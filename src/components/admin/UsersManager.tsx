@@ -18,7 +18,7 @@ type UserRow = {
 type School = { id: string; name: string };
 
 const ROLE_LABEL: Record<Role, string> = {
-  parent: 'Phụ huynh',
+  parent: 'Người lớn (chưa phân quyền)',
   teacher: 'Giáo viên',
   school_admin: 'Quản trị trường',
   system_admin: 'Quản trị hệ thống',
@@ -81,7 +81,7 @@ export default function UsersManager() {
       <div className="adm-head">
         <div>
           <h1>Người dùng</h1>
-          <p>Cấp quyền giáo viên để soạn bài, quản trị trường để quản lý lớp. Mọi tài khoản mới mặc định là phụ huynh.</p>
+          <p>Cấp quyền giáo viên để soạn bài, quản trị trường để quản lý lớp. Tài khoản mới chưa có quyền gì cho tới khi được cấp vai trò giáo viên.</p>
         </div>
       </div>
 

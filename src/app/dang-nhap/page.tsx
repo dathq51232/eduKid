@@ -57,7 +57,7 @@ function AdultLogin({ next, configured }: { next: string; configured: boolean })
         <LogIn aria-hidden="true" /> {busy ? 'Đang đăng nhập…' : 'Đăng nhập'}
       </button>
       <p className="auth-switch"><Link href="/quen-mat-khau">Quên mật khẩu?</Link></p>
-      <p className="auth-switch">Chưa có tài khoản? <Link href="/dang-ky">Đăng ký thầy cô / phụ huynh</Link></p>
+      <p className="auth-switch">Chưa có tài khoản? <Link href="/dang-ky">Đăng ký tài khoản thầy cô</Link></p>
     </form>
   );
 }
@@ -283,7 +283,7 @@ function LoginScreen() {
             <GraduationCap aria-hidden="true" /> Học sinh
           </button>
           <button type="button" role="tab" aria-selected={tab === 'adult'} className="auth-tab" onClick={() => setTab('adult')}>
-            <Users aria-hidden="true" /> Thầy cô / Phụ huynh
+            <Users aria-hidden="true" /> Thầy cô
           </button>
         </div>
         <div role="tabpanel">

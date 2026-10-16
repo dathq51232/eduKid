@@ -27,10 +27,13 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   const { data: cls } = await supabase.from('classes').select('id, name, grade, join_code, status').eq('id', id).maybeSingle();
   if (!cls) notFound(); // lớp không tồn tại HOẶC không được phân công — trả cùng một kết quả
 
-  const [{ data: roster }, { data: summary }] = await Promise.all([
+  const [{ data: roster }, { data: summary }, { data: pinRows }] = await Promise.all([
     supabase.rpc('teacher_class_roster', { p_class: id }),
     supabase.rpc('class_results_summary', { p_class: id }),
+    // PIN học sinh (migration 0009) — chỉ giáo viên của lớp đọc được; lỗi (chưa chạy migration) thì coi như chưa có PIN
+    supabase.rpc('teacher_class_pins', { p_class: id }),
   ]);
+  const pins: Record<string, string> = Object.fromEntries(((pinRows ?? []) as { student_id: string; pin: string }[]).map((p) => [p.student_id, p.pin]));
   const rosterRows = (roster ?? []) as RosterRow[];
   const active = rosterRows.filter((r) => r.membership_status === 'active');
   const names = new Map(active.map((r) => [r.student_id, r.display_name]));
@@ -52,6 +55,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
           cls={cls as { id: string; name: string; grade: number; join_code: string; status: string }}
           roster={rosterRows}
           summary={(summary ?? []) as SummaryRow[]}
+          pins={pins}
         />
         <ClassProgress classId={id} className={(cls as { name: string }).name} results={(results ?? []) as LessonResult[]} names={names} />
       </main>

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { KeyRound, Lock, LockOpen, Printer, RotateCcw, UserMinus, UserPlus, Users } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, Lock, LockOpen, Printer, RotateCcw, UserMinus, UserPlus, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export type RosterRow = {
@@ -14,7 +14,6 @@ export type RosterRow = {
   has_account: boolean;
   failed_count: number;
   locked_until: string | null;
-  parents: number;
 };
 export type SummaryRow = {
   student_id: string;
@@ -30,14 +29,14 @@ type Cls = { id: string; name: string; grade: number; join_code: string; status:
 
 const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '—');
 
-export default function ClassManager({ cls, roster, summary }: { cls: Cls; roster: RosterRow[]; summary: SummaryRow[] }) {
+export default function ClassManager({ cls, roster, summary, pins = {} }: { cls: Cls; roster: RosterRow[]; summary: SummaryRow[]; pins?: Record<string, string> }) {
   const router = useRouter();
   const [names, setNames] = useState('');
   const [consent, setConsent] = useState(false);
   const [cards, setCards] = useState<Card[]>([]);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [invite, setInvite] = useState<{ name: string; code: string } | null>(null);
+  const [showPins, setShowPins] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const active = roster.filter((r) => r.membership_status === 'active');
   const left = roster.filter((r) => r.membership_status !== 'active');
@@ -74,7 +73,7 @@ export default function ClassManager({ cls, roster, summary }: { cls: Cls; roste
       setCards(made);
       setNames('');
       const failed = data.created.length - made.length;
-      setMsg({ kind: failed ? 'error' : 'ok', text: `Đã thêm ${data.created.length} học sinh${failed ? `, ${failed} bạn chưa tạo được tài khoản (bấm "Đặt PIN" để thử lại)` : ''}. In thẻ đăng nhập ngay — PIN chỉ hiện một lần.` });
+      setMsg({ kind: failed ? 'error' : 'ok', text: `Đã thêm ${data.created.length} học sinh${failed ? `, ${failed} bạn chưa tạo được tài khoản (bấm "Đặt PIN" để thử lại)` : ''}. Có thể in thẻ đăng nhập ngay; PIN cũng xem lại được ở bảng Học sinh.` });
       router.refresh();
     } catch {
       setMsg({ kind: 'error', text: 'Không kết nối được máy chủ.' });
@@ -138,15 +137,7 @@ export default function ClassManager({ cls, roster, summary }: { cls: Cls; roste
               </li>
             ))}
           </ul>
-          <p className="dash-muted no-print">PIN chỉ hiện một lần. Quên PIN thì bấm “Đặt PIN mới” cho bạn đó.</p>
-        </section>
-      )}
-
-      {invite && (
-        <section className="dash-card invite-box">
-          <h2>Mã mời phụ huynh của {invite.name}</h2>
-          <p className="invite-code">{invite.code}</p>
-          <p className="dash-muted">Phụ huynh đăng ký tài khoản, vào mục <b>Phụ huynh</b> rồi nhập mã này. Mã dùng được cho 2 người, hết hạn sau 30 ngày; tạo mã mới thì mã cũ hết hiệu lực.</p>
+          <p className="dash-muted no-print">PIN xem lại được ở bảng Học sinh (nút “Hiện PIN”). Muốn đổi PIN thì bấm “Đặt PIN mới”.</p>
         </section>
       )}
 
@@ -167,12 +158,25 @@ export default function ClassManager({ cls, roster, summary }: { cls: Cls; roste
       </section>
 
       <section className="dash-section no-print">
-        <h2><Users aria-hidden="true" /> Học sinh ({active.length})</h2>
+        <div className="dash-card-head">
+          <h2><Users aria-hidden="true" /> Học sinh ({active.length})</h2>
+          {active.length > 0 && (
+            <div className="row-actions">
+              <button type="button" className="mini-btn" onClick={() => setShowPins((v) => !v)} aria-pressed={showPins}>
+                {showPins ? <><EyeOff aria-hidden="true" /> Ẩn PIN</> : <><Eye aria-hidden="true" /> Hiện PIN</>}
+              </button>
+              <button type="button" className="mini-btn" disabled={!active.some((r) => pins[r.student_id])}
+                onClick={() => setCards(active.filter((r) => pins[r.student_id]).map((r) => ({ id: r.student_id, name: r.display_name, pin: pins[r.student_id] })))}>
+                <Printer aria-hidden="true" /> Thẻ cả lớp
+              </button>
+            </div>
+          )}
+        </div>
         {active.length === 0 ? <p className="dash-muted">Lớp chưa có học sinh.</p> : (
           <div className="table-scroll">
             <table className="roster-table">
               <thead>
-                <tr><th>Học sinh</th><th>Trạng thái</th><th>Bài đã làm</th><th>Đúng TB</th><th>Điểm</th><th>Gần nhất</th><th>Phụ huynh</th><th><span className="sr-only">Thao tác</span></th></tr>
+                <tr><th>Học sinh</th><th>PIN</th><th>Trạng thái</th><th>Bài đã làm</th><th>Đúng TB</th><th>Điểm</th><th>Gần nhất</th><th><span className="sr-only">Thao tác</span></th></tr>
               </thead>
               <tbody>
                 {active.map((r) => {
@@ -182,12 +186,12 @@ export default function ClassManager({ cls, roster, summary }: { cls: Cls; roste
                   return (
                     <tr key={r.student_id}>
                       <th scope="row"><Link href={`/giao-vien/lop/${cls.id}/hoc-sinh/${r.student_id}`} className="student-link" title="Xem tiến độ chi tiết">{r.display_name}</Link></th>
+                      <td className="pin-cell">{pins[r.student_id] ? (showPins ? <b className="pin-value">{pins[r.student_id]}</b> : <span aria-label="PIN đang ẩn">••••••</span>) : <span className="dash-muted" title="PIN tạo trước khi bật lưu PIN — bấm “Đặt PIN mới” để có PIN xem lại được">Chưa lưu</span>}</td>
                       <td><span className={`status-chip tone-${st.tone}`}>{st.label}</span></td>
                       <td>{s?.lessons_done ? <Link href={`/giao-vien/lop/${cls.id}/hoc-sinh/${r.student_id}`} className="student-link">{s.lessons_done} bài</Link> : 0}</td>
                       <td>{s?.lessons_done ? `${s.avg_percent}%` : '—'}</td>
                       <td>{s?.total_points ?? 0}</td>
                       <td>{fmtDate(s?.last_activity ?? null)}</td>
-                      <td>{r.parents}</td>
                       <td>
                         <div className="row-actions">
                           <button type="button" className="mini-btn" disabled={busy !== null} onClick={() => resetPin(r)}><KeyRound aria-hidden="true" /> {r.has_account ? 'Đặt PIN mới' : 'Đặt PIN'}</button>
@@ -195,10 +199,6 @@ export default function ClassManager({ cls, roster, summary }: { cls: Cls; roste
                           {r.student_status === 'active'
                             ? <button type="button" className="mini-btn" disabled={busy !== null} onClick={() => rpc(`l-${r.student_id}`, 'teacher_manage_student', { p_class: cls.id, p_student: r.student_id, p_action: 'lock' }, `Đã khóa tài khoản ${r.display_name}.`)}><Lock aria-hidden="true" /> Khóa</button>
                             : <button type="button" className="mini-btn" disabled={busy !== null} onClick={() => rpc(`u-${r.student_id}`, 'teacher_manage_student', { p_class: cls.id, p_student: r.student_id, p_action: 'unlock' }, `Đã mở tài khoản ${r.display_name}.`)}><LockOpen aria-hidden="true" /> Mở</button>}
-                          <button type="button" className="mini-btn" disabled={busy !== null} onClick={async () => {
-                            const code = await rpc(`i-${r.student_id}`, 'create_parent_invite', { p_class: cls.id, p_student: r.student_id, p_days: 30 }, `Đã tạo mã mời phụ huynh cho ${r.display_name}.`);
-                            if (typeof code === 'string') setInvite({ name: r.display_name, code });
-                          }}>Mã phụ huynh</button>
                           {confirmRemove === r.student_id ? (
                             <>
                               <button type="button" className="mini-btn is-danger" onClick={() => { setConfirmRemove(null); void rpc(`x-${r.student_id}`, 'teacher_manage_student', { p_class: cls.id, p_student: r.student_id, p_action: 'remove' }, `${r.display_name} đã rời lớp.`); }}>Xác nhận</button>

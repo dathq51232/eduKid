@@ -113,15 +113,15 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ---------------------------------------------- Phụ huynh */}
+        {/* ---------------------------------------------- Thầy cô */}
         <section id="safety" className="home-section wrap">
           <div className="home-safety">
             <ShieldCheck className="home-safety-icon" aria-hidden="true" />
             <div>
-              <h2>Dành cho phụ huynh và thầy cô</h2>
-              <p>Không có bảng xếp hạng, không so sánh các em với nhau. Thầy cô tạo tài khoản cho cả lớp; phụ huynh chỉ xem được tiến độ của con mình bằng mã mời.</p>
+              <h2>Dành cho thầy cô</h2>
+              <p>Không có bảng xếp hạng, không so sánh các em với nhau. Thầy cô tạo tài khoản và PIN cho cả lớp, theo dõi tiến độ từng em trong mục Quản lý lớp.</p>
             </div>
-            <Link href="/phu-huynh" className="btn btn-outline">Góc phụ huynh</Link>
+            <Link href="/giao-vien" className="btn btn-outline">Góc thầy cô</Link>
           </div>
         </section>
 
@@ -131,7 +131,7 @@ export default function HomePage() {
             <nav className="footer-links" aria-label="Trên trang này">
               <a href="#subjects">Môn học</a>
               <a href="#how-it-works">Cách học</a>
-              <a href="#safety">Phụ huynh</a>
+              <a href="#safety">Thầy cô</a>
             </nav>
           </div>
         </footer>

@@ -1293,7 +1293,7 @@ a.adm-row-title:hover { color: var(--link); text-decoration: underline; }
   .main-nav-learn { order: 3; width: 100%; }
 }
 @media (max-width: 900px) {
-  .main-nav-home .main-nav-list, .main-nav-learn .main-nav-list { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .main-nav-home .main-nav-list, .main-nav-learn .main-nav-list { display: grid; grid-template-columns: repeat(3, 1fr); }
   .main-nav-home .main-nav-link, .main-nav-learn .main-nav-link { justify-content: center; }
 }
 @media (max-width: 560px) {
@@ -1943,6 +1943,8 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--brand-blue); ou
 .roster-table th, .roster-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; white-space: nowrap; }
 .roster-table thead th { color: var(--muted); font-size: 13px; font-weight: 700; }
 .roster-table tbody th { font-weight: 700; }
+.pin-cell { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pin-value { letter-spacing: 2px; font-size: 16px; }
 .status-chip { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--tile-bg); color: var(--tile-fg); font-size: 13px; font-weight: 700; }
 /* Tiến độ học tập (giáo viên) */
 .student-link { color: var(--link); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }

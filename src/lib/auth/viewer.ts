@@ -67,5 +67,5 @@ export function homeFor(v: Viewer): string {
   if (v.isStudent) return '/hoc-sinh';
   if (v.isAdmin) return '/quan-tri';
   if (v.isTeacher || v.teacherApplication || v.wantsTeacher) return '/giao-vien';
-  return '/phu-huynh';
+  return '/giao-vien'; // đã bỏ mục phụ huynh: tài khoản người lớn chưa được duyệt vào trang giáo viên để gửi yêu cầu
 }

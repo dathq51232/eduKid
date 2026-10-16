@@ -34,6 +34,7 @@ Vào **SQL Editor** → **New query**. Với **từng file** trong `supabase/mig
 | 6 | `0006_levels_timer_points.sql` | |
 | 7 | `0007_student_role.sql` | **chạy riêng một lần**, xong mới sang 0008 |
 | 8 | `0008_classroom_accounts.sql` | |
+| 9 | `0009_teacher_view_pin.sql` | giáo viên xem lại PIN học sinh; chạy lại an toàn |
 
 Cách làm mỗi file: mở file bằng Notepad/VS Code → chọn hết (Ctrl+A) → copy → dán vào SQL Editor → **Run**.
 Thấy "Success. No rows returned" là được. Xóa ô soạn rồi làm file tiếp theo.

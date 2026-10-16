@@ -15,7 +15,8 @@ export function dbError(err: { code?: string; message?: string } | null): { stat
   return { status: 400, message: 'Không thực hiện được. Vui lòng thử lại.' };
 }
 
-/** Tạo (hoặc đặt lại mật khẩu) tài khoản đăng nhập cho học sinh với PIN mới. Trả PIN để in thẻ — PIN không được lưu. */
+/** Tạo (hoặc đặt lại mật khẩu) tài khoản đăng nhập cho học sinh với PIN mới. Trả PIN để in thẻ.
+ *  PIN được lưu ở bảng student_pins (migration 0009) — chỉ giáo viên của lớp đọc được qua hàm teacher_class_pins. */
 export async function issueStudentPin(studentId: string, displayName: string): Promise<{ pin: string } | { error: string }> {
   const admin = createAdminClient();
   const pin = generatePin();
@@ -37,6 +38,8 @@ export async function issueStudentPin(studentId: string, displayName: string): P
     const { error: linkErr } = await admin.from('students').update({ user_id: data.user.id }).eq('id', studentId);
     if (linkErr) return { error: 'Không gắn được tài khoản.' };
   }
+  // Lưu PIN để giáo viên xem lại (bảng chỉ máy chủ ghi; chưa chạy migration 0009 thì bỏ qua, không làm hỏng việc tạo PIN)
+  await admin.from('student_pins').upsert({ student_id: studentId, pin, updated_at: new Date().toISOString() });
   await admin.from('student_login_guards').upsert({ student_id: studentId, failed_count: 0, locked_until: null, last_failed_at: null, updated_at: new Date().toISOString() });
   return { pin };
 }

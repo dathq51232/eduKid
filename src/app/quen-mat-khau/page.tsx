@@ -12,7 +12,7 @@ const LINK_ERRORS: Record<string, string> = {
   'lien-ket-sai': 'Liên kết không hợp lệ. Bạn gửi lại liên kết mới nhé.',
 };
 
-// Quên mật khẩu — chỉ dành cho tài khoản người lớn (thầy cô, phụ huynh).
+// Quên mật khẩu — chỉ dành cho tài khoản thầy cô.
 // Học sinh quên PIN thì nhờ thầy cô bấm "Đặt PIN mới".
 function ForgotPassword() {
   const params = useSearchParams();
@@ -48,7 +48,7 @@ function ForgotPassword() {
       <div className="auth-card">
         <Link href="/" className="brand auth-brand" aria-label="EduChain Kids - Trang chủ"><BrandLogo size={40} /></Link>
         <h1>Quên mật khẩu</h1>
-        <p className="auth-sub">Dành cho thầy cô và phụ huynh. Nhập email đã đăng ký, chúng tôi sẽ gửi liên kết để đặt mật khẩu mới.</p>
+        <p className="auth-sub">Dành cho thầy cô. Nhập email đã đăng ký, chúng tôi sẽ gửi liên kết để đặt mật khẩu mới.</p>
         {!configured && <p className="adm-alert is-warn">Chưa kết nối Supabase. Xem docs/AUTH-SETUP.md.</p>}
         {sent ? (
           <p className="adm-alert is-ok" role="status">

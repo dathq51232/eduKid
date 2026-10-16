@@ -52,6 +52,7 @@ Bản nền tảng phát triển nội bộ cho website học tập tiểu học
    - `supabase/migrations/0004_admin_authoring.sql`
    - `supabase/migrations/0005_curriculum_catalog.sql` (danh mục chương trình + dữ liệu lớp 1)
    - `supabase/migrations/0006_levels_timer_points.sql` (cấp độ L1–L5, thời gian từng câu, thời lượng bài làm, điểm tích luỹ)
+   - `supabase/migrations/0007_student_role.sql` (chạy riêng), `0008_classroom_accounts.sql`, `0009_teacher_view_pin.sql` (giáo viên xem lại PIN học sinh)
 3. Lấy Project URL và publishable/anon key từ phần API project settings, điền vào `.env.local`.
 4. Tạo tài khoản test riêng cho từng vai trò. Không dùng tài khoản hoặc dữ liệu học sinh thật.
 5. Gán role test qua SQL Editor bằng tài khoản quản trị tin cậy. Không tạo endpoint công khai để người dùng tự cấp role.
@@ -168,7 +169,7 @@ Bộ sinh câu ngẫu nhiên cho Toán 1 (Học kì 1) — dùng cho nút **Đ�
 
 ## Game trí tuệ (/tro-choi)
 
-Thanh điều hướng chính có 4 tab: **Học tập** (`/chon-bai`), **Game trí tuệ** (`/tro-choi`), **Thành tích** (`/thanh-tich`), **Phụ huynh** (`/phu-huynh`). Tab Phụ huynh hiện chỉ là trang trạng thái "Đang phát triển".
+Thanh điều hướng chính có 3 tab: **Học tập** (`/chon-bai`), **Game trí tuệ** (`/tro-choi`), **Thành tích** (`/thanh-tich`). Mục Phụ huynh đã bỏ; đường dẫn cũ `/phu-huynh` chuyển về trang chủ.
 
 - **Thế giới khám phá**: lọc theo kỹ năng (Tất cả, Logic, Trí nhớ, Không gian, Toán, Ngôn ngữ) và chọn lớp 1–5. Chọn lớp chỉ để gợi ý cấp độ bắt đầu; lớp và cấp độ game là hai thứ khác nhau. Nhóm Ngôn ngữ chưa có game nên hiện trạng thái trống.
 - **Cấp độ L1–L5** (Làm quen, Cơ bản, Vận dụng, Thử thách, Mở rộng) là thang thử thách nội bộ của EduChain Kids, **không phải** cấp độ chính thức của Bộ GD&ĐT. Game khó dần nhờ thêm lựa chọn, quy luật phức tạp hơn, nhiều cặp thẻ hơn hoặc mê cung rộng hơn, không đưa thêm kiến thức chưa học.
@@ -288,11 +289,11 @@ Sinh lại file sau khi sửa nội dung: `npm run gen:sql2` (… `gen:sql5`). �
 Chi tiết cấu hình: `docs/AUTH-SETUP.md`. Khi chưa kết nối Supabase, app vẫn chạy chế độ minh họa như trước.
 Hướng dẫn từng bước dựng bản thử `educhain-dev` và đưa lên Vercel: `docs/DEPLOY-DEV.md`.
 
-- **Vai trò:** học sinh (`student`), phụ huynh (`parent`), giáo viên (`teacher`), quản trị (`school_admin`, `system_admin`). Vai trò chỉ do quản trị hệ thống cấp; không ai tự nâng quyền.
-- **Giáo viên:** đăng ký ở `/dang-ky` → chờ duyệt (Quản trị → Duyệt giáo viên) → `/giao-vien` tạo lớp → **Quản lý lớp** (`/giao-vien/lop/[id]`): thêm học sinh theo danh sách tên, tạo PIN và in thẻ, đặt PIN mới, khóa/mở, mở khóa nhập sai, mã mời phụ huynh, cho rời lớp, xem tiến độ lớp.
+- **Vai trò:** học sinh (`student`), giáo viên (`teacher`), quản trị (`school_admin`, `system_admin`). Vai trò chỉ do quản trị hệ thống cấp; không ai tự nâng quyền. Mục phụ huynh đã bỏ khỏi giao diện (bảng/hàm cũ trong database vẫn giữ, không dùng).
+- **Giáo viên:** đăng ký ở `/dang-ky` → chờ duyệt (Quản trị → Duyệt giáo viên) → `/giao-vien` tạo lớp → **Quản lý lớp** (`/giao-vien/lop/[id]`): thêm học sinh theo danh sách tên, tạo PIN và in thẻ, **xem lại PIN** (nút Hiện PIN, In thẻ cả lớp), đặt PIN mới, khóa/mở, mở khóa nhập sai, cho rời lớp, xem tiến độ lớp.
 - **Học sinh:** `/dang-nhap` → mã lớp → chọn tên → PIN 6 số (sai 5 lần → khóa 15 phút) → `/hoc-sinh`. Bài làm được gửi lên máy chủ, **máy chủ chấm lại** rồi mới lưu (`/api/tien-do`).
-- **Phụ huynh:** `/phu-huynh` → nhập mã mời `PH-…` → chỉ xem tiến độ của con đã liên kết.
-- **Database:** `supabase/migrations/0007_student_role.sql`, `0008_classroom_accounts.sql` (chỉ thêm, chạy lại an toàn). Kiểm thử phân quyền: `supabase/tests/local/50_classroom_rbac.sql`.
+- **PIN học sinh** (migration `0009_teacher_view_pin.sql`): PIN lưu ở bảng `student_pins` — trình duyệt không đọc/ghi trực tiếp được; giáo viên đọc qua hàm `teacher_class_pins` (chỉ lớp mình dạy, quản trị trường/hệ thống), mỗi lần xem ghi nhật ký. Học sinh tạo PIN trước khi chạy 0009 hiện "Chưa lưu" — bấm **Đặt PIN mới** một lần. Kiểm thử: `supabase/tests/local/60_teacher_pins.sql`.
+- **Database:** `supabase/migrations/0007_student_role.sql`, `0008_classroom_accounts.sql`, `0009_teacher_view_pin.sql` (chỉ thêm, chạy lại an toàn). Kiểm thử phân quyền: `supabase/tests/local/50_classroom_rbac.sql`.
 - **Mã nguồn chính:** `src/lib/auth/` (người xem, PIN, chuyển hướng an toàn), `src/lib/supabase/admin.ts` (service_role, chỉ máy chủ), `src/lib/progress-server/grade.ts` (chấm lại phía máy chủ), `src/app/api/` (đăng nhập học sinh, tạo tài khoản, lưu tiến độ).
 
 ## Đọc đề bằng giọng nói
@@ -339,7 +340,7 @@ npm run check:sets      # kiểm tra Đổi bộ câu hỏi không trùng câu v
 | `/tro-choi` | Game trí tuệ: danh mục, lọc kỹ năng, chọn lớp |
 | `/tro-choi/tham-tu-quy-luat`, `/tro-choi/nha-vo-dich-tri-nho`, `/tro-choi/me-cung` | Ba game, chọn cấp độ L1–L5 (`?cap=1..5`) |
 | `/thanh-tich` | Thành tích cá nhân (dữ liệu minh họa) |
-| `/phu-huynh` | Khu vực phụ huynh — đang phát triển |
+| `/phu-huynh` | (đã bỏ) chuyển về trang chủ |
 | `/dang-nhap` | Đăng nhập (admin, giáo viên) |
 | `/quan-tri` | Khu quản trị: tổng quan, bài học, soạn câu hỏi, người dùng, nhật ký |
 
