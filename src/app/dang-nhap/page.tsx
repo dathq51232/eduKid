@@ -83,7 +83,7 @@ function saveRemembered(v: Remembered | null) {
   }
 }
 
-function StudentLogin({ configured, initialCode }: { configured: boolean; initialCode: string }) {
+function StudentLogin({ configured, initialCode, next = '' }: { configured: boolean; initialCode: string; next?: string }) {
   const router = useRouter();
   const [step, setStep] = useState<'code' | 'name' | 'pin'>('code');
   const [code, setCode] = useState(initialCode);
@@ -156,7 +156,8 @@ function StudentLogin({ configured, initialCode }: { configured: boolean; initia
       const data = await res.json();
       if (res.ok) {
         saveRemembered({ code, className, id: me.id, name: me.name });
-        router.replace(data.next ?? '/hoc-sinh');
+        // Bị chuyển tới đây từ trang học (vd. /lam-bai?…) thì quay lại đúng trang đó; còn lại về trang học sinh
+        router.replace(next.startsWith('/chon-bai') || next.startsWith('/lam-bai') || next.startsWith('/tro-choi') || next.startsWith('/thanh-tich') || next.startsWith('/ket-qua') || next.startsWith('/hoc-sinh') ? next : (data.next ?? '/hoc-sinh'));
         router.refresh();
         return;
       }
@@ -275,6 +276,9 @@ function LoginScreen() {
       <div className="auth-card">
         <Link href="/" className="brand auth-brand" aria-label="EduChain Kids - Trang chủ"><BrandLogo size={40} /></Link>
         <h1>Đăng nhập</h1>
+        {configured && /^\/(chon-bai|lam-bai|ket-qua|tro-choi|thanh-tich)/.test(next) && (
+          <p className="adm-alert is-ok" role="status">Em đăng nhập bằng mã lớp và mã PIN để làm bài nhé. Bài làm sẽ được lưu để thầy cô xem.</p>
+        )}
         {!configured && (
           <p className="adm-alert is-warn">Chưa kết nối Supabase nên chưa đăng nhập được. Xem hướng dẫn trong docs/AUTH-SETUP.md.</p>
         )}
@@ -287,7 +291,7 @@ function LoginScreen() {
           </button>
         </div>
         <div role="tabpanel">
-          {tab === 'student' ? <StudentLogin configured={configured} initialCode={(params.get('lop') ?? '').toUpperCase().slice(0, 8)} /> : <AdultLogin next={next} configured={configured} />}
+          {tab === 'student' ? <StudentLogin configured={configured} initialCode={(params.get('lop') ?? '').toUpperCase().slice(0, 8)} next={next} /> : <AdultLogin next={next} configured={configured} />}
         </div>
         <Link href="/" className="auth-back"><ArrowLeft size={16} aria-hidden="true" /> Về trang chủ</Link>
       </div>
