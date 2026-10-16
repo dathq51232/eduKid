@@ -1,0 +1,11 @@
+# Không tải lên Vercel khi deploy bằng CLI (Vercel tự cài thư viện và tự build).
+node_modules
+.next
+out
+build
+# Bí mật chỉ khai báo trong Vercel → Settings → Environment Variables, không tải file lên.
+.env
+.env.local
+.env.*.local
+*.log
+tsconfig.tsbuildinfo

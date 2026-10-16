@@ -1,0 +1,49 @@
+{
+  "name": "educhain-kids",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "check:content": "tsx scripts/check-content.ts",
+    "gen:sql": "tsx scripts/gen-curriculum-sql.ts > supabase/seed/curriculum_grade1.sql && tsx scripts/gen-content-sql.ts > supabase/seed/content_grade1_hk1.sql",
+    "gen:sql2": "tsx scripts/gen-curriculum-sql.ts 2 > supabase/seed/curriculum_grade2.sql && tsx scripts/gen-content-sql.ts 2 1 > supabase/seed/content_grade2_hk1.sql && tsx scripts/gen-content-sql.ts 2 2 > supabase/seed/content_grade2_hk2.sql",
+    "gen:sql3": "tsx scripts/gen-curriculum-sql.ts 3 > supabase/seed/curriculum_grade3.sql && tsx scripts/gen-content-sql.ts 3 1 > supabase/seed/content_grade3_hk1.sql && tsx scripts/gen-content-sql.ts 3 2 > supabase/seed/content_grade3_hk2.sql",
+    "gen:sql4": "tsx scripts/gen-curriculum-sql.ts 4 > supabase/seed/curriculum_grade4.sql && tsx scripts/gen-content-sql.ts 4 1 > supabase/seed/content_grade4_hk1.sql && tsx scripts/gen-content-sql.ts 4 2 > supabase/seed/content_grade4_hk2.sql",
+    "gen:sql5": "tsx scripts/gen-curriculum-sql.ts 5 > supabase/seed/curriculum_grade5.sql && tsx scripts/gen-content-sql.ts 5 1 > supabase/seed/content_grade5_hk1.sql && tsx scripts/gen-content-sql.ts 5 2 > supabase/seed/content_grade5_hk2.sql",
+    "export:bank2": "tsx scripts/dump-bank.ts 2 > data/bank-lop2.json",
+    "export:bank3": "tsx scripts/dump-bank.ts 3 > data/bank-lop3.json",
+    "export:bank4": "tsx scripts/dump-bank.ts 4 > data/bank-lop4.json",
+    "export:bank5": "tsx scripts/dump-bank.ts 5 > data/bank-lop5.json",
+    "export:bank": "tsx scripts/dump-bank.ts > data/bank.json && python scripts/export_bank_xlsx.py data/bank.json data/ngan-hang-mau-goc.xlsx data/EduChain_Kids_Ngan_hang_cau_hoi_Lop_1.xlsx",
+    "check:practice": "tsx scripts/check-practice.ts",
+    "check:games": "tsx scripts/check-games.ts",
+    "check:sets": "tsx scripts/check-sets.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.1",
+    "lucide-react": "^0.468.0",
+    "next": "^15.2.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "autoprefixer": "^10.6.1",
+    "eslint": "^9.22.0",
+    "eslint-config-next": "^15.2.4",
+    "postcss": "^8.5.29",
+    "tailwindcss": "^3.4.19",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.2"
+  }
+}
