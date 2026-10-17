@@ -115,7 +115,7 @@ function StudentLogin({ configured, initialCode, next = '' }: { configured: bool
       const res = await fetch('/api/hoc-sinh/lop', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: value }) });
       const data = await res.json();
       if (!res.ok) {
-        setError(res.status === 429 ? 'Em thử nhiều quá rồi, đợi một lát nhé.' : data.error === 'not_configured' ? 'Máy chủ chưa bật đăng nhập học sinh.' : data.error === 'server_error' ? 'Máy chủ chưa kết nối được cơ sở dữ liệu. Em nhờ thầy cô báo quản trị nhé.' : 'Không tìm thấy lớp. Em xem lại mã lớp trên thẻ nhé.');
+        setError(res.status === 429 ? 'Em thử nhiều quá rồi, đợi một lát nhé.' : data.error === 'not_configured' ? 'Máy chủ chưa bật đăng nhập học sinh.' : data.error === 'server_error' ? 'Máy chủ chưa kết nối được cơ sở dữ liệu. Em nhờ thầy cô báo quản trị nhé.' : data.error === 'class_archived' ? 'Lớp này đang được lưu trữ. Em nhờ thầy cô bấm "Mở lại lớp" nhé.' : 'Không tìm thấy lớp. Em xem lại mã lớp trên thẻ nhé.');
         return false;
       }
       if (!data.students.length) { setError('Lớp này chưa có bạn nào có tài khoản. Em hỏi thầy cô nhé.'); return false; }

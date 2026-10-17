@@ -10,6 +10,7 @@ import VoiceHelp from '@/components/VoiceHelp';
 import { isSubjectCode, parseGrade } from '@/lib/data';
 import { LEVELS, formatDuration, rankFor } from '@/lib/levels';
 import { readLastAttempt, starsFor } from '@/lib/progress';
+import { SYNC_EVENT, readSyncStatus, type SyncStatus } from '@/lib/progress-sync';
 import { buildComment, levelStats } from '@/lib/scoring';
 import { segmentsFor, speakSegments, stopSpeaking } from '@/lib/speech';
 import type { AnswerRecord, AttemptSummary } from '@/lib/types';
@@ -35,6 +36,15 @@ function StatusIcon({ status }: { status: AnswerRecord['status'] }) {
   return <MinusCircle size={17} aria-hidden="true" />;
 }
 
+function syncMessage(s: SyncStatus): string {
+  if (s.pending) return 'Đang lưu bài cho thầy cô…';
+  if (s.saved) return 'Đã lưu bài làm để thầy cô xem.';
+  if (s.reason === 'guest') return 'Em chưa đăng nhập bằng mã lớp và PIN nên bài này chưa được lưu cho thầy cô.';
+  if (s.reason === 'not_student') return 'Đang dùng tài khoản người lớn nên bài làm không được lưu vào lớp.';
+  if (s.reason === 'too_many') return 'Em làm nhanh quá, máy chủ tạm chưa lưu bài này. Lát nữa làm tiếp nhé.';
+  return `Chưa lưu được bài lên máy chủ (mã: ${s.reason ?? 'không rõ'}). Em báo thầy cô nhé.`;
+}
+
 function KetQuaContent() {
   const searchParams = useSearchParams();
   const subjectParam = searchParams.get('subject');
@@ -44,10 +54,14 @@ function KetQuaContent() {
   const [attempt, setAttempt] = useState<AttemptSummary | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [voiceProblem, setVoiceProblem] = useState<'unsupported' | 'no_vi_voice' | null>(null);
+  const [sync, setSync] = useState<SyncStatus | null>(null);
   useEffect(() => {
     setAttempt(readLastAttempt());
     setLoaded(true);
-    return () => stopSpeaking();
+    const onSync = () => setSync(readSyncStatus());
+    onSync();
+    window.addEventListener(SYNC_EVENT, onSync);
+    return () => { stopSpeaking(); window.removeEventListener(SYNC_EVENT, onSync); };
   }, []);
 
   if (!loaded) return <LearnHeader />;
@@ -116,6 +130,9 @@ function KetQuaContent() {
               <dd>{attempt.points}</dd>
             </div>
           </dl>
+          {sync && sync.lessonId === attempt.lessonId && (
+            <p className={`sync-note${sync.saved ? ' is-ok' : sync.pending ? '' : ' is-warn'}`} role="status">{syncMessage(sync)}</p>
+          )}
         </section>
 
         <section className="points-card" aria-label="Điểm tích luỹ">

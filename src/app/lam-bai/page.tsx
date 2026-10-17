@@ -23,7 +23,7 @@ import { isAnswered } from '@/lib/grading';
 import { knowledgeFor } from '@/lib/content/knowledge';
 import { LEVELS, LEVEL_LIST, SPEED_BONUS, formatDuration, questionPoints, rankFor } from '@/lib/levels';
 import { addPoints, readTotalPoints, saveAttempt, saveMucLesson } from '@/lib/progress';
-import { syncLessonResult } from '@/lib/progress-sync';
+import { syncEnabled, syncLessonResult, writeSyncStatus } from '@/lib/progress-sync';
 import { MUC, MUC_LIST, parseMuc, type Muc } from '@/lib/sets';
 import { totals } from '@/lib/scoring';
 import { TIMER_SOUND_MODES, playSound, readTimerSound, saveTimerSound, timerSoundFor, type TimerSoundMode } from '@/lib/sound';
@@ -242,12 +242,13 @@ function LamBaiContent() {
       answers,
     });
     // Học sinh đã đăng nhập: gửi bài làm để máy chủ chấm lại và lưu (khách thì máy chủ bỏ qua)
+    if (syncEnabled()) writeSyncStatus({ lessonId, saved: false, pending: true });
     void syncLessonResult({
       lessonId,
       seed,
       muc: seed ? muc : undefined,
       answers: answers.map((a) => ({ questionId: a.questionId, answer: a.userAnswer ?? null, spentMs: a.spentMs })),
-    });
+    }).then((r) => { if (syncEnabled()) writeSyncStatus({ lessonId, ...r, pending: false }); });
     playIf('complete');
     router.push(`/ket-qua?subject=${subjectCode}&grade=${grade}`);
   }, [order, lesson, lessonId, subjectCode, grade, router, seed, muc]);

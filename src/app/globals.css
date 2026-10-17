@@ -664,6 +664,9 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--yellow); outlin
 @keyframes star-pop { from { transform: scale(0) rotate(-30deg); } 70% { transform: scale(1.15) rotate(4deg); } to { transform: scale(1) rotate(0); } }
 .score-box { display: flex; justify-content: space-around; gap: 16px; max-width: 420px; margin-inline: auto; padding: 14px; border: 2px solid var(--line-strong); border-radius: 14px; background: var(--bg-ffffff); }
 .score-box dt { color: var(--muted); font-size: 15px; }
+.sync-note { max-width: 420px; margin-inline: auto; padding: 8px 12px; border-radius: 10px; background: var(--bg-ffffff); color: var(--muted); font-size: 15px; font-weight: 600; }
+.sync-note.is-ok { color: #15803d; }
+.sync-note.is-warn { color: #b45309; }
 .score-box dd { margin: 0; font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 34px; font-weight: 800; line-height: 1.2; }
 .result-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .review-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }

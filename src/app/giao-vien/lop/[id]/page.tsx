@@ -27,7 +27,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   const { data: cls } = await supabase.from('classes').select('id, name, grade, join_code, status').eq('id', id).maybeSingle();
   if (!cls) notFound(); // lớp không tồn tại HOẶC không được phân công — trả cùng một kết quả
 
-  const [{ data: roster }, { data: summary }, { data: pinRows }] = await Promise.all([
+  const [{ data: roster }, { data: summary }, { data: pinRows, error: pinErr }] = await Promise.all([
     supabase.rpc('teacher_class_roster', { p_class: id }),
     supabase.rpc('class_results_summary', { p_class: id }),
     // PIN học sinh (migration 0009) — chỉ giáo viên của lớp đọc được; lỗi (chưa chạy migration) thì coi như chưa có PIN
@@ -51,6 +51,11 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
       <LearnHeader />
       <main className="dash wrap">
         <Link href="/giao-vien" className="dash-back"><ArrowLeft aria-hidden="true" /> Các lớp</Link>
+        {pinErr && (
+          <p className="adm-alert is-warn" role="status">
+            Chưa đọc được PIN đã lưu (thường do chưa chạy <code>supabase/migrations/0009_teacher_view_pin.sql</code> trên Supabase). Chạy file đó, rồi bấm <strong>Đặt PIN mới</strong> cho từng em để PIN hiện ở cột PIN.
+          </p>
+        )}
         <ClassManager
           cls={cls as { id: string; name: string; grade: number; join_code: string; status: string }}
           roster={rosterRows}

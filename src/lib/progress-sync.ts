@@ -4,15 +4,30 @@ import type { AnswerValue } from './types';
 
 const enabled = () => Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
-export type SyncResult = { saved: boolean; score?: number; total?: number; points?: number };
+export type SyncResult = { saved: boolean; reason?: string; score?: number; total?: number; points?: number };
+
+/** Trạng thái lưu của bài vừa làm, để trang Kết quả báo cho học sinh biết bài đã tới thầy cô chưa. */
+export const SYNC_KEY = 'edukid:last-sync';
+export const SYNC_EVENT = 'edukid-sync';
+export type SyncStatus = SyncResult & { lessonId: string; pending?: boolean };
+
+export function writeSyncStatus(s: SyncStatus) {
+  try { sessionStorage.setItem(SYNC_KEY, JSON.stringify(s)); } catch { /* bỏ qua */ }
+  try { window.dispatchEvent(new Event(SYNC_EVENT)); } catch { /* bỏ qua */ }
+}
+export function readSyncStatus(): SyncStatus | null {
+  try { const v = sessionStorage.getItem(SYNC_KEY); return v ? (JSON.parse(v) as SyncStatus) : null; } catch { return null; }
+}
+export const syncEnabled = () => enabled();
 
 export async function syncLessonResult(p: { lessonId: string; seed?: number; muc?: number; answers: { questionId: string; answer: AnswerValue; spentMs: number }[] }): Promise<SyncResult> {
   if (!enabled()) return { saved: false };
   try {
     const res = await fetch('/api/tien-do', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(p), keepalive: true });
-    return (await res.json()) as SyncResult;
+    const data = (await res.json().catch(() => ({ saved: false, reason: `http_${res.status}` }))) as SyncResult;
+    return data;
   } catch {
-    return { saved: false };
+    return { saved: false, reason: 'network' };
   }
 }
 

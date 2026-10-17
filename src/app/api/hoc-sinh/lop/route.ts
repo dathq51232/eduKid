@@ -15,13 +15,15 @@ export async function POST(request: Request) {
   if (!code) return NextResponse.json({ error: 'invalid_code' }, { status: 400 });
 
   const admin = createAdminClient();
-  const { data: cls, error: clsErr } = await admin.from('classes').select('id, name, grade').eq('join_code', code).eq('status', 'active').maybeSingle();
+  const { data: cls, error: clsErr } = await admin.from('classes').select('id, name, grade, status').eq('join_code', code).maybeSingle();
   // Lỗi truy vấn (thường do SUPABASE_SERVICE_ROLE_KEY sai/đã đổi) phải báo khác với "không có lớp", nếu không sẽ rất khó dò.
   if (clsErr) {
     console.error('[hoc-sinh/lop] classes query failed:', clsErr.code, clsErr.message);
     return NextResponse.json({ error: 'server_error' }, { status: 500 });
   }
   if (!cls) return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  // Lớp có thật nhưng giáo viên đã lưu trữ: báo rõ để giáo viên bấm "Mở lại lớp" (không lộ thêm thông tin gì).
+  if (cls.status !== 'active') return NextResponse.json({ error: 'class_archived' }, { status: 403 });
 
   const { data: members } = await admin.from('class_memberships').select('student_id').eq('class_id', cls.id).eq('status', 'active');
   const ids = (members ?? []).map((m) => m.student_id as string);
