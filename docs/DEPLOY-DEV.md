@@ -40,6 +40,7 @@ Vào **SQL Editor** → **New query**. Với **từng file** trong `supabase/mig
 | 12 | `0012_class_leaderboard.sql` | Thành tích thật + bạn điểm cao nhất tuần/tháng trong lớp; chạy lại an toàn |
 | 13 | `0013_student_comments.sql` | nhận xét học sinh tuần/học kỳ/cả năm; chạy lại an toàn |
 | 14 | `0014_school_results.sql` | điểm kiểm tra định kỳ + khen thưởng trên trường; chạy lại an toàn |
+| 15 | `0015_exam_papers.sql` | lưu ma trận và đề kiểm tra của giáo viên; chạy lại an toàn |
 
 Cách làm mỗi file: mở file bằng Notepad/VS Code → chọn hết (Ctrl+A) → copy → dán vào SQL Editor → **Run**.
 Thấy "Success. No rows returned" là được. Xóa ô soạn rồi làm file tiếp theo.

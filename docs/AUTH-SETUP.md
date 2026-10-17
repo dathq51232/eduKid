@@ -7,7 +7,7 @@
 
 1. Tạo project trên Supabase (khu vực gần Việt Nam, ví dụ Singapore).
 2. Vào **SQL Editor**, chạy lần lượt từng file trong `supabase/migrations/`:
-   `0001` → `0002` → `0003` → `0004` → `0005` → `0006` → `0007_student_role.sql` → `0008_classroom_accounts.sql` → `0009_teacher_view_pin.sql` → `0010_class_code_required.sql` → `0011_fix_student_role.sql` → `0012_class_leaderboard.sql` → `0013_student_comments.sql` → `0014_school_results.sql`.
+   `0001` → `0002` → `0003` → `0004` → `0005` → `0006` → `0007_student_role.sql` → `0008_classroom_accounts.sql` → `0009_teacher_view_pin.sql` → `0010_class_code_required.sql` → `0011_fix_student_role.sql` → `0012_class_leaderboard.sql` → `0013_student_comments.sql` → `0014_school_results.sql` → `0015_exam_papers.sql`.
    - `0007` phải chạy **riêng** và trước `0008` (thêm giá trị vai trò `student`).
    - `0007`, `0008` chỉ thêm bảng/cột/hàm và thay policy, chạy lại nhiều lần vẫn an toàn.
 3. (Tùy chọn) Nạp dữ liệu chương trình: `supabase/seed/curriculum_grade1.sql`, sau khi có tài khoản quản trị (bước 3)

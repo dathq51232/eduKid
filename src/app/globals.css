@@ -2237,3 +2237,37 @@ body {
 .sr-award-form .btn { justify-self: start; }
 .sr-awards .mini-btn svg { width: 14px; height: 14px; }
 @media (max-width: 760px) { .sr-award-form { grid-template-columns: 1fr; } .sr-award-form .sr-award-note { grid-column: auto; } }
+
+/* ------------------------------------------------ Ma trận và đề kiểm tra (0015) */
+.exam-builder h1 { display: flex; align-items: center; gap: 10px; }
+.exam-builder h1 svg { width: 30px; height: 30px; }
+.exam-builder h2 { display: flex; align-items: center; gap: 8px; }
+.exam-builder h2 svg { width: 22px; height: 22px; }
+.exam-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.exam-form .exam-title { grid-column: span 2; }
+.exam-form select, .exam-form input { width: 100%; }
+.exam-saved { display: grid; gap: 8px; margin: 8px 0 0; padding: 0; list-style: none; }
+.exam-saved li { display: flex; align-items: center; gap: 8px; }
+.exam-saved li.is-on .exam-saved-open { box-shadow: inset 0 0 0 2px var(--blue); }
+.exam-saved-open { flex: 1; display: grid; gap: 2px; padding: 8px 12px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--bg-ffffff); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.exam-saved-open span { color: var(--muted); font-size: 13px; }
+.exam-saved .mini-btn svg, .exam-paper .mini-btn svg { width: 14px; height: 14px; }
+.exam-matrix td, .exam-matrix th { text-align: center; vertical-align: middle; }
+.exam-matrix .exam-unit { text-align: left; font-weight: 700; }
+.exam-matrix .exam-unit span, .exam-avail { display: block; color: var(--muted); font-size: 12px; font-weight: 500; }
+.exam-matrix input { width: 64px; min-height: 34px; padding: 2px 6px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg-ffffff); color: var(--ink); font: inherit; text-align: center; }
+.exam-points th { font-weight: 600; color: var(--muted); font-size: 13px; }
+.exam-warn { color: #b45309; } .exam-ok { color: #15803d; }
+.exam-papers { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
+.exam-paper { padding: 14px 16px; border: 2px solid var(--line-strong); border-radius: 16px; background: var(--bg-ffffff); }
+.exam-paper h3 { margin: 0 0 8px; }
+.exam-paper ol { display: grid; gap: 10px; margin: 0; padding-left: 22px; }
+.exam-q-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.exam-q-lesson { flex: 1; color: var(--muted); font-size: 12px; }
+.exam-muc { padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+.exam-muc.m1 { background: #dcfce7; color: #166534; } .exam-muc.m2 { background: #dbeafe; color: #1e40af; } .exam-muc.m3 { background: #fde68a; color: #92400e; }
+.exam-q-prompt { margin: 4px 0 0; white-space: pre-line; }
+.exam-q-opts { margin: 2px 0 0; color: var(--ink); font-size: 14px; }
+.exam-q-ans { margin: 2px 0 0; color: #15803d; font-size: 13px; font-weight: 700; }
+@media (max-width: 900px) { .exam-form { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .exam-form { grid-template-columns: 1fr; } .exam-form .exam-title { grid-column: auto; } }

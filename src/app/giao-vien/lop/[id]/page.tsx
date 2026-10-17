@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { ArrowLeft, ClipboardCheck, GraduationCap } from 'lucide-react';
+import { ArrowLeft, ClipboardCheck, GraduationCap, Table2 } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import ClassManager, { type RosterRow, type SummaryRow } from '@/components/classroom/ClassManager';
@@ -65,6 +65,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
         />
         <section className="dash-section comments-entry no-print">
           <div className="comments-actions">
+            <Link href={`/giao-vien/lop/${id}/de-kiem-tra`} className="btn btn-outline"><Table2 aria-hidden="true" /> Ma trận và đề kiểm tra</Link>
             <Link href={`/giao-vien/lop/${id}/ket-qua-truong`} className="btn btn-outline"><GraduationCap aria-hidden="true" /> Kết quả học tập trên trường</Link>
             <Link href={`/giao-vien/lop/${id}/nhan-xet`} className="btn btn-primary"><ClipboardCheck aria-hidden="true" /> Nhận xét học sinh (tuần · học kỳ · cả năm)</Link>
           </div>
