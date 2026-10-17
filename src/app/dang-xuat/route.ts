@@ -5,7 +5,7 @@ import { hasSupabaseEnv } from '@/lib/supabase/env';
 export async function POST(request: NextRequest) {
   if (hasSupabaseEnv()) {
     const supabase = await createClient();
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'local' }); // chỉ thoát trên trình duyệt này, không đá các máy khác đang dùng cùng tài khoản
   }
   return NextResponse.redirect(new URL('/dang-nhap', request.url), { status: 303 });
 }

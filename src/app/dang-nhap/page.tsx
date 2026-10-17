@@ -270,6 +270,12 @@ function LoginScreen() {
   const next = safeNext(params.get('next'));
   const [tab, setTab] = useState<Tab>(params.get('vai') === 'nguoi-lon' || next.startsWith('/quan-tri') || next.startsWith('/giao-vien') || next.startsWith('/phu-huynh') ? 'adult' : 'student');
   const configured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  // Mỗi trình duyệt chỉ giữ MỘT phiên đăng nhập (cookie). Báo trước để thầy cô không vô tình bị thay bằng tài khoản học sinh và ngược lại.
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    if (!configured) return;
+    createClient().auth.getUser().then(({ data }) => setSignedIn(Boolean(data.user))).catch(() => undefined);
+  }, [configured]);
 
   return (
     <main className="auth-page">
@@ -278,6 +284,13 @@ function LoginScreen() {
         <h1>Đăng nhập</h1>
         {configured && /^\/(chon-bai|lam-bai|ket-qua|tro-choi|thanh-tich)/.test(next) && (
           <p className="adm-alert is-ok" role="status">Em đăng nhập bằng mã lớp và mã PIN để làm bài nhé. Bài làm sẽ được lưu để thầy cô xem.</p>
+        )}
+        {signedIn && (
+          <div className="adm-alert is-warn" role="status">
+            <p>Trình duyệt này đang đăng nhập một tài khoản khác. Mỗi trình duyệt chỉ giữ <strong>một</strong> tài khoản: đăng nhập tiếp sẽ thay tài khoản đó.</p>
+            <p>Muốn thầy cô và học sinh dùng cùng lúc trên một máy, hãy mở <strong>cửa sổ ẩn danh</strong> hoặc trình duyệt khác. Mỗi em dùng máy (hoặc trình duyệt) riêng thì cả lớp vào cùng lúc được.</p>
+            <form action="/dang-xuat" method="post"><button type="submit" className="btn btn-outline btn-sm">Đăng xuất tài khoản đang dùng</button></form>
+          </div>
         )}
         {!configured && (
           <p className="adm-alert is-warn">Chưa kết nối Supabase nên chưa đăng nhập được. Xem hướng dẫn trong docs/AUTH-SETUP.md.</p>

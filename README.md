@@ -52,7 +52,7 @@ Bản nền tảng phát triển nội bộ cho website học tập tiểu học
    - `supabase/migrations/0004_admin_authoring.sql`
    - `supabase/migrations/0005_curriculum_catalog.sql` (danh mục chương trình + dữ liệu lớp 1)
    - `supabase/migrations/0006_levels_timer_points.sql` (cấp độ L1–L5, thời gian từng câu, thời lượng bài làm, điểm tích luỹ)
-   - `supabase/migrations/0007_student_role.sql` (chạy riêng), `0008_classroom_accounts.sql`, `0009_teacher_view_pin.sql` (giáo viên xem lại PIN học sinh), `0010_class_code_required.sql` (mã lớp bắt buộc, không trùng, không sửa được)
+   - `supabase/migrations/0007_student_role.sql` (chạy riêng), `0008_classroom_accounts.sql`, `0009_teacher_view_pin.sql` (giáo viên xem lại PIN học sinh), `0010_class_code_required.sql` (mã lớp bắt buộc, không trùng, không sửa được), `0011_fix_student_role.sql` (tài khoản học sinh luôn mang vai trò học sinh)
 3. Lấy Project URL và publishable/anon key từ phần API project settings, điền vào `.env.local`.
 4. Tạo tài khoản test riêng cho từng vai trò. Không dùng tài khoản hoặc dữ liệu học sinh thật.
 5. Gán role test qua SQL Editor bằng tài khoản quản trị tin cậy. Không tạo endpoint công khai để người dùng tự cấp role.
@@ -294,6 +294,7 @@ Hướng dẫn từng bước dựng bản thử `educhain-dev` và đưa lên V
 - **Học sinh:** `/dang-nhap` → mã lớp → chọn tên → PIN 6 số (sai 5 lần → khóa 15 phút) → `/hoc-sinh`. Bài làm được gửi lên máy chủ, **máy chủ chấm lại** rồi mới lưu (`/api/tien-do`).
 - **PIN học sinh** (migration `0009_teacher_view_pin.sql`): PIN lưu ở bảng `student_pins` — trình duyệt không đọc/ghi trực tiếp được; giáo viên đọc qua hàm `teacher_class_pins` (chỉ lớp mình dạy, quản trị trường/hệ thống), mỗi lần xem ghi nhật ký. Học sinh tạo PIN trước khi chạy 0009 hiện "Chưa lưu" — bấm **Đặt PIN mới** một lần. Kiểm thử: `supabase/tests/local/60_teacher_pins.sql`.
 - **Mã lớp** (migration `0010_class_code_required.sql`): mỗi lớp có một mã dạng `ABC-123` do hệ thống tự sinh, duy nhất trên toàn hệ thống (không trùng giữa các giáo viên, các trường), bắt buộc có và không sửa được sau khi cấp. Lớp cũ chưa có mã được cấp khi chạy migration. Kiểm thử: `supabase/tests/local/70_class_codes.sql`.
+- **Vai trò học sinh** (migration `0011_fix_student_role.sql`): Supabase Auth ghi `app_metadata` sau khi tạo tài khoản nên trigger 0008 từng gán nhầm vai trò người lớn cho học sinh (bài làm không được lưu). 0011 gán vai trò học sinh khi tài khoản được gắn vào hồ sơ học sinh và sửa các tài khoản đã tạo. Kiểm thử: `supabase/tests/local/80_student_role.sql`.
 - **Bắt đăng nhập để học:** khi đã nối Supabase, các trang `/chon-bai`, `/lam-bai`, `/ket-qua`, `/tro-choi`, `/thanh-tich` chuyển người chưa đăng nhập sang `/dang-nhap`. Chỉ bài làm của tài khoản học sinh (mã lớp + PIN) được lưu cho thầy cô xem.
 - **Database:** `supabase/migrations/0007_student_role.sql`, `0008_classroom_accounts.sql`, `0009_teacher_view_pin.sql` (chỉ thêm, chạy lại an toàn). Kiểm thử phân quyền: `supabase/tests/local/50_classroom_rbac.sql`.
 - **Mã nguồn chính:** `src/lib/auth/` (người xem, PIN, chuyển hướng an toàn), `src/lib/supabase/admin.ts` (service_role, chỉ máy chủ), `src/lib/progress-server/grade.ts` (chấm lại phía máy chủ), `src/app/api/` (đăng nhập học sinh, tạo tài khoản, lưu tiến độ).
