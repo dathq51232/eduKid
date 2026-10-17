@@ -20,7 +20,11 @@ export async function POST(request: Request) {
   const studentId = body.studentId;
 
   const admin = createAdminClient();
-  const { data: cls } = await admin.from('classes').select('id').eq('join_code', code).eq('status', 'active').maybeSingle();
+  const { data: cls, error: clsErr } = await admin.from('classes').select('id').eq('join_code', code).eq('status', 'active').maybeSingle();
+  if (clsErr) {
+    console.error('[hoc-sinh/dang-nhap] classes query failed:', clsErr.code, clsErr.message);
+    return NextResponse.json({ error: 'server_error' }, { status: 500 });
+  }
   const { data: member } = cls
     ? await admin.from('class_memberships').select('student_id').eq('class_id', cls.id).eq('student_id', studentId).eq('status', 'active').maybeSingle()
     : { data: null };
