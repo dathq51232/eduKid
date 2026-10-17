@@ -2,12 +2,12 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { MUC } from '@/lib/sets';
+import { MUC } from '@/lib/basics';
 import { useSearchParams } from 'next/navigation';
 import { Check, Clock, Home, ListChecks, MinusCircle, RotateCcw, Star, Volume2, X, Dices } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import VoiceHelp from '@/components/VoiceHelp';
-import { isSubjectCode, parseGrade } from '@/lib/data';
+import { isSubjectCode, parseGrade } from '@/lib/basics';
 import { LEVELS, formatDuration, rankFor } from '@/lib/levels';
 import { readLastAttempt, starsFor } from '@/lib/progress';
 import { SYNC_EVENT, readSyncStatus, type SyncStatus } from '@/lib/progress-sync';

@@ -15,14 +15,7 @@ import type { AnswerValue, GradeResult, Lesson, Question, Subject, SubjectCode }
 
 export { GRADES, SUBJECTS } from './demo-data';
 
-export function isSubjectCode(value: string | null): value is SubjectCode {
-  return value === 'toan' || value === 'tieng-viet' || value === 'tieng-anh';
-}
-
-export function parseGrade(value: string | null): number {
-  const n = Number(value);
-  return Number.isInteger(n) && n >= 1 && n <= 5 ? n : 1;
-}
+export { isSubjectCode, parseGrade } from './basics';
 
 export function getSubject(code: SubjectCode): Subject {
   return SUBJECTS.find((s) => s.code === code) ?? SUBJECTS[0];
