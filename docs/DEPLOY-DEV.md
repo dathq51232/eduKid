@@ -38,6 +38,8 @@ Vào **SQL Editor** → **New query**. Với **từng file** trong `supabase/mig
 | 10 | `0010_class_code_required.sql` | mã lớp bắt buộc, không trùng, không sửa được; chạy lại an toàn |
 | 11 | `0011_fix_student_role.sql` | sửa học sinh bị nhận nhầm là người lớn; chạy lại an toàn |
 | 12 | `0012_class_leaderboard.sql` | Thành tích thật + bạn điểm cao nhất tuần/tháng trong lớp; chạy lại an toàn |
+| 13 | `0013_student_comments.sql` | nhận xét học sinh tuần/học kỳ/cả năm; chạy lại an toàn |
+| 14 | `0014_school_results.sql` | điểm kiểm tra định kỳ + khen thưởng trên trường; chạy lại an toàn |
 
 Cách làm mỗi file: mở file bằng Notepad/VS Code → chọn hết (Ctrl+A) → copy → dán vào SQL Editor → **Run**.
 Thấy "Success. No rows returned" là được. Xóa ô soạn rồi làm file tiếp theo.

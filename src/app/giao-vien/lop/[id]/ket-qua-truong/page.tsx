@@ -1,0 +1,43 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound, redirect } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
+import LearnHeader from '@/components/LearnHeader';
+import NotConfigured from '@/components/classroom/NotConfigured';
+import SchoolResults from '@/components/classroom/SchoolResults';
+import type { RosterRow } from '@/components/classroom/ClassManager';
+import { getViewer } from '@/lib/auth/viewer';
+import { createClient } from '@/lib/supabase/server';
+
+export const metadata: Metadata = { title: 'Kết quả học tập trên trường · EduChain Kids' };
+export const dynamic = 'force-dynamic';
+
+// Điểm kiểm tra định kỳ + khen thưởng. Quyền kiểm tra ở đây (giáo viên) và trong database (teaches_class).
+export default async function SchoolResultsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const viewer = await getViewer();
+  if (viewer.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Kết quả học tập trên trường" /></main></>);
+  if (viewer.state === 'signed_out') redirect(`/dang-nhap?next=/giao-vien/lop/${id}/ket-qua-truong`);
+  if (!viewer.isTeacher && !viewer.isAdmin) redirect('/giao-vien');
+  if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
+
+  const supabase = await createClient();
+  const { data: cls } = await supabase.from('classes').select('id, name, grade').eq('id', id).maybeSingle();
+  if (!cls) notFound();
+  const { data: roster } = await supabase.rpc('teacher_class_roster', { p_class: id });
+  const students = ((roster ?? []) as RosterRow[])
+    .filter((r) => r.membership_status === 'active')
+    .map((r) => ({ id: r.student_id, name: r.display_name }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  const c = cls as { id: string; name: string; grade: number };
+
+  return (
+    <>
+      <LearnHeader />
+      <main className="dash wrap">
+        <Link href={`/giao-vien/lop/${id}`} className="dash-back no-print"><ArrowLeft aria-hidden="true" /> Lớp {c.name}</Link>
+        <SchoolResults classId={c.id} className={c.name} grade={c.grade} students={students} />
+      </main>
+    </>
+  );
+}

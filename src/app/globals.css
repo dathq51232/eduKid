@@ -2190,3 +2190,50 @@ body {
   .lb-grid { grid-template-columns: 1fr; }
   .ach-stats.ach-stats-6 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ------------------------------------------------ Nhận xét học sinh (0013) */
+.comments-board h1 { display: flex; align-items: center; gap: 10px; }
+.comments-board h1 svg { width: 30px; height: 30px; }
+.comments-toolbar { display: grid; gap: 12px; }
+.comments-period select { min-width: 260px; }
+.comments-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.comments-actions .btn svg { width: 16px; height: 16px; }
+.comments-list { display: grid; gap: 14px; margin: 16px 0 0; padding: 0; list-style: none; }
+.comment-card { padding: 14px 16px; border: 2px solid var(--line-strong); border-radius: 16px; background: var(--bg-ffffff); break-inside: avoid; }
+.comment-card h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 18px; }
+.comment-no { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); font-size: 14px; }
+.comment-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.comment-cell { display: grid; gap: 6px; align-content: start; }
+.comment-cell.is-general { grid-column: 1 / -1; }
+.comment-cell-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.comment-cell-head label { font-weight: 800; }
+.comment-cell-head select { min-height: 32px; padding: 2px 6px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg-ffffff); color: var(--ink); font: inherit; font-size: 13px; }
+.comment-tag { margin-left: auto; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 700; }
+.comment-tag.is-saved { color: #15803d; }
+.comment-tag.is-dirty { color: #b45309; }
+.comment-stat { margin: 0; color: var(--muted); font-size: 13px; }
+.comment-cell textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--bg-ffffff); color: var(--ink); font: inherit; font-size: 14px; line-height: 1.45; resize: vertical; }
+.print-only { display: none; }
+@media (max-width: 900px) { .comment-grid { grid-template-columns: 1fr; } }
+@media print {
+  .print-only { display: block; }
+  .comment-cell textarea { border: 0; padding: 0; resize: none; }
+  .comment-cell-head select { border: 0; appearance: none; }
+  .comment-tag, .comment-stat { display: none; }
+}
+
+/* ------------------------------------------------ Kết quả học tập trên trường (0014) */
+.school-results h1 { display: flex; align-items: center; gap: 10px; }
+.school-results h1 svg { width: 30px; height: 30px; }
+.sr-tabs { max-width: 420px; margin: 16px 0; }
+.sr-table td, .sr-table th { text-align: center; }
+.sr-table .sr-name, .sr-table thead th:nth-child(2) { text-align: left; }
+.sr-input { width: 64px; min-height: 36px; padding: 4px 6px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg-ffffff); color: var(--ink); font: inherit; text-align: center; font-variant-numeric: tabular-nums; }
+.sr-input.is-dirty { border-color: #b45309; box-shadow: 0 0 0 1px #b45309; }
+.sr-input.is-invalid { border-color: #dc2626; box-shadow: 0 0 0 2px #dc2626; }
+.sr-table tfoot th, .sr-table tfoot td { color: var(--muted); font-size: 14px; }
+.sr-award-form { display: grid; grid-template-columns: minmax(140px, 1fr) minmax(220px, 2fr) minmax(120px, 1fr) minmax(130px, 1fr); gap: 10px; align-items: end; }
+.sr-award-form .sr-award-note { grid-column: 1 / 4; }
+.sr-award-form .btn { justify-self: start; }
+.sr-awards .mini-btn svg { width: 14px; height: 14px; }
+@media (max-width: 760px) { .sr-award-form { grid-template-columns: 1fr; } .sr-award-form .sr-award-note { grid-column: auto; } }

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ClipboardCheck, GraduationCap } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import ClassManager, { type RosterRow, type SummaryRow } from '@/components/classroom/ClassManager';
@@ -63,6 +63,13 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
           summary={(summary ?? []) as SummaryRow[]}
           pins={pins}
         />
+        <section className="dash-section comments-entry no-print">
+          <div className="comments-actions">
+            <Link href={`/giao-vien/lop/${id}/ket-qua-truong`} className="btn btn-outline"><GraduationCap aria-hidden="true" /> Kết quả học tập trên trường</Link>
+            <Link href={`/giao-vien/lop/${id}/nhan-xet`} className="btn btn-primary"><ClipboardCheck aria-hidden="true" /> Nhận xét học sinh (tuần · học kỳ · cả năm)</Link>
+          </div>
+          <p className="dash-muted">Nhập điểm kiểm tra định kỳ và khen thưởng của các em; hệ thống kết hợp với bài luyện tập trong app để gợi ý mức đạt và lời nhận xét. Thầy cô sửa, lưu và tải Excel để nhập lên hệ thống của trường.</p>
+        </section>
         <ClassLeaderboard classId={id} />
         <ClassProgress classId={id} className={(cls as { name: string }).name} results={(results ?? []) as LessonResult[]} names={names} />
       </main>
