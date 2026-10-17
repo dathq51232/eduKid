@@ -119,7 +119,7 @@ export default function HomePage() {
             <ShieldCheck className="home-safety-icon" aria-hidden="true" />
             <div>
               <h2>Dành cho thầy cô</h2>
-              <p>Không có bảng xếp hạng, không so sánh các em với nhau. Thầy cô tạo tài khoản và PIN cho cả lớp, theo dõi tiến độ từng em trong mục Quản lý lớp.</p>
+              <p>Thầy cô tạo tài khoản và PIN cho cả lớp, theo dõi tiến độ từng em trong mục Quản lý lớp. Bảng bạn điểm cao nhất tuần/tháng chỉ hiện trong lớp, cho các bạn cùng lớp và thầy cô.</p>
             </div>
             <Link href="/giao-vien" className="btn btn-outline">Góc thầy cô</Link>
           </div>

@@ -6,6 +6,7 @@ import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import ClassManager, { type RosterRow, type SummaryRow } from '@/components/classroom/ClassManager';
 import ClassProgress from '@/components/classroom/ClassProgress';
+import { ClassLeaderboard } from '@/components/achievements/LiveAchievements';
 import type { LessonResult } from '@/lib/classroom/progress';
 import { getViewer } from '@/lib/auth/viewer';
 import { createClient } from '@/lib/supabase/server';
@@ -62,6 +63,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
           summary={(summary ?? []) as SummaryRow[]}
           pins={pins}
         />
+        <ClassLeaderboard classId={id} />
         <ClassProgress classId={id} className={(cls as { name: string }).name} results={(results ?? []) as LessonResult[]} names={names} />
       </main>
     </>
