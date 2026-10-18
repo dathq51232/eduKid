@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ClipboardCheck, Printer, Save, Sparkles, Wand2 } from 'lucide-react';
 import CsvButton from '@/components/classroom/CsvButton';
+import VneduExportButton from '@/components/classroom/VneduExportButton';
 import { createClient } from '@/lib/supabase/client';
 import { awardLabel, QUALITY_LEVEL_NAME, type Award, type QualityItem, type QualityLevel, type SchoolSubject } from '@/lib/classroom/school';
 import {
@@ -120,6 +121,7 @@ export default function CommentsBoard({ classId, className, grade, students }: {
 
   const cells = Object.values(sheet).flatMap((r) => Object.values(r)) as Cell[];
   const dirtyCount = cells.filter((c) => c.dirty).length;
+  const unsavedCount = cells.filter((c) => c.dirty || (!c.saved && c.comment.trim())).length; // file vnEdu chỉ lấy nhận xét đã lưu
   const update = (sid: string, subj: CommentSubject, patch: Partial<Cell>) =>
     setSheet((s) => ({ ...s, [sid]: { ...s[sid], [subj]: { ...(s[sid]?.[subj] as Cell), ...patch, dirty: true } } }));
 
@@ -233,6 +235,7 @@ export default function CommentsBoard({ classId, className, grade, students }: {
           <button type="button" className="btn btn-outline btn-sm" onClick={() => regenerate(true)} disabled={busy}><Wand2 aria-hidden="true" /> Viết lại tất cả</button>
           <button type="button" className="btn btn-outline btn-sm" onClick={() => window.print()}><Printer aria-hidden="true" /> In</button>
           <CsvButton filename={`nhan-xet-${className}-${period.key}.csv`} header={csvHeader} rows={csvRows} />
+          {period.exam && <VneduExportButton classId={classId} className={className} grade={grade} year={Number(period.key.split('-')[1])} exam={period.exam} students={students} disabled={busy || unsavedCount > 0} />}
           <button type="button" className="btn btn-primary btn-sm" onClick={() => void save()} disabled={busy}><Save aria-hidden="true" /> {busy ? 'Đang xử lý…' : `Lưu${dirtyCount ? ` (${dirtyCount})` : ''}`}</button>
         </div>
         {msg && <p className={`adm-alert is-${msg.kind === 'ok' ? 'ok' : msg.kind === 'error' ? 'error' : 'info'}`} role="status">{msg.text}</p>}

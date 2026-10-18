@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, KeyRound, Lock, LockOpen, Printer, RotateCcw, UserMinus, UserPlus, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { parsePastedNames } from '@/lib/classroom/names';
 
 export type RosterRow = {
   student_id: string;
@@ -39,6 +40,11 @@ export default function ClassManager({ cls, roster, summary, pins = {} }: { cls:
   const [showPins, setShowPins] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const active = roster.filter((r) => r.membership_status === 'active');
+  const pasted = useMemo(() => parsePastedNames(names), [names]);
+  const dupNames = useMemo(() => {
+    const have = new Set(active.map((r) => r.display_name.trim().toLowerCase()));
+    return pasted.filter((n) => have.has(n.toLowerCase()));
+  }, [pasted, active]);
   const left = roster.filter((r) => r.membership_status !== 'active');
   const [origin, setOrigin] = useState('');
   useEffect(() => setOrigin(window.location.origin), []);
@@ -61,7 +67,7 @@ export default function ClassManager({ cls, roster, summary, pins = {} }: { cls:
 
   const addStudents = async (e: React.FormEvent) => {
     e.preventDefault();
-    const list = names.split('\n').map((n) => n.trim()).filter(Boolean);
+    const list = parsePastedNames(names);
     if (!list.length) return;
     setBusy('add');
     setMsg(null);
@@ -145,17 +151,21 @@ export default function ClassManager({ cls, roster, summary, pins = {} }: { cls:
         <h2><UserPlus aria-hidden="true" /> Thêm học sinh <span className="dash-muted">({active.length}/40)</span></h2>
         {active.length >= 40 ? <p className="adm-alert is-info">Lớp đã đủ 40 học sinh — số tối đa của một lớp.</p> : (
         <form className="dash-form" onSubmit={addStudents}>
-          <label className="adm-field"><span>Mỗi dòng một tên gọi (chỉ cần tên, không cần họ đầy đủ hay ngày sinh)</span>
-            <textarea rows={5} value={names} onChange={(e) => setNames(e.target.value)} placeholder={'An\nBình\nChi'} />
+          <label className="adm-field"><span>Mỗi dòng một học sinh (tên gọi hoặc họ và tên). Có thể chép thẳng từ file vnEdu/Excel: chọn các dòng học sinh (từ cột STT đến cột họ tên hoặc hết dòng), Ctrl+C rồi dán vào đây — hệ thống chỉ lấy họ tên, bỏ qua số thứ tự, mã định danh, ngày sinh.</span>
+            <textarea rows={6} value={names} onChange={(e) => setNames(e.target.value)} placeholder={'Nguyễn Văn An\nTrần Thị Bình\n(hoặc dán các dòng chép từ vnEdu)'} />
           </label>
+          {pasted.length > 0 && (
+            <p className="dash-muted" aria-live="polite">Nhận ra {pasted.length} học sinh: {pasted.slice(0, 4).join(', ')}{pasted.length > 4 ? `, … ${pasted[pasted.length - 1]}` : ''}.{dupNames.length ? ` Trùng tên đã có trong lớp: ${dupNames.join(', ')}.` : ''}</p>
+          )}
+          {names.trim() && pasted.length === 0 && <p className="adm-alert is-warn">Chưa nhận ra tên học sinh nào trong nội dung đã dán.</p>}
           <label className="check-line">
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
             <span>Tôi xác nhận nhà trường đã có sự đồng ý của cha mẹ (người giám hộ) cho các em dùng EduChain Kids để học tập.</span>
           </label>
-          <button type="submit" className="btn btn-primary" disabled={busy === 'add' || !consent || !names.trim() || cls.status !== 'active'}>
+          <button type="submit" className="btn btn-primary" disabled={busy === 'add' || !consent || !pasted.length || active.length + pasted.length > 40 || cls.status !== 'active'}>
             <UserPlus aria-hidden="true" /> {busy === 'add' ? 'Đang tạo tài khoản…' : 'Thêm và tạo PIN'}
           </button>
-          {names.trim() && active.length + names.split('\n').filter((x) => x.trim()).length > 40 && (
+          {pasted.length > 0 && active.length + pasted.length > 40 && (
             <p className="adm-alert is-warn">Chỉ còn thêm được {40 - active.length} em (tối đa 40 học sinh / lớp).</p>
           )}
         </form>

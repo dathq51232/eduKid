@@ -1941,7 +1941,7 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--brand-blue); ou
 .join-code-box span { color: var(--muted); font-size: 14px; font-weight: 600; }
 .join-code-box strong { color: var(--brand-blue); font-size: 30px; letter-spacing: .1em; line-height: 1.1; }
 .join-code-box small { color: var(--muted); font-size: 13px; }
-.table-scroll { overflow-x: auto; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.table-scroll { position: relative; overflow-x: auto; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); }
 .roster-table { width: 100%; border-collapse: collapse; font-size: 15px; }
 .roster-table th, .roster-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; white-space: nowrap; }
 .roster-table thead th { color: var(--muted); font-size: 13px; font-weight: 700; }
@@ -2298,3 +2298,7 @@ body {
 .comments-table .comment-stat { display: block; font-weight: 500; }
 .comments-table select { min-height: 32px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg-ffffff); color: var(--ink); font: inherit; font-size: 13px; }
 .sr-top .sr-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* Xuất mẫu vnEdu */
+.vnedu-export { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.vnedu-export .adm-alert { margin: 0; padding: 4px 10px; font-size: 0.85rem; }

@@ -7,6 +7,7 @@ import NotConfigured from '@/components/classroom/NotConfigured';
 import SchoolResults from '@/components/classroom/SchoolResults';
 import type { RosterRow } from '@/components/classroom/ClassManager';
 import { getViewer } from '@/lib/auth/viewer';
+import { compareViName } from '@/lib/classroom/names';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Kết quả học tập trên trường · EduChain Kids' };
@@ -28,7 +29,7 @@ export default async function SchoolResultsPage({ params }: { params: Promise<{ 
   const students = ((roster ?? []) as RosterRow[])
     .filter((r) => r.membership_status === 'active')
     .map((r) => ({ id: r.student_id, name: r.display_name }))
-    .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+    .sort((a, b) => compareViName(a.name, b.name)); // theo tên như sổ vnEdu
   const c = cls as { id: string; name: string; grade: number };
 
   return (

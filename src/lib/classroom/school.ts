@@ -30,7 +30,7 @@ export const SUBJECT_SHORT: Record<SchoolSubject, string> = {
 export const EXAM_NAME: Record<ExamCode, string> = { gk1: 'Giữa học kỳ I', ck1: 'Cuối học kỳ I', gk2: 'Giữa học kỳ II', ck2: 'Cuối năm học' };
 export const EXAMS: ExamCode[] = ['gk1', 'ck1', 'gk2', 'ck2'];
 
-/** Các môn của khối lớp (thứ tự như sổ theo dõi) */
+/** Các môn của khối lớp (thứ tự như bảng tổng hợp vnEdu: …, Nghệ thuật (Âm nhạc, Mĩ thuật), Giáo dục thể chất, HĐTN) */
 export function schoolSubjects(grade: number): SchoolSubject[] {
   const list: SchoolSubject[] = ['tieng-viet', 'toan'];
   list.push('tieng-anh'); // lớp 1–2: tự chọn
@@ -38,9 +38,11 @@ export function schoolSubjects(grade: number): SchoolSubject[] {
   if (grade <= 3) list.push('tnxh');
   else list.push('khoa-hoc', 'lich-su-dia-li');
   if (grade >= 3) list.push('tin-hoc-cong-nghe');
-  list.push('gdtc', 'am-nhac', 'mi-thuat', 'hdtn');
+  list.push('am-nhac', 'mi-thuat', 'gdtc', 'hdtn');
   return list;
 }
+/** Môn bắt buộc (dùng khi xếp loại cuối năm, bảng tổng hợp): lớp 1–2 bỏ Tiếng Anh tự chọn */
+export const requiredSubjects = (grade: number) => schoolSubjects(grade).filter((s) => grade >= 3 || s !== 'tieng-anh');
 
 /** Môn có điểm bài kiểm tra định kỳ ở kỳ này */
 export function isScored(grade: number, exam: ExamCode, s: SchoolSubject): boolean {
@@ -110,5 +112,26 @@ export type AwardScope = 'lop' | 'truong' | 'huyen' | 'tinh' | 'quoc-gia' | 'kha
 export const AWARD_SCOPE_NAME: Record<AwardScope, string> = { lop: 'Cấp lớp', truong: 'Cấp trường', huyen: 'Cấp huyện', tinh: 'Cấp tỉnh', 'quoc-gia': 'Cấp quốc gia', khac: 'Khác' };
 export type Award = { id: string; student_id: string; title: string; scope: AwardScope; awarded_on: string; note: string };
 export const awardLabel = (a: Pick<Award, 'title' | 'scope'>) => (a.scope === 'lop' || a.scope === 'khac' ? a.title : `${a.title} (${AWARD_SCOPE_NAME[a.scope].toLowerCase()})`);
+
+// ------------------------------------------------------------------ Đánh giá kết quả giáo dục cuối năm (Thông tư 27/2020)
+export type Kqgd = 'HTXS' | 'HTT' | 'HT' | 'CHT';
+export const KQGD_NAME: Record<Kqgd, string> = { HTXS: 'Hoàn thành xuất sắc', HTT: 'Hoàn thành tốt', HT: 'Hoàn thành', CHT: 'Chưa hoàn thành' };
+/**
+ * Gợi ý mức đánh giá cuối năm từ sổ theo dõi:
+ *  HTXS — các môn Hoàn thành tốt, phẩm chất/năng lực Tốt, bài KTĐK cuối năm các môn từ 9 điểm;
+ *  HTT  — các môn Hoàn thành tốt, phẩm chất/năng lực Tốt, bài KTĐK cuối năm từ 7 điểm;
+ *  HT   — các môn Hoàn thành tốt hoặc Hoàn thành, phẩm chất/năng lực Tốt hoặc Đạt, bài KTĐK từ 5 điểm;
+ *  CHT  — còn lại.
+ * Trả null khi còn thiếu mức/điểm (chưa đủ căn cứ) — thầy cô điền đủ rồi mới xếp loại.
+ */
+export function kqgdOf(levels: (SubjectLevel | '' | null | undefined)[], scores: (number | null | undefined)[], qualities: (QualityLevel | '' | null | undefined)[]): Kqgd | null {
+  if (levels.some((l) => !l) || scores.some((x) => x == null) || qualities.some((q) => !q)) return null;
+  const sc = scores as number[];
+  const allT = levels.every((l) => l === 'T') && qualities.every((q) => q === 'T');
+  if (allT && sc.every((x) => x >= 9)) return 'HTXS';
+  if (allT && sc.every((x) => x >= 7)) return 'HTT';
+  if (levels.every((l) => l === 'T' || l === 'H') && qualities.every((q) => q === 'T' || q === 'D') && sc.every((x) => x >= 5)) return 'HT';
+  return 'CHT';
+}
 
 export const MAX_STUDENTS = 40;

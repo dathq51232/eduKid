@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Award as AwardIcon, BookOpenCheck, GraduationCap, HeartHandshake, Plus, Save, Trash2, Wand2 } from 'lucide-react';
 import CsvButton from '@/components/classroom/CsvButton';
+import VneduExportButton from '@/components/classroom/VneduExportButton';
 import { createClient } from '@/lib/supabase/client';
 import { schoolYearOf } from '@/lib/classroom/comments';
 import {
@@ -51,6 +52,7 @@ export default function SchoolResults({ classId, className, grade, students }: {
             </select>
           </label>
         )}
+        {tab !== 'awards' && <VneduExportButton classId={classId} className={className} grade={grade} year={year} exam={exam} students={students} disabled={locked} />}
       </div>
       {tab === 'subjects' && <Subjects classId={classId} className={className} grade={grade} students={students} periodKey={examKey(exam, year)} exam={exam} onDirty={setLocked} />}
       {tab === 'qualities' && <Qualities classId={classId} className={className} grade={grade} students={students} periodKey={examKey(exam, year)} onDirty={setLocked} />}
