@@ -72,10 +72,15 @@ export default async function TeacherHome() {
           <SignOutButton />
         </div>
 
-        <section className="dash-card">
-          <h2>Tạo lớp mới</h2>
-          <CreateClassForm />
-        </section>
+        {list.some((c) => c.status === 'active') ? (
+          <p className="adm-alert is-info">Mỗi giáo viên phụ trách <strong>1 lớp</strong> (tối đa 40 học sinh). Cuối năm học, lưu trữ lớp hiện tại để tạo lớp mới.</p>
+        ) : (
+          <section className="dash-card">
+            <h2>Tạo lớp</h2>
+            <p className="dash-muted">Mỗi giáo viên phụ trách 1 lớp, tối đa 40 học sinh.</p>
+            <CreateClassForm />
+          </section>
+        )}
 
         <section className="dash-section">
           <h2>Các lớp đang quản lý</h2>

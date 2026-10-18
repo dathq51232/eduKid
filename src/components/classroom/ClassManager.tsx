@@ -142,7 +142,8 @@ export default function ClassManager({ cls, roster, summary, pins = {} }: { cls:
       )}
 
       <section className="dash-card no-print">
-        <h2><UserPlus aria-hidden="true" /> Thêm học sinh</h2>
+        <h2><UserPlus aria-hidden="true" /> Thêm học sinh <span className="dash-muted">({active.length}/40)</span></h2>
+        {active.length >= 40 ? <p className="adm-alert is-info">Lớp đã đủ 40 học sinh — số tối đa của một lớp.</p> : (
         <form className="dash-form" onSubmit={addStudents}>
           <label className="adm-field"><span>Mỗi dòng một tên gọi (chỉ cần tên, không cần họ đầy đủ hay ngày sinh)</span>
             <textarea rows={5} value={names} onChange={(e) => setNames(e.target.value)} placeholder={'An\nBình\nChi'} />
@@ -154,7 +155,11 @@ export default function ClassManager({ cls, roster, summary, pins = {} }: { cls:
           <button type="submit" className="btn btn-primary" disabled={busy === 'add' || !consent || !names.trim() || cls.status !== 'active'}>
             <UserPlus aria-hidden="true" /> {busy === 'add' ? 'Đang tạo tài khoản…' : 'Thêm và tạo PIN'}
           </button>
+          {names.trim() && active.length + names.split('\n').filter((x) => x.trim()).length > 40 && (
+            <p className="adm-alert is-warn">Chỉ còn thêm được {40 - active.length} em (tối đa 40 học sinh / lớp).</p>
+          )}
         </form>
+        )}
       </section>
 
       <section className="dash-section no-print">

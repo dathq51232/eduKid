@@ -47,7 +47,7 @@ export function CreateClassForm() {
     const { data, error: err } = await createClient().rpc('teacher_create_class', { p_name: name.trim(), p_grade: grade });
     setBusy(false);
     if (err) {
-      setError(err.message.includes('not_allowed') ? 'Tài khoản chưa được duyệt làm giáo viên.' : err.message.includes('too_many') ? 'Mỗi giáo viên tối đa 20 lớp.' : 'Chưa tạo được lớp.');
+      setError(err.message.includes('not_allowed') ? 'Tài khoản chưa được duyệt làm giáo viên.' : err.message.includes('one_class_only') ? 'Mỗi giáo viên chỉ phụ trách 1 lớp. Thầy cô đang có một lớp đang hoạt động — lưu trữ lớp đó (cuối năm học) trước khi tạo lớp mới.' : err.message.includes('too_many') ? 'Đã đạt số lớp tối đa.' : 'Chưa tạo được lớp.');
       return;
     }
     router.push(`/giao-vien/lop/${data}`);
