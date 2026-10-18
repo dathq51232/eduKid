@@ -2307,3 +2307,114 @@ body {
 .exam-entry { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
 .exam-entry h2 { margin: 0 0 4px; }
 .exam-entry .dash-muted { margin: 0; }
+
+/* ===== Công cụ giáo viên (trang lớp) ===== */
+.teacher-tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.tool-card { display: grid; gap: 4px; align-content: start; padding: 16px 18px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); color: var(--ink); text-decoration: none; border: 2px solid transparent; transition: border-color .15s, transform .15s; }
+.tool-card:hover, .tool-card:focus-visible { border-color: var(--blue); transform: translateY(-1px); }
+.tool-card svg { width: 26px; height: 26px; color: var(--blue); }
+.tool-card.tone-red svg { color: var(--red); } .tool-card.tone-green svg { color: var(--green-solid); } .tool-card.tone-yellow svg { color: #c58a00; }
+.tool-card strong { font-size: 17px; }
+.tool-card span { color: var(--muted); font-size: 14px; line-height: 1.4; }
+
+/* ===== Giao bài ===== */
+.assign-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end; }
+.assign-form .assign-lesson { grid-column: span 2; }
+.assign-form .comments-actions, .assign-form .assign-pick { grid-column: 1 / -1; }
+.assign-target { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 20px; border: 0; padding: 0; margin: 0; }
+.assign-target legend { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+.assign-pick ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 2px 12px; max-height: 280px; overflow: auto; }
+.assign-list { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 10px; }
+.assign-item { padding: 14px 16px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-sm); border-left: 5px solid var(--blue); }
+.assign-item.is-overdue { border-left-color: var(--red); }
+.assign-list.is-closed .assign-item { opacity: .8; border-left-color: var(--line-strong); }
+.assign-head { display: grid; grid-template-columns: minmax(0, 2fr) auto minmax(150px, 1fr) auto; gap: 8px 16px; align-items: center; }
+.assign-title { display: grid; gap: 2px; min-width: 0; }
+.assign-title strong { font-size: 16px; overflow-wrap: anywhere; }
+.assign-kind { justify-self: start; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 800; background: var(--blue-soft); color: var(--blue-deep); }
+.assign-kind.kind-exam { background: #fde68a; color: #92400e; }
+.assign-due { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; color: var(--muted); white-space: nowrap; }
+.assign-due svg { width: 16px; height: 16px; }
+.assign-due.is-soon { color: #b45309; font-weight: 700; } .assign-due.is-over { color: var(--red); font-weight: 700; }
+.assign-progress { display: grid; gap: 4px; font-size: 14px; }
+.assign-bar { display: block; height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; min-width: 60px; }
+.assign-bar > span { display: block; height: 100%; background: var(--green-solid); border-radius: inherit; }
+.assign-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.assign-detail { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line-strong); display: grid; gap: 10px; }
+.assign-detail h3 { margin: 6px 0 0; font-size: 16px; }
+.assign-summary { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 600; }
+.assign-summary svg { width: 18px; height: 18px; color: var(--green-solid); }
+.assign-table tr.is-missing th, .assign-table tr.is-missing td { color: var(--muted); }
+.tag-ok { padding: 2px 8px; border-radius: 999px; background: var(--mint); color: var(--green); font-size: 13px; font-weight: 700; }
+.tag-miss { padding: 2px 8px; border-radius: 999px; background: #fee2e2; color: #b91c1c; font-size: 13px; font-weight: 700; }
+.assign-items td.assign-q { white-space: normal; min-width: 220px; max-width: 420px; }
+.assign-items tr.is-weak td, .assign-items tr.is-weak th { background: #fff4e5; }
+.assign-items th .exam-muc { margin-left: 6px; }
+.assign-rate { display: inline-flex; align-items: center; gap: 8px; }
+.assign-rate .assign-bar { width: 70px; }
+.assign-paper { display: grid; gap: 8px; margin: 6px 0 10px; }
+.assign-paper-form { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.assign-paper-form .dash-muted { flex-basis: 100%; margin: 0; font-size: 13px; }
+@media (max-width: 760px) {
+  .assign-head { grid-template-columns: 1fr; }
+  .assign-actions { justify-content: flex-start; }
+  .assign-form .assign-lesson { grid-column: 1 / -1; }
+}
+
+/* ===== Lỗ hổng kiến thức ===== */
+.gaps-periods { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+.gaps-periods .mini-btn { text-decoration: none; }
+.gaps-periods .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.gap-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.gap-card { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 16px; padding: 16px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); border-left: 6px solid var(--line-strong); }
+.gap-card.is-low { border-left-color: var(--red); } .gap-card.is-mid { border-left-color: #f59e0b; }
+.gap-rate { display: grid; place-content: center; text-align: center; border-radius: 14px; background: var(--surface-2); }
+.gap-rate strong { font-size: 26px; line-height: 1.1; }
+.gap-card.is-low .gap-rate strong { color: var(--red); } .gap-card.is-mid .gap-rate strong { color: #b45309; }
+.gap-rate span { font-size: 13px; color: var(--muted); }
+.gap-body { display: grid; gap: 4px; min-width: 0; }
+.gap-body h3 { margin: 0; font-size: 17px; }
+.gap-body p { margin: 0; overflow-wrap: anywhere; }
+.gap-lesson { font-weight: 600; }
+.gap-weak { display: flex; gap: 6px; align-items: flex-start; font-size: 14px; }
+.gap-weak svg { flex: none; width: 16px; height: 16px; margin-top: 2px; color: var(--red); }
+.gap-body .comments-actions { margin-top: 6px; }
+.gap-pill { padding: 2px 8px; border-radius: 999px; font-weight: 700; font-size: 13px; background: var(--surface-2); }
+.gap-pill.is-low { background: #fee2e2; color: #b91c1c; } .gap-pill.is-mid { background: #fef3c7; color: #92400e; } .gap-pill.is-good { background: var(--mint); color: var(--green); }
+@media (max-width: 560px) { .gap-card { grid-template-columns: 1fr; } .gap-rate { justify-content: start; grid-auto-flow: column; gap: 6px; padding: 6px 10px; } }
+
+/* ===== Học sinh: bài được giao + làm đề ===== */
+.task-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.task-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 16px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); border: 2px solid var(--brand-yellow); }
+.task-item.is-done { border-color: var(--line); }
+.task-item.is-over { border-color: var(--red); }
+.task-icon svg { width: 28px; height: 28px; color: #c58a00; }
+.task-item.is-done .task-icon svg { color: var(--green-solid); }
+.task-info { display: grid; gap: 2px; min-width: 0; }
+.task-info strong { font-size: 17px; overflow-wrap: anywhere; }
+.task-info span { color: var(--muted); font-size: 14px; }
+.task-info .task-done { color: var(--green); font-weight: 700; }
+@media (max-width: 520px) { .task-item { grid-template-columns: auto minmax(0, 1fr); } .task-item .btn { grid-column: 1 / -1; justify-content: center; } }
+.exam-take-page { max-width: 860px; }
+.exam-taker { display: grid; gap: 14px; }
+.exam-bar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 14px; border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.exam-bar-title { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.exam-timer { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; font-weight: 800; font-size: 18px; }
+.exam-timer svg { width: 18px; height: 18px; }
+.exam-timer.is-low { color: var(--red); }
+.exam-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.exam-nav-btn { min-width: 38px; min-height: 38px; border-radius: 10px; border: 2px solid var(--line-strong); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.exam-nav-btn.is-answered { background: var(--blue-soft); border-color: var(--blue); }
+.exam-nav-btn.is-current { outline: 3px solid var(--brand-yellow); outline-offset: 1px; }
+.exam-actions { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.exam-submit-early { margin: 0; text-align: right; }
+.exam-start p, .exam-result p { margin: 0; }
+.exam-score { font-size: 20px; }
+.exam-score strong { font-size: 34px; color: var(--blue); }
+.exam-result-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.exam-result-list li { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-weight: 700; font-size: 14px; }
+.exam-result-list li svg { width: 16px; height: 16px; }
+.exam-result-list li.is-ok { background: var(--mint); color: var(--green); }
+.exam-result-list li.is-wrong { background: #fee2e2; color: #b91c1c; }
+.gaps-page h1, .assign-page h1 { display: flex; align-items: center; gap: 10px; }
+.gaps-page h1 svg, .assign-page h1 svg { flex: none; width: 30px; height: 30px; }

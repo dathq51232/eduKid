@@ -7,6 +7,10 @@ import { MUCS, MUC_NAME, partOf, totals, type ExamQuestion, type Matrix, type Mu
 export type ExamMeta = {
   school: string; title: string; subjectName: string; grade: number; className: string;
   yearLabel: string; minutes: number;
+  /** Phiếu bài tập: không ghi điểm từng câu, không thời gian, không ô điểm; đáp án không có cột điểm */
+  worksheet?: boolean;
+  /** Phiếu bài tập: nội dung (các bài) in dưới tiêu đề */
+  topic?: string;
 };
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -16,8 +20,8 @@ const lower = 'abcdefgh';
 const fmt = (n: number) => (Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100).replace('.', ','));
 const BLANK = '……………';
 
-function questionHtml(q: ExamQuestion, no: number, pts: number): string {
-  const head = `<p class="q"><b>Câu ${no}.</b> <i>(${fmt(pts)} điểm)</i> `;
+function questionHtml(q: ExamQuestion, no: number, pts: number | null): string {
+  const head = `<p class="q"><b>Câu ${no}.</b> ${pts == null ? '' : `<i>(${fmt(pts)} điểm)</i> `}`;
   switch (q.type) {
     case 'single_choice':
       return `${head}${br(q.prompt)}</p><p class="hint">Khoanh vào chữ đặt trước câu trả lời đúng:</p>`
@@ -112,6 +116,7 @@ function specHtml(m: Matrix, paper: Paper, lessonTitles: Map<string, string>): s
 }
 
 function paperHtml(meta: ExamMeta, m: Matrix, paper: Paper): string {
+  if (meta.worksheet) return worksheetHtml(meta, paper);
   const head = `<table class="head" width="100%"><tr><td width="45%"><b>${esc(meta.school || 'TRƯỜNG TIỂU HỌC ……………')}</b><br/>Lớp: ${esc(meta.className)}</td>`
     + `<td align="center"><b>${esc(meta.title.toUpperCase())}</b><br/>NĂM HỌC ${esc(meta.yearLabel)}<br/>Môn: ${esc(meta.subjectName)} – Lớp ${meta.grade}<br/><i>Thời gian: ${meta.minutes} phút</i>${paper.code ? `<br/><b>ĐỀ ${esc(paper.code)}</b>` : ''}</td></tr></table>`
     + `<p>Họ và tên: ………………………………………………… Lớp: ……………</p>`
@@ -122,7 +127,22 @@ function paperHtml(meta: ExamMeta, m: Matrix, paper: Paper): string {
   return head + part(`PHẦN I. TRẮC NGHIỆM`, p1) + part(`PHẦN ${p1.length ? 'II' : 'I'}. TỰ LUẬN`, p2);
 }
 
+function worksheetHtml(meta: ExamMeta, paper: Paper): string {
+  const head = `<table class="head" width="100%"><tr><td width="40%"><b>${esc(meta.school || 'TRƯỜNG TIỂU HỌC ……………')}</b><br/>Lớp: ${esc(meta.className)}</td>`
+    + `<td align="center"><b>${esc(meta.title.toUpperCase())}</b><br/>Môn: ${esc(meta.subjectName)} – Lớp ${meta.grade}${paper.code ? ` · <b>PHIẾU ${esc(paper.code)}</b>` : ''}`
+    + `${meta.topic ? `<br/><i>${esc(meta.topic)}</i>` : ''}</td></tr></table>`
+    + `<p>Họ và tên: ………………………………………………… Ngày: ……/……/………</p>`;
+  return head + paper.slots.map((s, i) => questionHtml(s.q, i + 1, null)).join('')
+    + `<p class="muted">Em làm đúng: ……… / ${paper.slots.length} câu.</p>`;
+}
+
 function keyHtml(meta: ExamMeta, m: Matrix, paper: Paper): string {
+  if (meta.worksheet) {
+    return `<h1>ĐÁP ÁN – ${esc(meta.title.toUpperCase())}${paper.code ? ` – PHIẾU ${esc(paper.code)}` : ''}</h1><p align="center">Môn ${esc(meta.subjectName)} lớp ${meta.grade}${meta.topic ? ` · ${esc(meta.topic)}` : ''}</p>`
+      + `<table class="grid" width="100%"><tr><th>Câu</th><th>Mức</th><th>Đáp án</th></tr>`
+      + paper.slots.map((s, i) => `<tr><td align="center">${i + 1}</td><td align="center">M${s.muc}</td><td>${esc(answerText(s.q))}${s.q.explanation ? `<br/><span class="muted">${esc(s.q.explanation)}</span>` : ''}</td></tr>`).join('')
+      + '</table>';
+  }
   return `<h1>ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM${paper.code ? ` – ĐỀ ${esc(paper.code)}` : ''}</h1><p align="center">${esc(meta.title)} – Môn ${esc(meta.subjectName)} lớp ${meta.grade}</p>`
     + `<table class="grid" width="100%"><tr><th>Câu</th><th>Mức</th><th>Đáp án</th><th>Điểm</th></tr>`
     + paper.slots.map((s, i) => `<tr><td align="center">${i + 1}</td><td align="center">M${s.muc}</td><td>${esc(answerText(s.q))}${s.q.explanation ? `<br/><span class="muted">${esc(s.q.explanation)}</span>` : ''}</td><td align="center">${fmt(m.points[s.muc])}</td></tr>`).join('')

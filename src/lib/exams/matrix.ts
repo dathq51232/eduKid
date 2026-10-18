@@ -94,8 +94,8 @@ export function available(lessonIds: string[]): Record<Muc, number> {
   return c;
 }
 
-/** Ma trận mặc định: tổng `total` câu, tỉ lệ mức 50/30/20, chia theo số bài của từng chủ đề */
-export function defaultMatrix(lessons: BookLesson[], total = 10): Matrix {
+/** Ma trận mặc định: tổng `total` câu, tỉ lệ mức (mặc định 50/30/20), chia theo số bài của từng chủ đề */
+export function defaultMatrix(lessons: BookLesson[], total = 10, ratio: [number, number] = [0.5, 0.3]): Matrix {
   const groups = new Map<string, MatrixRow>();
   for (const l of lessons) {
     const g = groups.get(l.unit.code) ?? { unitCode: l.unit.code, unitTitle: l.unit.title, lessonIds: [], counts: { 1: 0, 2: 0, 3: 0 } };
@@ -103,7 +103,7 @@ export function defaultMatrix(lessons: BookLesson[], total = 10): Matrix {
     groups.set(l.unit.code, g);
   }
   const rows = [...groups.values()];
-  const target: Record<Muc, number> = { 1: Math.round(total * 0.5), 2: Math.round(total * 0.3), 3: 0 };
+  const target: Record<Muc, number> = { 1: Math.round(total * ratio[0]), 2: Math.round(total * ratio[1]), 3: 0 };
   target[3] = total - target[1] - target[2];
   const avail = rows.map((r) => available(r.lessonIds));
   const cap = avail.map((a) => a[1] + a[2] + a[3]);

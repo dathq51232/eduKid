@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FileDown, FilePlus2, FolderOpen, RefreshCw, Save, Shuffle, Table2, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import AssignPaperForm from '@/components/classroom/AssignPaperForm';
+import type { ExamItem } from '@/lib/classroom/assignments';
 import { schoolYearOf } from '@/lib/classroom/comments';
 import { EXAM_NAME, examsFor, type ExamCode } from '@/lib/classroom/school';
 import {
@@ -167,7 +169,7 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
           <h1><Table2 aria-hidden="true" /> Ma trận và đề kiểm tra</h1>
           <p className="dash-muted">
             Chọn môn, phạm vi bài, lập ma trận theo 3 mức (Mức 1 nhận biết · Mức 2 kết nối · Mức 3 vận dụng), máy chọn câu từ ngân hàng câu hỏi tự soạn của EduChain Kids.
-            Thầy cô đổi từng câu nếu cần, rồi tải file Word gồm ma trận, bản đặc tả, đề và đáp án. Câu có tranh vẽ không đưa vào đề in.
+            Thầy cô đổi từng câu nếu cần, rồi tải file Word gồm ma trận, bản đặc tả, đề và đáp án — hoặc giao đề cho cả lớp làm trực tiếp trên app, máy chấm và thống kê từng câu. Câu có tranh vẽ không đưa vào đề.
           </p>
         </div>
       </header>
@@ -289,6 +291,10 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
             {papers.map((p, pi) => (
               <div key={pi} className="exam-paper">
                 <h3>{p.code ? `Đề ${p.code}` : 'Đề'} · {p.slots.length} câu</h3>
+                <AssignPaperForm classId={classId} subject={subject} minutes={minutes}
+                  title={`${title || autoTitle}${p.code ? ` – Đề ${p.code}` : ''}`}
+                  label={`Giao ${p.code ? `đề ${p.code}` : 'đề'} làm trên app`}
+                  items={p.slots.map(({ q, muc }): ExamItem => ({ type: q.type, prompt: q.prompt, options: q.options, left: q.left, blanks: q.blanks, statements: q.statements, answer: q.answer, explanation: q.explanation, lessonTitle: q.lessonTitle, muc, pts: matrix.points[muc] }))} />
                 <ol>
                   {p.slots.map((s, si) => (
                     <li key={si}>

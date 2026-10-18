@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { ArrowLeft, ClipboardCheck, GraduationCap, Table2 } from 'lucide-react';
+import { ArrowLeft, ClipboardCheck, FileText, GraduationCap, Radar, Send, Table2 } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import ClassManager, { type RosterRow, type SummaryRow } from '@/components/classroom/ClassManager';
@@ -64,13 +64,20 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
           summary={(summary ?? []) as SummaryRow[]}
           pins={pins}
           top={(
-          <section className="dash-card exam-entry no-print">
-            <div>
-              <h2><Table2 aria-hidden="true" /> Ma trận và đề kiểm tra</h2>
-              <p className="dash-muted">Lập ma trận 3 mức, chọn câu từ ngân hàng theo đúng khối lớp, tạo đề A/B kèm đáp án và xuất Word để in.</p>
-            </div>
-            <Link href={`/giao-vien/lop/${id}/de-kiem-tra`} className="btn btn-primary"><Table2 aria-hidden="true" /> Mở ma trận và đề</Link>
-          </section>
+            <nav className="teacher-tools no-print" aria-label="Công cụ giáo viên">
+              <Link href={`/giao-vien/lop/${id}/giao-bai`} className="tool-card tone-blue">
+                <Send aria-hidden="true" /><strong>Giao bài về nhà</strong><span>Chọn bài, hạn nộp; xem em nào đã làm, em nào chưa</span>
+              </Link>
+              <Link href={`/giao-vien/lop/${id}/lo-hong`} className="tool-card tone-red">
+                <Radar aria-hidden="true" /><strong>Lỗ hổng kiến thức</strong><span>Dạng bài lớp hay sai, em cần kèm, giao bài ôn ngay</span>
+              </Link>
+              <Link href={`/giao-vien/lop/${id}/de-kiem-tra`} className="tool-card tone-green">
+                <Table2 aria-hidden="true" /><strong>Ma trận và đề kiểm tra</strong><span>Lập ma trận 3 mức, đề A/B, xuất Word hoặc giao làm trên app</span>
+              </Link>
+              <Link href={`/giao-vien/lop/${id}/phieu-bai-tap`} className="tool-card tone-yellow">
+                <FileText aria-hidden="true" /><strong>Phiếu bài tập</strong><span>Phiếu in theo bài đang học, đáp án trang riêng</span>
+              </Link>
+            </nav>
           )}
         />
         {FEATURES.teacherRecords && (
