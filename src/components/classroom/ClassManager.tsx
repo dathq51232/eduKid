@@ -30,7 +30,7 @@ type Cls = { id: string; name: string; grade: number; join_code: string; status:
 
 const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '—');
 
-export default function ClassManager({ cls, roster, summary, pins = {} }: { cls: Cls; roster: RosterRow[]; summary: SummaryRow[]; pins?: Record<string, string> }) {
+export default function ClassManager({ cls, roster, summary, pins = {}, top }: { cls: Cls; roster: RosterRow[]; summary: SummaryRow[]; pins?: Record<string, string>; /** khối hiện ngay dưới tiêu đề lớp */ top?: React.ReactNode }) {
   const router = useRouter();
   const [names, setNames] = useState('');
   const [consent, setConsent] = useState(false);
@@ -123,6 +123,7 @@ export default function ClassManager({ cls, roster, summary, pins = {} }: { cls:
           <small>Lần đầu: <b>Đăng nhập</b> → mã lớp → chọn tên → PIN. Lần sau trên cùng máy: chỉ cần nhập PIN.</small>
         </div>
       </div>
+      {top}
 
       {msg && <p className={`adm-alert ${msg.kind === 'ok' ? 'is-ok' : 'is-error'}`} role="status">{msg.text}</p>}
 

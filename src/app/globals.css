@@ -2302,3 +2302,8 @@ body {
 /* Xuất mẫu vnEdu */
 .vnedu-export { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .vnedu-export .adm-alert { margin: 0; padding: 4px 10px; font-size: 0.85rem; }
+
+/* Lối vào Ma trận và đề kiểm tra (đầu trang lớp) */
+.exam-entry { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.exam-entry h2 { margin: 0 0 4px; }
+.exam-entry .dash-muted { margin: 0; }

@@ -9,6 +9,7 @@ import type { RosterRow } from '@/components/classroom/ClassManager';
 import { getViewer } from '@/lib/auth/viewer';
 import { compareViName } from '@/lib/classroom/names';
 import { createClient } from '@/lib/supabase/server';
+import { FEATURES } from '@/lib/features';
 
 export const metadata: Metadata = { title: 'Nhận xét học sinh · EduChain Kids' };
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,7 @@ export const dynamic = 'force-dynamic';
 // Nhận xét tuần / học kỳ / cả năm. Quyền kiểm tra ở đây (giáo viên) và trong database (teaches_class).
 export default async function CommentsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  if (!FEATURES.teacherRecords) redirect(`/giao-vien/lop/${id}`); // tính năng đang tắt (src/lib/features.ts)
   const viewer = await getViewer();
   if (viewer.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Nhận xét học sinh" /></main></>);
   if (viewer.state === 'signed_out') redirect(`/dang-nhap?next=/giao-vien/lop/${id}/nhan-xet`);

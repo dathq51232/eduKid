@@ -10,6 +10,7 @@ import { ClassLeaderboard } from '@/components/achievements/LiveAchievements';
 import type { LessonResult } from '@/lib/classroom/progress';
 import { getViewer } from '@/lib/auth/viewer';
 import { createClient } from '@/lib/supabase/server';
+import { FEATURES } from '@/lib/features';
 
 export const metadata: Metadata = { title: 'Quản lý lớp · EduChain Kids' };
 export const dynamic = 'force-dynamic';
@@ -62,15 +63,25 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
           roster={rosterRows}
           summary={(summary ?? []) as SummaryRow[]}
           pins={pins}
+          top={(
+          <section className="dash-card exam-entry no-print">
+            <div>
+              <h2><Table2 aria-hidden="true" /> Ma trận và đề kiểm tra</h2>
+              <p className="dash-muted">Lập ma trận 3 mức, chọn câu từ ngân hàng theo đúng khối lớp, tạo đề A/B kèm đáp án và xuất Word để in.</p>
+            </div>
+            <Link href={`/giao-vien/lop/${id}/de-kiem-tra`} className="btn btn-primary"><Table2 aria-hidden="true" /> Mở ma trận và đề</Link>
+          </section>
+          )}
         />
-        <section className="dash-section comments-entry no-print">
-          <div className="comments-actions">
-            <Link href={`/giao-vien/lop/${id}/de-kiem-tra`} className="btn btn-outline"><Table2 aria-hidden="true" /> Ma trận và đề kiểm tra</Link>
-            <Link href={`/giao-vien/lop/${id}/ket-qua-truong`} className="btn btn-outline"><GraduationCap aria-hidden="true" /> Kết quả học tập trên trường</Link>
-            <Link href={`/giao-vien/lop/${id}/nhan-xet`} className="btn btn-primary"><ClipboardCheck aria-hidden="true" /> Nhận xét học sinh (tuần · học kỳ · cả năm)</Link>
-          </div>
-          <p className="dash-muted">Nhập điểm kiểm tra định kỳ và khen thưởng của các em; hệ thống kết hợp với bài luyện tập trong app để gợi ý mức đạt và lời nhận xét. Thầy cô sửa, lưu và tải Excel để nhập lên hệ thống của trường.</p>
-        </section>
+        {FEATURES.teacherRecords && (
+          <section className="dash-section comments-entry no-print">
+            <div className="comments-actions">
+              <Link href={`/giao-vien/lop/${id}/ket-qua-truong`} className="btn btn-outline"><GraduationCap aria-hidden="true" /> Kết quả học tập trên trường</Link>
+              <Link href={`/giao-vien/lop/${id}/nhan-xet`} className="btn btn-outline"><ClipboardCheck aria-hidden="true" /> Nhận xét học sinh (tuần · học kỳ · cả năm)</Link>
+            </div>
+            <p className="dash-muted">Nhập điểm kiểm tra định kỳ và khen thưởng của các em; hệ thống kết hợp với bài luyện tập trong app để gợi ý mức đạt và lời nhận xét. Thầy cô sửa, lưu và tải Excel để nhập lên hệ thống của trường.</p>
+          </section>
+        )}
         <ClassLeaderboard classId={id} />
         <ClassProgress classId={id} className={(cls as { name: string }).name} results={(results ?? []) as LessonResult[]} names={names} />
       </main>
