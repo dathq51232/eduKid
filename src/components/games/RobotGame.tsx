@@ -8,7 +8,7 @@ import LevelPicker, { rememberLevel } from './LevelPicker';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import type { GameLevel } from '@/lib/games/catalog';
 import {
-  MAX_COUNT, ROBOT_LEVELS, ROUND_SIZE, R_DIRS, R_DIR_LABEL, R_DIR_SPOKEN, cmdLabel, generatePuzzle, runProgram, solve, startFacing,
+  MAX_COUNT, ROBOT_LEVELS, ROUND_SIZE, R_DIRS, R_DIR_LABEL, R_DIR_SPOKEN, cmdLabel, generatePuzzle, runProgram, solve, startFacing, turn,
   type Cmd, type Puzzle, type RDir, type RunResult,
 } from '@/lib/games/robot';
 
@@ -115,7 +115,7 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
     }
     if (program.length >= puzzle.limit) {
       setNote(
-        `Hết chỗ rồi: màn này chỉ cho ${puzzle.limit} thẻ.${cfg.mode !== 'arrows' ? ' Mẹo: bấm cùng một nút nhiều lần liên tiếp để gộp nhiều bước vào một thẻ (tối đa 5 bước).' : ''} Em có thể bấm vào thẻ để bỏ bớt.`,
+        `Hết chỗ rồi: màn này chỉ cho ${puzzle.limit} thẻ.${cfg.mode !== 'arrows' ? ' Mẹo: bấm cùng một nút nhiều lần liên tiếp để gộp nhiều bước vào một thẻ (tối đa 5 bước).' : ''} Em có thể bấm vào thẻ để bớt bước hoặc bỏ thẻ.`,
       );
       return;
     }
@@ -222,6 +222,16 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
   const failedCmd = run?.failAt ?? -1;
   const left = puzzle && fr ? puzzle.stars.length - fr.got.length : 0;
   const hintCmds = solution.slice(0, hints);
+  // Cách bấm để có thẻ đó (L4–L5 gộp bước: "Tiến 5 bước" = bấm Tiến 5 lần)
+  const hintText = (c: Cmd) => {
+    if (c.kind === 'turn') return c.side === 'L' ? 'Quay trái' : 'Quay phải';
+    const name = c.kind === 'fwd' ? 'Tiến' : R_DIR_LABEL[c.dir];
+    if (cfg.mode === 'arrows') return name;
+    return c.n > 1 ? `${name} × ${c.n} (bấm ${name} ${c.n} lần)` : `${name} × 1`;
+  };
+  // L5: hướng Milo sẽ nhìn sau các thẻ đã xếp — để nút Quay nói rõ Milo sẽ quay sang đâu
+  const endFacing = program.reduce<RDir>((f, c) => (c.kind === 'turn' ? turn(f, c.side) : f), f0);
+  const FACE: Record<RDir, string> = { 0: 'nhìn lên', 1: 'nhìn sang phải', 2: 'nhìn xuống', 3: 'nhìn sang trái' };
 
   return (
     <>
@@ -293,9 +303,9 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
               <div className="robot-palette" role="group" aria-label="Thẻ lệnh">
                 {cfg.mode === 'relative' ? (
                   <div className="robot-keys is-rel">
-                    <button type="button" className="robot-key" onClick={() => add({ kind: 'turn', side: 'L' })}><RotateCcw aria-hidden="true" /><span>Quay trái</span></button>
+                    <button type="button" className="robot-key" onClick={() => add({ kind: 'turn', side: 'L' })} aria-label={`Thêm lệnh: Quay trái, Milo sẽ ${FACE[turn(endFacing, 'L')]}`}><RotateCcw aria-hidden="true" /><span>Quay trái</span><small>→ {FACE[turn(endFacing, 'L')]}</small></button>
                     <button type="button" className="robot-key" onClick={() => add({ kind: 'fwd', n: 1 })} aria-label="Thêm lệnh: Tiến 1 bước"><ArrowUp aria-hidden="true" strokeWidth={3} /><span>Tiến</span></button>
-                    <button type="button" className="robot-key" onClick={() => add({ kind: 'turn', side: 'R' })}><RotateCw aria-hidden="true" /><span>Quay phải</span></button>
+                    <button type="button" className="robot-key" onClick={() => add({ kind: 'turn', side: 'R' })} aria-label={`Thêm lệnh: Quay phải, Milo sẽ ${FACE[turn(endFacing, 'R')]}`}><RotateCw aria-hidden="true" /><span>Quay phải</span><small>→ {FACE[turn(endFacing, 'R')]}</small></button>
                   </div>
                 ) : (
                   <div className="robot-keys">
@@ -325,8 +335,8 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
                     <button
                       type="button"
                       className={`robot-card${activeCmd === i ? ' is-active' : ''}${ended && run?.result === 'crash' && i === failedCmd ? ' is-bad' : ''}`}
-                      onClick={() => edit((p) => p.filter((_, k) => k !== i))}
-                      aria-label={`Lệnh ${i + 1}: ${cmdLabel(c)}. Bấm để bỏ thẻ này`}
+                      onClick={() => edit((p) => (c.kind !== 'turn' && c.n > 1 ? p.map((x, k) => (k === i && x.kind !== 'turn' ? { ...x, n: x.n - 1 } : x)) : p.filter((_, k) => k !== i)))}
+                      aria-label={`Lệnh ${i + 1}: ${cmdLabel(c)}. ${c.kind !== 'turn' && c.n > 1 ? 'Bấm để bớt 1 bước' : 'Bấm để bỏ thẻ này'}`}
                       disabled={animating || won}
                     >
                       <small>{i + 1}</small>
@@ -339,7 +349,11 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
                   <li key={`e${i}`} className="robot-slot" aria-hidden="true" />
                 ))}
               </ol>
-              {!program.length && <p className="robot-empty">Bấm các thẻ lệnh ở trên để xếp chương trình.</p>}
+              {!program.length ? (
+                <p className="robot-empty">Bấm các thẻ lệnh ở trên để xếp chương trình.</p>
+              ) : (
+                <p className="robot-empty">Bấm vào một thẻ trong chương trình để {cfg.mode === 'arrows' ? 'bỏ thẻ đó' : 'bớt 1 bước (thẻ × 1 thì bỏ thẻ)'}.</p>
+              )}
               {note && <p className="robot-full" role="status">{note}</p>}
 
               <div className="robot-actions">
@@ -376,7 +390,7 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
                 ) : run.result === 'crash' ? (
                   <>
                     <p className="game-feedback-title">Ối, Milo {run.blocked?.out ? 'sắp đi ra ngoài sân' : 'va vào tảng đá'}!</p>
-                    <p>Lỗi ở lệnh số {failedCmd + 1}. Em sửa chương trình (bấm vào thẻ để bỏ) rồi chạy lại nhé.</p>
+                    <p>Lỗi ở lệnh số {failedCmd + 1}. Em sửa chương trình (bấm vào thẻ để bớt 1 bước hoặc bỏ thẻ) rồi chạy lại nhé.</p>
                   </>
                 ) : (
                   <>
@@ -390,7 +404,7 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
           {!ended && hints > 0 && (
             <p className="robot-hint">
               <Lightbulb aria-hidden="true" className="icon" /> Gợi ý — {hints === 1 ? 'lệnh đầu tiên' : `${hints} lệnh đầu`} của một cách giải ngắn nhất:{' '}
-              <strong>{hintCmds.map(cmdLabel).join(' → ')}</strong>
+              <strong>{hintCmds.map(hintText).join(' → ')}</strong>
             </p>
           )}
         </div>
