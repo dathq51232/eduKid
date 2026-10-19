@@ -1449,17 +1449,12 @@ a.adm-row-title:hover { color: var(--link); text-decoration: underline; }
 .robot-sprite, .robot-facing { transition: transform 300ms ease; }
 .robot-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .robot-palette { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 14px; background: var(--bg-f1f5fc); }
-.robot-count { display: flex; align-items: center; gap: 8px; font-weight: 700; }
-.robot-count > span { flex: 1; }
-.robot-count button { display: grid; width: 44px; height: 44px; place-items: center; border: 2px solid var(--line-strong); border-radius: 12px; background: var(--bg-ffffff); color: var(--ink); cursor: pointer; }
-.robot-count button:disabled { opacity: .45; cursor: default; }
-.robot-count strong { min-width: 28px; font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 24px; text-align: center; }
 .robot-keys { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .robot-keys.is-rel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .robot-key { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 64px; padding: 4px; border: 2px solid var(--line-strong); border-bottom-width: 5px; border-radius: 14px; background: var(--yellow); color: #1f2a44; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; touch-action: manipulation; }
 .robot-key svg { width: 26px; height: 26px; }
 .robot-key:active { transform: translateY(2px); border-bottom-width: 3px; }
-.robot-key:focus-visible, .robot-card:focus-visible, .robot-count button:focus-visible { outline: 3px solid var(--blue-deep); outline-offset: 3px; }
+.robot-key:focus-visible, .robot-card:focus-visible { outline: 3px solid var(--blue-deep); outline-offset: 3px; }
 .robot-prog-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .robot-prog-head h3 { font-size: 18px; }
 .robot-prog-head span { color: var(--muted); font-size: 15px; font-weight: 700; }
@@ -1472,6 +1467,8 @@ a.adm-row-title:hover { color: var(--link); text-decoration: underline; }
 .robot-card.is-bad { border-color: #e2483d; background: var(--bg-fde8e6); box-shadow: 0 0 0 3px #e2483d inset; }
 .robot-slot { min-height: 56px; border: 2px dashed var(--rule); border-radius: 12px; }
 .robot-empty { color: var(--muted); font-size: 14px; }
+.robot-tip { color: var(--ink); font-size: 14px; line-height: 1.45; }
+.robot-full { padding: 8px 12px; border-radius: 10px; background: var(--bg-fde8e6); color: var(--ink); font-size: 14px; font-weight: 600; }
 .robot-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .robot-actions .button { flex: 1 1 auto; }
 .robot-hint { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 10px 14px; border-radius: 12px; background: var(--bg-fff3d1); font-size: 15px; }

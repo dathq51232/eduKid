@@ -65,6 +65,7 @@ export default function SudokuGame({ initialLevel }: { initialLevel: GameLevel }
         setMsg('Ô này có sẵn từ đầu, em chọn ô trống nhé.');
         return;
       }
+      if (grid[r][c] === v) return; // bấm lại đúng thứ đang có: không tính thêm lần sai
       const next = grid.map((row) => [...row]);
       next[r][c] = v;
       setGrid(next);
@@ -170,7 +171,7 @@ export default function SudokuGame({ initialLevel }: { initialLevel: GameLevel }
       <section className="game-panel" aria-labelledby="sudoku-title">
         <div className="game-panel-top">
           <h2 id="sudoku-title" className="game-progress">Sudoku {cfg.n} × {cfg.n}</h2>
-          <p className="game-score">Còn trống: <strong>{grid.flat().filter((v, i) => !v || (game && v !== game.solution[Math.floor(i / game.n)][i % game.n])).length}</strong></p>
+          <p className="game-score">Ô chưa xong: <strong>{grid.flat().filter((v, i) => !v || (game && v !== game.solution[Math.floor(i / game.n)][i % game.n])).length}</strong></p>
         </div>
         <p className="maze-help">
           Luật chơi: mỗi <strong>hàng</strong>, mỗi <strong>cột</strong> và mỗi <strong>vùng</strong> viền đậm ({cfg.br} × {cfg.bc} ô) đều có đủ {symbols ? '4 hình' : `các số từ 1 đến ${cfg.n}`}, không thứ nào lặp lại.

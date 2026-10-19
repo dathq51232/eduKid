@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Lightbulb, Minus, Play, Plus, RotateCcw, RotateCw, Trash2, Undo2 } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Lightbulb, Play, RotateCcw, RotateCw, Trash2, Undo2 } from 'lucide-react';
 import GameFinish from './GameFinish';
 import LevelPicker, { rememberLevel } from './LevelPicker';
 import MiloMascot from '@/components/mascot/MiloMascot';
@@ -50,7 +50,7 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
   const [seeds, setSeeds] = useState<number[]>([]);
   const [idx, setIdx] = useState(0);
   const [program, setProgram] = useState<Cmd[]>([]);
-  const [count, setCount] = useState(2);
+  const [note, setNote] = useState('');
   const [run, setRun] = useState<RunResult | null>(null);
   const [frame, setFrame] = useState(0);
   const [runs, setRuns] = useState(0);
@@ -99,9 +99,28 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
     stop();
     setRun(null);
     setFrame(0);
+    setNote('');
     setProgram((p) => fn(p));
   };
-  const add = (c: Cmd) => edit((p) => (puzzle && p.length < puzzle.limit ? [...p, c] : p));
+  /** Thêm thẻ. Ở L4–L5, bấm cùng một lệnh đi nhiều lần liên tiếp thì gộp vào thẻ cuối (tối đa MAX_COUNT bước / thẻ). */
+  const add = (c: Cmd) => {
+    if (animating || won || !puzzle) return;
+    const last = program[program.length - 1];
+    const mergeable =
+      cfg.mode !== 'arrows' && !!last && last.kind !== 'turn' && c.kind !== 'turn' && last.kind === c.kind &&
+      (c.kind === 'fwd' || (last.kind === 'move' && c.kind === 'move' && last.dir === c.dir)) && last.n < MAX_COUNT;
+    if (mergeable) {
+      edit((p) => p.map((x, i) => (i === p.length - 1 && x.kind !== 'turn' ? { ...x, n: x.n + 1 } : x)));
+      return;
+    }
+    if (program.length >= puzzle.limit) {
+      setNote(
+        `Hết chỗ rồi: màn này chỉ cho ${puzzle.limit} thẻ.${cfg.mode !== 'arrows' ? ' Mẹo: bấm cùng một nút nhiều lần liên tiếp để gộp nhiều bước vào một thẻ (tối đa 5 bước).' : ''} Em có thể bấm vào thẻ để bỏ bớt.`,
+      );
+      return;
+    }
+    edit((p) => [...p, c]);
+  };
 
   const go = () => {
     if (!puzzle || animating || won || !program.length) return;
@@ -150,7 +169,10 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
       const map: Record<string, RDir> = { ArrowUp: 0, ArrowRight: 1, ArrowDown: 2, ArrowLeft: 3 };
       if (e.key in map && cfg.mode !== 'relative') {
         e.preventDefault();
-        add({ kind: 'move', dir: map[e.key], n: cfg.mode === 'counted' ? count : 1 });
+        add({ kind: 'move', dir: map[e.key], n: 1 });
+      } else if (cfg.mode === 'relative' && (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        e.preventDefault();
+        add(e.key === 'ArrowUp' ? { kind: 'fwd', n: 1 } : { kind: 'turn', side: e.key === 'ArrowLeft' ? 'L' : 'R' });
       } else if (e.key === 'Backspace' && t?.tagName !== 'BUTTON') {
         e.preventDefault();
         edit((p) => p.slice(0, -1));
@@ -162,7 +184,7 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
 
   const detail = (lv: GameLevel) => {
     const c = ROBOT_LEVELS[lv];
-    const kind = c.mode === 'arrows' ? 'thẻ mũi tên, mỗi thẻ đi 1 bước' : c.mode === 'counted' ? 'thẻ có số bước (đi 3 bước = 1 thẻ)' : 'Milo có hướng nhìn: Tiến, Quay trái, Quay phải';
+    const kind = c.mode === 'arrows' ? 'thẻ mũi tên, mỗi thẻ đi 1 bước' : c.mode === 'counted' ? 'bấm một nút nhiều lần để gộp nhiều bước vào 1 thẻ' : 'Milo có hướng nhìn: Tiến, Quay trái, Quay phải';
     return `sân ${c.size} × ${c.size} ô, ${c.stars} ngôi sao, ${kind}${c.slack === null ? '' : ', giới hạn số thẻ'}`;
   };
 
@@ -269,33 +291,27 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
 
             <div className="robot-side">
               <div className="robot-palette" role="group" aria-label="Thẻ lệnh">
-                {cfg.mode !== 'arrows' && (
-                  <div className="robot-count" role="group" aria-label="Số bước">
-                    <span>Số bước</span>
-                    <button type="button" onClick={() => setCount((c) => Math.max(1, c - 1))} aria-label="Bớt một bước" disabled={count <= 1}><Minus aria-hidden="true" /></button>
-                    <strong aria-live="polite">{count}</strong>
-                    <button type="button" onClick={() => setCount((c) => Math.min(MAX_COUNT, c + 1))} aria-label="Thêm một bước" disabled={count >= MAX_COUNT}><Plus aria-hidden="true" /></button>
-                  </div>
-                )}
                 {cfg.mode === 'relative' ? (
                   <div className="robot-keys is-rel">
                     <button type="button" className="robot-key" onClick={() => add({ kind: 'turn', side: 'L' })}><RotateCcw aria-hidden="true" /><span>Quay trái</span></button>
-                    <button type="button" className="robot-key" onClick={() => add({ kind: 'fwd', n: count })}><ArrowUp aria-hidden="true" strokeWidth={3} /><span>Tiến {count}</span></button>
+                    <button type="button" className="robot-key" onClick={() => add({ kind: 'fwd', n: 1 })} aria-label="Thêm lệnh: Tiến 1 bước"><ArrowUp aria-hidden="true" strokeWidth={3} /><span>Tiến</span></button>
                     <button type="button" className="robot-key" onClick={() => add({ kind: 'turn', side: 'R' })}><RotateCw aria-hidden="true" /><span>Quay phải</span></button>
                   </div>
                 ) : (
                   <div className="robot-keys">
                     {R_DIRS.map((d) => {
                       const Icon = DIR_ICON[d];
-                      const n = cfg.mode === 'counted' ? count : 1;
                       return (
-                        <button key={d} type="button" className={`robot-key is-d${d}`} onClick={() => add({ kind: 'move', dir: d, n })} aria-label={`Thêm thẻ: ${cmdLabel({ kind: 'move', dir: d, n })}`}>
+                        <button key={d} type="button" className={`robot-key is-d${d}`} onClick={() => add({ kind: 'move', dir: d, n: 1 })} aria-label={`Thêm lệnh: ${R_DIR_LABEL[d]}`}>
                           <Icon aria-hidden="true" strokeWidth={3} />
-                          <span>{R_DIR_LABEL[d]}{n > 1 ? ` ${n}` : ''}</span>
+                          <span>{R_DIR_LABEL[d]}</span>
                         </button>
                       );
                     })}
                   </div>
+                )}
+                {cfg.mode !== 'arrows' && (
+                  <p className="robot-tip">Bấm cùng một nút nhiều lần liên tiếp để đi nhiều bước mà chỉ tốn 1 thẻ (ví dụ bấm {cfg.mode === 'relative' ? 'Tiến' : 'Phải'} 3 lần → thẻ «× 3», tối đa 5).</p>
                 )}
               </div>
 
@@ -315,7 +331,7 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
                     >
                       <small>{i + 1}</small>
                       <CmdIcon c={c} />
-                      <span>{c.kind === 'turn' ? (c.side === 'L' ? 'Trái' : 'Phải') : c.n > 1 ? `× ${c.n}` : ''}</span>
+                      <span>{c.kind === 'turn' ? (c.side === 'L' ? 'Trái' : 'Phải') : `× ${c.n}`}</span>
                     </button>
                   </li>
                 ))}
@@ -324,6 +340,7 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
                 ))}
               </ol>
               {!program.length && <p className="robot-empty">Bấm các thẻ lệnh ở trên để xếp chương trình.</p>}
+              {note && <p className="robot-full" role="status">{note}</p>}
 
               <div className="robot-actions">
                 <button type="button" className="button button-yellow" onClick={go} disabled={!program.length || animating || won}>
