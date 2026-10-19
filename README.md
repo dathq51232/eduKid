@@ -167,6 +167,13 @@ Bộ sinh câu ngẫu nhiên cho Toán 1 (Học kì 1) — dùng cho nút **Đ�
 - **Kiểm tra tự động**: `npm run check:practice` sinh 500 đề cho mỗi bài và kiểm tra: đủ 10 câu đúng thứ tự cấp độ, không trùng câu trong đề, đáp án tự chấm đúng (và đáp án sai bị chấm sai), lựa chọn không trùng, **không vượt trước** (Bài 1 chỉ số 0–5; trước Bài 10 không có dấu + / −; Bài 10 chưa có dấu −; mọi số ≤ 10), thời gian mỗi câu 30–120 giây, câu L3 trở lên có lời giải.
 - Lưu ý: đề luyện tập sinh và chấm ngay trên trình duyệt nên chỉ dùng để tự luyện. Khi cần chấm thật (kiểm tra, chứng nhận) thì chạy bộ sinh ở server và không gửi đáp án xuống trình duyệt.
 
+## Trang làm bài: trang trí, hiệu ứng, sticker
+
+- **Nền theo môn** (`src/components/learn/LessonDecor.tsx`): Toán số + hình khối, Tiếng Việt chữ cái có dấu + bút chì, Tiếng Anh bóng bay chữ ABC; họa tiết mờ ở hai bên mép + viền nét đứt, nằm sau nội dung (không che câu hỏi). Tự vẽ bằng SVG, không ảnh ngoài.
+- **Đường tiến độ có Milo** (`MiloTrail.tsx`, đầu khung câu hỏi): mỗi câu một chặng, câu đúng có sao vàng, Milo đứng ở câu đang làm; đúng thì Milo nhảy + "Giỏi quá!", sai thì nghiêng đầu "Cố lên, câu sau nhé!". Điện thoại dùng bản đường ngắn hơn cho Milo đủ to.
+- **Hiệu ứng khi đúng**: pháo giấy ~1 giây (`Confetti.tsx`), ô đáp án sáng lên. Nút ✨ trên thanh làm bài bật/tắt hiệu ứng (ghi nhớ trên máy); máy bật "giảm chuyển động" thì tự bỏ mọi chuyển động.
+- **Huy hiệu + sticker** (trang Kết quả, `MedalBadge.tsx`, `StickerAlbum.tsx`, `src/lib/stickers.ts`): làm đúng từ 7/10 nhận 1 sticker ngẫu nhiên chưa có (24 sticker tự vẽ: khủng long, tên lửa, hành tinh…); bộ sưu tập hiện ở trang Kết quả và Thành tích. Sticker lưu trên trình duyệt của máy (giống điểm tích luỹ khách), không quy đổi, không so sánh.
+
 ## Game trí tuệ (/tro-choi)
 
 Thanh điều hướng chính có 3 tab: **Học tập** (`/chon-bai`), **Game trí tuệ** (`/tro-choi`), **Thành tích** (`/thanh-tich`). Mục Phụ huynh đã bỏ; đường dẫn cũ `/phu-huynh` chuyển về trang chủ.

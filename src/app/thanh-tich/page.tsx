@@ -7,6 +7,7 @@ import { GAME_LEVELS, gameById, gameHref } from '@/lib/games/catalog';
 import { DEMO_BADGES, DEMO_PLAYER, DEMO_PRAISE, DEMO_PROGRESS, totalChallenges, totalPlays } from '@/lib/games/demo-achievements';
 import LiveAchievements from '@/components/achievements/LiveAchievements';
 import { getViewer } from '@/lib/auth/viewer';
+import StickerAlbum from '@/components/learn/StickerAlbum';
 
 export const metadata: Metadata = { title: 'Thành tích · EduChain Kids' };
 
@@ -17,7 +18,7 @@ export const dynamic = 'force-dynamic';
 export default async function AchievementsPage() {
   const viewer = await getViewer();
   if (viewer.state === 'ok' && viewer.isStudent) {
-    return (<><LearnHeader /><main className="games-main wrap"><LiveAchievements /></main></>);
+    return (<><LearnHeader /><main className="games-main wrap"><LiveAchievements /><StickerAlbum /></main></>);
   }
   if (viewer.state === 'ok') {
     return (
@@ -56,6 +57,8 @@ function DemoAchievements() {
             </p>
           </div>
         </header>
+
+        <StickerAlbum />
 
         <section aria-labelledby="ach-summary" className="ach-section">
           <h2 id="ach-summary" className="sr-only">Tổng quan</h2>

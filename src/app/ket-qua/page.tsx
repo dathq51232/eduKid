@@ -7,6 +7,10 @@ import { useSearchParams } from 'next/navigation';
 import { Check, Clock, Home, ListChecks, MinusCircle, RotateCcw, Star, Volume2, X, Dices } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import VoiceHelp from '@/components/VoiceHelp';
+import LessonDecor from '@/components/learn/LessonDecor';
+import MedalBadge from '@/components/learn/MedalBadge';
+import StickerAlbum, { NewSticker } from '@/components/learn/StickerAlbum';
+import { lastAwardFor, type StickerId } from '@/lib/stickers';
 import { isSubjectCode, parseGrade } from '@/lib/basics';
 import { LEVELS, formatDuration, rankFor } from '@/lib/levels';
 import { readLastAttempt, starsFor } from '@/lib/progress';
@@ -55,8 +59,11 @@ function KetQuaContent() {
   const [loaded, setLoaded] = useState(false);
   const [voiceProblem, setVoiceProblem] = useState<'unsupported' | 'no_vi_voice' | null>(null);
   const [sync, setSync] = useState<SyncStatus | null>(null);
+  const [newSticker, setNewSticker] = useState<StickerId | null>(null);
   useEffect(() => {
-    setAttempt(readLastAttempt());
+    const a = readLastAttempt();
+    setAttempt(a);
+    if (a) setNewSticker(lastAwardFor(a.finishedAt));
     setLoaded(true);
     const onSync = () => setSync(readSyncStatus());
     onSync();
@@ -105,8 +112,10 @@ function KetQuaContent() {
   return (
     <>
       <LearnHeader />
+      <LessonDecor subject={attempt.subject} animate={false} />
       <main className="learn-main">
         <section className="result-card" aria-live="polite">
+          <MedalBadge size={132} />
           <p className="lesson-tag">{attempt.lessonTitle}</p>
           <h1>{comment.headline}</h1>
           <div className="result-stars" aria-label={`Em được ${stars} trên 3 ngôi sao`}>
@@ -134,6 +143,8 @@ function KetQuaContent() {
             <p className={`sync-note${sync.saved ? ' is-ok' : sync.pending ? '' : ' is-warn'}`} role="status">{syncMessage(sync)}</p>
           )}
         </section>
+
+        {newSticker && <NewSticker id={newSticker} />}
 
         <section className="points-card" aria-label="Điểm tích luỹ">
           <div className="points-rank">
@@ -214,6 +225,8 @@ function KetQuaContent() {
             <Home size={18} aria-hidden="true" /> Trang chủ
           </Link>
         </div>
+
+        <StickerAlbum highlight={newSticker} />
 
         <h2 className="learn-heading">Từng câu em đã làm</h2>
         <ol className="review-list">

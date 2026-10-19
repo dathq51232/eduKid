@@ -2512,7 +2512,8 @@ body {
   .quiz-bar .icon-button { width: 40px; height: 40px; border-radius: 12px; }
   .quiz-progress { display: none; }
   .quiz-count { margin-right: auto; padding: 2px 10px; font-size: 15px; }
-  .quiz-submit { white-space: nowrap; padding-inline: 14px; min-height: 40px; }
+  .quiz-submit { white-space: nowrap; padding-inline: 12px; min-height: 40px; }
+  .quiz-submit svg { display: none; }
   .question-tools .button { white-space: nowrap; padding-inline: 14px; font-size: 16px; }
   .swap-count { font-size: 13px; }
 }
@@ -2574,3 +2575,78 @@ body {
 .plan-edit input[type=number] { width: 72px; }
 .plan-edit .plan-note { flex: 1 1 200px; min-width: 160px; }
 .plan-edit .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+
+/* ==================================================================
+   TRANG LÀM BÀI: nền theo môn, đường tiến độ có Milo, pháo giấy, sticker
+   (tự vẽ bằng SVG; chuyển động tắt được và tự tắt khi máy bật "giảm chuyển động")
+================================================================== */
+.lesson-decor { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.lesson-decor-frame { position: absolute; inset: 8px; border: 3px dashed; border-radius: 22px; }
+.lesson-decor-motif { position: absolute; opacity: .2; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)); }
+.lesson-decor.is-animated .lesson-decor-motif { animation: decor-float 7s ease-in-out infinite; animation-delay: var(--d, 0s); }
+@keyframes decor-float {
+  0%, 100% { transform: translate(-50%, -50%) rotate(var(--rot, 0deg)); }
+  50% { transform: translate(-50%, calc(-50% - 9px)) rotate(var(--rot, 0deg)); }
+}
+@media (max-width: 760px) { .lesson-decor-motif { opacity: .13; } .lesson-decor-frame { inset: 4px; border-width: 2px; } }
+
+.milo-trail { margin: -8px -6px 6px; }
+.milo-trail svg { display: block; width: 100%; height: auto; overflow: visible; }
+.milo-trail svg.is-narrow { display: none; }
+@media (max-width: 600px) { .milo-trail svg.is-wide { display: none; } .milo-trail svg.is-narrow { display: block; } .milo-trail { margin: -14px -10px 4px; } }
+.milo-trail-milo { transition: transform 300ms ease; }
+.milo-trail-milo.is-jump { animation: milo-jump 900ms cubic-bezier(.3, 1.6, .5, 1); }
+.milo-trail-milo.is-tilt { transform: rotate(-12deg); }
+@keyframes milo-jump {
+  0% { transform: translateY(0) scale(1, 1); }
+  20% { transform: translateY(2px) scale(1.08, .9); }
+  50% { transform: translateY(-22px) scale(.96, 1.06); }
+  80% { transform: translateY(0) scale(1.04, .96); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+.fx-on .milo-trail-bubble { animation: bubble-pop 380ms cubic-bezier(.3, 1.6, .5, 1); transform-box: fill-box; }
+@keyframes bubble-pop { from { opacity: 0; } to { opacity: 1; } }
+
+.question-card { position: relative; }
+.confetti { position: absolute; left: 50%; top: 40%; z-index: 3; width: 0; height: 0; pointer-events: none; }
+.confetti-bit { position: absolute; width: 9px; height: 15px; border-radius: 2px; opacity: 0; animation: confetti-burst 1100ms cubic-bezier(.15, .7, .3, 1) var(--delay, 0ms) forwards; }
+.confetti-bit.is-round { width: 10px; height: 10px; border-radius: 50%; }
+@keyframes confetti-burst {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(.6); }
+  65% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + 70px)) rotate(var(--r)) scale(1); }
+}
+.fx-on .choice.is-right, .fx-on .question-card .is-right { animation: right-glow 1200ms ease-out; }
+@keyframes right-glow {
+  0% { box-shadow: 0 0 0 0 rgba(31, 157, 107, .55); }
+  40% { box-shadow: 0 0 0 8px rgba(31, 157, 107, .28), 0 0 26px rgba(31, 157, 107, .5); }
+  100% { box-shadow: 0 0 0 3px rgba(31, 157, 107, .2); }
+}
+.choice.is-right { box-shadow: 0 0 0 3px rgba(31, 157, 107, .2); }
+.fx-toggle.is-on { background: var(--bg-fff3d1); color: var(--fg-7a4d00); }
+
+.result-card .medal-badge { display: block; margin: -6px auto 4px; }
+.sticker-new { display: flex; align-items: center; gap: 18px; padding: 16px 20px; border: 2px solid var(--line-strong); border-radius: 20px; background: var(--bg-ffffff); box-shadow: var(--shadow-sm); }
+.sticker-new-art { display: grid; flex: none; width: 124px; height: 124px; place-items: center; border: 3px dashed var(--green); border-radius: 50%; background: var(--mint); }
+.sticker-new-tag { color: var(--fg-11704c); font-size: 14px; font-weight: 800; letter-spacing: .04em; }
+.sticker-new-name { font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 26px; font-weight: 800; }
+.sticker-new-note { color: var(--muted); font-size: 15px; }
+.sticker-album { padding: 20px 22px; border: 2px solid var(--line-strong); border-radius: 20px; background: var(--bg-ffffff); }
+.sticker-album h2 { font-size: 22px; }
+.sticker-album h2 span { color: var(--muted); font-size: 17px; }
+.sticker-album ul { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px; margin: 14px 0 0; padding: 0; list-style: none; }
+.sticker-slot { display: grid; aspect-ratio: 1; place-items: center; border: 2px dashed var(--rule); border-radius: 16px; color: var(--muted); font-size: 26px; font-weight: 800; }
+.sticker-slot.is-owned { border-style: solid; border-color: var(--line-strong); background: #fbfcff; }
+.sticker-slot.is-new { border-color: var(--green); box-shadow: 0 0 0 3px rgba(31, 157, 107, .25); }
+.sticker-slot .sticker-art { width: 78%; height: 78%; }
+.sticker-album-note { margin-top: 12px; color: var(--muted); font-size: 14px; }
+@media (max-width: 760px) { .sticker-album ul { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (max-width: 480px) {
+  .sticker-album ul { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .sticker-new { flex-direction: column; text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lesson-decor-motif, .milo-trail-milo, .milo-trail-bubble, .fx-on .choice.is-right, .fx-on .question-card .is-right { animation: none !important; transition: none !important; }
+  .milo-trail-milo.is-tilt { transform: none; }
+  .confetti { display: none; }
+}

@@ -12,12 +12,16 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Check, Clock, Dices, Flag, Lightbulb, Play, RefreshCw, SkipForward, Volume2, VolumeX, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Clock, Dices, Flag, Lightbulb, Play, RefreshCw, SkipForward, Sparkles, Volume2, VolumeX, X } from 'lucide-react';
 import Figure from '@/components/Figure';
 import KnowledgeCard from '@/components/KnowledgeCard';
 import LearnHeader from '@/components/LearnHeader';
 import QuestionRenderer from '@/components/questions/QuestionRenderer';
 import VoiceHelp from '@/components/VoiceHelp';
+import Confetti from '@/components/learn/Confetti';
+import LessonDecor from '@/components/learn/LessonDecor';
+import MiloTrail from '@/components/learn/MiloTrail';
+import { awardSticker, prefersReducedMotion, readFx, saveFx } from '@/lib/stickers';
 import { getLesson, getQuestionSet, getReplacement, gradeAnswer, isSubjectCode, parseGrade } from '@/lib/data';
 import { isAnswered } from '@/lib/grading';
 import { knowledgeFor } from '@/lib/content/knowledge';
@@ -147,6 +151,19 @@ function LamBaiContent() {
   };
   const [voiceProblem, setVoiceProblem] = useState<'unsupported' | 'no_vi_voice' | null>(null);
   const [startTotal, setStartTotal] = useState(0);
+  // Hiệu ứng (pháo giấy, Milo nhảy, họa tiết trôi): em tắt được; máy bật "giảm chuyển động" thì tự bỏ chuyển động
+  const [fx, setFx] = useState(true);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  useEffect(() => {
+    setFx(readFx());
+    setReduceMotion(prefersReducedMotion());
+  }, []);
+  const motion = fx && !reduceMotion;
+  // Mỗi câu mới hiện từ đầu trang (để thấy đường tiến độ có Milo ngay trên câu hỏi)
+  useEffect(() => {
+    if (phase === 'quiz') window.scrollTo({ top: 0 });
+  }, [phase, current]);
+  const toggleFx = () => setFx((v) => { saveFx(!v); return !v; });
   const finishedRef = useRef(false);
 
   const q = order[current];
@@ -222,6 +239,8 @@ function LamBaiContent() {
     const t = totals(answers);
     t.durationMs += extraMsRef.current; // gồm cả thời gian làm dở các câu đã đổi
     const added = addPoints(lessonId, lesson.title, t.points);
+    const finishedAt = new Date().toISOString();
+    awardSticker(finishedAt, lessonId, t.score, order.length);
     saveAttempt({
       lessonId,
       lessonTitle: lesson.title,
@@ -236,7 +255,7 @@ function LamBaiContent() {
       newPoints: added.newPoints,
       totalPoints: added.totalPoints,
       previousTotal: added.previousTotal,
-      finishedAt: new Date().toISOString(),
+      finishedAt,
       seed,
       muc: seed ? muc : undefined,
       answers,
@@ -487,6 +506,7 @@ function LamBaiContent() {
     return (
       <>
         <LearnHeader />
+        <LessonDecor subject={subjectCode} animate={motion} />
         <main className="learn-main">
           <Link href={backHref} className="back-link">
             <ArrowLeft size={20} aria-hidden="true" /> Danh sách bài
@@ -601,9 +621,13 @@ function LamBaiContent() {
   const navLabel = (st: ItemStatus) =>
     st === 'correct' ? 'đã làm đúng' : st === 'wrong' ? 'đã làm sai' : st === 'timeout' ? 'hết giờ' : st === 'skipped' ? 'để sau' : 'chưa làm';
 
+  const trailMood = fb && motion ? (fb.kind === 'correct' ? 'jump' : 'tilt') : 'idle';
+  const trailMessage = fb ? (fb.kind === 'correct' ? 'Giỏi quá!' : 'Cố lên, câu sau nhé!') : undefined;
+
   return (
     <>
       <LearnHeader />
+      <LessonDecor subject={subjectCode} animate={motion} />
 
       <div className="quiz-bar">
         <div className="quiz-bar-inner">
@@ -616,6 +640,16 @@ function LamBaiContent() {
           <span className="quiz-count">{doneCount}/{order.length}</span>
           <button type="button" className="icon-button" aria-pressed={soundEnabled} aria-label={soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'} onClick={() => setSoundEnabled((v) => !v)}>
             {soundEnabled ? <Volume2 size={22} aria-hidden="true" /> : <VolumeX size={22} aria-hidden="true" />}
+          </button>
+          <button
+            type="button"
+            className={`icon-button fx-toggle${fx ? ' is-on' : ''}`}
+            aria-pressed={fx}
+            aria-label={fx ? 'Tắt hiệu ứng (pháo giấy, Milo nhảy)' : 'Bật hiệu ứng (pháo giấy, Milo nhảy)'}
+            title={fx ? 'Tắt hiệu ứng' : 'Bật hiệu ứng'}
+            onClick={toggleFx}
+          >
+            <Sparkles size={22} aria-hidden="true" />
           </button>
           <button type="button" className="button button-dark quiz-submit" onClick={() => (unfinished > 0 ? setDialog('submit') : finish())}>
             <Flag size={18} aria-hidden="true" /> Nộp bài
@@ -641,8 +675,10 @@ function LamBaiContent() {
         </nav>
       </div>
 
-      <main className="learn-main" style={{ paddingBottom: 240 }}>
+      <main className={`learn-main${motion ? ' fx-on' : ''}`} style={{ paddingBottom: 240 }}>
         <section className="question-card">
+          {motion && fb?.kind === 'correct' && <Confetti burst={fb.id} />}
+          <MiloTrail statuses={order.map((x) => items[x.id]?.status ?? 'todo')} current={current} mood={trailMood} message={trailMessage} />
           <div className="question-top">
             <div className="question-meta">
               <span className="lesson-tag">Câu {current + 1}/{order.length}</span>
