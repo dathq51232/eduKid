@@ -2439,3 +2439,48 @@ body {
   .question-tools .button { white-space: nowrap; padding-inline: 14px; font-size: 16px; }
   .swap-count { font-size: 13px; }
 }
+
+/* ===== Học phí ===== */
+.is-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .02em; }
+.tag-wait { padding: 2px 8px; border-radius: 999px; background: #fef3c7; color: #92400e; font-size: 13px; font-weight: 700; }
+.tuition-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.tuition-banner svg { width: 18px; height: 18px; }
+.tuition-page h1 { display: flex; align-items: center; gap: 10px; }
+.tuition-page h1 svg { flex: none; width: 30px; height: 30px; }
+.pay-panel { display: grid; gap: 16px; }
+.pay-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.pay-plan { display: grid; gap: 4px; justify-items: start; padding: 18px; border-radius: 18px; border: 2px solid var(--line-strong); background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; box-shadow: var(--shadow-sm); }
+.pay-plan:hover, .pay-plan.is-on { border-color: var(--blue); }
+.pay-plan-name { font-weight: 700; color: var(--muted); }
+.pay-plan strong { font-size: 28px; color: var(--blue); }
+.pay-plan-note { font-size: 14px; color: var(--muted); }
+.pay-plan-cta { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 12px; border-radius: 999px; background: var(--brand-yellow); color: #1e2b4a; font-weight: 800; font-size: 14px; }
+.pay-plan-cta svg { width: 16px; height: 16px; }
+.pay-qr { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: start; padding: 18px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); border: 2px dashed var(--blue); }
+.qr-code { display: block; border-radius: 8px; background: #ffffff; max-width: 100%; height: auto; }
+.pay-info { display: grid; gap: 8px; min-width: 0; }
+.pay-info p { margin: 0; }
+.pay-step { font-weight: 600; }
+.pay-line { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.pay-line span { color: var(--muted); font-size: 14px; }
+.pay-line strong { overflow-wrap: anywhere; }
+.pay-warn { padding: 8px 12px; border-radius: 10px; background: #fff7e6; color: #7a4b00; font-size: 14px; }
+@media (max-width: 640px) {
+  .pay-qr { grid-template-columns: 1fr; justify-items: center; }
+  .pay-info { width: 100%; }
+  .pay-line { grid-template-columns: minmax(0, 1fr) auto; row-gap: 2px; }
+  .pay-line span { grid-column: 1 / -1; }
+  .pay-line strong { font-size: 17px; }
+}
+.billing-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; align-items: end; }
+.billing-switch { grid-column: 1 / -1; display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); cursor: pointer; }
+.billing-switch input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+.billing-note { grid-column: 1 / -1; }
+.billing-actions { grid-column: 1 / -1; }
+.billing-preview { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 12px; }
+.billing-preview p { flex: 1 1 260px; margin: 0; }
+.billing-filter { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin: 8px 0; }
+.billing-filter .auth-tabs { margin: 0; flex: 1 1 420px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.billing-search { display: inline-flex; align-items: center; gap: 6px; flex: 1 1 260px; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); }
+.billing-search svg { width: 16px; height: 16px; color: var(--muted); }
+.billing-search input { border: 0; outline: 0; background: transparent; font: inherit; width: 100%; color: var(--ink); }

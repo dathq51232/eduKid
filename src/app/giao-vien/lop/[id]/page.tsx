@@ -4,7 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { ArrowLeft, ClipboardCheck, FileText, GraduationCap, Radar, Send, Table2 } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
-import ClassManager, { type RosterRow, type SummaryRow } from '@/components/classroom/ClassManager';
+import ClassManager, { type BillingRow, type RosterRow, type SummaryRow } from '@/components/classroom/ClassManager';
 import ClassProgress from '@/components/classroom/ClassProgress';
 import { ClassLeaderboard } from '@/components/achievements/LiveAchievements';
 import type { LessonResult } from '@/lib/classroom/progress';
@@ -29,11 +29,13 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   const { data: cls } = await supabase.from('classes').select('id, name, grade, join_code, status').eq('id', id).maybeSingle();
   if (!cls) notFound(); // lớp không tồn tại HOẶC không được phân công — trả cùng một kết quả
 
-  const [{ data: roster }, { data: summary }, { data: pinRows, error: pinErr }] = await Promise.all([
+  const [{ data: roster }, { data: summary }, { data: pinRows, error: pinErr }, { data: billing }] = await Promise.all([
     supabase.rpc('teacher_class_roster', { p_class: id }),
     supabase.rpc('class_results_summary', { p_class: id }),
     // PIN học sinh (migration 0009) — chỉ giáo viên của lớp đọc được; lỗi (chưa chạy migration) thì coi như chưa có PIN
     supabase.rpc('teacher_class_pins', { p_class: id }),
+    // Tình trạng học phí (migration 0018) — giáo viên chỉ xem; chưa chạy migration thì bỏ qua
+    supabase.rpc('teacher_class_billing', { p_class: id }),
   ]);
   const pins: Record<string, string> = Object.fromEntries(((pinRows ?? []) as { student_id: string; pin: string }[]).map((p) => [p.student_id, p.pin]));
   const rosterRows = (roster ?? []) as RosterRow[];
@@ -63,6 +65,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
           roster={rosterRows}
           summary={(summary ?? []) as SummaryRow[]}
           pins={pins}
+          billing={(billing ?? []) as BillingRow[]}
           top={(
             <nav className="teacher-tools no-print" aria-label="Công cụ giáo viên">
               <Link href={`/giao-vien/lop/${id}/giao-bai`} className="tool-card tone-blue">

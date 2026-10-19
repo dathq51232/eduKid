@@ -30,7 +30,19 @@ type Cls = { id: string; name: string; grade: number; join_code: string; status:
 
 const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '—');
 
-export default function ClassManager({ cls, roster, summary, pins = {}, top }: { cls: Cls; roster: RosterRow[]; summary: SummaryRow[]; pins?: Record<string, string>; /** khối hiện ngay dưới tiêu đề lớp */ top?: React.ReactNode }) {
+export type BillingRow = { student_id: string; active: boolean; reason: 'free' | 'paid' | 'trial' | 'expired'; until: string | null };
+const fmtDay = (s: string | null) => (s ? new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/-/g, '/') : '');
+function billingChip(b?: BillingRow) {
+  if (!b) return <span className="dash-muted">—</span>;
+  if (b.reason === 'paid') return <span className="status-chip tone-green" title={`Đã đóng, đến ${fmtDay(b.until)}`}>Đến {fmtDay(b.until)}</span>;
+  if (b.reason === 'trial') return <span className="status-chip tone-blue" title="Đang học thử">Học thử · {fmtDay(b.until)}</span>;
+  if (b.reason === 'expired') return <span className="status-chip tone-coral">Hết hạn</span>;
+  return <span className="dash-muted">Miễn phí</span>;
+}
+
+export default function ClassManager({ cls, roster, summary, pins = {}, top, billing }: { cls: Cls; roster: RosterRow[]; summary: SummaryRow[]; pins?: Record<string, string>; /** khối hiện ngay dưới tiêu đề lớp */ top?: React.ReactNode; /** tình trạng học phí (migration 0018) */ billing?: BillingRow[] }) {
+  const billMap = new Map((billing ?? []).map((b) => [b.student_id, b]));
+  const showBilling = (billing ?? []).some((b) => b.reason !== 'free');
   const router = useRouter();
   const [names, setNames] = useState('');
   const [consent, setConsent] = useState(false);
@@ -192,7 +204,7 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top }: {
           <div className="table-scroll">
             <table className="roster-table">
               <thead>
-                <tr><th>Học sinh</th><th>PIN</th><th>Trạng thái</th><th>Bài đã làm</th><th>Đúng TB</th><th>Điểm</th><th>Gần nhất</th><th><span className="sr-only">Thao tác</span></th></tr>
+                <tr><th>Học sinh</th><th>PIN</th><th>Trạng thái</th>{showBilling && <th>Học phí</th>}<th>Bài đã làm</th><th>Đúng TB</th><th>Điểm</th><th>Gần nhất</th><th><span className="sr-only">Thao tác</span></th></tr>
               </thead>
               <tbody>
                 {active.map((r) => {
@@ -204,6 +216,7 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top }: {
                       <th scope="row"><Link href={`/giao-vien/lop/${cls.id}/hoc-sinh/${r.student_id}`} className="student-link" title="Xem tiến độ chi tiết">{r.display_name}</Link></th>
                       <td className="pin-cell">{pins[r.student_id] ? (showPins ? <b className="pin-value">{pins[r.student_id]}</b> : <span aria-label="PIN đang ẩn">••••••</span>) : <span className="dash-muted" title="PIN tạo trước khi bật lưu PIN — bấm “Đặt PIN mới” để có PIN xem lại được">Chưa lưu</span>}</td>
                       <td><span className={`status-chip tone-${st.tone}`}>{st.label}</span></td>
+                      {showBilling && <td>{billingChip(billMap.get(r.student_id))}</td>}
                       <td>{s?.lessons_done ? <Link href={`/giao-vien/lop/${cls.id}/hoc-sinh/${r.student_id}`} className="student-link">{s.lessons_done} bài</Link> : 0}</td>
                       <td>{s?.lessons_done ? `${s.avg_percent}%` : '—'}</td>
                       <td>{s?.total_points ?? 0}</td>

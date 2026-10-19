@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getViewer } from '@/lib/auth/viewer';
-import { studentGradeOf } from '@/lib/auth/student-grade';
+import { learningGate } from '@/lib/auth/gate';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient, hasServiceRole } from '@/lib/supabase/admin';
 import { gradeLessonSubmission, type SubmittedAnswer } from '@/lib/progress-server/grade';
@@ -21,9 +21,10 @@ export async function POST(request: Request) {
   const graded = gradeLessonSubmission(body.lessonId, body.answers as SubmittedAnswer[]);
   if ('error' in graded) return NextResponse.json({ saved: false, reason: graded.error }, { status: 400 });
 
-  // Học sinh chỉ lưu bài của khối mình (khối lấy từ database, không tin dữ liệu trình duyệt gửi)
-  const myGrade = await studentGradeOf(await createClient(), viewer.userId);
-  if (myGrade && graded.grade !== myGrade) return NextResponse.json({ saved: false, reason: 'wrong_grade' }, { status: 403 });
+  // Còn hạn học phí + chỉ lưu bài của khối mình (lấy từ database, không tin dữ liệu trình duyệt gửi)
+  const gate = await learningGate(await createClient(), viewer.userId);
+  if (gate.is_student && !gate.active) return NextResponse.json({ saved: false, reason: 'expired' }, { status: 402 });
+  if (gate.grade && graded.grade !== gate.grade) return NextResponse.json({ saved: false, reason: 'wrong_grade' }, { status: 403 });
 
   const seed = Number.isSafeInteger(body.seed) && (body.seed as number) > 0 ? (body.seed as number) : null;
   const muc = body.muc === 1 || body.muc === 2 || body.muc === 3 ? body.muc : null;

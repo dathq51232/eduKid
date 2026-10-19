@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getViewer } from '@/lib/auth/viewer';
+import { learningGate } from '@/lib/auth/gate';
+import { createClient } from '@/lib/supabase/server';
 import { createAdminClient, hasServiceRole } from '@/lib/supabase/admin';
 import { checkGameResult } from '@/lib/progress-server/grade';
 import { rateLimit } from '@/lib/rate-limit';
@@ -12,6 +14,9 @@ export async function POST(request: Request) {
   if (!viewer.isStudent || !viewer.studentId) return NextResponse.json({ saved: false, reason: 'not_student' });
   if (!hasServiceRole()) return NextResponse.json({ saved: false, reason: 'not_configured' }, { status: 503 });
   if (!rateLimit(`game:${viewer.studentId}`, 120, 60 * 60_000)) return NextResponse.json({ saved: false, reason: 'too_many' }, { status: 429 });
+
+  const gate = await learningGate(await createClient(), viewer.userId);
+  if (gate.is_student && !gate.active) return NextResponse.json({ saved: false, reason: 'expired' }, { status: 402 });
 
   const r = checkGameResult((await request.json().catch(() => ({}))) as Record<string, unknown>);
   if (!r) return NextResponse.json({ saved: false, reason: 'invalid' }, { status: 400 });

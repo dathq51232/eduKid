@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 import { NextResponse, type NextRequest } from 'next/server';
-import { studentGradeOf } from '@/lib/auth/student-grade';
+import { learningGate } from '@/lib/auth/gate';
 import { lessonGradeFromId } from '@/lib/basics';
 
 // Làm mới phiên đăng nhập Supabase ở mỗi request để Server Components đọc được user.
@@ -42,28 +42,34 @@ export async function updateSession(request: NextRequest) {
     return redirect;
   }
 
-  // Học sinh chỉ học nội dung KHỐI CỦA MÌNH: mở bài / chọn bài của khối khác -> về trang chọn bài đúng khối.
-  // Khối lấy từ database (lớp em đang học), không tin tham số trên URL. Người lớn (giáo viên…) không bị giới hạn.
+  // Học sinh: (1) hết hạn học phí -> chỉ còn trang của em + trang đóng phí; (2) chỉ học nội dung KHỐI CỦA MÌNH.
+  // Thông tin lấy từ database (my_learning_gate), không tin tham số trên URL. Người lớn (giáo viên…) không bị giới hạn.
   const path = request.nextUrl.pathname;
-  if (data.user && GRADE_LOCKED.includes(path)) {
-    const grade = await studentGradeOf(supabase, data.user.id);
-    if (grade) {
+  if (data.user && (GATED.includes(path) || path.startsWith('/hoc-sinh/de/'))) {
+    const gate = await learningGate(supabase, data.user.id);
+    const grade = gate.is_student ? gate.grade : null;
+    const go = (pathname: string, params: Record<string, string> = {}) => {
+      const to = request.nextUrl.clone();
+      to.pathname = pathname;
+      to.search = '';
+      for (const [k, v] of Object.entries(params)) to.searchParams.set(k, v);
+      const redirect = NextResponse.redirect(to);
+      response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+      if (grade) redirect.cookies.set(GRADE_COOKIE, String(grade), { path: '/', sameSite: 'lax', maxAge: 12 * 3600 });
+      return redirect;
+    };
+    if (gate.is_student && !gate.active) return go('/hoc-sinh/dong-phi');
+    if (grade && GRADE_LOCKED.includes(path)) {
       const q = request.nextUrl.searchParams;
       const asked = Number(q.get('grade') ?? grade);
       const lessonGrade = path === '/lam-bai' ? lessonGradeFromId(q.get('lessonId')) : null;
       if (asked !== grade || (lessonGrade !== null && lessonGrade !== grade)) {
-        const to = request.nextUrl.clone();
-        to.pathname = '/chon-bai';
-        to.search = '';
-        to.searchParams.set('grade', String(grade));
         const subject = q.get('subject');
-        if (subject === 'toan' || subject === 'tieng-viet' || subject === 'tieng-anh') to.searchParams.set('subject', subject);
-        const redirect = NextResponse.redirect(to);
-        response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
-        redirect.cookies.set(GRADE_COOKIE, String(grade), { path: '/', sameSite: 'lax', maxAge: 12 * 3600 });
-        return redirect;
+        return go('/chon-bai', { grade: String(grade), ...(subject === 'toan' || subject === 'tieng-viet' || subject === 'tieng-anh' ? { subject } : {}) });
       }
-      // Gợi ý cho giao diện (ẩn nút chọn lớp khác). Chỉ để hiển thị — việc chặn nằm ở đây và ở /api/tien-do.
+    }
+    // Gợi ý cho giao diện (ẩn nút chọn lớp khác). Chỉ để hiển thị — việc chặn nằm ở đây và ở các API.
+    if (grade) {
       if (request.cookies.get(GRADE_COOKIE)?.value !== String(grade)) response.cookies.set(GRADE_COOKIE, String(grade), { path: '/', sameSite: 'lax', maxAge: 12 * 3600 });
     } else if (request.cookies.get(GRADE_COOKIE)) {
       response.cookies.delete(GRADE_COOKIE);
@@ -73,6 +79,8 @@ export async function updateSession(request: NextRequest) {
 }
 
 const GRADE_LOCKED = ['/chon-bai', '/lam-bai'];
+/** Phần học bị khoá khi hết hạn học phí (cùng /hoc-sinh/de/…) */
+const GATED = ['/chon-bai', '/lam-bai', '/ket-qua', '/tro-choi'];
 export const GRADE_COOKIE = 'edukid_grade';
 
 function toLogin(request: NextRequest) {

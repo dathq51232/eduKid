@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { BookOpen, CheckCircle2, ClipboardList, Clock, Gamepad2, Star } from 'lucide-react';
+import { BookOpen, CheckCircle2, ClipboardList, Clock, CreditCard, Gamepad2, Lock, Star } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import SignOutButton from '@/components/classroom/SignOutButton';
 import { getViewer } from '@/lib/auth/viewer';
+import { learningGate } from '@/lib/auth/gate';
+import { fmtDay } from '@/lib/billing';
 import { MUC_NAME, SUBJECT_NAME, dueInfo, lessonHref, type MyAssignment } from '@/lib/classroom/assignments';
 import { createClient } from '@/lib/supabase/server';
 
@@ -31,6 +33,10 @@ export default async function StudentHome() {
     // Bài thầy cô giao (migration 0017). Chưa chạy migration thì bỏ qua, trang vẫn hiện bình thường.
     supabase.rpc('student_my_assignments'),
   ]);
+  // Học phí (migration 0018): hết hạn thì mọi nút học dẫn tới trang đóng phí (máy chủ cũng chặn ở middleware + API)
+  const gate = await learningGate(supabase, viewer.userId);
+  const locked = gate.is_student && !gate.active;
+  const PAY = '/hoc-sinh/dong-phi';
   const tasks = ((assigned ?? []) as MyAssignment[]);
   const todo = tasks.filter((t) => t.status === 'open' && !t.done);
   const fmtNum = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',');
@@ -45,6 +51,15 @@ export default async function StudentHome() {
     <>
       <LearnHeader />
       <main className="dash wrap">
+        {gate.reason === 'expired' && (
+          <p className="adm-alert is-warn tuition-banner" role="status"><Lock aria-hidden="true" /> Thời gian học của em đã hết. Nhờ bố mẹ đóng học phí để học tiếp nhé! <Link href={PAY} className="btn btn-yellow btn-sm"><CreditCard aria-hidden="true" /> Đóng học phí</Link></p>
+        )}
+        {gate.reason === 'trial' && (
+          <p className="adm-alert is-info tuition-banner">Em đang học thử miễn phí đến {fmtDay(gate.until)}. <Link href={PAY}>Xem học phí →</Link></p>
+        )}
+        {gate.reason === 'paid' && (
+          <p className="dash-muted tuition-banner">Đã đóng học phí — học đến hết {fmtDay(gate.until)}. <Link href={PAY}>Học phí</Link></p>
+        )}
         <section className="dash-hero">
           <MiloMascot size={110} />
           <div>
@@ -52,8 +67,14 @@ export default async function StudentHome() {
             <h1>Chào {(me as { display_name?: string } | null)?.display_name ?? 'em'}!</h1>
             <p>Hôm nay mình học một bài nhỏ nhé.</p>
             <div className="dash-actions">
-              <Link href={`/chon-bai?grade=${grade}`} className="btn btn-yellow"><BookOpen aria-hidden="true" /> Vào học</Link>
-              <Link href="/tro-choi" className="btn btn-outline"><Gamepad2 aria-hidden="true" /> Game trí tuệ</Link>
+              {locked ? (
+                <Link href={PAY} className="btn btn-yellow"><Lock aria-hidden="true" /> Đóng học phí để học tiếp</Link>
+              ) : (
+                <>
+                  <Link href={`/chon-bai?grade=${grade}`} className="btn btn-yellow"><BookOpen aria-hidden="true" /> Vào học</Link>
+                  <Link href="/tro-choi" className="btn btn-outline"><Gamepad2 aria-hidden="true" /> Game trí tuệ</Link>
+                </>
+              )}
               <SignOutButton />
             </div>
           </div>
@@ -65,7 +86,7 @@ export default async function StudentHome() {
             <ul className="task-list">
               {tasks.map((t) => {
                 const d = dueInfo(t.due_at);
-                const href = t.kind === 'exam' ? `/hoc-sinh/de/${t.id}` : t.lesson_code && t.subject ? lessonHref(t.lesson_code, t.subject, t.grade, t.muc) : null;
+                const href = locked ? PAY : t.kind === 'exam' ? `/hoc-sinh/de/${t.id}` : t.lesson_code && t.subject ? lessonHref(t.lesson_code, t.subject, t.grade, t.muc) : null;
                 const closed = t.status !== 'open';
                 return (
                   <li key={t.id} className={`task-item${t.done ? ' is-done' : ''}${!t.done && d.overdue ? ' is-over' : ''}`}>

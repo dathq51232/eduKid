@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getViewer } from '@/lib/auth/viewer';
+import { learningGate } from '@/lib/auth/gate';
+import { createClient } from '@/lib/supabase/server';
 import type { ExamItem } from '@/lib/classroom/assignments';
 import { gradeExam } from '@/lib/classroom/exam-grade';
 import { rateLimit } from '@/lib/rate-limit';
@@ -14,6 +16,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (viewer.state !== 'ok' || !viewer.isStudent || !viewer.studentId) return NextResponse.json({ error: 'Em cần đăng nhập bằng tài khoản học sinh.' }, { status: 401 });
   if (!hasServiceRole()) return NextResponse.json({ error: 'Máy chủ chưa cấu hình lưu bài.' }, { status: 503 });
   if (!rateLimit(`nopde:${viewer.studentId}`, 20, 60 * 60_000)) return NextResponse.json({ error: 'Em nộp quá nhiều lần, thử lại sau.' }, { status: 429 });
+
+  const gate = await learningGate(await createClient(), viewer.userId);
+  if (gate.is_student && !gate.active) return NextResponse.json({ error: 'Đã hết hạn học phí — nhờ bố mẹ đóng học phí để tiếp tục.' }, { status: 402 });
 
   const body = (await request.json().catch(() => ({}))) as { answers?: unknown; durationMs?: unknown };
   const admin = createAdminClient();
