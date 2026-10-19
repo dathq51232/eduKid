@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { GAME_MASCOT } from '@/lib/mascots';
 import GameFinish from './GameFinish';
 import LevelPicker, { rememberLevel } from './LevelPicker';
 import PatternItemView from './PatternItemView';
@@ -59,6 +60,7 @@ export default function PatternGame({ initialLevel }: { initialLevel: GameLevel 
       <>
         <LevelPicker value={level} onChange={changeLevel} detail={(lv) => LEVEL_DETAIL[lv]} />
         <GameFinish
+          mascot={GAME_MASCOT.pattern}
           title={all ? 'Thám tử xuất sắc!' : 'Em đã hoàn thành chuyến điều tra!'}
           message={
             all
@@ -147,7 +149,7 @@ export default function PatternGame({ initialLevel }: { initialLevel: GameLevel 
         <div className="game-feedback-slot" aria-live="polite">
           {picked && (
             <div className={`game-feedback ${right ? 'is-right' : 'is-try'}`}>
-              <MiloMascot mood={right ? 'cheer' : 'oops'} size={72} />
+              <MiloMascot variant={GAME_MASCOT.pattern} mood={right ? 'cheer' : 'oops'} size={72} />
               <div>
                 <p className="game-feedback-title">{praise}</p>
                 <p>{explainPattern(q)}</p>

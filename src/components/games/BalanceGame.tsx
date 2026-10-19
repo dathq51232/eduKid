@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { GAME_MASCOT } from '@/lib/mascots';
 import GameFinish from './GameFinish';
 import LevelPicker, { rememberLevel } from './LevelPicker';
 import { ShapePath } from './ShapeIcon';
@@ -170,6 +171,7 @@ export default function BalanceGame({ initialLevel }: { initialLevel: GameLevel 
       <>
         <LevelPicker value={level} onChange={changeLevel} detail={detail} />
         <GameFinish
+          mascot={GAME_MASCOT.balance}
           title="Cân nào cũng thăng bằng!"
           message={
             right === round.length
@@ -256,7 +258,7 @@ export default function BalanceGame({ initialLevel }: { initialLevel: GameLevel 
             <div className="game-feedback-slot" aria-live="polite">
               {solved ? (
                 <div className="game-feedback is-right">
-                  <MiloMascot mood="cheer" size={64} />
+                  <MiloMascot variant={GAME_MASCOT.balance} mood="cheer" size={64} />
                   <div>
                     <p className="game-feedback-title">{tried.length === 1 ? 'Chính xác!' : 'Đúng rồi, cân đã thăng bằng!'}</p>
                     <p>{q.explain}</p>
@@ -267,7 +269,7 @@ export default function BalanceGame({ initialLevel }: { initialLevel: GameLevel 
                 </div>
               ) : last !== null ? (
                 <div className="game-feedback is-try">
-                  <MiloMascot mood="think" size={64} />
+                  <MiloMascot variant={GAME_MASCOT.balance} mood="think" size={64} />
                   <div>
                     <p className="game-feedback-title">Cân chưa thăng bằng</p>
                     <p>{wrongMsg}</p>

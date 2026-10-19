@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react';
+import { GAME_MASCOT } from '@/lib/mascots';
 import GameFinish from './GameFinish';
 import LevelPicker, { rememberLevel } from './LevelPicker';
 import MiloMascot from '@/components/mascot/MiloMascot';
@@ -107,6 +108,7 @@ export default function MazeGame({ initialLevel }: { initialLevel: GameLevel }) 
       <>
         <LevelPicker value={level} onChange={changeLevel} detail={detail} />
         <GameFinish
+          mascot={GAME_MASCOT.maze}
           title="Milo đã đến đích!"
           message={
             best
@@ -161,7 +163,7 @@ export default function MazeGame({ initialLevel }: { initialLevel: GameLevel }) 
                 strokeLinejoin="round"
               />
               <path d={walls} stroke="#1f2a44" strokeWidth="4" strokeLinecap="round" fill="none" />
-              <MiloMascot x={PAD + pos.x * CELL + 4} y={PAD + pos.y * CELL + 3} size={CELL - 8} />
+              <MiloMascot variant={GAME_MASCOT.maze} x={PAD + pos.x * CELL + 4} y={PAD + pos.y * CELL + 3} size={CELL - 8} />
             </svg>
 
             <div className="maze-pad" role="group" aria-label="Nút điều khiển">

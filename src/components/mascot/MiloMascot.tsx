@@ -2,8 +2,8 @@
 // Ảnh nằm trong dự án (public/brand/milo.webp, milo-sm.webp) — không tải từ địa chỉ ngoài.
 
 export type MiloMood = 'happy' | 'cheer' | 'think' | 'oops';
-/** Trang phục theo game: 'robot' = Milo mặc bộ giáp robot (game Robot lập trình) */
-export type MiloVariant = 'default' | 'robot';
+/** Trang phục: 'robot' (Robot lập trình), 'artist' họa sĩ, 'professor' giáo sư, 'astronaut' phi hành gia, 'doctor' bác sĩ — xem src/lib/mascots.ts */
+export type MiloVariant = 'default' | 'robot' | 'artist' | 'professor' | 'astronaut' | 'doctor';
 
 type Props = {
   /** Giữ để tương thích chỗ gọi cũ; tranh chính thức dùng chung một tư thế */
@@ -19,7 +19,7 @@ type Props = {
 };
 
 const src = (size: number, variant: MiloVariant = 'default') => {
-  const base = variant === 'robot' ? '/brand/milo-robot' : '/brand/milo';
+  const base = variant === 'default' ? '/brand/milo' : `/brand/milo-${variant}`;
   return size <= 140 ? `${base}-sm.webp` : `${base}.webp`;
 };
 

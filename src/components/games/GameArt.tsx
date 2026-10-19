@@ -1,5 +1,6 @@
 import MiloMascot from '@/components/mascot/MiloMascot';
 import type { GameId } from '@/lib/games/catalog';
+import { GAME_MASCOT } from '@/lib/mascots';
 
 const INK = '#1f2a44';
 
@@ -78,7 +79,7 @@ export default function GameArt({ id }: { id: GameId }) {
         )}
       </svg>
       {id !== 'robot' && (
-        <MiloMascot size={40} mood={id === 'pattern' || id === 'sudoku' ? 'think' : id === 'memory' ? 'happy' : 'cheer'} className="game-art-milo" />
+        <MiloMascot variant={GAME_MASCOT[id]} size={58} mood={id === 'pattern' || id === 'sudoku' ? 'think' : id === 'memory' ? 'happy' : 'cheer'} className="game-art-milo" />
       )}
     </div>
   );

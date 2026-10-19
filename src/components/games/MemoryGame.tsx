@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { GAME_MASCOT } from '@/lib/mascots';
 import GameFinish from './GameFinish';
 import LevelPicker, { rememberLevel } from './LevelPicker';
 import ShapeIcon from './ShapeIcon';
@@ -71,6 +72,7 @@ export default function MemoryGame({ initialLevel }: { initialLevel: GameLevel }
       <>
         <LevelPicker value={level} onChange={changeLevel} detail={detail} />
         <GameFinish
+          mascot={GAME_MASCOT.memory}
           title="Nhà vô địch trí nhớ!"
           message={`Em đã tìm đủ ${pairs} cặp thẻ. Trí nhớ được luyện mỗi ngày sẽ càng ngày càng giỏi!`}
           stats={[
@@ -100,7 +102,7 @@ export default function MemoryGame({ initialLevel }: { initialLevel: GameLevel }
         </div>
 
         <div className="memory-status">
-          <MiloMascot mood={mood} size={56} />
+          <MiloMascot variant={GAME_MASCOT.memory} mood={mood} size={56} />
           <p aria-live="polite">{message}</p>
         </div>
 

@@ -22,6 +22,7 @@ import Confetti from '@/components/learn/Confetti';
 import LessonDecor from '@/components/learn/LessonDecor';
 import MiloTrail from '@/components/learn/MiloTrail';
 import { awardSticker, prefersReducedMotion, readFx, saveFx } from '@/lib/stickers';
+import { SUBJECT_MASCOT } from '@/lib/mascots';
 import { getLesson, getQuestionSet, getReplacement, gradeAnswer, isSubjectCode, parseGrade } from '@/lib/data';
 import { isAnswered } from '@/lib/grading';
 import { knowledgeFor } from '@/lib/content/knowledge';
@@ -678,7 +679,7 @@ function LamBaiContent() {
       <main className={`learn-main${motion ? ' fx-on' : ''}`} style={{ paddingBottom: 240 }}>
         <section className="question-card">
           {motion && fb?.kind === 'correct' && <Confetti burst={fb.id} />}
-          <MiloTrail statuses={order.map((x) => items[x.id]?.status ?? 'todo')} current={current} mood={trailMood} message={trailMessage} />
+          <MiloTrail statuses={order.map((x) => items[x.id]?.status ?? 'todo')} current={current} mood={trailMood} message={trailMessage} variant={SUBJECT_MASCOT[subjectCode]} />
           <div className="question-top">
             <div className="question-meta">
               <span className="lesson-tag">Câu {current + 1}/{order.length}</span>

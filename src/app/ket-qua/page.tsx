@@ -11,6 +11,7 @@ import LessonDecor from '@/components/learn/LessonDecor';
 import MedalBadge from '@/components/learn/MedalBadge';
 import StickerAlbum, { NewSticker } from '@/components/learn/StickerAlbum';
 import { lastAwardFor, type StickerId } from '@/lib/stickers';
+import { SUBJECT_MASCOT } from '@/lib/mascots';
 import { isSubjectCode, parseGrade } from '@/lib/basics';
 import { LEVELS, formatDuration, rankFor } from '@/lib/levels';
 import { readLastAttempt, starsFor } from '@/lib/progress';
@@ -115,7 +116,7 @@ function KetQuaContent() {
       <LessonDecor subject={attempt.subject} animate={false} />
       <main className="learn-main">
         <section className="result-card" aria-live="polite">
-          <MedalBadge size={132} />
+          <MedalBadge size={132} variant={SUBJECT_MASCOT[attempt.subject]} />
           <p className="lesson-tag">{attempt.lessonTitle}</p>
           <h1>{comment.headline}</h1>
           <div className="result-stars" aria-label={`Em được ${stars} trên 3 ngôi sao`}>

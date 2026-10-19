@@ -1,4 +1,4 @@
-import MiloMascot from '@/components/mascot/MiloMascot';
+import MiloMascot, { type MiloVariant } from '@/components/mascot/MiloMascot';
 
 export type StopStatus = 'todo' | 'skipped' | 'correct' | 'wrong' | 'timeout';
 export type TrailMood = 'idle' | 'jump' | 'tilt';
@@ -27,10 +27,10 @@ export function stopPoints(n: number, W = 1000): { x: number; y: number }[] {
  * Đường tiến độ: mỗi câu là một chặng; câu đúng có ngôi sao vàng; Milo đứng ở câu đang làm.
  * Trả lời đúng: Milo nhảy lên + "Giỏi quá!"; chưa đúng: Milo nghiêng đầu động viên. Cờ đỏ ở đích.
  */
-type Props = { statuses: StopStatus[]; current: number; mood: TrailMood; message?: string };
+type Props = { statuses: StopStatus[]; current: number; mood: TrailMood; message?: string; variant?: MiloVariant };
 
 /** Một bản vẽ con đường với chiều rộng W (bản rộng cho máy tính / iPad, bản hẹp cho điện thoại để Milo đủ to) */
-function Road({ statuses, current, mood, message, W }: Props & { W: number }) {
+function Road({ statuses, current, mood, message, variant, W }: Props & { W: number }) {
   const pts = stopPoints(statuses.length, W);
   const flag = { x: W - 40, y: pts.length ? pts[pts.length - 1].y - 6 : 70 };
   const all = [{ x: 14, y: pts[0]?.y ?? 70 }, ...pts, flag];
@@ -78,11 +78,11 @@ function Road({ statuses, current, mood, message, W }: Props & { W: number }) {
         {cur && (
           <g className={`milo-trail-milo is-${mood}`} style={{ transformOrigin: `${cur.x}px ${cur.y}px` }}>
             <ellipse cx={cur.x} cy={cur.y + 2} rx="18" ry="5" fill={INK} opacity=".16" />
-            <MiloMascot x={cur.x - 40} y={cur.y - 86} size={80} />
+            <MiloMascot x={cur.x - 50} y={cur.y - 104} size={100} variant={variant} />
           </g>
         )}
         {cur && message && (
-          <g className="milo-trail-bubble" transform={`translate(${bubbleLeft ? cur.x - 266 : cur.x + 42} ${cur.y - 86})`}>
+          <g className="milo-trail-bubble" transform={`translate(${bubbleLeft ? cur.x - 276 : cur.x + 52} ${cur.y - 96})`}>
             <rect width="224" height="44" rx="16" fill="#fff" stroke={INK} strokeWidth="2.5" />
             <text x="112" y="29" textAnchor="middle" fontSize="21" fontWeight="800" fill={INK}>{message}</text>
           </g>

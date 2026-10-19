@@ -172,6 +172,8 @@ Bộ sinh câu ngẫu nhiên cho Toán 1 (Học kì 1) — dùng cho nút **Đ�
 - **Nền theo môn** (`src/components/learn/LessonDecor.tsx`): Toán số + hình khối, Tiếng Việt chữ cái có dấu + bút chì, Tiếng Anh bóng bay chữ ABC; họa tiết mờ ở hai bên mép + viền nét đứt, nằm sau nội dung (không che câu hỏi). Tự vẽ bằng SVG, không ảnh ngoài.
 - **Đường tiến độ có Milo** (`MiloTrail.tsx`, đầu khung câu hỏi): mỗi câu một chặng, câu đúng có sao vàng, Milo đứng ở câu đang làm; đúng thì Milo nhảy + "Giỏi quá!", sai thì nghiêng đầu "Cố lên, câu sau nhé!". Điện thoại dùng bản đường ngắn hơn cho Milo đủ to.
 - **Hiệu ứng khi đúng**: pháo giấy ~1 giây (`Confetti.tsx`), ô đáp án sáng lên. Nút ✨ trên thanh làm bài bật/tắt hiệu ứng (ghi nhớ trên máy); máy bật "giảm chuyển động" thì tự bỏ mọi chuyển động.
+- **Milo theo môn / theo game** (`src/lib/mascots.ts`, ảnh `public/brand/milo-<tên>.webp` + `-sm`): Toán – giáo sư, Tiếng Việt – họa sĩ, Tiếng Anh – phi hành gia; game: Quy luật – họa sĩ, Mê cung – phi hành gia, Robot – robot, Sudoku – giáo sư, Cân – bác sĩ, Trí nhớ – Milo gốc. Ảnh tách nền từ bộ linh vật của dự án.
+- **Sticker 3D**: ảnh `public/stickers/<id>.webp` (200 × 200, nền trong suốt).
 - **Huy hiệu + sticker** (trang Kết quả, `MedalBadge.tsx`, `StickerAlbum.tsx`, `src/lib/stickers.ts`): làm đúng từ 7/10 nhận 1 sticker ngẫu nhiên chưa có (24 sticker tự vẽ: khủng long, tên lửa, hành tinh…); bộ sưu tập hiện ở trang Kết quả và Thành tích. Sticker lưu trên trình duyệt của máy (giống điểm tích luỹ khách), không quy đổi, không so sánh.
 
 ## Game trí tuệ (/tro-choi)

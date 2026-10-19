@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Eraser, Lightbulb } from 'lucide-react';
+import { GAME_MASCOT } from '@/lib/mascots';
 import GameFinish from './GameFinish';
 import LevelPicker, { rememberLevel } from './LevelPicker';
 import ShapeIcon from './ShapeIcon';
@@ -143,6 +144,7 @@ export default function SudokuGame({ initialLevel }: { initialLevel: GameLevel }
       <>
         <LevelPicker value={level} onChange={changeLevel} detail={detail} />
         <GameFinish
+          mascot={GAME_MASCOT.sudoku}
           title="Em giải xong Sudoku!"
           message={
             mistakes === 0
