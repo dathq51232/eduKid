@@ -20,3 +20,9 @@ export const MUC: Record<Muc, { name: string; describe: string; minLevel: Level;
   3: { name: 'Giỏi', describe: 'Chỉ câu vận dụng và thử thách (L3 → L5)', minLevel: 3, quota: { 3: 3, 4: 3, 5: 4 } },
 };
 export const parseMuc = (v: string | null | undefined): Muc => (v === '2' ? 2 : v === '3' ? 3 : 1);
+
+/** Khối lớp của một bài theo mã bài (toan2-…, tv3-…, ta4-…, lt-toan1-…); không nhận ra thì null */
+export function lessonGradeFromId(lessonId: string | null | undefined): number | null {
+  const m = /^(?:lt-)?(?:toan|tv|ta)([1-5])-/.exec(lessonId ?? '');
+  return m ? Number(m[1]) : null;
+}

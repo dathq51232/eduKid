@@ -23,7 +23,18 @@ function Stars({ count }: { count: number }) {
   );
 }
 
+/** Khối của tài khoản học sinh (máy chủ ghi cookie gợi ý, xem middleware) — chỉ để ẩn nút lớp khác */
+function useLockedGrade(): number | null {
+  const [g, setG] = useState<number | null>(null);
+  useEffect(() => {
+    const m = /(?:^|;\s*)edukid_grade=([1-5])(?:;|$)/.exec(document.cookie);
+    setG(m ? Number(m[1]) : null);
+  }, []);
+  return g;
+}
+
 function ChonBaiContent() {
+  const lockedGrade = useLockedGrade();
   const router = useRouter();
   const searchParams = useSearchParams();
   const subjectParam = searchParams.get('subject');
@@ -88,8 +99,8 @@ function ChonBaiContent() {
         </Link>
 
         <div className="grade-row is-learn" role="group" aria-label="Chọn lớp">
-          <span className="grade-title">Lớp</span>
-          {GRADES.map((g) => (
+          <span className="grade-title">{lockedGrade ? 'Lớp của em' : 'Lớp'}</span>
+          {GRADES.filter((g) => !lockedGrade || g === lockedGrade).map((g) => (
             <Link
               key={g}
               href={`/chon-bai?subject=${subjectCode}&grade=${g}`}

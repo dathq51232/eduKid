@@ -3,6 +3,7 @@ import BrandLogo from '@/components/brand/BrandLogo';
 import ThemeToggle from '@/components/brand/ThemeToggle';
 import AccountLink from '@/components/brand/AccountLink';
 import MainNavigation from '@/components/navigation/MainNavigation';
+import HeaderOffset from '@/components/navigation/HeaderOffset';
 
 type Props = {
   studentName?: string;
@@ -32,6 +33,7 @@ export default function LearnHeader({ studentName, avatar }: Props) {
           </p>
         )}
       </div>
+      <HeaderOffset />
     </header>
   );
 }

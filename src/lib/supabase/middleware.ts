@@ -2,6 +2,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 import { NextResponse, type NextRequest } from 'next/server';
+import { studentGradeOf } from '@/lib/auth/student-grade';
+import { lessonGradeFromId } from '@/lib/basics';
 
 // Làm mới phiên đăng nhập Supabase ở mỗi request để Server Components đọc được user.
 // Chưa cấu hình biến môi trường thì bỏ qua, trang minh họa vẫn chạy bình thường.
@@ -39,8 +41,39 @@ export async function updateSession(request: NextRequest) {
     response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
     return redirect;
   }
+
+  // Học sinh chỉ học nội dung KHỐI CỦA MÌNH: mở bài / chọn bài của khối khác -> về trang chọn bài đúng khối.
+  // Khối lấy từ database (lớp em đang học), không tin tham số trên URL. Người lớn (giáo viên…) không bị giới hạn.
+  const path = request.nextUrl.pathname;
+  if (data.user && GRADE_LOCKED.includes(path)) {
+    const grade = await studentGradeOf(supabase, data.user.id);
+    if (grade) {
+      const q = request.nextUrl.searchParams;
+      const asked = Number(q.get('grade') ?? grade);
+      const lessonGrade = path === '/lam-bai' ? lessonGradeFromId(q.get('lessonId')) : null;
+      if (asked !== grade || (lessonGrade !== null && lessonGrade !== grade)) {
+        const to = request.nextUrl.clone();
+        to.pathname = '/chon-bai';
+        to.search = '';
+        to.searchParams.set('grade', String(grade));
+        const subject = q.get('subject');
+        if (subject === 'toan' || subject === 'tieng-viet' || subject === 'tieng-anh') to.searchParams.set('subject', subject);
+        const redirect = NextResponse.redirect(to);
+        response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+        redirect.cookies.set(GRADE_COOKIE, String(grade), { path: '/', sameSite: 'lax', maxAge: 12 * 3600 });
+        return redirect;
+      }
+      // Gợi ý cho giao diện (ẩn nút chọn lớp khác). Chỉ để hiển thị — việc chặn nằm ở đây và ở /api/tien-do.
+      if (request.cookies.get(GRADE_COOKIE)?.value !== String(grade)) response.cookies.set(GRADE_COOKIE, String(grade), { path: '/', sameSite: 'lax', maxAge: 12 * 3600 });
+    } else if (request.cookies.get(GRADE_COOKIE)) {
+      response.cookies.delete(GRADE_COOKIE);
+    }
+  }
   return response;
 }
+
+const GRADE_LOCKED = ['/chon-bai', '/lam-bai'];
+export const GRADE_COOKIE = 'edukid_grade';
 
 function toLogin(request: NextRequest) {
   const login = request.nextUrl.clone();

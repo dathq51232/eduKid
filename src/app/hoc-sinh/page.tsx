@@ -25,7 +25,7 @@ export default async function StudentHome() {
   // RLS chỉ trả dữ liệu của chính học sinh đang đăng nhập
   const [{ data: me }, { data: cls }, { data: results }, { count: games }, { data: assigned }] = await Promise.all([
     supabase.from('students').select('display_name, grade').eq('id', viewer.studentId).maybeSingle(),
-    supabase.from('classes').select('name, grade').limit(1).maybeSingle(),
+    supabase.from('classes').select('name, grade').eq('status', 'active').order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('lesson_results').select('id, lesson_title, lesson_code, score, total, points, created_at').order('created_at', { ascending: false }).limit(20),
     supabase.from('game_results').select('id', { count: 'exact', head: true }),
     // Bài thầy cô giao (migration 0017). Chưa chạy migration thì bỏ qua, trang vẫn hiện bình thường.
@@ -38,7 +38,8 @@ export default async function StudentHome() {
   const best = new Map<string, number>();
   for (const r of list) best.set(r.lesson_code, Math.max(best.get(r.lesson_code) ?? 0, r.points));
   const points = [...best.values()].reduce((a, b) => a + b, 0);
-  const grade = (me as { grade?: number } | null)?.grade ?? 1;
+  // Khối theo lớp em đang học (năm sau lên lớp thì theo lớp mới), không có lớp thì theo hồ sơ học sinh
+  const grade = (cls as { grade?: number } | null)?.grade ?? (me as { grade?: number } | null)?.grade ?? 1;
 
   return (
     <>

@@ -631,7 +631,7 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--yellow); outlin
 .star-off { fill: var(--surface); stroke: var(--rule); }
 
 /* Làm bài */
-.quiz-bar { position: sticky; top: 74px; z-index: 20; border-bottom: 3px solid var(--line-strong); background: var(--paper); }
+.quiz-bar { position: sticky; top: var(--learn-top-h, 74px); z-index: 20; border-bottom: 3px solid var(--line-strong); background: var(--paper); }
 .quiz-bar-inner { width: min(760px, calc(100% - 32px)); margin-inline: auto; display: flex; align-items: center; gap: 12px; padding-block: 10px; }
 .icon-button { display: grid; flex: none; width: 48px; height: 48px; place-items: center; border: 2px solid var(--line-strong); border-radius: 14px; background: var(--bg-ffffff); color: var(--ink); cursor: pointer; }
 .icon-button:hover { background: var(--yellow); }
@@ -1569,7 +1569,7 @@ a.adm-row-title:hover { color: var(--link); text-decoration: underline; }
 @media (min-width: 1100px) {
   .chon-layout { display: grid; grid-template-columns: 270px minmax(0, 760px); justify-content: center; gap: 28px; width: min(1100px, calc(100% - 48px)); margin-inline: auto; }
   .chon-layout .learn-main { width: 100%; margin-inline: 0; }
-  .lesson-toc { position: sticky; top: 104px; display: flex; flex-direction: column; gap: 8px; align-self: start; max-height: calc(100vh - 124px); margin-top: 32px; padding: 14px 10px 10px 12px; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--bg-ffffff); }
+  .lesson-toc { position: sticky; top: calc(var(--learn-top-h, 74px) + 30px); display: flex; flex-direction: column; gap: 8px; align-self: start; max-height: calc(100vh - 124px); margin-top: 32px; padding: 14px 10px 10px 12px; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--bg-ffffff); }
   .toc-scroll { overflow-y: auto; padding-right: 4px; overscroll-behavior: contain; }
   .toc-fab { display: none; }
   .lesson-row { scroll-margin-top: 110px; }
@@ -2397,7 +2397,7 @@ body {
 @media (max-width: 520px) { .task-item { grid-template-columns: auto minmax(0, 1fr); } .task-item .btn { grid-column: 1 / -1; justify-content: center; } }
 .exam-take-page { max-width: 860px; }
 .exam-taker { display: grid; gap: 14px; }
-.exam-bar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 14px; border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.exam-bar { position: sticky; top: calc(var(--learn-top-h, 0px) + 6px); z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 14px; border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-sm); }
 .exam-bar-title { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
 .exam-timer { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; font-weight: 800; font-size: 18px; }
 .exam-timer svg { width: 18px; height: 18px; }
@@ -2418,3 +2418,24 @@ body {
 .exam-result-list li.is-wrong { background: #fee2e2; color: #b91c1c; }
 .gaps-page h1, .assign-page h1 { display: flex; align-items: center; gap: 10px; }
 .gaps-page h1 svg, .assign-page h1 svg { flex: none; width: 30px; height: 30px; }
+
+/* Điện thoại (thanh trên cùng xuống 2 dòng): thanh trên cùng cuộn theo trang để nhường chỗ cho nội dung;
+   chỉ thanh làm bài / làm đề dính ở đầu màn hình. Chiều cao thật được đo bởi HeaderOffset (--learn-top-h). */
+@media (max-width: 760px) {
+  .learn-top { position: relative; }
+  .quiz-bar-inner { padding-block: 6px; }
+  .feedback-bar { padding: 10px 0 max(10px, env(safe-area-inset-bottom)); }
+  .feedback-inner { gap: 8px 12px; }
+  .feedback-text h2 { font-size: 19px; }
+  .feedback-text p, .feedback-sub { font-size: 14px; }
+}
+/* Màn hình rất hẹp (iPhone SE, máy Android nhỏ ~320–380px) */
+@media (max-width: 380px) {
+  .quiz-bar-inner { gap: 6px; }
+  .quiz-bar .icon-button { width: 40px; height: 40px; border-radius: 12px; }
+  .quiz-progress { display: none; }
+  .quiz-count { margin-right: auto; padding: 2px 10px; font-size: 15px; }
+  .quiz-submit { white-space: nowrap; padding-inline: 14px; min-height: 40px; }
+  .question-tools .button { white-space: nowrap; padding-inline: 14px; font-size: 16px; }
+  .swap-count { font-size: 13px; }
+}
