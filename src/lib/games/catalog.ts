@@ -6,7 +6,7 @@
 export type GameCategory = 'logic' | 'memory' | 'space' | 'math' | 'language';
 export type GameFilter = 'all' | GameCategory;
 export type GameLevel = 1 | 2 | 3 | 4 | 5;
-export type GameId = 'pattern' | 'memory' | 'maze';
+export type GameId = 'pattern' | 'memory' | 'maze' | 'robot' | 'sudoku' | 'balance';
 export type Grade = 1 | 2 | 3 | 4 | 5;
 
 export const GAME_LEVELS: GameLevel[] = [1, 2, 3, 4, 5];
@@ -90,6 +90,42 @@ export const GAMES: GameInfo[] = [
     minutes: [5, 10],
     status: 'beta',
     difficulty: 'Mê cung rộng dần: 5 × 5 → 6 × 6 → 8 × 8 → 10 × 10 → 12 × 12 ô. Không đếm ngược.',
+  },
+  {
+    id: 'robot',
+    slug: 'robot-lap-trinh',
+    title: 'Robot lập trình',
+    summary: 'Xếp thẻ lệnh thành chương trình để robot nhặt hết ngôi sao mà không va vào đá.',
+    categories: ['logic', 'space'],
+    skills: ['Tư duy lập trình', 'Trình tự', 'Tìm và sửa lỗi'],
+    grades: [1, 2, 3, 4, 5],
+    minutes: [5, 10],
+    status: 'ready',
+    difficulty: 'Sân rộng dần 4 × 4 → 6 × 6, nhiều sao và đá hơn, giới hạn số thẻ; L4 có thẻ "đi n bước" (vòng lặp), L5 robot có hướng nhìn: Tiến, Quay trái, Quay phải.',
+  },
+  {
+    id: 'sudoku',
+    slug: 'sudoku-mini',
+    title: 'Sudoku mini',
+    summary: 'Điền hình hoặc số sao cho mỗi hàng, mỗi cột, mỗi vùng đều đủ và không lặp lại.',
+    categories: ['logic', 'math'],
+    skills: ['Suy luận loại trừ', 'Quan sát', 'Kiên nhẫn'],
+    grades: [1, 2, 3, 4, 5],
+    minutes: [5, 10],
+    status: 'ready',
+    difficulty: 'L1 lưới 4 × 4 bằng hình; L2–L3 lưới 4 × 4 bằng số, nhiều ô trống hơn; L4–L5 lưới 6 × 6. Đề tự sinh, luôn có đúng một lời giải.',
+  },
+  {
+    id: 'balance',
+    slug: 'can-thang-bang',
+    title: 'Cân thăng bằng',
+    summary: 'Tìm số còn thiếu để hai đĩa cân nặng bằng nhau — làm quen với phương trình.',
+    categories: ['math', 'logic'],
+    skills: ['Tính nhẩm', 'So sánh', 'Suy luận nhiều bước'],
+    grades: [1, 2, 3, 4, 5],
+    minutes: [5, 8],
+    status: 'ready',
+    difficulty: 'Phạm vi 10 → 20 → 100; từ quả cân có số đến hình chưa biết cân nặng, suy luận 2–3 bước có nhân, chia. Cân nghiêng cho biết cần số lớn hơn hay nhỏ hơn.',
   },
 ];
 

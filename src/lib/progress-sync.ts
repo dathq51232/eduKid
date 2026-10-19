@@ -1,6 +1,7 @@
 // Gửi kết quả lên máy chủ khi HỌC SINH đã đăng nhập. Khách (chưa đăng nhập) vẫn lưu trên trình duyệt như cũ;
 // máy chủ trả 401/403 thì bỏ qua lặng lẽ. Máy chủ tự chấm lại, không tin điểm do trình duyệt gửi.
 import type { AnswerValue } from './types';
+import type { GameId } from './games/catalog';
 
 const enabled = () => Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -31,7 +32,7 @@ export async function syncLessonResult(p: { lessonId: string; seed?: number; muc
   }
 }
 
-export function syncGameResult(p: { gameId: 'pattern' | 'memory' | 'maze'; level: number; score: number; maxScore: number; details?: Record<string, number> }) {
+export function syncGameResult(p: { gameId: GameId; level: number; score: number; maxScore: number; details?: Record<string, number> }) {
   if (!enabled()) return;
   void fetch('/api/tien-do/game', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(p), keepalive: true }).catch(() => undefined);
 }

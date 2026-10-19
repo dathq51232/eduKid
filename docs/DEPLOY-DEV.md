@@ -45,6 +45,7 @@ Vào **SQL Editor** → **New query**. Với **từng file** trong `supabase/mig
 | 17 | `0017_assignments.sql` | Giao bài về nhà, đề làm trên app (máy chủ chấm, mỗi em nộp 1 lần); chạy lại an toàn |
 | 18 | `0018_billing.sql` | Thu phí học sinh (tháng / năm học, học thử, chuyển khoản + quản trị xác nhận); mặc định TẮT; chạy lại an toàn |
 | 19 | `0019_teacher_free_plan.sql` | Giáo viên đăng ký miễn phí, dùng ngay; gói 3 học sinh, quản trị nâng giới hạn; chạy lại an toàn |
+| 20 | `0020_more_games.sql` | Cho phép lưu kết quả 3 game mới (robot, sudoku, cân thăng bằng); chạy lại an toàn |
 
 Cách làm mỗi file: mở file bằng Notepad/VS Code → chọn hết (Ctrl+A) → copy → dán vào SQL Editor → **Run**.
 Thấy "Success. No rows returned" là được. Xóa ô soạn rồi làm file tiếp theo.

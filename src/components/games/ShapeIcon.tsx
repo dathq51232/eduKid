@@ -3,7 +3,7 @@ import { COLOR_HEX, type Direction, type Shape, type ShapeColor } from '@/lib/ga
 const INK = '#1f2a44';
 
 /** Đường vẽ của từng hình trong khung 40 × 40 */
-function ShapePath({ shape, fill }: { shape: Shape; fill: string }) {
+export function ShapePath({ shape, fill }: { shape: Shape; fill: string }) {
   const p = { fill, stroke: INK, strokeWidth: 2.5, strokeLinejoin: 'round' as const };
   switch (shape) {
     case 'circle':

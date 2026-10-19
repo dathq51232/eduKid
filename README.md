@@ -52,7 +52,7 @@ Bản nền tảng phát triển nội bộ cho website học tập tiểu học
    - `supabase/migrations/0004_admin_authoring.sql`
    - `supabase/migrations/0005_curriculum_catalog.sql` (danh mục chương trình + dữ liệu lớp 1)
    - `supabase/migrations/0006_levels_timer_points.sql` (cấp độ L1–L5, thời gian từng câu, thời lượng bài làm, điểm tích luỹ)
-   - `supabase/migrations/0007_student_role.sql` (chạy riêng), `0008_classroom_accounts.sql`, `0009_teacher_view_pin.sql` (giáo viên xem lại PIN học sinh), `0010_class_code_required.sql` (mã lớp bắt buộc, không trùng, không sửa được), `0011_fix_student_role.sql` (tài khoản học sinh luôn mang vai trò học sinh), `0012_class_leaderboard.sql` (Thành tích thật + bảng bạn điểm cao nhất tuần/tháng trong lớp), `0013_student_comments.sql` (nhận xét học sinh tuần/học kỳ/cả năm), `0014_school_results.sql` (điểm kiểm tra định kỳ + khen thưởng), `0015_exam_papers.sql` (lưu ma trận và đề kiểm tra), `0016_class_rules_full_subjects.sql` (1 giáo viên – 1 lớp, tối đa 40 học sinh, đủ môn + phẩm chất – năng lực), `0017_assignments.sql` (giao bài về nhà, đề làm trên app), `0018_billing.sql` (thu phí học sinh, giáo viên miễn phí), `0019_teacher_free_plan.sql` (giáo viên đăng ký miễn phí, gói 3 học sinh)
+   - `supabase/migrations/0007_student_role.sql` (chạy riêng), `0008_classroom_accounts.sql`, `0009_teacher_view_pin.sql` (giáo viên xem lại PIN học sinh), `0010_class_code_required.sql` (mã lớp bắt buộc, không trùng, không sửa được), `0011_fix_student_role.sql` (tài khoản học sinh luôn mang vai trò học sinh), `0012_class_leaderboard.sql` (Thành tích thật + bảng bạn điểm cao nhất tuần/tháng trong lớp), `0013_student_comments.sql` (nhận xét học sinh tuần/học kỳ/cả năm), `0014_school_results.sql` (điểm kiểm tra định kỳ + khen thưởng), `0015_exam_papers.sql` (lưu ma trận và đề kiểm tra), `0016_class_rules_full_subjects.sql` (1 giáo viên – 1 lớp, tối đa 40 học sinh, đủ môn + phẩm chất – năng lực), `0017_assignments.sql` (giao bài về nhà, đề làm trên app), `0018_billing.sql` (thu phí học sinh, giáo viên miễn phí), `0019_teacher_free_plan.sql` (giáo viên đăng ký miễn phí, gói 3 học sinh), `0020_more_games.sql` (lưu kết quả 3 game Robot lập trình, Sudoku mini, Cân thăng bằng)
 3. Lấy Project URL và publishable/anon key từ phần API project settings, điền vào `.env.local`.
 4. Tạo tài khoản test riêng cho từng vai trò. Không dùng tài khoản hoặc dữ liệu học sinh thật.
 5. Gán role test qua SQL Editor bằng tài khoản quản trị tin cậy. Không tạo endpoint công khai để người dùng tự cấp role.
@@ -176,6 +176,10 @@ Thanh điều hướng chính có 3 tab: **Học tập** (`/chon-bai`), **Game t
 - **Thám tử quy luật**: 25 câu soạn sẵn, mỗi cấp độ 5 câu, 3–4 lựa chọn. Đáp án và lời giải được tính từ quy luật nên không thể sai.
 - **Nhà vô địch trí nhớ**: số cặp thẻ là 3/4/6/8/10. Thẻ được xáo lại mỗi lần chơi. Không lật được thẻ đang mở hoặc đã ghép. Game chỉ đếm số lượt, không có đồng hồ.
 - **Mê cung phiêu lưu**: mê cung 5×5 → 12×12, luôn có đường đến đích. Điều khiển bằng nút chạm, phím mũi tên hoặc W A S D. Không đếm ngược.
+- **Robot lập trình** (`/tro-choi/robot-lap-trinh`): xếp thẻ lệnh rồi bấm Chạy để robot nhặt hết sao, không va đá / ra ngoài sân. L1–L3 thẻ mũi tên 1 bước (sân 4×4 → 5×5, giới hạn số thẻ từ L2); L4 thẻ "đi n bước" (làm quen vòng lặp); L5 robot có hướng nhìn: Tiến n, Quay trái, Quay phải. Màn tự sinh, luôn giải được (BFS tìm lời giải ngắn nhất); chạy sai thì tô đỏ thẻ gây lỗi; Gợi ý mở dần lời giải. 5 màn / lượt, điểm = số màn đúng ngay lần chạy đầu.
+- **Sudoku mini** (`/tro-choi/sudoku-mini`): L1 lưới 4×4 bằng hình, L2–L3 4×4 bằng số, L4–L5 6×6 (vùng 2×3). Đề tự sinh, luôn có đúng một lời giải. Điền sai báo ngay lý do (trùng hàng / cột / vùng); Gợi ý chỉ ô chỉ còn một khả năng. Chạm ô rồi chạm hình / số, hoặc dùng phím số và mũi tên.
+- **Cân thăng bằng** (`/tro-choi/can-thang-bang`): tìm số đặt vào ô ? để hai đĩa cân bằng. L1 phạm vi 10, L2 phạm vi 20, L3 có hình đã biết cân nặng (nhân), L4 suy luận 2 bước, L5 3 bước có chia, phạm vi 100. Chọn sai thì cân nghiêng và nói cần số lớn hơn hay nhỏ hơn. 6 câu / lượt.
+- Kết quả 3 game mới của học sinh đăng nhập được lưu như game cũ (cần migration `0020_more_games.sql`; kiểm thử `supabase/tests/local/102_more_games.sql`).
 - **Thành tích**: chỉ dùng dữ liệu minh họa, có ghi nhãn rõ. Không có bảng xếp hạng, không so sánh với bạn khác, huy hiệu không có giá trị đổi thưởng.
 - Milo và mọi hình ảnh đều vẽ bằng SVG trong mã nguồn (`src/components/mascot/`), không tải ảnh từ ngoài.
 - Mã nguồn:
@@ -359,7 +363,7 @@ npm run check:sets      # kiểm tra Đổi bộ câu hỏi không trùng câu v
 | `/lam-bai?lessonId=...` | Làm bài: 6 dạng câu, đếm ngược từng câu, để sau / quay lại, đi từ dễ đến khó |
 | `/ket-qua` | Kết quả: câu đúng, tổng thời gian, nhận xét, điểm tích luỹ, xem lại từng câu |
 | `/tro-choi` | Game trí tuệ: danh mục, lọc kỹ năng, chọn lớp |
-| `/tro-choi/tham-tu-quy-luat`, `/tro-choi/nha-vo-dich-tri-nho`, `/tro-choi/me-cung` | Ba game, chọn cấp độ L1–L5 (`?cap=1..5`) |
+| `/tro-choi/tham-tu-quy-luat`, `/tro-choi/nha-vo-dich-tri-nho`, `/tro-choi/me-cung`, `/tro-choi/robot-lap-trinh`, `/tro-choi/sudoku-mini`, `/tro-choi/can-thang-bang` | Sáu game, chọn cấp độ L1–L5 (`?cap=1..5`) |
 | `/thanh-tich` | Thành tích cá nhân (dữ liệu minh họa) |
 | `/phu-huynh` | (đã bỏ) chuyển về trang chủ |
 | `/dang-nhap` | Đăng nhập (admin, giáo viên) |

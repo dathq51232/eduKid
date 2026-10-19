@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import MiloMascot from '@/components/mascot/MiloMascot';
-import { LEVEL_INFO, type GameLevel } from '@/lib/games/catalog';
+import { LEVEL_INFO, type GameId, type GameLevel } from '@/lib/games/catalog';
 import { syncGameResult } from '@/lib/progress-sync';
 
 type Props = {
@@ -16,10 +16,10 @@ type Props = {
   onNextLevel?: () => void;
   extra?: React.ReactNode;
   /** Kết quả gửi lên máy chủ nếu học sinh đã đăng nhập (khách thì bỏ qua) */
-  record?: { gameId: 'pattern' | 'memory' | 'maze'; score: number; maxScore: number; details?: Record<string, number> };
+  record?: { gameId: GameId; score: number; maxScore: number; details?: Record<string, number> };
 };
 
-/** Màn hoàn thành dùng chung cho cả 3 game: Milo reo vui, lời khen, các nút chơi lại / về danh mục */
+/** Màn hoàn thành dùng chung cho mọi game: Milo reo vui, lời khen, các nút chơi lại / về danh mục */
 export default function GameFinish({ title, message, stats, level, onReplay, replayLabel = 'Chơi lại', onNextLevel, extra, record }: Props) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => headingRef.current?.focus(), []);
