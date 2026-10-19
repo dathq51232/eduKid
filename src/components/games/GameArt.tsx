@@ -41,8 +41,8 @@ export default function GameArt({ id }: { id: GameId }) {
             <path d="M51 14 V106 M74 14 V106 M97 14 V106 M28 37 H120 M28 60 H120 M28 83 H120" stroke="#c9d6ea" strokeWidth="1.5" />
             <path d="M86 89c-6-1-8-9-3-12 5-4 12 0 12 5 0 6-4 8-9 7z" fill="#9aa6b8" strokeWidth="2" />
             <path d="M108 18l3 6.2 6.8 1-4.9 4.8 1.2 6.8-6.1-3.2-6.1 3.2 1.2-6.8-4.9-4.8 6.8-1z" fill="#f5b82e" strokeWidth="2" />
-            <rect x="35" y="66" width="28" height="26" rx="7" fill="#2f6fed" strokeWidth="2.5" />
-            <rect x="40" y="71" width="18" height="10" rx="4" fill="#e1ebff" strokeWidth="2" />
+            <path d="M49 79 V48 H97" stroke="#2f6fed" strokeWidth="4" strokeLinecap="round" strokeDasharray="2 8" fill="none" />
+            <MiloMascot variant="robot" x={30} y={58} size={40} />
             {[0, 1, 2].map((i) => (
               <g key={i} transform={`translate(${136 + i * 32} 44)`}>
                 <rect width="28" height="32" rx="6" fill="#f5b82e" strokeWidth="2.5" />
@@ -77,7 +77,9 @@ export default function GameArt({ id }: { id: GameId }) {
           </g>
         )}
       </svg>
-      <MiloMascot size={40} mood={id === 'pattern' || id === 'sudoku' ? 'think' : id === 'memory' ? 'happy' : 'cheer'} className="game-art-milo" />
+      {id !== 'robot' && (
+        <MiloMascot size={40} mood={id === 'pattern' || id === 'sudoku' ? 'think' : id === 'memory' ? 'happy' : 'cheer'} className="game-art-milo" />
+      )}
     </div>
   );
 }

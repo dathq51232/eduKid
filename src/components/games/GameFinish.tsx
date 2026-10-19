@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
-import MiloMascot from '@/components/mascot/MiloMascot';
+import MiloMascot, { type MiloVariant } from '@/components/mascot/MiloMascot';
 import { LEVEL_INFO, type GameId, type GameLevel } from '@/lib/games/catalog';
 import { syncGameResult } from '@/lib/progress-sync';
 
@@ -16,11 +16,13 @@ type Props = {
   onNextLevel?: () => void;
   extra?: React.ReactNode;
   /** Kết quả gửi lên máy chủ nếu học sinh đã đăng nhập (khách thì bỏ qua) */
+  /** Trang phục của Milo trong màn hoàn thành (theo game) */
+  mascot?: MiloVariant;
   record?: { gameId: GameId; score: number; maxScore: number; details?: Record<string, number> };
 };
 
 /** Màn hoàn thành dùng chung cho mọi game: Milo reo vui, lời khen, các nút chơi lại / về danh mục */
-export default function GameFinish({ title, message, stats, level, onReplay, replayLabel = 'Chơi lại', onNextLevel, extra, record }: Props) {
+export default function GameFinish({ title, message, stats, level, onReplay, replayLabel = 'Chơi lại', onNextLevel, extra, record, mascot }: Props) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => headingRef.current?.focus(), []);
   const sent = useRef(false);
@@ -31,7 +33,7 @@ export default function GameFinish({ title, message, stats, level, onReplay, rep
   }, [record, level]);
   return (
     <section className="game-finish" aria-labelledby="game-finish-title">
-      <MiloMascot mood="cheer" size={120} />
+      <MiloMascot mood="cheer" size={120} variant={mascot} />
       <div className="game-finish-body">
         <h2 id="game-finish-title" ref={headingRef} tabIndex={-1}>{title}</h2>
         <p>{message}</p>

@@ -188,7 +188,13 @@ export function generatePuzzle(level: GameLevel, seed: number): Puzzle {
   return { size: n, mode: cfg.mode, start, facing: 1, stars, rocks: [], best: sol.length, limit: Math.min(MAX_CARDS, sol.length + (cfg.slack ?? 4)), seed };
 }
 
-export type Frame = { x: number; y: number; f: RDir; got: number[] };
+/** rot: góc quay của robot tính dồn (độ), không quấn về 0 — để hình vẽ luôn quay đúng chiều, mỗi lần đúng 90° (hoặc 180°) */
+export type Frame = { x: number; y: number; f: RDir; rot: number; got: number[] };
+
+/** Hướng ban đầu robot nhìn: kiểu 'relative' theo màn chơi, các kiểu khác nhìn sang phải */
+export const startFacing = (p: Pick<Puzzle, 'mode' | 'facing'>): RDir => (p.mode === 'relative' ? p.facing : 1);
+/** Góc quay ngắn nhất từ hướng a sang hướng b: 0, +90 (phải), -90 (trái) hoặc 180 */
+export const turnDelta = (a: RDir, b: RDir): number => [0, 90, 180, -90][(b - a + 4) % 4];
 export type RunResult = {
   frames: Frame[];
   result: 'win' | 'crash' | 'short';
@@ -203,9 +209,9 @@ export type RunResult = {
 /** Chạy chương trình từng bước. Robot dừng khi nhặt đủ sao (thắng), khi va đá / ra ngoài sân (va), hoặc hết lệnh (thiếu sao). */
 export function runProgram(p: Puzzle, prog: Cmd[]): RunResult {
   const b = boardOf(p);
-  let x = p.start.x, y = p.start.y, f: RDir = p.mode === 'relative' ? p.facing : 1;
+  let x = p.start.x, y = p.start.y, f: RDir = startFacing(p), rot = f * 90;
   const got: number[] = [];
-  const frames: Frame[] = [{ x, y, f, got: [] }];
+  const frames: Frame[] = [{ x, y, f, rot, got: [] }];
   const cmdAt: number[] = [-1];
   const stepTo = (d: RDir, ci: number): 'ok' | 'win' | 'crash' => {
     const nx = x + DX[d], ny = y + DY[d];
@@ -214,7 +220,7 @@ export function runProgram(p: Puzzle, prog: Cmd[]): RunResult {
     y = ny;
     const si = b.starIdx.get(`${x},${y}`);
     if (si !== undefined && !got.includes(si)) got.push(si);
-    frames.push({ x, y, f, got: [...got] });
+    frames.push({ x, y, f, rot, got: [...got] });
     cmdAt.push(ci);
     return got.length === p.stars.length ? 'win' : 'ok';
   };
@@ -222,12 +228,19 @@ export function runProgram(p: Puzzle, prog: Cmd[]): RunResult {
     const c = prog[ci];
     if (c.kind === 'turn') {
       f = turn(f, c.side);
-      frames.push({ x, y, f, got: [...got] });
+      rot += c.side === 'R' ? 90 : -90;
+      frames.push({ x, y, f, rot, got: [...got] });
       cmdAt.push(ci);
       continue;
     }
     const d: RDir = c.kind === 'move' ? c.dir : f;
-    if (c.kind === 'move') f = c.dir;
+    if (c.kind === 'move' && c.dir !== f) {
+      // kiểu mũi tên: robot quay mặt về hướng đi (một khung hình riêng) rồi mới bước
+      rot += turnDelta(f, c.dir);
+      f = c.dir;
+      frames.push({ x, y, f, rot, got: [...got] });
+      cmdAt.push(ci);
+    }
     for (let k = 0; k < c.n; k++) {
       const r = stepTo(d, ci);
       if (r === 'win') return { frames, result: 'win', cmdAt };

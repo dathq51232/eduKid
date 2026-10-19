@@ -143,6 +143,17 @@ for (const lv of GAME_LEVELS) {
   ok(runProgram(r, [{ kind: 'turn', side: 'L' }, { kind: 'fwd', n: 3 }]).result === 'win', 'Robot: đang nhìn xuống, quay trái thì phải nhìn sang phải');
   ok(runProgram(r, [{ kind: 'fwd', n: 1 }]).frames[1].y === 1, 'Robot: Tiến khi nhìn xuống phải đi xuống');
   ok(solve(r)?.length === 2, 'Robot: lời giải ngắn nhất kiểu hướng nhìn phải là 2 thẻ');
+  // Góc quay hình vẽ: luôn quay đúng chiều, mỗi lệnh quay đúng 90°, khớp với hướng nhìn
+  const spin = runProgram({ ...r, facing: 3, stars: [{ x: 3, y: 3 }] }, [{ kind: 'turn', side: 'R' }, { kind: 'turn', side: 'R' }, { kind: 'turn', side: 'L' }, { kind: 'turn', side: 'L' }, { kind: 'turn', side: 'L' }]);
+  ok(JSON.stringify(spin.frames.map((f) => f.rot)) === JSON.stringify([270, 360, 450, 360, 270, 180]), `Robot: góc quay sai chiều ${spin.frames.map((f) => f.rot)}`);
+  for (const lv of GAME_LEVELS)
+    for (let seed = 1; seed <= 100; seed++) {
+      const p2 = generatePuzzle(lv, seed * 31);
+      const fr = runProgram(p2, solve(p2) ?? []).frames;
+      ok(fr.every((f) => ((f.rot % 360) + 360) % 360 === f.f * 90), `Robot L${lv}: góc vẽ không khớp hướng nhìn`);
+      ok(fr.every((f, i) => i === 0 || (Math.abs(f.rot - fr[i - 1].rot) <= 180 && (f.rot === fr[i - 1].rot || (f.x === fr[i - 1].x && f.y === fr[i - 1].y)))), `Robot L${lv}: vừa quay vừa đi trong cùng một bước`);
+      ok(fr.every((f, i) => i === 0 || Math.abs(f.x - fr[i - 1].x) + Math.abs(f.y - fr[i - 1].y) <= 1), `Robot L${lv}: nhảy quá 1 ô trong một bước`);
+    }
 }
 
 // ---- Sudoku mini

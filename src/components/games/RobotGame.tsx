@@ -8,7 +8,7 @@ import LevelPicker, { rememberLevel } from './LevelPicker';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import type { GameLevel } from '@/lib/games/catalog';
 import {
-  MAX_COUNT, ROBOT_LEVELS, ROUND_SIZE, R_DIRS, R_DIR_LABEL, R_DIR_SPOKEN, cmdLabel, generatePuzzle, runProgram, solve,
+  MAX_COUNT, ROBOT_LEVELS, ROUND_SIZE, R_DIRS, R_DIR_LABEL, R_DIR_SPOKEN, cmdLabel, generatePuzzle, runProgram, solve, startFacing,
   type Cmd, type Puzzle, type RDir, type RunResult,
 } from '@/lib/games/robot';
 
@@ -26,26 +26,21 @@ function CmdIcon({ c }: { c: Cmd }) {
   return <Icon aria-hidden="true" strokeWidth={3} />;
 }
 
-/** Robot nhỏ: thân tròn, ăng-ten, mũi tên chỉ hướng đang nhìn */
-function RobotSprite({ x, y, f, showFacing }: { x: number; y: number; f: RDir; showFacing: boolean }) {
+/** Nhân vật: Milo mặc bộ giáp robot. Milo luôn đứng thẳng (quay mặt sang trái khi đi về bên trái);
+ *  mũi tên đỏ quanh chân chỉ hướng Milo đang nhìn — "quay trái / quay phải" là bên tay trái / phải của chính Milo.
+ *  Góc `rot` tính dồn để mũi tên luôn quay đúng chiều, mỗi lần đúng 90°. */
+function RobotSprite({ x, y, rot, f }: { x: number; y: number; rot: number; f: RDir }) {
   const cx = PAD + x * CELL + CELL / 2;
   const cy = PAD + y * CELL + CELL / 2;
   return (
     <g className="robot-sprite" style={{ transform: `translate(${cx}px, ${cy}px)` }}>
-      {showFacing && (
-        <g style={{ transform: `rotate(${f * 90}deg)` }} className="robot-facing">
-          <path d="M-8 -19 L0 -27 L8 -19 Z" fill="#e2483d" stroke={INK} strokeWidth="2" strokeLinejoin="round" />
-        </g>
-      )}
-      <line x1="0" y1="-17" x2="0" y2="-22" stroke={INK} strokeWidth="2.5" />
-      <circle cx="0" cy="-23" r="3" fill="#f5b82e" stroke={INK} strokeWidth="2" />
-      <rect x="-16" y="-17" width="32" height="30" rx="9" fill="#2f6fed" stroke={INK} strokeWidth="2.5" />
-      <rect x="-11" y="-11" width="22" height="13" rx="5" fill="#e1ebff" stroke={INK} strokeWidth="2" />
-      <circle cx="-5" cy="-4.5" r="2.6" fill={INK} />
-      <circle cx="5" cy="-4.5" r="2.6" fill={INK} />
-      <path d="M-6 7 h12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
-      <rect x="-19" y="-6" width="3" height="10" rx="1.5" fill={INK} />
-      <rect x="16" y="-6" width="3" height="10" rx="1.5" fill={INK} />
+      <ellipse cx="0" cy="18" rx="17" ry="5" fill="#1f2a44" opacity="0.18" />
+      <g className="robot-facing" style={{ transform: `rotate(${rot}deg)` }}>
+        <path d="M-7 -20 L0 -28 L7 -20 Z" fill="#e2483d" stroke={INK} strokeWidth="1.8" strokeLinejoin="round" />
+      </g>
+      <g style={{ transform: f === 3 ? 'scaleX(-1)' : undefined }}>
+        <MiloMascot variant="robot" x={-24} y={-27} size={48} />
+      </g>
     </g>
   );
 }
@@ -167,7 +162,7 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
 
   const detail = (lv: GameLevel) => {
     const c = ROBOT_LEVELS[lv];
-    const kind = c.mode === 'arrows' ? 'thẻ mũi tên, mỗi thẻ đi 1 bước' : c.mode === 'counted' ? 'thẻ có số bước (đi 3 bước = 1 thẻ)' : 'robot có hướng nhìn: Tiến, Quay trái, Quay phải';
+    const kind = c.mode === 'arrows' ? 'thẻ mũi tên, mỗi thẻ đi 1 bước' : c.mode === 'counted' ? 'thẻ có số bước (đi 3 bước = 1 thẻ)' : 'Milo có hướng nhìn: Tiến, Quay trái, Quay phải';
     return `sân ${c.size} × ${c.size} ô, ${c.stars} ngôi sao, ${kind}${c.slack === null ? '' : ', giới hạn số thẻ'}`;
   };
 
@@ -176,7 +171,7 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
       <>
         <LevelPicker value={level} onChange={changeLevel} detail={detail} />
         <GameFinish
-          title="Robot đã nhặt hết sao!"
+          title="Milo robot đã nhặt hết sao!"
           message={
             stats.firstTry === ROUND_SIZE
               ? `Cả ${ROUND_SIZE} màn em đều viết đúng chương trình ngay lần chạy đầu. Em là lập trình viên nhí rồi!`
@@ -189,13 +184,17 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
           level={level}
           onReplay={() => startRound(level)}
           onNextLevel={() => changeLevel((level + 1) as GameLevel)}
+          mascot="robot"
           record={{ gameId: 'robot', score: stats.firstTry, maxScore: ROUND_SIZE, details: { runs: stats.runs, hints: stats.hints } }}
         />
       </>
     );
   }
 
-  const fr = run ? run.frames[frame] : puzzle ? { x: puzzle.start.x, y: puzzle.start.y, f: (cfg.mode === 'relative' ? puzzle.facing : 1) as RDir, got: [] as number[] } : null;
+  const f0 = puzzle ? startFacing(puzzle) : (1 as RDir);
+  const fr = run ? run.frames[frame] : puzzle ? { x: puzzle.start.x, y: puzzle.start.y, f: f0, rot: f0 * 90, got: [] as number[] } : null;
+  // Vệt đường robot đã đi (tới khung hình hiện tại)
+  const trail = run ? run.frames.slice(0, frame + 1).map((p) => `${PAD + p.x * CELL + CELL / 2},${PAD + p.y * CELL + CELL / 2}`).join(' ') : '';
   const activeCmd = run ? run.cmdAt[frame] : -1;
   const size = puzzle ? puzzle.size * CELL + PAD * 2 : 0;
   const failedCmd = run?.failAt ?? -1;
@@ -212,8 +211,10 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
           <p className="game-score">Đúng ngay lần đầu: <strong>{stats.firstTry}</strong></p>
         </div>
         <p className="maze-help">
-          Xếp các thẻ lệnh thành chương trình rồi bấm <strong>Chạy</strong>. Robot làm đúng từng lệnh theo thứ tự và phải nhặt hết ngôi sao, không va vào đá, không ra ngoài sân.
-          {cfg.mode === 'relative' && ' Mũi tên đỏ cho biết robot đang nhìn về phía nào; "Tiến" là đi thẳng theo hướng đó.'}
+          Xếp các thẻ lệnh thành chương trình rồi bấm <strong>Chạy</strong>. Milo robot làm đúng từng lệnh theo thứ tự và phải nhặt hết ngôi sao, không va vào đá, không ra ngoài sân.
+          {cfg.mode === 'relative'
+            ? ' Mũi tên đỏ dưới chân chỉ hướng Milo đang nhìn. "Tiến" là đi thẳng theo mũi tên; "Quay trái / Quay phải" là Milo quay tại chỗ sang bên tay trái / tay phải của chính Milo (hãy tưởng tượng em đang đứng ở chỗ Milo, nhìn theo mũi tên).'
+            : ' Bấm thẻ chỉ để xếp lệnh — Milo chỉ đi khi em bấm Chạy.'}
         </p>
 
         {puzzle && fr ? (
@@ -222,7 +223,7 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
               className="robot-board"
               viewBox={`0 0 ${size} ${size}`}
               role="img"
-              aria-label={`Sân ${puzzle.size} × ${puzzle.size} ô. Robot ở hàng ${fr.y + 1}, cột ${fr.x + 1}${cfg.mode === 'relative' ? `, đang nhìn ${R_DIR_SPOKEN[fr.f]}` : ''}. Ngôi sao còn lại: ${puzzle.stars
+              aria-label={`Sân ${puzzle.size} × ${puzzle.size} ô. Milo robot ở hàng ${fr.y + 1}, cột ${fr.x + 1}${cfg.mode === 'relative' ? `, đang nhìn ${R_DIR_SPOKEN[fr.f]}` : ''}. Ngôi sao còn lại: ${puzzle.stars
                 .filter((_, i) => !fr.got.includes(i))
                 .map((s) => `hàng ${s.y + 1} cột ${s.x + 1}`)
                 .join('; ')}. Tảng đá: ${puzzle.rocks.map((r) => `hàng ${r.y + 1} cột ${r.x + 1}`).join('; ')}.`}
@@ -253,7 +254,7 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
                   strokeLinejoin="round"
                 />
               ))}
-              <circle cx={PAD + puzzle.start.x * CELL + CELL / 2} cy={PAD + puzzle.start.y * CELL + CELL / 2} r="22" fill="none" stroke="#2f6fed" strokeWidth="2" strokeDasharray="4 4" />
+              <rect x={PAD + puzzle.start.x * CELL + 4} y={PAD + puzzle.start.y * CELL + 4} width={CELL - 8} height={CELL - 8} rx="10" fill="#d6e4ff" stroke="#2f6fed" strokeWidth="2" strokeDasharray="4 4" />
               {run?.result === 'crash' && ended && run.blocked && (
                 <g
                   transform={`translate(${PAD + Math.min(Math.max(run.blocked.x, -0.35), puzzle.size - 0.65) * CELL + CELL / 2} ${PAD + Math.min(Math.max(run.blocked.y, -0.35), puzzle.size - 0.65) * CELL + CELL / 2})`}
@@ -262,7 +263,8 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
                   <path d="M-5 -5 L5 5 M5 -5 L-5 5" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
                 </g>
               )}
-              <RobotSprite x={fr.x} y={fr.y} f={fr.f} showFacing={cfg.mode === 'relative'} />
+              {trail && <polyline points={trail} fill="none" stroke="#2f6fed" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="2 9" opacity="0.75" />}
+              <RobotSprite key={run ? `run${runs}` : 'idle'} x={fr.x} y={fr.y} rot={fr.rot} f={fr.f} />
             </svg>
 
             <div className="robot-side">
@@ -337,17 +339,17 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
             </div>
           </div>
         ) : (
-          <p className="game-loading">Robot đang chuẩn bị sân chơi…</p>
+          <p className="game-loading">Milo robot đang chuẩn bị sân chơi…</p>
         )}
 
         <div className="game-feedback-slot" aria-live="polite">
           {ended && run && puzzle && (
             <div className={`game-feedback ${won ? 'is-right' : 'is-try'}`} ref={resultRef} tabIndex={-1}>
-              <MiloMascot mood={won ? 'cheer' : 'think'} size={64} />
+              <MiloMascot mood={won ? 'cheer' : 'think'} size={64} variant="robot" />
               <div>
                 {won ? (
                   <>
-                    <p className="game-feedback-title">{runs === 1 && hints === 0 ? 'Đúng ngay lần đầu!' : 'Robot nhặt đủ sao rồi!'}</p>
+                    <p className="game-feedback-title">{runs === 1 && hints === 0 ? 'Đúng ngay lần đầu!' : 'Milo nhặt đủ sao rồi!'}</p>
                     <p>
                       Chương trình của em dùng {program.length} thẻ
                       {program.length <= puzzle.best ? ' — ngắn nhất có thể, quá giỏi!' : `. Cách ngắn nhất chỉ cần ${puzzle.best} thẻ, lần sau thử tìm xem nhé.`}
@@ -356,12 +358,12 @@ export default function RobotGame({ initialLevel }: { initialLevel: GameLevel })
                   </>
                 ) : run.result === 'crash' ? (
                   <>
-                    <p className="game-feedback-title">Ối, robot {run.blocked?.out ? 'sắp đi ra ngoài sân' : 'va vào tảng đá'}!</p>
+                    <p className="game-feedback-title">Ối, Milo {run.blocked?.out ? 'sắp đi ra ngoài sân' : 'va vào tảng đá'}!</p>
                     <p>Lỗi ở lệnh số {failedCmd + 1}. Em sửa chương trình (bấm vào thẻ để bỏ) rồi chạy lại nhé.</p>
                   </>
                 ) : (
                   <>
-                    <p className="game-feedback-title">Robot chạy hết lệnh rồi</p>
+                    <p className="game-feedback-title">Milo chạy hết lệnh rồi</p>
                     <p>Nhưng vẫn còn {left} ngôi sao chưa nhặt. Em thêm lệnh rồi chạy lại nhé.</p>
                   </>
                 )}

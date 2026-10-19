@@ -2,6 +2,8 @@
 // Ảnh nằm trong dự án (public/brand/milo.webp, milo-sm.webp) — không tải từ địa chỉ ngoài.
 
 export type MiloMood = 'happy' | 'cheer' | 'think' | 'oops';
+/** Trang phục theo game: 'robot' = Milo mặc bộ giáp robot (game Robot lập trình) */
+export type MiloVariant = 'default' | 'robot';
 
 type Props = {
   /** Giữ để tương thích chỗ gọi cũ; tranh chính thức dùng chung một tư thế */
@@ -10,20 +12,24 @@ type Props = {
   /** Có title thì Milo được đọc như một hình ảnh; mặc định là hình trang trí */
   title?: string;
   className?: string;
+  variant?: MiloVariant;
   /** Vị trí khi đặt Milo bên trong một hình SVG khác (ví dụ mê cung) */
   x?: number;
   y?: number;
 };
 
-const src = (size: number) => (size <= 140 ? '/brand/milo-sm.webp' : '/brand/milo.webp');
+const src = (size: number, variant: MiloVariant = 'default') => {
+  const base = variant === 'robot' ? '/brand/milo-robot' : '/brand/milo';
+  return size <= 140 ? `${base}-sm.webp` : `${base}.webp`;
+};
 
-export default function MiloMascot({ size = 96, title, className, x, y }: Props) {
+export default function MiloMascot({ size = 96, title, className, x, y, variant = 'default' }: Props) {
   const height = (size * 124) / 120;
   if (x !== undefined || y !== undefined) {
     // Bên trong một hình SVG
     return (
       <image
-        href={src(size)}
+        href={src(size, variant)}
         x={x}
         y={y}
         width={size}
@@ -38,7 +44,7 @@ export default function MiloMascot({ size = 96, title, className, x, y }: Props)
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src(size)}
+      src={src(size, variant)}
       width={size}
       height={height}
       alt={title ?? ''}

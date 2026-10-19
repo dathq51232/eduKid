@@ -95,7 +95,7 @@ export const GAMES: GameInfo[] = [
     id: 'robot',
     slug: 'robot-lap-trinh',
     title: 'Robot lập trình',
-    summary: 'Xếp thẻ lệnh thành chương trình để robot nhặt hết ngôi sao mà không va vào đá.',
+    summary: 'Xếp thẻ lệnh thành chương trình để Milo robot nhặt hết ngôi sao mà không va vào đá.',
     categories: ['logic', 'space'],
     skills: ['Tư duy lập trình', 'Trình tự', 'Tìm và sửa lỗi'],
     grades: [1, 2, 3, 4, 5],

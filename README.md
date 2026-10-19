@@ -182,6 +182,7 @@ Thanh điều hướng chính có 3 tab: **Học tập** (`/chon-bai`), **Game t
 - Kết quả 3 game mới của học sinh đăng nhập được lưu như game cũ (cần migration `0020_more_games.sql`; kiểm thử `supabase/tests/local/102_more_games.sql`).
 - **Thành tích**: chỉ dùng dữ liệu minh họa, có ghi nhãn rõ. Không có bảng xếp hạng, không so sánh với bạn khác, huy hiệu không có giá trị đổi thưởng.
 - Milo và mọi hình ảnh đều vẽ bằng SVG trong mã nguồn (`src/components/mascot/`), không tải ảnh từ ngoài.
+- **Nhân vật trong game**: game nào có nhân vật thì dùng cú Milo; mỗi game có thể có một bộ trang phục riêng qua `MiloMascot variant` (ảnh nằm trong `public/brand/`). Robot lập trình dùng Milo mặc giáp robot (`milo-robot.webp`, `milo-robot-sm.webp`): Milo đứng thẳng, mũi tên đỏ dưới chân chỉ hướng đang nhìn. Thêm trang phục mới: đặt ảnh nền trong suốt `public/brand/milo-<tên>.webp` + bản `-sm`, rồi thêm tên vào `MiloVariant`.
 - Mã nguồn:
   - Dữ liệu và logic: `src/lib/games/`
   - Giao diện: `src/components/games/`, `src/components/navigation/MainNavigation.tsx`
