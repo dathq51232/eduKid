@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpen, CreditCard, LayoutDashboard, ListTree, ScrollText, UserCheck, Users } from 'lucide-react';
 import { useAdminUser } from './AdminContext';
+import { FEATURES } from '@/lib/features';
 
 export default function AdminNav() {
   const pathname = usePathname();
@@ -13,8 +14,8 @@ export default function AdminNav() {
     { href: '/quan-tri/chuong-trinh', label: 'Chương trình', icon: ListTree, exact: false, show: true },
     { href: '/quan-tri/bai-hoc', label: 'Bài học', icon: BookOpen, exact: false, show: true },
     { href: '/quan-tri/nguoi-dung', label: 'Người dùng', icon: Users, exact: false, show: isAdmin },
-    { href: '/quan-tri/duyet-giao-vien', label: 'Duyệt giáo viên', icon: UserCheck, exact: false, show: isAdmin },
-    { href: '/quan-tri/thu-phi', label: 'Thu phí', icon: CreditCard, exact: false, show: isAdmin },
+    { href: '/quan-tri/giao-vien', label: 'Giáo viên', icon: UserCheck, exact: false, show: isAdmin },
+    { href: '/quan-tri/thu-phi', label: 'Thu phí', icon: CreditCard, exact: false, show: isAdmin && FEATURES.billing },
     { href: '/quan-tri/nhat-ky', label: 'Nhật ký', icon: ScrollText, exact: false, show: isAdmin },
   ];
 

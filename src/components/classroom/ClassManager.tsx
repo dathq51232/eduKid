@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, KeyRound, Lock, LockOpen, Printer, RotateCcw, UserMinus, UserPlus, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { parsePastedNames } from '@/lib/classroom/names';
+import ContactAdmin from '@/components/ContactAdmin';
+import { ADMIN_CONTACT, FREE_STUDENT_LIMIT } from '@/lib/contact';
 
 export type RosterRow = {
   student_id: string;
@@ -40,7 +42,7 @@ function billingChip(b?: BillingRow) {
   return <span className="dash-muted">Miễn phí</span>;
 }
 
-export default function ClassManager({ cls, roster, summary, pins = {}, top, billing }: { cls: Cls; roster: RosterRow[]; summary: SummaryRow[]; pins?: Record<string, string>; /** khối hiện ngay dưới tiêu đề lớp */ top?: React.ReactNode; /** tình trạng học phí (migration 0018) */ billing?: BillingRow[] }) {
+export default function ClassManager({ cls, roster, summary, pins = {}, top, billing, plan }: { cls: Cls; roster: RosterRow[]; summary: SummaryRow[]; pins?: Record<string, string>; /** khối hiện ngay dưới tiêu đề lớp */ top?: React.ReactNode; /** tình trạng học phí (migration 0018) */ billing?: BillingRow[]; /** gói của giáo viên (migration 0019): giới hạn + số em đang dùng ở mọi lớp */ plan?: { limit: number; used: number } | null }) {
   const billMap = new Map((billing ?? []).map((b) => [b.student_id, b]));
   const showBilling = (billing ?? []).some((b) => b.reason !== 'free');
   const router = useRouter();
@@ -52,6 +54,9 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
   const [showPins, setShowPins] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const active = roster.filter((r) => r.membership_status === 'active');
+  // Còn thêm được bao nhiêu em: tối đa 40 / lớp và trong gói của giáo viên (tính trên mọi lớp)
+  const room = Math.max(0, Math.min(40 - active.length, plan ? plan.limit - plan.used : 40));
+  const capLabel = plan ? `${plan.used}/${plan.limit} học sinh của gói` : `${active.length}/40`;
   const pasted = useMemo(() => parsePastedNames(names), [names]);
   const dupNames = useMemo(() => {
     const have = new Set(active.map((r) => r.display_name.trim().toLowerCase()));
@@ -161,8 +166,15 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
       )}
 
       <section className="dash-card no-print">
-        <h2><UserPlus aria-hidden="true" /> Thêm học sinh <span className="dash-muted">({active.length}/40)</span></h2>
-        {active.length >= 40 ? <p className="adm-alert is-info">Lớp đã đủ 40 học sinh — số tối đa của một lớp.</p> : (
+        <h2><UserPlus aria-hidden="true" /> Thêm học sinh <span className="dash-muted">({capLabel})</span></h2>
+        {room === 0 ? (
+          active.length >= 40 ? <p className="adm-alert is-info">Lớp đã đủ 40 học sinh — số tối đa của một lớp.</p> : (
+            <>
+              <p className="adm-alert is-info">Thầy cô đã dùng hết {plan?.limit ?? 0} chỗ học sinh của gói{plan && plan.limit <= FREE_STUDENT_LIMIT ? ' miễn phí' : ''}. Muốn thêm học sinh, liên hệ quản trị để được mở thêm.</p>
+              <ContactAdmin />
+            </>
+          )
+        ) : (
         <form className="dash-form" onSubmit={addStudents}>
           <label className="adm-field"><span>Mỗi dòng một học sinh (tên gọi hoặc họ và tên). Có thể chép thẳng từ file vnEdu/Excel: chọn các dòng học sinh (từ cột STT đến cột họ tên hoặc hết dòng), Ctrl+C rồi dán vào đây — hệ thống chỉ lấy họ tên, bỏ qua số thứ tự, mã định danh, ngày sinh.</span>
             <textarea rows={6} value={names} onChange={(e) => setNames(e.target.value)} placeholder={'Nguyễn Văn An\nTrần Thị Bình\n(hoặc dán các dòng chép từ vnEdu)'} />
@@ -175,11 +187,11 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
             <span>Tôi xác nhận nhà trường đã có sự đồng ý của cha mẹ (người giám hộ) cho các em dùng EduChain Kids để học tập.</span>
           </label>
-          <button type="submit" className="btn btn-primary" disabled={busy === 'add' || !consent || !pasted.length || active.length + pasted.length > 40 || cls.status !== 'active'}>
+          <button type="submit" className="btn btn-primary" disabled={busy === 'add' || !consent || !pasted.length || pasted.length > room || cls.status !== 'active'}>
             <UserPlus aria-hidden="true" /> {busy === 'add' ? 'Đang tạo tài khoản…' : 'Thêm và tạo PIN'}
           </button>
-          {pasted.length > 0 && active.length + pasted.length > 40 && (
-            <p className="adm-alert is-warn">Chỉ còn thêm được {40 - active.length} em (tối đa 40 học sinh / lớp).</p>
+          {pasted.length > 0 && pasted.length > room && (
+            <p className="adm-alert is-warn">Chỉ còn thêm được {room} em{plan && plan.limit - plan.used <= 40 - active.length ? ` (gói của thầy cô: ${plan.limit} học sinh — liên hệ quản trị ${ADMIN_CONTACT.phoneDisplay} để thêm)` : ' (tối đa 40 học sinh / lớp)'}.</p>
           )}
         </form>
         )}

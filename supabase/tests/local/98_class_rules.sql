@@ -3,6 +3,8 @@
 insert into public.schools(id,name) values ('00000000-0000-0000-0000-0000000016a1','Trường Demo R2');
 insert into auth.users(id,email) values ('00000000-0000-0000-0000-0000000016f1','gvR@demo.local');
 insert into public.user_roles(user_id, role, school_id) values ('00000000-0000-0000-0000-0000000016f1','teacher','00000000-0000-0000-0000-0000000016a1');
+-- từ 0019: gói miễn phí 3 học sinh — giáo viên này được quản trị nâng lên 40 để kiểm tra quy tắc 40 em / lớp
+insert into public.teacher_plans(teacher_id, student_limit) values ('00000000-0000-0000-0000-0000000016f1', 40);
 \echo == GV tao lop 1 (ok) roi lop 2 (mong doi: one_class_only)
 begin; set local role authenticated; set local request.jwt.claim.sub='00000000-0000-0000-0000-0000000016f1';
 select public.teacher_create_class('3A', 3::smallint) as c1 \gset

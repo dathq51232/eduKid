@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ChevronRight, Clock, School } from 'lucide-react';
+import { ChevronRight, School } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import SignOutButton from '@/components/classroom/SignOutButton';
 import { CreateClassForm, TeacherRequestForm } from '@/components/classroom/TeacherForms';
 import { getViewer } from '@/lib/auth/viewer';
+import ContactAdmin from '@/components/ContactAdmin';
+import { FREE_STUDENT_LIMIT } from '@/lib/contact';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Giáo viên · EduChain Kids' };
@@ -29,33 +31,26 @@ export default async function TeacherHome() {
             <div><p className="dash-kicker">Giáo viên</p><h1>Chào {viewer.displayName}!</h1></div>
             <SignOutButton />
           </div>
-          {viewer.teacherApplication === 'pending' ? (
-            <section className="dash-card dash-notice">
-              <Clock aria-hidden="true" />
-              <div>
-                <h2>Đang chờ quản trị viên duyệt</h2>
-                <p>Khi được duyệt, bạn sẽ tạo được lớp và tài khoản cho học sinh. Bạn có thể cập nhật tên trường bên dưới.</p>
-                <TeacherRequestForm schoolHint={viewer.schoolNameHint} />
-              </div>
-            </section>
-          ) : (
-            <section className="dash-card">
-              <h2>{viewer.teacherApplication === 'rejected' ? 'Yêu cầu trước chưa được duyệt' : 'Gửi yêu cầu làm giáo viên'}</h2>
-              <p>Quản trị viên sẽ xác minh rồi cấp quyền. Chỉ giáo viên đã được duyệt mới tạo được lớp và tài khoản học sinh.</p>
-              <TeacherRequestForm schoolHint={viewer.schoolNameHint} />
-            </section>
-          )}
+          <section className="dash-card">
+            <h2>Đăng ký dùng miễn phí cho giáo viên</h2>
+            <p>Nhập tên trường để bắt đầu ngay — không cần chờ duyệt. Gói miễn phí: <strong>1 lớp, tối đa {FREE_STUDENT_LIMIT} học sinh</strong>, dùng đủ các công cụ giao bài, đề kiểm tra, phiếu bài tập. Muốn thêm học sinh, liên hệ quản trị.</p>
+            <TeacherRequestForm schoolHint={viewer.schoolNameHint} />
+          </section>
+          <ContactAdmin title="Liên hệ quản trị" compact />
         </main>
       </>
     );
   }
 
   const supabase = await createClient();
-  const [{ data: classes }, { data: members }, { data: school }] = await Promise.all([
+  const [{ data: classes }, { data: members }, { data: school }, { data: planRows }] = await Promise.all([
     supabase.from('classes').select('id, name, grade, join_code, status').order('created_at'),
     supabase.from('class_memberships').select('class_id').eq('status', 'active'),
     viewer.teacherSchoolId ? supabase.from('schools').select('name').eq('id', viewer.teacherSchoolId).maybeSingle() : Promise.resolve({ data: null }),
+    supabase.rpc('teacher_my_plan'),
   ]);
+  const plan = ((planRows ?? []) as { student_limit: number; students_used: number }[])[0];
+  const planText = plan ? `${plan.student_limit <= FREE_STUDENT_LIMIT ? 'Gói miễn phí' : 'Gói của thầy cô'}: ${plan.students_used}/${plan.student_limit} học sinh` : null;
   const count = new Map<string, number>();
   for (const m of (members ?? []) as { class_id: string }[]) count.set(m.class_id, (count.get(m.class_id) ?? 0) + 1);
   const list = (classes ?? []) as ClassRow[];
@@ -73,13 +68,17 @@ export default async function TeacherHome() {
         </div>
 
         {list.some((c) => c.status === 'active') ? (
-          <p className="adm-alert is-info">Mỗi giáo viên phụ trách <strong>1 lớp</strong> (tối đa 40 học sinh). Cuối năm học, lưu trữ lớp hiện tại để tạo lớp mới.</p>
+          <p className="adm-alert is-info">Mỗi giáo viên phụ trách <strong>1 lớp</strong>{planText ? <> · <strong>{planText}</strong></> : ' (tối đa 40 học sinh)'}. Cuối năm học, lưu trữ lớp hiện tại để tạo lớp mới.</p>
         ) : (
           <section className="dash-card">
             <h2>Tạo lớp</h2>
-            <p className="dash-muted">Mỗi giáo viên phụ trách 1 lớp, tối đa 40 học sinh.</p>
+            <p className="dash-muted">Mỗi giáo viên phụ trách 1 lớp{planText ? ` · ${planText}` : ', tối đa 40 học sinh'}.</p>
             <CreateClassForm />
           </section>
+        )}
+
+        {plan && plan.students_used >= plan.student_limit && (
+          <ContactAdmin note={`Thầy cô đã dùng hết ${plan.student_limit} chỗ học sinh của gói. Liên hệ để được mở thêm.`} />
         )}
 
         <section className="dash-section">

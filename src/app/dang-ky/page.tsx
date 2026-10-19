@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, UserPlus } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import { createClient } from '@/lib/supabase/client';
+import { ADMIN_CONTACT, FREE_STUDENT_LIMIT } from '@/lib/contact';
 
 type Role = 'teacher';
 
@@ -42,19 +43,19 @@ export default function SignupPage() {
         email: email.trim(),
         password,
         options: {
-          // Chỉ là thông tin hiển thị; vai trò KHÔNG lấy từ đây (giáo viên phải được quản trị viên duyệt)
+          // Chỉ là thông tin hiển thị; vai trò KHÔNG lấy từ đây (cấp qua hàm request_teacher_role — gói miễn phí)
           data: { display_name: name.trim().slice(0, 100), wants_teacher: role === 'teacher', school_name: school.trim().slice(0, 180) },
           emailRedirectTo: `${window.location.origin}/auth/xac-nhan?next=/sau-dang-nhap`,
         },
       });
       if (err) return setError(signupError(err.message));
       if (!data.session) {
-        setDone('Đã gửi thư xác nhận tới email của bạn. Mở thư, bấm xác nhận rồi đăng nhập.' + (role === 'teacher' ? ' Sau khi đăng nhập, yêu cầu làm giáo viên sẽ được gửi để quản trị viên duyệt.' : ''));
+        setDone('Đã gửi thư xác nhận tới email của bạn. Mở thư, bấm xác nhận rồi đăng nhập.' + (role === 'teacher' ? ' Sau khi đăng nhập, vào mục Giáo viên bấm “Bắt đầu dùng miễn phí” là dùng được ngay.' : ''));
         return;
       }
       if (role === 'teacher') {
         const { error: reqErr } = await supabase.rpc('request_teacher_role', { p_school_name: school.trim(), p_note: null });
-        if (reqErr) return setError('Đã tạo tài khoản nhưng chưa gửi được yêu cầu làm giáo viên. Bạn vào mục Giáo viên để gửi lại.');
+        if (reqErr) return setError('Đã tạo tài khoản nhưng chưa bật được quyền giáo viên. Bạn vào mục Giáo viên bấm “Bắt đầu dùng miễn phí”.');
       }
       router.replace('/sau-dang-nhap');
       router.refresh();
@@ -91,7 +92,7 @@ export default function SignupPage() {
               </label>
             )}
             {role === 'teacher' ? (
-              <p className="adm-alert is-info">Tài khoản giáo viên cần quản trị viên duyệt trước khi tạo lớp.</p>
+              <p className="adm-alert is-info">Giáo viên đăng ký <strong>miễn phí</strong>, dùng được ngay: 1 lớp, tối đa {FREE_STUDENT_LIMIT} học sinh. Cần thêm học sinh, liên hệ quản trị {ADMIN_CONTACT.phoneDisplay} (Zalo) — {ADMIN_CONTACT.email}.</p>
             ) : (
               <p className="adm-alert is-info">Sau khi đăng ký, nhập mã mời do thầy cô gửi để xem tiến độ của con.</p>
             )}

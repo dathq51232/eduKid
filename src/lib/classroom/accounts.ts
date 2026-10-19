@@ -1,5 +1,6 @@
 import 'server-only';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { ADMIN_CONTACT, FREE_STUDENT_LIMIT } from '@/lib/contact';
 import { generatePin, studentEmail, studentPassword } from '@/lib/auth/student-credentials';
 
 export const POLICY_VERSION = 'lop-hoc-2026-10';
@@ -9,6 +10,7 @@ export function dbError(err: { code?: string; message?: string } | null): { stat
   const m = err?.message ?? '';
   if (err?.code === '42501' || m.includes('not_allowed')) return { status: 403, message: 'Bạn không có quyền với lớp hoặc học sinh này.' };
   if (m.includes('consent_required')) return { status: 400, message: 'Cần xác nhận nhà trường đã có sự đồng ý của phụ huynh.' };
+  if (m.includes('plan_limit')) return { status: 400, message: `Đã hết chỗ học sinh trong gói của thầy cô (gói miễn phí: ${FREE_STUDENT_LIMIT} học sinh; số em vượt quá chỗ còn lại). Muốn thêm học sinh, liên hệ quản trị: ${ADMIN_CONTACT.phoneDisplay} (gọi / Zalo) hoặc ${ADMIN_CONTACT.email}.` };
   if (m.includes('class_full')) return { status: 400, message: 'Mỗi lớp tối đa 40 học sinh. Lớp đã đủ hoặc số em thêm vào vượt quá 40.' };
   if (m.includes('one_class_only')) return { status: 400, message: 'Mỗi giáo viên chỉ phụ trách 1 lớp đang hoạt động. Lưu trữ lớp cũ trước khi mở lớp khác.' };
   if (m.includes('class_inactive')) return { status: 400, message: 'Lớp đang lưu trữ, hãy mở lại lớp trước.' };

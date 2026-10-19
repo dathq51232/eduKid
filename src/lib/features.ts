@@ -5,4 +5,6 @@
 export const FEATURES = {
   /** "Kết quả học tập trên trường" và "Nhận xét học sinh" của giáo viên */
   teacherRecords: process.env.NEXT_PUBLIC_FEATURE_SO_THEO_DOI === 'on',
+  /** Thu phí học sinh (migration 0018) — đang ẩn; bật: NEXT_PUBLIC_FEATURE_THU_PHI=on rồi Redeploy */
+  billing: process.env.NEXT_PUBLIC_FEATURE_THU_PHI === 'on',
 } as const;

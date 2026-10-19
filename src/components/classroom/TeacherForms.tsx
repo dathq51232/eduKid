@@ -17,7 +17,7 @@ export function TeacherRequestForm({ schoolHint }: { schoolHint: string }) {
     setError('');
     const { error: err } = await createClient().rpc('request_teacher_role', { p_school_name: school.trim(), p_note: note.trim() || null });
     setBusy(false);
-    if (err) return setError(err.message.includes('invalid_school_name') ? 'Tên trường cần từ 2 đến 180 ký tự.' : 'Chưa gửi được yêu cầu. Vui lòng thử lại.');
+    if (err) return setError(err.message.includes('invalid_school_name') ? 'Tên trường cần từ 2 đến 180 ký tự.' : err.message.includes('not_allowed') ? 'Tài khoản học sinh không đăng ký làm giáo viên được.' : 'Chưa đăng ký được. Vui lòng thử lại.');
     router.refresh();
   };
   return (
@@ -25,11 +25,11 @@ export function TeacherRequestForm({ schoolHint }: { schoolHint: string }) {
       <label className="adm-field"><span>Trường đang dạy</span>
         <input required minLength={2} maxLength={180} value={school} onChange={(e) => setSchool(e.target.value)} placeholder="Trường Tiểu học …" />
       </label>
-      <label className="adm-field"><span>Ghi chú cho quản trị viên (không bắt buộc)</span>
+      <label className="adm-field"><span>Ghi chú (không bắt buộc)</span>
         <input maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ví dụ: chủ nhiệm lớp 1A" />
       </label>
       {error && <p className="adm-alert is-error" role="alert">{error}</p>}
-      <button type="submit" className="btn btn-primary" disabled={busy}><Send aria-hidden="true" /> Gửi yêu cầu duyệt</button>
+      <button type="submit" className="btn btn-primary" disabled={busy}><Send aria-hidden="true" /> {busy ? 'Đang đăng ký…' : 'Bắt đầu dùng miễn phí'}</button>
     </form>
   );
 }
