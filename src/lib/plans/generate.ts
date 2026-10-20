@@ -16,9 +16,21 @@ export type LessonInfo = {
 export type ActivityKey = 'khoi-dong' | 'kham-pha' | 'luyen-tap' | 'van-dung';
 export type PlanActivity = { key: ActivityKey; title: string; minutes: number; goal: string; teacher: string; student: string };
 
+/** Môn của giáo án: 3 môn có ngân hàng câu hỏi trong app + các môn khác (khung chung) */
+export type OtherSubject = 'dao-duc' | 'tnxh' | 'khoa-hoc' | 'ls-dl' | 'hdtn' | 'am-nhac' | 'mi-thuat' | 'gdtc' | 'tin-hoc' | 'cong-nghe' | 'khac';
+export type PlanSubject = SubjectCode | OtherSubject;
+export const isAppSubject = (s: PlanSubject): s is SubjectCode => s === 'toan' || s === 'tieng-viet' || s === 'tieng-anh';
+
 export type LessonPlan = {
   v: 1;
-  subject: SubjectCode;
+  subject: PlanSubject;
+  /** tên môn như trong lịch báo giảng (vd "HĐTN1", "Toán (BS)") — để hiện đúng như trường dùng */
+  subjectLabel?: string;
+  /** buổi (Sáng / Chiều) và số tiết theo phân phối chương trình — khi tạo từ lịch báo giảng */
+  session?: string;
+  ppct?: string;
+  /** nội dung tích hợp / đồ dùng dạy học ghi trong lịch báo giảng */
+  integration?: string;
   grade: number;
   className: string;
   /** mã bài trong app (để mở bài luyện tập); '' = bài giáo viên tự nhập */
@@ -37,7 +49,13 @@ export type LessonPlan = {
   adjust: string;
 };
 
-export const SUBJECT_NAMES: Record<SubjectCode, string> = { toan: 'Toán', 'tieng-viet': 'Tiếng Việt', 'tieng-anh': 'Tiếng Anh' };
+export const SUBJECT_NAMES: Record<PlanSubject, string> = {
+  toan: 'Toán', 'tieng-viet': 'Tiếng Việt', 'tieng-anh': 'Tiếng Anh', 'dao-duc': 'Đạo đức', tnxh: 'Tự nhiên và Xã hội', 'khoa-hoc': 'Khoa học',
+  'ls-dl': 'Lịch sử và Địa lí', hdtn: 'Hoạt động trải nghiệm', 'am-nhac': 'Âm nhạc', 'mi-thuat': 'Mĩ thuật', gdtc: 'Giáo dục thể chất',
+  'tin-hoc': 'Tin học', 'cong-nghe': 'Công nghệ', khac: 'Môn khác',
+};
+/** Tên môn hiển thị của một giáo án */
+export const subjectNameOf = (p: Pick<LessonPlan, 'subject' | 'subjectLabel'>) => p.subjectLabel?.trim() || SUBJECT_NAMES[p.subject] || 'Môn học';
 export const ACTIVITY_TITLES: Record<ActivityKey, string> = {
   'khoi-dong': '1. Khởi động',
   'kham-pha': '2. Khám phá',
@@ -204,4 +222,62 @@ export function addDays(iso: string, n: number): string {
 export function isPlan(x: unknown): x is LessonPlan {
   const p = x as LessonPlan;
   return !!p && p.v === 1 && typeof p.title === 'string' && Array.isArray(p.activities) && !!p.goals && !!p.materials;
+}
+
+// ------------------------------------------------------------------ khung chung cho môn không có ngân hàng câu hỏi trong app
+const OTHER: Record<OtherSubject, { competence: string; teacher: string; student: string; explore: string; practice: string; apply: string }> = {
+  'dao-duc': { competence: 'Năng lực điều chỉnh hành vi; năng lực phát triển bản thân.', teacher: 'Tranh tình huống, câu chuyện ngắn, phiếu học tập.', student: 'Sách giáo khoa, vở bài tập Đạo đức.', explore: 'Kể chuyện / cho HS quan sát tranh tình huống; hỏi để HS nhận ra hành vi đúng, chưa đúng.', practice: 'Thảo luận nhóm xử lí tình huống; bày tỏ ý kiến đồng tình / không đồng tình.', apply: 'HS liên hệ bản thân, nêu việc sẽ làm ở nhà, ở trường.' },
+  tnxh: { competence: 'Năng lực nhận thức khoa học; tìm hiểu môi trường tự nhiên và xã hội xung quanh; vận dụng kiến thức, kĩ năng đã học.', teacher: 'Tranh ảnh, vật thật / mô hình, phiếu học tập.', student: 'Sách giáo khoa, vở bài tập Tự nhiên và Xã hội.', explore: 'Cho HS quan sát tranh, vật thật; đặt câu hỏi để HS tự phát hiện, nêu nhận xét.', practice: 'Làm việc nhóm: hoàn thành phiếu, chia sẻ trước lớp.', apply: 'HS liên hệ thực tế gia đình, trường học, địa phương.' },
+  'khoa-hoc': { competence: 'Năng lực nhận thức khoa học tự nhiên; tìm hiểu tự nhiên; vận dụng kiến thức vào thực tiễn.', teacher: 'Dụng cụ thí nghiệm đơn giản, tranh ảnh, phiếu học tập.', student: 'Sách giáo khoa, vở bài tập Khoa học.', explore: 'Tổ chức quan sát / thí nghiệm đơn giản; HS dự đoán, kiểm chứng, rút ra kết luận.', practice: 'Hoàn thành phiếu học tập, trả lời câu hỏi củng cố.', apply: 'Vận dụng giải thích hiện tượng gần gũi trong đời sống.' },
+  'ls-dl': { competence: 'Năng lực nhận thức khoa học lịch sử và địa lí; tìm hiểu lịch sử và địa lí; vận dụng kiến thức, kĩ năng đã học.', teacher: 'Lược đồ, bản đồ, tranh ảnh tư liệu, phiếu học tập.', student: 'Sách giáo khoa, vở bài tập Lịch sử và Địa lí.', explore: 'Khai thác lược đồ, tranh ảnh, tư liệu; HS trả lời câu hỏi để rút ra nội dung chính.', practice: 'Làm việc nhóm hoàn thành phiếu, chỉ trên bản đồ / lược đồ.', apply: 'Liên hệ địa phương; sưu tầm tư liệu liên quan.' },
+  hdtn: { competence: 'Năng lực thích ứng với cuộc sống; năng lực thiết kế và tổ chức hoạt động; định hướng nghề nghiệp ở mức đơn giản.', teacher: 'Tranh ảnh, video ngắn, phiếu, đồ dùng cho trò chơi.', student: 'Sách / vở Hoạt động trải nghiệm, bút màu.', explore: 'Tổ chức hoạt động trải nghiệm: chia sẻ, đóng vai, trò chơi theo chủ đề.', practice: 'Thực hành theo nhóm; chia sẻ cảm nhận sau hoạt động.', apply: 'Cam kết hành động nhỏ ở nhà, ở trường; nhờ phụ huynh hỗ trợ.' },
+  'am-nhac': { competence: 'Năng lực thể hiện âm nhạc; cảm thụ và hiểu biết âm nhạc; ứng dụng và sáng tạo âm nhạc.', teacher: 'Nhạc cụ, loa, file nhạc, tranh minh hoạ.', student: 'Sách giáo khoa Âm nhạc, nhạc cụ gõ (nếu có).', explore: 'Nghe mẫu; hướng dẫn hát từng câu / gõ đệm theo phách, nhịp.', practice: 'Hát cả bài theo tổ, nhóm, cá nhân; kết hợp vận động phụ hoạ.', apply: 'Biểu diễn trước lớp; hát cho người thân nghe.' },
+  'mi-thuat': { competence: 'Năng lực quan sát và nhận thức thẩm mĩ; sáng tạo và ứng dụng thẩm mĩ; phân tích và đánh giá thẩm mĩ.', teacher: 'Tranh mẫu, sản phẩm mẫu, giấy, màu.', student: 'Vở / giấy vẽ, bút chì, màu vẽ, kéo, hồ dán.', explore: 'Cho HS quan sát tranh / sản phẩm mẫu; nêu cách thực hiện.', practice: 'HS thực hành tạo sản phẩm cá nhân hoặc nhóm; GV gợi ý, hỗ trợ.', apply: 'Trưng bày, giới thiệu sản phẩm; nhận xét, chia sẻ.' },
+  gdtc: { competence: 'Năng lực chăm sóc sức khoẻ; vận động cơ bản; hoạt động thể dục thể thao.', teacher: 'Sân tập, còi, cờ, bóng / dụng cụ phù hợp.', student: 'Trang phục gọn gàng, giày dép phù hợp.', explore: 'Khởi động chung; GV làm mẫu, phân tích động tác.', practice: 'Tập đồng loạt, theo tổ; thi đua giữa các tổ; trò chơi vận động.', apply: 'Thả lỏng, hồi tĩnh; nhận xét; nhắc tập luyện ở nhà.' },
+  'tin-hoc': { competence: 'Năng lực sử dụng và quản lí phương tiện công nghệ thông tin; giải quyết vấn đề với sự hỗ trợ của máy tính.', teacher: 'Máy tính, máy chiếu, phần mềm / bài thực hành.', student: 'Sách giáo khoa Tin học, máy tính phòng máy.', explore: 'Trình chiếu, làm mẫu thao tác; HS quan sát và nêu các bước.', practice: 'Thực hành trên máy theo nhóm đôi; GV theo dõi, hỗ trợ.', apply: 'Vận dụng làm sản phẩm nhỏ; nhắc an toàn khi dùng máy tính.' },
+  'cong-nghe': { competence: 'Năng lực nhận thức công nghệ; sử dụng công nghệ; thiết kế kĩ thuật ở mức đơn giản.', teacher: 'Bộ lắp ghép / vật liệu, sản phẩm mẫu, tranh quy trình.', student: 'Sách giáo khoa Công nghệ, bộ đồ dùng.', explore: 'Quan sát sản phẩm mẫu, quy trình; nêu các bước thực hiện.', practice: 'Thực hành làm / lắp ghép sản phẩm theo nhóm.', apply: 'Trưng bày, đánh giá sản phẩm; liên hệ sử dụng an toàn.' },
+  khac: { competence: 'Năng lực đặc thù của môn học theo yêu cầu cần đạt của bài.', teacher: 'Đồ dùng dạy học phù hợp với bài.', student: 'Sách giáo khoa, vở, đồ dùng học tập.', explore: 'Hình thành kiến thức mới qua quan sát, trao đổi.', practice: 'Luyện tập, thực hành theo cá nhân / nhóm.', apply: 'Vận dụng vào tình huống thực tế.' },
+};
+
+/**
+ * Giáo án khung cho môn không có ngân hàng câu hỏi trong app, hoặc tiết ôn tập / bổ sung (BS):
+ * giữ đúng tên bài theo lịch báo giảng, phần yêu cầu cần đạt để giáo viên điền theo sách.
+ */
+export function genericPlan(input: { subject: PlanSubject; grade: number; className: string; title: string; review?: boolean; appLesson?: { id: string; title: string } | null }): LessonPlan {
+  const { subject, grade, className, title } = input;
+  if (isAppSubject(subject) && !input.review) {
+    const p = generatePlan({ subject, grade, className, lesson: null });
+    return { ...p, title, goals: { ...p.goals, knowledge: '- (Thầy cô ghi yêu cầu cần đạt của bài theo sách giáo khoa / kế hoạch dạy học.)' } };
+  }
+  const o = isAppSubject(subject) ? null : OTHER[subject];
+  const app = input.appLesson;
+  const review = !!input.review;
+  const comp = isAppSubject(subject) ? COMPETENCE[subject] : o!.competence;
+  const mat = isAppSubject(subject) ? MATERIALS[subject] : { teacher: o!.teacher, student: o!.student };
+  const act = (key: ActivityKey, minutes: number, goal: string, teacher: string[], student: string[]): PlanActivity => ({ key, title: ACTIVITY_TITLES[key], minutes, goal, teacher: bullet(teacher), student: bullet(student) });
+  return {
+    v: 1, subject, grade, className, lessonId: app?.id ?? '', title,
+    week: '', date: '', period: 0, minutes: 35,
+    goals: {
+      knowledge: review
+        ? bullet([`Củng cố kiến thức, kĩ năng đã học trong tuần${app ? ` (trọng tâm: ${app.title})` : ''}.`, 'Phát hiện và bù đắp chỗ học sinh còn hổng.'])
+        : '- (Thầy cô ghi yêu cầu cần đạt của bài theo sách giáo khoa / kế hoạch dạy học.)',
+      competence: `${comp}\n${COMMON_COMPETENCE}`,
+      quality: QUALITY,
+    },
+    materials: { ...mat },
+    activities: review ? [
+      act('khoi-dong', 5, 'Tạo hứng thú, nhắc lại nội dung đã học trong tuần.', ['Trò chơi hỏi nhanh – đáp nhanh về các bài đã học trong tuần.'], ['Tham gia trò chơi.']),
+      act('kham-pha', 8, 'Hệ thống lại kiến thức trọng tâm.', ['Cùng HS nhắc lại kiến thức trọng tâm của tuần; chốt lại những điểm dễ nhầm.'], ['Nhắc lại, nêu ví dụ.']),
+      act('luyen-tap', 17, 'Luyện tập theo mức độ, kèm cặp HS còn chậm.', ['Chia nhóm theo mức: nhóm củng cố, nhóm nâng cao.', ...(app ? [`Cho HS luyện trên EduChain Kids: bài “${app.title}” (máy / máy tính bảng của lớp hoặc giao về nhà).`] : []), 'Theo dõi, kèm riêng HS còn lúng túng.'], ['Làm bài theo nhóm / cá nhân; tự sửa lỗi.']),
+      act('van-dung', 5, 'Vận dụng và dặn dò.', ['Nhận xét tiết học; dặn ôn luyện ở nhà.'], ['Nghe nhận xét, ghi nhớ nhiệm vụ.']),
+    ] : [
+      act('khoi-dong', 5, 'Tạo hứng thú, kết nối vào bài.', ['Tổ chức trò chơi / bài hát ngắn liên quan đến chủ đề.', `Giới thiệu bài: “${title}”.`], ['Tham gia, lắng nghe.']),
+      act('kham-pha', 12, 'Hình thành kiến thức, kĩ năng mới.', [o?.explore ?? 'Hình thành kiến thức mới qua quan sát, trao đổi.'], ['Quan sát, trao đổi nhóm đôi, trình bày.']),
+      act('luyen-tap', 13, 'Luyện tập, thực hành.', [o?.practice ?? 'Luyện tập, thực hành.', 'Theo dõi, giúp đỡ HS; nhận xét, tuyên dương.'], ['Thực hành cá nhân / nhóm; nhận xét bạn.']),
+      act('van-dung', 5, 'Vận dụng, liên hệ thực tế.', [o?.apply ?? 'Vận dụng vào thực tế.', 'Nhận xét tiết học, dặn dò.'], ['Liên hệ bản thân; ghi nhớ nhiệm vụ.']),
+    ],
+    assessment: 'Đánh giá thường xuyên bằng nhận xét: quan sát, vấn đáp, sản phẩm học tập của học sinh.',
+    adjust: '',
+  };
 }

@@ -1,22 +1,24 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CalendarDays, Copy, FileDown, FilePlus2, NotebookPen, Save, Sparkles, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { downloadDoc } from '@/lib/doc-download';
 import {
-  ACTIVITY_TITLES, SUBJECT_NAMES, addDays, blankPlan, generatePlan, isPlan, mondayOf, viDate, weekdayVi,
-  type LessonInfo, type LessonPlan, type PlanActivity,
+  ACTIVITY_TITLES, SUBJECT_NAMES, addDays, blankPlan, generatePlan, isPlan, mondayOf, subjectNameOf, viDate, weekdayVi,
+  type LessonInfo, type LessonPlan, type PlanActivity, type PlanSubject,
 } from '@/lib/plans/generate';
 import { plansDocument, weekDocument } from '@/lib/plans/word';
 import type { SubjectCode } from '@/lib/types';
+import ScheduleImport from './ScheduleImport';
 
-type Saved = { id: string; class_id: string | null; class_name: string | null; subject: SubjectCode; grade: number; title: string; teach_date: string | null; period: number | null; updated_at: string };
+type Saved = { id: string; class_id: string | null; class_name: string | null; subject: PlanSubject; grade: number; title: string; teach_date: string | null; period: number | null; updated_at: string };
 type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;
 const ALL_SUBJECTS: SubjectCode[] = ['toan', 'tieng-viet', 'tieng-anh'];
 const notReady = (m: string) => /function|does not exist|schema cache/i.test(m);
-const MIGRATION_HINT = 'Chưa bật lưu giáo án: chạy supabase/migrations/0021_lesson_plans.sql trên Supabase. Vẫn soạn và tải Word được.';
+const MIGRATION_HINT = 'Chưa bật lưu giáo án: chạy supabase/migrations/0021_lesson_plans.sql và 0022_lesson_plans_subjects.sql trên Supabase. Vẫn soạn và tải Word được.';
+const SUBJECT_HINT = 'Giáo án môn này cần chạy supabase/migrations/0022_lesson_plans_subjects.sql trên Supabase. Vẫn tải Word được.';
 const todayIso = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -45,6 +47,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
   const [msg, setMsg] = useState<Msg>(null);
   const [week, setWeek] = useState(() => mondayOf(todayIso()));
   const [scope, setScope] = useState<'week' | 'all'>('week');
+  const editorRef = useRef<HTMLElement>(null);
 
   useEffect(() => { setLessonId((cur) => (lessons.some((l) => l.id === cur) ? cur : lessons[0]?.id ?? '')); }, [lessons]);
 
@@ -93,7 +96,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
       p_date: plan.date || null, p_period: plan.period || null, p_data: plan,
     });
     setBusy(false);
-    if (error) return setMsg({ kind: 'error', text: notReady(error.message) ? MIGRATION_HINT : 'Chưa lưu được. Thử lại sau.' });
+    if (error) return setMsg({ kind: 'error', text: notReady(error.message) ? MIGRATION_HINT : /subject_check/i.test(error.message) ? SUBJECT_HINT : 'Chưa lưu được. Thử lại sau.' });
     setPlanId(data as string);
     setDirty(false);
     setMsg({ kind: 'ok', text: asNew ? 'Đã lưu thành giáo án mới.' : 'Đã lưu giáo án.' });
@@ -116,6 +119,16 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
     if (error) return setMsg({ kind: 'error', text: 'Chưa xoá được.' });
     if (id === planId) { setPlan(null); setPlanId(null); setDirty(false); }
     void refresh();
+  };
+
+  /** Mở một giáo án sinh từ lịch báo giảng vào khung soạn (chưa lưu) */
+  const openDraft = (p: LessonPlan) => {
+    if (!confirmDiscard()) return;
+    setPlan(p);
+    setPlanId(null);
+    setDirty(true);
+    setMsg({ kind: 'info', text: `Giáo án “${p.title}” (từ lịch báo giảng). Sửa rồi bấm Lưu.` });
+    setTimeout(() => editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
   const exportPlan = () => plan && downloadDoc(`giao-an-${plan.title || 'bai-hoc'}`, plansDocument([plan], school));
@@ -142,6 +155,9 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
           <p className="dash-muted">Chọn bài, app soạn sẵn khung giáo án: yêu cầu cần đạt, đồ dùng, 4 hoạt động (khởi động – khám phá – luyện tập – vận dụng) và đánh giá; phần luyện tập có sẵn các dạng lớp còn hay sai. Thầy cô sửa theo lớp mình, lưu, nhân bản cho tiết sau và tải Word để chỉnh theo mẫu của trường.</p>
         </div>
       </header>
+
+      <ScheduleImport classId={classId} className={className} grade={grade} school={school} weakForms={weakForms} lessonsBySubject={lessonsBySubject}
+        saved={saved} canSave={canSave} onOpen={openDraft} onSaved={(m) => { setWeek(m); setScope('week'); void refresh(); }} />
 
       <section className="dash-section planner-card" aria-labelledby="pl-new">
         <h2 id="pl-new"><FilePlus2 aria-hidden="true" /> Soạn giáo án mới</h2>
@@ -171,9 +187,9 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
       {msg && <p className={`adm-alert is-${msg.kind}`} role={msg.kind === 'error' ? 'alert' : 'status'}>{msg.text}</p>}
 
       {plan && (
-        <section className="dash-section planner-card planner-editor" aria-labelledby="pl-edit">
+        <section ref={editorRef} className="dash-section planner-card planner-editor" aria-labelledby="pl-edit">
           <div className="planner-edit-head">
-            <h2 id="pl-edit">{planId ? 'Sửa giáo án' : 'Giáo án mới'}{dirty && <span className="planner-dirty"> · chưa lưu</span>}</h2>
+            <h2 id="pl-edit">{planId ? 'Sửa giáo án' : 'Giáo án mới'} · {subjectNameOf(plan)}{dirty && <span className="planner-dirty"> · chưa lưu</span>}</h2>
             <div className="planner-actions">
               <button type="button" className="btn btn-primary btn-sm" disabled={busy || !canSave} onClick={() => void save(false)}><Save aria-hidden="true" /> Lưu</button>
               {planId && <button type="button" className="btn btn-outline btn-sm" disabled={busy || !canSave} onClick={() => void save(true)}>Lưu thành bản mới</button>}
@@ -188,12 +204,15 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
             <label className="adm-field"><span>Tiết</span><input type="number" min={1} max={10} value={plan.period || ''} onChange={(e) => edit((p) => ({ ...p, period: Math.max(0, Math.min(10, Number(e.target.value) || 0)) }))} /></label>
             <label className="adm-field"><span>Tuần</span><input value={plan.week} maxLength={10} placeholder="vd: 7" onChange={(e) => edit((p) => ({ ...p, week: e.target.value }))} /></label>
             <label className="adm-field"><span>Thời lượng (phút)</span><input type="number" min={20} max={90} value={plan.minutes} onChange={(e) => edit((p) => ({ ...p, minutes: Number(e.target.value) || 35 }))} /></label>
+            <label className="adm-field"><span>Buổi</span><select value={plan.session ?? ''} onChange={(e) => edit((p) => ({ ...p, session: e.target.value }))}><option value="">—</option><option>Sáng</option><option>Chiều</option></select></label>
+            <label className="adm-field"><span>Tiết PPCT</span><input value={plan.ppct ?? ''} maxLength={10} onChange={(e) => edit((p) => ({ ...p, ppct: e.target.value }))} /></label>
           </div>
 
           <h3>I. Yêu cầu cần đạt</h3>
           <label className="adm-field"><span>1. Kiến thức, kĩ năng</span><textarea rows={4} value={plan.goals.knowledge} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, knowledge: e.target.value } }))} /></label>
           <label className="adm-field"><span>2. Năng lực</span><textarea rows={2} value={plan.goals.competence} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, competence: e.target.value } }))} /></label>
           <label className="adm-field"><span>3. Phẩm chất</span><textarea rows={2} value={plan.goals.quality} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, quality: e.target.value } }))} /></label>
+          <label className="adm-field"><span>4. Nội dung tích hợp (nếu có)</span><textarea rows={2} value={plan.integration ?? ''} placeholder="vd: GDĐP, Quyền con người, Bảo vệ môi trường…" onChange={(e) => edit((p) => ({ ...p, integration: e.target.value }))} /></label>
 
           <h3>II. Đồ dùng dạy học</h3>
           <div className="planner-two">
@@ -216,7 +235,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
           <label className="adm-field"><span>Đánh giá</span><textarea rows={2} value={plan.assessment} onChange={(e) => edit((p) => ({ ...p, assessment: e.target.value }))} /></label>
           <h3>IV. Điều chỉnh sau bài dạy</h3>
           <label className="adm-field"><span>Ghi lại sau khi dạy (để lần sau dùng lại giáo án tốt hơn)</span><textarea rows={3} value={plan.adjust} onChange={(e) => edit((p) => ({ ...p, adjust: e.target.value }))} /></label>
-          {plan.lessonId && <p className="dash-muted">Bài luyện của học sinh: <Link href={`/lam-bai?lessonId=${plan.lessonId}&subject=${plan.subject}&grade=${plan.grade}`}>mở “{plan.title}” trên app</Link>.</p>}
+          {plan.lessonId && (plan.subject === 'toan' || plan.subject === 'tieng-viet' || plan.subject === 'tieng-anh') && <p className="dash-muted">Bài luyện của học sinh: <Link href={`/lam-bai?lessonId=${plan.lessonId}&subject=${plan.subject}&grade=${plan.grade}`}>mở “{plan.title}” trên app</Link>.</p>}
         </section>
       )}
 
@@ -249,7 +268,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
                   <tr key={s.id} className={s.id === planId ? 'is-on' : ''}>
                     <td>{s.teach_date ? `${weekdayVi(s.teach_date)} ${viDate(s.teach_date)}` : '—'}</td>
                     <td>{s.period ?? ''}</td>
-                    <td>{SUBJECT_NAMES[s.subject]} {s.grade}</td>
+                    <td>{SUBJECT_NAMES[s.subject] ?? s.subject} {s.grade}</td>
                     <td className="planner-title">{s.title}</td>
                     <td>{s.class_name ?? ''}</td>
                     <td className="planner-row-actions">

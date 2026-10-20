@@ -19,7 +19,7 @@ select public.teacher_save_plan(null, null, 'Giáo án chung', 'tieng-viet', 2::
 select public.teacher_save_plan(null, '00000000-0000-0000-0000-0000000021c2', 'Gắn lớp người khác', 'toan', 2::smallint, null, null, '{"v":1}'); rollback;
 \echo == Mon sai / lop sai / tiet sai (mong doi: check constraint x3)
 begin; set local role authenticated; set local request.jwt.claim.sub='00000000-0000-0000-0000-0000000021f1';
-select public.teacher_save_plan(null, null, 'X giáo án', 'hoa', 2::smallint, null, null, '{}'); rollback;
+select public.teacher_save_plan(null, null, 'X giáo án', 'Hoa!', 2::smallint, null, null, '{}'); rollback;
 begin; set local role authenticated; set local request.jwt.claim.sub='00000000-0000-0000-0000-0000000021f1';
 select public.teacher_save_plan(null, null, 'X giáo án', 'toan', 9::smallint, null, null, '{}'); rollback;
 begin; set local role authenticated; set local request.jwt.claim.sub='00000000-0000-0000-0000-0000000021f1';
