@@ -63,7 +63,8 @@ export function subjectOf(label: string): { subject: PlanSubject; extra: boolean
   const g = f.replace(/\(.*?\)/g, ' ').replace(/\bbs\b/g, ' ').trim();
   const has = (...k: string[]) => k.some((x) => g.includes(x));
   let subject: PlanSubject = 'khac';
-  if (has('tieng viet', 'tv')) subject = 'tieng-viet';
+  if (has('stem')) subject = 'stem';
+  else if (has('tieng viet', 'tv')) subject = 'tieng-viet';
   else if (has('tieng anh', 'anh van', 'ngoai ngu')) subject = 'tieng-anh';
   else if (/^toan\b/.test(g) || has(' toan')) subject = 'toan';
   else if (has('dao duc')) subject = 'dao-duc';
@@ -211,7 +212,22 @@ export function matchLesson<T extends LessonRef>(subject: SubjectCode, title: st
 
 const isReviewTitle = (title: string) => { const f = fold(title); return /^(on tap|on luyen|luyen tap|cung co)/.test(f) || (/on (tap|luyen)/.test(f) && !/\bbai\s*\d/.test(f)); };
 
-export type RowPlan = { row: ScheduleRow; plan: LessonPlan; lessonId: string; lessonTitle: string; kind: 'app' | 'review' | 'khung' };
+export type RowPlan = { row: ScheduleRow; plan: LessonPlan; lessonId: string; lessonTitle: string; kind: 'app' | 'review' | 'khung' | 'kho' };
+
+/** Dùng giáo án trong kho của trường cho một tiết: giữ nội dung giáo án, lấy ngày/tiết/buổi/PPCT/tích hợp từ lịch */
+export function withLibraryPlan(rp: RowPlan, lib: LessonPlan, className: string): RowPlan {
+  const r = rp.row;
+  const integration = [r.integration, lib.integration].filter((x) => x && x.trim()).join('\n') || undefined;
+  return {
+    ...rp, kind: 'kho', lessonTitle: lib.title,
+    plan: {
+      ...lib, v: 1, className, lessonId: rp.plan.lessonId || lib.lessonId || '', subject: rp.plan.subject === 'khac' ? lib.subject : rp.plan.subject,
+      subjectLabel: r.subjectLabel || lib.subjectLabel, session: r.session, ppct: r.ppct, integration,
+      title: r.title || lib.title, week: rp.plan.week || lib.week, date: rp.plan.date, period: rp.plan.period,
+      adjust: r.adjust || '', grade: rp.plan.grade,
+    },
+  };
+}
 
 /** Sinh giáo án cho từng tiết của lịch báo giảng */
 export function plansFromSchedule(sch: Schedule, opts: {

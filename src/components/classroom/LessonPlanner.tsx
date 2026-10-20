@@ -6,12 +6,14 @@ import { CalendarDays, Copy, FileDown, FilePlus2, NotebookPen, Save, Sparkles, T
 import { createClient } from '@/lib/supabase/client';
 import { downloadDoc } from '@/lib/doc-download';
 import {
-  ACTIVITY_TITLES, SUBJECT_NAMES, addDays, blankPlan, generatePlan, isPlan, mondayOf, subjectNameOf, viDate, weekdayVi,
+  SUBJECT_NAMES, addDays, blankPlan, generatePlan, isPlan, mondayOf, subjectNameOf, viDate, weekdayVi,
   type LessonInfo, type LessonPlan, type PlanActivity, type PlanSubject,
 } from '@/lib/plans/generate';
 import { plansDocument, weekDocument } from '@/lib/plans/word';
 import type { SubjectCode } from '@/lib/types';
 import ScheduleImport from './ScheduleImport';
+import PlanLibrary from './PlanLibrary';
+import type { LibraryMeta } from '@/lib/plans/library';
 
 type Saved = { id: string; class_id: string | null; class_name: string | null; subject: PlanSubject; grade: number; title: string; teach_date: string | null; period: number | null; updated_at: string };
 type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;
@@ -48,6 +50,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
   const [week, setWeek] = useState(() => mondayOf(todayIso()));
   const [scope, setScope] = useState<'week' | 'all'>('week');
   const editorRef = useRef<HTMLElement>(null);
+  const [library, setLibrary] = useState<LibraryMeta[]>([]);
 
   useEffect(() => { setLessonId((cur) => (lessons.some((l) => l.id === cur) ? cur : lessons[0]?.id ?? '')); }, [lessons]);
 
@@ -157,7 +160,9 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
       </header>
 
       <ScheduleImport classId={classId} className={className} grade={grade} school={school} weakForms={weakForms} lessonsBySubject={lessonsBySubject}
-        saved={saved} canSave={canSave} onOpen={openDraft} onSaved={(m) => { setWeek(m); setScope('week'); void refresh(); }} />
+        saved={saved} canSave={canSave} library={library} onOpen={openDraft} onSaved={(m) => { setWeek(m); setScope('week'); void refresh(); }} />
+
+      <PlanLibrary grade={grade} className={className} onOpen={openDraft} onChange={setLibrary} />
 
       <section className="dash-section planner-card" aria-labelledby="pl-new">
         <h2 id="pl-new"><FilePlus2 aria-hidden="true" /> Soạn giáo án mới</h2>
@@ -209,9 +214,10 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
           </div>
 
           <h3>I. Yêu cầu cần đạt</h3>
-          <label className="adm-field"><span>1. Kiến thức, kĩ năng</span><textarea rows={4} value={plan.goals.knowledge} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, knowledge: e.target.value } }))} /></label>
-          <label className="adm-field"><span>2. Năng lực</span><textarea rows={2} value={plan.goals.competence} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, competence: e.target.value } }))} /></label>
-          <label className="adm-field"><span>3. Phẩm chất</span><textarea rows={2} value={plan.goals.quality} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, quality: e.target.value } }))} /></label>
+          {plan.source && <p className="dash-muted">Từ kho giáo án của trường: {plan.source}</p>}
+          <label className="adm-field"><span>1. {plan.goalLabels?.[0] ?? 'Kiến thức, kĩ năng'}</span><textarea rows={4} value={plan.goals.knowledge} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, knowledge: e.target.value } }))} /></label>
+          <label className="adm-field"><span>2. {plan.goalLabels?.[1] ?? 'Năng lực'}</span><textarea rows={2} value={plan.goals.competence} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, competence: e.target.value } }))} /></label>
+          <label className="adm-field"><span>3. {plan.goalLabels?.[2] ?? 'Phẩm chất'}</span><textarea rows={2} value={plan.goals.quality} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, quality: e.target.value } }))} /></label>
           <label className="adm-field"><span>4. Nội dung tích hợp (nếu có)</span><textarea rows={2} value={plan.integration ?? ''} placeholder="vd: GDĐP, Quyền con người, Bảo vệ môi trường…" onChange={(e) => edit((p) => ({ ...p, integration: e.target.value }))} /></label>
 
           <h3>II. Đồ dùng dạy học</h3>
@@ -222,12 +228,12 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
 
           <h3>III. Các hoạt động dạy học chủ yếu</h3>
           {plan.activities.map((a, i) => (
-            <fieldset key={a.key} className="planner-act">
-              <legend>{ACTIVITY_TITLES[a.key]} <input className="planner-min" type="number" min={0} max={60} value={a.minutes} aria-label={`Số phút: ${a.title}`} onChange={(e) => setAct(i, { minutes: Number(e.target.value) || 0 })} /> phút</legend>
-              <label className="adm-field"><span>Mục tiêu</span><input value={a.goal} onChange={(e) => setAct(i, { goal: e.target.value })} /></label>
+            <fieldset key={i} className="planner-act">
+              <legend><input className="planner-act-title" value={a.title} aria-label="Tên hoạt động" onChange={(e) => setAct(i, { title: e.target.value })} /> <input className="planner-min" type="number" min={0} max={60} value={a.minutes} aria-label={`Số phút: ${a.title}`} onChange={(e) => setAct(i, { minutes: Number(e.target.value) || 0 })} /> phút</legend>
+              <label className="adm-field"><span>Mục tiêu</span><textarea rows={a.goal.length > 120 ? 3 : 1} value={a.goal} onChange={(e) => setAct(i, { goal: e.target.value })} /></label>
               <div className="planner-two">
-                <label className="adm-field"><span>Hoạt động của giáo viên</span><textarea rows={6} value={a.teacher} onChange={(e) => setAct(i, { teacher: e.target.value })} /></label>
-                <label className="adm-field"><span>Hoạt động của học sinh</span><textarea rows={6} value={a.student} onChange={(e) => setAct(i, { student: e.target.value })} /></label>
+                <label className="adm-field"><span>Hoạt động của giáo viên</span><textarea rows={Math.min(16, Math.max(6, a.teacher.split('\n').length + 1))} value={a.teacher} onChange={(e) => setAct(i, { teacher: e.target.value })} /></label>
+                <label className="adm-field"><span>Hoạt động của học sinh</span><textarea rows={Math.min(16, Math.max(6, a.student.split('\n').length + 1))} value={a.student} onChange={(e) => setAct(i, { student: e.target.value })} /></label>
               </div>
             </fieldset>
           ))}

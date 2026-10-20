@@ -42,16 +42,16 @@ function planBody(p: LessonPlan, school: string): string {
   <p class="c"><b>Môn: ${esc(subjectNameOf(p))}${p.subjectLabel ? '' : ` ${p.grade}`}</b> — <b>${esc(p.title || 'Tên bài: ……………………')}</b></p>
   <p class="c muted">${p.week ? `Tuần ${esc(p.week)} · ` : ''}${when}${p.session ? ` · Buổi ${esc(p.session.toLowerCase())}` : ''}${p.period ? ` · Tiết ${p.period}` : ''}${p.ppct ? ` · Tiết PPCT: ${esc(p.ppct)}` : ''} · Thời lượng: ${p.minutes} phút</p>
   <h2>I. YÊU CẦU CẦN ĐẠT</h2>
-  <h3>1. Kiến thức, kĩ năng</h3><p>${br(p.goals.knowledge)}</p>
-  <h3>2. Năng lực</h3><p>${br(p.goals.competence)}</p>
-  <h3>3. Phẩm chất</h3><p>${br(p.goals.quality)}</p>
+  <h3>1. ${esc(p.goalLabels?.[0] ?? 'Kiến thức, kĩ năng')}</h3><p>${br(p.goals.knowledge)}</p>
+  <h3>2. ${esc(p.goalLabels?.[1] ?? 'Năng lực')}</h3><p>${br(p.goals.competence)}</p>
+  <h3>3. ${esc(p.goalLabels?.[2] ?? 'Phẩm chất')}</h3><p>${br(p.goals.quality)}</p>
   ${p.integration?.trim() ? `<h3>4. Nội dung tích hợp</h3><p>${br(p.integration)}</p>` : ''}
   <h2>II. ĐỒ DÙNG DẠY HỌC</h2>
   <p><b>1. Giáo viên:</b> ${br(p.materials.teacher)}</p>
   <p><b>2. Học sinh:</b> ${br(p.materials.student)}</p>
   <h2>III. CÁC HOẠT ĐỘNG DẠY HỌC CHỦ YẾU</h2>
   <table class="grid" width="100%" border="1" cellspacing="0" cellpadding="4"><tr><th width="8%">Thời gian</th><th width="56%">Hoạt động của giáo viên</th><th>Hoạt động của học sinh</th></tr>${acts}</table>
-  <p><b>Đánh giá:</b> ${br(p.assessment)}</p>
+  ${p.assessment.trim() ? `<p><b>Đánh giá:</b> ${br(p.assessment)}</p>` : ''}
   <h2>IV. ĐIỀU CHỈNH SAU BÀI DẠY</h2>
   <p>${p.adjust.trim() ? br(p.adjust) : '……………………………………………………………………………………………<br/>……………………………………………………………………………………………'}</p>`;
 }

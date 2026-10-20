@@ -2852,6 +2852,17 @@ body {
 .planner-import td { font-size: 14px; vertical-align: top; }
 .planner-import input[type="checkbox"] { width: 18px; height: 18px; }
 .planner-import .mini-btn { white-space: nowrap; }
+.planner-act-title { font: inherit; font-weight: 700; border: 1px solid transparent; background: transparent; border-radius: 6px; padding: 2px 6px; min-width: 16ch; width: min(60ch, 70vw); }
+.planner-act-title:hover, .planner-act-title:focus { border-color: var(--line, #cfd6e0); background: var(--surface, #fff); }
+.planner-lib-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+.planner-lib-search { max-width: 520px; }
+.planner-lib-search span { display: inline-flex; align-items: center; gap: 6px; }
+.planner-lib-search svg { width: 16px; height: 16px; }
+.planner-lib-files { list-style: none; margin: 8px 0 0; padding: 0; max-height: 360px; overflow: auto; border: 1px solid var(--line, #e3e8ef); border-radius: 10px; }
+.planner-lib-files li { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-bottom: 1px solid var(--line, #eef1f5); font-size: 14px; }
+.planner-lib-files li span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.planner-lib-fails { margin: 6px 0; font-size: 14px; }
+.planner-lib-fails ul { margin: 6px 0 0 18px; }
 .planner-int { color: var(--muted, #667); font-size: 13px; }
 .planner-kind { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; background: #eef2f7; color: #334; }
 .planner-kind.is-app { background: #e3f4e8; color: #17603a; }

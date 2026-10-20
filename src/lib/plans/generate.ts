@@ -17,7 +17,7 @@ export type ActivityKey = 'khoi-dong' | 'kham-pha' | 'luyen-tap' | 'van-dung';
 export type PlanActivity = { key: ActivityKey; title: string; minutes: number; goal: string; teacher: string; student: string };
 
 /** Môn của giáo án: 3 môn có ngân hàng câu hỏi trong app + các môn khác (khung chung) */
-export type OtherSubject = 'dao-duc' | 'tnxh' | 'khoa-hoc' | 'ls-dl' | 'hdtn' | 'am-nhac' | 'mi-thuat' | 'gdtc' | 'tin-hoc' | 'cong-nghe' | 'khac';
+export type OtherSubject = 'dao-duc' | 'tnxh' | 'khoa-hoc' | 'ls-dl' | 'hdtn' | 'am-nhac' | 'mi-thuat' | 'gdtc' | 'tin-hoc' | 'cong-nghe' | 'stem' | 'khac';
 export type PlanSubject = SubjectCode | OtherSubject;
 export const isAppSubject = (s: PlanSubject): s is SubjectCode => s === 'toan' || s === 'tieng-viet' || s === 'tieng-anh';
 
@@ -43,6 +43,10 @@ export type LessonPlan = {
   period: number;
   minutes: number;
   goals: { knowledge: string; competence: string; quality: string };
+  /** tên 3 mục của phần Yêu cầu cần đạt theo mẫu trường (vd "Năng lực đặc thù", "Năng lực chung", "Phẩm chất") */
+  goalLabels?: [string, string, string];
+  /** giáo án lấy từ kho giáo án của trường: tên file gốc */
+  source?: string;
   materials: { teacher: string; student: string };
   activities: PlanActivity[];
   assessment: string;
@@ -52,7 +56,7 @@ export type LessonPlan = {
 export const SUBJECT_NAMES: Record<PlanSubject, string> = {
   toan: 'Toán', 'tieng-viet': 'Tiếng Việt', 'tieng-anh': 'Tiếng Anh', 'dao-duc': 'Đạo đức', tnxh: 'Tự nhiên và Xã hội', 'khoa-hoc': 'Khoa học',
   'ls-dl': 'Lịch sử và Địa lí', hdtn: 'Hoạt động trải nghiệm', 'am-nhac': 'Âm nhạc', 'mi-thuat': 'Mĩ thuật', gdtc: 'Giáo dục thể chất',
-  'tin-hoc': 'Tin học', 'cong-nghe': 'Công nghệ', khac: 'Môn khác',
+  'tin-hoc': 'Tin học', 'cong-nghe': 'Công nghệ', stem: 'Bài học STEM', khac: 'Môn khác',
 };
 /** Tên môn hiển thị của một giáo án */
 export const subjectNameOf = (p: Pick<LessonPlan, 'subject' | 'subjectLabel'>) => p.subjectLabel?.trim() || SUBJECT_NAMES[p.subject] || 'Môn học';
@@ -236,6 +240,7 @@ const OTHER: Record<OtherSubject, { competence: string; teacher: string; student
   gdtc: { competence: 'Năng lực chăm sóc sức khoẻ; vận động cơ bản; hoạt động thể dục thể thao.', teacher: 'Sân tập, còi, cờ, bóng / dụng cụ phù hợp.', student: 'Trang phục gọn gàng, giày dép phù hợp.', explore: 'Khởi động chung; GV làm mẫu, phân tích động tác.', practice: 'Tập đồng loạt, theo tổ; thi đua giữa các tổ; trò chơi vận động.', apply: 'Thả lỏng, hồi tĩnh; nhận xét; nhắc tập luyện ở nhà.' },
   'tin-hoc': { competence: 'Năng lực sử dụng và quản lí phương tiện công nghệ thông tin; giải quyết vấn đề với sự hỗ trợ của máy tính.', teacher: 'Máy tính, máy chiếu, phần mềm / bài thực hành.', student: 'Sách giáo khoa Tin học, máy tính phòng máy.', explore: 'Trình chiếu, làm mẫu thao tác; HS quan sát và nêu các bước.', practice: 'Thực hành trên máy theo nhóm đôi; GV theo dõi, hỗ trợ.', apply: 'Vận dụng làm sản phẩm nhỏ; nhắc an toàn khi dùng máy tính.' },
   'cong-nghe': { competence: 'Năng lực nhận thức công nghệ; sử dụng công nghệ; thiết kế kĩ thuật ở mức đơn giản.', teacher: 'Bộ lắp ghép / vật liệu, sản phẩm mẫu, tranh quy trình.', student: 'Sách giáo khoa Công nghệ, bộ đồ dùng.', explore: 'Quan sát sản phẩm mẫu, quy trình; nêu các bước thực hiện.', practice: 'Thực hành làm / lắp ghép sản phẩm theo nhóm.', apply: 'Trưng bày, đánh giá sản phẩm; liên hệ sử dụng an toàn.' },
+  stem: { competence: 'Năng lực vận dụng kiến thức liên môn (Toán, Khoa học, Công nghệ, Kĩ thuật) để giải quyết vấn đề thực tiễn; thiết kế, chế tạo sản phẩm đơn giản.', teacher: 'Dụng cụ, vật liệu cho từng nhóm; sản phẩm mẫu; phiếu học tập.', student: 'Bút màu, giấy màu, kéo, hồ dán; dụng cụ theo nhóm.', explore: 'Nêu vấn đề / nhiệm vụ; HS tìm hiểu kiến thức nền, đề xuất ý tưởng, vẽ phác thảo.', practice: 'HS làm sản phẩm theo nhóm, thử nghiệm, điều chỉnh.', apply: 'Trình bày, chia sẻ sản phẩm; đánh giá theo tiêu chí; liên hệ sử dụng.' },
   khac: { competence: 'Năng lực đặc thù của môn học theo yêu cầu cần đạt của bài.', teacher: 'Đồ dùng dạy học phù hợp với bài.', student: 'Sách giáo khoa, vở, đồ dùng học tập.', explore: 'Hình thành kiến thức mới qua quan sát, trao đổi.', practice: 'Luyện tập, thực hành theo cá nhân / nhóm.', apply: 'Vận dụng vào tình huống thực tế.' },
 };
 

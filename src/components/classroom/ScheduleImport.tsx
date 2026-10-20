@@ -7,13 +7,15 @@ import { downloadDoc } from '@/lib/doc-download';
 import { downloadXlsx } from '@/lib/xlsx';
 import { readXlsx } from '@/lib/xlsx-read';
 import { addDays, mondayOf, viDate, weekdayVi, type LessonInfo, type LessonPlan } from '@/lib/plans/generate';
-import { parseSchedule, plansFromSchedule, scheduleTemplate, type RowPlan, type Schedule } from '@/lib/plans/schedule';
+import { parseSchedule, plansFromSchedule, scheduleTemplate, withLibraryPlan, type RowPlan, type Schedule } from '@/lib/plans/schedule';
+import { pickFromLibrary, type LibraryMeta } from '@/lib/plans/library';
+import { isPlan } from '@/lib/plans/generate';
 import { weekDocument } from '@/lib/plans/word';
 import type { SubjectCode } from '@/lib/types';
 
 type SavedLite = { teach_date: string | null; period: number | null; title: string };
 type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;
-const KIND_LABEL: Record<RowPlan['kind'], string> = { app: 'Theo bài trong app', review: 'Ôn tập / bổ sung', khung: 'Khung chung' };
+const KIND_LABEL: Record<RowPlan['kind'], string> = { kho: 'Giáo án của trường', app: 'Theo bài trong app', review: 'Ôn tập / bổ sung', khung: 'Khung chung' };
 const keyOf = (date: string, period: number, title: string) => `${date}|${period}|${title.trim().toLowerCase()}`;
 
 /**
@@ -21,10 +23,12 @@ const keyOf = (date: string, period: number, title: string) => `${date}|${period
  * bài Toán / Tiếng Việt / Tiếng Anh có trong app dùng yêu cầu cần đạt, dạng bài, kiến thức của bài;
  * tiết ôn tập / bổ sung (BS) dùng khung ôn luyện theo bài trọng tâm của tuần; môn khác dùng khung chung của môn.
  */
-export default function ScheduleImport({ classId, className, grade, school, weakForms, lessonsBySubject, saved, canSave, onOpen, onSaved }: {
+export default function ScheduleImport({ classId, className, grade, school, weakForms, lessonsBySubject, saved, canSave, library, onOpen, onSaved }: {
   classId: string; className: string; grade: number; school: string;
   weakForms: Record<SubjectCode, string[]>; lessonsBySubject: Record<SubjectCode, LessonInfo[]>;
   saved: SavedLite[]; canSave: boolean;
+  /** danh mục kho giáo án của trường (không kèm nội dung) */
+  library: LibraryMeta[];
   onOpen: (plan: LessonPlan) => void; onSaved: (monday: string) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -45,7 +49,22 @@ export default function ScheduleImport({ classId, className, grade, school, weak
     if (file.size > 5_000_000) return setMsg({ kind: 'error', text: 'File quá lớn (tối đa 5 MB).' });
     try {
       const s = parseSchedule(await readXlsx(await file.arrayBuffer()));
-      const list = plansFromSchedule(s, { grade, className, lessonsBySubject, weakForms });
+      let list = plansFromSchedule(s, { grade, className, lessonsBySubject, weakForms });
+      // ưu tiên giáo án trong kho của trường (đúng môn, khối, bài, tiết)
+      if (library.length) {
+        const g = s.grade ?? grade;
+        const picks = pickFromLibrary(library, s.rows.map((r) => ({ subject: r.subject, extra: r.extra, grade: g, week: Number(s.week) || null, title: r.title, ppct: Number(r.ppct) || null, integration: r.integration })));
+        const ids = [...new Set(picks.filter((x): x is LibraryMeta => !!x).map((x) => x.id))];
+        if (ids.length) {
+          const sb = createClient();
+          const got = new Map<string, unknown>();
+          for (let i = 0; i < ids.length; i += 150) {
+            const { data } = await sb.rpc('library_get', { p_ids: ids.slice(i, i + 150) });
+            for (const row of (data ?? []) as { id: string; data: unknown }[]) got.set(row.id, row.data);
+          }
+          list = list.map((rp, i) => { const m = picks[i]; const d = m ? got.get(m.id) : null; return m && isPlan(d) ? withLibraryPlan(rp, d, className) : rp; });
+        }
+      }
       setSch(s); setItems(list);
       setPick(list.map((r) => !(!!r.plan.date && savedKeys.has(keyOf(r.plan.date, r.plan.period, r.plan.title)))));
       if (s.grade !== null && s.grade !== grade) setMsg({ kind: 'info', text: `Lịch báo giảng là của khối ${s.grade}, lớp ${className} là khối ${grade}: giáo án dùng khung chung, không ghép bài của app. Kiểm tra lại file nếu nhầm.` });
@@ -56,6 +75,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
 
   const chosen = items.filter((_, i) => pick[i]);
   const counts = useMemo(() => ({
+    kho: items.filter((r) => r.kind === 'kho').length,
     app: items.filter((r) => r.kind === 'app').length, review: items.filter((r) => r.kind === 'review').length, khung: items.filter((r) => r.kind === 'khung').length,
   }), [items]);
 
@@ -95,7 +115,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
   return (
     <section className="dash-section planner-card" aria-labelledby="pl-import">
       <h2 id="pl-import"><FileSpreadsheet aria-hidden="true" /> Tạo giáo án từ lịch báo giảng (Excel)</h2>
-      <p className="dash-muted">Tải lên lịch báo giảng tuần theo mẫu của trường (cột Thứ/ngày · Buổi · Tiết TKB · Môn học · Tiết PPCT · Tên bài dạy · ND tích hợp/ĐDDH · Điều chỉnh). App tự soạn giáo án cho từng tiết: bài Toán, Tiếng Việt, Tiếng Anh có trong app được soạn theo yêu cầu cần đạt và dạng bài của bài; tiết ôn tập, bổ sung (BS) theo bài trọng tâm của tuần; các môn khác theo khung chung của môn.</p>
+      <p className="dash-muted">Tải lên lịch báo giảng tuần theo mẫu của trường (cột Thứ/ngày · Buổi · Tiết TKB · Môn học · Tiết PPCT · Tên bài dạy · ND tích hợp/ĐDDH · Điều chỉnh). App tự soạn giáo án cho từng tiết: ưu tiên giáo án trong kho của trường (mục dưới) đúng môn, bài, tiết; còn lại bài Toán, Tiếng Việt, Tiếng Anh có trong app được soạn theo yêu cầu cần đạt và dạng bài của bài; tiết ôn tập, bổ sung (BS) theo bài trọng tâm của tuần; các môn khác theo khung chung của môn.</p>
       <div className="planner-actions">
         <input ref={fileRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden
           onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void load(f); }} />
@@ -110,7 +130,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
           <p className="planner-import-sum">
             <strong>{sch.week ? `Tuần ${sch.week}` : 'Lịch tuần'}</strong>
             {sch.monday && <> · {viDate(sch.monday)} – {viDate(addDays(sch.monday, 4))}</>}
-            {sch.grade !== null && <> · Khối {sch.grade}</>} · {items.length} tiết: {counts.app} theo bài trong app, {counts.review} ôn tập/bổ sung, {counts.khung} khung chung
+            {sch.grade !== null && <> · Khối {sch.grade}</>} · {items.length} tiết: {counts.kho > 0 && <>{counts.kho} giáo án của trường, </>}{counts.app} theo bài trong app, {counts.review} ôn tập/bổ sung, {counts.khung} khung chung
           </p>
           {sch.warnings.map((w) => <p key={w} className="dash-muted">⚠ {w}</p>)}
           <div className="planner-week">

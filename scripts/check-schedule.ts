@@ -49,3 +49,42 @@ const ok = (c: unknown, m: string) => { if (c) pass++; else { fail++; console.lo
   console.log(`check:schedule ${pass}/${pass + fail}`);
   if (fail) process.exit(1);
 })();
+
+// ------------------------------------------------------------------ kho giáo án: tách file Word (dữ liệu demo dựng tay)
+import { splitLessonPlans, pickFromLibrary } from '../src/lib/plans/library';
+import type { DocBlock } from '../src/lib/docx-read';
+(() => {
+  let pass2 = 0, fail2 = 0;
+  const ok2 = (c: unknown, m: string) => { if (c) pass2++; else { fail2++; console.log('✗', m); } };
+  const P = (text: string, bold = false): DocBlock => ({ t: 'p', text, bold });
+  const T = (rows: string[][]): DocBlock => ({ t: 'table', rows });
+  const plan = (title: string, extra: DocBlock[] = []) => [
+    P(title, true), P('I. YÊU CẦU CẦN ĐẠT', true), P('1. Năng lực đặc thù', true), P('- Đếm được đến 10.'), P('2. Năng lực chung', true), P('- Hợp tác nhóm đôi.'),
+    P('3. Phẩm chất', true), P('- Chăm chỉ.'), P('4. Tích hợp', true), P('- Quyền trẻ em.'), P('II. ĐỒ DÙNG DẠY HỌC', true), P('- Giáo viên: tranh, thẻ số.'), P('- Học sinh: SGK, bảng con.'),
+    P('III. CÁC HOẠT ĐỘNG DẠY HỌC', true),
+    T([['Hoạt động của giáo viên', 'Hoạt động của học sinh'], ['1. Khởi động (5 phút)\nMục tiêu: Tạo hứng thú.', ''], ['- GV tổ chức trò chơi.', '- HS chơi.'], ['2. Khám phá', ''], ['a. Nhận biết', ''], ['- GV cho HS quan sát.', '- HS quan sát.'], ['3. Vận dụng', ''], ['- GV dặn dò.', '- HS lắng nghe.']]),
+    ...extra,
+  ];
+  const blocks = [P('KẾ HOẠCH BÀI DẠY MÔN TOÁN LỚP 1', true), P('TUẦN 5', true), ...plan('BÀI 4: SO SÁNH SỐ - TIẾT 4', [P('IV. ĐIỀU CHỈNH SAU BÀI DẠY', true), P('……………………………………')]), ...plan('BÀI 5: MẤY VÀ MẤY (TIẾT 1 + 2)')];
+  const e = splitLessonPlans(blocks, 'GIAO AN/TOÁN K1/TOÁN TUẦN 5.docx');
+  ok2(e.length === 2, `tách 2 giáo án (${e.length})`);
+  ok2(e[0].subject === 'toan' && e[0].grade === 1 && e[0].week === 5 && e[0].lessonNo === 4 && e[0].periods.join() === '4', `thông tin giáo án 1 ${JSON.stringify({ ...e[0], plan: undefined })}`);
+  ok2(e[1].lessonNo === 5 && e[1].periods.join() === '1,2', 'tiết 1 + 2');
+  const p = e[0].plan;
+  ok2(p.goalLabels?.[0] === 'Năng lực đặc thù' && p.goals.knowledge.includes('Đếm') && p.goals.competence.includes('Hợp tác') && p.goals.quality.includes('Chăm chỉ'), 'mục I và nhãn của trường');
+  ok2(p.integration?.includes('Quyền trẻ em') && p.materials.teacher.includes('tranh') && p.materials.student.includes('SGK'), 'tích hợp, đồ dùng');
+  ok2(p.activities.length === 3 && p.activities[0].minutes === 5 && p.activities[0].goal === 'Tạo hứng thú.' && p.activities[1].teacher.includes('a. Nhận biết') && p.activities[2].key === 'van-dung', `3 hoạt động (${p.activities.map((a) => a.title)})`);
+  const bs = splitLessonPlans([P('TUẦN 5', true), P('TOÁN', true), ...plan('BÀI 4: SO SÁNH SỐ (TIẾT 1)')], 'TV (BS) VÀ TOÁN (BS)/KHBD_Toan_1_Buoi_2_HKI.docx');
+  ok2(bs[0]?.extra && bs[0].subject === 'toan', 'file buổi 2 → tiết bổ sung');
+  const lib = [...e, ...bs].map((x, i) => ({ ...x, id: String(i) }));
+  const pk = pickFromLibrary(lib, [
+    { subject: 'toan', extra: false, grade: 1, week: 5, title: 'Bài 4: So sánh số - Tiết 4', ppct: 13 },
+    { subject: 'toan', extra: false, grade: 1, week: 5, title: 'Bài 5: Mấy và mấy - Tiết 2', ppct: 15 },
+    { subject: 'toan', extra: true, grade: 1, week: 5, title: 'Ôn tập', ppct: 9 },
+    { subject: 'toan', extra: false, grade: 1, week: 5, title: 'Bài 7: Hình vuông', ppct: 20 },
+    { subject: 'toan', extra: false, grade: 2, week: 5, title: 'Bài 4: So sánh số - Tiết 4', ppct: 13 },
+  ]);
+  ok2(pk.map((x) => x?.id ?? '-').join(',') === '0,1,2,-,-', `chọn giáo án trong kho: ${pk.map((x) => x?.id ?? '-')}`);
+  console.log(`check:schedule (kho giáo án) ${pass2}/${pass2 + fail2}`);
+  if (fail2) process.exitCode = 1;
+})();
