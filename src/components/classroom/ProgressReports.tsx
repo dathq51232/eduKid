@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Check, ClipboardCopy, FileSpreadsheet, MessageSquareHeart, Printer, RotateCcw } from 'lucide-react';
 import { downloadXlsx, XS } from '@/lib/xlsx';
+import { nd30HeaderHtml, nd30SignHtml } from '@/lib/doc-style';
 import { SUBJECT_VI, buildReport, reportRanges, reportText, type CompactResult, type Range, type StudentReport } from '@/lib/classroom/report';
 
 type Student = { id: string; name: string };
@@ -32,8 +33,8 @@ async function copyText(text: string): Promise<boolean> {
  * rồi sao chép từng em / tất cả đã duyệt để dán vào Zalo, in (mỗi em một trang) hoặc tải Excel.
  * Bản nháp lưu trên máy của thầy cô (không gửi đi đâu).
  */
-export default function ProgressReports({ classId, className, students, rows, teacherName, failed }: {
-  classId: string; className: string; students: Student[]; rows: CompactResult[]; teacherName: string; failed: boolean;
+export default function ProgressReports({ classId, className, students, rows, teacherName, failed, school = '' }: {
+  classId: string; className: string; students: Student[]; rows: CompactResult[]; teacherName: string; failed: boolean; school?: string;
 }) {
   const ranges = useMemo(() => reportRanges(), []);
   const [key, setKey] = useState(ranges[1].key); // mặc định: tuần trước (tuần đã trọn vẹn)
@@ -45,6 +46,11 @@ export default function ProgressReports({ classId, className, students, rows, te
     return ok ? { key: 'tuy-chon', label: `Từ ${custom.from.split('-').reverse().join('/')} đến ${custom.to.split('-').reverse().join('/')}`, from, to } : ranges[1];
   }, [key, custom, ranges]);
   const [teacher, setTeacher] = useState(teacherName);
+  // Địa danh in ở góc phải bản in (thể thức NĐ30), nhớ trên máy
+  const [place, setPlace] = useState('');
+  useEffect(() => { try { setPlace(localStorage.getItem('edukid:dia-danh') ?? ''); } catch { /* bỏ qua */ } }, []);
+  const savePlace = (v: string) => { setPlace(v); try { localStorage.setItem('edukid:dia-danh', v); } catch { /* bỏ qua */ } };
+  const todayIso = isoDay(Date.now());
 
   const byStudent = useMemo(() => {
     const m = new Map<number, CompactResult[]>();
@@ -109,6 +115,7 @@ export default function ProgressReports({ classId, className, students, rows, te
 
   return (
     <div className="progress-report">
+      <style>{'@media print { @page { size: A4 portrait; margin: 20mm 15mm 20mm 30mm; } }'}</style>
       <header className="dash-head no-print">
         <div>
           <p className="dash-kicker">Lớp {className}</p>
@@ -133,6 +140,7 @@ export default function ProgressReports({ classId, className, students, rows, te
             </>
           )}
           <label className="adm-field"><span>Ký tên</span><input value={teacher} maxLength={60} onChange={(e) => setTeacher(e.target.value)} placeholder="Tên giáo viên" /></label>
+          <label className="adm-field"><span>Địa danh (in trên phiếu)</span><input value={place} maxLength={60} onChange={(e) => savePlace(e.target.value)} placeholder="Phường / xã" /></label>
         </div>
         <p className="dash-muted">{activeCount}/{students.length} em có luyện bài trong khoảng này · {approved.length} lời nhắn đã duyệt.</p>
         <div className="planner-actions">
@@ -183,10 +191,13 @@ export default function ProgressReports({ classId, className, students, rows, te
       <div className="report-print" aria-hidden="true">
         {approved.map((st) => (
           <article key={st.id} className="report-page">
+            {/* Thể thức NĐ30: góc trái tên trường, góc phải Quốc hiệu – Tiêu ngữ, địa danh ngày tháng (nội dung đã được escape) */}
+            <div dangerouslySetInnerHTML={{ __html: nd30HeaderHtml({ school, place, dateIso: todayIso }) }} />
             <h2>PHIẾU BÁO TIẾN BỘ</h2>
             <p className="report-page-sub">Lớp {className} · {range.label}</p>
             <p><strong>Học sinh:</strong> {st.name}</p>
-            {drafts[st.id].text.split('\n').map((line, k) => <p key={k}>{line}</p>)}
+            {drafts[st.id].text.split('\n').map((line, k, all) => <p key={k} className="report-line">{k === all.length - 1 ? line.replace(/\s*GVCN .*$/, '') : line}</p>)}
+            <div dangerouslySetInnerHTML={{ __html: nd30SignHtml('Giáo viên chủ nhiệm', teacher) }} />
           </article>
         ))}
       </div>

@@ -1,6 +1,7 @@
 // Xuất đề kiểm tra ra file Word (.doc dạng HTML — Word mở trực tiếp, "Lưu thành" .docx nếu cần).
 // Không dùng thư viện ngoài; tạo ngay trên trình duyệt, không gửi dữ liệu đi đâu.
 
+import { PAGE_MARGIN, WORD_BASE_STYLE, nd30HeaderHtml } from '../doc-style';
 import { MUCS, MUC_DESC, MUC_NAME, partOf, totals, type ExamQuestion, type Matrix, type Muc, type Paper } from './matrix';
 
 export type ExamMeta = {
@@ -33,12 +34,12 @@ function questionHtml(q: ExamQuestion, no: number, pts: number | null): string {
     case 'true_false':
       return `${head}Đúng ghi Đ, sai ghi S vào ô trống:</p><p class="indent">${br(q.prompt)} &nbsp; <span class="box">&nbsp;&nbsp;&nbsp;&nbsp;</span></p>`;
     case 'true_false_table':
-      return `${head}${br(q.prompt)}</p>${/ghi Đ/.test(q.prompt) ? '' : '<p class="hint">Đúng ghi Đ, sai ghi S:</p>'}<table class="grid">`
+      return `${head}${br(q.prompt)}</p>${/ghi Đ/.test(q.prompt) ? '' : '<p class="hint">Đúng ghi Đ, sai ghi S:</p>'}<table class="grid" border="1" cellspacing="0" cellpadding="4">`
         + (q.statements ?? []).map((st) => `<tr><td>${esc(st)}</td><td class="tf">&nbsp;</td></tr>`).join('') + '</table>';
     case 'fill_blanks':
       return `${head}${br(q.prompt)}</p>` + (q.blanks ?? []).map((l) => `<p class="indent">${esc(l).replace(/\{\}/g, BLANK)}</p>`).join('');
     case 'matching':
-      return `${head}${br(q.prompt)}</p><p class="hint">Nối mỗi ý ở cột trái với ý phù hợp ở cột phải:</p><table class="grid">`
+      return `${head}${br(q.prompt)}</p><p class="hint">Nối mỗi ý ở cột trái với ý phù hợp ở cột phải:</p><table class="grid" border="1" cellspacing="0" cellpadding="4">`
         + Array.from({ length: Math.max(q.left?.length ?? 0, q.options.length) }, (_, i) =>
           `<tr><td>${q.left?.[i] != null ? `${i + 1}. ${esc(q.left[i])}` : ''}</td><td class="gap">&nbsp;</td><td>${q.options[i] != null ? `${lower[i]}. ${esc(q.options[i])}` : ''}</td></tr>`).join('')
         + '</table>';
@@ -75,9 +76,11 @@ export function answerText(q: ExamQuestion): string {
   return '';
 }
 
+// Thể thức theo NĐ30: Times New Roman, A4, lề trên/dưới 20 mm, trái 30 mm, phải 15 mm (src/lib/doc-style.ts)
 const STYLE = `<style>
-@page { size: 21cm 29.7cm; margin: 2cm 2cm 2cm 2.5cm; }
-body { font-family: 'Times New Roman', serif; font-size: 13pt; line-height: 1.35; }
+@page { size: 21cm 29.7cm; margin: ${PAGE_MARGIN}; }
+${WORD_BASE_STYLE}
+body { font-size: 13pt; line-height: 1.3; }
 h1 { font-size: 14pt; text-align: center; margin: 4pt 0; } h2 { font-size: 13pt; margin: 10pt 0 4pt; }
 table { border-collapse: collapse; } .head td { vertical-align: top; padding: 2pt 6pt; }
 .grid td, .grid th, .mx td, .mx th { border: 1px solid #000; padding: 3pt 6pt; } .mx th { background: #eee; }
@@ -95,7 +98,7 @@ function matrixHtml(m: Matrix): string {
   const t = totals(m);
   const rows = m.rows.filter((r) => MUCS.some((k) => r.counts[k] > 0));
   const cell = (n: number, k: Muc) => (n ? `${n} câu<br/>${fmt(n * m.points[k])} đ` : '');
-  return `<table class="mx" width="100%"><tr><th rowspan="2">TT</th><th rowspan="2">Chủ đề / mạch kiến thức</th>${MUCS.map((k) => `<th>${MUC_NAME[k]}</th>`).join('')}<th rowspan="2">Tổng</th></tr>`
+  return `<table class="mx" border="1" cellspacing="0" cellpadding="4" width="100%"><tr><th rowspan="2">TT</th><th rowspan="2">Chủ đề / mạch kiến thức</th>${MUCS.map((k) => `<th>${MUC_NAME[k]}</th>`).join('')}<th rowspan="2">Tổng</th></tr>`
     + `<tr>${MUCS.map((k) => `<th class="muted">${fmt(m.points[k])} đ/câu</th>`).join('')}</tr>`
     + rows.map((r, i) => {
       const n = MUCS.reduce((a, k) => a + r.counts[k], 0);
@@ -112,7 +115,7 @@ function specHtml(m: Matrix, paper: Paper, lessonTitles: Map<string, string>, ou
   const numbers = new Map<string, number[]>();
   paper.slots.forEach((s, i) => { const k = `${s.row}:${s.muc}`; numbers.set(k, [...(numbers.get(k) ?? []), i + 1]); });
   const yc = (ri: number) => [...new Set(paper.slots.filter((s) => s.row === ri && s.q.outcome).map((s) => s.q.outcome as string))].map((c) => outcomes[c]).filter(Boolean);
-  return `<table class="mx" width="100%"><tr><th>Chủ đề</th><th>Nội dung (bài đã học)</th><th>Yêu cầu cần đạt</th>${MUCS.map((k) => `<th>${MUC_NAME[k]}<br/><span class="muted">câu số</span></th>`).join('')}</tr>`
+  return `<table class="mx" border="1" cellspacing="0" cellpadding="4" width="100%"><tr><th>Chủ đề</th><th>Nội dung (bài đã học)</th><th>Yêu cầu cần đạt</th>${MUCS.map((k) => `<th>${MUC_NAME[k]}<br/><span class="muted">câu số</span></th>`).join('')}</tr>`
     + m.rows.map((r, ri) => MUCS.some((k) => r.counts[k] > 0)
       ? `<tr><td>${esc(r.unitTitle)}</td><td>${r.lessonIds.map((id) => esc(lessonTitles.get(id) ?? id)).join('; ')}</td><td>${yc(ri).map((x) => `- ${esc(x)}`).join('<br/>')}</td>${MUCS.map((k) => `<td class="n">${(numbers.get(`${ri}:${k}`) ?? []).join(', ')}</td>`).join('')}</tr>`
       : '').join('') + '</table>';
@@ -142,12 +145,12 @@ function worksheetHtml(meta: ExamMeta, paper: Paper): string {
 function keyHtml(meta: ExamMeta, m: Matrix, paper: Paper): string {
   if (meta.worksheet) {
     return `<h1>ĐÁP ÁN – ${esc(meta.title.toUpperCase())}${paper.code ? ` – PHIẾU ${esc(paper.code)}` : ''}</h1><p align="center">Môn ${esc(meta.subjectName)} lớp ${meta.grade}${meta.topic ? ` · ${esc(meta.topic)}` : ''}</p>`
-      + `<table class="grid" width="100%"><tr><th>Câu</th><th>Mức</th><th>Đáp án</th></tr>`
+      + `<table class="grid" border="1" cellspacing="0" cellpadding="4" width="100%"><tr><th>Câu</th><th>Mức</th><th>Đáp án</th></tr>`
       + paper.slots.map((s, i) => `<tr><td align="center">${i + 1}</td><td align="center">M${s.muc}</td><td>${esc(answerText(s.q))}${s.q.explanation ? `<br/><span class="muted">${esc(s.q.explanation)}</span>` : ''}</td></tr>`).join('')
       + '</table>';
   }
   return `<h1>ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM${paper.code ? ` – ĐỀ ${esc(paper.code)}` : ''}</h1><p align="center">${esc(meta.title)} – Môn ${esc(meta.subjectName)} lớp ${meta.grade}</p>`
-    + `<table class="grid" width="100%"><tr><th>Câu</th><th>Mức</th><th>Đáp án</th><th>Điểm</th></tr>`
+    + `<table class="grid" border="1" cellspacing="0" cellpadding="4" width="100%"><tr><th>Câu</th><th>Mức</th><th>Đáp án</th><th>Điểm</th></tr>`
     + paper.slots.map((s, i) => `<tr><td align="center">${i + 1}</td><td align="center">M${s.muc}</td><td>${esc(answerText(s.q))}${s.q.explanation ? `<br/><span class="muted">${esc(s.q.explanation)}</span>` : ''}</td><td align="center">${fmt(m.points[s.muc])}</td></tr>`).join('')
     + `<tr><th colspan="3" align="right">Tổng</th><th>${fmt(totals(m).score)}</th></tr></table>`
     + `<p class="muted">Câu có nhiều ý: chấm theo từng ý đúng, chia đều số điểm của câu. Điểm toàn bài theo thang 10; làm tròn thành số nguyên theo quy định đánh giá học sinh tiểu học hiện hành và hướng dẫn của nhà trường.</p>`;
@@ -157,7 +160,7 @@ function keyHtml(meta: ExamMeta, m: Matrix, paper: Paper): string {
 export function examDocument(meta: ExamMeta, m: Matrix, papers: Paper[], lessonTitles: Map<string, string>, parts: { matrix: boolean; papers: boolean; keys: boolean }): string {
   const blocks: string[] = [];
   if (parts.matrix) {
-    blocks.push(`<h1>MA TRẬN ${esc(meta.title.toUpperCase())}</h1><p align="center">Môn ${esc(meta.subjectName)} – Lớp ${meta.grade} – Năm học ${esc(meta.yearLabel)}</p>` + matrixHtml(m));
+    blocks.push(`${nd30HeaderHtml({ school: meta.school, showDate: false })}<h1>MA TRẬN ${esc(meta.title.toUpperCase())}</h1><p align="center">Môn ${esc(meta.subjectName)} – Lớp ${meta.grade} – Năm học ${esc(meta.yearLabel)}</p>` + matrixHtml(m));
     if (papers[0]) blocks.push(`<h2>BẢN ĐẶC TẢ${papers[0].code ? ` (ĐỀ ${esc(papers[0].code)})` : ''}</h2>` + specHtml(m, papers[0], lessonTitles, meta.outcomes));
   }
   if (parts.papers) for (const p of papers) blocks.push(paperHtml(meta, m, p));

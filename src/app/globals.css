@@ -2880,10 +2880,28 @@ body {
 .report-print { display: none; }
 @media print {
   .report-print { display: block; }
-  .report-page { break-after: page; page-break-after: always; padding: 10mm 6mm; color: #000; font-size: 13pt; line-height: 1.5; }
+  /* Thể thức NĐ30: Times New Roman, nội dung cỡ 14, giãn dòng 1,3, cách đoạn 6pt, lùi đầu dòng 1 cm */
+  .report-page { break-after: page; page-break-after: always; padding: 0; color: #000; font-family: 'Times New Roman', Times, serif; font-size: 14pt; line-height: 1.3; }
   .report-page:last-child { break-after: auto; page-break-after: auto; }
-  .report-page h2 { text-align: center; font-size: 18pt; margin: 0 0 4pt; }
-  .report-page-sub { text-align: center; margin: 0 0 12pt; }
+  .report-page *, .report-page { font-family: 'Times New Roman', Times, serif !important; }
+  .report-page p { margin: 0 0 6pt; }
+  .report-page h2 { text-align: center; font-size: 14pt; font-weight: bold; margin: 12pt 0 2pt; }
+  .report-page-sub { text-align: center; font-style: italic; }
+  .report-line { text-indent: 1cm; text-align: justify; }
+  .nd30-head { width: 100%; border-collapse: collapse; margin-bottom: 6pt; }
+  .nd30-head td { border: 0; padding: 0; text-align: center; vertical-align: top; }
+  .nd30-org { font-size: 13pt; text-transform: uppercase; }
+  .nd30-nation { font-size: 12pt; font-weight: bold; }
+  .nd30-motto { font-size: 13pt; font-weight: bold; }
+  .nd30-rule { border-collapse: collapse; margin: 1pt auto 4pt; }
+  .nd30-rule td { border: 0; border-top: 1px solid #000; font-size: 2pt; line-height: 2pt; padding: 0; }
+  .nd30-place { font-size: 13pt; font-style: italic; }
+  .nd30-sign { width: 100%; border-collapse: collapse; margin-top: 12pt; }
+  .nd30-sign td { border: 0; padding: 0; vertical-align: top; }
+  .nd30-sign .role { font-size: 13pt; font-weight: bold; text-transform: uppercase; text-align: center; margin: 0; }
+  .nd30-sign .name { font-size: 14pt; font-weight: bold; text-align: center; }
+  /* Bản in danh sách nhận xét cũng dùng Times New Roman */
+  .comments-board, .comments-board * { font-family: 'Times New Roman', Times, serif !important; }
 }
 
 /* ------------------------------------------------ Đề kiểm tra: chú thích mức + lọc YCCĐ */

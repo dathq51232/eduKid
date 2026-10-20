@@ -67,7 +67,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
       <LearnHeader />
       <main className="dash wrap">
         <Link href={`/giao-vien/lop/${id}`} className="dash-back no-print"><ArrowLeft aria-hidden="true" /> Lớp {c.name}</Link>
-        <ProgressReports classId={c.id} className={c.name} students={students} rows={compact} teacherName={viewer.displayName === 'Bạn' ? '' : viewer.displayName} failed={Boolean(error)} />
+        <ProgressReports classId={c.id} className={c.name} students={students} rows={compact} teacherName={viewer.displayName === 'Bạn' ? '' : viewer.displayName} failed={Boolean(error)} school={viewer.schoolNameHint ?? ''} />
       </main>
     </>
   );

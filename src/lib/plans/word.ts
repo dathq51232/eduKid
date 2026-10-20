@@ -1,16 +1,20 @@
 // Xuất kế hoạch bài dạy / kế hoạch tuần ra Word (.doc dạng HTML — Word mở trực tiếp, "Lưu thành" .docx để chỉnh theo mẫu trường).
 // Không dùng thư viện ngoài, tạo ngay trên trình duyệt.
 
+import { PAGE_MARGIN, PAGE_MARGIN_LAND, WORD_BASE_STYLE, nd30HeaderHtml } from '../doc-style';
 import { SUBJECT_NAMES, addDays, viDate, weekdayVi, type LessonPlan } from './generate';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const br = (s: string) => esc(s).replace(/\n/g, '<br/>');
 
+// Thể thức theo NĐ30: Times New Roman, A4, lề trên/dưới 20 mm, trái 30 mm, phải 15 mm; nội dung cỡ 14 (src/lib/doc-style.ts)
 const STYLE = `<style>
-@page { size: 21cm 29.7cm; margin: 2cm 1.8cm 2cm 2.5cm; }
-@page land { size: 29.7cm 21cm; margin: 1.5cm 1.5cm 1.5cm 2cm; }
-body { font-family: 'Times New Roman', serif; font-size: 13pt; line-height: 1.35; }
-h1 { font-size: 14pt; text-align: center; margin: 4pt 0; } h2 { font-size: 13pt; margin: 10pt 0 4pt; } h3 { font-size: 13pt; margin: 6pt 0 2pt; }
+@page { size: 21cm 29.7cm; margin: ${PAGE_MARGIN}; }
+@page land { size: 29.7cm 21cm; margin: ${PAGE_MARGIN_LAND}; }
+${WORD_BASE_STYLE}
+body { font-size: 14pt; line-height: 1.3; }
+td, th { font-size: 13pt; }
+h1 { font-size: 14pt; text-align: center; margin: 6pt 0 2pt; } h2 { font-size: 14pt; margin: 10pt 0 4pt; } h3 { font-size: 14pt; margin: 6pt 0 2pt; }
 table { border-collapse: collapse; width: 100%; } td, th { vertical-align: top; }
 .grid td, .grid th { border: 1px solid #000; padding: 3pt 6pt; } .grid th { background: #eee; }
 .meta td { padding: 1pt 6pt 1pt 0; } .c { text-align: center; } .pb { page-break-before: always; } .muted { color: #555; font-size: 11pt; }
@@ -23,12 +27,13 @@ const doc = (title: string, body: string) =>
 function planBody(p: LessonPlan, school: string): string {
   const when = p.date ? `${weekdayVi(p.date)}, ngày ${viDate(p.date)}` : '………………';
   const acts = p.activities.map((a) => `<tr>
-      <td class="c">${a.minutes ? `${a.minutes}'` : ''}</td>
-      <td><b>${esc(a.title)}</b>${a.goal ? `<br/><i>Mục tiêu: ${br(a.goal)}</i>` : ''}<br/>${br(a.teacher)}</td>
-      <td>${br(a.student)}</td></tr>`).join('');
+      <td class="c" valign="top">${a.minutes ? `${a.minutes}'` : ''}</td>
+      <td valign="top"><b>${esc(a.title)}</b>${a.goal ? `<br/><i>Mục tiêu: ${br(a.goal)}</i>` : ''}<br/>${br(a.teacher)}</td>
+      <td valign="top">${br(a.student)}</td></tr>`).join('');
   return `
-  <table class="meta"><tr><td>${esc(school || 'Trường: ……………………………')}</td><td style="text-align:right">Lớp: ${esc(p.className || '……')}</td></tr></table>
+  ${nd30HeaderHtml({ school, showDate: false })}
   <h1>KẾ HOẠCH BÀI DẠY</h1>
+  <p class="c">Lớp: ${esc(p.className || '……')}</p>
   <p class="c"><b>Môn: ${esc(SUBJECT_NAMES[p.subject])} ${p.grade}</b> — <b>${esc(p.title || 'Tên bài: ……………………')}</b></p>
   <p class="c muted">${p.week ? `Tuần ${esc(p.week)} · ` : ''}${when}${p.period ? ` · Tiết ${p.period}` : ''} · Thời lượng: ${p.minutes} phút</p>
   <h2>I. YÊU CẦU CẦN ĐẠT</h2>
@@ -39,7 +44,7 @@ function planBody(p: LessonPlan, school: string): string {
   <p><b>1. Giáo viên:</b> ${br(p.materials.teacher)}</p>
   <p><b>2. Học sinh:</b> ${br(p.materials.student)}</p>
   <h2>III. CÁC HOẠT ĐỘNG DẠY HỌC CHỦ YẾU</h2>
-  <table class="grid"><tr><th style="width:8%">Thời gian</th><th style="width:56%">Hoạt động của giáo viên</th><th>Hoạt động của học sinh</th></tr>${acts}</table>
+  <table class="grid" width="100%" border="1" cellspacing="0" cellpadding="4"><tr><th width="8%">Thời gian</th><th width="56%">Hoạt động của giáo viên</th><th>Hoạt động của học sinh</th></tr>${acts}</table>
   <p><b>Đánh giá:</b> ${br(p.assessment)}</p>
   <h2>IV. ĐIỀU CHỈNH SAU BÀI DẠY</h2>
   <p>${p.adjust.trim() ? br(p.adjust) : '……………………………………………………………………………………………<br/>……………………………………………………………………………………………'}</p>`;
@@ -60,9 +65,9 @@ export function weekDocument(monday: string, plans: LessonPlan[], school: string
     return list.map((p, i) => `<tr>${i === 0 ? `<td class="c" rowspan="${list.length}"><b>${weekdayVi(d)}</b><br/>${viDate(d)}</td>` : ''}<td class="c">${p.period || ''}</td><td>${esc(SUBJECT_NAMES[p.subject])}</td><td>${esc(p.title)}</td><td>${esc(p.materials.teacher.split(/[.;]/)[0] ?? '')}</td></tr>`).join('');
   }).join('');
   const table = `<div class="wk">
-    <table class="meta"><tr><td>${esc(school || 'Trường: ……………………………')}</td><td style="text-align:right">Lớp: ${esc(className || '……')}</td></tr></table>
-    <h1>LỊCH BÁO GIẢNG</h1><p class="c">Tuần từ ${viDate(days[0])} đến ${viDate(days[4])}</p>
-    <table class="grid"><tr><th style="width:12%">Thứ / ngày</th><th style="width:7%">Tiết</th><th style="width:13%">Môn</th><th>Tên bài dạy</th><th style="width:28%">Đồ dùng</th></tr>${rows}</table></div>`;
+    ${nd30HeaderHtml({ school, showDate: false })}
+    <h1>LỊCH BÁO GIẢNG</h1><p class="c">Lớp: ${esc(className || '……')} · Tuần từ ${viDate(days[0])} đến ${viDate(days[4])}</p>
+    <table class="grid" width="100%" border="1" cellspacing="0" cellpadding="4"><tr><th width="16%">Thứ / ngày</th><th width="6%">Tiết</th><th width="12%">Môn</th><th>Tên bài dạy</th><th width="26%">Đồ dùng</th></tr>${rows}</table></div>`;
   const rest = withPlans ? [...plans].sort((a, b) => (a.date + String(a.period).padStart(2, '0')).localeCompare(b.date + String(b.period).padStart(2, '0')))
     .map((p) => `<div class="pb">${planBody(p, school)}</div>`).join('') : '';
   return doc(`Lịch báo giảng tuần ${viDate(days[0])}`, table + rest);
