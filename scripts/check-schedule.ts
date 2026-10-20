@@ -56,8 +56,8 @@ import type { DocBlock } from '../src/lib/docx-read';
 (() => {
   let pass2 = 0, fail2 = 0;
   const ok2 = (c: unknown, m: string) => { if (c) pass2++; else { fail2++; console.log('✗', m); } };
-  const P = (text: string, bold = false): DocBlock => ({ t: 'p', text, bold });
-  const T = (rows: string[][]): DocBlock => ({ t: 'table', rows });
+  const P = (text: string, bold = false): DocBlock => ({ t: 'p', text, bold, html: `<p>${text}</p>` });
+  const T = (rows: string[][]): DocBlock => ({ t: 'table', rows, html: '<table></table>' });
   const plan = (title: string, extra: DocBlock[] = []) => [
     P(title, true), P('I. YÊU CẦU CẦN ĐẠT', true), P('1. Năng lực đặc thù', true), P('- Đếm được đến 10.'), P('2. Năng lực chung', true), P('- Hợp tác nhóm đôi.'),
     P('3. Phẩm chất', true), P('- Chăm chỉ.'), P('4. Tích hợp', true), P('- Quyền trẻ em.'), P('II. ĐỒ DÙNG DẠY HỌC', true), P('- Giáo viên: tranh, thẻ số.'), P('- Học sinh: SGK, bảng con.'),
@@ -87,4 +87,25 @@ import type { DocBlock } from '../src/lib/docx-read';
   ok2(pk.map((x) => x?.id ?? '-').join(',') === '0,1,2,-,-', `chọn giáo án trong kho: ${pk.map((x) => x?.id ?? '-')}`);
   console.log(`check:schedule (kho giáo án) ${pass2}/${pass2 + fail2}`);
   if (fail2) process.exitCode = 1;
+})();
+
+// ------------------------------------------------------------------ xuất Word .docx từ HTML (bản gốc có hình, bảng gộp ô, tô màu)
+import { htmlToDocx } from '../src/lib/docx-write';
+import { unzip } from '../src/lib/xlsx-read';
+(async () => {
+  let pass3 = 0, fail3 = 0;
+  const ok3 = (c: unknown, m: string) => { if (c) pass3++; else { fail3++; console.log('✗', m); } };
+  const png = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='), (c) => c.charCodeAt(0));
+  const html = `<html><body><div data-orig="1"><p style="text-align:center;margin:0pt 0 0pt 0pt;font-size:13pt;font-weight:bold">MÔN: HĐTN</p>
+    <table border="1"><tr><td bgcolor="#A9D18E" style="background:#A9D18E">GV</td><td>HS</td></tr><tr><td colspan="2"><span style="color:#ff0000">Mục tiêu</span></td></tr>
+    <tr><td rowspan="2">A<img data-img="k1.png" width="40" height="30" alt="" /></td><td>B</td></tr><tr><td>C</td></tr></table></div>
+    <p style="page-break-before:always;margin:0">&nbsp;</p><div class="Land"><p>Trang ngang</p></div></body></html>`;
+  const z = await unzip(htmlToDocx(html, new Map([['k1.png', { bytes: png, mime: 'image/png' }]])));
+  const x = new TextDecoder().decode(z.get('word/document.xml')!);
+  ok3(z.has('word/media/image1.png') && /r:embed="rIdImg1"/.test(x), 'có hình');
+  ok3(/w:fill="A9D18E"/.test(x) && /<w:gridSpan w:val="2"\/>/.test(x) && /<w:vMerge w:val="restart"\/>/.test(x) && /<w:vMerge\/>/.test(x), 'tô màu, gộp ngang, gộp dọc');
+  ok3(/<w:color w:val="FF0000"\/>/.test(x) && /<w:jc w:val="center"\/>/.test(x) && /<w:b\/>/.test(x), 'màu chữ, căn giữa, đậm');
+  ok3(/<w:pageBreakBefore\/>/.test(x) && /w:orient="landscape"/.test(x), 'ngắt trang, trang ngang');
+  console.log(`check:schedule (xuất .docx) ${pass3}/${pass3 + fail3}`);
+  if (fail3) process.exitCode = 1;
 })();

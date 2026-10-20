@@ -160,8 +160,8 @@ function activitiesFrom(tables: string[][][], paras: string[]): PlanActivity[] {
   }));
 }
 
-type Draft = { head: string[]; sec: string; goals: { k: string[]; c: string[]; q: string[]; i: string[]; labels: string[]; cur: 'k' | 'c' | 'q' | 'i' }; mat: { t: string[]; s: string[]; cur: 't' | 's' | '' }; tables: string[][][]; actParas: string[]; adjust: string[] };
-const newDraft = (head: string[]): Draft => ({ head, sec: 'I', goals: { k: [], c: [], q: [], i: [], labels: [], cur: 'k' }, mat: { t: [], s: [], cur: '' }, tables: [], actParas: [], adjust: [] });
+type Draft = { start: number; head: string[]; sec: string; goals: { k: string[]; c: string[]; q: string[]; i: string[]; labels: string[]; cur: 'k' | 'c' | 'q' | 'i' }; mat: { t: string[]; s: string[]; cur: 't' | 's' | '' }; tables: string[][][]; actParas: string[]; adjust: string[] };
+const newDraft = (head: string[], start: number): Draft => ({ start, head, sec: 'I', goals: { k: [], c: [], q: [], i: [], labels: [], cur: 'k' }, mat: { t: [], s: [], cur: '' }, tables: [], actParas: [], adjust: [] });
 
 /** Tách một file giáo án thành các giáo án (mỗi bài / tiết một giáo án) */
 export function splitLessonPlans(blocks: DocBlock[], path: string): LibraryEntry[] {
@@ -171,11 +171,17 @@ export function splitLessonPlans(blocks: DocBlock[], path: string): LibraryEntry
   const wf = /tuan\s*(\d+)/.exec(fold(fileName)); if (wf) ctx.week = Number(wf[1]);
   const out: LibraryEntry[] = [];
   let buf: string[] = [];
+  let bufStart = -1;
   let d: Draft | null = null;
+  const addBuf = (i: number, ...xs: string[]) => { if (!xs.length) return; if (!buf.length) bufStart = i; buf.push(...xs); };
+  const clearBuf = () => { buf = []; bufStart = -1; };
+  /** khối bắt đầu giáo án mới: giáo án đầu tiên lấy cả phần đầu file */
+  const startAt = (i: number) => (!d && !out.length ? 0 : bufStart >= 0 ? bufStart : i);
 
-  const finish = () => {
+  const finish = (end: number) => {
     if (!d) return;
     const draft = d; d = null;
+    const html = blocks.slice(draft.start, end + 1).map((b) => b.html).join('');
     const c: Ctx = { ...ctx };
     const title = readHeader(draft.head, c, fromPath.extra) || fileName.replace(/\.docx$/i, '').replace(/_/g, ' ');
     Object.assign(ctx, { subject: c.subject, extra: c.extra, grade: c.grade, week: c.week, topic: c.topic });
@@ -198,19 +204,21 @@ export function splitLessonPlans(blocks: DocBlock[], path: string): LibraryEntry
       integration: g.i.join('\n') || undefined,
       materials: { teacher: draft.mat.t.join('\n'), student: draft.mat.s.join('\n') },
       activities: acts.length ? acts : [{ key: 'kham-pha', title: 'Hoạt động dạy học', minutes: 0, goal: '', teacher: '', student: '' }],
-      assessment: '', adjust: draft.adjust.join('\n'), source: fileName,
+      assessment: '', adjust: draft.adjust.join('\n'), source: fileName, orig: html ? { html } : undefined,
     };
     if (c.extra && subject !== 'stem') plan.subjectLabel = `${subjectName(subject)} (BS)`;
     out.push({ subject, extra: c.extra && subject !== 'stem', grade: plan.grade, week: c.week, lessonNo, periods, ppct, title: plan.title, topic: c.topic, source: fileName, plan });
   };
 
-  for (const b of blocks) {
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i];
+    if (b.t === 'p' && !b.text) continue;
     if (b.t === 'p') {
       const s = b.text.trim();
       const r = roman(s);
       const f = fold(s);
-      if (r === 'I' && /yeu cau|muc tieu/.test(f)) { finish(); d = newDraft(buf); buf = []; continue; }
-      if (!d) { if (s.length < 200) buf.push(...lines(s)); continue; }
+      if (r === 'I' && /yeu cau|muc tieu/.test(f)) { const st = startAt(i); finish(st - 1); d = newDraft(buf, st); clearBuf(); continue; }
+      if (!d) { if (s.length < 200) addBuf(i, ...lines(s)); continue; }
       if (r === 'II' && d.sec === 'I') { d.sec = 'II'; continue; }
       if (r === 'III' && (d.sec === 'II' || d.sec === 'I')) { d.sec = 'III'; continue; }
       if (r === 'IV' && d.sec === 'III') { d.sec = 'IV'; continue; }
@@ -238,27 +246,28 @@ export function splitLessonPlans(blocks: DocBlock[], path: string): LibraryEntry
       }
       if (d.sec === 'III') {
         // dòng in đậm sau bảng hoạt động: có thể là phần đầu của giáo án kế tiếp (file không có mục IV)
-        if (d.tables.length && (b.bold || buf.length)) { buf.push(s); continue; }
+        if (d.tables.length && (b.bold || buf.length)) { addBuf(i, s); continue; }
         d.actParas.push(s);
         continue;
       }
       if (d.sec === 'IV') {
-        if (b.bold) { buf.push(s); continue; }
+        if (b.bold) { addBuf(i, s); continue; }
         if (!isDots(s) && !buf.length) d.adjust.push(s);
-        else if (!isDots(s)) buf.push(s);
+        else if (!isDots(s)) addBuf(i, s);
       }
     } else if (!d) {
       const all = b.rows.flat();
-      const i = all.findIndex((c) => roman(c) === 'I' || /^i\.\s/i.test(c.trim()));
-      if (i >= 0) {
-        finish();
-        for (const c of all.slice(0, Math.max(0, i))) if (c.length < 200) buf.push(...lines(c));
-        d = newDraft(buf); buf = [];
-        for (const c of all.slice(Math.max(0, i))) for (const l of lines(c)) if (!roman(l)) d.goals.k.push(l);
-      } else for (const c of all) if (c.length < 200) buf.push(...lines(c));
+      const k = all.findIndex((c) => roman(c) === 'I' || /^i\.\s/i.test(c.trim()));
+      if (k >= 0) {
+        const st = startAt(i);
+        finish(st - 1);
+        for (const c of all.slice(0, k)) if (c.length < 200) addBuf(i, ...lines(c));
+        d = newDraft(buf, st); clearBuf();
+        for (const c of all.slice(k)) for (const l of lines(c)) if (!roman(l)) d.goals.k.push(l);
+      } else for (const c of all) if (c.length < 200) addBuf(i, ...lines(c));
     } else if (d) {
       if (d.sec === 'III') {
-        if (buf.length) { d.tables.push(buf.map((x) => [x])); buf = []; }
+        if (buf.length) { d.tables.push(buf.map((x) => [x])); clearBuf(); }
         d.tables.push(b.rows);
       } else if (d.sec === 'II') {
         // bảng dụng cụ (STEM): STT | Thiết bị | Số lượng
@@ -267,7 +276,7 @@ export function splitLessonPlans(blocks: DocBlock[], path: string): LibraryEntry
       }
     }
   }
-  finish();
+  finish(blocks.length - 1);
   return out.filter((e) => e.plan.activities.some((a) => a.teacher || a.student) || e.plan.goals.knowledge);
 }
 

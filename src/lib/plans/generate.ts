@@ -47,6 +47,13 @@ export type LessonPlan = {
   goalLabels?: [string, string, string];
   /** giáo án lấy từ kho giáo án của trường: tên file gốc */
   source?: string;
+  /**
+   * bản gốc của giáo án (từ file Word của trường): HTML giữ nguyên trình bày, hình ghi là <img data-img="khoá">.
+   * Khi có, bản xem trước và file Word xuất ra dùng đúng bản này.
+   */
+  orig?: { html: string };
+  /** false = xuất theo khung soạn của app thay cho bản gốc */
+  useOrig?: boolean;
   materials: { teacher: string; student: string };
   activities: PlanActivity[];
   assessment: string;

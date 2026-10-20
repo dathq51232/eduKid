@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CalendarDays, Copy, FileDown, FilePlus2, NotebookPen, Save, Sparkles, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { downloadDoc } from '@/lib/doc-download';
 import {
   SUBJECT_NAMES, addDays, blankPlan, generatePlan, isPlan, mondayOf, subjectNameOf, viDate, weekdayVi,
   type LessonInfo, type LessonPlan, type PlanActivity, type PlanSubject,
@@ -13,6 +12,7 @@ import { plansDocument, weekDocument } from '@/lib/plans/word';
 import type { SubjectCode } from '@/lib/types';
 import ScheduleImport from './ScheduleImport';
 import PlanLibrary from './PlanLibrary';
+import DocPreview from './DocPreview';
 import type { LibraryMeta } from '@/lib/plans/library';
 
 type Saved = { id: string; class_id: string | null; class_name: string | null; subject: PlanSubject; grade: number; title: string; teach_date: string | null; period: number | null; updated_at: string };
@@ -51,6 +51,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
   const [scope, setScope] = useState<'week' | 'all'>('week');
   const editorRef = useRef<HTMLElement>(null);
   const [library, setLibrary] = useState<LibraryMeta[]>([]);
+  const [preview, setPreview] = useState<{ title: string; filename: string; html: string; single?: boolean } | null>(null);
 
   useEffect(() => { setLessonId((cur) => (lessons.some((l) => l.id === cur) ? cur : lessons[0]?.id ?? '')); }, [lessons]);
 
@@ -134,7 +135,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
     setTimeout(() => editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
-  const exportPlan = () => plan && downloadDoc(`giao-an-${plan.title || 'bai-hoc'}`, plansDocument([plan], school));
+  const exportPlan = () => plan && setPreview({ title: plan.title || 'Giáo án', filename: `giao-an-${plan.title || 'bai-hoc'}`, html: plansDocument([plan], school), single: true });
 
   const weekEnd = addDays(week, 6);
   const inWeek = saved.filter((s) => s.teach_date && s.teach_date >= week && s.teach_date <= weekEnd);
@@ -146,7 +147,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
     const got = await Promise.all(inWeek.map((s) => sb.rpc('teacher_get_plan', { p_plan: s.id })));
     setBusy(false);
     const plans = got.map((g) => ((g.data ?? []) as { data: unknown }[])[0]?.data).filter(isPlan);
-    downloadDoc(`lich-bao-giang-tuan-${week}`, weekDocument(week, plans, school, className, withPlans));
+    setPreview({ title: `Kế hoạch dạy học tuần ${viDate(week)}${withPlans ? ` + ${plans.length} giáo án` : ''}`, filename: `ke-hoach-day-hoc-tuan-${week}`, html: weekDocument(week, plans, school, className, withPlans) });
   };
 
   return (
@@ -160,7 +161,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
       </header>
 
       <ScheduleImport classId={classId} className={className} grade={grade} school={school} weakForms={weakForms} lessonsBySubject={lessonsBySubject}
-        saved={saved} canSave={canSave} library={library} onOpen={openDraft} onSaved={(m) => { setWeek(m); setScope('week'); void refresh(); }} />
+        saved={saved} canSave={canSave} library={library} onOpen={openDraft} onPreview={setPreview} onSaved={(m) => { setWeek(m); setScope('week'); void refresh(); }} />
 
       <PlanLibrary grade={grade} className={className} onOpen={openDraft} onChange={setLibrary} />
 
@@ -199,7 +200,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
               <button type="button" className="btn btn-primary btn-sm" disabled={busy || !canSave} onClick={() => void save(false)}><Save aria-hidden="true" /> Lưu</button>
               {planId && <button type="button" className="btn btn-outline btn-sm" disabled={busy || !canSave} onClick={() => void save(true)}>Lưu thành bản mới</button>}
               <button type="button" className="btn btn-outline btn-sm" onClick={duplicate}><Copy aria-hidden="true" /> Nhân bản cho tiết khác</button>
-              <button type="button" className="btn btn-outline btn-sm" onClick={exportPlan}><FileDown aria-hidden="true" /> Tải Word</button>
+              <button type="button" className="btn btn-outline btn-sm" onClick={exportPlan}><FileDown aria-hidden="true" /> Xem trước &amp; tải Word</button>
             </div>
           </div>
 
@@ -215,6 +216,14 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
 
           <h3>I. Yêu cầu cần đạt</h3>
           {plan.source && <p className="dash-muted">Từ kho giáo án của trường: {plan.source}</p>}
+          {plan.orig && (
+            <div className="planner-orig" role="group" aria-label="Bản xuất Word">
+              <p>Giáo án có <b>bản gốc của trường</b>: giữ nguyên chữ, bảng tô màu, hình ảnh như file Word đã nạp. Bản xem trước và file Word xuất ra dùng:</p>
+              <label><input type="radio" name="pl-orig" checked={plan.useOrig !== false} onChange={() => edit((p) => ({ ...p, useOrig: true }))} /> Bản gốc của trường (sửa trực tiếp trên bản xem trước)</label>
+              <label><input type="radio" name="pl-orig" checked={plan.useOrig === false} onChange={() => edit((p) => ({ ...p, useOrig: false }))} /> Khung soạn bên dưới</label>
+              <button type="button" className="mini-btn" onClick={exportPlan}><FileDown aria-hidden="true" /> Xem bản gốc</button>
+            </div>
+          )}
           <label className="adm-field"><span>1. {plan.goalLabels?.[0] ?? 'Kiến thức, kĩ năng'}</span><textarea rows={4} value={plan.goals.knowledge} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, knowledge: e.target.value } }))} /></label>
           <label className="adm-field"><span>2. {plan.goalLabels?.[1] ?? 'Năng lực'}</span><textarea rows={2} value={plan.goals.competence} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, competence: e.target.value } }))} /></label>
           <label className="adm-field"><span>3. {plan.goalLabels?.[2] ?? 'Phẩm chất'}</span><textarea rows={2} value={plan.goals.quality} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, quality: e.target.value } }))} /></label>
@@ -259,8 +268,8 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
             <strong>{viDate(week)} – {viDate(addDays(week, 4))}</strong>
             <button type="button" className="mini-btn" onClick={() => setWeek(addDays(week, 7))}>Tuần sau ›</button>
             <span className="planner-spacer" />
-            <button type="button" className="mini-btn" disabled={busy} onClick={() => void exportWeek(false)}><FileDown aria-hidden="true" /> Lịch báo giảng (Word)</button>
-            <button type="button" className="mini-btn" disabled={busy} onClick={() => void exportWeek(true)}><FileDown aria-hidden="true" /> Lịch + giáo án cả tuần</button>
+            <button type="button" className="mini-btn" disabled={busy} onClick={() => void exportWeek(false)}><FileDown aria-hidden="true" /> Xem trước lịch báo giảng</button>
+            <button type="button" className="mini-btn" disabled={busy} onClick={() => void exportWeek(true)}><FileDown aria-hidden="true" /> Xem trước lịch + giáo án cả tuần</button>
           </div>
         )}
         {shown.length === 0 ? (
@@ -289,6 +298,10 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
         )}
         <p className="dash-muted">Giáo án thuộc về thầy cô: lớp cũ đã lưu trữ vẫn mở lại được để dùng cho lớp mới (Mở → Nhân bản → Lưu).</p>
       </section>
+      {preview && (
+        <DocPreview title={preview.title} filename={preview.filename} html={preview.html} onClose={() => setPreview(null)}
+          onSaveOrig={preview.single && plan?.orig ? (h) => { edit((p) => ({ ...p, orig: { html: h } })); setPreview(null); setMsg({ kind: 'info', text: 'Đã cập nhật bản gốc của giáo án theo phần sửa trên bản xem trước. Bấm Lưu để lưu lại.' }); } : undefined} />
+      )}
     </div>
   );
 }

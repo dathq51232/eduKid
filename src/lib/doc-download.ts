@@ -13,3 +13,17 @@ export function downloadDoc(filename: string, html: string) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/** Tải file Word .docx (đã tạo sẵn nội dung) */
+export function downloadDocx(filename: string, bytes: Uint8Array) {
+  const blob = new Blob([bytes as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const name = asciiFilename(filename).replace(/\.docx?$/i, '');
+  a.download = `${name}.docx`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}

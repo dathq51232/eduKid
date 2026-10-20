@@ -3,7 +3,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { FileDown, FileSpreadsheet, Save, Upload } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { downloadDoc } from '@/lib/doc-download';
 import { downloadXlsx } from '@/lib/xlsx';
 import { readXlsx } from '@/lib/xlsx-read';
 import { addDays, mondayOf, viDate, weekdayVi, type LessonInfo, type LessonPlan } from '@/lib/plans/generate';
@@ -23,13 +22,14 @@ const keyOf = (date: string, period: number, title: string) => `${date}|${period
  * bài Toán / Tiếng Việt / Tiếng Anh có trong app dùng yêu cầu cần đạt, dạng bài, kiến thức của bài;
  * tiết ôn tập / bổ sung (BS) dùng khung ôn luyện theo bài trọng tâm của tuần; môn khác dùng khung chung của môn.
  */
-export default function ScheduleImport({ classId, className, grade, school, weakForms, lessonsBySubject, saved, canSave, library, onOpen, onSaved }: {
+export default function ScheduleImport({ classId, className, grade, school, weakForms, lessonsBySubject, saved, canSave, library, onOpen, onSaved, onPreview }: {
   classId: string; className: string; grade: number; school: string;
   weakForms: Record<SubjectCode, string[]>; lessonsBySubject: Record<SubjectCode, LessonInfo[]>;
   saved: SavedLite[]; canSave: boolean;
   /** danh mục kho giáo án của trường (không kèm nội dung) */
   library: LibraryMeta[];
   onOpen: (plan: LessonPlan) => void; onSaved: (monday: string) => void;
+  onPreview: (p: { title: string; filename: string; html: string }) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState('');
@@ -58,8 +58,8 @@ export default function ScheduleImport({ classId, className, grade, school, weak
         if (ids.length) {
           const sb = createClient();
           const got = new Map<string, unknown>();
-          for (let i = 0; i < ids.length; i += 150) {
-            const { data } = await sb.rpc('library_get', { p_ids: ids.slice(i, i + 150) });
+          for (let i = 0; i < ids.length; i += 25) {
+            const { data } = await sb.rpc('library_get', { p_ids: ids.slice(i, i + 25) });
             for (const row of (data ?? []) as { id: string; data: unknown }[]) got.set(row.id, row.data);
           }
           list = list.map((rp, i) => { const m = picks[i]; const d = m ? got.get(m.id) : null; return m && isPlan(d) ? withLibraryPlan(rp, d, className) : rp; });
@@ -103,7 +103,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
   const exportWord = () => {
     if (!sch || !chosen.length) return;
     const monday = sch.monday || mondayOf(chosen[0].plan.date || new Date().toISOString().slice(0, 10));
-    downloadDoc(`ke-hoach-day-hoc-tuan-${sch.week || monday}`, weekDocument(monday, chosen.map((r) => r.plan), school, className, true));
+    onPreview({ title: `Kế hoạch dạy học tuần ${sch.week || viDate(monday)} + ${chosen.length} giáo án`, filename: `ke-hoach-day-hoc-tuan-${sch.week || monday}`, html: weekDocument(monday, chosen.map((r) => r.plan), school, className, true) });
   };
 
   const template = () => {
@@ -138,7 +138,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
             <button type="button" className="mini-btn" onClick={() => setPick(items.map(() => false))}>Bỏ chọn</button>
             <span className="planner-spacer" />
             <button type="button" className="btn btn-primary btn-sm" disabled={busy || !chosen.length || !canSave} onClick={() => void saveAll()}><Save aria-hidden="true" /> {progress || `Lưu ${chosen.length} giáo án`}</button>
-            <button type="button" className="btn btn-outline btn-sm" disabled={!chosen.length} onClick={exportWord}><FileDown aria-hidden="true" /> Tải Word: lịch + {chosen.length} giáo án</button>
+            <button type="button" className="btn btn-outline btn-sm" disabled={!chosen.length} onClick={exportWord}><FileDown aria-hidden="true" /> Xem trước &amp; tải Word: lịch + {chosen.length} giáo án</button>
           </div>
           <div className="table-scroll">
             <table className="roster-table planner-table planner-import">

@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpenCheck, FolderUp, Search, Trash2, Upload } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { readDocx } from '@/lib/docx-read';
+import { readDocxFull } from '@/lib/docx-read';
+import { imageKeys, prepareImage, uploadImage } from '@/lib/plans/images';
 import { SUBJECT_NAMES, isPlan, type LessonPlan, type PlanSubject } from '@/lib/plans/generate';
 import { splitLessonPlans, type LibraryMeta } from '@/lib/plans/library';
 
@@ -56,16 +57,42 @@ export default function PlanLibrary({ grade, className, onOpen, onChange }: {
     if (!docs.length) return setMsg({ kind: 'error', text: 'Không có file Word .docx nào trong lựa chọn (file .doc cũ: mở bằng Word rồi “Lưu thành” .docx).' });
     setBusy(true); setMsg(null); setFails([]);
     const sb = createClient();
-    let plans = 0, ok = 0;
+    let plans = 0, ok = 0, pics = 0;
     const bad: string[] = [];
     for (let i = 0; i < docs.length; i++) {
       const f = docs[i], path = relPath(f);
       setProgress(`Đang đọc ${i + 1}/${docs.length}: ${f.name}`);
       try {
         if (f.size > 40_000_000) throw new Error('file quá lớn');
-        const items = splitLessonPlans(await readDocx(await f.arrayBuffer()), path);
+        const { blocks, media } = await readDocxFull(await f.arrayBuffer());
+        const items = splitLessonPlans(blocks, path);
+        // hình trong giáo án: thu nhỏ nếu lớn, đưa lên kho của trường, thay khoá trong bản gốc
+        const used = [...new Set(items.flatMap((it) => imageKeys(it.plan.orig?.html ?? '')))];
+        const keyOf = new Map<string, string | null>();
+        for (let j = 0; j < used.length; j++) {
+          setProgress(`Đang đọc ${i + 1}/${docs.length}: ${f.name} — hình ${j + 1}/${used.length}`);
+          const raw = media.get(used[j]);
+          const img = raw ? await prepareImage(raw, used[j]) : null;
+          keyOf.set(used[j], img ? await uploadImage(img) : null);
+          if (img && keyOf.get(used[j])) pics++;
+        }
+        for (const it of items) if (it.plan.orig) {
+          it.plan.orig.html = it.plan.orig.html.replace(/<img data-img="([^"]+)"([^>]*)\/>/g, (m, k: string, rest: string) => { const nk = keyOf.get(k); return nk ? `<img data-img="${nk}"${rest}/>` : ''; });
+        }
         if (!items.length) { bad.push(`${path} — không thấy giáo án (cần có mục “I. Yêu cầu cần đạt”)`); continue; }
-        const { data, error } = await sb.rpc('library_import', { p_source: path.slice(0, 300), p_items: items.slice(0, 300) });
+        // gửi từng phần ≤ ~1,5 MB (bản gốc có thể lớn)
+        const parts: typeof items[] = [[]];
+        let size = 0;
+        for (const it of items.slice(0, 300)) {
+          const n = JSON.stringify(it).length;
+          if (size + n > 1_500_000 && parts[parts.length - 1].length) { parts.push([]); size = 0; }
+          parts[parts.length - 1].push(it); size += n;
+        }
+        let data = 0; let error: { message: string } | null = null;
+        for (let k = 0; k < parts.length && !error; k++) {
+          const r = await sb.rpc('library_import', { p_source: path.slice(0, 300), p_items: parts[k], p_append: k > 0 });
+          error = r.error; data += Number(r.data) || 0;
+        }
         if (error) {
           if (notReady(error.message)) { setReady(false); setMsg({ kind: 'error', text: HINT }); break; }
           bad.push(`${path} — ${/library_full/.test(error.message) ? 'kho đã đầy (20 000 giáo án)' : 'chưa lưu được'}`);
@@ -77,7 +104,7 @@ export default function PlanLibrary({ grade, className, onOpen, onChange }: {
       }
     }
     setBusy(false); setProgress(''); setFails(bad);
-    if (ok) setMsg({ kind: 'ok', text: `Đã nạp ${plans} giáo án từ ${ok} file vào kho của trường${skipped ? ` (bỏ qua ${skipped} file không phải .docx)` : ''}${bad.length ? `; ${bad.length} file chưa nạp được (xem bên dưới)` : ''}.` });
+    if (ok) setMsg({ kind: 'ok', text: `Đã nạp ${plans} giáo án (${pics} hình) từ ${ok} file vào kho của trường${skipped ? ` (bỏ qua ${skipped} file không phải .docx)` : ''}${bad.length ? `; ${bad.length} file chưa nạp được (xem bên dưới)` : ''}.` });
     else if (bad.length) setMsg({ kind: 'error', text: 'Chưa nạp được file nào — xem lí do bên dưới.' });
     void refresh();
   };
@@ -116,7 +143,7 @@ export default function PlanLibrary({ grade, className, onOpen, onChange }: {
   return (
     <section className="dash-section planner-card" aria-labelledby="pl-lib">
       <h2 id="pl-lib"><BookOpenCheck aria-hidden="true" /> Kho giáo án của trường</h2>
-      <p className="dash-muted">Tải thư mục giáo án Word (.docx) của trường lên một lần: app tách từng bài, từng tiết (I. Yêu cầu cần đạt · II. Đồ dùng · III. Hoạt động · IV. Điều chỉnh) ngay trên máy này, chỉ lưu phần chữ, dùng chung cho giáo viên cùng trường. Khi tải lịch báo giảng, tiết nào có giáo án trong kho sẽ được soạn sẵn theo đúng giáo án đó. Nạp lại cùng một file thì giáo án cũ của file đó được thay mới.</p>
+      <p className="dash-muted">Tải thư mục giáo án Word (.docx) của trường lên một lần: app tách từng bài, từng tiết (I. Yêu cầu cần đạt · II. Đồ dùng · III. Hoạt động · IV. Điều chỉnh) ngay trên máy này, giữ nguyên bản gốc (chữ, bảng tô màu, hình ảnh) để xem trước và xuất Word đúng như file của trường; dùng chung cho giáo viên cùng trường. Khi tải lịch báo giảng, tiết nào có giáo án trong kho sẽ được soạn sẵn theo đúng giáo án đó. Nạp lại cùng một file thì giáo án cũ của file đó được thay mới.</p>
       <div className="planner-actions">
         <input ref={dirRef} type="file" multiple hidden {...{ webkitdirectory: '', directory: '' }}
           onChange={(e) => { const el = e.currentTarget; const fs = [...(el.files ?? [])]; if (fs.length) void importFiles(fs).finally(() => { el.value = ''; }); }} />

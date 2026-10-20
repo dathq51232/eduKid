@@ -2942,3 +2942,16 @@ body {
 .today-item.is-soon { border-left-color: #f5a524; }
 .today-item.is-info { border-left-color: var(--blue); }
 .today-item.is-done { border-left-color: var(--green-solid); }
+
+/* Bản xem trước văn bản (DocPreview) */
+.pv-overlay { position: fixed; inset: 0; z-index: 80; background: rgba(15, 23, 42, .55); display: flex; padding: 16px; }
+.pv-panel { flex: 1; display: flex; flex-direction: column; background: var(--surface, #fff); border-radius: 14px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+.pv-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line, #e3e8ef); }
+.pv-title { font-size: 15px; max-width: 46ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-note { color: var(--muted, #667); font-size: 13px; }
+.pv-frame { flex: 1; width: 100%; border: 0; background: #e6eaf0; }
+.pv-loading { display: grid; place-items: center; color: #556; }
+@media (max-width: 640px) { .pv-overlay { padding: 0; } .pv-panel { border-radius: 0; } }
+.planner-orig { border: 1px solid #b7e0c4; background: #effaf2; border-radius: 10px; padding: 10px 12px; margin: 8px 0 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 14px; }
+.planner-orig p { margin: 0; flex-basis: 100%; }
+.planner-orig label { display: inline-flex; align-items: center; gap: 6px; }

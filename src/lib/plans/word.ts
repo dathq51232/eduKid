@@ -23,13 +23,15 @@ table { border-collapse: collapse; width: 100%; } td, th { vertical-align: top; 
 </style>`;
 
 /** ngắt trang — dạng Word và LibreOffice đều nhận */
-const BREAK = '<br clear="all" style="page-break-before:always" /><p style="page-break-before:always;margin:0;font-size:1pt;line-height:1pt">&nbsp;</p>';
+const BREAK = '<p style="page-break-before:always;margin:0">&nbsp;</p>';
 const sessionRank = (s?: string) => (/chi/i.test(s ?? '') ? 1 : 0);
 
 const doc = (title: string, body: string) =>
   `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${esc(title)}</title>${STYLE}</head><body>${body}</body></html>`;
 
 function planBody(p: LessonPlan, school: string): string {
+  // giáo án lấy từ kho của trường: giữ nguyên bản gốc (chữ, bảng, màu, hình)
+  if (p.orig?.html && p.useOrig !== false) return `<div data-orig="1">${p.orig.html}</div>`;
   const when = p.date ? `${weekdayVi(p.date)}, ngày ${viDate(p.date)}` : '………………';
   const acts = p.activities.map((a) => `<tr>
       <td class="c" valign="top">${a.minutes ? `${a.minutes}'` : ''}</td>
@@ -85,5 +87,5 @@ export function weekDocument(monday: string, plans: LessonPlan[], school: string
     <table class="grid" width="100%" border="1" cellspacing="0" cellpadding="4"><tr><th width="9%">Thứ, ngày</th><th width="6%">Buổi</th><th width="5%">Tiết TKB</th><th width="10%">Môn học</th><th width="5%">Tiết PPCT</th><th>Tên bài dạy</th><th width="22%">ND tích hợp / ĐDDH</th><th width="10%">Điều chỉnh KH tuần</th></tr>${rows}</table></div>`;
   const rest = withPlans ? [...plans].sort((a, b) => (a.date + sessionRank(a.session) + String(a.period).padStart(2, '0')).localeCompare(b.date + sessionRank(b.session) + String(b.period).padStart(2, '0')))
     .map((p, i) => `${i ? BREAK : ''}${planBody(p, school)}`).join('') : '';
-  return doc(`Kế hoạch dạy học tuần ${viDate(days[0])}`, table + (rest ? `${BREAK}<div class="Port">${rest}</div>` : ''));
+  return doc(`Kế hoạch dạy học tuần ${viDate(days[0])}`, table + (rest ? `<div class="Port">${rest}</div>` : ''));
 }
