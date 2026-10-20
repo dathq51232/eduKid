@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { ArrowLeft, Award, ClipboardCheck, FileText, GraduationCap, Radar, Send, Table2 } from 'lucide-react';
+import { ArrowLeft, Award, ClipboardCheck, FileText, GraduationCap, MessageSquareHeart, NotebookPen, Radar, Send, Table2 } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import ClassManager, { type BillingRow, type RosterRow, type SummaryRow } from '@/components/classroom/ClassManager';
@@ -73,6 +73,9 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
           plan={plan}
           top={(
             <nav className="teacher-tools no-print" aria-label="Công cụ giáo viên">
+              <Link href={`/giao-vien/lop/${id}/ke-hoach`} className="tool-card tone-green">
+                <NotebookPen aria-hidden="true" /><strong>Kế hoạch bài dạy</strong><span>Giáo án soạn sẵn theo bài, sửa, nhân bản, lịch báo giảng tuần, tải Word</span>
+              </Link>
               <Link href={`/giao-vien/lop/${id}/giao-bai`} className="tool-card tone-blue">
                 <Send aria-hidden="true" /><strong>Giao bài về nhà</strong><span>Chọn bài, hạn nộp; xem em nào đã làm, em nào chưa</span>
               </Link>
@@ -84,6 +87,9 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
               </Link>
               <Link href={`/giao-vien/lop/${id}/phieu-bai-tap`} className="tool-card tone-yellow">
                 <FileText aria-hidden="true" /><strong>Phiếu bài tập</strong><span>Phiếu in theo bài đang học, đáp án trang riêng</span>
+              </Link>
+              <Link href={`/giao-vien/lop/${id}/phieu-tien-bo`} className="tool-card tone-coral">
+                <MessageSquareHeart aria-hidden="true" /><strong>Phiếu báo tiến bộ</strong><span>Lời nhắn cho phụ huynh theo tuần, tháng: điểm mạnh, cần cố gắng, gợi ý ở nhà</span>
               </Link>
               <Link href={`/giao-vien/lop/${id}/thu-khen`} className="tool-card tone-purple">
                 <Award aria-hidden="true" /><strong>Thư khen</strong><span>Chọn mẫu, tạo thư cho các em được khen; tải PDF, ảnh PNG hoặc in</span>

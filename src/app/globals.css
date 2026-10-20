@@ -2824,3 +2824,84 @@ body {
 .class-quick svg { width: 16px; height: 16px; color: var(--purple); }
 .praise-style { display: inline-block; padding: 0 6px; border-radius: 6px; background: #fff3d0; color: #8a5a00; font-size: 12px; }
 .praise-style.is-formal { background: #fde8e6; color: #9a1b1b; }
+
+/* ------------------------------------------------ Kế hoạch bài dạy (giáo viên) */
+.planner, .progress-report { display: grid; gap: 18px; }
+.planner h1, .progress-report h1 { display: flex; align-items: center; gap: 10px; }
+.planner h1 svg, .progress-report h1 svg { width: 30px; height: 30px; }
+.planner-card { padding: 18px 20px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.planner-card h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; }
+.planner-card h2 svg { width: 22px; height: 22px; color: var(--blue); }
+.planner-card h3 { margin: 10px 0 0; font-size: 17px; color: var(--link); }
+.planner-new { display: grid; grid-template-columns: 170px minmax(0, 1fr) 170px 90px; gap: 12px; align-items: end; }
+.planner-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.planner-weak { margin: 0; font-size: 14px; }
+.planner-edit-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.planner-dirty { color: #b45309; font-size: 15px; font-weight: 700; }
+.planner-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.planner-wide { grid-column: 1 / -1; }
+.planner-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.planner-act { display: grid; gap: 10px; margin: 0; padding: 12px 14px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface-2); }
+.planner-act legend { padding: 0 6px; font-weight: 800; }
+.planner-min { width: 64px; min-height: 32px; margin-left: 8px; padding: 2px 6px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg-ffffff); color: var(--ink); font: inherit; }
+.planner-week { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.planner-spacer { flex: 1; }
+.planner-table td { white-space: normal; }
+.planner-table tr.is-on td { background: var(--blue-soft); }
+.planner-title { font-weight: 700; min-width: 180px; }
+.planner-row-actions { display: flex; gap: 6px; }
+.tool-card.tone-purple svg { color: var(--purple); }
+@media (max-width: 860px) {
+  .planner-new { grid-template-columns: 1fr 1fr; }
+  .planner-new .planner-lesson { grid-column: 1 / -1; }
+  .planner-grid { grid-template-columns: 1fr 1fr; }
+  .planner-two { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) { .planner-card { padding: 14px; } }
+
+/* ------------------------------------------------ Phiếu báo tiến bộ (giáo viên) */
+.tool-card.tone-coral svg { color: var(--brand-coral); }
+.report-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.report-bar .adm-field { min-width: 200px; }
+.report-list { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.report-card { display: grid; gap: 10px; padding: 16px; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--surface); }
+.report-card.is-ok { border-color: color-mix(in srgb, var(--green-solid) 55%, transparent); background: color-mix(in srgb, var(--green-solid) 6%, var(--surface)); }
+.report-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.report-head strong { font-size: 18px; }
+.report-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.report-chip { padding: 3px 10px; border-radius: 999px; background: var(--blue-soft); color: var(--link); font-size: 13px; font-weight: 800; }
+.report-chip.is-soft { background: var(--surface-2); color: var(--muted); }
+.report-chip.is-low { background: #fde8e6; color: #b3261e; }
+.report-chip.is-up { background: #ddf7e7; color: #15803d; }
+.report-card textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--bg-ffffff); color: var(--ink); font: inherit; font-size: 15px; line-height: 1.5; resize: vertical; }
+.report-ok { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 10px; background: var(--surface-2); font-weight: 800; font-size: 14px; cursor: pointer; }
+.report-ok svg { width: 16px; height: 16px; color: var(--green-solid); }
+.report-ok input { width: 18px; height: 18px; accent-color: var(--green-solid); }
+.report-print { display: none; }
+@media print {
+  .report-print { display: block; }
+  .report-page { break-after: page; page-break-after: always; padding: 10mm 6mm; color: #000; font-size: 13pt; line-height: 1.5; }
+  .report-page:last-child { break-after: auto; page-break-after: auto; }
+  .report-page h2 { text-align: center; font-size: 18pt; margin: 0 0 4pt; }
+  .report-page-sub { text-align: center; margin: 0 0 12pt; }
+}
+
+/* ------------------------------------------------ Đề kiểm tra: chú thích mức + lọc YCCĐ */
+.exam-muc-legend { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: 14px; color: var(--muted); }
+.exam-outcomes { padding: 10px 14px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); }
+.exam-outcomes summary { cursor: pointer; font-weight: 800; }
+.exam-outcomes ul { display: grid; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; font-size: 15px; }
+.exam-outcomes label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.exam-outcomes input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--blue); flex: none; }
+
+/* ------------------------------------------------ Việc hôm nay (trang giáo viên) */
+.today-board h2 { display: flex; align-items: center; gap: 8px; }
+.today-board h2 svg { width: 24px; height: 24px; color: var(--blue); }
+.today-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.today-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 16px; border-left: 6px solid var(--line-strong); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.today-item > div { display: grid; gap: 2px; min-width: 0; flex: 1 1 320px; }
+.today-item span { color: var(--muted); font-size: 15px; line-height: 1.45; }
+.today-item.is-urgent { border-left-color: var(--red); }
+.today-item.is-soon { border-left-color: #f5a524; }
+.today-item.is-info { border-left-color: var(--blue); }
+.today-item.is-done { border-left-color: var(--green-solid); }

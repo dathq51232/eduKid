@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Award, ChevronRight, School } from 'lucide-react';
+import TodayBoard from '@/components/classroom/TodayBoard';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import SignOutButton from '@/components/classroom/SignOutButton';
@@ -10,6 +11,8 @@ import { getViewer } from '@/lib/auth/viewer';
 import ContactAdmin from '@/components/ContactAdmin';
 import { FREE_STUDENT_LIMIT } from '@/lib/contact';
 import { createClient } from '@/lib/supabase/server';
+import { FEATURES } from '@/lib/features';
+import { buildToday, type TodayItem } from '@/lib/classroom/today';
 
 export const metadata: Metadata = { title: 'Giáo viên · EduChain Kids' };
 export const dynamic = 'force-dynamic';
@@ -55,6 +58,31 @@ export default async function TeacherHome() {
   for (const m of (members ?? []) as { class_id: string }[]) count.set(m.class_id, (count.get(m.class_id) ?? 0) + 1);
   const list = (classes ?? []) as ClassRow[];
 
+  // Việc hôm nay của lớp đang dạy (lỗi / chưa chạy migration thì bỏ qua phần đó)
+  const active = list.find((c) => c.status === 'active');
+  let today: TodayItem[] = [];
+  if (active) {
+    const since = new Date(Date.now() - 7 * 86400_000).toISOString();
+    const [{ data: plans, error: planErr }, { data: asg, error: asgErr }, { data: mem }] = await Promise.all([
+      supabase.rpc('teacher_list_plans', { p_class: active.id }),
+      supabase.rpc('teacher_list_assignments', { p_class: active.id }),
+      supabase.from('class_memberships').select('student_id').eq('class_id', active.id).eq('status', 'active'),
+    ]);
+    const ids = ((mem ?? []) as { student_id: string }[]).map((m) => m.student_id);
+    const { data: recent } = ids.length
+      ? await supabase.from('lesson_results').select('student_id').in('student_id', ids).gte('created_at', since).limit(3000)
+      : { data: [] };
+    today = buildToday({
+      classId: active.id,
+      grade: active.grade,
+      plans: planErr ? null : (plans ?? []) as Parameters<typeof buildToday>[0]['plans'],
+      assignments: asgErr ? null : (asg ?? []) as Parameters<typeof buildToday>[0]['assignments'],
+      students: ids.length,
+      activeLast7: new Set(((recent ?? []) as { student_id: string }[]).map((r) => r.student_id)).size,
+      recordsOn: FEATURES.teacherRecords,
+    });
+  }
+
   return (
     <>
       <LearnHeader />
@@ -80,6 +108,8 @@ export default async function TeacherHome() {
         {plan && plan.students_used >= plan.student_limit && (
           <ContactAdmin note={`Thầy cô đã dùng hết ${plan.student_limit} chỗ học sinh của gói. Liên hệ để được mở thêm.`} />
         )}
+
+        {active && <TodayBoard className={active.name} items={today} />}
 
         <section className="dash-section">
           <h2>Các lớp đang quản lý</h2>

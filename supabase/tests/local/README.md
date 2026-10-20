@@ -20,3 +20,5 @@ Không thay thế được kiểm thử trên Supabase thật.
 Ví dụ: `psql -d edukid_test -f 00_supabase_shim.sql` rồi lần lượt các file còn lại.
 
 Kết quả mong đợi của 10_e2e: q1 true, q2 true, q3 false, q4 true, q5 true, finish = 4/5; phụ huynh khác thấy 0 dòng ở mọi bảng.
+
+- `0021_lesson_plans.sql` rồi `103_lesson_plans.sql`: giáo án chỉ người soạn đọc/ghi/xoá, chỉ gắn được lớp mình dạy, học sinh/anon không đọc được, xoá lớp giữ giáo án, chạy lại migration an toàn.

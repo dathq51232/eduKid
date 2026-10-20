@@ -1,8 +1,7 @@
 // Xuất đề kiểm tra ra file Word (.doc dạng HTML — Word mở trực tiếp, "Lưu thành" .docx nếu cần).
 // Không dùng thư viện ngoài; tạo ngay trên trình duyệt, không gửi dữ liệu đi đâu.
 
-import { asciiFilename } from '../filename';
-import { MUCS, MUC_NAME, partOf, totals, type ExamQuestion, type Matrix, type Muc, type Paper } from './matrix';
+import { MUCS, MUC_DESC, MUC_NAME, partOf, totals, type ExamQuestion, type Matrix, type Muc, type Paper } from './matrix';
 
 export type ExamMeta = {
   school: string; title: string; subjectName: string; grade: number; className: string;
@@ -11,6 +10,8 @@ export type ExamMeta = {
   worksheet?: boolean;
   /** Phiếu bài tập: nội dung (các bài) in dưới tiêu đề */
   topic?: string;
+  /** mã yêu cầu cần đạt → nội dung (in ở bản đặc tả) */
+  outcomes?: Record<string, string>;
 };
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -102,16 +103,18 @@ function matrixHtml(m: Matrix): string {
       return `<tr><td class="n">${i + 1}</td><td>${esc(r.unitTitle)}</td>${MUCS.map((k) => `<td class="n">${cell(r.counts[k], k)}</td>`).join('')}<td class="n">${n} câu<br/>${fmt(sc)} đ</td></tr>`;
     }).join('')
     + `<tr><th colspan="2">Tổng</th>${MUCS.map((k) => `<th>${t.byMuc[k]} câu<br/>${fmt(t.byMuc[k] * m.points[k])} đ</th>`).join('')}<th>${t.questions} câu<br/>${fmt(t.score)} đ</th></tr>`
-    + `<tr><th colspan="2">Tỉ lệ</th>${MUCS.map((k) => `<th>${t.score ? Math.round((t.byMuc[k] * m.points[k] * 100) / t.score) : 0}%</th>`).join('')}<th>100%</th></tr></table>`;
+    + `<tr><th colspan="2">Tỉ lệ</th>${MUCS.map((k) => `<th>${t.score ? Math.round((t.byMuc[k] * m.points[k] * 100) / t.score) : 0}%</th>`).join('')}<th>100%</th></tr></table>`
+    + `<p class="muted">${MUCS.map((k) => `<b>${MUC_NAME[k]}:</b> ${esc(MUC_DESC[k])}`).join('<br/>')}<br/><i>Theo quy định đánh giá học sinh tiểu học (Thông tư 27/2020/TT-BGDĐT).</i></p>`;
 }
 
-function specHtml(m: Matrix, paper: Paper, lessonTitles: Map<string, string>): string {
+function specHtml(m: Matrix, paper: Paper, lessonTitles: Map<string, string>, outcomes: Record<string, string> = {}): string {
   // Bản đặc tả: chủ đề -> bài đã học -> câu số mấy ở mức nào
   const numbers = new Map<string, number[]>();
   paper.slots.forEach((s, i) => { const k = `${s.row}:${s.muc}`; numbers.set(k, [...(numbers.get(k) ?? []), i + 1]); });
-  return `<table class="mx" width="100%"><tr><th>Chủ đề</th><th>Nội dung (bài đã học)</th>${MUCS.map((k) => `<th>${MUC_NAME[k]}<br/><span class="muted">câu số</span></th>`).join('')}</tr>`
+  const yc = (ri: number) => [...new Set(paper.slots.filter((s) => s.row === ri && s.q.outcome).map((s) => s.q.outcome as string))].map((c) => outcomes[c]).filter(Boolean);
+  return `<table class="mx" width="100%"><tr><th>Chủ đề</th><th>Nội dung (bài đã học)</th><th>Yêu cầu cần đạt</th>${MUCS.map((k) => `<th>${MUC_NAME[k]}<br/><span class="muted">câu số</span></th>`).join('')}</tr>`
     + m.rows.map((r, ri) => MUCS.some((k) => r.counts[k] > 0)
-      ? `<tr><td>${esc(r.unitTitle)}</td><td>${r.lessonIds.map((id) => esc(lessonTitles.get(id) ?? id)).join('; ')}</td>${MUCS.map((k) => `<td class="n">${(numbers.get(`${ri}:${k}`) ?? []).join(', ')}</td>`).join('')}</tr>`
+      ? `<tr><td>${esc(r.unitTitle)}</td><td>${r.lessonIds.map((id) => esc(lessonTitles.get(id) ?? id)).join('; ')}</td><td>${yc(ri).map((x) => `- ${esc(x)}`).join('<br/>')}</td>${MUCS.map((k) => `<td class="n">${(numbers.get(`${ri}:${k}`) ?? []).join(', ')}</td>`).join('')}</tr>`
       : '').join('') + '</table>';
 }
 
@@ -155,22 +158,30 @@ export function examDocument(meta: ExamMeta, m: Matrix, papers: Paper[], lessonT
   const blocks: string[] = [];
   if (parts.matrix) {
     blocks.push(`<h1>MA TRẬN ${esc(meta.title.toUpperCase())}</h1><p align="center">Môn ${esc(meta.subjectName)} – Lớp ${meta.grade} – Năm học ${esc(meta.yearLabel)}</p>` + matrixHtml(m));
-    if (papers[0]) blocks.push(`<h2>BẢN ĐẶC TẢ${papers[0].code ? ` (ĐỀ ${esc(papers[0].code)})` : ''}</h2>` + specHtml(m, papers[0], lessonTitles));
+    if (papers[0]) blocks.push(`<h2>BẢN ĐẶC TẢ${papers[0].code ? ` (ĐỀ ${esc(papers[0].code)})` : ''}</h2>` + specHtml(m, papers[0], lessonTitles, meta.outcomes));
   }
   if (parts.papers) for (const p of papers) blocks.push(paperHtml(meta, m, p));
   if (parts.keys) for (const p of papers) blocks.push(keyHtml(meta, m, p));
   return doc(meta.title, blocks.map((b, i) => (i ? `<div class="pb">${b}</div>` : `<div>${b}</div>`)).join(''));
 }
 
-export function downloadDoc(filename: string, html: string) {
-  const blob = new Blob(['﻿', html], { type: 'application/msword' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  const name = asciiFilename(filename);
-  a.download = name.endsWith('.doc') ? name : `${name}.doc`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+export { downloadDoc } from '../doc-download';
+
+/** In / lưu PDF: mở bản in của tài liệu (cùng nội dung file Word) trong khung ẩn rồi gọi lệnh In của trình duyệt.
+ *  Trong hộp thoại In chọn "Lưu dưới dạng PDF". Không dùng thư viện ngoài. */
+export function printDoc(html: string) {
+  const frame = document.createElement('iframe');
+  frame.setAttribute('aria-hidden', 'true');
+  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+  document.body.appendChild(frame);
+  const w = frame.contentWindow;
+  const d = frame.contentDocument;
+  if (!w || !d) { frame.remove(); return; }
+  d.open();
+  d.write(html);
+  d.close();
+  const go = () => {
+    try { w.focus(); w.print(); } finally { setTimeout(() => frame.remove(), 60_000); }
+  };
+  if (d.readyState === 'complete') setTimeout(go, 150); else frame.onload = () => setTimeout(go, 150);
 }

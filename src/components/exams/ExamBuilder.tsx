@@ -1,23 +1,26 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FileDown, FilePlus2, FolderOpen, RefreshCw, Save, Shuffle, Table2, Trash2 } from 'lucide-react';
+import { FileDown, FilePlus2, FolderOpen, Printer, RefreshCw, Save, Shuffle, Table2, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import AssignPaperForm from '@/components/classroom/AssignPaperForm';
 import type { ExamItem } from '@/lib/classroom/assignments';
 import { schoolYearOf } from '@/lib/classroom/comments';
 import { EXAM_NAME, examsFor, type ExamCode } from '@/lib/classroom/school';
 import {
-  MUCS, MUC_NAME, available, bookLessons, buildPaper, defaultMatrix, replaceSlot, totals,
+  MUCS, MUC_DESC, MUC_NAME, available, bookLessons, buildPaper, defaultMatrix, outcomesIn, replaceSlot, shufflePaper, totals,
   type BookLesson, type Matrix, type Muc, type Paper,
 } from '@/lib/exams/matrix';
-import { answerText, downloadDoc, examDocument } from '@/lib/exams/word';
+import { answerText, downloadDoc, examDocument, printDoc } from '@/lib/exams/word';
+import { findOutcomeAny } from '@/lib/curriculum';
 import type { SubjectCode } from '@/lib/types';
 
 type Saved = { id: string; title: string; subject: SubjectCode; exam_code: string; updated_at: string };
 type ExamKind = ExamCode | 'khac';
 type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;
-type Data = { school: string; minutes: number; fromId: string; toId: string; total: number; nPapers: number; matrix: Matrix; papers: Paper[] };
+type MixMode = 'khac' | 'tron';
+type Data = { school: string; minutes: number; fromId: string; toId: string; total: number; nPapers: number; mode?: MixMode; matrix: Matrix; papers: Paper[] };
+const CODES = 'ABCD';
 
 const SUBJECT_NAME: Record<SubjectCode, string> = { toan: 'Toán', 'tieng-viet': 'Tiếng Việt', 'tieng-anh': 'Tiếng Anh' };
 const KIND_NAME: Record<ExamKind, string> = { ...EXAM_NAME, khac: 'Kiểm tra khác' };
@@ -51,6 +54,7 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
   const [range, setRange] = useState<[string, string]>(() => defaultRange(bookLessons(subjects[0] ?? 'toan', grade), kinds.includes('ck1') ? 'ck1' : kinds[0]));
   const [total, setTotal] = useState(10);
   const [nPapers, setNPapers] = useState(2);
+  const [mode, setMode] = useState<MixMode>('khac');
   const [matrix, setMatrix] = useState<Matrix | null>(null);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [busy, setBusy] = useState(false);
@@ -89,7 +93,24 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
     setMsg({ kind: 'info', text: 'Đã lập ma trận gợi ý (tỉ lệ 50% · 30% · 20%). Thầy cô chỉnh số câu, điểm từng mức rồi bấm "Tạo đề".' });
   };
 
-  const avail = useMemo(() => matrix?.rows.map((r) => available(r.lessonIds)) ?? [], [matrix]);
+  const avail = useMemo(() => matrix?.rows.map((r) => available(r.lessonIds, matrix.exclude)) ?? [], [matrix]);
+  // Yêu cầu cần đạt trong phạm vi đề: giáo viên bỏ chọn YCCĐ không muốn kiểm tra
+  const outcomeList = useMemo(() => (matrix ? outcomesIn(matrix.rows.flatMap((r) => r.lessonIds)) : [])
+    .map((o) => ({ ...o, text: findOutcomeAny(subject, o.code)?.outcome.text ?? o.code })), [matrix, subject]);
+  const outcomeText = useMemo(() => Object.fromEntries(outcomeList.map((o) => [o.code, o.text])), [outcomeList]);
+  const toggleOutcome = (code: string, on: boolean) => {
+    setMatrix((m) => {
+      if (!m) return m;
+      const exclude = on ? (m.exclude ?? []).filter((c) => c !== code) : [...(m.exclude ?? []), code];
+      // giảm số câu ô nào vượt số câu còn lại sau khi lọc
+      const rows = m.rows.map((r) => {
+        const a = available(r.lessonIds, exclude);
+        return { ...r, counts: { 1: Math.min(r.counts[1], a[1]), 2: Math.min(r.counts[2], a[2]), 3: Math.min(r.counts[3], a[3]) } };
+      });
+      return { ...m, exclude, rows };
+    });
+    setPapers([]);
+  };
   const t = matrix ? totals(matrix) : null;
 
   const setCount = (ri: number, k: Muc, v: number) => setMatrix((m) => m && ({ ...m, rows: m.rows.map((r, i) => (i === ri ? { ...r, counts: { ...r.counts, [k]: Math.max(0, Math.min(v || 0, avail[ri]?.[k] ?? 0)) } } : r)) }));
@@ -100,14 +121,16 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
     const out: Paper[] = [];
     const avoid = new Set<string>();
     for (let i = 0; i < nPapers; i++) {
-      const p = buildPaper(matrix, newSeed(), nPapers > 1 ? 'AB'[i] : '', avoid);
+      const code = nPapers > 1 ? CODES[i] : '';
+      if (mode === 'tron' && i > 0) { out.push(shufflePaper(out[0], newSeed(), code)); continue; }
+      const p = buildPaper(matrix, newSeed(), code, avoid);
       p.slots.forEach((s) => avoid.add(s.q.key));
       out.push(p);
     }
     setPapers(out);
     const miss = out.flatMap((p) => p.missing);
     setMsg(miss.length
-      ? { kind: 'info', text: `Đã tạo đề, nhưng ${miss.length} ô ma trận chưa đủ câu khác nhau (ngân hàng còn ít câu cho chủ đề đó). Thầy cô giảm số câu ô đó hoặc tạo 1 đề.` }
+      ? { kind: 'info', text: `Đã tạo đề, nhưng ${miss.length} ô ma trận chưa đủ câu khác nhau (ngân hàng còn ít câu cho chủ đề đó). Thầy cô giảm số câu ô đó, chọn cách “Trộn từ đề A”, hoặc tạo ít đề hơn.` }
       : { kind: 'ok', text: `Đã tạo ${out.length} đề${Math.abs(t.score - 10) > 0.001 ? ` — lưu ý tổng điểm đang là ${t.score}, chưa bằng 10` : ''}.` });
   };
 
@@ -117,7 +140,7 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
     setPapers((ps) => ps.map((p, i) => (i === pi ? replaceSlot(matrix, p, si, newSeed(), avoid) : p)));
   };
 
-  const data = (): Data | null => (matrix ? { school, minutes, fromId: range[0], toId: range[1], total, nPapers, matrix, papers } : null);
+  const data = (): Data | null => (matrix ? { school, minutes, fromId: range[0], toId: range[1], total, nPapers, mode, matrix, papers } : null);
 
   const save = async () => {
     const d = data();
@@ -142,7 +165,7 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
     const k = row.exam_code.split('-')[0] as ExamKind;
     setExamId(row.id); setTitle(row.title); setSubject(row.subject); setKind(kinds.includes(k) ? k : 'khac');
     setSchool(row.data.school ?? school); setMinutes(row.data.minutes ?? 40); setRange([row.data.fromId, row.data.toId]);
-    setTotal(row.data.total ?? 10); setNPapers(row.data.nPapers ?? 1); setMatrix(row.data.matrix); setPapers(row.data.papers ?? []);
+    setTotal(row.data.total ?? 10); setNPapers(row.data.nPapers ?? 1); setMode(row.data.mode ?? 'khac'); setMatrix(row.data.matrix); setPapers(row.data.papers ?? []);
     setMsg({ kind: 'info', text: `Đã mở "${row.title}".` });
   };
 
@@ -156,8 +179,9 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
 
   const download = (parts: { matrix: boolean; papers: boolean; keys: boolean }, suffix: string) => {
     if (!matrix) return;
-    const meta = { school, title: title || autoTitle, subjectName: SUBJECT_NAME[subject], grade, className, yearLabel: `${year}–${year + 1}`, minutes };
+    const meta = { school, title: title || autoTitle, subjectName: SUBJECT_NAME[subject], grade, className, yearLabel: `${year}–${year + 1}`, minutes, outcomes: outcomeText };
     const html = examDocument(meta, matrix, papers, new Map(lessons.map((l) => [l.id, l.title])), parts);
+    if (suffix === 'pdf') return printDoc(html);
     downloadDoc(`${SUBJECT_NAME[subject]}-lop${grade}-${kind}-${suffix}`.replace(/\s+/g, '-'), html);
   };
 
@@ -227,9 +251,17 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
           </label>
           <label className="adm-field"><span>Số đề</span>
             <select value={nPapers} onChange={(e) => setNPapers(Number(e.target.value))}>
-              <option value={1}>1 đề</option><option value={2}>2 đề (A, B)</option>
+              <option value={1}>1 đề</option><option value={2}>2 đề (A, B)</option><option value={3}>3 đề (A, B, C)</option><option value={4}>4 đề (A, B, C, D)</option>
             </select>
           </label>
+          {nPapers > 1 && (
+            <label className="adm-field"><span>Cách tạo nhiều đề</span>
+              <select value={mode} onChange={(e) => setMode(e.target.value as MixMode)}>
+                <option value="khac">Các đề khác câu nhau</option>
+                <option value="tron">Trộn từ đề A (cùng câu, đảo thứ tự câu và phương án)</option>
+              </select>
+            </label>
+          )}
         </div>
         <p className="dash-muted">Phạm vi: {chosen.length} bài. Đề Tiếng Việt thường còn phần đọc thành tiếng và phần viết — thầy cô bổ sung trực tiếp trong file Word.</p>
         <div className="comments-actions">
@@ -270,6 +302,20 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
             </table>
           </div>
           {Math.abs(t.score - 10) > 0.001 && <p className="adm-alert is-warn">Tổng điểm đang là {t.score}. Chỉnh số câu hoặc điểm mỗi câu cho đủ 10 điểm.</p>}
+          <ul className="exam-muc-legend">
+            {MUCS.map((k) => <li key={k}><span className={`exam-muc m${k}`}>M{k}</span> <strong>{MUC_NAME[k]}:</strong> {MUC_DESC[k]}</li>)}
+          </ul>
+          {outcomeList.length > 0 && (
+            <details className="exam-outcomes">
+              <summary>Lọc theo yêu cầu cần đạt ({outcomeList.length - (matrix.exclude?.length ?? 0)}/{outcomeList.length} đang dùng)</summary>
+              <p className="dash-muted">Bỏ chọn yêu cầu cần đạt không muốn kiểm tra trong đề này; số câu “có” ở ma trận cập nhật theo.</p>
+              <ul>
+                {outcomeList.map((o) => (
+                  <li key={o.code}><label><input type="checkbox" checked={!(matrix.exclude ?? []).includes(o.code)} onChange={(e) => toggleOutcome(o.code, e.target.checked)} /> {o.text} <span className="exam-avail">{o.n} câu</span></label></li>
+                ))}
+              </ul>
+            </details>
+          )}
           <div className="comments-actions">
             <button type="button" className="btn btn-primary btn-sm" onClick={makePapers}><Shuffle aria-hidden="true" /> {papers.length ? 'Tạo lại đề' : 'Tạo đề'}</button>
           </div>
@@ -284,6 +330,7 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
               <button type="button" className="btn btn-primary btn-sm" onClick={() => download({ matrix: true, papers: true, keys: true }, 'day-du')}><FileDown aria-hidden="true" /> Tải Word (ma trận + đề + đáp án)</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ matrix: false, papers: true, keys: false }, 'de')}><FileDown aria-hidden="true" /> Chỉ đề</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ matrix: false, papers: false, keys: true }, 'dap-an')}><FileDown aria-hidden="true" /> Chỉ đáp án</button>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ matrix: true, papers: true, keys: true }, 'pdf')}><Printer aria-hidden="true" /> In / lưu PDF</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => void save()} disabled={busy}><Save aria-hidden="true" /> {examId ? 'Lưu thay đổi' : 'Lưu đề'}</button>
             </div>
           </div>
