@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ChevronRight, School } from 'lucide-react';
+import { Award, ChevronRight, School } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import SignOutButton from '@/components/classroom/SignOutButton';
@@ -95,6 +95,9 @@ export default async function TeacherHome() {
                     <span className="class-tile-code">Mã lớp <strong>{c.join_code}</strong></span>
                     <ChevronRight className="class-tile-go" aria-hidden="true" />
                   </Link>
+                  {c.status === 'active' && (
+                    <Link href={`/giao-vien/lop/${c.id}/thu-khen`} className="class-quick"><Award aria-hidden="true" /> Thư khen lớp {c.name}</Link>
+                  )}
                 </li>
               ))}
             </ul>
