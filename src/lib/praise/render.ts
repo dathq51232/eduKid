@@ -14,6 +14,8 @@ export type LetterData = {
   placeDate: string;
   role: string;
   teacher: string;
+  /** lời kết phía trên chữ ký (mẫu trang trọng), vd "Yêu thương và trân trọng" */
+  closing: string;
   /** ảnh chữ ký (tùy chọn) — chỉ nằm trên máy giáo viên */
   signature?: HTMLImageElement | null;
 };
@@ -102,8 +104,8 @@ function ringText(ctx: Ctx, text: string, x: number, y: number, fill: string, ri
 
 /** Phần chữ chính; trả về mép dưới. dry = chỉ đo, không vẽ */
 function drawBody(ctx: Ctx, t: PraiseTemplate, d: LetterData, s: number, dry: boolean): number {
-  const x0 = 70;
-  const x1 = LETTER_W - t.right - 70;
+  const x0 = t.side;
+  const x1 = LETTER_W - t.side;
   const cx = (x0 + x1) / 2;
   const maxW = x1 - x0;
   const hasSchool = t.school && d.school.trim().length > 0;
@@ -159,6 +161,119 @@ function drawBody(ctx: Ctx, t: PraiseTemplate, d: LetterData, s: number, dry: bo
   return y;
 }
 
+const FORMAL_BOTTOM = 772;
+
+/** Kiểu trang trọng: mọi dòng căn giữa trang, tên viết tay có gạch chân */
+function drawFormalBody(ctx: Ctx, t: PraiseTemplate, d: LetterData, s: number, dry: boolean): number {
+  const cx = LETTER_W / 2;
+  const maxW = LETTER_W - 2 * t.side;
+  let y = t.top;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const lines = (font: string, text: string, size: number, lh: number, color: string, transform = false) => {
+    ctx.font = font;
+    for (const l of wrapLines(ctx, transform ? upper(text) : text, maxW)) {
+      if (!dry) { ctx.fillStyle = color; ctx.fillText(l, cx, y + (size * lh) / 2); }
+      y += size * lh;
+    }
+  };
+
+  const ts = t.title.size * s;
+  ctx.font = `800 ${ts}px ${FF.baloo}`;
+  if (!dry) {
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.12)';
+    ctx.shadowOffsetY = 4 * s;
+    ctx.fillStyle = t.title.fill;
+    ctx.fillText('THƯ KHEN', cx, y + ts * 0.56);
+    ctx.restore();
+  }
+  y += ts * 1.02;
+
+  // đường kẻ hoa văn: hai nét thanh + hình thoi ở giữa
+  y += 10 * s;
+  if (!dry) {
+    ctx.save();
+    ctx.strokeStyle = t.accent;
+    ctx.fillStyle = t.accent;
+    ctx.lineWidth = 3 * s;
+    const half = 230 * s, gap = 22 * s;
+    ctx.beginPath(); ctx.moveTo(cx - half, y); ctx.lineTo(cx - gap, y); ctx.moveTo(cx + gap, y); ctx.lineTo(cx + half, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, y - 9 * s); ctx.lineTo(cx + 12 * s, y); ctx.lineTo(cx, y + 9 * s); ctx.lineTo(cx - 12 * s, y); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  y += 18 * s;
+
+  if (t.school && d.school.trim()) lines(`600 ${46 * s}px ${FF.script}`, d.school.trim(), 46 * s, 1.3, t.ink);
+  if (d.lead.trim()) { y += 4 * s; lines(`500 ${32 * s}px ${FF.oswald}`, d.lead, 32 * s, 1.35, t.ink, true); }
+
+  // Tên học sinh: chữ viết tay, tự thu nhỏ cho vừa một dòng, gạch chân
+  const name = d.name.trim();
+  let ns = 104 * s;
+  ctx.font = `600 ${ns}px ${FF.script}`;
+  while (ctx.measureText(name).width > maxW - 40 && ns > 44 * s) { ns -= 2 * s; ctx.font = `600 ${ns}px ${FF.script}`; }
+  const nw = ctx.measureText(name).width;
+  if (!dry) { ctx.fillStyle = t.name.fill; ctx.fillText(name, cx, y + ns * 0.62); }
+  y += ns * 1.18;
+  if (!dry) {
+    ctx.save();
+    ctx.strokeStyle = t.name.fill;
+    ctx.globalAlpha = 0.75;
+    ctx.lineWidth = 2.5 * s;
+    const half = Math.min(maxW / 2, nw / 2 + 50 * s);
+    ctx.beginPath(); ctx.moveTo(cx - half, y); ctx.lineTo(cx + half, y); ctx.stroke();
+    ctx.restore();
+  }
+  y += 16 * s;
+
+  if (d.extra.trim()) lines(`700 ${38 * s}px ${FF.baloo}`, d.extra, 38 * s, 1.22, t.ink);
+  if (d.reason.trim()) lines(`600 ${37 * s}px ${FF.baloo}`, d.reason, 37 * s, 1.28, t.ink);
+  if (d.wish.trim()) { y += 6 * s; lines(`600 ${39 * s}px ${FF.script}`, d.wish, 39 * s, 1.3, t.wish); }
+  return y;
+}
+
+/** Hàng dưới kiểu trang trọng: trái "Lớp …, nơi – ngày"; phải lời kết + người ký */
+function drawFormalFooter(ctx: Ctx, t: PraiseTemplate, d: LetterData) {
+  const [lx, rx] = t.cols ?? [320, 1094];
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = t.ink;
+  let ly = 812;
+  if (d.className.trim()) {
+    fitFont(ctx, `Lớp ${d.className}`, '800', FF.baloo, 38, 380);
+    ctx.fillText(`Lớp ${d.className}`, lx, ly);
+    ly += 48;
+  }
+  const pd = d.placeDate.trim();
+  if (pd) {
+    const cut = pd.indexOf(', ');
+    const parts = cut > 0 ? [pd.slice(0, cut + 1), pd.slice(cut + 2)] : [pd];
+    for (const part of parts) {
+      fitFont(ctx, part, '600', FF.baloo, 28, 400);
+      ctx.fillText(part, lx, ly);
+      ly += 36;
+    }
+  }
+  let ry = 812;
+  if (d.closing.trim()) {
+    fitFont(ctx, upper(d.closing), '800', FF.baloo, 30, 480);
+    ctx.fillText(upper(d.closing), rx, ry);
+    ry += 44;
+  }
+  const who = [d.role.trim(), d.teacher.trim()].filter(Boolean).join(': ');
+  if (d.signature) {
+    const im = d.signature;
+    const k = Math.min(260 / im.naturalWidth, 70 / im.naturalHeight);
+    const w = im.naturalWidth * k, h = im.naturalHeight * k;
+    ctx.drawImage(im, rx - w / 2, ry + 4, w, h);
+    ry += h + 26;
+    if (who) { fitFont(ctx, who, '700', FF.baloo, 28, 460); ctx.fillText(who, rx, ry); }
+  } else if (who) {
+    fitFont(ctx, who, '600', FF.script, 46, 460);
+    ctx.fillText(who, rx, ry + 12);
+  }
+}
+
 /** Thu nhỏ một dòng chữ cho vừa chiều rộng */
 function fitFont(ctx: Ctx, text: string, weight: string, family: string, size: number, maxW: number) {
   let fs = size;
@@ -185,6 +300,15 @@ export function drawLetter(ctx: Ctx, t: PraiseTemplate, assets: { art: HTMLImage
     ctx.drawImage(im, -st.w / 2, -h / 2, st.w, h);
     ctx.restore();
   });
+
+  if (t.layout === 'formal') {
+    let s = 1;
+    while (s > 0.6 && drawFormalBody(ctx, t, d, s, true) > FORMAL_BOTTOM) s -= 0.03;
+    drawFormalBody(ctx, t, d, s, false);
+    drawFormalFooter(ctx, t, d);
+    ctx.restore();
+    return;
+  }
 
   // Chữ dài thì thu cả khối cho vừa trước phần ký tên
   let s = 1;

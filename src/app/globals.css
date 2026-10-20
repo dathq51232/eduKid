@@ -2822,3 +2822,5 @@ body {
 .class-quick { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 4px 10px; border-radius: 999px; color: var(--link); font-size: 14px; font-weight: 700; }
 .class-quick:hover { background: var(--blue-soft); }
 .class-quick svg { width: 16px; height: 16px; color: var(--purple); }
+.praise-style { display: inline-block; padding: 0 6px; border-radius: 6px; background: #fff3d0; color: #8a5a00; font-size: 12px; }
+.praise-style.is-formal { background: #fde8e6; color: #9a1b1b; }

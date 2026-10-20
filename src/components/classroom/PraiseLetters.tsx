@@ -16,7 +16,7 @@ type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;
 /** Cài đặt chung lưu trên máy giáo viên (không chứa tên học sinh) */
 type Settings = {
   tpl: PraiseTemplateId; lead: string; reason: number; customReason: string; ky: string;
-  wish: string; place: string; role: string; teacher: string; school: string;
+  wish: string; place: string; role: string; teacher: string; school: string; closing: string;
 };
 const STORE_KEY = 'edukid:thu-khen';
 const CUSTOM = -2; // lời khen tự nhập
@@ -32,7 +32,7 @@ const lastMonth = () => `tháng ${((new Date().getMonth() + 11) % 12) + 1}`;
 function readSettings(grade: number, teacherName: string, schoolName: string, fromStore: boolean): Settings {
   const base: Settings = {
     tpl: defaultTemplateFor(grade), lead: 'Cô dành lời khen ngợi và chúc mừng em', reason: 0, customReason: '', ky: lastMonth(),
-    wish: DEFAULT_WISH, place: '', role: 'GVCN', teacher: teacherName, school: schoolName,
+    wish: DEFAULT_WISH, place: '', role: 'GVCN', teacher: teacherName, school: schoolName, closing: 'Yêu thương và trân trọng',
   };
   try {
     const raw = fromStore ? localStorage.getItem(STORE_KEY) : null;
@@ -100,7 +100,7 @@ export default function PraiseLetters({ className, grade, students, awards, teac
     return {
       school: s.school, lead: s.lead, name: st.name, className, extra: r.extra,
       reason: fillReason(reason, s.ky), wish: s.wish, placeDate: placeDate(s.place, date),
-      role: s.role, teacher: s.teacher, signature: useSignImage ? signature : null,
+      role: s.role, teacher: s.teacher, closing: s.closing, signature: useSignImage ? signature : null,
     };
   }, [rows, commonReason, s, className, date, signature, useSignImage]);
 
@@ -136,7 +136,7 @@ export default function PraiseLetters({ className, grade, students, awards, teac
         ctx.setTransform(0.2, 0, 0, 0.2, 0, 0);
         drawLetter(ctx, t, assets, {
           school: 'Trường tiểu học', lead: 'Cô dành lời khen ngợi và chúc mừng em', name: sample, className, extra: '',
-          reason: fillReason(PRAISE_REASONS[0], 'tháng 9'), wish: DEFAULT_WISH, placeDate: 'Ngày 30 tháng 9', role: 'GVCN', teacher: teacherName,
+          reason: fillReason(PRAISE_REASONS[0], 'tháng 9'), wish: DEFAULT_WISH, placeDate: 'Ngày 30 tháng 9', role: 'GVCN', teacher: teacherName, closing: 'Yêu thương và trân trọng',
         });
       }
     })();
@@ -247,7 +247,7 @@ export default function PraiseLetters({ className, grade, students, awards, teac
                   <button key={t.id} type="button" role="radio" aria-checked={s.tpl === t.id} className={`praise-tpl${s.tpl === t.id ? ' is-on' : ''}${fit ? '' : ' is-other'}`} onClick={() => set('tpl', t.id)}>
                     <canvas ref={(el) => { thumbs.current[i] = el; }} width={Math.round(LETTER_W * 0.2)} height={Math.round(LETTER_H * 0.2)} aria-hidden="true" />
                     <strong>{t.label}</strong>
-                    <small>{t.tag}{fit ? ' · hợp lớp này' : ''}</small>
+                    <small><span className={`praise-style${t.layout === 'formal' ? ' is-formal' : ''}`}>{t.style}</span> {t.tag}{fit ? ' · hợp lớp này' : ''}</small>
                     {s.tpl === t.id && <span className="praise-tick" aria-hidden="true"><Check /></span>}
                   </button>
                 );
@@ -307,6 +307,11 @@ export default function PraiseLetters({ className, grade, students, awards, teac
                 </label>
                 {signature && <button type="button" className="mini-btn" onClick={() => { setSignature(null); setUseSignImage(false); }}><X aria-hidden="true" /> Bỏ ảnh</button>}
               </div>
+              {tpl.layout === 'formal' && (
+                <label className="adm-field"><span>Lời kết <small>(trên chữ ký, mẫu trang trọng)</small></span>
+                  <input value={s.closing} maxLength={50} onChange={(e) => set('closing', e.target.value)} />
+                </label>
+              )}
               {tpl.school && (
                 <label className="adm-field"><span>Tên trường <small>(mẫu {tpl.label} có dòng tên trường; để trống thì không in)</small></span>
                   <input value={s.school} maxLength={80} onChange={(e) => set('school', e.target.value)} />
