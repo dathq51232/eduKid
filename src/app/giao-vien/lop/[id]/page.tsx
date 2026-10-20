@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { ArrowLeft, ClipboardCheck, FileText, GraduationCap, Radar, Send, Table2 } from 'lucide-react';
+import { ArrowLeft, Award, ClipboardCheck, FileText, GraduationCap, Radar, Send, Table2 } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import ClassManager, { type BillingRow, type RosterRow, type SummaryRow } from '@/components/classroom/ClassManager';
@@ -84,6 +84,9 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
               </Link>
               <Link href={`/giao-vien/lop/${id}/phieu-bai-tap`} className="tool-card tone-yellow">
                 <FileText aria-hidden="true" /><strong>Phiếu bài tập</strong><span>Phiếu in theo bài đang học, đáp án trang riêng</span>
+              </Link>
+              <Link href={`/giao-vien/lop/${id}/thu-khen`} className="tool-card tone-purple">
+                <Award aria-hidden="true" /><strong>Thư khen</strong><span>Chọn mẫu, tạo thư cho các em được khen; tải PDF, ảnh PNG hoặc in</span>
               </Link>
             </nav>
           )}

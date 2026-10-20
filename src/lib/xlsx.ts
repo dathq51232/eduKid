@@ -156,7 +156,7 @@ function crc32(buf: Uint8Array): number {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-function zipStore(entries: [Uint8Array, Uint8Array][]): Uint8Array {
+export function zipStore(entries: [Uint8Array, Uint8Array][]): Uint8Array {
   const local: Uint8Array[] = [];
   const central: Uint8Array[] = [];
   let offset = 0;

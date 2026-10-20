@@ -2390,7 +2390,7 @@ body {
 .tool-card { display: grid; gap: 4px; align-content: start; padding: 16px 18px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); color: var(--ink); text-decoration: none; border: 2px solid transparent; transition: border-color .15s, transform .15s; }
 .tool-card:hover, .tool-card:focus-visible { border-color: var(--blue); transform: translateY(-1px); }
 .tool-card svg { width: 26px; height: 26px; color: var(--blue); }
-.tool-card.tone-red svg { color: var(--red); } .tool-card.tone-green svg { color: var(--green-solid); } .tool-card.tone-yellow svg { color: #c58a00; }
+.tool-card.tone-red svg { color: var(--red); } .tool-card.tone-green svg { color: var(--green-solid); } .tool-card.tone-yellow svg { color: #c58a00; } .tool-card.tone-purple svg { color: var(--purple); }
 .tool-card strong { font-size: 17px; }
 .tool-card span { color: var(--muted); font-size: 14px; line-height: 1.4; }
 
@@ -2649,4 +2649,69 @@ body {
   .lesson-decor-motif, .milo-trail-milo, .milo-trail-bubble, .fx-on .choice.is-right, .fx-on .question-card .is-right { animation: none !important; transition: none !important; }
   .milo-trail-milo.is-tilt { transform: none; }
   .confetti { display: none; }
+}
+
+/* ------------------------------------------------ Thư khen (giáo viên) */
+.praise { display: grid; gap: 18px; }
+.praise h1 { display: flex; align-items: center; gap: 10px; }
+.praise h1 svg { width: 30px; height: 30px; }
+.praise-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 480px); gap: 20px; align-items: start; }
+.praise-steps { display: grid; gap: 18px; min-width: 0; }
+.praise-card { padding: 18px 20px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.praise-card h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 20px; }
+.praise-card h2 small { color: var(--muted); font-size: 15px; font-weight: 600; }
+.praise-n { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 16px; flex: none; }
+.praise-tpls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.praise-tpl { position: relative; display: grid; gap: 4px; padding: 6px 6px 10px; border: 3px solid transparent; border-radius: 14px; background: var(--surface-2); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.praise-tpl canvas { width: 100%; height: auto; aspect-ratio: 1414 / 1000; border-radius: 8px; background: #fff; }
+.praise-tpl strong { padding: 0 4px; font-size: 15px; }
+.praise-tpl small { padding: 0 4px; color: var(--muted); font-size: 13px; font-weight: 700; }
+.praise-tpl.is-on { border-color: var(--blue); background: var(--blue-soft); }
+.praise-tpl.is-other:not(.is-on) canvas { opacity: .6; }
+.praise-tpl:focus-visible { outline: 3px solid var(--brand-yellow); outline-offset: 2px; }
+.praise-tick { position: absolute; top: -9px; right: -9px; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--blue); color: #fff; }
+.praise-tick svg { width: 18px; height: 18px; }
+.praise-form { display: grid; gap: 12px; }
+.praise-form small { font-weight: 500; }
+.praise-row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.praise-row2 .praise-ky, .praise-row2 .praise-role { max-width: 100%; }
+.praise-sign { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.praise-label { color: var(--muted); font-size: 14px; font-weight: 600; }
+.praise-seg { display: inline-flex; padding: 3px; border-radius: 12px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.praise-seg button { min-height: 38px; padding: 4px 14px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.praise-seg button.is-on { background: var(--blue); color: #fff; }
+.praise-upload { cursor: pointer; }
+.praise-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.praise-table td { white-space: normal; }
+.praise-table tr.is-on td { background: var(--blue-soft); }
+.praise-table input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--blue); }
+.praise-table select, .praise-extra input { min-height: 38px; padding: 4px 8px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--bg-ffffff); color: var(--ink); font: inherit; font-size: 14px; }
+.praise-table select { flex: 0 1 230px; min-width: 0; }
+.praise-extra { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.praise-extra input { flex: 1 1 200px; min-width: 0; }
+.praise-name { font-weight: 700; min-width: 140px; }
+.praise-name .praise-award { display: flex; margin-top: 4px; max-width: 220px; text-align: left; }
+.praise-preview { position: sticky; top: 16px; min-width: 0; }
+.praise-canvas { display: block; width: 100%; height: auto; aspect-ratio: 1414 / 1000; border-radius: 12px; box-shadow: var(--shadow-sm); background: #fff; }
+.praise-pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-weight: 700; }
+.praise-pager .btn { padding: 8px 12px; }
+.praise-dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.praise-dl .btn-primary { grid-column: 1 / -1; }
+.praise-note { margin: 0; font-size: 14px; }
+.praise-print { display: none; }
+@media (max-width: 980px) {
+  .praise-layout { grid-template-columns: 1fr; }
+  .praise-preview { position: static; order: -1; }
+}
+@media (max-width: 560px) {
+  .praise-row2 { grid-template-columns: 1fr; }
+  .praise-card { padding: 14px; }
+  .praise-dl { grid-template-columns: 1fr; }
+  .praise-tpls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media print {
+  .praise-print { display: block; }
+  .praise-print img { display: block; width: 297mm; height: 208mm; object-fit: contain; break-after: page; page-break-after: always; }
+  .praise-print img:last-child { break-after: auto; page-break-after: auto; }
+  main:has(.praise-print) { max-width: none !important; margin: 0 !important; padding: 0 !important; }
 }
