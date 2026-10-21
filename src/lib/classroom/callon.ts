@@ -10,6 +10,9 @@ export const CALL_MODES: { id: CallMode; label: string; icon: string; action: st
 ];
 
 export type Student = { id: string; name: string };
+
+/** Thời gian quay thầy cô chọn được (giây) */
+export const DURATIONS = [3, 6, 10, 15, 20];
 export type Tally = { ok: number; no: number; star: number };
 export type CallState = {
   day: string; // yyyy-mm-dd — sang ngày mới thì danh sách vắng và đã gọi tự xoá
@@ -19,6 +22,7 @@ export type CallState = {
   tally: Record<string, Tally>; // giữ qua các ngày
   mode: CallMode;
   noRepeat: boolean;
+  duration: number; // giây quay / bốc / đua / trứng lắc — thầy cô chọn
   sound: boolean;
   subject: string;
   lessonId: string; // '' = chỉ gọi phát biểu, không hiện câu hỏi
@@ -30,7 +34,7 @@ export const today = (now = new Date()) => {
 };
 
 export function emptyState(): CallState {
-  return { day: today(), round: 1, absent: [], called: [], tally: {}, mode: 'wheel', noRepeat: true, sound: true, subject: 'toan', lessonId: '' };
+  return { day: today(), round: 1, absent: [], called: [], tally: {}, mode: 'wheel', noRepeat: true, duration: 6, sound: true, subject: 'toan', lessonId: '' };
 }
 
 /** Đọc trạng thái đã lưu; sang ngày mới thì bắt đầu lại danh sách vắng / đã gọi nhưng giữ điểm và cài đặt. */
@@ -40,6 +44,7 @@ export function restoreState(raw: string | null, now = new Date()): CallState {
   try {
     const s = { ...base, ...(JSON.parse(raw) as Partial<CallState>) };
     if (!CALL_MODES.some((m) => m.id === s.mode)) s.mode = 'wheel';
+    if (!DURATIONS.includes(s.duration)) s.duration = 6;
     if (s.day !== today(now)) return { ...s, day: today(now), absent: [], called: [], round: s.round + 1 };
     return s;
   } catch {
@@ -91,15 +96,15 @@ export function lotsFor(students: Student[], s: Pick<CallState, 'absent' | 'roun
 const ANIMALS = ['🐢', '🐇', '🦆', '🐘', '🐎', '🐿️', '🐧', '🦒', '🐌', '🦔'];
 
 /** Cuộc đua: em được gọi + tối đa 5 bạn khác; thời gian về đích (giây) — em được gọi luôn về trước. */
-export function raceFor(winner: Student, pool: Student[], rand: () => number = Math.random, lanes = 6) {
+export function raceFor(winner: Student, pool: Student[], rand: () => number = Math.random, lanes = 6, seconds = 4) {
   const others = shuffle(pool.filter((x) => x.id !== winner.id), rand).slice(0, lanes - 1);
   const racers = shuffle([winner, ...others], rand);
   const animals = shuffle(ANIMALS, rand);
-  const base = 3.6 + rand() * 0.6;
+  const base = Math.max(1.5, seconds) * (0.9 + rand() * 0.1);
   return racers.map((st, i) => ({
     student: st,
     animal: animals[i % animals.length],
-    finish: st.id === winner.id ? base : base + 0.35 + rand() * 1.6,
+    finish: st.id === winner.id ? base : base * (1.06 + rand() * 0.35),
     wobble: 0.6 + rand() * 1.4,
   }));
 }
@@ -128,4 +133,35 @@ export const shortName = (name: string) => name.trim().split(/\s+/).slice(-2).jo
 export function addTally(s: CallState, studentId: string, mark: keyof Tally): CallState {
   const t = s.tally[studentId] ?? { ok: 0, no: 0, star: 0 };
   return { ...s, tally: { ...s.tally, [studentId]: { ...t, [mark]: t[mark] + 1 } } };
+}
+
+/** Vòng quay giảm tốc êm, chậm dần ở cuối để cả lớp hồi hộp nhìn kim lướt qua từng bạn (0 → 1). */
+export const spinEase = (x: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
+
+/** Số vòng quay theo thời gian: quay lâu thì nhiều vòng hơn */
+export const spinTurns = (seconds: number) => Math.max(3, Math.min(16, Math.round(seconds * 1.1)));
+
+/** Ô đang nằm dưới kim (ở đỉnh) khi vòng đã quay góc a */
+export function sliceAt(a: number, n: number): number {
+  const atTop = (((-a) % 360) + 360) % 360;
+  return Math.min(n - 1, Math.floor(atTop / (360 / n)));
+}
+
+/** Bốc thăm: các bước "đèn chạy" qua các lá, nhanh lúc đầu, chậm dần, dừng đúng lá được chọn. Trả về [chỉ số lá, thời điểm ms]. */
+export function lotHops(choices: number[], target: number, seconds: number, rand: () => number = Math.random): [number, number][] {
+  const total = Math.max(1, seconds) * 1000;
+  const out: [number, number][] = [];
+  let t = 0, prev = -1;
+  while (true) {
+    const x = t / total;
+    const gap = 70 + 650 * Math.pow(x, 2.2);
+    if (t + gap > total) break;
+    t += gap;
+    let i = choices[Math.floor(rand() * choices.length)];
+    if (choices.length > 1) while (i === prev) i = choices[Math.floor(rand() * choices.length)];
+    out.push([i, t]);
+    prev = i;
+  }
+  out.push([target, total]);
+  return out;
 }

@@ -4,10 +4,10 @@
 // Không gọi lại em đã lên, bỏ qua em vắng, hiện một câu dò bài theo bài đang học, chấm ✓ ✗ ★.
 // Tất cả lưu trên máy đang chiếu (localStorage) — chưa gửi lên máy chủ.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Eye, EyeOff, Maximize2, Minimize2, RotateCcw, Users, Volume2, VolumeX, X } from 'lucide-react';
+import { Eye, EyeOff, Maximize2, Timer, Minimize2, RotateCcw, Users, Volume2, VolumeX, X } from 'lucide-react';
 import MiloMascot, { type MiloVariant } from '@/components/mascot/MiloMascot';
 import {
-  CALL_MODES, addTally, candidatesOf, lotsFor, pickOne, presentOf, raceFor, racePos, restoreState, shortName, wheelAngle,
+  CALL_MODES, DURATIONS, addTally, candidatesOf, lotHops, lotsFor, pickOne, presentOf, raceFor, racePos, restoreState, shortName, sliceAt, spinEase, spinTurns, wheelAngle,
   type CallMode, type CallState, type Student, type Tally,
 } from '@/lib/classroom/callon';
 import { bookLessons, lessonPool, type ExamQuestion } from '@/lib/exams/matrix';
@@ -40,8 +40,17 @@ function useSound(on: boolean) {
       o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime + ms / 1000);
     } catch { /* trình duyệt chặn âm thanh: bỏ qua */ }
   }, [on]);
-  const fanfare = useCallback(() => { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 180, 'square', 0.05), i * 110)); }, [beep]);
-  return { beep, fanfare };
+  /** tiếng "tách" khi kim lướt qua một ô / đèn nhảy sang lá khác; càng về cuối càng trầm */
+  const tick = useCallback((x = 0) => beep(1300 - 500 * x, 28, 'square', 0.035), [beep]);
+  /** trống dồn trước khi trứng nở */
+  const drum = useCallback(() => beep(110 + Math.random() * 30, 70, 'triangle', 0.12), [beep]);
+  /** "ta-da": hợp âm rồi chuỗi nốt lấp lánh */
+  const fanfare = useCallback(() => {
+    [392, 523, 659].forEach((f) => beep(f, 420, 'square', 0.04));
+    [784, 988, 1175, 1568].forEach((f, i) => setTimeout(() => beep(f, 260, 'triangle', 0.06), 220 + i * 90));
+    setTimeout(() => [523, 659, 784, 1047].forEach((f) => beep(f, 700, 'triangle', 0.045)), 620);
+  }, [beep]);
+  return { beep, tick, drum, fanfare };
 }
 
 export default function CallOn({ classId, className, grade, students, absentToday = [] }: { classId: string; className: string; grade: number; students: Student[]; /** em vắng hôm nay theo Sổ lớp */ absentToday?: string[] }) {
@@ -57,7 +66,12 @@ export default function CallOn({ classId, className, grade, students, absentToda
   const [notice, setNotice] = useState('');
   const boardRef = useRef<HTMLDivElement>(null);
   const reduced = useRef(false);
-  const { beep, fanfare } = useSound(s.sound);
+  const { beep, tick, drum, fanfare } = useSound(s.sound);
+  const secs = reduced.current ? 0.6 : s.duration;
+  const [celebrate, setCelebrate] = useState(false);
+  const timers = useRef<number[]>([]);
+  const later = (fn: () => void, ms: number) => { timers.current.push(window.setTimeout(fn, ms)); };
+  useEffect(() => () => { timers.current.forEach(clearTimeout); }, []);
 
   // đọc / ghi trạng thái trên máy
   useEffect(() => {
@@ -108,6 +122,9 @@ export default function CallOn({ classId, className, grade, students, absentToda
     setPhase('done');
     setS((x) => ({ ...x, called: x.called.includes(st.id) ? x.called : [...x.called, st.id] }));
     fanfare();
+    // tên em được chọn hiện to giữa sân chơi kèm pháo giấy, rồi mới thu về thẻ kết quả
+    setCelebrate(true);
+    window.setTimeout(() => setCelebrate(false), reduced.current ? 600 : 2200);
   }, [nextQuestion, fanfare]);
 
   const mark = (m: keyof Tally) => {
@@ -115,42 +132,66 @@ export default function CallOn({ classId, className, grade, students, absentToda
     setS((x) => addTally(x, picked.id, m));
     closeResult();
   };
-  const closeResult = () => { setPhase('idle'); setPicked(null); setQuestion(null); setNotice(''); setTaps(0); setFlipped(null); };
+  const closeResult = () => { setPhase('idle'); setPicked(null); setQuestion(null); setNotice(''); setTaps(0); setFlipped(null); setHot(null); setCelebrate(false); };
 
   /* -------------------------------------------- 1. vòng quay */
   // ô trên vòng = các em còn có thể được gọi; giữ nguyên trong lúc quay và lúc hiện kết quả
   const [wheelSnap, setWheelSnap] = useState<Student[] | null>(null);
   const wheelList = phase !== 'idle' && wheelSnap ? wheelSnap : cands;
-  const [angle, setAngle] = useState(0);
+  const angleRef = useRef(0);
+  const wheelRef = useRef<SVGSVGElement>(null);
+  const [underPointer, setUnderPointer] = useState<string>('');
   const spinWheel = () => {
     const st = choose();
     if (!st) return;
     const list = candidatesOf(students, s).list;
     const i = list.findIndex((x) => x.id === st.id);
     setWheelSnap(list);
-    const dur = reduced.current ? 300 : 4200;
-    setAngle((a) => wheelAngle(i, list.length, a, reduced.current ? 1 : 6));
     setPhase('running');
-    if (!reduced.current) { let k = 0; const tick = () => { k++; beep(900 + (k % 2) * 200, 30); if (k < 40) setTimeout(tick, 30 + k * k * 0.12); }; tick(); }
-    setTimeout(() => reveal(st), dur + 150);
+    const from = angleRef.current;
+    const to = wheelAngle(i, list.length, from, reduced.current ? 1 : spinTurns(secs));
+    const ms = secs * 1000;
+    const t0 = performance.now();
+    let last = sliceAt(from, list.length);
+    const frame = (now: number) => {
+      const x = Math.min(1, (now - t0) / ms);
+      const a = from + (to - from) * spinEase(x);
+      angleRef.current = a;
+      if (wheelRef.current) wheelRef.current.style.transform = `rotate(${a}deg)`;
+      const k = sliceAt(a, list.length);
+      if (k !== last) { last = k; tick(x); setUnderPointer(list[k]?.name ?? ''); }
+      if (x < 1) requestAnimationFrame(frame);
+      else later(() => reveal(st), 350);
+    };
+    requestAnimationFrame(frame);
   };
 
   /* -------------------------------------------- 2. bốc thăm */
   const lots = useMemo(() => lotsFor(students, s, hashId(classId)), [students, s, classId]);
   const [flipped, setFlipped] = useState<number | null>(null);
-  const drawLot = (index?: number) => {
-    let i = index;
-    if (i === undefined) {
-      const st = choose();
-      if (!st) return;
-      i = lots.findIndex((x) => x.id === st.id);
-    } else if (s.noRepeat && s.called.includes(lots[i].id)) return;
-    const st = lots[i];
-    if (!st) return;
+  const [hot, setHot] = useState<number | null>(null); // lá đang sáng khi đèn chạy
+  const flipLot = (i: number, st: Student) => {
+    setHot(null);
     setFlipped(i);
+    beep(660, 90); later(() => beep(880, 90), 120);
+    later(() => reveal(st), reduced.current ? 200 : 900);
+  };
+  const drawLot = (index?: number) => {
+    if (index !== undefined) { // em tự chọn lá: lật ngay
+      const st = lots[index];
+      if (!st || (s.noRepeat && s.called.includes(st.id))) return;
+      setPhase('running');
+      flipLot(index, st);
+      return;
+    }
+    const st = choose();
+    if (!st) return;
+    const target = lots.findIndex((x) => x.id === st.id);
+    const ids = new Set(candidatesOf(students, s).list.map((x) => x.id));
+    const choices = lots.map((x, k) => (ids.has(x.id) ? k : -1)).filter((k) => k >= 0);
     setPhase('running');
-    beep(660, 90); setTimeout(() => beep(880, 90), 120);
-    setTimeout(() => reveal(st), reduced.current ? 200 : 900);
+    const hops = lotHops(choices, target, secs);
+    hops.forEach(([k, t], n) => later(() => { setHot(k); tick(t / (secs * 1000)); if (n === hops.length - 1) later(() => flipLot(k, st), 450); }, t));
   };
 
   /* -------------------------------------------- 3. đua thú */
@@ -159,7 +200,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
   const runRace = () => {
     const st = choose();
     if (!st) return;
-    const lanes = raceFor(st, present);
+    const lanes = raceFor(st, present, Math.random, 6, secs);
     setRace(lanes);
     setRaceT(0);
     setPhase('running');
@@ -170,9 +211,9 @@ export default function CallOn({ classId, className, grade, students, absentToda
     const frame = (now: number) => {
       const t = ((now - t0) / 1000) * speed;
       setRaceT(t);
-      if (t - lastBeat > 0.25) { lastBeat = t; beep(220 + Math.random() * 60, 50, 'sine', 0.05); }
+      if (t - lastBeat > 0.22) { lastBeat = t; beep(200 + (t / winnerAt) * 260 + Math.random() * 40, 50, 'sine', 0.05); }
       if (t < winnerAt) requestAnimationFrame(frame);
-      else { setRaceT(winnerAt); reveal(st); }
+      else { setRaceT(winnerAt); later(() => reveal(st), 300); }
     };
     requestAnimationFrame(frame);
   };
@@ -187,7 +228,10 @@ export default function CallOn({ classId, className, grade, students, absentToda
     if (!st) return;
     setTaps(3);
     setPhase('running');
-    setTimeout(() => reveal(st), reduced.current ? 150 : 650);
+    const ms = Math.min(secs, 8) * 1000;
+    let t = 0;
+    while (t < ms) { const x = t / ms; later(drum, t); t += 260 - 200 * x; }
+    later(() => reveal(st), ms);
   };
 
   /* -------------------------------------------- nút chính + phím cách */
@@ -261,6 +305,13 @@ export default function CallOn({ classId, className, grade, students, absentToda
           {lessons.map((l) => <option key={l.id} value={l.id}>{l.title}</option>)}
         </select>
         <div className="callon-toggles">
+          <label className="callon-chip callon-time" title="Thời gian quay / bốc / đua">
+            <Timer aria-hidden="true" />
+            <span className="sr-only">Thời gian quay</span>
+            <select value={s.duration} onChange={(e) => setS((x) => ({ ...x, duration: Number(e.target.value) }))} disabled={phase === 'running'}>
+              {DURATIONS.map((d) => <option key={d} value={d}>{d} giây</option>)}
+            </select>
+          </label>
           <button type="button" className={`callon-chip${s.noRepeat ? ' is-on' : ''}`} aria-pressed={s.noRepeat} onClick={() => setS((x) => ({ ...x, noRepeat: !x.noRepeat }))}>{s.noRepeat ? '✓ ' : ''}Không gọi lại</button>
           <button type="button" className={`callon-chip${s.sound ? ' is-on' : ''}`} aria-pressed={s.sound} aria-label={s.sound ? 'Tắt âm thanh' : 'Bật âm thanh'} onClick={() => setS((x) => ({ ...x, sound: !x.sound }))}>{s.sound ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}</button>
           <button type="button" className="callon-chip" onClick={() => setDrawer(true)}><Users aria-hidden="true" /> Danh sách</button>
@@ -276,7 +327,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
             <p className="callon-hint">Vòng quay có <b>{wheelList.length} em</b>{s.noRepeat ? ' chưa được gọi' : ''}</p>
             <div className="cw-box">
               <span className="cw-pointer" aria-hidden="true" />
-              <svg viewBox="0 0 540 540" className="cw-wheel" style={{ transform: `rotate(${angle}deg)`, transitionDuration: reduced.current ? '300ms' : '4200ms' }} aria-hidden="true">
+              <svg ref={wheelRef} viewBox="0 0 540 540" className={`cw-wheel${phase === 'done' ? ' is-done' : ''}`} style={{ transform: `rotate(${angleRef.current}deg)` }} aria-hidden="true">
                 {wheelList.map((st, i) => {
                   const n = wheelList.length, R = 266, c = 270;
                   if (n === 1) return <circle key={st.id} cx={c} cy={c} r={R} fill={COLORS[0]} />;
@@ -285,7 +336,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
                   const col = COLORS[i % COLORS.length];
                   const mid = ((i + 0.5) * 360) / n - 90;
                   return (
-                    <g key={st.id}>
+                    <g key={st.id} className={phase === 'done' && picked?.id === st.id ? 'is-win' : undefined}>
                       <path d={`M${c} ${c}L${c + R * Math.cos(a0)} ${c + R * Math.sin(a0)}A${R} ${R} 0 ${large} 1 ${c + R * Math.cos(a1)} ${c + R * Math.sin(a1)}Z`} fill={col} stroke="#fff" strokeWidth="3" />
                       <text transform={`translate(${c} ${c}) rotate(${mid}) translate(${R - 16} 0)`} textAnchor="end" dominantBaseline="middle" fontWeight="700" fontSize={n > 24 ? 13 : n > 14 ? 15 : 18} fill={col === '#ffc83d' ? '#1e2b4a' : '#fff'}>
                         {n > 10 ? shortName(st.name) : st.name}
@@ -297,6 +348,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
               </svg>
               <span className="cw-hub"><MiloMascot size={72} /></span>
             </div>
+            {phase === 'running' && underPointer && <p className="cw-now" aria-hidden="true">{underPointer}</p>}
           </div>
         )}
 
@@ -308,7 +360,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
                 const used = s.noRepeat && s.called.includes(st.id) && flipped !== i;
                 return (
                   <li key={st.id}>
-                    <button type="button" className={`cl-lot${used ? ' is-used' : ''}${flipped === i ? ' is-flip' : ''}`} style={{ ['--c' as string]: COLORS[i % 5 === 3 ? 4 : i % 5] }}
+                    <button type="button" className={`cl-lot${used ? ' is-used' : ''}${flipped === i ? ' is-flip' : ''}${hot === i ? ' is-hot' : ''}`} style={{ ['--c' as string]: COLORS[i % 5 === 3 ? 4 : i % 5] }}
                       disabled={used || phase === 'running'} aria-label={used ? `Lá ${i + 1}: đã bốc` : `Lá thăm số ${i + 1}`} onClick={() => { if (phase === 'done') closeResult(); drawLot(i); }}>
                       <span className="cl-front">{used ? 'đã bốc' : i + 1}</span>
                       <span className="cl-back">{flipped === i ? st.name : ''}</span>
@@ -342,17 +394,27 @@ export default function CallOn({ classId, className, grade, students, absentToda
         {s.mode === 'eggs' && (
           <div className="ce">
             <p className="callon-hint">Gõ trứng 3 lần (bấm vào trứng hoặc phím cách) · trứng nở ra tên một em</p>
-            <button type="button" className={`ce-egg taps-${taps}${phase === 'done' ? ' is-open' : ''}`} onClick={go} aria-label={phase === 'done' ? 'Gõ quả trứng mới' : `Gõ trứng (${taps}/3)`}>
+            <button type="button" className={`ce-egg taps-${taps}${phase === 'done' ? ' is-open' : ''}${phase === 'running' && taps === 3 ? ' is-hatching' : ''}`} onClick={go} aria-label={phase === 'done' ? 'Gõ quả trứng mới' : `Gõ trứng (${taps}/3)`}>
               <span className="ce-nest" aria-hidden="true" />
               {phase === 'done' && <span className="ce-milo"><MiloMascot variant={subject.milo} size={180} /></span>}
               <span className="ce-shell" aria-hidden="true"><i /><i /></span>
-              {taps > 0 && phase !== 'done' && <span className="ce-count" aria-hidden="true">{taps}/3</span>}
+              {taps > 0 && phase !== 'done' && <span className="ce-count" aria-hidden="true">{taps === 3 ? 'Sắp nở…' : `${taps}/3`}</span>}
             </button>
           </div>
         )}
 
         {/* ------------------------------------------------ kết quả */}
-        {phase === 'done' && picked && (
+        {phase === 'done' && picked && celebrate && (
+          <div className="callon-spot" aria-hidden="true">
+            <span className="callon-burst">{Array.from({ length: 36 }, (_, k) => <i key={k} style={{ ['--a' as string]: `${(k * 360) / 36}deg`, ['--d' as string]: `${140 + (k % 5) * 45}px`, ['--c' as string]: COLORS[k % COLORS.length] }} />)}</span>
+            <span className="callon-spot-card">
+              <MiloMascot variant={subject.milo} size={110} />
+              <small>Mời bạn</small>
+              <strong>{picked.name}</strong>
+            </span>
+          </div>
+        )}
+        {phase === 'done' && picked && !celebrate && (
           <div className="callon-result" role="dialog" aria-label={`Mời ${picked.name}`}>
             <button type="button" className="callon-close" aria-label="Đóng" onClick={closeResult}><X aria-hidden="true" /></button>
             <div className="callon-who">

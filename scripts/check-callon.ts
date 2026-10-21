@@ -1,5 +1,5 @@
 // Kiểm tra phần tính toán của "Gọi tên – Dò bài": npx tsx scripts/check-callon.ts
-import { candidatesOf, emptyState, lotsFor, raceFor, racePos, restoreState, rng, wheelAngle, type Student } from '../src/lib/classroom/callon';
+import { candidatesOf, emptyState, lotHops, lotsFor, raceFor, racePos, restoreState, rng, sliceAt, spinEase, wheelAngle, type Student } from '../src/lib/classroom/callon';
 
 let fail = 0;
 const ok = (c: boolean, m: string) => { if (!c) { fail++; console.log('✗', m); } };
@@ -29,11 +29,26 @@ for (let n = 2; n <= 40; n++) for (let i = 0; i < n; i++) {
   ok(slice === i, `vòng quay n=${n} i=${i} chỉ vào ô ${slice}`);
   ok(a - cur >= 5 * 360, 'quay ít nhất 5 vòng');
 }
+// 2b. Quay êm: góc tăng dần, chậm dần về cuối, dừng đúng ô (sliceAt dùng khi vẽ từng khung hình)
+for (const n of [5, 23, 32]) for (let i = 0; i < n; i++) {
+  const to = wheelAngle(i, n, 1234, 8);
+  ok(sliceAt(1234 + (to - 1234) * spinEase(1), n) === i, `quay êm dừng đúng ô n=${n} i=${i}`);
+}
+const v1 = spinEase(0.1) - spinEase(0.05), v2 = spinEase(0.95) - spinEase(0.9);
+ok(v1 > v2 * 10, 'đầu nhanh, cuối rất chậm');
+// 2c. Bốc thăm: đèn chạy dừng đúng lá, khoảng cách giữa hai bước dài dần, đúng tổng thời gian
+for (const sec of [3, 6, 10, 20]) {
+  const h = lotHops([0, 2, 4, 6, 8], 4, sec, rng(sec));
+  ok(h[h.length - 1][0] === 4 && h[h.length - 1][1] === sec * 1000, `bốc thăm ${sec}s dừng đúng lá, đúng giờ`);
+  const gaps = h.slice(1, -1).map((x, k) => x[1] - h[k][1]);
+  ok(gaps.every((g, k) => k === 0 || g >= gaps[k - 1] - 1), 'đèn chạy chậm dần');
+  ok(h.slice(0, -1).every(([k]) => [0, 2, 4, 6, 8].includes(k)), 'đèn chỉ chạy qua lá chưa bốc');
+}
 // 3. Đua thú: em được gọi về đích trước, đủ 6 làn, không trùng em
 for (let t = 1; t <= 300; t++) {
   const r = rng(t);
   const w = S[t % 28];
-  const lanes = raceFor(w, S, r);
+  const lanes = raceFor(w, S, r, 6, 2 + (t % 15));
   ok(lanes.length === 6 && new Set(lanes.map((l) => l.student.id)).size === 6, 'đủ 6 em khác nhau');
   const first = [...lanes].sort((a, b) => a.finish - b.finish)[0];
   ok(first.student.id === w.id, 'em được gọi về đích đầu tiên');
@@ -41,6 +56,7 @@ for (let t = 1; t <= 300; t++) {
   ok(lanes.every((l) => l === wl || racePos(wl.finish - 0.01, l.finish, l.wobble) < 1), 'không ai chạm đích trước em được gọi');
 }
 ok(raceFor(S[0], [S[0], S[1]]).length === 2, 'lớp 2 em: đua 2 làn');
+ok(Math.abs(raceFor(S[0], S, rng(9), 6, 10).find((l) => l.student.id === S[0].id)!.finish - 10) <= 1, 'đua theo thời gian đã chọn');
 // 4. Lá thăm: cùng vòng thì giữ số, vòng mới xáo lại
 const a1 = lotsFor(S, { absent: [], round: 1 }, 42).map((x) => x.id).join();
 ok(a1 === lotsFor(S, { absent: [], round: 1 }, 42).map((x) => x.id).join(), 'cùng vòng giữ số lá');
