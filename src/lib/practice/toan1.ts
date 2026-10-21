@@ -15,6 +15,7 @@ import {
   objectsFig, shapeFig, shapeRow, shapeTitle, type Ctx, type Meta, type PracticeQuestion, type Thing,
 } from './kit';
 import type { Rng } from './rng';
+import { G1 } from './count-shapes';
 
 export type Template = (r: Rng, c: Ctx, l: Level) => PracticeQuestion | null;
 
@@ -1152,8 +1153,8 @@ const P2: Pool = { 1: [countPick, countOn], 2: [countFill, pickGroupN], 3: [coun
 const P3: Pool = { 1: [compareRows], 2: [pickExtremeGroup, matchEqual], 3: [addToEqual, countTwo], 4: [removeToEqual, tfCount], 5: [whoMost] };
 const P4: Pool = { 1: [signPick], 2: [signPicture, extreme], 3: [orderNums], 4: [signTable, allLess], 5: [between, betweenCount] };
 const P5: Pool = { 1: [bondPart], 2: [bondPicture, bondWhole], 3: [splitWord, whichWhole], 4: [splitAll, bondTable], 5: [halves] };
-const P7: Pool = { 1: [shapeName, objectShape], 2: [oddOne, objectShape], 3: [countScene, classifyObjects], 4: [tfShapes, patternRow], 5: [pattern3x3] };
-const P8: Pool = { 1: [compose, shapeName], 2: [sticksSquares, compose, oddOne], 3: [sticksTriangles, sticksCount, countScene], 4: [sticksNeeded, tfScene], 5: [sharedVsApart, pattern3x3] };
+const P7: Pool = { 1: [shapeName, objectShape], 2: [oddOne, objectShape], 3: [countScene, classifyObjects], 4: [tfShapes, patternRow, G1.tri, G1.sq], 5: [pattern3x3, G1.mid, G1.rect] };
+const P8: Pool = { 1: [compose, shapeName], 2: [sticksSquares, compose, oddOne], 3: [sticksTriangles, sticksCount, countScene], 4: [sticksNeeded, tfScene, G1.rect, G1.tri], 5: [sharedVsApart, pattern3x3, G1.diag, G1.tri, G1.sq] };
 const P10: Pool = { 1: [addCalc], 2: [addPicture, addWhich], 3: [addTable, addWord], 4: [addMissing, addWord], 5: [addCompare, addMany] };
 const P11: Pool = { 1: [subCalc], 2: [subPicture, subWhich], 3: [subTable, subWord], 4: [subMissing, subWord], 5: [subCompare, subMany] };
 const P12: Pool = { 1: [addCalc, subCalc], 2: [addWhich, subWhich], 3: [family, mixTable], 4: [opPick, biggest], 5: [subMissing, addCompare, subCompare] };

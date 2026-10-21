@@ -144,9 +144,10 @@ export function ask(b: Built, l: Level, outcome: string, extra = ''): PracticeQu
   const n = countOf(b);
   if (n !== b.formula || n < 2) return null; // hình vẽ và công thức phải khớp
   const noun = NOUN[b.ask];
-  const what = b.ask === 'angle' ? 'góc đỉnh O (góc nhỏ hơn góc bẹt)' : b.ask === 'rectangle' ? 'hình chữ nhật (tính cả hình vuông)' : b.ask === 'segment' ? 'đoạn thẳng có hai đầu là hai điểm đã ghi tên' : noun;
+  const withSquares = b.ask === 'rectangle' && shapesOf(analyze(b.segs), 'square').length > 0;
+  const what = b.ask === 'angle' ? 'góc đỉnh O (góc nhỏ hơn góc bẹt)' : b.ask === 'rectangle' ? `hình chữ nhật${withSquares ? ' (tính cả hình vuông)' : ''}` : b.ask === 'segment' ? 'đoạn thẳng có hai đầu là hai điểm đã ghi tên' : noun;
   const prompt = `Hình bên có bao nhiêu ${what}?${extra}`;
-  const m: Meta = { o: outcome, f: 'TOAN.HINH', k: `dem_hinh_${b.ask}`, l, e: b.explain(n), s: `Cách đếm: đếm hình đơn trước, rồi hình ghép 2, ghép 3… để không bỏ sót, không đếm trùng. ${b.explain(n)}` };
+  const m: Meta = { o: outcome, f: 'TOAN.HINH', k: `dem_hinh_${b.ask}`, l, e: b.explain(n), s: `${outcome.startsWith('T1.') ? 'Cách đếm: đếm các hình nhỏ trước, rồi hình ghép, cuối cùng là hình to; đếm hình nào chỉ tay vào hình đó.' : 'Cách đếm: đếm hình đơn trước, rồi hình ghép 2, ghép 3… để không bỏ sót, không đếm trùng.'} ${b.explain(n)}` };
   const figure: Figure = { kind: 'lines', w: b.w, h: b.h, segs: b.segs, labels: b.labels, alt: b.alt };
   if (l >= 5) return Q.blanks(prompt, [`{} ${noun}`], [[n]], m, { figure });
   // nhiễu: chỉ đếm hình đơn, quên hình lớn nhất, đếm thừa
@@ -190,4 +191,30 @@ export const G5: Record<'tri' | 'trap' | 'diagMid' | 'sq', Tpl> = {
   trap: (r, _c, l) => ask(fan(r.int(1, l >= 5 ? 3 : 2), l >= 5 ? 2 : 1, 'trapezoid'), l, 'T5.TD.02'),
   diagMid: (_r, _c, l) => ask(squareDiagMid('triangle'), l, 'T5.TD.02'),
   sq: (r, _c, l) => ask(grid(r.int(3, 4), 4, 'square'), l, 'T5.TD.02'),
+};
+
+// ------------------------------------------------------------------ lớp 1 (số đến 10, chưa học phép cộng ở Bài 7–9)
+
+/** Lời giải lớp 1: kể từng nhóm (hình nhỏ, hình ghép, hình to) rồi đếm tiếp 1, 2, 3… — không dùng phép cộng */
+function grade1(b: Built, groupNames: (pieces: number, isWhole: boolean) => string): Built {
+  return {
+    ...b,
+    explain: (N) => {
+      const shapes = shapesOf(analyze(b.segs), b.ask as ShapeKind);
+      const g = groupByPieces(shapes);
+      const most = g[g.length - 1][0];
+      const parts = g.map(([k, c]) => `${c} ${groupNames(k, k === most && c === 1)}`);
+      return `Có ${parts.join(', ')}. Chỉ tay đếm lần lượt: ${Array.from({ length: N }, (_, i) => i + 1).join(', ')}. Có tất cả ${N} ${NOUN[b.ask]}.`;
+    },
+  };
+}
+const g1Names = (noun: string) => (k: number, whole: boolean) => (k === 1 ? `${noun} nhỏ` : whole ? `${noun} to (cả hình)` : `${noun} ghép từ ${k} hình nhỏ`);
+
+/** Lớp 1: tam giác chung đỉnh, hình vuông 2 × 2 ô, hình chữ nhật chia phần, tam giác nối trung điểm, hình vuông 2 đường chéo */
+export const G1: Record<'tri' | 'sq' | 'rect' | 'mid' | 'diag', Tpl> = {
+  tri: (r, _c, l) => ask(grade1(fan(l >= 5 ? 2 : 1), g1Names('hình tam giác')), l, 'T1.HH.02'),
+  sq: (_r, _c, l) => ask(grade1(grid(2, 2, 'square'), g1Names('hình vuông')), l, 'T1.HH.02'),
+  rect: (r, _c, l) => ask(grade1(strip(l >= 5 ? 2 : 1, 'rectangle'), g1Names('hình chữ nhật')), l, 'T1.HH.02'),
+  mid: (_r, _c, l) => ask(grade1(midTriangle(), g1Names('hình tam giác')), l, 'T1.HH.02'),
+  diag: (_r, _c, l) => ask(grade1(squareDiag(), g1Names('hình tam giác')), l, 'T1.HH.02'),
 };

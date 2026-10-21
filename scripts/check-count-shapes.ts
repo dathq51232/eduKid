@@ -63,6 +63,21 @@ for (const [g, , list, id, topics] of LESSONS) {
     ok(found >= 10, `lớp ${g} bài ${l.no}: có câu đếm hình ở mức 4–5 (${found}/240)`);
   }
 }
+// lớp 1: Bài 7, 8, 9 (số đến 10, chưa học cộng), Bài 19 và Bài 40 (ôn tập hình học)
+for (const no of [7, 8, 9, 19, 40]) {
+  const pid = `lt-toan1-kntt-b${String(no).padStart(2, '0')}`;
+  let found = 0;
+  for (const lv of [4, 5] as const) for (let s = 1; s <= 120; s++) {
+    const q = generateOne(pid, s, lv);
+    if (!q || !q.skill?.startsWith('dem_hinh_') || q.figure?.kind !== 'lines') continue;
+    found++; total++;
+    const n = shapesOf(analyze(q.figure.segs), q.skill.replace('dem_hinh_', '') as Parameters<typeof shapesOf>[1]).length;
+    const key = q.type === 'single_choice' ? (q.key as { correct: string }).correct : (q.key as { answers: string[][] }).answers[0][0];
+    ok(String(n) === key && n <= 10, `lớp 1 bài ${no}: đáp án ${key}, đếm lại ${n} (≤ 10)`);
+    if (no <= 9) ok(!/[+×]/.test(`${q.explanation} ${q.solution}`), `lớp 1 bài ${no}: lời giải không dùng phép tính (chưa học)`);
+  }
+  ok(found >= 10, `lớp 1 bài ${no}: có câu đếm hình ở mức 4–5 (${found}/240)`);
+}
 ok(questionById('lt-' + t5Id(26) + '~7~x5') !== null, 'chấm lại theo mã câu');
 console.log(`  (${total} câu đếm hình đã kiểm)`);
 console.log(`check:count-shapes ${pass}/${pass + fail}`);
