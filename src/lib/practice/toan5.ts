@@ -11,6 +11,7 @@ import type { Level } from '../content/types';
 import type { T5Lesson, T5Topic } from '../content/toan5-plan';
 import { KIDS, Q, type Meta, type PracticeQuestion } from './kit';
 import type { Rng } from './rng';
+import { G5 } from './count-shapes';
 import { f, readVi } from './toan4';
 
 export type T5Ctx = { lesson: number; decimal: boolean; topics: T5Topic[] };
@@ -1407,7 +1408,7 @@ const T: Record<T5Topic, LvMap> = {
   fracOps: { 1: [fracAddSame], 2: [fracMulPick, fracAddSame], 3: [fracDivPick, fracMulPick], 4: [fracExpr], 5: [fracRestWord] },
   fracAddDiff: { 1: [fracAddDiffPick], 2: [fracAddDiffPick], 3: [fracAddDiffPick, fracFindX], 4: [fracFindX, fracRoadWord], 5: [fracTankWord, fracRoadWord] },
   mixed: { 1: [mixedRead], 2: [mixedToFrac], 3: [fracToMixed, mixedToFrac], 4: [mixedCmp], 5: [mixedWord] },
-  geoRev: { 1: [rectArea], 2: [lenConvert, rectArea], 3: [lenConvert, rectArea], 4: [rectFromPerim], 5: [gardenPath] },
+  geoRev: { 1: [rectArea], 2: [lenConvert, rectArea], 3: [lenConvert, rectArea], 4: [rectFromPerim, G5.sq], 5: [gardenPath, G5.sq] },
   decConcept: { 1: [decWrite, decParts], 2: [decDigitPlace, decWrite], 3: [fracToDec, decDigitPlace], 4: [decToFrac, fracToDec], 5: [decCompose] },
   decCompare: { 1: [decCmp], 2: [decMax, decCmp], 3: [decOrder], 4: [decEqualMc, decOrder], 5: [decBetween] },
   decMeasure: { 1: [decMeasureLen], 2: [decMeasureSmall, decMeasureLen], 3: [decMeasureRev, decMeasureSmall], 4: [decMeasureCmp], 5: [decMeasureCmp, decMeasureRev] },
@@ -1419,8 +1420,8 @@ const T: Record<T5Topic, LvMap> = {
   decMul: { 1: [decMulNat], 2: [decMulDec, decMulNat], 3: [decMulWord, decMulDec], 4: [decMulSmart], 5: [decRectArea] },
   decDiv: { 1: [decDivNat], 2: [natDivDec, decDivNat], 3: [decDivDec, natDivDec], 4: [decDivWord], 5: [decAverage, decDivWord] },
   decPow10: { 1: [pow10Mul], 2: [pow10Div, pow10Mul], 3: [pow01], 4: [pow01, pow10Equal], 5: [pow10Equal] },
-  triangle: { 1: [triArea], 2: [triRight, triArea], 3: [triHeight, triRight], 4: [triInRect, triHeight], 5: [triKind] },
-  trapezoid: { 1: [trapArea], 2: [trapArea], 3: [trapHeight], 4: [trapWord, trapHeight], 5: [trapSides] },
+  triangle: { 1: [triArea], 2: [triRight, triArea], 3: [triHeight, triRight], 4: [triInRect, triHeight, G5.tri], 5: [triKind, G5.tri, G5.diagMid] },
+  trapezoid: { 1: [trapArea], 2: [trapArea], 3: [trapHeight], 4: [trapWord, trapHeight, G5.trap], 5: [trapSides, G5.trap, G5.tri] },
   circle: { 1: [circC], 2: [circS, circC], 3: [circFromC, circS], 4: [wheelWord, circFromC, halfCircle], 5: [circShade, circRing, halfCircle] },
   ratio: { 1: [ratioPick], 2: [ratioPct, ratioPick], 3: [ratioWhole, ratioPct], 4: [ratioOfPart, ratioWhole], 5: [ratioOfPart] },
   mapScale: { 1: [mapReal], 2: [mapReal, mapDraw], 3: [mapDraw, mapReal], 4: [mapArea, mapDraw], 5: [mapArea] },

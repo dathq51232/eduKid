@@ -105,6 +105,20 @@ export default function Figure({ figure, compact = false }: { figure: FigureData
         </div>
       );
 
+    case 'lines':
+      return (
+        <div className={cls} role="img" aria-label={figure.alt}>
+          <svg viewBox={figure.labels?.length ? `-26 -30 ${figure.w + 52} ${figure.h + 60}` : `-14 -14 ${figure.w + 28} ${figure.h + 28}`} className="fig-svg is-lines" aria-hidden="true">
+            {figure.segs.map(([x1, y1, x2, y2], i) => <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={INK} strokeWidth={2.4} strokeLinecap="round" />)}
+            {figure.labels?.map((p, i) => (
+              <g key={`l${i}`}>
+                <circle cx={p.x} cy={p.y} r={3.2} fill={INK} />
+                <text x={p.x + (p.dx ?? 0)} y={p.y + (p.dy ?? -8)} fontSize={15} fontWeight={700} textAnchor="middle" fill="#c62828">{p.t}</text>
+              </g>
+            ))}
+          </svg>
+        </div>
+      );
     case 'sticks':
       return (
         <div className={cls} role="img" aria-label={figure.alt}>

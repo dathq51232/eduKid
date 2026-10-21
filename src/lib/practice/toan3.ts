@@ -13,6 +13,7 @@ import type { T3Lesson, T3Topic } from '../content/toan3-plan';
 import type { Figure } from '../figures';
 import { KIDS, Q, type Meta, type PracticeQuestion } from './kit';
 import type { Rng } from './rng';
+import { G3 } from './count-shapes';
 
 export type T3Ctx = { lesson: number; max: number; tables: number[]; newTable?: number; bigMul: boolean; remainder: boolean; topics: T3Topic[] };
 export type T3Template = (r: Rng, c: T3Ctx, l: Level) => PracticeQuestion | null;
@@ -1174,11 +1175,11 @@ const T: Record<T3Topic, LvMap> = {
   table: { 1: [tableMul, tableDiv], 2: [tablePick, tableSeq], 3: [tableWord, family], 4: [tableCompare, findMulDiv], 5: [mulAddMix, legs, unitRate] },
   findMulDiv: { 1: [findMulDiv], 2: [findMulDiv, tableDiv], 3: [tableWord, family], 4: [findMulChain, findMulDiv], 5: [findMulChain, unitRate] },
   fraction: { 1: [fracOf, fracShape], 2: [fracOf, fracShape], 3: [fracWord], 4: [fracReverse, fracCompare], 5: [fracCompare, fracReverse] },
-  geoReview: { 1: [unitsReview, polyline], 2: [polyline, unitsReview], 3: [polyline, addWord], 4: [twoStepMore, polyline], 5: [equalize, polyline] },
+  geoReview: { 1: [unitsReview, polyline], 2: [polyline, unitsReview], 3: [polyline, addWord], 4: [twoStepMore, polyline, G3.tri], 5: [equalize, polyline, G3.mid] },
   midpoint: { 1: [midpoint], 2: [midpoint, midpointFacts], 3: [midpointFacts, midpoint], 4: [midpoint, circleRow], 5: [circleRow, midpoint] },
   circle: { 1: [circleRD], 2: [circleRD, circleFacts], 3: [circleFacts, circleRD], 4: [circleRow], 5: [circleRow, circleRD] },
-  angle: { 1: [angleClock, angleFacts], 2: [angleClock, shapeCount], 3: [rectFacts, angleClock, shapeCount, angleFacts], 4: [countRightAngles], 5: [countRightAngles, angleClock] },
-  shapes: { 1: [shapeCount], 2: [shapeCount, rectFacts], 3: [rectFacts, shapeCount], 4: [countRightAngles], 5: [countRightAngles] },
+  angle: { 1: [angleClock, angleFacts], 2: [angleClock, shapeCount], 3: [rectFacts, angleClock, shapeCount, angleFacts], 4: [countRightAngles, G3.sq, G3.mid], 5: [countRightAngles, angleClock, G3.diag, G3.triH] },
+  shapes: { 1: [shapeCount], 2: [shapeCount, rectFacts], 3: [rectFacts, shapeCount], 4: [countRightAngles, G3.sq, G3.tri, G3.mid], 5: [countRightAngles, G3.sq, G3.rect, G3.diag, G3.triH] },
   solids: { 1: [solidCount, solidObjects], 2: [solidCount, solidFacts, solidObjects], 3: [solidFacts, solidCount, solidObjects], 4: [cubePaint, cubeStack], 5: [cubePaint, cubeStack, countRightAngles] },
   mul2d: MUL, mul3d: MUL, mul4d: MUL, mul5d: MUL,
   div2d: DIV, div3d: DIV, div4d: DIV, div5d: DIV,
@@ -1192,9 +1193,9 @@ const T: Record<T3Topic, LvMap> = {
   temp: { 1: [temp, unitPick], 2: [temp, tempCompare], 3: [tempCompare, temp], 4: [tempCompare, weighPuzzle], 5: [weighPuzzle, tempCompare] },
   expr: { 1: [exprCalc], 2: [exprCalc, exprPickQ], 3: [exprPickQ, exprParen], 4: [exprCompare, exprParen], 5: [exprCompare, findMulChain] },
   ratio: { 1: [ratioCalc], 2: [ratioCalc, timesCalc], 3: [ratioWord], 4: [ratioFraction], 5: [ratioFraction, timesChain] },
-  perimeter: { 1: [perimRect], 2: [perimRect, polyline], 3: [perimRect, areaPerimTable], 4: [perimReverse], 5: [perimReverse, areaReverse] },
+  perimeter: { 1: [perimRect], 2: [perimRect, polyline], 3: [perimRect, areaPerimTable], 4: [perimReverse, G3.rect], 5: [perimReverse, areaReverse, G3.sq] },
   areaIntro: { 1: [areaCount], 2: [areaCount, areaUnitFacts], 3: [areaUnitFacts, areaCount], 4: [areaRect], 5: [areaRect, areaReverse] },
-  area: { 1: [areaRect, areaCount], 2: [areaRect], 3: [areaPerimTable, areaRect], 4: [areaReverse], 5: [areaReverse, perimReverse] },
+  area: { 1: [areaRect, areaCount], 2: [areaRect], 3: [areaPerimTable, areaRect], 4: [areaReverse, G3.sq], 5: [areaReverse, perimReverse, G3.sq, G3.rect] },
   clock: { 1: [readClock3], 2: [readClock3, clockKem], 3: [duration3, clockKem], 4: [durationCross], 5: [durationCross, weekdayCalc] },
   month: { 1: [monthDays3, yearFacts], 2: [yearFacts, months31], 3: [months31, weekdayCalc], 4: [weekdayCalc], 5: [weekdayCalc, durationCross] },
   money: { 1: [moneySum, moneyPick], 2: [moneyPick, moneySum], 3: [moneyChange, moneyBuy], 4: [moneyBuy, moneyChange], 5: [equalize, unitRate] },

@@ -1155,6 +1155,7 @@ a.adm-row-title:hover { color: var(--link); text-decoration: underline; }
 .fig-compare-row + .fig-compare-row { padding-top: 8px; border-top: 2px dashed var(--rule); }
 .fig-svg { display: block; width: min(360px, 78vw); height: auto; }
 .fig-svg.is-sticks { width: min(300px, 70vw); }
+.fig-svg.is-lines { width: min(340px, 80vw); background: #fff; border-radius: 10px; }
 .fig-svg.is-bond { width: 220px; }
 .fig-svg.is-clock { width: 150px; }
 .figure.is-compact .fig-svg.is-clock { width: 96px; }

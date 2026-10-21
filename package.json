@@ -24,7 +24,8 @@
     "check:sets": "tsx scripts/check-sets.ts",
     "check:exams": "tsx scripts/check-exams.ts",
     "check:schedule": "tsx scripts/check-schedule.ts",
-    "check:spelling": "tsx scripts/check-spelling.ts"
+    "check:spelling": "tsx scripts/check-spelling.ts",
+    "check:count-shapes": "tsx scripts/check-count-shapes.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",

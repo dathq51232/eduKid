@@ -13,6 +13,7 @@ import type { T2Lesson, T2Topic } from '../content/toan2-plan';
 import type { Figure } from '../figures';
 import { KIDS, Q, STUFF, type Meta, type PracticeQuestion } from './kit';
 import type { Rng } from './rng';
+import { G2 } from './count-shapes';
 
 export type T2Ctx = {
   lesson: number;
@@ -918,9 +919,9 @@ const T: Record<T2Topic, Lv> = {
   sub21: { 1: [calcFill, pickResult], 2: [columnFill], 3: [wordAddSub, tfTable], 4: [missingAddend], 5: [equalize] },
   sub22: { 1: [calcFill, pickResult], 2: [columnFill, compareExpr], 3: [wordAddSub, diffHowMuch], 4: [missingAddend, chainCalc], 5: [sumDiff, equalize] },
   word100: { 1: [pickOperation], 2: [wordMoreLess], 3: [wordAddSub, diffHowMuch], 4: [twoStep, tallest], 5: [ageProblem, sumDiff] },
-  geo: { 1: [geoFacts], 2: [geoFacts, geoTable], 3: [geoTable, geoFacts], 4: [countSegments], 5: [countSegments, polylineLen] },
-  polyline: { 1: [polylineSegs], 2: [polylineLen], 3: [polylineLen], 4: [countSegments], 5: [polylineLen, countSegments] },
-  quad: { 1: [geoFacts], 2: [quadFacts], 3: [quadFacts, geoTable], 4: [countSegments], 5: [countSegments] },
+  geo: { 1: [geoFacts], 2: [geoFacts, geoTable], 3: [geoTable, geoFacts], 4: [countSegments, G2.tri, G2.quad], 5: [countSegments, polylineLen, G2.tri, G2.seg, G2.diag] },
+  polyline: { 1: [polylineSegs], 2: [polylineLen], 3: [polylineLen], 4: [countSegments, G2.seg], 5: [polylineLen, countSegments, G2.seg, G2.tri] },
+  quad: { 1: [geoFacts], 2: [quadFacts], 3: [quadFacts, geoTable], 4: [countSegments, G2.quad, G2.tri], 5: [countSegments, G2.quad, G2.diag, G2.tri] },
   time: { 1: [readClock, timeFacts], 2: [timeFacts, readClock], 3: [timeDuration], 4: [timeDuration], 5: [ageProblem] },
   date: { 1: [monthDays], 2: [weekNext], 3: [weekNext], 4: [weekNext], 5: [twoStep] },
   mulMeaning: { 1: [mulSum, mulGroups], 2: [mulGroups, mulSum], 3: [mulWord], 4: [findXMul, mulCompare], 5: [legsPuzzle, mulAddMix] },

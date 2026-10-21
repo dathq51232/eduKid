@@ -48,5 +48,7 @@ export type Figure =
   | { kind: 'ruler'; items: { label: string; length: number; color: string }[]; max: number; ruler: boolean; alt: string }
   // Tờ lịch một ngày
   | { kind: 'calendar'; month: number; day: number; weekday: string; alt: string }
+  // Hình vẽ bằng các đoạn thẳng (bài đếm hình nâng cao lớp 2–5); labels = tên điểm đặt cạnh điểm
+  | { kind: 'lines'; w: number; h: number; segs: [number, number, number, number][]; labels?: { x: number; y: number; t: string; dx?: number; dy?: number }[]; alt: string }
   // Đặt tính theo cột (cộng, trừ); ô "?" là ô cần tìm
   | { kind: 'column'; a: string; b: string; op: '+' | '−'; result: string; alt: string };

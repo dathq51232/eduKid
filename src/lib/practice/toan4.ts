@@ -11,6 +11,7 @@ import type { Level } from '../content/types';
 import type { T4Lesson, T4Topic } from '../content/toan4-plan';
 import { KIDS, Q, type Meta, type PracticeQuestion } from './kit';
 import type { Rng } from './rng';
+import { G4 } from './count-shapes';
 
 export type T4Ctx = { lesson: number; max: number; mulMax: number; pow10: boolean; topics: T4Topic[] };
 export type T4Template = (r: Rng, c: T4Ctx, l: Level) => PracticeQuestion | null;
@@ -775,17 +776,17 @@ const T: Record<T4Topic, LvMap> = {
   evenOdd: { 1: [evenOdd], 2: [evenOdd, neighbor4], 3: [evenOdd, evenCount], 4: [evenCount], 5: [evenCount, makeBig] },
   letterExpr: { 1: [letterExpr], 2: [letterExpr, letterPick], 3: [letterPick, letterExpr], 4: [letterPick, threeStep], 5: [threeStepGoods, letterExpr] },
   threeStep: { 1: [addWord4, mulDivWord], 2: [mulDivWord, addWord4], 3: [threeStep], 4: [threeStepGoods, threeStep], 5: [threeStepGoods, sumDiffWord] },
-  angleMeasure: { 1: [angleFacts, angleKind, angleDiff], 2: [angleKind, angleFacts, angleDiff], 3: [angleClock4, angleKind, angleDiff], 4: [angleSum, angleClock4, angleDiff], 5: [angleSum, angleClock4] },
-  angleKind: { 1: [angleKind, angleDiff], 2: [angleKind, angleFacts, angleDiff], 3: [angleClock4, angleKind, angleDiff], 4: [angleSum, angleClock4, angleDiff], 5: [angleSum, angleClock4] },
+  angleMeasure: { 1: [angleFacts, angleKind, angleDiff], 2: [angleKind, angleFacts, angleDiff], 3: [angleClock4, angleKind, angleDiff], 4: [angleSum, angleClock4, angleDiff, G4.angle], 5: [angleSum, angleClock4, G4.angle] },
+  angleKind: { 1: [angleKind, angleDiff], 2: [angleKind, angleFacts, angleDiff], 3: [angleClock4, angleKind, angleDiff], 4: [angleSum, angleClock4, angleDiff, G4.angle], 5: [angleSum, angleClock4, G4.angle] },
   mass: { 1: [massConvert, areaUnitPick], 2: [massConvert, massCompare], 3: [massCompare, massWord], 4: [massWord, unitRate4], 5: [unitRateInv, massWord] },
   areaUnit: { 1: [areaConvert, areaUnitPick], 2: [areaConvert, areaUnitPick], 3: [areaConvert, roomTiles], 4: [roomTiles], 5: [roomTiles, areaConvert] },
   timeUnit: { 1: [timeConvert], 2: [timeConvert, centuryOf], 3: [centuryOf, secondsRace], 4: [centuryOf, timeConvert], 5: [secondsRace, centuryOf] },
   addBig: ADD, subBig: ADD,
   addProps: { 1: [addPropPick, addCalc4], 2: [smartAdd, addPropPick], 3: [smartAdd, addWord4], 4: [smartAdd, findX4], 5: [smartAdd, sumDiff4] },
   sumDiff: { 1: [sumDiff4], 2: [sumDiff4, addCalc4], 3: [sumDiffWord, sumDiff4], 4: [sumDiffWord, sumDiffAge], 5: [sumDiffAge, sumDiffWord] },
-  perpendicular: { 1: [linePick, lineFacts], 2: [lineFacts, linePick], 3: [rectLines, lineFacts], 4: [rectLines, angleSum], 5: [rectLines, angleSum, angleClock4] },
-  parallel: { 1: [linePick, lineFacts], 2: [lineFacts, linePick], 3: [rectLines, lineFacts], 4: [rectLines, shapePick4, angleSum], 5: [rectLines, paraPerim] },
-  parallelogram: { 1: [shapePick4, paraFacts], 2: [paraFacts, shapePick4], 3: [paraPerim, paraFacts], 4: [paraPerim, rectLines], 5: [paraPerim, angleSum] },
+  perpendicular: { 1: [linePick, lineFacts], 2: [lineFacts, linePick], 3: [rectLines, lineFacts], 4: [rectLines, angleSum, G4.rect], 5: [rectLines, angleSum, angleClock4, G4.rect, G4.diagMid] },
+  parallel: { 1: [linePick, lineFacts], 2: [lineFacts, linePick], 3: [rectLines, lineFacts], 4: [rectLines, shapePick4, angleSum, G4.triH, G4.para], 5: [rectLines, paraPerim, G4.triH, G4.para] },
+  parallelogram: { 1: [shapePick4, paraFacts], 2: [paraFacts, shapePick4], 3: [paraPerim, paraFacts], 4: [paraPerim, rectLines, G4.para], 5: [paraPerim, angleSum, G4.para, G4.diagMid] },
   mul1: MUL, div1: { 1: [divCalc4], 2: [divCalc4, divRem4], 3: [mulDivWord, divRem4], 4: [unitRateInv, divRem4], 5: [averageMissing, unitRateInv] },
   mulProps: { 1: [mulPropPick, mulCalc4], 2: [mulProps, mulPropPick], 3: [mulProps, mulDivWord], 4: [mulProps, distributive], 5: [mulProps, unitRate4] },
   mulPow10: { 1: [pow10], 2: [pow10, mulCalc4], 3: [pow10, mulProps], 4: [pow10, mulProps], 5: [pow10, unitRate4] },
