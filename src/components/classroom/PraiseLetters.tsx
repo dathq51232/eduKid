@@ -145,7 +145,7 @@ export default function PraiseLetters({ className, grade, students, awards, teac
 
   // ------------------------------------------------ tạo hàng loạt
   const renderAll = async (scale: number, type: 'image/png' | 'image/jpeg', label: string) => {
-    if (!selected.length) { setMsg({ kind: 'error', text: 'Chọn ít nhất một em ở danh sách bên dưới.' }); return null; }
+    if (!selected.length) { askToPick(); return null; }
     setMsg(null);
     await loadPraiseFonts();
     const assets = await loadTemplateAssets(tpl);
@@ -157,6 +157,12 @@ export default function PraiseLetters({ className, grade, students, awards, teac
       await new Promise((r) => setTimeout(r, 0)); // nhường cho giao diện cập nhật tiến độ
     }
     return out;
+  };
+  /** chưa chọn em nào: nhắc rồi đưa thầy cô tới mục 3 để chọn */
+  const askToPick = () => {
+    setMsg({ kind: 'error', text: 'Chưa chọn em nào. Đánh dấu các em được khen ở mục 3 “Học sinh được khen” (hoặc bấm “Chọn cả lớp”), rồi bấm tải lại.' });
+    const h = document.getElementById('pr-step3');
+    h?.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   };
   const fileBase = asciiFilename(`thu-khen-lop-${className}`);
   const run = async (fn: () => Promise<void>) => {
@@ -378,10 +384,16 @@ export default function PraiseLetters({ className, grade, students, awards, teac
               <span>{selected.length ? `Thư ${Math.min(page, selected.length - 1) + 1} / ${selected.length}` : 'Chưa chọn em nào — đang xem mẫu'}</span>
               <button type="button" className="btn btn-outline btn-sm" disabled={selected.length < 2} onClick={() => setPage((p) => (p + 1) % selected.length)} aria-label="Thư sau"><ChevronRight aria-hidden="true" /></button>
             </div>
+            {!selected.length && students.length > 0 && (
+              <p className="adm-alert is-info praise-pick-hint">
+                Đang xem thư mẫu. Chọn các em được khen ở mục 3 để xem thư từng em và tải về.
+                <button type="button" className="mini-btn" onClick={() => { selectAll(true); setMsg(null); }}>Chọn cả lớp ({students.length} em)</button>
+              </p>
+            )}
             <div className="praise-dl">
-              <button type="button" className="btn btn-primary btn-sm" disabled={!!busy || !selected.length} onClick={() => void downloadPdf()}><FileDown aria-hidden="true" /> Tải PDF{selected.length ? ` (${selected.length} trang)` : ''}</button>
-              <button type="button" className="btn btn-outline btn-sm" disabled={!!busy || !selected.length} onClick={() => void downloadPng()}><ImageDown aria-hidden="true" /> Tải ảnh PNG</button>
-              <button type="button" className="btn btn-outline btn-sm" disabled={!!busy || !selected.length} onClick={() => void doPrint()}><Printer aria-hidden="true" /> In</button>
+              <button type="button" className="btn btn-primary btn-sm" disabled={!!busy} onClick={() => void downloadPdf()}><FileDown aria-hidden="true" /> Tải PDF{selected.length ? ` (${selected.length} trang)` : ''}</button>
+              <button type="button" className="btn btn-outline btn-sm" disabled={!!busy} onClick={() => void downloadPng()}><ImageDown aria-hidden="true" /> Tải ảnh PNG</button>
+              <button type="button" className="btn btn-outline btn-sm" disabled={!!busy} onClick={() => void doPrint()}><Printer aria-hidden="true" /> In</button>
             </div>
             {busy && <p className="adm-alert is-info" role="status">{busy}</p>}
             {msg && <p className={`adm-alert is-${msg.kind}`} role={msg.kind === 'error' ? 'alert' : 'status'}>{msg.text}</p>}
