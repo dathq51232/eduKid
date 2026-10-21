@@ -3186,3 +3186,14 @@ body {
 .join-code-box small { font-size: 14px; }
 .check-line { min-height: 44px; align-items: center; }
 .check-line input { width: 22px; height: 22px; margin-top: 0; }
+
+/* Quản trị: sửa tên giáo viên, tên trường */
+.teacher-info-open { margin-top: 8px; }
+.teacher-info-edit { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; align-items: end; }
+.teacher-info-edit label { display: grid; gap: 4px; font-size: 14px; font-weight: 700; }
+.teacher-info-edit input { min-height: 44px; padding: 8px 12px; border: 2px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 500; }
+.teacher-info-edit input:focus-visible { outline: 3px solid var(--brand-blue); outline-offset: 1px; }
+.teacher-info-actions { display: flex; gap: 8px; align-items: center; }
+.teacher-info-edit small { grid-column: 1 / -1; color: var(--muted); }
+@media (max-width: 640px) { .teacher-info-edit { grid-template-columns: 1fr; } }
+.teacher-tools-wrap h2 { margin-bottom: 12px; }

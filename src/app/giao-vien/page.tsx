@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Award, ChevronRight, School } from 'lucide-react';
 import TodayBoard from '@/components/classroom/TodayBoard';
+import TeacherTools from '@/components/classroom/TeacherTools';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import SignOutButton from '@/components/classroom/SignOutButton';
@@ -110,6 +111,8 @@ export default async function TeacherHome() {
         )}
 
         {active && <TodayBoard className={active.name} items={today} />}
+
+        {active && <TeacherTools classId={active.id} className={active.name} />}
 
         <section className="dash-section">
           <h2>Các lớp đang quản lý</h2>

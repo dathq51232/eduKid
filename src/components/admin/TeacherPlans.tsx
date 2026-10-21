@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Search } from 'lucide-react';
+import { Pencil, Search } from 'lucide-react';
 import CsvButton from '@/components/classroom/CsvButton';
 import { createClient } from '@/lib/supabase/client';
 import { FREE_STUDENT_LIMIT } from '@/lib/contact';
@@ -21,6 +21,8 @@ export default function TeacherPlans() {
   const [edit, setEdit] = useState<Record<string, { limit: number; note: string }>>({});
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // sửa tên giáo viên và tên trường (migration 0025)
+  const [info, setInfo] = useState<Record<string, { name: string; school: string }>>({});
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc('admin_list_teacher_plans', { p_search: q.trim() || null });
@@ -42,6 +44,24 @@ export default function TeacherPlans() {
     void load();
   };
 
+  const saveInfo = async (r: Row) => {
+    const e = info[r.teacher_id];
+    if (!e) return;
+    const name = e.name.trim(), school = e.school.trim();
+    if (!name) return setMsg({ kind: 'error', text: 'Tên giáo viên không được để trống.' });
+    if (school.length < 2) return setMsg({ kind: 'error', text: 'Tên trường cần ít nhất 2 ký tự.' });
+    setBusy(true);
+    const { data, error } = await supabase.rpc('admin_update_teacher', { p_teacher: r.teacher_id, p_display_name: name, p_school_name: school });
+    setBusy(false);
+    if (error) {
+      return setMsg({ kind: 'error', text: /function|schema cache/i.test(error.message) ? 'Chưa bật sửa thông tin giáo viên: hãy chạy supabase/migrations/0025_admin_edit_teacher.sql trên Supabase.' : 'Chưa lưu được (tên 1–100 ký tự, trường 2–180 ký tự).' });
+    }
+    const shared = Number(data ?? 1);
+    setMsg({ kind: 'ok', text: `Đã lưu: ${name} · ${school}.${shared > 1 ? ` Trường này có ${shared} giáo viên, tên trường mới áp dụng cho cả ${shared} người.` : ''}` });
+    setInfo((x) => { const n = { ...x }; delete n[r.teacher_id]; return n; });
+    void load();
+  };
+
   if (!me.isAdmin) return <p className="adm-alert is-warn">Chỉ quản trị hệ thống quản lý giáo viên.</p>;
   const full = rows.filter((r) => r.students_used >= r.student_limit).length;
   const csvRows = rows.map((r) => [r.display_name, r.email ?? '', r.school_name ?? '', r.classes, r.students_used, r.student_limit, r.note ?? '', fmtDay(r.joined_at)]);
@@ -52,7 +72,7 @@ export default function TeacherPlans() {
         <h1>Giáo viên</h1>
         <CsvButton filename="giao-vien.csv" header={['Họ tên', 'Email', 'Trường', 'Số lớp', 'Học sinh đang có', 'Giới hạn', 'Ghi chú', 'Ngày đăng ký']} rows={csvRows} />
       </div>
-      <p className="adm-muted">Giáo viên đăng ký miễn phí và dùng ngay: 1 lớp, tối đa {FREE_STUDENT_LIMIT} học sinh. Khi thầy cô liên hệ xin thêm, đặt giới hạn mới ở đây (tối đa 40 em / lớp). {rows.length ? `${rows.length} giáo viên, ${full} người đã dùng hết chỗ.` : ''}</p>
+      <p className="adm-muted">Giáo viên đăng ký miễn phí và dùng ngay: 1 lớp, tối đa {FREE_STUDENT_LIMIT} học sinh. Khi thầy cô liên hệ xin thêm, đặt giới hạn mới ở đây (tối đa 40 em / lớp). Bấm <strong>Sửa tên, trường</strong> để đổi tên giáo viên hoặc tên trường hiện trên trang của thầy cô. {rows.length ? `${rows.length} giáo viên, ${full} người đã dùng hết chỗ.` : ''}</p>
       {msg && <p className={`adm-alert ${msg.kind === 'ok' ? 'is-ok' : 'is-error'}`} role="status">{msg.text}</p>}
       <label className="billing-search"><Search aria-hidden="true" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm theo tên, email hoặc trường" aria-label="Tìm giáo viên" /></label>
       {rows.length === 0 ? <p className="adm-muted">Không có giáo viên nào.</p> : (
@@ -62,10 +82,30 @@ export default function TeacherPlans() {
             <tbody>
               {rows.map((r) => {
                 const e = edit[r.teacher_id];
+                const f = info[r.teacher_id];
                 return (
                   <tr key={r.teacher_id}>
-                    <td><strong>{r.display_name}</strong><br /><small>{r.email}</small><br /><small>Đăng ký {fmtDay(r.joined_at)}</small></td>
-                    <td>{r.school_name ?? '—'}<br /><small>{r.classes} lớp</small></td>
+                    {f ? (
+                      <td colSpan={2}>
+                        <div className="teacher-info-edit">
+                          <label>Tên giáo viên<input value={f.name} maxLength={100} onChange={(ev) => setInfo((x) => ({ ...x, [r.teacher_id]: { ...x[r.teacher_id], name: ev.target.value } }))} /></label>
+                          <label>Trường<input value={f.school} maxLength={180} onChange={(ev) => setInfo((x) => ({ ...x, [r.teacher_id]: { ...x[r.teacher_id], school: ev.target.value } }))} /></label>
+                          <div className="teacher-info-actions">
+                            <button type="button" className="button button-blue" disabled={busy} onClick={() => void saveInfo(r)}>Lưu</button>
+                            <button type="button" className="mini-btn" onClick={() => setInfo((x) => { const n = { ...x }; delete n[r.teacher_id]; return n; })}>Huỷ</button>
+                          </div>
+                          <small>{r.email} · {r.classes} lớp</small>
+                        </div>
+                      </td>
+                    ) : (
+                      <>
+                        <td>
+                          <strong>{r.display_name}</strong><br /><small>{r.email}</small><br /><small>Đăng ký {fmtDay(r.joined_at)}</small><br />
+                          <button type="button" className="mini-btn teacher-info-open" onClick={() => setInfo((x) => ({ ...x, [r.teacher_id]: { name: r.display_name, school: r.school_name ?? '' } }))}><Pencil aria-hidden="true" /> Sửa tên, trường</button>
+                        </td>
+                        <td>{r.school_name ?? '—'}<br /><small>{r.classes} lớp</small></td>
+                      </>
+                    )}
                     <td><span className={`status-chip ${r.students_used >= r.student_limit ? 'tone-coral' : 'tone-green'}`}>{r.students_used}/{r.student_limit}</span>{r.note && <><br /><small>{r.note}</small></>}</td>
                     <td>
                       <div className="plan-edit">

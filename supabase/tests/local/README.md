@@ -25,3 +25,4 @@ Kết quả mong đợi của 10_e2e: q1 true, q2 true, q3 false, q4 true, q5 tr
 - `0022_lesson_plans_subjects.sql` rồi `104_lesson_plan_subjects.sql`: giáo án nhận mọi môn trong lịch báo giảng (Đạo đức, TNXH, HĐTN…), vẫn chặn mã môn rác.
 - `0023_plan_library.sql` rồi `105_plan_library.sql`: kho giáo án dùng chung trong trường (nạp lại cùng file thì thay, không nhân đôi), trường khác / học sinh / khách không đọc được.
 - `106_plan_library_images.sql` (tự tạo giả lập schema storage rồi chạy 0024): hình kho giáo án chỉ trường mình đọc/ghi, nạp giáo án theo từng phần, giáo án lớn (bản gốc HTML) lưu được.
+- `0025_admin_edit_teacher.sql` rồi `107_admin_edit_teacher.sql`: chỉ quản trị hệ thống sửa được tên giáo viên và tên trường; giáo viên khác, khách bị chặn; mỗi lần sửa ghi nhật ký.
