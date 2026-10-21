@@ -15,9 +15,9 @@ export const dynamic = 'force-dynamic';
 
 // Sổ lớp hằng ngày: điểm danh, ghi chú từng em, tin nhắn phụ huynh, tổng hợp tháng.
 // Quyền kiểm tra ở đây (giáo viên) và trong database (teacher_class_roster chỉ trả lớp được phân công).
-export default async function ClassDiaryPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
+export default async function ClassDiaryPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; em?: string }> }) {
   const { id } = await params;
-  const { tab } = await searchParams;
+  const { tab, em } = await searchParams;
   const viewer = await getViewer();
   if (viewer.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Sổ lớp hằng ngày" /></main></>);
   if (viewer.state === 'signed_out') redirect(`/dang-nhap?next=/giao-vien/lop/${id}/so-lop`);
@@ -39,7 +39,7 @@ export default async function ClassDiaryPage({ params, searchParams }: { params:
       <LearnHeader />
       <main className="dash wrap diary-page">
         <Link href="/giao-vien" className="dash-back no-print"><ArrowLeft aria-hidden="true" /> Lớp của tôi</Link>
-        <ClassDiary classId={c.id} className={c.name} students={students} initialTab={tab === 'thang' ? 'month' : tab === 'tin-nhan' ? 'msg' : 'day'} />
+        <ClassDiary classId={c.id} className={c.name} students={students} initialTab={tab === 'thang' ? 'month' : tab === 'tin-nhan' ? 'msg' : 'day'} initialSelected={em} />
       </main>
     </>
   );

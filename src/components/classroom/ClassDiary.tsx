@@ -27,7 +27,7 @@ async function copyText(text: string) {
   }
 }
 
-export default function ClassDiary({ classId, className, students, initialTab = 'day' }: { classId: string; className: string; students: Student[]; initialTab?: Tab }) {
+export default function ClassDiary({ classId, className, students, initialTab = 'day', initialSelected }: { classId: string; className: string; students: Student[]; initialTab?: Tab; /** mở sẵn ghi chú của em này (từ ô tìm nhanh) */ initialSelected?: string }) {
   const supabase = useMemo(() => createClient(), []);
   const [tab, setTab] = useState<Tab>(initialTab);
   const [day, setDay] = useState(todayIso());
@@ -36,7 +36,7 @@ export default function ClassDiary({ classId, className, students, initialTab = 
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [state, setState] = useState<'loading' | 'idle' | 'dirty' | 'saving'>('loading');
   const [error, setError] = useState('');
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(initialSelected && students.some((x) => x.id === initialSelected) ? initialSelected : null);
   const [pronoun, setPronoun] = useState<Pronoun>('co');
   const [edited, setEdited] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<string | null>(null);
