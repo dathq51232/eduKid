@@ -1,26 +1,49 @@
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Calculator, Languages, ShieldCheck, Star } from 'lucide-react';
+import { ArrowRight, BookOpen, Calculator, ClipboardList, FileText, Gamepad2, Languages, ListChecks, ShieldCheck, Star, Trophy } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import MiloMascot from '@/components/mascot/MiloMascot';
+import GameArt from '@/components/games/GameArt';
+import { GAMES } from '@/lib/games/catalog';
+import { SUBJECT_MASCOT } from '@/lib/mascots';
+import { CONTENT } from '@/lib/content';
+import type { SubjectCode } from '@/lib/types';
 
 // Trang chủ EduChain Kids. Ý tưởng giao diện: "vở ô li" của học sinh tiểu học —
 // nền giấy kẻ ô, mỗi môn là một cuốn vở có nhãn vở, câu hỏi mẫu viết trên trang vở có lề đỏ.
-const subjects = [
+// Làm mới 10/2026 (Taste Skill, cách "restyle"): giữ bố cục cũ; thêm số liệu thật, Milo theo môn, dải trò chơi,
+// danh sách công cụ cho thầy cô; một thang cỡ chữ, một kiểu đổ bóng, tiêu đề ngắn trên điện thoại.
+const subjects: { code: SubjectCode; title: string; detail: string; tone: string; Icon: typeof Calculator }[] = [
   { code: 'toan', title: 'Toán', detail: 'Số học, hình học, giải toán', tone: 'blue', Icon: Calculator },
   { code: 'tieng-viet', title: 'Tiếng Việt', detail: 'Đọc hiểu, từ vựng, viết câu', tone: 'coral', Icon: BookOpen },
   { code: 'tieng-anh', title: 'Tiếng Anh', detail: 'Từ mới, mẫu câu, giao tiếp', tone: 'green', Icon: Languages },
 ];
 
 const steps = [
-  { title: 'Chọn một môn em thích', text: 'Chọn lớp, rồi chọn Toán, Tiếng Việt hoặc Tiếng Anh. Môn nào cũng bắt đầu từ bài dễ.' },
-  { title: 'Học một bài thật ngắn', text: 'Mỗi bài chỉ vài phút, có câu hỏi nhỏ để em thử ngay.' },
-  { title: 'Nhận ngôi sao của riêng em', text: 'Sao ghi lại những gì em đã làm được, không so với bạn nào.' },
+  { title: 'Chọn một môn', text: 'Chọn lớp, rồi chọn Toán, Tiếng Việt hoặc Tiếng Anh. Môn nào cũng bắt đầu từ bài dễ.' },
+  { title: 'Học bài ngắn', text: 'Mỗi bài mười câu, vài phút là xong. Có nút nghe đọc đề.' },
+  { title: 'Nhận ngôi sao', text: 'Sao và sticker ghi lại những gì em làm được, không so với bạn nào.' },
+];
+
+const teacherTools = [
+  { Icon: ClipboardList, text: 'Giáo án tự soạn từ lịch báo giảng' },
+  { Icon: FileText, text: 'Phiếu bài tập, phiếu chính tả có đáp án' },
+  { Icon: Trophy, text: 'Thư khen, nhận xét cuối kì' },
+  { Icon: ListChecks, text: 'Theo dõi tiến độ và lỗ hổng từng em' },
 ];
 
 const grades = [1, 2, 3, 4, 5];
 const answers = ['6', '7', '8', '9'];
 
+/** Số bài thật theo môn: "24 bài mỗi lớp" hoặc "30 – 35 bài mỗi lớp" */
+function lessonsPerGrade(subject: SubjectCode): string {
+  const counts = grades.map((g) => CONTENT.filter((l) => l.subject === subject && l.grade === g).length).filter(Boolean);
+  if (!counts.length) return '';
+  const lo = Math.min(...counts), hi = Math.max(...counts);
+  return lo === hi ? `${lo} bài mỗi lớp` : `${lo} – ${hi} bài mỗi lớp`;
+}
+
 export default function HomePage() {
+  const totalLessons = CONTENT.length;
   return (
     <>
       <LearnHeader />
@@ -44,7 +67,14 @@ export default function HomePage() {
               <p className="home-lead">Mỗi ngày một bài nhỏ. Mỗi bài nhỏ mở ra một thế giới lớn.</p>
               <div className="home-actions">
                 <Link href="/chon-bai" className="btn btn-yellow">Bắt đầu học <ArrowRight aria-hidden="true" /></Link>
+                <Link href="/tro-choi" className="btn home-btn-ghost"><Gamepad2 aria-hidden="true" /> Chơi game trí tuệ</Link>
               </div>
+              <ul className="home-facts" aria-label="EduChain Kids có gì">
+                <li><strong>{totalLessons}</strong> bài học</li>
+                <li><strong>Lớp 1 – 5</strong></li>
+                <li><strong>3</strong> môn</li>
+                <li><strong>{GAMES.length}</strong> trò chơi</li>
+              </ul>
             </div>
             <span className="hero-bubble" aria-hidden="true">Cố lên<br />bạn nhé!</span>
           </div>
@@ -71,7 +101,9 @@ export default function HomePage() {
                   <span className="notebook-label">
                     <span className="notebook-line">Vở <strong>{title}</strong></span>
                     <span className="notebook-line notebook-detail">{detail}</span>
+                    <span className="notebook-line notebook-count">{lessonsPerGrade(code)}</span>
                   </span>
+                  <MiloMascot variant={SUBJECT_MASCOT[code]} size={96} className="notebook-milo" />
                   <span className="notebook-open">Mở vở <ArrowRight aria-hidden="true" /></span>
                 </Link>
               </li>
@@ -83,7 +115,7 @@ export default function HomePage() {
         <section id="how-it-works" className="home-section wrap">
           <div className="home-how">
             <div>
-              <h2>Ba bước nhỏ cho mỗi ngày</h2>
+              <h2>Ba bước nhỏ mỗi ngày</h2>
               <ol className="home-steps">
                 {steps.map((s, i) => (
                   <li key={s.title}>
@@ -99,7 +131,7 @@ export default function HomePage() {
 
             <div className="home-sample worksheet" aria-label="Câu hỏi mẫu">
               <p className="worksheet-head">Toán lớp 1, câu mẫu</p>
-              <h3>Bé có 4 quả táo, mẹ cho thêm 3 quả. Bé có tất cả mấy quả?</h3>
+              <p className="worksheet-q">Bé có 4 quả táo, mẹ cho thêm 3 quả. Bé có tất cả mấy quả?</p>
               <ul className="home-answers">
                 {answers.map((a) => (
                   <li key={a} className={a === '7' ? 'is-right' : undefined}>{a}</li>
@@ -113,15 +145,39 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ---------------------------------------------- Trò chơi trí tuệ */}
+        <section id="games" className="home-section wrap">
+          <div className="home-section-head">
+            <div>
+              <h2>Nghỉ giữa giờ</h2>
+              <p>{GAMES.length} trò chơi trí tuệ, mỗi trò 5 – 10 phút, có 5 cấp độ từ dễ đến khó.</p>
+            </div>
+            <Link href="/tro-choi" className="btn btn-outline">Xem tất cả <ArrowRight aria-hidden="true" /></Link>
+          </div>
+          <ul className="home-games">
+            {GAMES.map((g) => (
+              <li key={g.id}>
+                <Link href={`/tro-choi/${g.slug}`} className="home-game">
+                  <span className="home-game-art" aria-hidden="true"><GameArt id={g.id} /></span>
+                  <strong>{g.title}</strong>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+
         {/* ---------------------------------------------- Thầy cô */}
         <section id="safety" className="home-section wrap">
           <div className="home-safety">
             <ShieldCheck className="home-safety-icon" aria-hidden="true" />
             <div>
               <h2>Dành cho thầy cô</h2>
-              <p>Thầy cô tạo tài khoản và PIN cho cả lớp, theo dõi tiến độ từng em trong mục Quản lý lớp. Bảng bạn điểm cao nhất tuần/tháng chỉ hiện trong lớp, cho các bạn cùng lớp và thầy cô.</p>
+              <p>Thầy cô tạo tài khoản và PIN cho cả lớp. Bảng điểm cao chỉ hiện trong lớp, cho các bạn cùng lớp và thầy cô.</p>
+              <ul className="home-tools">
+                {teacherTools.map(({ Icon, text }) => <li key={text}><Icon aria-hidden="true" /> {text}</li>)}
+              </ul>
             </div>
-            <Link href="/giao-vien" className="btn btn-outline">Góc thầy cô</Link>
+            <Link href="/giao-vien" className="btn btn-outline">Góc thầy cô <ArrowRight aria-hidden="true" /></Link>
           </div>
         </section>
 
@@ -131,6 +187,7 @@ export default function HomePage() {
             <nav className="footer-links" aria-label="Trên trang này">
               <a href="#subjects">Môn học</a>
               <a href="#how-it-works">Cách học</a>
+              <a href="#games">Trò chơi</a>
               <a href="#safety">Thầy cô</a>
             </nav>
           </div>

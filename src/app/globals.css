@@ -1636,7 +1636,7 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--brand-blue); ou
 .logo-mark { flex: none; }
 .brand-word { font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; }
 .bw-edu { color: var(--brand-blue); }
-.bw-chain { color: #eba000; }
+.bw-chain { color: #9a6200; } /* đủ đậm: 5,1:1 trên nền trắng (vàng cũ #eba000 chỉ 2,2:1) */
 .bw-kids { color: var(--green); }
 :root[data-theme="dark"] .bw-chain { color: var(--brand-yellow); }
 .brand { color: var(--ink); }
@@ -2078,7 +2078,7 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--brand-blue); ou
   --oli-major: rgb(36 87 197 / .12);
   --margin-red: #e5484d;
   --worksheet: #ffffff;
-  --nb-blue: #2457c5; --nb-coral: #d93f45; --nb-green: #15803d;
+  --nb-blue: #2457c5; --nb-coral: #c93a3f; /* đỏ đủ đậm: chữ trắng 5,0:1 */ --nb-green: #15803d;
   --label-paper: #fffdf7; --label-ink: #1e2b4a; --page-edge: #ffffff;
 }
 :root[data-theme="dark"] {
@@ -3003,3 +3003,88 @@ body {
 /* Nút .btn bị tắt (vd chưa đủ điều kiện): nhìn rõ là đang tắt, cả nền sáng lẫn nền tối */
 .btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; box-shadow: none; transform: none; filter: saturate(.4); }
 .praise-pick-hint { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+/* ==================================================================
+   TRANG CHỦ — LÀM MỚI 10/2026 (Taste Skill, cách "restyle": giữ bố cục, làm mới chi tiết)
+   - Một kiểu nổi duy nhất cho mọi thứ bấm được: mép dưới đặc 4px tông đậm hơn (vui, rõ là bấm được),
+     thay cho 8 kiểu bóng mờ khác nhau; không quầng sáng.
+   - Thang chữ: 70 / 36 / 22 / 17 / 15 (tiêu đề lớn, tiêu đề mục, tiêu đề nhỏ, chữ thường, chữ phụ).
+   - Thêm nội dung thật: số bài, Milo theo môn, dải trò chơi, công cụ cho thầy cô.
+================================================================== */
+.home { --lift: 0 4px 0 rgb(var(--ink-rgb) / .16); --lift-hover: 0 6px 0 rgb(var(--ink-rgb) / .16); }
+.home .btn { transition: transform 150ms ease, box-shadow 150ms ease; }
+.home .btn:hover { transform: translateY(-2px); }
+.home .btn:active { transform: translateY(2px); box-shadow: none; }
+.home .home-actions .btn-yellow, .home .btn-yellow { box-shadow: 0 4px 0 #d39b12; }
+.home-btn-ghost { min-height: 54px; padding: 12px 24px; border-radius: 999px; background: #fff; color: var(--ink); font-weight: 700; box-shadow: var(--lift); }
+.home-btn-ghost svg { width: 20px; height: 20px; }
+:root[data-theme="dark"] .home-btn-ghost { background: var(--surface); color: var(--ink); }
+.home .home-actions { align-items: center; }
+
+/* số liệu thật dưới nút bắt đầu */
+.home-facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 0; padding: 0; list-style: none; }
+.home-facts li { padding: 6px 14px; border-radius: 999px; background: rgb(255 255 255 / .9); color: var(--ink); font-size: 15px; font-weight: 600; }
+.home-facts strong { color: var(--brand-blue); font-weight: 700; }
+:root[data-theme="dark"] .home-facts li { background: rgb(15 25 52 / .85); }
+
+/* tiêu đề mục, đoạn dẫn: một cỡ cho cả trang */
+.home .home-section { margin-top: 88px; }
+.home .home-section h2 { font-size: clamp(28px, 3.4vw, 36px); letter-spacing: -.015em; }
+.home .home-section-head p { font-size: 17px; }
+.home .grade-pill { box-shadow: var(--lift); background: var(--surface); font-weight: 700; }
+.home .grade-pill.is-on { background: var(--blue); color: #fff; box-shadow: 0 4px 0 var(--blue-deep); }
+
+/* vở môn học: Milo theo môn ngồi ở góc bìa, số bài thật trên nhãn */
+.home .notebook-cover { min-height: 290px; padding-bottom: 20px; }
+.home .notebook-label { align-self: start; }
+.home .notebook-cover:hover { transform: translateY(-4px) rotate(-.6deg); }
+.notebook-count { color: var(--nb); font-weight: 700; }
+.notebook-milo { position: absolute; left: 34px; bottom: 12px; width: 76px; height: auto; pointer-events: none; transform: rotate(-4deg); transition: transform 200ms ease; }
+.notebook-cover:hover .notebook-milo { transform: rotate(2deg) translateY(-4px); }
+.home .notebook-icon { display: none; }
+.home .notebook-open { position: relative; z-index: 1; }
+
+/* câu hỏi mẫu: câu hỏi là một đoạn văn (không phải tiêu đề), cỡ vừa đọc */
+.worksheet-q { margin-top: 10px; font-size: 22px; font-weight: 700; line-height: 1.4; }
+.home .home-sample { box-shadow: var(--lift); }
+.home .home-answers li { box-shadow: var(--lift); font-weight: 700; }
+.home .home-answers li.is-right { box-shadow: inset 0 0 0 2px var(--green), 0 4px 0 color-mix(in srgb, var(--green) 45%, transparent); }
+.home .home-steps h3 { font-size: 22px; }
+.home .home-steps p { font-size: 17px; }
+
+/* dải trò chơi */
+.home-games { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; margin: 28px 0 0; padding: 0; list-style: none; }
+.home-game { display: flex; flex-direction: column; height: 100%; border-radius: 22px; overflow: hidden; background: var(--surface); color: var(--ink); text-decoration: none; box-shadow: var(--lift); transition: transform 150ms ease, box-shadow 150ms ease; }
+.home-game:hover { transform: translateY(-3px); box-shadow: var(--lift-hover); }
+.home-game:focus-visible { outline: 3px solid var(--brand-blue); outline-offset: 3px; }
+.home-game-art { display: block; }
+.home-game-art .game-art { border-radius: 0; }
+.home-game strong { padding: 12px 16px 16px; font-size: 17px; line-height: 1.3; }
+
+/* thầy cô: danh sách công cụ thay cho một đoạn chữ dài */
+.home .home-safety { align-items: start; }
+.home .home-safety p { font-size: 16px; }
+.home-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 24px; margin: 16px 0 0; padding: 0; list-style: none; }
+.home-tools li { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
+.home-tools svg { flex: none; width: 22px; height: 22px; color: var(--brand-blue); }
+.home .home-safety .btn { align-self: center; }
+
+@media (max-width: 900px) {
+  .home-games { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .home .home-section { margin-top: 64px; }
+  .home-actions .btn { flex: 1 1 100%; justify-content: center; }
+  .home-facts li { font-size: 14px; padding: 5px 12px; }
+  /* trò chơi: một hàng vuốt ngang, mỗi thẻ gần nửa màn hình */
+  .home-games { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; margin-inline: -16px; padding: 4px 16px 10px; scrollbar-width: none; }
+  .home-games::-webkit-scrollbar { display: none; }
+  .home-games li { flex: 0 0 46%; scroll-snap-align: start; }
+  .home-game strong { font-size: 16px; padding: 10px 12px 14px; }
+  .home-tools { grid-template-columns: 1fr; }
+  .home .notebook-cover { min-height: 270px; }
+  .notebook-milo { width: 66px; }
+  /* tranh Milo bắt đầu thấp hơn để bong bóng lời không đè lên hai nút */
+  .home .home-hero-card { min-height: 800px; }
+  .worksheet-q { font-size: 20px; }
+}
