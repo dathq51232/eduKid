@@ -21,7 +21,7 @@ const subjects: { code: SubjectCode; title: string; detail: string; tone: string
 const steps = [
   { title: 'Chọn một môn', text: 'Chọn lớp, rồi chọn Toán, Tiếng Việt hoặc Tiếng Anh. Môn nào cũng bắt đầu từ bài dễ.' },
   { title: 'Học bài ngắn', text: 'Mỗi bài mười câu, vài phút là xong. Có nút nghe đọc đề.' },
-  { title: 'Nhận ngôi sao', text: 'Sao và sticker ghi lại những gì em làm được, không so với bạn nào.' },
+  { title: 'Nhận ngôi sao', text: 'Sao và sticker ghi lại những gì em làm được và nhận những món quà nhỏ nhé!' },
 ];
 
 const teacherTools = [
