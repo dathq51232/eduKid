@@ -2978,3 +2978,55 @@ body {
 /* Lịch báo giảng: tiêu đề nhóm môn theo mẫu nhà trường, tiết chữ đỏ bị bỏ qua */
 .planner-import .planner-group th { text-align: left; background: #eef4fb; color: #0d47a1; font-size: 13px; letter-spacing: .03em; padding: 6px 10px; }
 .planner-skipped { color: #b71c1c; }
+
+/* ==================================================================
+   RÀ SOÁT UX GIAO DIỆN HỌC SINH (10/2026) — ưu tiên điện thoại
+   1) Trang làm bài: nút "Bắt đầu làm bài" luôn trong tầm tay; khi đang làm câu hỏi, ẩn thanh điều hướng
+      chung để câu hỏi và các đáp án lên ngay màn hình đầu (thanh làm bài vẫn có nút ← quay lại).
+   2) Chọn bài: thẻ bài gọn hơn; chọn mức độ / đổi bộ câu chỉ hiện ở bài "Học tiếp" (các bài khác chọn
+      ngay ở màn hình bắt đầu của bài) → danh sách ngắn còn khoảng một nửa.
+   3) Chữ nhỏ trên điện thoại (nhãn menu, bong bóng lời Milo, mô tả mức độ) tăng lên tối thiểu 14px.
+================================================================== */
+@media (max-width: 560px) {
+  .main-nav-link { font-size: 14px; }
+  .cb-bubble { font-size: 14px; }
+  .muc-option small, .cb-muc small { font-size: 14px; }
+  .game-tag { font-size: 14px; }
+}
+
+@media (max-width: 760px) {
+  /* --- 1. trang làm bài --- */
+  /* màn hình bắt đầu: nút bắt đầu dính đáy màn hình trong lúc em đọc phần giới thiệu */
+  .intro-start { position: sticky; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 6; box-shadow: 0 6px 18px rgb(31 42 68 / .28), 0 0 0 6px var(--surface); }
+  /* âm thanh đồng hồ: ba lựa chọn nằm một hàng, bỏ dòng giải thích dài */
+  .timer-sound-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .timer-sound-option small { display: none; }
+  .timer-sound-option span { min-height: 48px; display: grid; place-items: center; text-align: center; }
+  /* đang làm câu hỏi: ẩn menu chung, thanh làm bài lên sát đầu màn hình */
+  body:has(.quiz-bar) .learn-top { display: none; }
+  body:has(.quiz-bar) .quiz-bar { top: 0; }
+  .question-card { padding: 16px 14px; }
+  .milo-trail { margin: -10px -6px 0; }
+  .milo-trail svg { max-height: 58px; }
+  .question-top { gap: 8px; }
+  /* "Nghe đọc đề" và "Đổi câu khác" chung một hàng, gọn */
+  .question-tools { flex-wrap: nowrap; gap: 8px; margin-top: 8px; }
+  .question-tools .button { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 6px 12px; font-size: 15px; gap: 6px; white-space: nowrap; }
+  .question-tools .swap-count { padding: 0 6px; font-size: 13px; }
+
+  /* --- 2. chọn bài --- */
+  .cb-list > .lesson-row.cb-card { gap: 6px; padding: 12px 14px; }
+  .cb-card-top { position: absolute; top: 12px; left: 14px; right: 14px; pointer-events: none; }
+  .cb-card-top > * { pointer-events: auto; }
+  .cb-card .lesson-no { width: 42px; height: 42px; font-size: 20px; font-weight: 800; }
+  .cb-card .lesson-info { padding: 2px 0 0 54px; min-height: 42px; }
+  .cb-card .lesson-info h3 { font-size: 17px; padding-right: 78px; }
+  .cb-card .lesson-info p { -webkit-line-clamp: 1; font-size: 14px; }
+  .cb-card .lesson-info .lesson-meta { margin-top: 2px; font-size: 14px; }
+  .lesson-actions.cb-actions { padding-top: 8px; gap: 6px; }
+  .lesson-actions.cb-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .cb-actions .cb-go { display: flex; width: 100%; min-height: 48px; justify-content: center; }
+  .cb-tools { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .cb-tools .muc-select select { min-height: 44px; }
+  .cb-card:not(.is-next) .cb-tools { display: none; }
+}

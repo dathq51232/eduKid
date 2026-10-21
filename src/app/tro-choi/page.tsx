@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import LearnHeader from '@/components/LearnHeader';
 import GameCatalog from '@/components/games/GameCatalog';
 import MiloMascot from '@/components/mascot/MiloMascot';
-import { FILTERS, parseGrade, type GameFilter } from '@/lib/games/catalog';
+import { FILTERS, GAMES, parseGrade, type GameFilter } from '@/lib/games/catalog';
 
 export const metadata: Metadata = { title: 'Game trí tuệ · EduChain Kids' };
 
@@ -18,7 +18,7 @@ export default async function GamesPage({ searchParams }: Props) {
         <header className="games-hero">
           <div>
             <h1>Thế giới khám phá</h1>
-            <p className="games-lead">Ba trò chơi nhỏ để em luyện quan sát, trí nhớ và cách tìm đường.</p>
+            <p className="games-lead">{GAMES.length} trò chơi nhỏ để em luyện quan sát, trí nhớ, suy luận và cách tìm đường.</p>
           </div>
           <MiloMascot mood="happy" size={112} className="games-hero-milo" />
         </header>

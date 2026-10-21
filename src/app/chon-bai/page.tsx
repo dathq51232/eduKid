@@ -272,7 +272,7 @@ function ChonBaiContent() {
                           value={mucStore.lessons[lesson.id] ?? 0}
                           onChange={(e) => setMucStore(saveMucLesson(lesson.id, Number(e.target.value) ? (Number(e.target.value) as Muc) : null))}
                         >
-                          <option value={0}>Mức chung ({MUC[mucStore.all].name})</option>
+                          <option value={0}>Mức chung · {MUC[mucStore.all].name}</option>
                           {MUC_LIST.map((x) => <option key={x} value={x}>{MUC[x].name}</option>)}
                         </select>
                       </label>
