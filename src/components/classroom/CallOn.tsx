@@ -44,7 +44,7 @@ function useSound(on: boolean) {
   return { beep, fanfare };
 }
 
-export default function CallOn({ classId, className, grade, students }: { classId: string; className: string; grade: number; students: Student[] }) {
+export default function CallOn({ classId, className, grade, students, absentToday = [] }: { classId: string; className: string; grade: number; students: Student[]; /** em vắng hôm nay theo Sổ lớp */ absentToday?: string[] }) {
   const storeKey = `goi-ten:${classId}`;
   const [s, setS] = useState<CallState>(() => restoreState(null));
   const [loaded, setLoaded] = useState(false);
@@ -61,9 +61,14 @@ export default function CallOn({ classId, className, grade, students }: { classI
 
   // đọc / ghi trạng thái trên máy
   useEffect(() => {
-    try { setS(restoreState(localStorage.getItem(storeKey))); } catch { /* chế độ riêng tư */ }
+    let st = restoreState(null);
+    try { st = restoreState(localStorage.getItem(storeKey)); } catch { /* chế độ riêng tư */ }
+    // em vắng đã điểm danh trong Sổ lớp hôm nay: tự đánh dấu vắng (thầy cô vẫn bỏ đánh dấu được)
+    const add = absentToday.filter((id) => !st.absent.includes(id));
+    setS(add.length ? { ...st, absent: [...st.absent, ...add] } : st);
     reduced.current = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     setLoaded(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ đọc một lần khi mở trang
   }, [storeKey]);
   useEffect(() => { if (loaded) { try { localStorage.setItem(storeKey, JSON.stringify(s)); } catch { /* bỏ qua */ } } }, [s, loaded, storeKey]);
 

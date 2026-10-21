@@ -26,7 +26,14 @@ export default async function CallOnPage({ params }: { params: Promise<{ id: str
   const supabase = await createClient();
   const { data: cls } = await supabase.from('classes').select('id, name, grade').eq('id', id).maybeSingle();
   if (!cls) notFound();
-  const { data: roster } = await supabase.rpc('teacher_class_roster', { p_class: id });
+  const vnToday = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+  const [{ data: roster }, { data: diary, error: diaryErr }] = await Promise.all([
+    supabase.rpc('teacher_class_roster', { p_class: id }),
+    // em vắng hôm nay theo Sổ lớp (migration 0026) — chưa chạy migration thì bỏ qua
+    supabase.rpc('teacher_diary_day', { p_class: id, p_day: vnToday }),
+  ]);
+  const absentToday = diaryErr ? [] : ((diary as { entries?: { student_id: string; status: string }[] } | null)?.entries ?? [])
+    .filter((e) => e.status !== 'present').map((e) => e.student_id);
   const students = ((roster ?? []) as RosterRow[])
     .filter((r) => r.membership_status === 'active')
     .map((r) => ({ id: r.student_id, name: r.display_name }))
@@ -38,7 +45,7 @@ export default async function CallOnPage({ params }: { params: Promise<{ id: str
       <LearnHeader />
       <main className="dash wrap callon-page">
         <Link href="/giao-vien" className="dash-back no-print"><ArrowLeft aria-hidden="true" /> Lớp của tôi</Link>
-        <CallOn classId={c.id} className={c.name} grade={c.grade} students={students} />
+        <CallOn classId={c.id} className={c.name} grade={c.grade} students={students} absentToday={absentToday} />
       </main>
     </>
   );

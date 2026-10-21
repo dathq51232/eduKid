@@ -82,6 +82,15 @@ export default async function TeacherHome() {
       activeLast7: new Set(((recent ?? []) as { student_id: string }[]).map((r) => r.student_id)).size,
       recordsOn: FEATURES.teacherRecords,
     });
+    // Sổ lớp (migration 0026): ngày học (thứ Hai – thứ Sáu) mà chưa điểm danh thì nhắc; chưa chạy migration thì bỏ qua
+    const vn = new Date(Date.now() + 7 * 3600_000);
+    const weekday = vn.getUTCDay();
+    if (ids.length && weekday >= 1 && weekday <= 5) {
+      const { data: diary, error: diaryErr } = await supabase.rpc('teacher_diary_day', { p_class: active.id, p_day: vn.toISOString().slice(0, 10) });
+      if (!diaryErr && !(diary as { saved_at: string | null } | null)?.saved_at) {
+        today.unshift({ tone: 'soon', title: 'Chưa điểm danh hôm nay', detail: 'Mở Sổ lớp: cả lớp mặc định có mặt, chỉ cần bấm em vắng.', href: `/giao-vien/lop/${active.id}/so-lop`, cta: 'Điểm danh' });
+      }
+    }
   }
 
   return (
