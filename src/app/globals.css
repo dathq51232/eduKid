@@ -3088,3 +3088,73 @@ body {
   .home .home-hero-card { min-height: 800px; }
   .worksheet-q { font-size: 20px; }
 }
+
+/* ==========================================================================
+   D1 — THÀNH PHẦN DÙNG CHUNG (làm mới 10/2026)
+   Một kiểu nổi khối cho cả trang web: mép dưới đặc, đậm hơn nền, thay cho bóng mờ.
+   Nút bấm như phím: rê chuột thì nhô lên, bấm thì lún xuống.
+   ========================================================================== */
+:root { --shadow-sm: 0 3px 0 rgb(var(--ink-rgb) / .10); --shadow-md: 0 6px 0 rgb(var(--ink-rgb) / .12); --lift: 0 4px 0 rgb(var(--ink-rgb) / .16); }
+:root[data-theme="dark"] { --shadow-sm: 0 3px 0 rgb(0 0 0 / .45); --shadow-md: 0 6px 0 rgb(0 0 0 / .5); --lift: 0 4px 0 rgb(0 0 0 / .5); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) { --shadow-sm: 0 3px 0 rgb(0 0 0 / .45); --shadow-md: 0 6px 0 rgb(0 0 0 / .5); --lift: 0 4px 0 rgb(0 0 0 / .5); }
+}
+:root[data-theme="dark"] .figure, :root[data-theme="dark"] .light-island { --shadow-sm: 0 3px 0 rgb(30 43 74 / .10); --shadow-md: 0 6px 0 rgb(30 43 74 / .12); }
+
+/* thanh đầu trang: chỉ một đường kẻ mảnh, không đổ bóng */
+.site-header, .learn-top { box-shadow: none; }
+.main-nav-link { min-height: 44px; }
+.main-nav-link:hover { color: var(--ink); }
+
+/* nút */
+.btn { transition: transform 120ms ease, box-shadow 120ms ease, background-color 160ms ease; }
+.btn-primary { box-shadow: 0 4px 0 var(--blue-deep); }
+.btn-primary:hover { box-shadow: 0 6px 0 var(--blue-deep); }
+.btn-yellow { box-shadow: 0 4px 0 #d39b12; }
+.btn-yellow:hover { box-shadow: 0 6px 0 #d39b12; }
+.btn-outline { box-shadow: inset 0 0 0 2px var(--brand-blue), 0 4px 0 rgb(36 87 197 / .28); }
+.btn-outline:hover { box-shadow: inset 0 0 0 2px var(--brand-blue), 0 6px 0 rgb(36 87 197 / .28); }
+.btn:active:not(:disabled) { transform: translateY(2px); }
+.btn-primary:active:not(:disabled) { box-shadow: 0 2px 0 var(--blue-deep); }
+.btn-yellow:active:not(:disabled) { box-shadow: 0 2px 0 #d39b12; }
+.btn-outline:active:not(:disabled) { box-shadow: inset 0 0 0 2px var(--brand-blue), 0 2px 0 rgb(36 87 197 / .28); }
+@media (prefers-reduced-motion: reduce) { .btn:hover, .btn:active:not(:disabled) { transform: none; } }
+
+/* chân trang: liên kết đủ to để ngón tay bấm */
+.footer-links { flex-wrap: wrap; gap: 4px 18px; }
+.footer-links a { display: inline-flex; align-items: center; min-height: 44px; }
+.learn-top .brand, .site-header .brand { display: inline-flex; align-items: center; min-height: 44px; }
+
+/* ==========================================================================
+   D3 — TRANG HỌC SINH (làm mới 10/2026, luật nới cho trẻ em: giữ Milo, emoji, màu tươi)
+   ========================================================================== */
+/* Chọn bài: bỏ nhãn "Chưa học" lặp lại trên mọi thẻ; chữ mục lục tối thiểu 14px; chữ "Aa"/"ABC" đậm hơn cho dễ đọc */
+.toc-group-title { font-size: 14px; }
+.toc-no { width: 30px; height: 30px; font-size: 14px; }
+.toc-next { padding: 1px 8px; font-size: 13px; }
+.cb-tab-mark { color: color-mix(in srgb, var(--cover) 72%, #000); }
+:root[data-theme="dark"] .cb-tab-mark { color: color-mix(in srgb, var(--cover) 70%, #fff); }
+@media (max-width: 560px) {
+  /* sao của bài đã học nằm góc phải: chừa chỗ cho cả tên bài lẫn mô tả */
+  .cb-card .lesson-info h3 { padding-right: 0; }
+  .cb-card.is-done .lesson-info { padding-right: 78px; }
+}
+
+/* Làm bài: nhãn mức độ (L1 · Làm quen) là viên thuốc một hàng — trước đây bị kiểu ô cấp độ của trò chơi đè lên */
+.level-chip[class*="is-l"] { display: inline-flex; flex-direction: row; min-height: 0; padding: 2px 10px; border: 2px solid currentColor; border-radius: 999px; font-size: 14px; line-height: 1.5; pointer-events: auto; }
+/* thanh tiến độ bị ép còn một chấm tròn trên điện thoại: bỏ, đã có số câu và hàng ô số */
+@media (max-width: 560px) { .quiz-progress { display: none; } .quiz-count { margin-right: auto; } }
+
+/* Trò chơi: nhãn thể loại đủ 14px */
+.game-tag { font-size: 14px; }
+
+/* Kết quả: bộ sưu tập sticker gọn 6 cột trên điện thoại (trước 4 cột, kéo dài 6 hàng ô dấu hỏi) */
+@media (max-width: 560px) {
+  .sticker-album ul { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+  .sticker-slot { border-radius: 12px; font-size: 18px; }
+}
+.muc-option small, .cb-muc small { font-size: 14px; }
+.cb-next-tag { font-size: 14px; }
+.ach-levels li { font-size: 14px; color: var(--ink); }
+.ach-levels li.is-done { color: #ffffff; }
+@media (max-width: 560px) { .cb-card.is-next .lesson-info h3 { padding-right: 96px; } }

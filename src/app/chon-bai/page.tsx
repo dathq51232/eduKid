@@ -244,7 +244,7 @@ function ChonBaiContent() {
                   )}
                   <div className="cb-card-top">
                     <span className="lesson-no" aria-hidden="true">{result ? <Check size={26} strokeWidth={3} /> : lessonBadge(lesson.title, index + 1)[0]}</span>
-                    {result ? <Stars count={starsFor(result.score, result.total)} /> : <span className="cb-new">Chưa học</span>}
+                    {result && <Stars count={starsFor(result.score, result.total)} />}
                   </div>
                   <div className="lesson-info">
                     <h3>{lesson.title}</h3>
