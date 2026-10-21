@@ -1,7 +1,8 @@
 // Sinh phiếu chính tả lớp 1 từ kho từ tự soạn (bank.ts): mỗi lần một phiếu khác (theo số ngẫu nhiên),
 // có tranh, bài điền chữ, tập chép và trang đáp án. Xuất HTML dùng chung cho xem trước / in PDF / Word.
 
-import { PAIRS, pairById, splitWord, type PairId } from './bank';
+import { PAIRS, pairById, splitWord, toneless, type PairId } from './bank';
+import { fitsLesson, NO_LIMIT, pairLesson, pairWeek } from './curriculum';
 
 export type SheetOptions = {
   pairs: PairId[];
@@ -12,10 +13,16 @@ export type SheetOptions = {
   copy: boolean;
   seed: number;
   title?: string;
+  /** bài cuối lớp đã học (Tiếng Việt 1): phiếu chỉ dùng âm, vần, dấu đã học; bỏ trống = không giới hạn */
+  lesson?: number;
+  /** dòng ghi phạm vi in trên phiếu, vd "Tuần 7 · Bài 31–35" */
+  scope?: string;
 };
 export type Item = { pic?: string; w: string; parts: { text: string; ans?: string }[]; ans: string[]; full: string };
 export type Section = { kind: 'pics' | 'words' | 'copy'; pair?: PairId; heading: string; items: Item[]; sentences?: string[] };
-export type Sheet = { title: string; subtitle: string; rules: string[]; sections: Section[]; seed: number };
+export type Sheet = { title: string; subtitle: string; rules: string[]; sections: Section[]; seed: number; scope?: string;
+  /** nhắc giáo viên: cặp chưa học, hoặc tuần này chưa đủ từ cho số câu đã chọn */
+  notes: string[] };
 
 /** số ngẫu nhiên lặp lại được theo seed (mulberry32) */
 function rng(seed: number) {
@@ -28,11 +35,20 @@ function shuffle<T>(a: T[], r: () => number): T[] {
   return b;
 }
 /** chọn n từ, chia đều theo các âm của cặp (vd 4 c + 4 k), rồi trộn */
-function balanced(words: string[], options: string[], n: number, r: () => number): string[] {
-  const groups = options.map((o) => shuffle(words.filter((w) => splitWord(w).ans[0] === o), r));
+function balanced(words: string[], options: string[], n: number, r: () => number, picOf?: (w: string) => string): string[] {
+  const groups = options.map((o) => shuffle(words.filter((w) => toneless(splitWord(w).ans[0]) === o), r));
   const out: string[] = [];
+  const used = new Set<string>();
   let i = 0;
-  while (out.length < n && groups.some((g) => g.length)) { const g = groups[i++ % groups.length]; const w = g.shift(); if (w) out.push(w); }
+  while (out.length < n && groups.some((g) => g.length)) {
+    const g = groups[i++ % groups.length];
+    const w = g.shift();
+    if (!w) continue;
+    const pic = picOf?.(w);
+    if (pic && used.has(pic)) continue; // một hình chỉ dùng một lần trong phiếu
+    if (pic) used.add(pic);
+    out.push(w);
+  }
   return shuffle(out, r);
 }
 const item = (w: string, pic?: string): Item => ({ pic, w, ...splitWord(w) });
@@ -40,29 +56,44 @@ const orList = (o: string[]) => (o.length === 2 ? `${o[0]} hoặc ${o[1]}` : `${
 
 export function makeSheet(opt: SheetOptions): Sheet {
   const r = rng(opt.seed);
-  const pairs = opt.pairs.map(pairById);
+  const lesson = opt.lesson ?? NO_LIMIT;
+  const fit = (t: string) => fitsLesson(t, lesson);
+  const notes: string[] = [];
+  const pairs = opt.pairs.map(pairById).filter((p) => {
+    if (pairLesson(p) <= lesson) return true;
+    notes.push(`${p.title}: lớp chưa học (học xong ở tuần ${pairWeek(p)}), nên không đưa vào phiếu.`);
+    return false;
+  });
   const sections: Section[] = [];
+  const copyPool = new Map(pairs.map((p) => [p.id, p.copy.filter(fit)]));
   for (const p of pairs) {
+    const what = p.kind === 'van' ? `vần ${orList(p.options)}` : orList(p.options);
     if (opt.picCount > 0) {
-      const chosen = balanced(p.pics.map((x) => x.w), p.options, opt.picCount, r);
-      sections.push({ kind: 'pics', pair: p.id, heading: `Điền vào chỗ trống ${orList(p.options)}`, items: chosen.map((w) => item(w, p.pics.find((x) => x.w === w)!.pic)) });
+      const pool = p.pics.filter((x) => fit(x.w));
+      const picOf = (w: string) => pool.find((x) => x.w === w)!.pic;
+      const chosen = balanced(pool.map((x) => x.w), p.options, opt.picCount, r, picOf);
+      if (chosen.length) sections.push({ kind: 'pics', pair: p.id, heading: `Điền vào chỗ trống ${what}`, items: chosen.map((w) => item(w, picOf(w))) });
+      if (chosen.length < opt.picCount) notes.push(`${p.title}: với bài đã học, mới có ${chosen.length} câu có tranh phù hợp (chọn ${opt.picCount}).`);
     }
     if (opt.wordCount > 0) {
-      const chosen = balanced(p.words, p.options, opt.wordCount, r);
-      sections.push({ kind: 'words', pair: p.id, heading: `Điền ${p.options.join(' / ')} vào chỗ chấm`, items: chosen.map((w) => item(w)) });
+      const chosen = balanced(p.words.filter(fit), p.options, opt.wordCount, r);
+      if (chosen.length) sections.push({ kind: 'words', pair: p.id, heading: p.kind === 'van' ? `Điền ${what} vào chỗ chấm (thêm dấu thanh nếu có)` : `Điền ${p.options.join(' / ')} vào chỗ chấm`, items: chosen.map((w) => item(w)) });
+      if (chosen.length < opt.wordCount) notes.push(`${p.title}: với bài đã học, mới có ${chosen.length} từ điền chữ phù hợp (chọn ${opt.wordCount}).`);
     }
   }
-  if (opt.copy) {
-    const sentences = pairs.map((p) => shuffle(p.copy, r)[0]).slice(0, 3);
-    if (pairs.length === 1) sentences.push(shuffle(pairs[0].copy.filter((s) => !sentences.includes(s)), r)[0]);
-    sections.push({ kind: 'copy', heading: 'Tập chép', items: [], sentences: sentences.filter(Boolean) });
+  if (opt.copy && pairs.length) {
+    const sentences = pairs.map((p) => shuffle(copyPool.get(p.id)!, r)[0]).filter(Boolean).slice(0, 3);
+    if (pairs.length === 1) sentences.push(shuffle(copyPool.get(pairs[0].id)!.filter((s) => !sentences.includes(s)), r)[0]);
+    const list = sentences.filter(Boolean);
+    if (list.length) sections.push({ kind: 'copy', heading: 'Tập chép', items: [], sentences: list });
+    else notes.push('Tập chép: chưa có câu chỉ gồm âm, vần đã học, nên bỏ bài tập chép.');
   }
   const one = pairs.length === 1;
   return {
     title: opt.title?.trim() || (one ? 'Bài tập chính tả lớp 1' : 'Phiếu bài tập chính tả'),
     subtitle: one ? pairs[0].title : pairs.map((p) => p.options.join('/')).join(' · '),
     rules: pairs.map((p) => p.rule).filter((x): x is string => !!x),
-    sections, seed: opt.seed,
+    sections, seed: opt.seed, scope: opt.scope, notes,
   };
 }
 
@@ -98,6 +129,7 @@ export function sheetHtml(sheet: Sheet, opts: { withKey?: boolean; school?: stri
     <td width="16%" style="vertical-align:middle;text-align:right">${img('rainbow', 56)}</td>
   </tr></table>
   ${info}
+  ${sheet.scope ? `<p style="text-align:center;margin:0 0 2pt;font-size:11pt;color:#607d8b">Ôn theo bài đã học: ${esc(sheet.scope)}</p>` : ''}
   ${answers ? '' : '<p style="margin:2pt 0 4pt;font-size:13pt">Họ và tên học sinh: ……………………………………………………………</p>'}
   ${sheet.rules.length && !answers ? `<table width="100%" cellspacing="0" cellpadding="4" style="width:100%;margin:0 0 6pt"><tr><td bgcolor="#fff8e1" style="background:#fff8e1;border:1px dashed #ffb300;padding:4pt 8pt">${img('light-bulb', 22)} <b style="color:#e65100">Ghi nhớ:</b> ${sheet.rules.map(esc).join(' ')}</td></tr></table>` : ''}`;
 
@@ -166,4 +198,4 @@ td[bgcolor] { border-radius: 12px; }
 </style></head><body>${body.join('\n')}</body></html>`;
 }
 
-export const ALL_PAIRS = PAIRS.map((p) => ({ id: p.id, title: p.title, options: p.options }));
+export const ALL_PAIRS = PAIRS.map((p) => ({ id: p.id, title: p.title, options: p.options, kind: p.kind, lesson: pairLesson(p), week: pairWeek(p) }));

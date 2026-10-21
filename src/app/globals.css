@@ -2967,3 +2967,9 @@ body {
 .ws-check { flex-direction: row !important; align-items: center; gap: 8px; }
 .ws-check input { width: 20px !important; height: 20px; flex: none; min-height: 0; padding: 0; }
 .ws-check { align-self: end; padding-bottom: 10px; }
+.ws-pair small { font-size: 12px; opacity: .8; }
+.ws-pair.is-locked { cursor: not-allowed; opacity: .55; border-style: dashed; }
+.ws-pair.is-locked svg { width: 14px; height: 14px; }
+.ws-pair .ws-new { background: #43a047; color: #fff; border-radius: 999px; padding: 0 7px; opacity: 1; font-weight: 700; }
+.ws-notes { margin: 0 0 12px; padding: 10px 14px 10px 30px; border: 1px dashed #ffb300; border-radius: 10px; background: #fff8e1; color: #6d4c00; font-size: 14px; }
+.ws-notes li + li { margin-top: 2px; }
