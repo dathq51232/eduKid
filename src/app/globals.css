@@ -3158,3 +3158,31 @@ body {
 .ach-levels li { font-size: 14px; color: var(--ink); }
 .ach-levels li.is-done { color: #ffffff; }
 @media (max-width: 560px) { .cb-card.is-next .lesson-info h3 { padding-right: 96px; } }
+
+/* ==========================================================================
+   D4 — GÓC THẦY CÔ (làm mới 10/2026): bảng tính điềm tĩnh, số thẳng cột, nút đủ to, ô công cụ có biểu tượng trên nền màu nhạt
+   ========================================================================== */
+.dash-back { min-height: 44px; }
+.tool-card { box-shadow: var(--lift); border: 2px solid var(--line); padding: 18px; gap: 6px; }
+.tool-card:hover, .tool-card:focus-visible { transform: translateY(-2px); }
+.tool-card svg { box-sizing: content-box; width: 24px; height: 24px; padding: 10px; margin-bottom: 4px; border-radius: 14px; background: color-mix(in srgb, currentColor 12%, var(--surface)); }
+.tool-card span { font-size: 15px; }
+
+.roster-table { font-variant-numeric: tabular-nums; }
+.roster-table thead th { font-size: 14px; }
+.status-chip { font-size: 14px; }
+.student-link { display: inline-block; padding-block: 10px; }
+.mini-btn { min-height: 40px; padding: 6px 12px; font-size: 14px; }
+@media (pointer: coarse) { .mini-btn { min-height: 44px; } }
+.mini-btn svg { width: 16px; height: 16px; }
+
+/* lưu trữ lớp: việc làm một lần mỗi năm, không cần nút to nhất trang */
+.dash-archive { display: flex; justify-content: flex-start; }
+.dash-archive .btn { color: var(--muted); box-shadow: inset 0 0 0 2px var(--line-strong), 0 4px 0 rgb(var(--ink-rgb) / .08); }
+.dash-archive .btn:hover { color: var(--ink); }
+.status-chip.tone-green { color: #116b33; }
+.status-chip.tone-coral { color: #a8282e; }
+:root[data-theme="dark"] .status-chip.tone-green, :root[data-theme="dark"] .status-chip.tone-coral { color: var(--tile-fg); }
+.join-code-box small { font-size: 14px; }
+.check-line { min-height: 44px; align-items: center; }
+.check-line input { width: 22px; height: 22px; margin-top: 0; }

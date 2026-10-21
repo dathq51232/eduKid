@@ -271,7 +271,7 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
         )}
       </section>
 
-      <section className="dash-section no-print">
+      <section className="dash-section no-print dash-archive">
         <button type="button" className="btn btn-outline btn-sm" onClick={() => rpc('arch', 'teacher_set_class_status', { p_class: cls.id, p_active: cls.status !== 'active' }, cls.status === 'active' ? 'Đã lưu trữ lớp.' : 'Đã mở lại lớp.')}>
           {cls.status === 'active' ? 'Lưu trữ lớp (cuối năm học)' : 'Mở lại lớp'}
         </button>
