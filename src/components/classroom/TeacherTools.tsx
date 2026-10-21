@@ -1,12 +1,15 @@
 import Link from 'next/link';
-import { Award, FileText, MessageSquareHeart, NotebookPen, Radar, Send, SpellCheck, Table2 } from 'lucide-react';
+import { Award, Dices, FileText, MessageSquareHeart, NotebookPen, Radar, Send, SpellCheck, Table2 } from 'lucide-react';
 
-/** 8 công cụ của giáo viên cho một lớp — hiện ngay ở trang "Lớp của tôi" (/giao-vien). */
+/** 9 công cụ của giáo viên cho một lớp — hiện ngay ở trang "Lớp của tôi" (/giao-vien). */
 export default function TeacherTools({ classId, className }: { classId: string; className: string }) {
   return (
     <section className="dash-section teacher-tools-wrap no-print" aria-labelledby="teacher-tools-title">
       <h2 id="teacher-tools-title">Công cụ cho lớp {className}</h2>
       <nav className="teacher-tools" aria-label="Công cụ giáo viên">
+        <Link href={`/giao-vien/lop/${classId}/goi-ten`} className="tool-card tone-yellow tool-card-new">
+          <Dices aria-hidden="true" /><strong>Gọi tên – Dò bài</strong><span>Vòng quay, bốc thăm, đua thú, trứng nở: gọi em lên dò bài cũ hoặc phát biểu, chiếu lên màn hình</span>
+        </Link>
         <Link href={`/giao-vien/lop/${classId}/ke-hoach`} className="tool-card tone-green">
           <NotebookPen aria-hidden="true" /><strong>Kế hoạch bài dạy</strong><span>Giáo án soạn sẵn theo bài, sửa, nhân bản, lịch báo giảng tuần, tải Word</span>
         </Link>

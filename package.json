@@ -20,6 +20,7 @@
     "export:bank5": "tsx scripts/dump-bank.ts 5 > data/bank-lop5.json",
     "export:bank": "tsx scripts/dump-bank.ts > data/bank.json && python scripts/export_bank_xlsx.py data/bank.json data/ngan-hang-mau-goc.xlsx data/EduChain_Kids_Ngan_hang_cau_hoi_Lop_1.xlsx",
     "check:practice": "tsx scripts/check-practice.ts",
+    "check:callon": "tsx scripts/check-callon.ts",
     "check:games": "tsx scripts/check-games.ts",
     "check:sets": "tsx scripts/check-sets.ts",
     "check:exams": "tsx scripts/check-exams.ts",
