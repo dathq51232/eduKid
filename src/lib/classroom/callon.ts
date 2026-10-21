@@ -12,11 +12,12 @@ export const CALL_MODES: { id: CallMode; label: string; icon: string; action: st
 export type Student = { id: string; name: string };
 
 /** Thời gian quay thầy cô chọn được (giây) */
-export const DURATIONS = [3, 6, 10, 15, 20];
+export const DURATIONS = [3, 6, 10, 15, 20, 30, 40];
 export type Tally = { ok: number; no: number; star: number };
 export type CallState = {
   day: string; // yyyy-mm-dd — sang ngày mới thì danh sách vắng và đã gọi tự xoá
   round: number; // tăng mỗi lần "Vòng mới": đổi cách đánh số lá thăm
+  mix: number; // tăng mỗi lần bấm "Trộn thăm"
   absent: string[];
   called: string[];
   tally: Record<string, Tally>; // giữ qua các ngày
@@ -34,7 +35,7 @@ export const today = (now = new Date()) => {
 };
 
 export function emptyState(): CallState {
-  return { day: today(), round: 1, absent: [], called: [], tally: {}, mode: 'wheel', noRepeat: true, duration: 6, sound: true, subject: 'toan', lessonId: '' };
+  return { day: today(), round: 1, mix: 0, absent: [], called: [], tally: {}, mode: 'wheel', noRepeat: true, duration: 6, sound: true, subject: 'toan', lessonId: '' };
 }
 
 /** Đọc trạng thái đã lưu; sang ngày mới thì bắt đầu lại danh sách vắng / đã gọi nhưng giữ điểm và cài đặt. */
@@ -89,17 +90,26 @@ export function pickOne<T>(list: T[], rand: () => number = Math.random): T | nul
 }
 
 /** Lá thăm: mỗi em có mặt một lá, số lá xáo theo vòng. Trả về [số lá] = em. */
-export function lotsFor(students: Student[], s: Pick<CallState, 'absent' | 'round'>, classSeed: number): Student[] {
-  return shuffle(presentOf(students, s), rng(classSeed * 31 + s.round * 7919));
+export function lotsFor(students: Student[], s: Pick<CallState, 'absent' | 'round'> & { mix?: number }, classSeed: number): Student[] {
+  return shuffle(presentOf(students, s), rng(classSeed * 31 + s.round * 7919 + (s.mix ?? 0) * 104729));
+}
+
+export type RaceSlot = { student: Student; animal: string };
+/** Xếp vị trí xuất phát ngẫu nhiên: ưu tiên các em chưa được gọi, thiếu thì thêm bạn khác cho đủ làn. */
+export function raceLineup(cands: Student[], present: Student[], rand: () => number = Math.random, lanes = 6): RaceSlot[] {
+  const first = shuffle(cands, rand).slice(0, lanes);
+  const fill = shuffle(present.filter((x) => !first.some((f) => f.id === x.id)), rand).slice(0, lanes - first.length);
+  const animals = shuffle(ANIMALS, rand);
+  return shuffle([...first, ...fill], rand).map((student, i) => ({ student, animal: animals[i % animals.length] }));
 }
 
 const ANIMALS = ['🐢', '🐇', '🦆', '🐘', '🐎', '🐿️', '🐧', '🦒', '🐌', '🦔'];
 
 /** Cuộc đua: em được gọi + tối đa 5 bạn khác; thời gian về đích (giây) — em được gọi luôn về trước. */
-export function raceFor(winner: Student, pool: Student[], rand: () => number = Math.random, lanes = 6, seconds = 4) {
+export function raceFor(winner: Student, pool: Student[], rand: () => number = Math.random, lanes = 6, seconds = 4, lineup?: RaceSlot[]) {
   const others = shuffle(pool.filter((x) => x.id !== winner.id), rand).slice(0, lanes - 1);
-  const racers = shuffle([winner, ...others], rand);
-  const animals = shuffle(ANIMALS, rand);
+  const racers = lineup?.some((l) => l.student.id === winner.id) ? lineup.map((l) => l.student) : shuffle([winner, ...others], rand);
+  const animals = lineup?.some((l) => l.student.id === winner.id) ? lineup.map((l) => l.animal) : shuffle(ANIMALS, rand);
   const base = Math.max(1.5, seconds) * (0.9 + rand() * 0.1);
   return racers.map((st, i) => ({
     student: st,
@@ -139,7 +149,7 @@ export function addTally(s: CallState, studentId: string, mark: keyof Tally): Ca
 export const spinEase = (x: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
 
 /** Số vòng quay theo thời gian: quay lâu thì nhiều vòng hơn */
-export const spinTurns = (seconds: number) => Math.max(3, Math.min(16, Math.round(seconds * 1.1)));
+export const spinTurns = (seconds: number) => Math.max(3, Math.min(30, Math.round(seconds * 1.1)));
 
 /** Ô đang nằm dưới kim (ở đỉnh) khi vòng đã quay góc a */
 export function sliceAt(a: number, n: number): number {

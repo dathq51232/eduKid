@@ -7,8 +7,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Eye, EyeOff, Maximize2, Timer, Minimize2, RotateCcw, Users, Volume2, VolumeX, X } from 'lucide-react';
 import MiloMascot, { type MiloVariant } from '@/components/mascot/MiloMascot';
 import {
-  CALL_MODES, DURATIONS, addTally, candidatesOf, lotHops, lotsFor, pickOne, presentOf, raceFor, racePos, restoreState, shortName, sliceAt, spinEase, spinTurns, wheelAngle,
-  type CallMode, type CallState, type Student, type Tally,
+  CALL_MODES, DURATIONS, addTally, raceLineup, candidatesOf, lotHops, lotsFor, pickOne, presentOf, raceFor, racePos, restoreState, shortName, sliceAt, spinEase, spinTurns, wheelAngle,
+  type CallMode, type CallState, type RaceSlot, type Student, type Tally,
 } from '@/lib/classroom/callon';
 import { bookLessons, lessonPool, type ExamQuestion } from '@/lib/exams/matrix';
 import { answerText } from '@/lib/exams/word';
@@ -27,30 +27,77 @@ type RaceLane = ReturnType<typeof raceFor>[number];
 
 const hashId = (s: string) => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 
-/* ------------------------------------------------------------ âm thanh (WebAudio, không cần file) */
+const PENTA = [523, 587, 659, 784, 880, 1047, 1175, 1319];
+
+/* ------------------------------------------------------------ âm thanh (WebAudio, tự tạo, không cần file) */
+// Mỗi kiểu một bộ tiếng: vòng quay "tách tách", bốc thăm tiếng xào giấy + đàn gõ, đua thú tiếng bước chạy + còi + reo hò,
+// trứng nở tiếng gõ cốc cốc + trống dồn + vỏ nứt + gà con chiêm chiếp.
 function useSound(on: boolean) {
   const ctx = useRef<AudioContext | null>(null);
-  const beep = useCallback((freq: number, ms = 60, type: OscillatorType = 'triangle', vol = 0.08) => {
-    if (!on || typeof window === 'undefined') return;
+  const noiseBuf = useRef<AudioBuffer | null>(null);
+  const audio = useCallback(() => {
+    if (!on || typeof window === 'undefined') return null;
     try {
       ctx.current ??= new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      const c = ctx.current, o = c.createOscillator(), g = c.createGain();
-      o.type = type; o.frequency.value = freq; g.gain.value = vol;
-      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + ms / 1000);
-      o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime + ms / 1000);
-    } catch { /* trình duyệt chặn âm thanh: bỏ qua */ }
+      if (ctx.current.state === 'suspended') void ctx.current.resume();
+      return ctx.current;
+    } catch { return null; }
   }, [on]);
-  /** tiếng "tách" khi kim lướt qua một ô / đèn nhảy sang lá khác; càng về cuối càng trầm */
-  const tick = useCallback((x = 0) => beep(1300 - 500 * x, 28, 'square', 0.035), [beep]);
-  /** trống dồn trước khi trứng nở */
-  const drum = useCallback(() => beep(110 + Math.random() * 30, 70, 'triangle', 0.12), [beep]);
+  const beep = useCallback((freq: number, ms = 60, type: OscillatorType = 'triangle', vol = 0.08, toFreq?: number) => {
+    const c = audio(); if (!c) return;
+    try {
+      const o = c.createOscillator(), g = c.createGain(), t = c.currentTime;
+      o.type = type; o.frequency.setValueAtTime(freq, t);
+      if (toFreq) o.frequency.exponentialRampToValueAtTime(toFreq, t + ms / 1000);
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + ms / 1000);
+      o.connect(g).connect(c.destination); o.start(t); o.stop(t + ms / 1000 + 0.02);
+    } catch { /* bỏ qua */ }
+  }, [audio]);
+  /** tiếng ồn đã lọc: bước chân, xào giấy, vỏ nứt, reo hò */
+  const noise = useCallback((ms: number, freq: number, vol = 0.2, type: BiquadFilterType = 'bandpass', q = 1.2, toFreq?: number, attack = 0) => {
+    const c = audio(); if (!c) return;
+    try {
+      if (!noiseBuf.current) {
+        const b = c.createBuffer(1, c.sampleRate, c.sampleRate); const d = b.getChannelData(0);
+        for (let k = 0; k < d.length; k++) d[k] = Math.random() * 2 - 1;
+        noiseBuf.current = b;
+      }
+      const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), t = c.currentTime, end = t + ms / 1000;
+      src.buffer = noiseBuf.current; src.loop = true;
+      f.type = type; f.Q.value = q; f.frequency.setValueAtTime(freq, t);
+      if (toFreq) f.frequency.exponentialRampToValueAtTime(toFreq, end);
+      g.gain.setValueAtTime(attack ? 0.0001 : vol, t);
+      if (attack) g.gain.exponentialRampToValueAtTime(vol, t + attack / 1000);
+      g.gain.exponentialRampToValueAtTime(0.0001, end);
+      src.connect(f).connect(g).connect(c.destination); src.start(t); src.stop(end + 0.02);
+    } catch { /* bỏ qua */ }
+  }, [audio]);
+  const at = (fn: () => void, ms: number) => window.setTimeout(fn, ms);
+
+  // vòng quay: tiếng lẫy "tách", trầm dần khi chậm lại
+  const tick = useCallback((x = 0) => { beep(1300 - 500 * x, 26, 'square', 0.03); noise(18, 3000 - 1200 * x, 0.06, 'highpass', 0.7); }, [beep, noise]);
+  // bốc thăm: nốt đàn gõ cho mỗi bước đèn chạy (thang ngũ cung), tiếng lật "vút", tiếng xào thăm
+  const chime = useCallback((x = 0) => { const f = PENTA[Math.floor(Math.random() * PENTA.length)] * (x > 0.85 ? 0.5 : 1); beep(f, 220, 'sine', 0.09); beep(f * 2.76, 90, 'sine', 0.02); }, [beep]);
+  const whoosh = useCallback(() => noise(380, 400, 0.18, 'bandpass', 0.8, 3500, 60), [noise]);
+  const riffle = useCallback((ms = 1100) => { for (let t = 0; t < ms; t += 28 + Math.random() * 22) at(() => noise(22, 2500 + Math.random() * 2500, 0.08, 'bandpass', 1.5), t); }, [noise]);
+  // đua thú: đếm ngược, còi xuất phát, bước chân, reo hò
+  const countBeep = useCallback((last = false) => beep(last ? 1046 : 523, last ? 420 : 180, 'square', 0.06), [beep]);
+  const whistle = useCallback(() => { beep(2600, 500, 'sine', 0.06); beep(2750, 500, 'sine', 0.04); }, [beep]);
+  const step = useCallback((x = 0, heavy = false) => { noise(heavy ? 90 : 55, heavy ? 160 : 320 + Math.random() * 120, heavy ? 0.5 : 0.32, 'lowpass', 0.9); if (!heavy) beep(90 + x * 40, 40, 'sine', 0.07); }, [beep, noise]);
+  const cheer = useCallback(() => { noise(1600, 1400, 0.12, 'bandpass', 0.6, 900, 250); noise(1400, 2400, 0.06, 'bandpass', 0.8, 1600, 300); }, [noise]);
+  const dice = useCallback(() => { for (let t = 0; t < 700; t += 50 + Math.random() * 60) at(() => { noise(30, 1800 + Math.random() * 1500, 0.15, 'bandpass', 2); beep(700 + Math.random() * 500, 25, 'square', 0.02); }, t); }, [beep, noise]);
+  // trứng nở: gõ cốc cốc, trống dồn, vỏ nứt, gà con
+  const knock = useCallback((n = 1) => { beep(170 + n * 40, 90, 'triangle', 0.16); noise(50, 1100 + n * 200, 0.25, 'bandpass', 3); }, [beep, noise]);
+  const drum = useCallback(() => { beep(110 + Math.random() * 30, 80, 'triangle', 0.13); noise(60, 200, 0.18, 'lowpass', 0.8); }, [beep, noise]);
+  const crack = useCallback(() => { for (let k = 0; k < 7; k++) at(() => noise(35, 3000 + Math.random() * 3000, 0.22, 'highpass', 0.8), k * 45 + Math.random() * 20); }, [noise]);
+  const chirp = useCallback(() => { [0, 170, 420, 590].forEach((t) => at(() => beep(2200, 110, 'sine', 0.07, 3400), t)); }, [beep]);
   /** "ta-da": hợp âm rồi chuỗi nốt lấp lánh */
   const fanfare = useCallback(() => {
     [392, 523, 659].forEach((f) => beep(f, 420, 'square', 0.04));
-    [784, 988, 1175, 1568].forEach((f, i) => setTimeout(() => beep(f, 260, 'triangle', 0.06), 220 + i * 90));
-    setTimeout(() => [523, 659, 784, 1047].forEach((f) => beep(f, 700, 'triangle', 0.045)), 620);
+    [784, 988, 1175, 1568].forEach((f, i) => at(() => beep(f, 260, 'triangle', 0.06), 220 + i * 90));
+    at(() => [523, 659, 784, 1047].forEach((f) => beep(f, 700, 'triangle', 0.045)), 620);
   }, [beep]);
-  return { beep, tick, drum, fanfare };
+  return { beep, tick, chime, whoosh, riffle, countBeep, whistle, step, cheer, dice, knock, drum, crack, chirp, fanfare };
 }
 
 export default function CallOn({ classId, className, grade, students, absentToday = [] }: { classId: string; className: string; grade: number; students: Student[]; /** em vắng hôm nay theo Sổ lớp */ absentToday?: string[] }) {
@@ -66,7 +113,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
   const [notice, setNotice] = useState('');
   const boardRef = useRef<HTMLDivElement>(null);
   const reduced = useRef(false);
-  const { beep, tick, drum, fanfare } = useSound(s.sound);
+  const { tick, chime, whoosh, riffle, countBeep, whistle, step, cheer, dice, knock, drum, crack, chirp, fanfare } = useSound(s.sound);
   const secs = reduced.current ? 0.6 : s.duration;
   const [celebrate, setCelebrate] = useState(false);
   const timers = useRef<number[]>([]);
@@ -168,12 +215,22 @@ export default function CallOn({ classId, className, grade, students, absentToda
 
   /* -------------------------------------------- 2. bốc thăm */
   const lots = useMemo(() => lotsFor(students, s, hashId(classId)), [students, s, classId]);
+  const [mixing, setMixing] = useState(false);
+  /** Trộn thăm: các lá bay lộn xộn rồi đánh số lại (em đã bốc vẫn được giữ) */
+  const mixLots = () => {
+    if (phase === 'running' || mixing) return;
+    closeResult();
+    setMixing(true);
+    riffle(reduced.current ? 300 : 1300);
+    later(() => setS((x) => ({ ...x, mix: x.mix + 1 })), reduced.current ? 150 : 650);
+    later(() => setMixing(false), reduced.current ? 300 : 1300);
+  };
   const [flipped, setFlipped] = useState<number | null>(null);
   const [hot, setHot] = useState<number | null>(null); // lá đang sáng khi đèn chạy
   const flipLot = (i: number, st: Student) => {
     setHot(null);
     setFlipped(i);
-    beep(660, 90); later(() => beep(880, 90), 120);
+    whoosh();
     later(() => reveal(st), reduced.current ? 200 : 900);
   };
   const drawLot = (index?: number) => {
@@ -191,47 +248,75 @@ export default function CallOn({ classId, className, grade, students, absentToda
     const choices = lots.map((x, k) => (ids.has(x.id) ? k : -1)).filter((k) => k >= 0);
     setPhase('running');
     const hops = lotHops(choices, target, secs);
-    hops.forEach(([k, t], n) => later(() => { setHot(k); tick(t / (secs * 1000)); if (n === hops.length - 1) later(() => flipLot(k, st), 450); }, t));
+    hops.forEach(([k, t], n) => later(() => { setHot(k); chime(t / (secs * 1000)); if (n === hops.length - 1) later(() => flipLot(k, st), 450); }, t));
   };
 
   /* -------------------------------------------- 3. đua thú */
   const [race, setRace] = useState<RaceLane[] | null>(null);
   const [raceT, setRaceT] = useState(0);
+  const [lineup, setLineup] = useState<RaceSlot[] | null>(null);
+  const [lining, setLining] = useState(false);
+  const [count, setCount] = useState<number | null>(null); // đếm ngược 3-2-1
+  /** Xếp vị trí xuất phát ngẫu nhiên (ưu tiên em chưa được gọi) */
+  const shuffleLineup = () => {
+    if (phase === 'running' || lining) return;
+    closeResult(); setRace(null);
+    setLining(true); dice();
+    let k = 0;
+    const roll = () => { setLineup(raceLineup(candidatesOf(students, s).list, present)); if (++k < 6) later(roll, 110); else setLining(false); };
+    roll();
+  };
   const runRace = () => {
-    const st = choose();
+    // em được gọi: một bạn chưa được gọi trong các làn đã xếp (chưa xếp thì xếp ngẫu nhiên)
+    const { list, newRound } = candidatesOf(students, s);
+    if (newRound) { setS((x) => ({ ...x, called: [], round: x.round + 1 })); setNotice('Cả lớp đã được gọi — bắt đầu vòng mới.'); }
+    let slots = lineup && lineup.every((l) => present.some((p) => p.id === l.student.id)) ? lineup : null;
+    if (!slots || !slots.some((l) => list.some((c) => c.id === l.student.id))) slots = raceLineup(list, present);
+    setLineup(slots);
+    const inLane = slots.filter((l) => list.some((c) => c.id === l.student.id)).map((l) => l.student);
+    const st = pickOne(inLane);
     if (!st) return;
-    const lanes = raceFor(st, present, Math.random, 6, secs);
+    const lanes = raceFor(st, present, Math.random, slots.length, secs, slots);
     setRace(lanes);
     setRaceT(0);
     setPhase('running');
-    const winnerAt = lanes.find((l) => l.student.id === st.id)!.finish;
-    const speed = reduced.current ? 6 : 1;
-    const t0 = performance.now();
-    let lastBeat = 0;
-    const frame = (now: number) => {
-      const t = ((now - t0) / 1000) * speed;
-      setRaceT(t);
-      if (t - lastBeat > 0.22) { lastBeat = t; beep(200 + (t / winnerAt) * 260 + Math.random() * 40, 50, 'sine', 0.05); }
-      if (t < winnerAt) requestAnimationFrame(frame);
-      else { setRaceT(winnerAt); later(() => reveal(st), 300); }
+    // đếm ngược 3 – 2 – 1 rồi còi xuất phát
+    const cd = reduced.current ? 0 : 3;
+    for (let n = cd; n >= 1; n--) later(() => { setCount(n); countBeep(false); }, (cd - n) * 700);
+    later(() => { setCount(0); countBeep(true); whistle(); start(); }, cd * 700);
+    later(() => setCount(null), cd * 700 + 600);
+    const start = () => {
+      const winnerAt = lanes.find((l) => l.student.id === st.id)!.finish;
+      const speed = reduced.current ? 6 : 1;
+      const t0 = performance.now();
+      let nextStep = 0, foot = 0;
+      const frame = (now: number) => {
+        const t = ((now - t0) / 1000) * speed;
+        setRaceT(t);
+        // tiếng bước chạy: dồn dập dần khi về gần đích; xen tiếng chân nặng (voi, ngựa)
+        if (t >= nextStep) { foot++; step(t / winnerAt, foot % 4 === 0); nextStep = t + Math.max(0.09, 0.26 - 0.16 * (t / winnerAt)); }
+        if (t < winnerAt) requestAnimationFrame(frame);
+        else { setRaceT(winnerAt); cheer(); later(() => reveal(st), 600); }
+      };
+      requestAnimationFrame(frame);
     };
-    requestAnimationFrame(frame);
   };
 
   /* -------------------------------------------- 4. trứng nở */
   const [taps, setTaps] = useState(0);
   const tapEgg = (from: number) => {
     const n = from + 1;
-    beep(300 + n * 140, 120, 'square', 0.05);
+    knock(n);
     if (n < 3) { setTaps(n); return; }
     const st = choose();
     if (!st) return;
     setTaps(3);
     setPhase('running');
-    const ms = Math.min(secs, 8) * 1000;
+    const ms = secs * 1000;
     let t = 0;
-    while (t < ms) { const x = t / ms; later(drum, t); t += 260 - 200 * x; }
-    later(() => reveal(st), ms);
+    while (t < ms) { const x = t / ms; later(drum, t); t += 300 - 230 * x; }
+    later(crack, ms - 250);
+    later(() => { reveal(st); chirp(); }, ms);
   };
 
   /* -------------------------------------------- nút chính + phím cách */
@@ -354,12 +439,15 @@ export default function CallOn({ classId, className, grade, students, absentToda
 
         {s.mode === 'lots' && (
           <div className="cl">
-            <p className="callon-hint">Bấm một lá thăm, hoặc bấm <b>Bốc thăm</b> để Milo bốc giúp</p>
-            <ol className="cl-grid" style={{ ['--cols' as string]: String(Math.max(5, Math.min(10, Math.ceil(lots.length / 3)))) }}>
+            <div className="callon-stagebar">
+              <p className="callon-hint">Bấm một lá thăm, hoặc bấm <b>Bốc thăm</b> để Milo bốc giúp</p>
+              <button type="button" className="callon-chip" onClick={mixLots} disabled={phase === 'running' || mixing}>🔀 Trộn thăm</button>
+            </div>
+            <ol className={`cl-grid${mixing ? ' is-mixing' : ''}`} style={{ ['--cols' as string]: String(Math.max(5, Math.min(10, Math.ceil(lots.length / 3)))) }}>
               {lots.map((st, i) => {
                 const used = s.noRepeat && s.called.includes(st.id) && flipped !== i;
                 return (
-                  <li key={st.id}>
+                  <li key={st.id} style={{ ['--dx' as string]: `${((i * 73) % 11) - 5}0px`, ['--dy' as string]: `${((i * 37) % 9) - 4}0px`, ['--r' as string]: `${((i * 53) % 31) - 15}deg` }}>
                     <button type="button" className={`cl-lot${used ? ' is-used' : ''}${flipped === i ? ' is-flip' : ''}${hot === i ? ' is-hot' : ''}`} style={{ ['--c' as string]: COLORS[i % 5 === 3 ? 4 : i % 5] }}
                       disabled={used || phase === 'running'} aria-label={used ? `Lá ${i + 1}: đã bốc` : `Lá thăm số ${i + 1}`} onClick={() => { if (phase === 'done') closeResult(); drawLot(i); }}>
                       <span className="cl-front">{used ? 'đã bốc' : i + 1}</span>
@@ -374,15 +462,19 @@ export default function CallOn({ classId, className, grade, students, absentToda
 
         {s.mode === 'race' && (
           <div className="cr">
-            <p className="callon-hint">{race ? 'Em về đích đầu tiên được gọi' : `Bấm Xuất phát: ${Math.min(6, present.length)} em ngẫu nhiên vào đua`}</p>
+            <div className="callon-stagebar">
+              <p className="callon-hint">{race ? 'Em về đích đầu tiên được gọi' : lineup ? 'Đã xếp vị trí — bấm Xuất phát' : `Bấm Xuất phát hoặc xếp ${Math.min(6, present.length)} bạn vào vị trí ngẫu nhiên`}</p>
+              <button type="button" className="callon-chip" onClick={shuffleLineup} disabled={phase === 'running' || lining}>🎲 Xếp vị trí ngẫu nhiên</button>
+            </div>
+            {count !== null && <span key={count} className="cr-count" aria-live="assertive">{count === 0 ? 'Chạy!' : count}</span>}
             <div className="cr-track">
               <span className="cr-finish" aria-hidden="true" />
-              {(race ?? Array.from({ length: Math.min(6, Math.max(1, present.length)) }, (_, i) => ({ student: { id: `?${i}`, name: '?' }, animal: ['🐢', '🐇', '🦆', '🐘', '🐎', '🐿️'][i], finish: 1, wobble: 1 }))).map((l) => {
+              {(race ?? (lineup ?? Array.from({ length: Math.min(6, Math.max(1, present.length)) }, (_, i) => ({ student: { id: `?${i}`, name: '?' }, animal: ['🐢', '🐇', '🦆', '🐘', '🐎', '🐿️'][i] }))).map((l) => ({ ...l, finish: 1, wobble: 1 }))).map((l) => {
                 const p = race ? racePos(raceT, l.finish, l.wobble) : 0;
                 const win = phase === 'done' && picked?.id === l.student.id;
                 return (
                   <div key={l.student.id} className={`cr-lane${win ? ' is-win' : ''}`}>
-                    <span className="cr-name">{race ? l.student.name : 'Ai sẽ vào đua?'}</span>
+                    <span className={`cr-name${lining ? ' is-rolling' : ''}`}>{race || lineup ? l.student.name : 'Ai sẽ vào đua?'}</span>
                     <span className="cr-animal" style={{ left: `calc(170px + ${p} * (100% - 250px))` }} aria-hidden="true">{l.animal}</span>
                   </div>
                 );

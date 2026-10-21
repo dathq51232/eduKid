@@ -1,5 +1,5 @@
 // Kiểm tra phần tính toán của "Gọi tên – Dò bài": npx tsx scripts/check-callon.ts
-import { candidatesOf, emptyState, lotHops, lotsFor, raceFor, racePos, restoreState, rng, sliceAt, spinEase, wheelAngle, type Student } from '../src/lib/classroom/callon';
+import { DURATIONS, candidatesOf, emptyState, lotHops, lotsFor, raceLineup, raceFor, racePos, restoreState, rng, sliceAt, spinEase, wheelAngle, type Student } from '../src/lib/classroom/callon';
 
 let fail = 0;
 const ok = (c: boolean, m: string) => { if (!c) { fail++; console.log('✗', m); } };
@@ -57,6 +57,24 @@ for (let t = 1; t <= 300; t++) {
 }
 ok(raceFor(S[0], [S[0], S[1]]).length === 2, 'lớp 2 em: đua 2 làn');
 ok(Math.abs(raceFor(S[0], S, rng(9), 6, 10).find((l) => l.student.id === S[0].id)!.finish - 10) <= 1, 'đua theo thời gian đã chọn');
+// 3b. Xếp vị trí ngẫu nhiên: 6 làn khác nhau, ưu tiên em chưa gọi; đua giữ đúng thứ tự làn, em được gọi về trước
+for (let t = 1; t <= 200; t++) {
+  const r = rng(t * 13);
+  const cands = S.slice(0, t % 9);
+  const lu = raceLineup(cands, S, r);
+  ok(lu.length === 6 && new Set(lu.map((l) => l.student.id)).size === 6, 'xếp đủ 6 làn khác nhau');
+  ok(cands.slice(0, 6).length === lu.filter((l) => cands.some((c) => c.id === l.student.id)).length, 'ưu tiên em chưa được gọi');
+  const inLane = lu.filter((l) => cands.some((c) => c.id === l.student.id));
+  if (inLane.length) {
+    const w = inLane[0].student;
+    const race = raceFor(w, S, r, 6, 3 + (t % 38), lu);
+    ok(race.map((l) => l.student.id).join() === lu.map((l) => l.student.id).join() && race.map((l) => l.animal).join() === lu.map((l) => l.animal).join(), 'đua giữ đúng vị trí đã xếp');
+    ok([...race].sort((a, b) => a.finish - b.finish)[0].student.id === w.id, 'em được gọi về trước khi đã xếp vị trí');
+  }
+}
+ok(Math.max(...DURATIONS) === 40, 'thời gian chọn được tối đa 40 giây');
+const m0 = lotsFor(S, { absent: [], round: 1, mix: 0 }, 42).map((x) => x.id).join();
+ok(m0 !== lotsFor(S, { absent: [], round: 1, mix: 1 }, 42).map((x) => x.id).join(), 'trộn thăm đổi số lá');
 // 4. Lá thăm: cùng vòng thì giữ số, vòng mới xáo lại
 const a1 = lotsFor(S, { absent: [], round: 1 }, 42).map((x) => x.id).join();
 ok(a1 === lotsFor(S, { absent: [], round: 1 }, 42).map((x) => x.id).join(), 'cùng vòng giữ số lá');

@@ -3520,3 +3520,16 @@ button.diary-pill { cursor: pointer; }
 @keyframes spot-hop { 50% { transform: translateY(-14px); } }
 @keyframes rays { to { rotate: 360deg; } }
 @media (prefers-reduced-motion: reduce) { .callon-spot::before, .callon-burst, .callon-spot-card, .callon-spot-card .milo { animation: none !important; } .callon-burst { display: none; } }
+/* Gọi tên: thanh nút trên sân chơi, trộn thăm, xếp vị trí đua, đếm ngược */
+.callon-stagebar { position: absolute; left: 24px; right: 24px; top: 10px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.callon-stagebar .callon-hint { position: static; }
+.callon-stagebar .callon-chip:disabled { opacity: .5; cursor: default; }
+.cl, .cr { padding-top: 66px; }
+.cl-grid.is-mixing li { animation: lot-mix .32s ease-in-out 4 alternate; }
+.cl-grid.is-mixing .cl-front { color: transparent; }
+@keyframes lot-mix { to { transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(.92); } }
+.cr-name.is-rolling { animation: name-roll .11s linear infinite; }
+@keyframes name-roll { 50% { transform: translateY(-50%) translateY(-3px); opacity: .55; } }
+.cr-count { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; color: #ffc83d; font-size: clamp(110px, 16vw, 200px); font-weight: 700; line-height: 1; text-shadow: 0 6px 0 #d39b12, 0 0 40px rgb(255 200 61 / .5); pointer-events: none; animation: count-pop .65s cubic-bezier(.2, 1.4, .4, 1); }
+@keyframes count-pop { from { transform: scale(2.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cl-grid.is-mixing li, .cr-name.is-rolling, .cr-count { animation: none !important; } }
