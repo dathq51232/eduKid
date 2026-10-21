@@ -1,7 +1,8 @@
 // Kiểm tra đọc lịch báo giảng Excel → giáo án (dữ liệu demo tự tạo theo file mẫu): npm run check:schedule
-import { buildXlsx } from '../src/lib/xlsx';
+import { buildXlsx, XS } from '../src/lib/xlsx';
+import { inSchoolOrder, weekDocument } from '../src/lib/plans/word';
 import { readXlsx } from '../src/lib/xlsx-read';
-import { matchLesson, parseSchedule, plansFromSchedule, scheduleTemplate, subjectOf } from '../src/lib/plans/schedule';
+import { isRedColor, matchLesson, parseSchedule, plansFromSchedule, scheduleTemplate, subjectOf } from '../src/lib/plans/schedule';
 import { lessonInfos } from '../src/lib/plans/lessons';
 
 let pass = 0, fail = 0;
@@ -37,6 +38,33 @@ const ok = (c: unknown, m: string) => { if (c) pass++; else { fail++; console.lo
   ok(plans[3].lessonId === 'toan1-kntt-b04' && plans[6].lessonId === 'tv1-kntt-t04', 'tiết ôn tập theo bài trọng tâm của tuần');
   ok(plans[4].plan.integration === 'GDQCN: Quyền trẻ em' && plans[4].plan.ppct === '5' && plans[4].plan.subject === 'dao-duc', 'tích hợp, PPCT, môn ngoài app');
   ok(plans.every((p) => p.plan.title.length >= 2 && p.plan.activities.length === 4 && p.plan.date), 'đủ 4 hoạt động, có ngày');
+  // tiết chữ đỏ = tiết trống: bỏ qua, không soạn
+  {
+    const t = scheduleTemplate(1, '2026-10-05', '5');
+    const set = (r: number, mon: string, bai: string, red = false) => { t.rows[r][3] = red ? { v: mon, s: XS.red } : mon; t.rows[r][5] = bai; };
+    set(4, 'HĐTN1', 'Sinh hoạt dưới cờ'); set(5, 'Toán', 'Bài 4: So sánh số - Tiết 4'); set(6, 'Tiếng Việt', 'Bài 16: M m N n - Tiết 1'); set(7, 'Tiếng Việt', 'Bài 16: M m N n - Tiết 2');
+    set(8, 'TNXH', 'Bài 5: Ôn tập chủ đề Gia đình'); set(9, 'Toán (BS)', 'Ôn tập'); set(10, 'Tiếng Việt (BS)', 'Ôn tập');
+    set(11, 'Tiếng Việt', 'Bài 17: G g Gi gi - Tiết 1'); set(12, 'Mĩ thuật', 'Sáng tạo từ những chấm màu', true); set(13, 'Đạo đức', 'Bài 5: Gia đình của em');
+    set(14, 'Tiếng Anh', 'Unit 3 - Lesson 1', true); set(15, 'GD thể chất', 'Tập hợp đội hình', true); set(16, 'Âm nhạc', 'Hát: Tổ quốc ta');
+    const red = parseSchedule(await readXlsx(buildXlsx([t])));
+    ok(red.rows.length === 10 && red.skipped.length === 3 && red.skipped.map((r) => r.subjectLabel).join(',') === 'Mĩ thuật,Tiếng Anh,GD thể chất', `chữ đỏ: ${red.rows.length} tiết soạn, bỏ ${red.skipped.map((r) => r.subjectLabel)}`);
+    ok(red.skipped[0].date === '2026-10-06' && red.skipped[0].period === 2, 'tiết bỏ qua vẫn giữ ngày, tiết');
+    ok(isRedColor('FF0000') && isRedColor('C00000') && !isRedColor('000000') && !isRedColor('FF9900') && !isRedColor(''), 'nhận màu đỏ');
+    // thứ tự soạn theo mẫu nhà trường
+    const rp = plansFromSchedule(red, { grade: 1, className: '1A1', lessonsBySubject: { toan: lessonInfos('toan', 1), 'tieng-viet': lessonInfos('tieng-viet', 1) } });
+    const order = inSchoolOrder(rp.map((r) => r.plan)).map((p) => `${p.subjectLabel}|${p.title}`);
+    ok(order.join(' / ') === ['Tiếng Việt|Bài 16: M m N n - Tiết 1', 'Tiếng Việt|Bài 16: M m N n - Tiết 2', 'Tiếng Việt|Bài 17: G g Gi gi - Tiết 1', 'Toán|Bài 4: So sánh số - Tiết 4', 'Đạo đức|Bài 5: Gia đình của em',
+      'TNXH|Bài 5: Ôn tập chủ đề Gia đình', 'HĐTN1|Sinh hoạt dưới cờ', 'Tiếng Việt (BS)|Ôn tập', 'Toán (BS)|Ôn tập', 'Âm nhạc|Hát: Tổ quốc ta'].join(' / '), `thứ tự: ${order.join(' / ')}`);
+    const html = weekDocument('2026-10-05', rp.map((r) => r.plan), 'TH A', '1A1', true, red.skipped);
+    const body = html.split('Chữ đỏ')[1] ?? '';
+    const pos = ['Bài 16: M m N n - Tiết 1', 'Bài 4: So sánh số - Tiết 4', 'Bài 5: Gia đình của em', 'Bài 5: Ôn tập chủ đề Gia đình', 'Sinh hoạt dưới cờ'].map((t) => body.indexOf(t));
+    ok(pos.every((x, i) => x > 0 && (i === 0 || x > pos[i - 1])), `Word: giáo án theo thứ tự nhà trường (${pos})`);
+    ok(html.includes('<span style="color:#FF0000">Mĩ thuật</span>') && !body.includes('Sáng tạo từ những chấm màu'), 'Word: tiết trống ghi chữ đỏ trong bảng, không có giáo án');
+    let allRed = '';
+    const t2 = scheduleTemplate(1, '2026-10-05', '5'); t2.rows[4][3] = { v: 'Mĩ thuật', s: XS.red }; t2.rows[4][5] = 'Vẽ';
+    try { parseSchedule(await readXlsx(buildXlsx([t2]))); } catch (e) { allRed = String(e); }
+    ok(allRed.includes('chữ đỏ'), 'báo rõ khi mọi tiết đều chữ đỏ');
+  }
   // khác khối → không ghép bài app
   const other = plansFromSchedule(sch, { grade: 3, className: '3A', lessonsBySubject: { toan: lessonInfos('toan', 3) } });
   ok(other.every((p) => p.kind !== 'app'), 'lịch khối 1 cho lớp 3: không ghép bài app');

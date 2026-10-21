@@ -30,8 +30,48 @@ export type Schedule = {
   /** Thứ Hai của tuần (yyyy-mm-dd), '' nếu không đọc được */
   monday: string;
   rows: ScheduleRow[];
+  /** tiết chữ đỏ trong lịch = tiết trống (giáo viên khác dạy / không soạn): bỏ qua khi soạn giáo án */
+  skipped: ScheduleRow[];
   warnings: string[];
 };
+
+/** chữ đỏ: đỏ rõ (R cao, G và B thấp) — vd FF0000, C00000, E53935 */
+export function isRedColor(hex: string | undefined): boolean {
+  if (!hex || !/^[0-9A-F]{6}$/i.test(hex)) return false;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  return r >= 0xb0 && g <= 0x70 && b <= 0x70;
+}
+
+// Thứ tự soạn giáo án trong file tuần theo mẫu nhà trường:
+// Tiếng Việt → Toán → Đạo đức → TN&XH → HĐTN → Tiếng Việt (tăng cường) → Toán (tăng cường), sau đó các môn khác.
+export const SCHOOL_ORDER: { label: string; subject: PlanSubject[]; extra: boolean }[] = [
+  { label: 'TIẾNG VIỆT', subject: ['tieng-viet'], extra: false },
+  { label: 'TOÁN', subject: ['toan', 'stem'], extra: false },
+  { label: 'ĐẠO ĐỨC', subject: ['dao-duc'], extra: false },
+  { label: 'TỰ NHIÊN VÀ XÃ HỘI', subject: ['tnxh'], extra: false },
+  { label: 'HOẠT ĐỘNG TRẢI NGHIỆM', subject: ['hdtn'], extra: false },
+  { label: 'TIẾNG VIỆT (TĂNG CƯỜNG)', subject: ['tieng-viet'], extra: true },
+  { label: 'TOÁN (TĂNG CƯỜNG)', subject: ['toan', 'stem'], extra: true },
+];
+/** vị trí nhóm môn theo mẫu nhà trường (môn khác xếp sau, theo tên môn) */
+export function schoolRank(subject: PlanSubject, extra: boolean): number {
+  const i = SCHOOL_ORDER.findIndex((g) => g.subject.includes(subject) && g.extra === extra);
+  if (i >= 0) return i;
+  // tiết bổ sung của môn khác (vd HĐTN tăng cường) đi liền nhóm chính của môn đó
+  const j = SCHOOL_ORDER.findIndex((g) => g.subject.includes(subject));
+  return j >= 0 ? j + 0.5 : SCHOOL_ORDER.length;
+}
+export const schoolGroupLabel = (subject: PlanSubject, extra: boolean) => SCHOOL_ORDER[schoolRank(subject, extra)]?.label ?? null;
+const sessionRank = (s?: string) => (/chi/i.test(s ?? '') ? 1 : 0);
+/** Xếp theo mẫu nhà trường: nhóm môn, rồi ngày → buổi → tiết (đúng thứ tự dạy trong tuần) */
+export function sortSchoolOrder<T>(list: T[], key: (x: T) => { subject: PlanSubject; extra: boolean; label?: string; date?: string; session?: string; period?: number }): T[] {
+  return list.map((x, i) => ({ x, i, k: key(x) })).sort((a, b) => {
+    const ra = schoolRank(a.k.subject, a.k.extra), rb = schoolRank(b.k.subject, b.k.extra);
+    if (ra !== rb) return ra - rb;
+    if (ra >= SCHOOL_ORDER.length && a.k.subject !== b.k.subject) return (a.k.label ?? a.k.subject).localeCompare(b.k.label ?? b.k.subject, 'vi');
+    return (a.k.date ?? '').localeCompare(b.k.date ?? '') || sessionRank(a.k.session) - sessionRank(b.k.session) || (a.k.period || 99) - (b.k.period || 99) || a.i - b.i;
+  }).map((e) => e.x);
+}
 
 /** bỏ dấu, chữ thường, gọn khoảng trắng — để so tên cột, tên môn */
 export const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -100,14 +140,15 @@ function mapColumns(header: string[]): Partial<Record<Col, number>> {
   return cols;
 }
 
-/** Điền giá trị ô gộp vào mọi ô của vùng gộp */
-function fillMerges(sheet: Sheet): string[][] {
+/** Điền giá trị (và màu chữ) ô gộp vào mọi ô của vùng gộp */
+function fillMerges(sheet: Sheet): { rows: string[][]; colors: string[][] } {
   const rows = sheet.rows.map((r) => [...r]);
+  const colors = sheet.rows.map((r, i) => r.map((_, j) => sheet.colors?.[i]?.[j] ?? ''));
   for (const [r1, c1, r2, c2] of sheet.merges) {
-    const v = rows[r1]?.[c1] ?? '';
-    for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) if (rows[r]) rows[r][c] = v;
+    const v = rows[r1]?.[c1] ?? '', col = colors[r1]?.[c1] ?? '';
+    for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) if (rows[r]) { rows[r][c] = v; colors[r][c] = col; }
   }
-  return rows;
+  return { rows, colors };
 }
 
 const END = /^(to truong|hieu truong|pho hieu truong|nguoi lap|giao vien|duyet|ky duyet|xac nhan)/;
@@ -137,11 +178,14 @@ export function parseSchedule(sheet: Sheet): Schedule {
   }
   if (!week) { const t = raw.slice(0, hi).flat().map(fold).find((x) => /tuan\s*\d+/.test(x)); if (t) week = /tuan\s*(\d+)/.exec(t)![1]; }
 
-  const rows = fillMerges(sheet);
+  const { rows, colors } = fillMerges(sheet);
   const cell = (r: string[], k: Col) => (cols[k] === undefined ? '' : (r[cols[k]!] ?? '').trim());
+  /** tiết chữ đỏ: ô Môn học hoặc ô Tên bài dạy tô chữ đỏ */
+  const red = (i: number) => (['subject', 'title'] as const).some((k) => cols[k] !== undefined && rows[i][cols[k]!]?.trim() && isRedColor(colors[i]?.[cols[k]!]));
   const hasLabels = rows.slice(hi + 1).some((r) => dayOfLabel(cell(r, 'day')) !== null);
 
   const out: ScheduleRow[] = [];
+  const skipped: ScheduleRow[] = [];
   let day = -1, session = '', firstDate = '';
   let lastSessionDay = -1;
   for (let i = hi + 1; i < rows.length; i++) {
@@ -163,22 +207,22 @@ export function parseSchedule(sheet: Sheet): Schedule {
     if (!subjectLabel && !title) continue;
     if (day < 0) day = 0;
     const { subject, extra } = subjectOf(subjectLabel);
-    out.push({
+    (red(i) ? skipped : out).push({
       day, date: '', session: session ? session[0].toUpperCase() + session.slice(1).toLowerCase() : '',
       period: Number(/\d+/.exec(cell(r, 'period'))?.[0] ?? 0) || 0,
       subjectLabel, subject, extra, ppct: cell(r, 'ppct'), title: title || subjectLabel,
       integration: cell(r, 'integration'), adjust: cell(r, 'adjust'),
     });
   }
-  if (!out.length) throw new Error('Không có tiết dạy nào trong bảng.');
+  if (!out.length) throw new Error(skipped.length ? 'Mọi tiết trong bảng đều tô chữ đỏ (tiết trống) — không có tiết nào cần soạn.' : 'Không có tiết dạy nào trong bảng.');
 
   // Thứ Hai của tuần: ưu tiên "Từ ngày", rồi ngày ghi trong cột Thứ/ngày
   let monday = from ? mondayOf(from) : '';
   if (!monday && firstDate) monday = mondayOf(firstDate);
   if (!monday) warnings.push('Không đọc được ngày của tuần — giáo án sẽ để trống ngày dạy.');
   if (grade === null) warnings.push('Không thấy khối lớp trong tiêu đề (vd “KHỐI 1”) — dùng khối của lớp đang chọn.');
-  for (const r of out) r.date = monday ? addDays(monday, r.day) : '';
-  return { grade, week, monday, rows: out, warnings };
+  for (const r of [...out, ...skipped]) r.date = monday ? addDays(monday, r.day) : '';
+  return { grade, week, monday, rows: out, skipped, warnings };
 }
 
 // ------------------------------------------------------------------ ghép với bài trong app

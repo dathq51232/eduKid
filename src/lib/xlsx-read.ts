@@ -8,6 +8,8 @@ export type Sheet = {
   rows: string[][];
   /** vùng gộp ô: [r1, c1, r2, c2] (chỉ số từ 0, gồm cả hai đầu) */
   merges: [number, number, number, number][];
+  /** màu chữ của ô, dạng "RRGGBB" ('' = mặc định / không rõ). Ô chữ nhiều màu: màu chung của mọi đoạn có chữ, nếu cùng một màu */
+  colors?: string[][];
 };
 
 const u16 = (b: Uint8Array, o: number) => b[o] | (b[o + 1] << 8);
@@ -48,6 +50,24 @@ const unxml = (s: string) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').repla
 /** nối mọi đoạn <t> trong một khối (chuỗi có nhiều kiểu chữ chia thành nhiều <r>) */
 const texts = (xml: string) => [...xml.matchAll(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g)].map((m) => unxml(m[1])).join('');
 
+// bảng màu cũ của Excel (indexed): chỉ cần các màu hay dùng để tô chữ
+const INDEXED: Record<string, string> = { 2: 'FF0000', 10: 'FF0000', 3: '00FF00', 11: '00FF00', 4: '0000FF', 12: '0000FF', 16: '800000', 53: 'FF6600', 60: '993300' };
+/** <color rgb=".."/> | indexed | theme → "RRGGBB" ('' nếu mặc định / màu chủ đề) */
+function colorOf(xml: string): string {
+  const c = /<color\b([^>]*)\/?>/.exec(xml)?.[1] ?? '';
+  const rgb = /rgb="([0-9A-Fa-f]{6,8})"/.exec(c)?.[1];
+  if (rgb) return rgb.slice(-6).toUpperCase();
+  const idx = /indexed="(\d+)"/.exec(c)?.[1];
+  return idx ? INDEXED[idx] ?? '' : '';
+}
+/** màu chung của các đoạn chữ (<r>) trong chuỗi nhiều kiểu; null nếu không phải chuỗi nhiều kiểu hoặc các đoạn khác màu */
+function runsColor(xml: string): string | null {
+  const runs = [...xml.matchAll(/<r>([\s\S]*?)<\/r>/g)].filter((m) => texts(m[1]).trim());
+  if (!runs.length) return null;
+  const cs = new Set(runs.map((m) => colorOf(/<rPr>([\s\S]*?)<\/rPr>/.exec(m[1])?.[1] ?? '')));
+  return cs.size === 1 ? [...cs][0] : null;
+}
+
 function colIndex(ref: string): number {
   let n = 0;
   for (const ch of ref) { const c = ch.charCodeAt(0); if (c < 65 || c > 90) break; n = n * 26 + (c - 64); }
@@ -57,7 +77,7 @@ const cellPos = (ref: string): [number, number] => [Number(/\d+/.exec(ref)?.[0] 
 
 /** Đọc trang tính đầu tiên của file .xlsx */
 export async function readXlsx(buf: ArrayBuffer | Uint8Array): Promise<Sheet> {
-  const files = await unzip(buf, (n) => n === 'xl/workbook.xml' || n === 'xl/sharedStrings.xml' || n === 'xl/_rels/workbook.xml.rels' || /^xl\/worksheets\/sheet\d+\.xml$/.test(n));
+  const files = await unzip(buf, (n) => n === 'xl/workbook.xml' || n === 'xl/sharedStrings.xml' || n === 'xl/styles.xml' || n === 'xl/_rels/workbook.xml.rels' || /^xl\/worksheets\/sheet\d+\.xml$/.test(n));
   const dec = new TextDecoder();
   const get = (n: string) => (files.has(n) ? dec.decode(files.get(n)) : '');
   const wb = get('xl/workbook.xml');
@@ -75,7 +95,13 @@ export async function readXlsx(buf: ArrayBuffer | Uint8Array): Promise<Sheet> {
   const xml = get(path);
   if (!xml) throw new Error('Không tìm thấy trang tính trong file.');
 
-  const shared = [...get('xl/sharedStrings.xml').matchAll(/<si>([\s\S]*?)<\/si>/g)].map((m) => texts(m[1]));
+  const sis = [...get('xl/sharedStrings.xml').matchAll(/<si>([\s\S]*?)<\/si>/g)].map((m) => m[1]);
+  const shared = sis.map(texts);
+  // màu chữ theo kiểu ô: cellXfs[s].fontId → fonts[fontId].color
+  const styles = get('xl/styles.xml');
+  const fonts = [...(/<fonts\b[^>]*>([\s\S]*?)<\/fonts>/.exec(styles)?.[1] ?? '').matchAll(/<font\b[^>]*?(?:\/>|>([\s\S]*?)<\/font>)/g)].map((m) => colorOf(m[1] ?? ''));
+  const xfFont = [...(/<cellXfs\b[^>]*>([\s\S]*?)<\/cellXfs>/.exec(styles)?.[1] ?? '').matchAll(/<xf\b([^>]*?)(?:\/>|>[\s\S]*?<\/xf>)/g)].map((m) => Number(/fontId="(\d+)"/.exec(m[1])?.[1] ?? 0));
+  const colors: string[][] = [];
   const rows: string[][] = [];
   for (const m of xml.matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
     const attrs = m[1], body = m[2] ?? '';
@@ -90,6 +116,9 @@ export async function readXlsx(buf: ArrayBuffer | Uint8Array): Promise<Sheet> {
     if (!val) continue;
     const [r, c] = cellPos(ref);
     (rows[r] ??= [])[c] = val;
+    const runs = t === 's' ? runsColor(sis[Number(v)] ?? '') : t === 'inlineStr' ? runsColor(body) : null;
+    const cellColor = runs ?? fonts[xfFont[Number(/\bs="(\d+)"/.exec(attrs)?.[1] ?? 0)] ?? 0] ?? '';
+    if (cellColor) (colors[r] ??= [])[c] = cellColor;
   }
   const width = Math.max(0, ...rows.filter(Boolean).map((r) => r.length));
   const full = Array.from({ length: rows.length }, (_, i) => Array.from({ length: width }, (_, j) => (rows[i]?.[j] ?? '').replace(/\r/g, '').trim()));
@@ -97,5 +126,6 @@ export async function readXlsx(buf: ArrayBuffer | Uint8Array): Promise<Sheet> {
     const [r1, c1] = cellPos(m[1]); const [r2, c2] = cellPos(m[2]);
     return [r1, c1, r2, c2] as [number, number, number, number];
   });
-  return { name, rows: full, merges };
+  const colorGrid = full.map((row, i) => row.map((_, j) => colors[i]?.[j] ?? ''));
+  return { name, rows: full, merges, colors: colorGrid };
 }

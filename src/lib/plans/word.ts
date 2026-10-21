@@ -3,6 +3,7 @@
 
 import { PAGE_MARGIN, PAGE_MARGIN_LAND, WORD_BASE_STYLE, nd30HeaderHtml } from '../doc-style';
 import { addDays, subjectNameOf, viDate, weekdayVi, type LessonPlan } from './generate';
+import { sortSchoolOrder, subjectOf, type ScheduleRow } from './schedule';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const br = (s: string) => esc(s).replace(/\n/g, '<br/>');
@@ -64,28 +65,39 @@ export function plansDocument(plans: LessonPlan[], school: string): string {
   return doc(plans.length === 1 ? plans[0].title : 'Kế hoạch bài dạy', body);
 }
 
-/** Lịch báo giảng tuần (bảng) + các giáo án của tuần phía sau */
-export function weekDocument(monday: string, plans: LessonPlan[], school: string, className: string, withPlans: boolean): string {
+/** Giáo án xếp theo mẫu nhà trường: Tiếng Việt → Toán → Đạo đức → TN&XH → HĐTN → TV tăng cường → Toán tăng cường → môn khác */
+export function inSchoolOrder(plans: LessonPlan[]): LessonPlan[] {
+  return sortSchoolOrder(plans, (p) => ({ subject: p.subject, extra: subjectOf(p.subjectLabel ?? '').extra, label: subjectNameOf(p), date: p.date, session: p.session, period: p.period }));
+}
+
+type TableRow = { date: string; session?: string; period: number; subject: string; ppct?: string; title: string; integration?: string; adjust?: string; red?: boolean };
+
+/** Lịch báo giảng tuần (bảng) + các giáo án của tuần phía sau. `skipped`: tiết chữ đỏ (tiết trống) — vẫn ghi trong bảng (chữ đỏ), không soạn giáo án */
+export function weekDocument(monday: string, plans: LessonPlan[], school: string, className: string, withPlans: boolean, skipped: ScheduleRow[] = []): string {
+  const entries: TableRow[] = [
+    ...plans.map((p) => ({ date: p.date, session: p.session, period: p.period, subject: subjectNameOf(p), ppct: p.ppct, title: p.title, integration: p.integration, adjust: p.adjust })),
+    ...skipped.map((r) => ({ date: r.date, session: r.session, period: r.period, subject: r.subjectLabel, ppct: r.ppct, title: r.title, integration: r.integration, adjust: r.adjust, red: true })),
+  ];
   const days = [0, 1, 2, 3, 4].map((i) => addDays(monday, i));
-  if (plans.some((p) => p.date === addDays(monday, 5))) days.push(addDays(monday, 5));
-  const sorted = (list: LessonPlan[]) => [...list].sort((x, y) => sessionRank(x.session) - sessionRank(y.session) || (x.period || 99) - (y.period || 99));
+  if (entries.some((p) => p.date === addDays(monday, 5))) days.push(addDays(monday, 5));
+  const sorted = (list: TableRow[]) => [...list].sort((x, y) => sessionRank(x.session) - sessionRank(y.session) || (x.period || 99) - (y.period || 99));
   const rows = days.map((d) => {
-    const list = sorted(plans.filter((p) => p.date === d));
+    const list = sorted(entries.filter((p) => p.date === d));
     const dayCell = `<td class="c" rowspan="${Math.max(1, list.length)}"><b>${weekdayVi(d).replace('Thứ ', '').toUpperCase()}</b><br/>${viDate(d)}</td>`;
     if (!list.length) return `<tr>${dayCell}<td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
     // gộp ô Buổi theo các tiết liên tiếp cùng buổi
     return list.map((p, i) => {
       let span = 0;
       if (i === 0 || (list[i - 1].session ?? '') !== (p.session ?? '')) { span = 1; while (i + span < list.length && (list[i + span].session ?? '') === (p.session ?? '')) span++; }
-      return `<tr>${i === 0 ? dayCell : ''}${span ? `<td class="c" rowspan="${span}">${esc(p.session ?? '')}</td>` : ''}<td class="c">${p.period || ''}</td><td>${esc(subjectNameOf(p))}</td><td class="c">${esc(p.ppct ?? '')}</td><td>${esc(p.title)}</td><td>${br(p.integration ?? '')}</td><td>${br(p.adjust ?? '')}</td></tr>`;
+      const red = (h: string) => (p.red ? `<span style="color:#FF0000">${h}</span>` : h);
+      return `<tr>${i === 0 ? dayCell : ''}${span ? `<td class="c" rowspan="${span}">${esc(p.session ?? '')}</td>` : ''}<td class="c">${red(String(p.period || ''))}</td><td>${red(esc(p.subject))}</td><td class="c">${red(esc(p.ppct ?? ''))}</td><td>${red(esc(p.title))}</td><td>${red(br(p.integration ?? ''))}</td><td>${red(br(p.adjust ?? ''))}</td></tr>`;
     }).join('');
   }).join('');
   const week = plans.find((p) => p.week)?.week ?? '';
   const table = `<div class="Land">
     ${nd30HeaderHtml({ school, showDate: false })}
     <h1>KẾ HOẠCH DẠY HỌC${week ? ` TUẦN ${esc(week)}` : ''}</h1><p class="c">Lớp: ${esc(className || '……')} · Từ ngày ${viDate(days[0])} đến ngày ${viDate(days[days.length - 1])}</p>
-    <table class="grid" width="100%" border="1" cellspacing="0" cellpadding="4"><tr><th width="9%">Thứ, ngày</th><th width="6%">Buổi</th><th width="5%">Tiết TKB</th><th width="10%">Môn học</th><th width="5%">Tiết PPCT</th><th>Tên bài dạy</th><th width="22%">ND tích hợp / ĐDDH</th><th width="10%">Điều chỉnh KH tuần</th></tr>${rows}</table></div>`;
-  const rest = withPlans ? [...plans].sort((a, b) => (a.date + sessionRank(a.session) + String(a.period).padStart(2, '0')).localeCompare(b.date + sessionRank(b.session) + String(b.period).padStart(2, '0')))
-    .map((p, i) => `${i ? BREAK : ''}${planBody(p, school)}`).join('') : '';
+    <table class="grid" width="100%" border="1" cellspacing="0" cellpadding="4"><tr><th width="9%">Thứ, ngày</th><th width="6%">Buổi</th><th width="5%">Tiết TKB</th><th width="10%">Môn học</th><th width="5%">Tiết PPCT</th><th>Tên bài dạy</th><th width="22%">ND tích hợp / ĐDDH</th><th width="10%">Điều chỉnh KH tuần</th></tr>${rows}</table>${skipped.length ? `<p class="muted"><span style="color:#FF0000">Chữ đỏ</span>: tiết trống, không soạn giáo án.</p>` : ''}</div>`;
+  const rest = withPlans ? inSchoolOrder(plans).map((p, i) => `${i ? BREAK : ''}${planBody(p, school)}`).join('') : '';
   return doc(`Kế hoạch dạy học tuần ${viDate(days[0])}`, table + (rest ? `<div class="Port">${rest}</div>` : ''));
 }

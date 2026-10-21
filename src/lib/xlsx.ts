@@ -13,6 +13,7 @@ export const XS = {
   italic: 6, // nghiêng, căn giữa, không khung
   boldLeft: 7, // đậm, căn trái, không khung
   note: 8, // nghiêng, căn trái, không khung
+  red: 9, // chữ đỏ, khung, căn trái, xuống dòng (vd tiết trống trong lịch báo giảng)
 } as const;
 export type XStyle = (typeof XS)[keyof typeof XS];
 export type XValue = string | number | null | undefined;
@@ -92,17 +93,18 @@ function sheetXml(sh: XSheet): string {
 
 const STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
   + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-  + '<fonts count="4">'
+  + '<fonts count="5">'
   + '<font><sz val="11"/><name val="Times New Roman"/><family val="1"/></font>'
   + '<font><b/><sz val="11"/><name val="Times New Roman"/><family val="1"/></font>'
   + '<font><i/><sz val="11"/><name val="Times New Roman"/><family val="1"/></font>'
   + '<font><b/><sz val="13"/><name val="Times New Roman"/><family val="1"/></font>'
+  + '<font><sz val="11"/><color rgb="FFFF0000"/><name val="Times New Roman"/><family val="1"/></font>'
   + '</fonts>'
   + '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>'
   + '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'
   + '<border><left style="thin"><color auto="1"/></left><right style="thin"><color auto="1"/></right><top style="thin"><color auto="1"/></top><bottom style="thin"><color auto="1"/></bottom><diagonal/></border></borders>'
   + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
-  + '<cellXfs count="9">'
+  + '<cellXfs count="10">'
   + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
   + '<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'
   + '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
@@ -112,6 +114,7 @@ const STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
   + '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'
   + '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>'
   + '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>'
+  + '<xf numFmtId="0" fontId="4" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
   + '</cellXfs>'
   + '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
   + '</styleSheet>';

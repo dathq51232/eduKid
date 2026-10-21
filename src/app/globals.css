@@ -2973,3 +2973,7 @@ body {
 .ws-pair .ws-new { background: #43a047; color: #fff; border-radius: 999px; padding: 0 7px; opacity: 1; font-weight: 700; }
 .ws-notes { margin: 0 0 12px; padding: 10px 14px 10px 30px; border: 1px dashed #ffb300; border-radius: 10px; background: #fff8e1; color: #6d4c00; font-size: 14px; }
 .ws-notes li + li { margin-top: 2px; }
+
+/* Lịch báo giảng: tiêu đề nhóm môn theo mẫu nhà trường, tiết chữ đỏ bị bỏ qua */
+.planner-import .planner-group th { text-align: left; background: #eef4fb; color: #0d47a1; font-size: 13px; letter-spacing: .03em; padding: 6px 10px; }
+.planner-skipped { color: #b71c1c; }

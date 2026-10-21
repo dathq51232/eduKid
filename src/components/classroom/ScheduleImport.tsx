@@ -1,12 +1,12 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { Fragment, useMemo, useRef, useState } from 'react';
 import { FileDown, FileSpreadsheet, Save, Upload } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { downloadXlsx } from '@/lib/xlsx';
 import { readXlsx } from '@/lib/xlsx-read';
 import { addDays, mondayOf, viDate, weekdayVi, type LessonInfo, type LessonPlan } from '@/lib/plans/generate';
-import { parseSchedule, plansFromSchedule, scheduleTemplate, withLibraryPlan, type RowPlan, type Schedule } from '@/lib/plans/schedule';
+import { parseSchedule, plansFromSchedule, scheduleTemplate, schoolGroupLabel, sortSchoolOrder, withLibraryPlan, type RowPlan, type Schedule } from '@/lib/plans/schedule';
 import { pickFromLibrary, type LibraryMeta } from '@/lib/plans/library';
 import { isPlan } from '@/lib/plans/generate';
 import { weekDocument } from '@/lib/plans/word';
@@ -65,6 +65,8 @@ export default function ScheduleImport({ classId, className, grade, school, weak
           list = list.map((rp, i) => { const m = picks[i]; const d = m ? got.get(m.id) : null; return m && isPlan(d) ? withLibraryPlan(rp, d, className) : rp; });
         }
       }
+      // thứ tự soạn theo mẫu nhà trường: TV → Toán → Đạo đức → TN&XH → HĐTN → TV tăng cường → Toán tăng cường → môn khác
+      list = sortSchoolOrder(list, (r) => ({ subject: r.row.subject, extra: r.row.extra, label: r.row.subjectLabel, date: r.plan.date, session: r.row.session, period: r.row.period }));
       setSch(s); setItems(list);
       setPick(list.map((r) => !(!!r.plan.date && savedKeys.has(keyOf(r.plan.date, r.plan.period, r.plan.title)))));
       if (s.grade !== null && s.grade !== grade) setMsg({ kind: 'info', text: `Lịch báo giảng là của khối ${s.grade}, lớp ${className} là khối ${grade}: giáo án dùng khung chung, không ghép bài của app. Kiểm tra lại file nếu nhầm.` });
@@ -103,7 +105,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
   const exportWord = () => {
     if (!sch || !chosen.length) return;
     const monday = sch.monday || mondayOf(chosen[0].plan.date || new Date().toISOString().slice(0, 10));
-    onPreview({ title: `Kế hoạch dạy học tuần ${sch.week || viDate(monday)} + ${chosen.length} giáo án`, filename: `ke-hoach-day-hoc-tuan-${sch.week || monday}`, html: weekDocument(monday, chosen.map((r) => r.plan), school, className, true) });
+    onPreview({ title: `Kế hoạch dạy học tuần ${sch.week || viDate(monday)} + ${chosen.length} giáo án`, filename: `ke-hoach-day-hoc-tuan-${sch.week || monday}`, html: weekDocument(monday, chosen.map((r) => r.plan), school, className, true, sch.skipped) });
   };
 
   const template = () => {
@@ -132,7 +134,11 @@ export default function ScheduleImport({ classId, className, grade, school, weak
             {sch.monday && <> · {viDate(sch.monday)} – {viDate(addDays(sch.monday, 4))}</>}
             {sch.grade !== null && <> · Khối {sch.grade}</>} · {items.length} tiết: {counts.kho > 0 && <>{counts.kho} giáo án của trường, </>}{counts.app} theo bài trong app, {counts.review} ôn tập/bổ sung, {counts.khung} khung chung
           </p>
+          {sch.skipped.length > 0 && (
+            <p className="dash-muted planner-skipped">Bỏ qua {sch.skipped.length} tiết chữ đỏ (tiết trống, không soạn): {sch.skipped.map((r) => `${r.date ? weekdayVi(r.date).replace('Thứ ', '') : ''} tiết ${r.period || '?'} ${r.subjectLabel}`).join(' · ')}. Các tiết này vẫn ghi chữ đỏ trong bảng kế hoạch tuần khi xuất Word.</p>
+          )}
           {sch.warnings.map((w) => <p key={w} className="dash-muted">⚠ {w}</p>)}
+          <p className="dash-muted">Giáo án xếp theo thứ tự soạn của nhà trường: Tiếng Việt → Toán → Đạo đức → Tự nhiên và Xã hội → Hoạt động trải nghiệm → Tiếng Việt (tăng cường) → Toán (tăng cường); trong mỗi môn theo thứ tự dạy trong tuần.</p>
           <div className="planner-week">
             <button type="button" className="mini-btn" onClick={() => setPick(items.map((r) => !exists(r)))}>Chọn tất cả</button>
             <button type="button" className="mini-btn" onClick={() => setPick(items.map(() => false))}>Bỏ chọn</button>
@@ -144,8 +150,12 @@ export default function ScheduleImport({ classId, className, grade, school, weak
             <table className="roster-table planner-table planner-import">
               <thead><tr><th><span className="sr-only">Chọn</span></th><th>Thứ</th><th>Buổi</th><th>Tiết</th><th>Môn</th><th>Tên bài dạy</th><th>Giáo án</th><th><span className="sr-only">Xem</span></th></tr></thead>
               <tbody>
-                {items.map((r, i) => (
-                  <tr key={i} className={pick[i] ? 'is-on' : ''}>
+                {items.map((r, i) => {
+                  const group = schoolGroupLabel(r.row.subject, r.row.extra) ?? r.row.subjectLabel.toUpperCase();
+                  const prev = i ? schoolGroupLabel(items[i - 1].row.subject, items[i - 1].row.extra) ?? items[i - 1].row.subjectLabel.toUpperCase() : null;
+                  return (<Fragment key={i}>
+                  {group !== prev && <tr className="planner-group"><th colSpan={8} scope="colgroup">{group}</th></tr>}
+                  <tr className={pick[i] ? 'is-on' : ''}>
                     <td><input type="checkbox" checked={!!pick[i]} aria-label={`Chọn ${r.plan.title}`} onChange={(e) => setPick((p) => p.map((x, k) => (k === i ? e.target.checked : x)))} /></td>
                     <td>{r.plan.date ? `${weekdayVi(r.plan.date).replace('Thứ ', '')} ${viDate(r.plan.date).slice(0, -5)}` : ''}</td>
                     <td>{r.row.session}</td>
@@ -155,7 +165,8 @@ export default function ScheduleImport({ classId, className, grade, school, weak
                     <td><span className={`planner-kind is-${r.kind}`} title={r.lessonTitle || undefined}>{KIND_LABEL[r.kind]}</span>{r.lessonTitle && <span className="planner-int"> {r.lessonTitle}</span>}{exists(r) && <span className="planner-int"> · đã lưu</span>}</td>
                     <td><button type="button" className="mini-btn" onClick={() => onOpen(r.plan)}>Xem, sửa</button></td>
                   </tr>
-                ))}
+                  </Fragment>);
+                })}
               </tbody>
             </table>
           </div>
