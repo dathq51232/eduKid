@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { ArrowLeft, Award, ClipboardCheck, FileText, GraduationCap, MessageSquareHeart, NotebookPen, Radar, Send, Table2 } from 'lucide-react';
+import { ArrowLeft, Award, ClipboardCheck, FileText, GraduationCap, MessageSquareHeart, NotebookPen, Radar, Send, SpellCheck, Table2 } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import ClassManager, { type BillingRow, type RosterRow, type SummaryRow } from '@/components/classroom/ClassManager';
@@ -87,6 +87,9 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
               </Link>
               <Link href={`/giao-vien/lop/${id}/phieu-bai-tap`} className="tool-card tone-yellow">
                 <FileText aria-hidden="true" /><strong>Phiếu bài tập</strong><span>Phiếu in theo bài đang học, đáp án trang riêng</span>
+              </Link>
+              <Link href={`/giao-vien/lop/${id}/phieu-chinh-ta`} className="tool-card tone-blue">
+                <SpellCheck aria-hidden="true" /><strong>Phiếu chính tả</strong><span>c/k, g/gh, ng/ngh, s/x, l/n, ch/tr, h/th/kh: phiếu có tranh, tập chép, đáp án; mỗi lần một phiếu mới</span>
               </Link>
               <Link href={`/giao-vien/lop/${id}/phieu-tien-bo`} className="tool-card tone-coral">
                 <MessageSquareHeart aria-hidden="true" /><strong>Phiếu báo tiến bộ</strong><span>Lời nhắn cho phụ huynh theo tuần, tháng: điểm mạnh, cần cố gắng, gợi ý ở nhà</span>

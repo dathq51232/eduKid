@@ -23,7 +23,8 @@
     "check:games": "tsx scripts/check-games.ts",
     "check:sets": "tsx scripts/check-sets.ts",
     "check:exams": "tsx scripts/check-exams.ts",
-    "check:schedule": "tsx scripts/check-schedule.ts"
+    "check:schedule": "tsx scripts/check-schedule.ts",
+    "check:spelling": "tsx scripts/check-spelling.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",

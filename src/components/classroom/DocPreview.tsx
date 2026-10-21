@@ -25,8 +25,16 @@ const stripSrc = (html: string) => html.replace(/\s+src="blob:[^"]*"/g, '');
  * Bản xem trước văn bản trước khi xuất Word: hiện đúng nội dung (cả hình, bảng tô màu của giáo án gốc),
  * cho sửa trực tiếp, in / lưu PDF, tải file .docx.
  */
-export default function DocPreview({ title, filename, html, onClose, onSaveOrig }: {
-  title: string; filename: string; html: string; onClose: () => void;
+export default function DocPreview({ title, filename, html, onClose, onSaveOrig, inline, screenCss, fontSize, extra }: {
+  title: string; filename: string; html: string; onClose?: () => void;
+  /** hiện ngay trong trang thay vì cửa sổ nổi */
+  inline?: boolean;
+  /** CSS màn hình thay cho trang A4 lề NĐ30 mặc định */
+  screenCss?: string;
+  /** cỡ chữ mặc định của file Word */
+  fontSize?: number;
+  /** nút thêm trên thanh công cụ */
+  extra?: React.ReactNode;
   /** có = cho lưu phần bản gốc (khối data-orig) đã sửa vào giáo án */
   onSaveOrig?: (html: string) => void;
 }) {
@@ -44,12 +52,14 @@ export default function DocPreview({ title, filename, html, onClose, onSaveOrig 
   }, [html]);
 
   useEffect(() => {
+    if (inline || !onClose) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, inline]);
 
-  const srcDoc = imgs ? withSrc(html, imgs).replace(/<\/head>/i, `${SCREEN}</head>`) : '';
+  const screen = screenCss ? `<style id="pv-screen">${screenCss}</style>` : SCREEN;
+  const srcDoc = imgs ? withSrc(html, imgs).replace(/<\/head>/i, `${screen}</head>`) : '';
 
   const toggleEdit = () => {
     const d = frame.current?.contentDocument;
@@ -68,9 +78,9 @@ export default function DocPreview({ title, filename, html, onClose, onSaveOrig 
     const body = d.body.cloneNode(true) as HTMLElement;
     body.removeAttribute('contenteditable');
     const out = html.replace(/<body[^>]*>[\s\S]*<\/body>/i, `<body>${stripSrc(body.innerHTML)}</body>`);
-    d.head.insertAdjacentHTML('beforeend', SCREEN);
+    d.head.insertAdjacentHTML('beforeend', screen);
     return out;
-  }, [edited, html]);
+  }, [edited, html, screen]);
 
   const download = () => {
     if (!imgs) return;
@@ -78,7 +88,7 @@ export default function DocPreview({ title, filename, html, onClose, onSaveOrig 
     try {
       const map = new Map<string, DocImage>();
       for (const [k, v] of imgs) map.set(k, v);
-      downloadDocx(filename, htmlToDocx(currentHtml(), map, { title }));
+      downloadDocx(filename, htmlToDocx(currentHtml(), map, { title, fontSize }));
     } finally { setBusy(false); }
   };
 
@@ -95,7 +105,7 @@ export default function DocPreview({ title, filename, html, onClose, onSaveOrig 
   const missing = imgs ? keys.filter((k) => !imgs.has(k)).length : 0;
 
   return (
-    <div className="pv-overlay" role="dialog" aria-modal="true" aria-label={`Xem trước: ${title}`}>
+    <div className={inline ? 'pv-inline' : 'pv-overlay'} role={inline ? 'region' : 'dialog'} aria-modal={inline ? undefined : true} aria-label={`Xem trước: ${title}`}>
       <div className="pv-panel">
         <div className="pv-bar">
           <strong className="pv-title">Xem trước · {title}</strong>
@@ -105,7 +115,8 @@ export default function DocPreview({ title, filename, html, onClose, onSaveOrig 
           {onSaveOrig && edited && html.includes('data-orig') && <button type="button" className="btn btn-outline btn-sm" onClick={saveOrig}><Save aria-hidden="true" /> Lưu sửa vào giáo án</button>}
           <button type="button" className="btn btn-outline btn-sm" onClick={print} disabled={!imgs}><Printer aria-hidden="true" /> In / PDF</button>
           <button type="button" className="btn btn-primary btn-sm" onClick={download} disabled={!imgs || busy}><FileDown aria-hidden="true" /> Tải file Word (.docx)</button>
-          <button type="button" className="mini-btn" aria-label="Đóng" onClick={onClose}><X aria-hidden="true" /></button>
+          {extra}
+          {onClose && <button type="button" className="mini-btn" aria-label="Đóng" onClick={onClose}><X aria-hidden="true" /></button>}
         </div>
         {imgs ? <iframe ref={frame} className="pv-frame" title="Bản xem trước" srcDoc={srcDoc} /> : <div className="pv-frame pv-loading">Đang chuẩn bị bản xem trước…</div>}
       </div>

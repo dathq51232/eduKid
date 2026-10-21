@@ -28,9 +28,17 @@ const cache = new Map<string, Promise<LoadedImage | null>>();
 export async function loadImages(keys: string[]): Promise<Map<string, LoadedImage>> {
   const out = new Map<string, LoadedImage>();
   if (!keys.length) return out;
-  const sc = await mySchool();
+  const sc = keys.some((k) => !k.startsWith('/')) ? await mySchool() : null;
   await Promise.all(keys.map(async (k) => {
     if (!cache.has(k)) cache.set(k, (async () => {
+      // hình có sẵn trong app (public/), vd "/emoji/crab.png"
+      if (/^\/[a-z0-9/_-]+\.(png|jpg|gif)$/.test(k)) {
+        const r = await fetch(k);
+        if (!r.ok) return null;
+        const bytes = new Uint8Array(await r.arrayBuffer());
+        const mime = mimeOf(k) ?? 'image/png';
+        return { bytes, mime, url: URL.createObjectURL(new Blob([bytes as BlobPart], { type: mime })) };
+      }
       if (!sc || !/^[0-9a-f]{40}\.[a-z]+$/.test(k)) return null;
       const { data, error } = await createClient().storage.from(BUCKET).download(`${sc}/${k}`);
       if (error || !data) return null;
