@@ -2,7 +2,7 @@
 // Ảnh nằm trong dự án (public/brand/milo.webp, milo-sm.webp) — không tải từ địa chỉ ngoài.
 
 export type MiloMood = 'happy' | 'cheer' | 'think' | 'oops';
-/** Trang phục: 'robot' (Robot lập trình), 'artist' họa sĩ, 'professor' giáo sư, 'astronaut' phi hành gia, 'doctor' bác sĩ — xem src/lib/mascots.ts */
+/** Trang phục: 'robot' (giữ để dùng sau; game Robot lập trình đã gỡ), 'artist' họa sĩ, 'professor' giáo sư, 'astronaut' phi hành gia, 'doctor' bác sĩ — xem src/lib/mascots.ts */
 export type MiloVariant = 'default' | 'robot' | 'artist' | 'professor' | 'astronaut' | 'doctor';
 
 type Props = {

@@ -24,7 +24,6 @@ export const GAME_MASCOT: Record<GameId, MiloVariant> = {
   pattern: 'artist',
   memory: 'default',
   maze: 'astronaut',
-  robot: 'robot',
   sudoku: 'professor',
   balance: 'doctor',
 };

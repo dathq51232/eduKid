@@ -172,7 +172,7 @@ Bộ sinh câu ngẫu nhiên cho Toán 1 (Học kì 1) — dùng cho nút **Đ�
 - **Nền theo môn** (`src/components/learn/LessonDecor.tsx`): Toán số + hình khối, Tiếng Việt chữ cái có dấu + bút chì, Tiếng Anh bóng bay chữ ABC; họa tiết mờ ở hai bên mép + viền nét đứt, nằm sau nội dung (không che câu hỏi). Tự vẽ bằng SVG, không ảnh ngoài.
 - **Đường tiến độ có Milo** (`MiloTrail.tsx`, đầu khung câu hỏi): mỗi câu một chặng, câu đúng có sao vàng, Milo đứng ở câu đang làm; đúng thì Milo nhảy + "Giỏi quá!", sai thì nghiêng đầu "Cố lên, câu sau nhé!". Điện thoại dùng bản đường ngắn hơn cho Milo đủ to.
 - **Hiệu ứng khi đúng**: pháo giấy ~1 giây (`Confetti.tsx`), ô đáp án sáng lên. Nút ✨ trên thanh làm bài bật/tắt hiệu ứng (ghi nhớ trên máy); máy bật "giảm chuyển động" thì tự bỏ mọi chuyển động.
-- **Milo theo môn / theo game** (`src/lib/mascots.ts`, ảnh `public/brand/milo-<tên>.webp` + `-sm`): Toán – giáo sư, Tiếng Việt – họa sĩ, Tiếng Anh – phi hành gia; game: Quy luật – họa sĩ, Mê cung – phi hành gia, Robot – robot, Sudoku – giáo sư, Cân – bác sĩ, Trí nhớ – Milo gốc. Ảnh tách nền từ bộ linh vật của dự án.
+- **Milo theo môn / theo game** (`src/lib/mascots.ts`, ảnh `public/brand/milo-<tên>.webp` + `-sm`): Toán – giáo sư, Tiếng Việt – họa sĩ, Tiếng Anh – phi hành gia; game: Quy luật – họa sĩ, Mê cung – phi hành gia, Sudoku – giáo sư, Cân – bác sĩ, Trí nhớ – Milo gốc. Ảnh tách nền từ bộ linh vật của dự án.
 - **Sticker 3D**: ảnh `public/stickers/<id>.webp` (200 × 200, nền trong suốt).
 - **Huy hiệu + sticker** (trang Kết quả, `MedalBadge.tsx`, `StickerAlbum.tsx`, `src/lib/stickers.ts`): làm đúng từ 7/10 nhận 1 sticker ngẫu nhiên chưa có (24 sticker tự vẽ: khủng long, tên lửa, hành tinh…); bộ sưu tập hiện ở trang Kết quả và Thành tích. Sticker lưu trên trình duyệt của máy (giống điểm tích luỹ khách), không quy đổi, không so sánh.
 
@@ -185,13 +185,12 @@ Thanh điều hướng chính có 3 tab: **Học tập** (`/chon-bai`), **Game t
 - **Thám tử quy luật**: 25 câu soạn sẵn, mỗi cấp độ 5 câu, 3–4 lựa chọn. Đáp án và lời giải được tính từ quy luật nên không thể sai.
 - **Nhà vô địch trí nhớ**: số cặp thẻ là 3/4/6/8/10. Thẻ được xáo lại mỗi lần chơi. Không lật được thẻ đang mở hoặc đã ghép. Game chỉ đếm số lượt, không có đồng hồ.
 - **Mê cung phiêu lưu**: mê cung 5×5 → 12×12, luôn có đường đến đích. Điều khiển bằng nút chạm, phím mũi tên hoặc W A S D. Không đếm ngược.
-- **Robot lập trình** (`/tro-choi/robot-lap-trinh`): xếp thẻ lệnh rồi bấm Chạy để robot nhặt hết sao, không va đá / ra ngoài sân. L1–L3 thẻ mũi tên 1 bước (sân 4×4 → 5×5, giới hạn số thẻ từ L2); L4 thẻ "đi n bước" (làm quen vòng lặp); L5 robot có hướng nhìn: Tiến n, Quay trái, Quay phải. Màn tự sinh, luôn giải được (BFS tìm lời giải ngắn nhất); chạy sai thì tô đỏ thẻ gây lỗi; Gợi ý mở dần lời giải. 5 màn / lượt, điểm = số màn đúng ngay lần chạy đầu.
 - **Sudoku mini** (`/tro-choi/sudoku-mini`): L1 lưới 4×4 bằng hình, L2–L3 4×4 bằng số, L4–L5 6×6 (vùng 2×3). Đề tự sinh, luôn có đúng một lời giải. Điền sai báo ngay lý do (trùng hàng / cột / vùng); Gợi ý chỉ ô chỉ còn một khả năng. Chạm ô rồi chạm hình / số, hoặc dùng phím số và mũi tên.
 - **Cân thăng bằng** (`/tro-choi/can-thang-bang`): tìm số đặt vào ô ? để hai đĩa cân bằng. L1 phạm vi 10, L2 phạm vi 20, L3 có hình đã biết cân nặng (nhân), L4 suy luận 2 bước, L5 3 bước có chia, phạm vi 100. Chọn sai thì cân nghiêng và nói cần số lớn hơn hay nhỏ hơn. 6 câu / lượt.
 - Kết quả 3 game mới của học sinh đăng nhập được lưu như game cũ (cần migration `0020_more_games.sql`; kiểm thử `supabase/tests/local/102_more_games.sql`).
 - **Thành tích**: chỉ dùng dữ liệu minh họa, có ghi nhãn rõ. Không có bảng xếp hạng, không so sánh với bạn khác, huy hiệu không có giá trị đổi thưởng.
 - Milo và mọi hình ảnh đều vẽ bằng SVG trong mã nguồn (`src/components/mascot/`), không tải ảnh từ ngoài.
-- **Nhân vật trong game**: game nào có nhân vật thì dùng cú Milo; mỗi game có thể có một bộ trang phục riêng qua `MiloMascot variant` (ảnh nằm trong `public/brand/`). Robot lập trình dùng Milo mặc giáp robot (`milo-robot.webp`, `milo-robot-sm.webp`): Milo đứng thẳng, mũi tên đỏ dưới chân chỉ hướng đang nhìn. Thêm trang phục mới: đặt ảnh nền trong suốt `public/brand/milo-<tên>.webp` + bản `-sm`, rồi thêm tên vào `MiloVariant`.
+- **Nhân vật trong game**: game nào có nhân vật thì dùng cú Milo; mỗi game có thể có một bộ trang phục riêng qua `MiloMascot variant` (ảnh nằm trong `public/brand/`). Trang phục robot (`milo-robot.webp`) vẫn giữ trong `MiloVariant` để dùng sau (game Robot lập trình đã gỡ 10/2026). Thêm trang phục mới: đặt ảnh nền trong suốt `public/brand/milo-<tên>.webp` + bản `-sm`, rồi thêm tên vào `MiloVariant`.
 - Mã nguồn:
   - Dữ liệu và logic: `src/lib/games/`
   - Giao diện: `src/components/games/`, `src/components/navigation/MainNavigation.tsx`
@@ -387,7 +386,7 @@ npm run check:exams     # kiểm tra 4 mã đề (khác câu / trộn), lọc th
 | `/lam-bai?lessonId=...` | Làm bài: 6 dạng câu, đếm ngược từng câu, để sau / quay lại, đi từ dễ đến khó |
 | `/ket-qua` | Kết quả: câu đúng, tổng thời gian, nhận xét, điểm tích luỹ, xem lại từng câu |
 | `/tro-choi` | Game trí tuệ: danh mục, lọc kỹ năng, chọn lớp |
-| `/tro-choi/tham-tu-quy-luat`, `/tro-choi/nha-vo-dich-tri-nho`, `/tro-choi/me-cung`, `/tro-choi/robot-lap-trinh`, `/tro-choi/sudoku-mini`, `/tro-choi/can-thang-bang` | Sáu game, chọn cấp độ L1–L5 (`?cap=1..5`) |
+| `/tro-choi/tham-tu-quy-luat`, `/tro-choi/nha-vo-dich-tri-nho`, `/tro-choi/me-cung`, `/tro-choi/sudoku-mini`, `/tro-choi/can-thang-bang` | Năm game (Robot lập trình đã gỡ, link cũ chuyển về `/tro-choi`), chọn cấp độ L1–L5 (`?cap=1..5`) |
 | `/thanh-tich` | Thành tích cá nhân (dữ liệu minh họa) |
 | `/phu-huynh` | (đã bỏ) chuyển về trang chủ |
 | `/dang-nhap` | Đăng nhập (admin, giáo viên) |

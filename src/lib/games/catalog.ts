@@ -6,7 +6,7 @@
 export type GameCategory = 'logic' | 'memory' | 'space' | 'math' | 'language';
 export type GameFilter = 'all' | GameCategory;
 export type GameLevel = 1 | 2 | 3 | 4 | 5;
-export type GameId = 'pattern' | 'memory' | 'maze' | 'robot' | 'sudoku' | 'balance';
+export type GameId = 'pattern' | 'memory' | 'maze' | 'sudoku' | 'balance';
 export type Grade = 1 | 2 | 3 | 4 | 5;
 
 export const GAME_LEVELS: GameLevel[] = [1, 2, 3, 4, 5];
@@ -90,18 +90,6 @@ export const GAMES: GameInfo[] = [
     minutes: [5, 10],
     status: 'beta',
     difficulty: 'Mê cung rộng dần: 5 × 5 → 6 × 6 → 8 × 8 → 10 × 10 → 12 × 12 ô. Không đếm ngược.',
-  },
-  {
-    id: 'robot',
-    slug: 'robot-lap-trinh',
-    title: 'Robot lập trình',
-    summary: 'Xếp thẻ lệnh thành chương trình để Milo robot nhặt hết ngôi sao mà không va vào đá.',
-    categories: ['logic', 'space'],
-    skills: ['Tư duy lập trình', 'Trình tự', 'Tìm và sửa lỗi'],
-    grades: [1, 2, 3, 4, 5],
-    minutes: [5, 10],
-    status: 'ready',
-    difficulty: 'Sân rộng dần 4 × 4 → 6 × 6, nhiều sao và đá hơn, giới hạn số thẻ; L4 có thẻ "đi n bước" (vòng lặp), L5 robot có hướng nhìn: Tiến, Quay trái, Quay phải.',
   },
   {
     id: 'sudoku',

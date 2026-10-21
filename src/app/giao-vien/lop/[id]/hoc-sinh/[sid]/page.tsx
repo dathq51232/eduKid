@@ -143,7 +143,7 @@ export default async function StudentProgressPage({ params }: { params: Promise<
                   {gameList.slice(0, 30).map((g) => (
                     <tr key={g.id}>
                       <td>{fmtDateTime(g.created_at)}</td>
-                      <th scope="row">{gameById(g.game_id as GameId)?.title ?? g.game_id}</th>
+                      <th scope="row">{gameById(g.game_id as GameId)?.title ?? (g.game_id === 'robot' ? 'Robot lập trình (đã gỡ)' : g.game_id)}</th>
                       <td>{g.level}</td>
                       <td>{g.score}/{g.max_score}</td>
                     </tr>

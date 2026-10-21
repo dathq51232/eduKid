@@ -6,7 +6,7 @@ const INK = '#1f2a44';
 
 /** Hình minh họa thẻ game: cùng khung, cùng nét mực, mỗi game một màu nền nhạt */
 export default function GameArt({ id }: { id: GameId }) {
-  const bg = { pattern: '#e1ebff', memory: '#efe7ff', maze: '#dff3e8', robot: '#fff0cc', sudoku: '#e2f5ec', balance: '#fde8e6' }[id];
+  const bg = { pattern: '#e1ebff', memory: '#efe7ff', maze: '#dff3e8', sudoku: '#e2f5ec', balance: '#fde8e6' }[id];
   return (
     <div className="game-art" style={{ background: bg }} aria-hidden="true">
       <svg viewBox="0 0 240 120" className="game-art-scene" focusable="false">
@@ -36,22 +36,6 @@ export default function GameArt({ id }: { id: GameId }) {
             <path d="M196 80l3.6 7.4 8 1.1-5.8 5.6 1.4 8L196 98.3l-7.2 3.8 1.4-8-5.8-5.6 8-1.1L196 80z" fill="#f5b82e" stroke={INK} strokeWidth="2.2" strokeLinejoin="round" />
           </g>
         )}
-        {id === 'robot' && (
-          <g stroke={INK} strokeLinejoin="round">
-            <rect x="28" y="14" width="92" height="92" rx="8" fill="#fff" strokeWidth="3" />
-            <path d="M51 14 V106 M74 14 V106 M97 14 V106 M28 37 H120 M28 60 H120 M28 83 H120" stroke="#c9d6ea" strokeWidth="1.5" />
-            <path d="M86 89c-6-1-8-9-3-12 5-4 12 0 12 5 0 6-4 8-9 7z" fill="#9aa6b8" strokeWidth="2" />
-            <path d="M108 18l3 6.2 6.8 1-4.9 4.8 1.2 6.8-6.1-3.2-6.1 3.2 1.2-6.8-4.9-4.8 6.8-1z" fill="#f5b82e" strokeWidth="2" />
-            <path d="M49 79 V48 H97" stroke="#2f6fed" strokeWidth="4" strokeLinecap="round" strokeDasharray="2 8" fill="none" />
-            <MiloMascot variant="robot" x={30} y={58} size={40} />
-            {[0, 1, 2].map((i) => (
-              <g key={i} transform={`translate(${136 + i * 32} 44)`}>
-                <rect width="28" height="32" rx="6" fill="#f5b82e" strokeWidth="2.5" />
-                <path d={i === 1 ? 'M14 24 V9 M8 15 L14 9 L20 15' : 'M6 16 H22 M16 10 L22 16 L16 22'} stroke={INK} strokeWidth="3" fill="none" strokeLinecap="round" />
-              </g>
-            ))}
-          </g>
-        )}
         {id === 'sudoku' && (
           <g>
             <rect x="72" y="12" width="96" height="96" rx="8" fill="#fff" stroke={INK} strokeWidth="3" />
@@ -78,9 +62,7 @@ export default function GameArt({ id }: { id: GameId }) {
           </g>
         )}
       </svg>
-      {id !== 'robot' && (
-        <MiloMascot variant={GAME_MASCOT[id]} size={58} mood={id === 'pattern' || id === 'sudoku' ? 'think' : id === 'memory' ? 'happy' : 'cheer'} className="game-art-milo" />
-      )}
+      <MiloMascot variant={GAME_MASCOT[id]} size={58} mood={id === 'pattern' || id === 'sudoku' ? 'think' : id === 'memory' ? 'happy' : 'cheer'} className="game-art-milo" />
     </div>
   );
 }
