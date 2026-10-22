@@ -44,9 +44,11 @@ export function levelOf(avgPercent: number | null | undefined, lessonsDone: numb
 }
 
 /* ====================================================================== CHIA NHÓM */
-export type GroupMode = 'random' | 'balanced' | 'teams';
-export type GroupOpts = { by: 'count' | 'size'; n: number; mode: GroupMode; leaders: boolean; skipAbsent: boolean; avoid: [string, string][] };
-export type Group = { members: string[]; leader: string | null };
+/** seating: theo sơ đồ chỗ ngồi — ghép các bàn trên/dưới cạnh nhau trong cùng dãy (quay bàn) */
+export type GroupMode = 'random' | 'balanced' | 'teams' | 'seating';
+export type GroupOpts = { by: 'count' | 'size'; n: number; mode: GroupMode; leaders: boolean; skipAbsent: boolean; avoid: [string, string][]; /** số bàn ghép thành 1 nhóm khi chia theo sơ đồ */ desksPer: number };
+/** name: tên thầy cô tự đặt (để trống thì dùng tên con vật mặc định) */
+export type Group = { members: string[]; leader: string | null; name?: string };
 export type GroupsState = { opts: GroupOpts; groups: Group[]; at?: string };
 
 export const GROUP_LOOKS = [
@@ -57,7 +59,50 @@ export const GROUP_LOOKS = [
   { emoji: '🦒', name: 'Hươu', color: '#b45309' }, { emoji: '🐸', name: 'Ếch', color: '#4d7c0f' },
   { emoji: '🐳', name: 'Cá voi', color: '#1d4ed8' }, { emoji: '🦋', name: 'Bướm', color: '#9333ea' },
 ];
-export const defaultGroupOpts = (): GroupOpts => ({ by: 'count', n: 6, mode: 'balanced', leaders: true, skipAbsent: true, avoid: [] });
+export const defaultGroupOpts = (): GroupOpts => ({ by: 'count', n: 6, mode: 'balanced', leaders: true, skipAbsent: true, avoid: [], desksPer: 2 });
+export const groupTitle = (g: Group, i: number) => g.name?.trim() || `Nhóm ${GROUP_LOOKS[i % GROUP_LOOKS.length].name}`;
+
+/** Chọn nhóm trưởng: ưu tiên em học tốt / khá */
+export function pickLeader(members: string[], levels: Record<string, Level>, rand: () => number = Math.random): string | null {
+  const able = members.filter((id) => ['tot', 'kha'].includes(levels[id] ?? 'chua'));
+  const from = able.length ? able : members;
+  return from.length ? from[Math.floor(rand() * from.length) % from.length] : null;
+}
+
+/**
+ * Chia nhóm theo sơ đồ chỗ ngồi: trong mỗi dãy, cứ `desksPer` bàn liền nhau (từ bàn đầu) thành một nhóm — học sinh chỉ cần quay bàn.
+ * Chỉ tính các em trong `ids` (vd đã bỏ em vắng). Nhóm chỉ còn 1 em thì nhập vào nhóm liền trước cùng dãy (hoặc liền sau).
+ * Em chưa có chỗ trong sơ đồ được thêm vào nhóm ít người nhất.
+ */
+export function groupsFromSeating(seat: Seating, ids: string[], desksPer: number, levels: Record<string, Level>, leaders: boolean, rand: () => number = Math.random): Group[] {
+  const keep = new Set(ids);
+  const k = Math.max(1, Math.min(seat.rows, Math.round(desksPer) || 1));
+  const per = DESK_SEATS[seat.desk];
+  const groups: string[][] = [];
+  for (let c = 0; c < seat.cols; c++) {
+    const col: string[][] = [];
+    for (let r0 = 0; r0 < seat.rows; r0 += k) {
+      const g: string[] = [];
+      for (let r = r0; r < Math.min(seat.rows, r0 + k); r++) for (let j = 0; j < per; j++) {
+        const id = seat.seats[seatIndex(seat, r, c, j)];
+        if (id && keep.has(id)) g.push(id);
+      }
+      if (g.length) col.push(g);
+    }
+    // nhóm 1 em (khi ghép từ 2 em trở lên) thì nhập vào nhóm bên cạnh cùng dãy
+    for (let i = col.length - 1; i >= 0 && k * per > 1; i--) {
+      if (col[i].length === 1 && col.length > 1) { const to = i > 0 ? i - 1 : 1; col[to].push(...col[i]); col.splice(i, 1); }
+    }
+    groups.push(...col);
+  }
+  const placed = new Set(groups.flat());
+  for (const id of ids.filter((x) => !placed.has(x))) {
+    if (!groups.length) { groups.push([id]); continue; }
+    const min = Math.min(...groups.map((g) => g.length));
+    groups[groups.findIndex((g) => g.length === min)].push(id);
+  }
+  return groups.map((members) => ({ members, leader: leaders ? pickLeader(members, levels, rand) : null }));
+}
 
 /** Số nhóm thực tế */
 export function groupCount(students: number, opts: Pick<GroupOpts, 'by' | 'n'>): number {
@@ -97,11 +142,7 @@ export function makeGroups(students: ToolStudent[], levels: Record<string, Level
     order.forEach((id, i) => buckets[(start + i) % k].push(id));
   }
   separate(buckets, opts.avoid, levels);
-  return buckets.map((members) => {
-    const able = members.filter((id) => ['tot', 'kha'].includes(levels[id] ?? 'chua'));
-    const leader = opts.leaders ? (able.length ? able : members)[Math.floor(rand() * (able.length || members.length))] ?? null : null;
-    return { members, leader };
-  });
+  return buckets.map((members) => ({ members, leader: opts.leaders ? pickLeader(members, levels, rand) : null }));
 }
 
 /** Các cặp "không xếp chung" đang bị chung nhóm */
@@ -142,7 +183,9 @@ export type DeskKind = 'double' | 'single' | 'group4';
 export const DESK_SEATS: Record<DeskKind, number> = { double: 2, single: 1, group4: 4 };
 export const DESK_LABEL: Record<DeskKind, string> = { double: 'Bàn đôi', single: 'Bàn đơn', group4: 'Nhóm 4' };
 /** cols = số dãy (từ trái sang phải nhìn từ cuối lớp lên bảng), rows = số bàn mỗi dãy (từ bàn đầu) */
-export type Seating = { cols: number; rows: number; desk: DeskKind; seats: (string | null)[]; colorByCol: boolean };
+/** tdesk: vị trí bàn giáo viên ở đầu lớp (lớp quay hướng khác nhau) */
+export type TeacherDeskPos = 'left' | 'center' | 'right';
+export type Seating = { cols: number; rows: number; desk: DeskKind; seats: (string | null)[]; colorByCol: boolean; tdesk: TeacherDeskPos };
 
 export const seatCount = (s: Pick<Seating, 'cols' | 'rows' | 'desk'>) => s.cols * s.rows * DESK_SEATS[s.desk];
 /** chỉ số ghế: dãy c, bàn r, chỗ k trong bàn */
@@ -152,7 +195,7 @@ export const colOfSeat = (s: Pick<Seating, 'cols' | 'desk'>, i: number) => Math.
 export function defaultSeating(n: number): Seating {
   const cols = 4;
   const rows = Math.max(1, Math.ceil(Math.max(n, 1) / (cols * 2)));
-  return { cols, rows, desk: 'double', seats: Array(cols * rows * 2).fill(null), colorByCol: true };
+  return { cols, rows, desk: 'double', seats: Array(cols * rows * 2).fill(null), colorByCol: true, tdesk: 'left' };
 }
 
 /** Bỏ em không còn trong lớp, bỏ trùng, đổi kích thước theo bố cục (em bị thừa ra thành "chưa xếp chỗ") */
@@ -170,7 +213,8 @@ export function normalizeSeating(raw: Partial<Seating> | null | undefined, stude
     seen.add(id);
     return id;
   });
-  return { cols, rows, desk, seats, colorByCol: raw?.colorByCol !== false };
+  const tdesk: TeacherDeskPos = raw?.tdesk === 'center' || raw?.tdesk === 'right' ? raw.tdesk : 'left';
+  return { cols, rows, desk, seats, colorByCol: raw?.colorByCol !== false, tdesk };
 }
 const clampInt = (v: unknown, lo: number, hi: number, def: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, Math.round(v))) : def);
 

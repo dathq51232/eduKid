@@ -1,7 +1,7 @@
 // Kiểm tra công cụ trên lớp (phần tính toán): npx tsx scripts/check-class-tools.ts
 import {
   addTime, autoSeat, conflictsOf, defaultSeating, fmtClock, formatPhone, groupCount, levelOf, makeGroups, matchStudent, normalizePhone,
-  normalizeSeating, shouldTick, normalizeTeams, parseContactPaste, parseTimer, pauseTimer, placeSeat, ranking, relayout, seatCount, seeded, startTimer,
+  normalizeSeating, shouldTick, groupsFromSeating, groupTitle, normalizeTeams, parseContactPaste, parseTimer, pauseTimer, placeSeat, ranking, relayout, seatCount, seeded, startTimer,
   teamTotals, teamsFromSeating, timerLeft, timerPhase, unseated, weekOf, type Level, type ToolStudent,
 } from '../src/lib/classroom/class-tools';
 
@@ -16,7 +16,7 @@ for (const size of [1, 2, 5, 13, 30, 35, 45]) {
   const st = mk(size);
   const lv: Record<string, Level> = Object.fromEntries(st.map((s, i) => [s.id, (['tot', 'kha', 'hotro', 'chua'] as Level[])[i % 4]]));
   for (const by of ['count', 'size'] as const) for (const k of [1, 2, 3, 4, 6, 8]) for (const mode of ['random', 'balanced'] as const) for (let seed = 1; seed <= 6; seed++) {
-    const opts = { by, n: k, mode, leaders: true, skipAbsent: true, avoid: [['s0', 's1'], ['s2', 's3']] as [string, string][] };
+    const opts = { by, n: k, mode, leaders: true, skipAbsent: true, desksPer: 2, avoid: [['s0', 's1'], ['s2', 's3']] as [string, string][] };
     const g = makeGroups(st, lv, opts, seeded(seed * 97 + k));
     const all = g.flatMap((x) => x.members);
     ok(all.length === size && new Set(all).size === size, `đủ em, không trùng (${size}/${by}${k}/${mode})`);
@@ -33,11 +33,11 @@ for (const size of [1, 2, 5, 13, 30, 35, 45]) {
     }
   }
 }
-ok(makeGroups([], {}, { by: 'count', n: 4, mode: 'random', leaders: true, skipAbsent: true, avoid: [] }).length === 0, 'lớp trống không lỗi');
+ok(makeGroups([], {}, { by: 'count', n: 4, mode: 'random', leaders: true, skipAbsent: true, avoid: [], desksPer: 2 }).length === 0, 'lớp trống không lỗi');
 {
   const st = mk(10);
   const teams = [['s0', 's1', 's2'], ['s3', 's4'], ['s5', 'x-không-còn']];
-  const g = makeGroups(st, {}, { by: 'count', n: 2, mode: 'teams', leaders: false, skipAbsent: true, avoid: [] }, seeded(3), teams);
+  const g = makeGroups(st, {}, { by: 'count', n: 2, mode: 'teams', leaders: false, skipAbsent: true, avoid: [], desksPer: 2 }, seeded(3), teams);
   ok(g.length === 3 && g.flatMap((x) => x.members).length === 10, 'theo tổ: giữ 3 tổ, em chưa có tổ được thêm vào');
   ok(g[0].members.includes('s0') && g[0].members.includes('s2') && !g.flatMap((x) => x.members).includes('x-không-còn'), 'theo tổ: giữ đúng thành viên, bỏ em không còn trong lớp');
   ok(g.every((x) => x.leader === null), 'tắt nhóm trưởng');
@@ -65,6 +65,32 @@ ok(levelOf(85, 3) === 'tot' && levelOf(60, 1) === 'kha' && levelOf(30, 2) === 'h
   ok(t.teams.every((x, c) => x.members.every((id) => s1.seats.indexOf(id) % 8 >= c * 2 && s1.seats.indexOf(id) % 8 < c * 2 + 2)), 'mỗi tổ đúng dãy');
   const nt = normalizeTeams({ teams: [{ name: 'A', emoji: '🚀', members: ['s1', 's1', 'zz'], leader: 'zz' }, { name: '', emoji: '', members: ['s1'], leader: null }] }, st);
   ok(nt.teams[0].members.length === 1 && nt.teams[1].members.length === 0 && nt.teams[0].leader === null && nt.teams[1].name === 'Tổ 2', 'làm sạch danh sách tổ');
+}
+
+/* ---------- chia nhóm theo sơ đồ chỗ ngồi */
+{
+  const st = mk(30);
+  const s1 = autoSeat(defaultSeating(30), st.map((x) => x.id), seeded(11)); // 4 dãy × 4 bàn đôi, 2 ghế trống cuối
+  const ids = st.map((x) => x.id);
+  for (const k of [1, 2, 3, 4]) {
+    const g = groupsFromSeating(s1, ids, k, {}, true, seeded(k));
+    const all = g.flatMap((x) => x.members);
+    ok(all.length === 30 && new Set(all).size === 30, `theo sơ đồ (${k} bàn/nhóm): đủ 30 em, không trùng`);
+    ok(g.every((x) => x.members.length >= 2 || k === 1), `theo sơ đồ (${k} bàn): không có nhóm 1 em`);
+    // cùng nhóm thì cùng dãy và các bàn liền nhau
+    ok(g.every((x) => new Set(x.members.map((id) => Math.floor(s1.seats.indexOf(id) / 2) % 4)).size === 1), `theo sơ đồ (${k} bàn): mỗi nhóm cùng một dãy`);
+  }
+  const g2 = groupsFromSeating(s1, ids, 2, {}, false);
+  ok(g2.length === 8 && g2.filter((x) => x.members.length === 4).length >= 6, `2 bàn/nhóm: 8 nhóm khoảng 4 em (${g2.map((x) => x.members.length)})`);
+  ok(g2.every((x) => x.leader === null), 'tắt nhóm trưởng');
+  const absent = new Set(ids.slice(0, 5));
+  const g3 = groupsFromSeating(s1, ids.filter((x) => !absent.has(x)), 2, {}, true);
+  ok(g3.flatMap((x) => x.members).length === 25 && !g3.some((x) => x.members.some((id) => absent.has(id))), 'bỏ em vắng');
+  const half = autoSeat(defaultSeating(30), ids.slice(0, 20), seeded(2));
+  const g4 = groupsFromSeating(half, ids, 2, {}, false);
+  ok(g4.flatMap((x) => x.members).length === 30, 'em chưa có chỗ ngồi vẫn được xếp vào nhóm');
+  ok(groupTitle({ members: [], leader: null, name: ' Nhóm Sao ' }, 0) === 'Nhóm Sao' && groupTitle({ members: [], leader: null }, 1) === 'Nhóm Cá heo', 'tên nhóm tự đặt / mặc định');
+  ok(normalizeSeating({ tdesk: 'right' } as never, st).tdesk === 'right' && normalizeSeating({ tdesk: 'xx' } as never, st).tdesk === 'left', 'vị trí bàn giáo viên');
 }
 
 /* ---------- thi đua */
