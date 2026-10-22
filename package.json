@@ -22,6 +22,7 @@
     "check:practice": "tsx scripts/check-practice.ts",
     "check:callon": "tsx scripts/check-callon.ts",
     "check:diary": "tsx scripts/check-diary.ts",
+    "check:tools": "tsx scripts/check-class-tools.ts",
     "check:games": "tsx scripts/check-games.ts",
     "check:sets": "tsx scripts/check-sets.ts",
     "check:exams": "tsx scripts/check-exams.ts",

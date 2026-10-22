@@ -3,9 +3,10 @@
 // Sổ lớp hằng ngày: điểm danh + ghi chú nhanh từng em, tin nhắn phụ huynh soạn sẵn (sao chép dán Zalo), tổng hợp tháng.
 // Lưu lên Supabase qua các hàm teacher_diary_* (migration 0026); tự lưu sau mỗi thay đổi.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Copy, Download, Pencil, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, Download, MessageCircle, Pencil, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { downloadXlsx } from '@/lib/xlsx';
+import { zaloHref } from '@/lib/classroom/class-tools';
 import {
   PRAISE_TAGS, REMIND_TAGS, STATUS_LABEL, alertsOf, dayLabel, emptyEntry, isMarked, isPraise, kindsOf, messageFor, monthSheet,
   shiftDay, summarize, todayIso, type Entry, type MessageKind, type Pronoun, type RangeData, type Status, type Student,
@@ -42,9 +43,20 @@ export default function ClassDiary({ classId, className, students, initialTab = 
   const [editing, setEditing] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | MessageKind>('all');
   const [flash, setFlash] = useState('');
+  // số Zalo phụ huynh (Danh bạ phụ huynh, migration 0028) — chỉ tải khi mở thẻ Tin nhắn; chưa có migration thì bỏ qua
+  const [phones, setPhones] = useState<Record<string, string> | null>(null);
 
   useEffect(() => { try { const p = localStorage.getItem('so-lop:xung-ho'); if (p === 'thay' || p === 'co') setPronoun(p); } catch { /* bỏ qua */ } }, []);
   const choosePronoun = (p: Pronoun) => { setPronoun(p); setEdited({}); try { localStorage.setItem('so-lop:xung-ho', p); } catch { /* bỏ qua */ } };
+
+  useEffect(() => {
+    if (tab !== 'msg' || phones) return;
+    void supabase.rpc('teacher_contacts', { p_class: classId }).then(({ data, error: e }) => {
+      const m: Record<string, string> = {};
+      if (!e) ((data ?? []) as { student_id: string; phone: string }[]).forEach((c) => { m[c.student_id] ??= c.phone; });
+      setPhones(m);
+    });
+  }, [tab, phones, supabase, classId]);
 
   /* ---------------------------------------------------------- đọc một ngày */
   const load = useCallback(async (d: string) => {
@@ -254,6 +266,7 @@ export default function ClassDiary({ classId, className, students, initialTab = 
                     ) : <p className="diary-bubble">{text}</p>}
                     <div className="diary-msg-act">
                       <button type="button" className={`mini-btn${e?.copied ? ' is-copied' : ''}`} onClick={() => void copyOne(s.id, text ?? '')}><Copy aria-hidden="true" /> {e?.copied ? 'Đã chép' : 'Sao chép'}</button>
+                      {phones?.[s.id] && <a className="mini-btn is-zalo" href={zaloHref(phones[s.id])} target="_blank" rel="noopener noreferrer" onClick={() => void copyOne(s.id, text ?? '')} title="Chép tin nhắn rồi mở Zalo của phụ huynh"><MessageCircle aria-hidden="true" /> Chép & mở Zalo</a>}
                       <button type="button" className="mini-btn" onClick={() => setEditing(editing === s.id ? null : s.id)}><Pencil aria-hidden="true" /> {editing === s.id ? 'Xong' : 'Sửa'}</button>
                     </div>
                   </li>

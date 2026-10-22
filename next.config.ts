@@ -2,14 +2,19 @@ import type { NextConfig } from 'next';
 
 // Header bảo mật cho mọi trang. CSP vừa phải: chỉ tải mã/ảnh từ chính trang và Supabase,
 // cấm nhúng trang vào web khác (chống clickjacking), cấm plugin, cấm gửi form ra ngoài.
+// Địa chỉ Supabase đang cấu hình (kể cả tên miền riêng) luôn được phép, ngoài *.supabase.co
+const SUPABASE_ORIGIN = (() => { try { return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').origin; } catch { return ''; } })();
+const SB = SUPABASE_ORIGIN && !SUPABASE_ORIGIN.endsWith('.supabase.co') ? ` ${SUPABASE_ORIGIN}` : '';
+const SB_WS = SB.replace(/^ http/, ' ws');
+
 const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.supabase.co",
+  `img-src 'self' data: blob: https://*.supabase.co${SB}`,
   "media-src 'self' data: blob:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  `connect-src 'self' https://*.supabase.co wss://*.supabase.co${SB}${SB_WS}`,
   "frame-src 'self' blob: data:",
   "frame-ancestors 'self'",
   "object-src 'none'",

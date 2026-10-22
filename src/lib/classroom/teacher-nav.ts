@@ -3,13 +3,17 @@ import { FEATURES } from '@/lib/features';
 
 export type ToolKey =
   | 'so-lop' | 'goi-ten' | 'ke-hoach' | 'giao-bai' | 'phieu-bai-tap' | 'phieu-chinh-ta'
-  | 'lo-hong' | 'de-kiem-tra' | 'nhan-xet' | 'ket-qua-truong' | 'phieu-tien-bo' | 'thu-khen' | 'lop';
+  | 'lo-hong' | 'de-kiem-tra' | 'nhan-xet' | 'ket-qua-truong' | 'phieu-tien-bo' | 'thu-khen' | 'lop'
+  | 'nhom' | 'thi-dua' | 'hen-gio' | 'danh-ba';
 export type ToolTone = 'green' | 'yellow' | 'blue' | 'violet' | 'red' | 'coral';
 export type Tool = { key: ToolKey; label: string; desc: string; group: string; tone: ToolTone; path: string; keywords: string };
 
 const ALL: Tool[] = [
   { key: 'so-lop', label: 'Sổ lớp', desc: 'Điểm danh, ghi chú, nhắn phụ huynh', group: 'Trên lớp', tone: 'green', path: 'so-lop', keywords: 'diem danh vang co phep ghi chu tin nhan zalo chuyen can' },
   { key: 'goi-ten', label: 'Gọi tên – Dò bài', desc: 'Vòng quay, bốc thăm, đua thú', group: 'Trên lớp', tone: 'yellow', path: 'goi-ten', keywords: 'goi ten do bai vong quay boc tham dua thu trung no phat bieu' },
+  { key: 'nhom', label: 'Nhóm & chỗ ngồi', desc: 'Chia nhóm, sơ đồ lớp', group: 'Trên lớp', tone: 'blue', path: 'nhom', keywords: 'chia nhom ngau nhien can bang so do cho ngoi xep cho ban doi day' },
+  { key: 'thi-dua', label: 'Thi đua tổ', desc: 'Cộng điểm tổ, tổng kết tuần', group: 'Trên lớp', tone: 'coral', path: 'thi-dua', keywords: 'thi dua to diem cong tru co tong ket tuan sinh hoat lop' },
+  { key: 'hen-gio', label: 'Hẹn giờ', desc: 'Đồng hồ đếm ngược chiếu bảng', group: 'Trên lớp', tone: 'violet', path: 'hen-gio', keywords: 'hen gio dem nguoc dong ho bam gio thao luan' },
   { key: 'ke-hoach', label: 'Kế hoạch bài dạy', desc: 'Giáo án, lịch báo giảng', group: 'Dạy học', tone: 'green', path: 'ke-hoach', keywords: 'giao an ke hoach lich bao giang soan bai word' },
   { key: 'giao-bai', label: 'Giao bài về nhà', desc: 'Hạn nộp, em nào chưa làm', group: 'Dạy học', tone: 'violet', path: 'giao-bai', keywords: 'giao bai ve nha han nop' },
   { key: 'phieu-bai-tap', label: 'Phiếu bài tập', desc: 'In kèm đáp án', group: 'Dạy học', tone: 'yellow', path: 'phieu-bai-tap', keywords: 'phieu bai tap in dap an' },
@@ -18,6 +22,7 @@ const ALL: Tool[] = [
   { key: 'de-kiem-tra', label: 'Ma trận & đề kiểm tra', desc: 'Đề A/B, xuất Word', group: 'Đánh giá', tone: 'green', path: 'de-kiem-tra', keywords: 'ma tran de kiem tra dinh ky' },
   { key: 'nhan-xet', label: 'Nhận xét học sinh', desc: 'Tuần, học kỳ, cả năm', group: 'Đánh giá', tone: 'blue', path: 'nhan-xet', keywords: 'nhan xet vnedu hoc ky' },
   { key: 'ket-qua-truong', label: 'Kết quả trên trường', desc: 'Điểm định kỳ, khen thưởng', group: 'Đánh giá', tone: 'violet', path: 'ket-qua-truong', keywords: 'ket qua diem dinh ky khen thuong' },
+  { key: 'danh-ba', label: 'Danh bạ phụ huynh', desc: 'Số điện thoại, Zalo', group: 'Phụ huynh', tone: 'green', path: 'danh-ba', keywords: 'danh ba phu huynh so dien thoai zalo goi lien lac' },
   { key: 'phieu-tien-bo', label: 'Phiếu báo tiến bộ', desc: 'Lời nhắn cho phụ huynh', group: 'Phụ huynh', tone: 'coral', path: 'phieu-tien-bo', keywords: 'phieu bao tien bo phu huynh' },
   { key: 'thu-khen', label: 'Thư khen', desc: 'PDF, ảnh PNG, in', group: 'Phụ huynh', tone: 'violet', path: 'thu-khen', keywords: 'thu khen giay khen' },
   { key: 'lop', label: 'Học sinh & mã lớp', desc: 'Thêm em, PIN, thẻ đăng nhập', group: 'Lớp', tone: 'blue', path: '', keywords: 'hoc sinh pin ma lop the dang nhap them em quan ly lop' },

@@ -7,17 +7,18 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Award, BookCheck, ChevronDown, ClipboardCheck, Dices, FileText, GraduationCap, Home, LayoutGrid, LogOut, Menu, MessageSquareHeart,
-  NotebookPen, Radar, Search, Send, SpellCheck, Table2, Users, X, type LucideIcon,
+  NotebookPen, Radar, Search, Send, SpellCheck, Table2, Users, X, UsersRound, Trophy, Timer, Contact, type LucideIcon,
 } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import ThemeToggle from '@/components/brand/ThemeToggle';
 import { createClient } from '@/lib/supabase/client';
+import { MiniTimer } from '@/components/classroom/ClassTimer';
 import { TOOLS, TOOL_GROUPS, classIdOfPath, fold, toolHref, toolOfPath, type Tool, type ToolKey } from '@/lib/classroom/teacher-nav';
 
 export const TOOL_ICON: Record<ToolKey, LucideIcon> = {
   'so-lop': BookCheck, 'goi-ten': Dices, 'ke-hoach': NotebookPen, 'giao-bai': Send, 'phieu-bai-tap': FileText, 'phieu-chinh-ta': SpellCheck,
   'lo-hong': Radar, 'de-kiem-tra': Table2, 'nhan-xet': ClipboardCheck, 'ket-qua-truong': GraduationCap, 'phieu-tien-bo': MessageSquareHeart,
-  'thu-khen': Award, lop: Users,
+  'thu-khen': Award, lop: Users, nhom: UsersRound, 'thi-dua': Trophy, 'hen-gio': Timer, 'danh-ba': Contact,
 };
 export const USAGE_KEY = 'gv-dung-nhanh';
 
@@ -139,6 +140,9 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
           <button type="button" onClick={() => setDrawer(true)}><Menu aria-hidden="true" />Thêm</button>
         </nav>
       )}
+
+      {/* hẹn giờ đang chạy: ô nhỏ góc dưới ở mọi trang (trừ trang Hẹn giờ) */}
+      <MiniTimer href={active ? `/giao-vien/lop/${active.id}/hen-gio` : null} hidden={current === 'hen-gio'} />
 
       {palette && <CommandPalette classId={active?.id ?? null} onClose={() => setPalette(false)} />}
     </div>
