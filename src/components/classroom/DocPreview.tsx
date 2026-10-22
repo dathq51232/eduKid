@@ -118,7 +118,7 @@ export default function DocPreview({ title, filename, html, onClose, onSaveOrig,
           {extra}
           {onClose && <button type="button" className="mini-btn" aria-label="Đóng" onClick={onClose}><X aria-hidden="true" /></button>}
         </div>
-        {imgs ? <iframe ref={frame} className="pv-frame" title="Bản xem trước" srcDoc={srcDoc} /> : <div className="pv-frame pv-loading">Đang chuẩn bị bản xem trước…</div>}
+        {imgs ? <iframe ref={frame} className="pv-frame" title="Bản xem trước" sandbox="allow-same-origin allow-modals" srcDoc={srcDoc} /> : <div className="pv-frame pv-loading">Đang chuẩn bị bản xem trước…</div>}
       </div>
     </div>
   );

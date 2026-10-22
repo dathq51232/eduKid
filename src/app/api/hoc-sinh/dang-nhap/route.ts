@@ -36,6 +36,24 @@ export async function POST(request: Request) {
   }
 
   const now = Date.now();
+  const supabase = await createClient();
+
+  // Giữ chỗ một lần thử NGUYÊN TỬ trong database trước khi kiểm tra PIN (migration 0027) — gửi nhiều yêu cầu
+  // song song cũng chỉ được thử tối đa MAX_PIN_FAILS lần trong mỗi LOCK_MINUTES phút.
+  const { data: att, error: attErr } = await admin.rpc('student_pin_attempt', { p_student: studentId, p_max: MAX_PIN_FAILS, p_lock_minutes: LOCK_MINUTES });
+  if (!attErr) {
+    const a = ((att ?? []) as { allowed: boolean; remaining: number; locked_minutes: number }[])[0];
+    if (!a?.allowed) return NextResponse.json({ error: 'locked', minutes: a?.locked_minutes || LOCK_MINUTES }, { status: 423 });
+    const { error } = await supabase.auth.signInWithPassword({ email: studentEmail(studentId), password: studentPassword(studentId, body.pin) });
+    if (error) {
+      if (a.locked_minutes > 0) return NextResponse.json({ error: 'locked', minutes: a.locked_minutes }, { status: 423 });
+      return NextResponse.json({ error: 'wrong_pin', remaining: a.remaining }, { status: 401 });
+    }
+    await admin.from('student_login_guards').upsert({ student_id: studentId, failed_count: 0, locked_until: null, last_failed_at: null, updated_at: new Date().toISOString() });
+    return NextResponse.json({ ok: true, next: '/hoc-sinh' });
+  }
+
+  // Chưa chạy migration 0027: cách cũ (đọc – thử – ghi)
   const { data: guard } = await admin.from('student_login_guards').select('failed_count, locked_until, last_failed_at').eq('student_id', studentId).maybeSingle();
   const lockedUntil = guard?.locked_until ? Date.parse(guard.locked_until) : 0;
   if (lockedUntil > now) {
@@ -44,7 +62,6 @@ export async function POST(request: Request) {
   // Lần sai cũ hơn cửa sổ khóa thì không tính nữa
   const recent = guard?.last_failed_at && now - Date.parse(guard.last_failed_at) < LOCK_MINUTES * 60_000 ? guard.failed_count : 0;
 
-  const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email: studentEmail(studentId), password: studentPassword(studentId, body.pin) });
 
   if (error) {
