@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Copy, Download, MessageCircle, Pencil, X } f
 import { createClient } from '@/lib/supabase/client';
 import { downloadXlsx } from '@/lib/xlsx';
 import { zaloHref } from '@/lib/classroom/class-tools';
+import ZaloGroupLink from '@/components/classroom/ZaloGroupLink';
 import {
   PRAISE_TAGS, REMIND_TAGS, STATUS_LABEL, alertsOf, dayLabel, emptyEntry, isMarked, isPraise, kindsOf, messageFor, monthSheet,
   shiftDay, summarize, todayIso, type Entry, type MessageKind, type Pronoun, type RangeData, type Status, type Student,
@@ -280,6 +281,7 @@ export default function ClassDiary({ classId, className, students, initialTab = 
             <textarea className="diary-note" rows={3} maxLength={1500} value={announcement} placeholder={'Bài về nhà: Toán trang 34 bài 1, 2\nThứ Hai mang bút màu'} onChange={(e) => { setAnnouncement(e.target.value); touch(); }} aria-label="Việc chung hôm nay" />
             <pre className="diary-sample">{classNotice}</pre>
             <button type="button" className="btn btn-primary diary-wide" onClick={() => void copyText(classNotice).then((ok) => setFlash(ok ? 'Đã sao chép thông báo cả lớp.' : 'Trình duyệt chặn sao chép.'))}><Copy aria-hidden="true" /> Sao chép thông báo</button>
+            <ZaloGroupLink classId={classId} className={className} notice={classNotice} onCopied={(ok) => setFlash(ok ? 'Đã chép thông báo — dán (Ctrl+V) vào nhóm Zalo vừa mở rồi gửi.' : 'Trình duyệt chặn sao chép.')} />
             <div className="diary-tone" role="group" aria-label="Cách xưng hô">
               <span>Xưng hô:</span>
               <button type="button" className="diary-chip is-praise" aria-pressed={pronoun === 'co'} onClick={() => choosePronoun('co')}>Cô – con</button>

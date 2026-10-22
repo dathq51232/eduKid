@@ -1,7 +1,7 @@
 // Kiểm tra công cụ trên lớp (phần tính toán): npx tsx scripts/check-class-tools.ts
 import {
   addTime, autoSeat, conflictsOf, defaultSeating, fmtClock, formatPhone, groupCount, levelOf, makeGroups, matchStudent, normalizePhone,
-  normalizeSeating, shouldTick, groupsFromSeating, groupTitle, normalizeTeams, parseContactPaste, parseTimer, pauseTimer, placeSeat, ranking, relayout, seatCount, seeded, startTimer,
+  normalizeSeating, shouldTick, normalizeZaloGroup, groupsFromSeating, groupTitle, normalizeTeams, parseContactPaste, parseTimer, pauseTimer, placeSeat, ranking, relayout, seatCount, seeded, startTimer,
   teamTotals, teamsFromSeating, timerLeft, timerPhase, unseated, weekOf, type Level, type ToolStudent,
 } from '../src/lib/classroom/class-tools';
 
@@ -150,5 +150,7 @@ ok(levelOf(85, 3) === 'tot' && levelOf(60, 1) === 'kha' && levelOf(30, 2) === 'h
   ok(timerPhase(200, 300) === 'calm' && timerPhase(50, 300) === 'warn' && timerPhase(8, 300) === 'last' && timerPhase(0, 300) === 'done' && timerPhase(14, 60) === 'warn' && timerPhase(20, 60) === 'calm', 'giai đoạn màu');
 }
 
+ok(normalizeZaloGroup('https://zalo.me/g/abcd1234') === 'https://zalo.me/g/abcd1234' && normalizeZaloGroup(' zalo.me/g/xyz_9-AB?src=qr ') === 'https://zalo.me/g/xyz_9-AB'
+  && normalizeZaloGroup('https://zalo.me/0912345678') === null && normalizeZaloGroup('https://evil.com/zalo.me/g/abcd') === null && normalizeZaloGroup('') === null, 'chuẩn hoá link nhóm Zalo');
 console.log(fail ? `${fail}/${n} lỗi` : `Công cụ trên lớp: ${n} kiểm tra đều đúng`);
 process.exit(fail ? 1 : 0);

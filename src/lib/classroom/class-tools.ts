@@ -457,3 +457,10 @@ export const shouldTick = (t: Pick<TimerState, 'tickMode' | 'muted'>, left: numb
   !t.muted && left > 0 && (t.tickMode === 'every' || (t.tickMode === 'last10' && left <= 10));
 export const timerPhase = (left: number, total: number): 'calm' | 'warn' | 'last' | 'done' =>
   left <= 0 ? 'done' : left <= 10 ? 'last' : left <= Math.min(60, total / 4) ? 'warn' : 'calm';
+
+/* ====================================================================== NHÓM ZALO LỚP */
+/** Chuẩn hoá link nhóm Zalo: nhận "zalo.me/g/abc", "https://zalo.me/g/abc?x" … → "https://zalo.me/g/abc"; sai thì null */
+export function normalizeZaloGroup(raw: string): string | null {
+  const m = raw.trim().match(/^(?:https?:\/\/)?(?:www\.)?zalo\.me\/g\/([A-Za-z0-9_-]{4,64})(?:[/?#].*)?$/i);
+  return m ? `https://zalo.me/g/${m[1]}` : null;
+}

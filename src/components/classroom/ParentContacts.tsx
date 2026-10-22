@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ClipboardPaste, Copy, Eye, EyeOff, MessageCircle, Pencil, Phone, Plus, Search, Trash2, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import ZaloGroupLink from '@/components/classroom/ZaloGroupLink';
 import { fold } from '@/lib/classroom/teacher-nav';
 import {
   RELATIONS, formatPhone, maskPhone, normalizePhone, parseContactPaste, telHref, zaloHref, type Contact, type ToolStudent,
@@ -104,6 +105,7 @@ export default function ParentContacts({ classId, className, students }: Props) 
         </div>
       </div>
       <p className="pc-note">🔒 Chỉ giáo viên được phân công lớp này xem được. Học sinh, phụ huynh khác và giáo viên lớp khác không xem được; mỗi lần xem / sửa đều được ghi nhật ký. Bật “Ẩn số khi chiếu” trước khi chiếu màn hình lên bảng.</p>
+      {!missing && <ZaloGroupLink classId={classId} className={className} variant="contacts" />}
       {missing && <p className="adm-alert is-warn">Chưa chạy migration <code>0028_class_tools.sql</code> trên Supabase nên chưa lưu được số phụ huynh.</p>}
       {err && <p className="adm-alert is-error" role="alert">{err}</p>}
       {ok && !err && <p className="adm-alert is-ok" role="status">{ok} <button type="button" className="ct-x" onClick={() => setOk('')} aria-label="Đóng"><X aria-hidden="true" /></button></p>}

@@ -4214,3 +4214,32 @@ button.diary-pill { cursor: pointer; }
   .auth-split .auth-hero-sub { display: none; }
   .auth-split .auth-hero-img { width: min(260px, 70%); }
 }
+/* link nhóm Zalo lớp */
+.zg { display: grid; gap: 6px; position: relative; }
+.zg-open { justify-content: center; background: #0068ff; color: #fff; text-decoration: none; box-shadow: 0 4px 0 #0050c4; }
+.zg-open:hover { background: #1a78ff; color: #fff; }
+.zg-add, .zg-edit, .zg-del { justify-self: start; font-size: 13.5px; }
+.zg-form { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.zg-label { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; }
+.zg-label svg, .zg-add svg, .zg-edit svg { width: 16px; height: 16px; }
+.zg-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.zg-row input { flex: 1 1 200px; min-width: 0; min-height: 40px; padding: 0 10px; border-radius: 10px; border: 2px solid var(--blue); background: var(--surface); color: var(--ink); font: inherit; font-size: 14.5px; }
+.zg-form small { color: var(--muted); font-weight: 600; font-size: 12.5px; line-height: 1.4; }
+.zg-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-radius: 16px; background: #e3f0ff; border: 1px solid #bcd7ff; }
+.zg-name { display: inline-flex; align-items: center; gap: 10px; color: #0050c4; }
+.zg-name > svg { width: 28px; height: 28px; }
+.zg-name b { display: block; color: var(--ink); }
+.zg-name small { display: block; color: var(--muted); font-weight: 600; }
+.zg-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.zg-qr { display: grid; justify-items: center; gap: 8px; padding: 18px; border-radius: 18px; background: #fff; color: #1e2b4a; border: 1px solid var(--line); box-shadow: var(--shadow-md); position: relative; max-width: 340px; }
+.zg-qr-x { position: absolute; top: 8px; right: 8px; color: #1e2b4a; }
+.zg-qr-title { font-weight: 700; font-size: 17px; text-align: center; }
+.zg-qr-sub { color: #56627a; font-weight: 600; font-size: 14px; }
+:root[data-theme="dark"] .zg-card { background: #10284a; border-color: #1d3d6b; }
+:root[data-theme="dark"] .zg-name { color: #7fb2ff; }
+@media print {
+  body:has(.zg-qr) * { visibility: hidden; }
+  body:has(.zg-qr) .zg-qr, body:has(.zg-qr) .zg-qr * { visibility: visible; }
+  body:has(.zg-qr) .zg-qr { position: absolute; left: 50%; top: 40px; transform: translateX(-50%); box-shadow: none; border: 0; max-width: none; }
+  .zg-qr-x { display: none !important; }
+}
