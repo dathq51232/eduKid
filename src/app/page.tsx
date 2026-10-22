@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Calculator, ClipboardList, FileText, Gamepad2, Languages, ListChecks, ShieldCheck, Star, Trophy } from 'lucide-react';
+import { ArrowRight, BookOpen, Calculator, ClipboardList, FileText, Gamepad2, GraduationCap, Languages, ListChecks, Presentation, ShieldCheck, Star, Trophy } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import GameArt from '@/components/games/GameArt';
@@ -77,6 +77,23 @@ export default function HomePage() {
               </ul>
             </div>
             <span className="hero-bubble" aria-hidden="true">Cố lên<br />bạn nhé!</span>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------- Kết nối giáo viên và học sinh (bộ nhận diện 10/2026) */}
+        <section className="home-connect wrap" aria-labelledby="connect-title">
+          <div className="home-connect-card">
+            {/* eslint-disable-next-line @next/next/no-img-element -- ảnh minh hoạ đã tối ưu sẵn */}
+            <img src="/brand/hero-team-sm.webp" width={520} height={362} alt="Cô giáo, Milo và bạn học sinh cùng đọc sách" className="home-connect-img" loading="lazy" />
+            <div className="home-connect-copy">
+              <h2 id="connect-title">Kết nối giáo viên và học sinh</h2>
+              <p className="home-connect-sub">Cùng học – Cùng phát triển</p>
+              <p>Thầy cô giao bài, chấm và theo dõi tiến bộ của cả lớp; các em luyện tập mỗi ngày, nhận sao và sticker cho từng cố gắng nhỏ.</p>
+              <div className="auth-roles">
+                <Link href="/dang-nhap?vai=nguoi-lon" className="auth-role is-teacher"><Presentation aria-hidden="true" /><span><small>Dành cho</small><b>Giáo viên</b></span></Link>
+                <Link href="/dang-nhap" className="auth-role is-student"><GraduationCap aria-hidden="true" /><span><small>Dành cho</small><b>Học sinh</b></span></Link>
+              </div>
+            </div>
           </div>
         </section>
 

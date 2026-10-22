@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Delete, GraduationCap, LogIn, Users } from 'lucide-react';
-import BrandLogo from '@/components/brand/BrandLogo';
+import { ArrowLeft, Delete, GraduationCap, LogIn, Presentation, Users } from 'lucide-react';
+import BrandLogo, { BrandWord } from '@/components/brand/BrandLogo';
 import { createClient } from '@/lib/supabase/client';
 import { safeNext } from '@/lib/auth/safe-next';
 
@@ -278,7 +278,25 @@ function LoginScreen() {
   }, [configured]);
 
   return (
-    <main className="auth-page">
+    <main className="auth-page auth-split">
+      {/* Bộ nhận diện: cô giáo – Milo – học sinh, chọn vai để mở đúng thẻ đăng nhập */}
+      <aside className="auth-hero">
+        <picture>
+          <source media="(max-width: 860px)" srcSet="/brand/hero-team-sm.webp" />
+          <img src="/brand/hero-team.webp" width={900} height={627} alt="Cô giáo, Milo và bạn học sinh cùng đọc sách" className="auth-hero-img" />
+        </picture>
+        <BrandWord className="auth-hero-word" />
+        <p className="auth-hero-tag">Kết nối giáo viên và học sinh</p>
+        <p className="auth-hero-sub"><span>Cùng học</span> – <span>Cùng phát triển</span></p>
+        <div className="auth-roles">
+          <button type="button" className={`auth-role is-teacher${tab === 'adult' ? ' is-on' : ''}`} onClick={() => setTab('adult')}>
+            <Presentation aria-hidden="true" /><span><small>Dành cho</small><b>Giáo viên</b></span>
+          </button>
+          <button type="button" className={`auth-role is-student${tab === 'student' ? ' is-on' : ''}`} onClick={() => setTab('student')}>
+            <GraduationCap aria-hidden="true" /><span><small>Dành cho</small><b>Học sinh</b></span>
+          </button>
+        </div>
+      </aside>
       <div className="auth-card">
         <Link href="/" className="brand auth-brand" aria-label="EduChain Kids - Trang chủ"><BrandLogo size={40} /></Link>
         <h1>Đăng nhập</h1>

@@ -4152,3 +4152,65 @@ button.diary-pill { cursor: pointer; }
 .ct-gtitle { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.2; padding: 2px 2px; }
 .ct-gtitle svg { display: none; }
 .ct-gtitle:hover svg, .ct-gtitle:focus-visible svg { display: inline-block; opacity: 1; }
+
+/* ==========================================================================
+   BỘ NHẬN DIỆN 10/2026 — logo Milo trong vòng xanh, chữ "EduChain" xanh + "Kids" nhiều màu
+   ========================================================================== */
+.logo-mark { flex: none; border-radius: 50%; box-shadow: 0 2px 6px rgb(36 99 235 / .25); }
+.brand-word { font-family: var(--font-display, 'Quicksand'), sans-serif; font-weight: 700; letter-spacing: -.02em; }
+.bw-edu { background: linear-gradient(90deg, #1d5fe0, #2f7cf6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.bw-kids i { font-style: normal; }
+.bw-kids i:nth-child(1) { color: #f59e0b; }
+.bw-kids i:nth-child(2) { color: #22c55e; }
+.bw-kids i:nth-child(3) { color: #ec4899; }
+.bw-kids i:nth-child(4) { color: #8b5cf6; }
+:root[data-theme="dark"] .bw-edu { background: linear-gradient(90deg, #6ea8ff, #8fbcff); -webkit-background-clip: text; background-clip: text; }
+:root[data-theme="dark"] .bw-kids i:nth-child(4) { color: #a78bfa; }
+.brand-stack { display: grid; gap: 2px; }
+.brand-tag { font-size: 13px; font-weight: 700; color: var(--blue); letter-spacing: 0; }
+/* trang đăng nhập: tranh nhận diện bên trái, thẻ đăng nhập bên phải */
+.auth-split { grid-template-columns: minmax(0, 1.05fr) minmax(0, 500px); gap: 40px; align-items: center; justify-content: center; max-width: 1180px; margin: 0 auto; }
+.auth-hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
+.auth-hero-img { width: min(520px, 100%); height: auto; filter: drop-shadow(0 18px 30px rgb(36 99 235 / .12)); }
+.auth-hero-word { font-size: clamp(40px, 5vw, 64px); line-height: 1; margin-top: -6px; }
+.auth-hero-tag { font-size: clamp(19px, 2vw, 26px); font-weight: 700; color: #1d47a8; }
+.auth-hero-sub { display: flex; align-items: center; gap: 10px; color: var(--blue); font-weight: 600; font-size: 17px; }
+.auth-hero-sub::before, .auth-hero-sub::after { content: ''; width: 56px; height: 2px; border-radius: 2px; background: currentColor; opacity: .6; }
+.auth-roles { display: flex; gap: 14px; margin-top: 12px; }
+.auth-role { display: inline-flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 22px 8px 16px; border: 0; border-radius: 999px; color: #fff; font: inherit; text-align: left; cursor: pointer; box-shadow: 0 6px 16px rgb(15 23 42 / .15); transition: transform .15s, box-shadow .15s; }
+.auth-role svg { width: 32px; height: 32px; flex: none; }
+.auth-role small { display: block; font-size: 13px; font-weight: 600; opacity: .9; }
+.auth-role b { display: block; font-size: 20px; line-height: 1.1; }
+.auth-role.is-teacher { background: linear-gradient(135deg, #1d5fe0, #4b9bff); }
+.auth-role.is-student { background: linear-gradient(135deg, #16a34a, #4ade80); }
+.auth-role:hover { transform: translateY(-2px); }
+.auth-role.is-on { outline: 3px solid rgb(255 200 61); outline-offset: 3px; }
+:root[data-theme="dark"] .auth-hero-tag { color: #9cc2ff; }
+@media (max-width: 860px) {
+  .auth-split { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .auth-hero-img { width: min(320px, 80%); }
+  .auth-hero-word { font-size: 38px; }
+  .auth-hero-sub { font-size: 15px; }
+  .auth-role { min-height: 54px; padding: 6px 16px 6px 12px; }
+  .auth-role svg { width: 26px; height: 26px; }
+  .auth-role b { font-size: 17px; }
+}
+.auth-split .auth-card > .auth-brand { display: none; }
+.auth-role { text-decoration: none; }
+.home-connect { margin-top: 28px; }
+.home-connect-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: 28px; padding: 22px 32px; border-radius: 28px; background: linear-gradient(120deg, #eaf2ff, #e8f8ee); border: 1px solid var(--line); }
+.home-connect-img { width: 100%; max-width: 460px; height: auto; justify-self: center; }
+.home-connect-copy { display: grid; gap: 8px; }
+.home-connect-copy h2 { font-size: clamp(26px, 3vw, 36px); color: #1d47a8; line-height: 1.15; }
+.home-connect-sub { color: var(--green); font-weight: 700; font-size: 17px; }
+.home-connect-copy p:not(.home-connect-sub) { color: var(--muted); font-weight: 600; max-width: 520px; }
+.home-connect .auth-roles { margin-top: 6px; flex-wrap: wrap; }
+:root[data-theme="dark"] .home-connect-card { background: linear-gradient(120deg, #15233f, #12302a); }
+:root[data-theme="dark"] .home-connect-copy h2 { color: #9cc2ff; }
+@media (max-width: 860px) {
+  .home-connect-card { grid-template-columns: minmax(0, 1fr); padding: 18px; text-align: center; }
+  .home-connect-copy p:not(.home-connect-sub) { margin: 0 auto; }
+  .home-connect .auth-roles { justify-content: center; }
+  .auth-split .auth-hero-sub { display: none; }
+  .auth-split .auth-hero-img { width: min(260px, 70%); }
+}
