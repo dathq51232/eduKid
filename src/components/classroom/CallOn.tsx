@@ -112,9 +112,10 @@ export default function CallOn({ classId, className, grade, students, absentToda
   const [full, setFull] = useState(false);
   const [notice, setNotice] = useState('');
   const boardRef = useRef<HTMLDivElement>(null);
-  const reduced = useRef(false);
   const { tick, chime, whoosh, riffle, countBeep, whistle, step, cheer, dice, knock, drum, crack, chirp, fanfare } = useSound(s.sound);
-  const secs = reduced.current ? 0.6 : s.duration;
+  // Thời gian chạy luôn theo lựa chọn của thầy cô. Không rút ngắn theo cài đặt "giảm chuyển động" của máy:
+  // Windows tắt "Animation effects" (máy yếu, chế độ Best performance) làm trò chơi chỉ chạy 0,6 giây.
+  const secs = s.duration;
   const [celebrate, setCelebrate] = useState(false);
   const timers = useRef<number[]>([]);
   const later = (fn: () => void, ms: number) => { timers.current.push(window.setTimeout(fn, ms)); };
@@ -127,7 +128,6 @@ export default function CallOn({ classId, className, grade, students, absentToda
     // em vắng đã điểm danh trong Sổ lớp hôm nay: tự đánh dấu vắng (thầy cô vẫn bỏ đánh dấu được)
     const add = absentToday.filter((id) => !st.absent.includes(id));
     setS(add.length ? { ...st, absent: [...st.absent, ...add] } : st);
-    reduced.current = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     setLoaded(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ đọc một lần khi mở trang
   }, [storeKey]);
@@ -171,7 +171,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
     fanfare();
     // tên em được chọn hiện to giữa sân chơi kèm pháo giấy, rồi mới thu về thẻ kết quả
     setCelebrate(true);
-    window.setTimeout(() => setCelebrate(false), reduced.current ? 600 : 2200);
+    window.setTimeout(() => setCelebrate(false), 2200);
   }, [nextQuestion, fanfare]);
 
   const mark = (m: keyof Tally) => {
@@ -196,7 +196,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
     setWheelSnap(list);
     setPhase('running');
     const from = angleRef.current;
-    const to = wheelAngle(i, list.length, from, reduced.current ? 1 : spinTurns(secs));
+    const to = wheelAngle(i, list.length, from, spinTurns(secs));
     const ms = secs * 1000;
     const t0 = performance.now();
     let last = sliceAt(from, list.length);
@@ -221,9 +221,9 @@ export default function CallOn({ classId, className, grade, students, absentToda
     if (phase === 'running' || mixing) return;
     closeResult();
     setMixing(true);
-    riffle(reduced.current ? 300 : 1300);
-    later(() => setS((x) => ({ ...x, mix: x.mix + 1 })), reduced.current ? 150 : 650);
-    later(() => setMixing(false), reduced.current ? 300 : 1300);
+    riffle(1300);
+    later(() => setS((x) => ({ ...x, mix: x.mix + 1 })), 650);
+    later(() => setMixing(false), 1300);
   };
   const [flipped, setFlipped] = useState<number | null>(null);
   const [hot, setHot] = useState<number | null>(null); // lá đang sáng khi đèn chạy
@@ -231,7 +231,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
     setHot(null);
     setFlipped(i);
     whoosh();
-    later(() => reveal(st), reduced.current ? 200 : 900);
+    later(() => reveal(st), 900);
   };
   const drawLot = (index?: number) => {
     if (index !== undefined) { // em tự chọn lá: lật ngay
@@ -281,17 +281,16 @@ export default function CallOn({ classId, className, grade, students, absentToda
     setRaceT(0);
     setPhase('running');
     // đếm ngược 3 – 2 – 1 rồi còi xuất phát
-    const cd = reduced.current ? 0 : 3;
+    const cd = 3;
     for (let n = cd; n >= 1; n--) later(() => { setCount(n); countBeep(false); }, (cd - n) * 700);
     later(() => { setCount(0); countBeep(true); whistle(); start(); }, cd * 700);
     later(() => setCount(null), cd * 700 + 600);
     const start = () => {
       const winnerAt = lanes.find((l) => l.student.id === st.id)!.finish;
-      const speed = reduced.current ? 6 : 1;
-      const t0 = performance.now();
+            const t0 = performance.now();
       let nextStep = 0, foot = 0;
       const frame = (now: number) => {
-        const t = ((now - t0) / 1000) * speed;
+        const t = (now - t0) / 1000;
         setRaceT(t);
         // tiếng bước chạy: dồn dập dần khi về gần đích; xen tiếng chân nặng (voi, ngựa)
         if (t >= nextStep) { foot++; step(t / winnerAt, foot % 4 === 0); nextStep = t + Math.max(0.09, 0.26 - 0.16 * (t / winnerAt)); }
