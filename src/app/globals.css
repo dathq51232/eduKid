@@ -4095,3 +4095,14 @@ button.diary-pill { cursor: pointer; }
 .ct-groups:fullscreen .ct-lead { font-size: 1.5vh; }
 .ct-desk.is-group4 .ct-seat-btn { min-height: 50px; }
 @media (max-width: 760px) { .ct-tdesk { margin-top: 0; } }
+/* hẹn giờ: tiếng chạy theo giây + tắt âm */
+.tmr-ctl button.is-muted { background: #b4232a; border-color: #b4232a; }
+.tmr-tick { display: grid; gap: 6px; }
+.tmr-tick-opts { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-2); }
+.tmr-tick-opts button { flex: 1; min-height: 38px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: 13.5px; cursor: pointer; }
+.tmr-tick-opts button.is-on { background: var(--surface); color: var(--blue); box-shadow: 0 1px 3px rgb(var(--ink-rgb) / .15); }
+.tmr-tick small { color: var(--muted); font-weight: 600; font-size: 12.5px; line-height: 1.4; }
+.tmr-muted-note { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 10px; background: #ffe4e4; color: #b4232a; font-size: 13px; }
+:root[data-theme="dark"] .tmr-muted-note { background: #3d1c22; color: #ff8a8f; }
+.tmr-mini button[aria-pressed="true"] { background: #b4232a; }
+.tmr-muted-note svg { width: 16px; height: 16px; flex: none; }

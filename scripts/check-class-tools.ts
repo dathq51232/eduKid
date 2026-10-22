@@ -1,7 +1,7 @@
 // Kiểm tra công cụ trên lớp (phần tính toán): npx tsx scripts/check-class-tools.ts
 import {
   addTime, autoSeat, conflictsOf, defaultSeating, fmtClock, formatPhone, groupCount, levelOf, makeGroups, matchStudent, normalizePhone,
-  normalizeSeating, normalizeTeams, parseContactPaste, parseTimer, pauseTimer, placeSeat, ranking, relayout, seatCount, seeded, startTimer,
+  normalizeSeating, shouldTick, normalizeTeams, parseContactPaste, parseTimer, pauseTimer, placeSeat, ranking, relayout, seatCount, seeded, startTimer,
   teamTotals, teamsFromSeating, timerLeft, timerPhase, unseated, weekOf, type Level, type ToolStudent,
 } from '../src/lib/classroom/class-tools';
 
@@ -117,6 +117,10 @@ ok(levelOf(85, 3) === 'tot' && levelOf(60, 1) === 'kha' && levelOf(30, 2) === 'h
   const done = startTimer({ ...p, left: 0 }, 0);
   ok(done.endsAt === t0.total * 1000, 'hết giờ bấm chạy lại = chạy từ đầu');
   ok(fmtClock(125.2) === '02:06' && fmtClock(0.2) === '00:01' && fmtClock(0) === '00:00' && fmtClock(600) === '10:00', 'hiển thị mm:ss');
+  ok(t0.tickMode === 'every' && !t0.muted, 'mặc định: tiếng mỗi giây, không tắt âm');
+  ok(parseTimer('{"tick":true}').tickMode === 'last10' && parseTimer('{"tick":false}').tickMode === 'off' && parseTimer('{"tickMode":"xx"}').tickMode === 'every', 'đọc được cài đặt cũ');
+  ok(shouldTick({ tickMode: 'every', muted: false }, 200) && !shouldTick({ tickMode: 'every', muted: true }, 200) && !shouldTick({ tickMode: 'last10', muted: false }, 30)
+    && shouldTick({ tickMode: 'last10', muted: false }, 9) && !shouldTick({ tickMode: 'off', muted: false }, 5) && !shouldTick({ tickMode: 'every', muted: false }, 0), 'khi nào phát tiếng giây');
   ok(timerPhase(200, 300) === 'calm' && timerPhase(50, 300) === 'warn' && timerPhase(8, 300) === 'last' && timerPhase(0, 300) === 'done' && timerPhase(14, 60) === 'warn' && timerPhase(20, 60) === 'calm', 'giai đoạn màu');
 }
 

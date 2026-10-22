@@ -359,9 +359,15 @@ export const TIMER_BELLS: { id: TimerBell; label: string }[] = [
 export const TIMER_PRESETS = [60, 120, 180, 300, 600, 900];
 export const TIMER_LABELS = ['Thảo luận nhóm', 'Làm bài cá nhân', 'Đọc thầm', 'Viết bài', 'Thu dọn', 'Ra chơi'];
 /** Lưu trên máy (đồng hồ vẫn chạy khi chuyển trang hoặc mở nhiều tab) */
-export type TimerState = { total: number; left: number; endsAt: number | null; label: string; look: TimerLook; bell: TimerBell; tick: boolean };
+/** Tiếng chạy theo từng giây: mỗi giây / chỉ 10 giây cuối / tắt */
+export type TickMode = 'every' | 'last10' | 'off';
+export const TICK_MODES: { id: TickMode; label: string }[] = [
+  { id: 'every', label: 'Mỗi giây' }, { id: 'last10', label: '10 giây cuối' }, { id: 'off', label: 'Tắt' },
+];
+/** muted: nút tắt âm nhanh — tắt mọi âm thanh của đồng hồ (tiếng giây lẫn chuông) */
+export type TimerState = { total: number; left: number; endsAt: number | null; label: string; look: TimerLook; bell: TimerBell; tickMode: TickMode; muted: boolean };
 export const TIMER_KEY = 'gv-hen-gio';
-export const defaultTimer = (): TimerState => ({ total: 300, left: 300, endsAt: null, label: 'Thảo luận nhóm', look: 'alarm', bell: 'keng', tick: true });
+export const defaultTimer = (): TimerState => ({ total: 300, left: 300, endsAt: null, label: 'Thảo luận nhóm', look: 'alarm', bell: 'keng', tickMode: 'every', muted: false });
 
 export function parseTimer(raw: string | null): TimerState {
   const d = defaultTimer();
@@ -376,7 +382,9 @@ export function parseTimer(raw: string | null): TimerState {
       label: typeof v.label === 'string' ? v.label.slice(0, 60) : d.label,
       look: TIMER_LOOKS.some((l) => l.id === v.look) ? v.look! : d.look,
       bell: TIMER_BELLS.some((b) => b.id === v.bell) ? v.bell! : d.bell,
-      tick: v.tick !== false,
+      // bản cũ lưu tick: true/false (chỉ 10 giây cuối)
+      tickMode: TICK_MODES.some((m) => m.id === v.tickMode) ? v.tickMode! : 'tick' in v ? ((v as { tick?: boolean }).tick === false ? 'off' : 'last10') : d.tickMode,
+      muted: v.muted === true,
     };
   } catch { return d; }
 }
@@ -400,5 +408,8 @@ export function fmtClock(sec: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 /** Giai đoạn để đổi màu / âm thanh */
+/** Có phát tiếng giây ở giây này không */
+export const shouldTick = (t: Pick<TimerState, 'tickMode' | 'muted'>, left: number) =>
+  !t.muted && left > 0 && (t.tickMode === 'every' || (t.tickMode === 'last10' && left <= 10));
 export const timerPhase = (left: number, total: number): 'calm' | 'warn' | 'last' | 'done' =>
   left <= 0 ? 'done' : left <= 10 ? 'last' : left <= Math.min(60, total / 4) ? 'warn' : 'calm';

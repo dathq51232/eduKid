@@ -5,10 +5,10 @@
 // ô nhỏ ở góc màn hình (MiniTimer, gắn trong khung giáo viên) hiện giờ còn lại ở mọi trang.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Bell, Maximize, Minimize, Pause, Play, Plus, RotateCcw, Timer, X } from 'lucide-react';
+import { Bell, Maximize, Minimize, Pause, Play, Plus, RotateCcw, Timer, Volume2, VolumeX, X } from 'lucide-react';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import {
-  TIMER_BELLS, TIMER_KEY, TIMER_LABELS, TIMER_LOOKS, TIMER_PRESETS, addTime, defaultTimer, fmtClock, parseTimer, pauseTimer, resetTimer,
+  TICK_MODES, TIMER_BELLS, TIMER_KEY, shouldTick, type TickMode, TIMER_LABELS, TIMER_LOOKS, TIMER_PRESETS, addTime, defaultTimer, fmtClock, parseTimer, pauseTimer, resetTimer,
   startTimer, timerLeft, timerPhase, type TimerBell, type TimerLook, type TimerState,
 } from '@/lib/classroom/class-tools';
 
@@ -49,7 +49,19 @@ export function playBell(kind: TimerBell) {
     });
   }
 }
-export const playTick = (urgent: boolean) => { tone(urgent ? 1400 : 1000, 0, 0.05, 'square', 0.05); tone(urgent ? 2800 : 2000, 0, 0.03, 'sine', 0.02); };
+/**
+ * Tiếng chạy từng giây, hợp với từng kiểu đồng hồ. 10 giây cuối: tiếng to và gấp hơn.
+ * sec: số giây còn lại (để xen "tích – tắc").
+ */
+export function playSecond(look: TimerLook, sec: number) {
+  if (sec <= 10) { const u = sec <= 3; tone(u ? 1500 : 1200, 0, 0.06, 'square', u ? 0.07 : 0.055); tone(u ? 3000 : 2400, 0, 0.04, 'sine', 0.025); return; }
+  const odd = sec % 2 === 1;
+  if (look === 'alarm') { tone(odd ? 1900 : 1350, 0, 0.035, 'square', 0.03); tone(odd ? 3800 : 2700, 0, 0.02, 'sine', 0.012); } // tích – tắc
+  else if (look === 'sand') tone(odd ? 2600 : 2900, 0, 0.03, 'triangle', 0.025); // hạt cát rơi lách tách
+  else if (look === 'snail') tone(odd ? 260 : 300, 0, 0.09, 'sine', 0.09, odd ? 200 : 230); // bước bò "bụp"
+  else if (look === 'rocket') tone(odd ? 880 : 990, 0, 0.05, 'sine', 0.05); // "bíp" trên tàu
+  else tone(odd ? 1050 : 1250, 0, 0.04, 'triangle', 0.05); // mõ gỗ
+}
 /** cộng điểm: "ting ting" đi lên; trừ điểm: "bụp" trầm */
 export const playPop = (up: boolean) => { if (up) { tone(880, 0, 0.12, 'sine', 0.12); tone(1320, 0.08, 0.2, 'sine', 0.1); } else tone(320, 0, 0.22, 'triangle', 0.14, 170); };
 const playTing = () => { tone(1320, 0, 0.6, 'sine', 0.12); tone(2640, 0, 0.35, 'sine', 0.04); };
@@ -102,15 +114,15 @@ function useClassTimer(soundOwner: () => boolean) {
     if (left <= 0) {
       // hết giờ lúc trang đang mở thì reo; mở lại trang sau khi đã hết giờ lâu rồi thì chỉ dừng, không reo
       const fresh = Date.now() - t.endsAt < 5000;
-      if (owner && fresh) playBell(t.bell);
+      if (owner && fresh && !t.muted) playBell(t.bell);
       if (fresh) setJustDone(true);
       update((x) => (x.endsAt === t.endsAt ? { ...x, endsAt: null, left: 0 } : x));
       return;
     }
     if (lastSec.current !== sec) {
       const ph = timerPhase(left, t.total);
-      if (owner && ph === 'warn' && !warned.current && t.total >= 30) { warned.current = true; playTing(); }
-      if (owner && ph === 'last' && t.tick && lastSec.current !== null) playTick(sec <= 3);
+      if (owner && ph === 'warn' && !warned.current && t.total >= 30) { warned.current = true; if (!t.muted) playTing(); }
+      if (owner && lastSec.current !== null && shouldTick(t, sec)) playSecond(t.look, sec);
       lastSec.current = sec;
     }
   }, [left, t, update, soundOwner]);
@@ -269,6 +281,7 @@ export default function ClassTimer({ className }: { className: string }) {
       else if (e.key === 'r' || e.key === 'R') reset();
       else if (e.key === 'f' || e.key === 'F') goFull();
       else if (e.key === '+' || e.key === '=') update((x) => addTime(x, 60));
+      else if (e.key === 'm' || e.key === 'M') update((x) => ({ ...x, muted: !x.muted }));
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -285,7 +298,7 @@ export default function ClassTimer({ className }: { className: string }) {
       <div className="tmr-stage">
         <div className="tmr-top">
           <span><Timer aria-hidden="true" /> Hẹn giờ · Lớp {className}</span>
-          <span className="tmr-keys">Phím cách: chạy / dừng · R: làm lại · F: toàn màn hình</span>
+          <span className="tmr-keys">Phím cách: chạy / dừng · R: làm lại · M: tắt âm · F: toàn màn hình</span>
         </div>
         <input className="tmr-label" value={t.label} maxLength={60} aria-label="Tên hoạt động" placeholder="Tên hoạt động…" list="tmr-labels"
           onChange={(e) => update((x) => ({ ...x, label: e.target.value }))} />
@@ -316,6 +329,7 @@ export default function ClassTimer({ className }: { className: string }) {
           <button type="button" onClick={reset}><RotateCcw aria-hidden="true" /> Làm lại</button>
           <button type="button" className="tmr-go" onClick={toggle}>{running ? <><Pause aria-hidden="true" /> Tạm dừng</> : <><Play aria-hidden="true" /> {left < t.total && left > 0 ? 'Chạy tiếp' : 'Bắt đầu'}</>}</button>
           <button type="button" onClick={() => update((x) => addTime(x, 60))} aria-label="Thêm 1 phút"><Plus aria-hidden="true" /> 1 phút</button>
+          <button type="button" className={t.muted ? 'is-muted' : ''} onClick={() => { ac(); update((x) => ({ ...x, muted: !x.muted })); }} aria-pressed={t.muted}>{t.muted ? <><VolumeX aria-hidden="true" /> Bật âm</> : <><Volume2 aria-hidden="true" /> Tắt âm</>}</button>
           <button type="button" onClick={goFull} aria-pressed={full}>{full ? <><Minimize aria-hidden="true" /> Thu nhỏ</> : <><Maximize aria-hidden="true" /> Toàn màn hình</>}</button>
         </div>
       </div>
@@ -335,7 +349,15 @@ export default function ClassTimer({ className }: { className: string }) {
             </select>
           </label>
           <button type="button" className="btn btn-outline btn-sm" onClick={() => playBell(t.bell === 'off' ? 'keng' : t.bell)}>🔊 Nghe thử</button>
-          <label className="tmr-check"><input type="checkbox" checked={t.tick} onChange={(e) => update((x) => ({ ...x, tick: e.target.checked }))} /> Tích tắc 10 giây cuối</label>
+          <div className="tmr-tick" role="radiogroup" aria-label="Tiếng chạy theo giây">
+            <span>⏱️ Tiếng chạy theo giây</span>
+            <div className="tmr-tick-opts">{TICK_MODES.map((m) => (
+              <button key={m.id} type="button" role="radio" aria-checked={t.tickMode === m.id} className={t.tickMode === m.id ? 'is-on' : ''}
+                onClick={() => { ac(); update((x) => ({ ...x, tickMode: m.id as TickMode, muted: m.id === 'off' ? x.muted : false })); if (m.id !== 'off') playSecond(t.look, 30); }}>{m.label}</button>
+            ))}</div>
+            <small>Mỗi kiểu đồng hồ một tiếng riêng: tích tắc, cát rơi, ốc bò, bíp tên lửa, mõ gỗ. 10 giây cuối kêu to và gấp hơn.</small>
+          </div>
+          {t.muted && <p className="tmr-muted-note"><VolumeX aria-hidden="true" /> Đang tắt âm — không có tiếng giây và chuông hết giờ.</p>}
           <p className="dash-muted">Đồng hồ vẫn chạy khi thầy cô chuyển sang trang khác — xem ở ô nhỏ góc dưới màn hình.</p>
         </div>
       </div>
@@ -358,6 +380,7 @@ export function MiniTimer({ href, hidden }: { href: string | null; hidden: boole
       <span className="tmr-mini-ic" aria-hidden="true">{look?.emoji ?? '⏱️'}</span>
       {href ? <Link href={href} className="tmr-mini-txt"><span>{done ? 'Hết giờ!' : t.label || 'Hẹn giờ'}</span><b>{fmtClock(left)}</b></Link>
         : <span className="tmr-mini-txt"><span>{done ? 'Hết giờ!' : t.label || 'Hẹn giờ'}</span><b>{fmtClock(left)}</b></span>}
+      {!done && <button type="button" onClick={() => update((x) => ({ ...x, muted: !x.muted }))} aria-label={t.muted ? 'Bật âm' : 'Tắt âm'} aria-pressed={t.muted}>{t.muted ? <VolumeX aria-hidden="true" /> : <Volume2 aria-hidden="true" />}</button>}
       {!done && <button type="button" onClick={() => { ac(); update((x) => (x.endsAt ? pauseTimer(x) : startTimer(x))); }} aria-label={running ? 'Tạm dừng' : 'Chạy tiếp'}>{running ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}</button>}
       <button type="button" onClick={close} aria-label="Tắt hẹn giờ"><X aria-hidden="true" /></button>
     </div>
