@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getViewer } from '@/lib/auth/viewer';
 import { hasServiceRole } from '@/lib/supabase/admin';
 import { rateLimit } from '@/lib/rate-limit';
-import { countTodayUsage, loadTeacherAiConfig, logAiUsage } from '@/lib/ai/teacher-keys';
+import { countTodayUsage, loadTeacherAiConfig, logAiUsage, saveTeacherAiKeys } from '@/lib/ai/teacher-keys';
 import { chatCompletion, type ProviderId } from '@/lib/ai/providers';
 import { TEACHER_ASSISTANT_SYSTEM, trimHistory } from '@/lib/ai/prompt';
 
@@ -54,5 +54,12 @@ export async function POST(request: Request) {
   const result = await chatCompletion(provider, chosen.key, { system: TEACHER_ASSISTANT_SYSTEM, messages, model: chosen.model });
   await logAiUsage(viewer.userId, provider, chosen.model, 'chat', result.ok, result.ok ? undefined : result.error);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 502 });
+  // Nhà cung cấp ép đổi model (model cũ ngừng cho tài khoản mới) và gọi lại đã thành công với model khác:
+  // lưu model mới để các lần sau dùng thẳng, không phải thử – lỗi nữa.
+  if (result.data.model !== chosen.model) {
+    try {
+      await saveTeacherAiKeys(viewer.userId, provider === 'gemini' ? { gemini: { key: chosen.key, model: result.data.model } } : { openai: { key: chosen.key, model: result.data.model } });
+    } catch { /* không lưu được thì lần sau tự thử chuyển lại */ }
+  }
   return NextResponse.json({ reply: result.data.text, provider, model: result.data.model });
 }

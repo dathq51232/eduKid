@@ -12,7 +12,9 @@ const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const OPENAI_BASE = 'https://api.openai.com/v1';
 
 // Ưu tiên model rẻ/nhanh, tiếng Việt tốt; nếu tài khoản không có thì tự chọn model flash/gpt gần nhất.
-const GEMINI_PREFERRED = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
+// Gemini: Google ngừng cho tài khoản mới dùng model cũ dần dần (2.5-flash bị chặn với user mới 10/2026),
+// nên đặt model mới nhất lên đầu; chat vẫn có cơ chế tự chuyển theo model Google khuyên dùng khi bị chặn.
+const GEMINI_PREFERRED = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
 const OPENAI_PREFERRED = ['gpt-4o-mini', 'gpt-4.1-mini', 'gpt-5-mini', 'gpt-4.1-nano', 'gpt-4o'];
 
 const clean = (s: string) => s.replace(/^models\//, '').trim();
@@ -78,7 +80,7 @@ export async function chatCompletion(provider: ProviderId, key: string, opts: Ch
   const maxTokens = opts.maxTokens ?? 1600;
   try {
     if (provider === 'gemini') {
-      const { status, body } = await fetchJson(`${GEMINI_BASE}/models/${opts.model}:generateContent?key=${encodeURIComponent(k)}`, {
+      const call = (model: string) => fetchJson(`${GEMINI_BASE}/models/${model}:generateContent?key=${encodeURIComponent(k)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -87,11 +89,23 @@ export async function chatCompletion(provider: ProviderId, key: string, opts: Ch
           generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens },
         }),
       });
-      if (status !== 200) return { ok: false, error: apiError(body, status, 'gemini') };
-      const parts = (body as { candidates?: { content?: { parts?: { text?: string }[] } }[] })?.candidates?.[0]?.content?.parts ?? [];
+      let model = opts.model;
+      let res = await call(model);
+      if (res.status !== 200) {
+        // Google chặn model cũ với tài khoản mới nhưng nêu tên model thay thế trong thông báo
+        // ("use models/gemini-3.8-flash …") — tự chuyển sang model đó và thử lại một lần.
+        const msg = apiError(res.body, res.status, 'gemini');
+        const alt = /use models\/([a-z0-9.-]+)/i.exec(msg)?.[1];
+        if (alt && alt !== model) {
+          model = alt;
+          res = await call(model);
+        } else return { ok: false, error: msg };
+      }
+      if (res.status !== 200) return { ok: false, error: apiError(res.body, res.status, 'gemini') };
+      const parts = (res.body as { candidates?: { content?: { parts?: { text?: string }[] } }[] })?.candidates?.[0]?.content?.parts ?? [];
       const text = parts.map((p) => p.text ?? '').join('').trim();
       if (!text) return { ok: false, error: 'Gemini trả về đáp án rỗng — thử gửi lại câu hỏi.' };
-      return { ok: true, data: { text, model: opts.model } };
+      return { ok: true, data: { text, model } };
     }
     // Model thế hệ mới (gpt-5*, o*) không nhận max_tokens/temperature như cũ.
     const newGen = /^(gpt-5|o\d)/.test(opts.model);
