@@ -6,7 +6,7 @@ import 'server-only';
 export type ProviderId = 'gemini' | 'openai';
 export type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
-export type ProviderResult<T> = { ok: true; data: T } | { ok: false; error: string };
+export type ProviderResult<T> = { ok: true; data: T } | { ok: false; error: string; httpStatus?: number };
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const OPENAI_BASE = 'https://api.openai.com/v1';
@@ -45,7 +45,13 @@ function apiError(body: unknown, status: number, provider: string): string {
     return `API key ${provider === 'gemini' ? 'Gemini' : 'OpenAI'} không hợp lệ — kiểm tra lại key (đã copy đủ, chưa bị thu hồi).`;
   }
   if (status === 429) return `Vượt giới hạn calls của ${provider === 'gemini' ? 'Gemini' : 'OpenAI'} — đợi ít phút rồi thử lại (gói miễn phí giới hạn số lần mỗi phút).`;
+  if (status === 503) return `Máy chủ ${provider === 'gemini' ? 'Gemini' : 'OpenAI'} đang quá tải — thử lại sau ít phút, hoặc chuyển sang nhà cung cấp khác trong Cài đặt API.`;
   return msg;
+}
+
+/** Trả true nếu lỗi có thể retry hoặc đáng fallback sang nhà cung cấp khác (quá tải / hạn mức). */
+export function isRetryable(status: number): boolean {
+  return status === 429 || status === 503;
 }
 
 /** Kiểm tra key bằng cách gọi endpoint danh sách model (rẻ, không tốn token) và chọn model mặc định. */
@@ -92,16 +98,14 @@ export async function chatCompletion(provider: ProviderId, key: string, opts: Ch
       let model = opts.model;
       let res = await call(model);
       if (res.status !== 200) {
-        // Google chặn model cũ với tài khoản mới nhưng nêu tên model thay thế trong thông báo
-        // ("use models/gemini-3.8-flash …") — tự chuyển sang model đó và thử lại một lần.
         const msg = apiError(res.body, res.status, 'gemini');
         const alt = /use models\/([a-z0-9.-]+)/i.exec(msg)?.[1];
         if (alt && alt !== model) {
           model = alt;
           res = await call(model);
-        } else return { ok: false, error: msg };
+        } else return { ok: false, error: msg, httpStatus: res.status };
       }
-      if (res.status !== 200) return { ok: false, error: apiError(res.body, res.status, 'gemini') };
+      if (res.status !== 200) return { ok: false, error: apiError(res.body, res.status, 'gemini'), httpStatus: res.status };
       const parts = (res.body as { candidates?: { content?: { parts?: { text?: string }[] } }[] })?.candidates?.[0]?.content?.parts ?? [];
       const text = parts.map((p) => p.text ?? '').join('').trim();
       if (!text) return { ok: false, error: 'Gemini trả về đáp án rỗng — thử gửi lại câu hỏi.' };
@@ -118,7 +122,7 @@ export async function chatCompletion(provider: ProviderId, key: string, opts: Ch
         ...(newGen ? { max_completion_tokens: maxTokens } : { temperature: 0.7, max_tokens: maxTokens }),
       }),
     });
-    if (status !== 200) return { ok: false, error: apiError(body, status, 'openai') };
+    if (status !== 200) return { ok: false, error: apiError(body, status, 'openai'), httpStatus: status };
     const text = ((body as { choices?: { message?: { content?: string } }[] })?.choices?.[0]?.message?.content ?? '').trim();
     if (!text) return { ok: false, error: 'OpenAI trả về đáp án rỗng — thử gửi lại câu hỏi.' };
     return { ok: true, data: { text, model: opts.model } };

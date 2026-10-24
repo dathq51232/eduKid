@@ -3,7 +3,7 @@ import { getViewer } from '@/lib/auth/viewer';
 import { hasServiceRole } from '@/lib/supabase/admin';
 import { rateLimit } from '@/lib/rate-limit';
 import { countTodayUsage, loadTeacherAiConfig, logAiUsage, saveTeacherAiKeys } from '@/lib/ai/teacher-keys';
-import { chatCompletion, type ProviderId } from '@/lib/ai/providers';
+import { chatCompletion, isRetryable, type ProviderId } from '@/lib/ai/providers';
 import { TEACHER_ASSISTANT_SYSTEM, trimHistory } from '@/lib/ai/prompt';
 
 // Trợ lý AI hội thoại cho giáo viên, dùng API key chính chủ đã lưu (BYOK — migration 0030).
@@ -53,9 +53,26 @@ export async function POST(request: Request) {
 
   const result = await chatCompletion(provider, chosen.key, { system: TEACHER_ASSISTANT_SYSTEM, messages, model: chosen.model });
   await logAiUsage(viewer.userId, provider, chosen.model, 'chat', result.ok, result.ok ? undefined : result.error);
-  if (!result.ok) return NextResponse.json({ error: result.error }, { status: 502 });
-  // Nhà cung cấp ép đổi model (model cũ ngừng cho tài khoản mới) và gọi lại đã thành công với model khác:
-  // lưu model mới để các lần sau dùng thẳng, không phải thử – lỗi nữa.
+
+  // Fallback tự động: nếu provider ưu tiên quá tải / hạn mức (429/503)
+  // và người dùng đã lưu key của cả hai nhà cung cấp, tự chuyển sang nhà kia một lần.
+  if (!result.ok) {
+    const fallbackProvider: ProviderId = provider === 'gemini' ? 'openai' : 'gemini';
+    const fallbackChosen = fallbackProvider === 'openai' ? config.openai : config.gemini;
+    if (fallbackChosen && isRetryable(result.httpStatus ?? 0)) {
+      const fr = await chatCompletion(fallbackProvider, fallbackChosen.key, { system: TEACHER_ASSISTANT_SYSTEM, messages, model: fallbackChosen.model });
+      await logAiUsage(viewer.userId, fallbackProvider, fallbackChosen.model, 'chat', fr.ok, fr.ok ? undefined : fr.error);
+      if (fr.ok) {
+        if (fr.data.model !== fallbackChosen.model) {
+          try { await saveTeacherAiKeys(viewer.userId, fallbackProvider === 'gemini' ? { gemini: { key: fallbackChosen.key, model: fr.data.model } } : { openai: { key: fallbackChosen.key, model: fr.data.model } }); } catch { /* ignore */ }
+        }
+        return NextResponse.json({ reply: fr.data.text, provider: fallbackProvider, model: fr.data.model, fallback: true });
+      }
+    }
+    return NextResponse.json({ error: result.error }, { status: 502 });
+  }
+
+  // Nhà cung cấp ép đổi model — lưu lại để lần sau dùng thẳng.
   if (result.data.model !== chosen.model) {
     try {
       await saveTeacherAiKeys(viewer.userId, provider === 'gemini' ? { gemini: { key: chosen.key, model: result.data.model } } : { openai: { key: chosen.key, model: result.data.model } });
