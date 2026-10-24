@@ -13,6 +13,8 @@ import BrandLogo from '@/components/brand/BrandLogo';
 import ThemeToggle from '@/components/brand/ThemeToggle';
 import { createClient } from '@/lib/supabase/client';
 import { MiniTimer } from '@/components/classroom/ClassTimer';
+import AiAssistant from '@/components/classroom/AiAssistant';
+import { FEATURES } from '@/lib/features';
 import { TOOLS, TOOL_GROUPS, classIdOfPath, fold, toolHref, toolOfPath, type Tool, type ToolKey } from '@/lib/classroom/teacher-nav';
 
 export const TOOL_ICON: Record<ToolKey, LucideIcon> = {
@@ -143,6 +145,9 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
 
       {/* hẹn giờ đang chạy: ô nhỏ góc dưới ở mọi trang (trừ trang Hẹn giờ) */}
       <MiniTimer href={active ? `/giao-vien/lop/${active.id}/hen-gio` : null} hidden={current === 'hen-gio'} />
+
+      {/* trợ lý AI: nút nổi + bảng hội thoại, dùng API key của chính thầy cô (migration 0030) */}
+      {FEATURES.ai && <AiAssistant />}
 
       {palette && <CommandPalette classId={active?.id ?? null} onClose={() => setPalette(false)} />}
     </div>

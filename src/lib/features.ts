@@ -7,4 +7,6 @@ export const FEATURES = {
   teacherRecords: process.env.NEXT_PUBLIC_FEATURE_SO_THEO_DOI !== 'off',
   /** Thu phí học sinh (migration 0018) — đang ẩn; bật: NEXT_PUBLIC_FEATURE_THU_PHI=on rồi Redeploy */
   billing: process.env.NEXT_PUBLIC_FEATURE_THU_PHI === 'on',
+  /** Trợ lý AI dùng API key của giáo viên (migration 0030) — mặc định bật; tắt: NEXT_PUBLIC_FEATURE_TRO_LY_AI=off */
+  ai: process.env.NEXT_PUBLIC_FEATURE_TRO_LY_AI !== 'off',
 } as const;
