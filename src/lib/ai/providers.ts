@@ -33,7 +33,7 @@ function pickOpenaiModel(ids: string[]): string | null {
 }
 
 async function fetchJson(url: string, init: RequestInit): Promise<{ status: number; body: unknown }> {
-  const res = await fetch(url, { ...init, signal: AbortSignal.timeout(45_000) });
+  const res = await fetch(url, { ...init, signal: AbortSignal.timeout(55_000) });
   const body = (await res.json().catch(() => null)) as unknown;
   return { status: res.status, body };
 }
@@ -86,24 +86,27 @@ export async function chatCompletion(provider: ProviderId, key: string, opts: Ch
   const maxTokens = opts.maxTokens ?? 1600;
   try {
     if (provider === 'gemini') {
-      const call = (model: string) => fetchJson(`${GEMINI_BASE}/models/${model}:generateContent?key=${encodeURIComponent(k)}`, {
+      // Model flash thế hệ mới (3.x) mặc định "suy nghĩ" (thinking) rất lâu trước khi trả lời — với chat trợ lý
+      // cần nhanh nên tắt thinking (thinkingBudget 0, model flash được phép); model nào không nhận cấu hình này
+      // thì thử lại không kèm nó. Kèm cơ chế chuyển model khi Google chặn model cũ với tài khoản mới.
+      const call = (model: string, noThinking: boolean) => fetchJson(`${GEMINI_BASE}/models/${model}:generateContent?key=${encodeURIComponent(k)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: opts.system }] },
           contents: opts.messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
-          generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens },
+          generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens, ...(noThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}) },
         }),
       });
       let model = opts.model;
-      let res = await call(model);
-      if (res.status !== 200) {
+      let noThinking = true;
+      let res = await call(model, noThinking);
+      for (let tries = 0; tries < 3 && res.status !== 200; tries++) {
         const msg = apiError(res.body, res.status, 'gemini');
         const alt = /use models\/([a-z0-9.-]+)/i.exec(msg)?.[1];
-        if (alt && alt !== model) {
-          model = alt;
-          res = await call(model);
-        } else return { ok: false, error: msg, httpStatus: res.status };
+        if (alt && alt !== model) { model = alt; res = await call(model, noThinking); continue; }
+        if (/thinking/i.test(msg) && noThinking) { noThinking = false; res = await call(model, noThinking); continue; }
+        return { ok: false, error: msg, httpStatus: res.status };
       }
       if (res.status !== 200) return { ok: false, error: apiError(res.body, res.status, 'gemini'), httpStatus: res.status };
       const parts = (res.body as { candidates?: { content?: { parts?: { text?: string }[] } }[] })?.candidates?.[0]?.content?.parts ?? [];
