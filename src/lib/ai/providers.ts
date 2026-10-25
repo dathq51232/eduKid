@@ -165,7 +165,8 @@ export async function streamChatCompletion(
         if (/thinking/i.test(msg) && noThinking) { noThinking = false; continue; }
         // Gói miễn phí giới hạn ~10 lượt/phút: tự nghỉ 22 giây rồi thử lại một lần —
         // thầy cô chỉ thấy "Đang soạn…" dài thêm chút thay vì nhận thông báo lỗi.
-        if (res.status === 429 && !waited429) { waited429 = true; await new Promise((r) => setTimeout(r, 22_000)); continue; }
+        // Hết lượt NGÀY (PerDay) thì chờ vô ích — báo luôn.
+        if (res.status === 429 && !waited429 && !/PerDay/i.test(msg)) { waited429 = true; await new Promise((r) => setTimeout(r, 22_000)); continue; }
         return { ok: false, error: msg, httpStatus: res.status };
       }
       return { ok: false, error: 'Không gọi được Gemini sau các lần thử.' };
