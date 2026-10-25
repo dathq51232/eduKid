@@ -80,6 +80,93 @@ export async function validateKey(provider: ProviderId, key: string): Promise<Pr
 
 export type ChatOptions = { system: string; messages: ChatMessage[]; model: string; maxTokens?: number };
 
+/** Đọc Response SSE (data: {json} mỗi dòng) và nhả ra stream chữ đã ghép từ các phần phản hồi. */
+function sseTextStream(res: Response, kind: 'gemini' | 'openai'): ReadableStream<Uint8Array> {
+  type SsePayload = { candidates?: { content?: { parts?: { text?: string }[] } }[]; choices?: { delta?: { content?: string } }[] };
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  const pick = (json: SsePayload) =>
+    kind === 'gemini'
+      ? (json.candidates?.[0]?.content?.parts ?? []).map((p) => p.text ?? '').join('')
+      : (json.choices?.[0]?.delta?.content ?? '');
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const reader = (res.body as ReadableStream<Uint8Array>).getReader();
+      let buf = '';
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          let idx: number;
+          while ((idx = buf.indexOf('\n')) >= 0) {
+            const line = buf.slice(0, idx).replace(/\r$/, '');
+            buf = buf.slice(idx + 1);
+            if (!line.startsWith('data:')) continue;
+            const payload = line.slice(5).trim();
+            if (!payload || payload === '[DONE]') continue;
+            try {
+              const text = pick(JSON.parse(payload) as { candidates?: { content?: { parts?: { text?: string }[] } }[]; choices?: { delta?: { content?: string } }[] });
+              if (text) controller.enqueue(encoder.encode(text));
+            } catch { /* dòng JSON hỏng giữa đường: bỏ qua */ }
+          }
+        }
+      } finally {
+        controller.close();
+      }
+    },
+  });
+}
+
+/** Chat streaming (SSE) — chữ về từng phần. Cùng cơ chế tự đổi model / tắt thinking như bản không stream. */
+export async function streamChatCompletion(
+  provider: ProviderId,
+  key: string,
+  opts: ChatOptions,
+): Promise<{ ok: true; stream: ReadableStream<Uint8Array>; model: string } | { ok: false; error: string; httpStatus?: number }> {
+  const k = key.trim();
+  const maxTokens = opts.maxTokens ?? 1600;
+  const messages = [{ role: 'system', content: opts.system }, ...opts.messages.map((m) => ({ role: m.role, content: m.content }))];
+  try {
+    if (provider === 'gemini') {
+      const call = (model: string, noThinking: boolean) => fetch(`${GEMINI_BASE}/models/${model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(k)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: opts.system }] },
+          contents: opts.messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
+          generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens, ...(noThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}) },
+        }),
+        signal: AbortSignal.timeout(55_000),
+      });
+      let model = opts.model;
+      let noThinking = true;
+      for (let tries = 0; tries < 4; tries++) {
+        const res = await call(model, noThinking);
+        if (res.status === 200 && res.body) return { ok: true, stream: sseTextStream(res, 'gemini'), model };
+        const msg = apiError(await res.json().catch(() => null), res.status, 'gemini');
+        const alt = /use models\/([a-z0-9.-]+)/i.exec(msg)?.[1];
+        if (alt && alt !== model) { model = alt; continue; }
+        if (/thinking/i.test(msg) && noThinking) { noThinking = false; continue; }
+        return { ok: false, error: msg, httpStatus: res.status };
+      }
+      return { ok: false, error: 'Không gọi được Gemini sau các lần thử.' };
+    }
+    const newGen = /^(gpt-5|o\d)/.test(opts.model);
+    const res = await fetch(`${OPENAI_BASE}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${k}` },
+      body: JSON.stringify({ model: opts.model, messages, stream: true, ...(newGen ? { max_completion_tokens: maxTokens } : { temperature: 0.7, max_tokens: maxTokens }) }),
+      signal: AbortSignal.timeout(55_000),
+    });
+    if (res.status === 200 && res.body) return { ok: true, stream: sseTextStream(res, 'openai'), model: opts.model };
+    return { ok: false, error: apiError(await res.json().catch(() => null), res.status, 'openai'), httpStatus: res.status };
+  } catch (e) {
+    if (e instanceof Error && e.name === 'TimeoutError') return { ok: false, error: 'Model trả lời quá chậm — thử câu ngắn hơn hoặc thử lại.' };
+    return { ok: false, error: 'Không kết nối được tới nhà cung cấp AI — kiểm tra mạng rồi thử lại.' };
+  }
+}
+
 /** Gọi chat (không stream) và trả văn bản trả lời. */
 export async function chatCompletion(provider: ProviderId, key: string, opts: ChatOptions): Promise<ProviderResult<{ text: string; model: string }>> {
   const k = key.trim();

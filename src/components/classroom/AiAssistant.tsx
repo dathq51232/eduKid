@@ -78,23 +78,33 @@ export default function AiAssistant() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: next, provider: provider ?? undefined }),
         });
-        const data = (await res.json().catch(() => ({}))) as { reply?: string; error?: string; code?: string };
-        if (res.ok && data.reply) {
-          setMessages((m) => [...m, { role: 'assistant', content: data.reply as string }]);
-        } else if (data.code === 'no_key') {
+        if (!res.ok) {
+          const data = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
           setMessages(messages); // bỏ câu hỏi vừa gửi
           setInput(q);
-          setNotice(data.error ?? 'Chưa nối API key.');
-          setShowSettings(true);
-        } else {
-          setMessages(messages);
-          setInput(q);
-          setNotice(data.error ?? 'Không trả lời được — thử lại nhé.');
+          if (data.code === 'no_key') { setNotice(data.error ?? 'Chưa nối API key.'); setShowSettings(true); }
+          else setNotice(data.error ?? 'Không trả lời được — thử lại nhé.');
+          return;
+        }
+        // đọc stream: chữ hiện dần từng phần
+        const reader = (res.body as ReadableStream<Uint8Array>).getReader();
+        const dec = new TextDecoder();
+        setMessages([...next, { role: 'assistant', content: '' }]);
+        let received = 0;
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = dec.decode(value, { stream: true });
+          if (chunk) { received += chunk.length; setMessages((m) => { const c = [...m]; const last = c.length - 1; c[last] = { role: 'assistant', content: (c[last]?.content ?? '') + chunk }; return c; }); }
+        }
+        if (!received) {
+          setMessages(m => m.slice(0, -1)); // stream kết thúc mà không có chữ nào
+          setNotice('Trợ lý chưa trả lời được — thử gửi lại nhé.');
         }
       } catch {
         setMessages(messages);
         setInput(q);
-        setNotice('Mất kết nối — kiểm tra mạng rồi thử lại.');
+        setNotice('Mất kết nối giữa chừng — thử lại nhé.');
       } finally {
         setBusy(false);
       }
@@ -232,9 +242,11 @@ export default function AiAssistant() {
                   </div>
                 )}
                 {messages.map((m, i) => (
-                  <div key={i} className={`aiw-m${m.role === 'user' ? ' is-me' : ' is-ai'}`}>{m.content}</div>
+                  m.role === 'assistant' && !m.content ? null : (
+                    <div key={i} className={`aiw-m${m.role === 'user' ? ' is-me' : ' is-ai'}`}>{m.content}</div>
+                  )
                 ))}
-                {busy && (
+                {busy && !(messages[messages.length - 1]?.role === 'assistant' && messages[messages.length - 1]?.content) && (
                   <div className="aiw-m is-ai is-typing"><Loader2 aria-hidden="true" />Đang soạn câu trả lời…</div>
                 )}
                 {notice && <p className="aiw-notice" role="alert">{notice}</p>}

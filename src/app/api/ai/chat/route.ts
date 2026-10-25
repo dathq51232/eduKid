@@ -3,7 +3,7 @@ import { getViewer } from '@/lib/auth/viewer';
 import { hasServiceRole } from '@/lib/supabase/admin';
 import { rateLimit } from '@/lib/rate-limit';
 import { countTodayUsage, loadTeacherAiConfig, logAiUsage, saveTeacherAiKeys } from '@/lib/ai/teacher-keys';
-import { chatCompletion, isRetryable, type ProviderId } from '@/lib/ai/providers';
+import { chatCompletion, isRetryable, streamChatCompletion, type ProviderId } from '@/lib/ai/providers';
 import { TEACHER_ASSISTANT_SYSTEM, trimHistory } from '@/lib/ai/prompt';
 
 // Trợ lý AI hội thoại cho giáo viên, dùng API key chính chủ đã lưu (BYOK — migration 0030).
@@ -51,6 +51,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Đã hỏi đủ ${DAILY_LIMIT} lượt hôm nay (để bảo vệ API key của thầy cô) — mai hỏi tiếp nhé.` }, { status: 429 });
   }
 
+  // Ưu tiên streaming: chữ về từng phần nên thầy cô thấy trợ lý "viết dần" thay vì chờ nguyên khối 30–60 giây.
+  const s = await streamChatCompletion(provider, chosen.key, { system: TEACHER_ASSISTANT_SYSTEM, messages, model: chosen.model });
+  if (s.ok) {
+    await logAiUsage(viewer.userId, provider, s.model, 'chat', true);
+    if (s.model !== chosen.model) {
+      try {
+        await saveTeacherAiKeys(viewer.userId, provider === 'gemini' ? { gemini: { key: chosen.key, model: s.model } } : { openai: { key: chosen.key, model: s.model } });
+      } catch { /* không lưu được thì lần sau tự thử chuyển lại */ }
+    }
+    return new Response(s.stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Ai-Model': s.model, 'X-Ai-Provider': provider } });
+  }
+
+  // Không stream được (lỗi hết hạn/thiếu model) — dùng đường không stream cũ, kèm fallback nhà cung cấp khi quá tải.
   const result = await chatCompletion(provider, chosen.key, { system: TEACHER_ASSISTANT_SYSTEM, messages, model: chosen.model });
   await logAiUsage(viewer.userId, provider, chosen.model, 'chat', result.ok, result.ok ? undefined : result.error);
 
