@@ -39,14 +39,28 @@ async function fetchJson(url: string, init: RequestInit): Promise<{ status: numb
 }
 
 function apiError(body: unknown, status: number, provider: string): string {
-  const b = body as { error?: { message?: string; status?: string } } | null;
-  const msg = b?.error?.message || `Không gọi được ${provider} (HTTP ${status}).`;
-  if (/API key not valid|API_KEY_INVALID|invalid_api_key|Incorrect API key/i.test(msg)) {
+  const b = body as {
+    error?: {
+      message?: string;
+      status?: string;
+      details?: { quotaId?: string; retryDelay?: string; violations?: { quotaId?: string }[] }[];
+    };
+  } | null;
+  const raw = b?.error?.message || `Không gọi được ${provider} (HTTP ${status}).`;
+  if (/API key not valid|API_KEY_INVALID|invalid_api_key|Incorrect API key/i.test(raw)) {
     return `API key ${provider === 'gemini' ? 'Gemini' : 'OpenAI'} không hợp lệ — kiểm tra lại key (đã copy đủ, chưa bị thu hồi).`;
   }
-  if (status === 429) return `Gói miễn phí của Gemini chỉ cho khoảng 10 lượt mỗi phút — nghỉ khoảng 1 phút rồi hỏi tiếp nhé (hoặc nối thêm key GPT ở Cài đặt API để có phương án dự phòng).`;
+  if (status === 429) {
+    // Google kèm mã giới hạn bị chạm (quotaId) và thời gian được hỏi lại (retryDelay) trong details —
+    // hiện ra để biết bị chặn theo phút hay theo ngày.
+    const details = b?.error?.details ?? [];
+    const quota = details.map((x) => x.quotaId ?? x.violations?.[0]?.quotaId).find(Boolean) ?? '';
+    const delay = details.map((x) => x.retryDelay).find(Boolean) ?? '';
+    const perDay = /PerDay/i.test(quota);
+    return `Gemini hết lượt (429${quota ? ` · ${quota}` : ''}${delay ? ` · hỏi lại sau ${delay}` : ''}) — ${perDay ? 'hết lượt của HÔM NAY, mai hỏi tiếp' : 'nghỉ khoảng 1 phút rồi hỏi tiếp'}; hoặc nối thêm key GPT ở Cài đặt API để có phương án dự phòng.`;
+  }
   if (status === 503) return `Máy chủ ${provider === 'gemini' ? 'Gemini' : 'OpenAI'} đang quá tải — thử lại sau ít phút, hoặc chuyển sang nhà cung cấp khác trong Cài đặt API.`;
-  return msg;
+  return raw;
 }
 
 /** Trả true nếu lỗi có thể retry hoặc đáng fallback sang nhà cung cấp khác (quá tải / hạn mức). */
