@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Calculator, ClipboardList, FileText, Gamepad2, GraduationCap, Languages, ListChecks, Presentation, ShieldCheck, Star, Trophy } from 'lucide-react';
+import { ArrowRight, BookOpen, Calculator, ClipboardList, FileText, Gamepad2, GraduationCap, Languages, ListChecks, Presentation, ShieldCheck, Star, Trophy, UsersRound } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import GameArt from '@/components/games/GameArt';
@@ -92,6 +92,7 @@ export default function HomePage() {
               <div className="auth-roles">
                 <Link href="/dang-nhap?vai=nguoi-lon" className="auth-role is-teacher"><Presentation aria-hidden="true" /><span><small>Dành cho</small><b>Giáo viên</b></span></Link>
                 <Link href="/dang-nhap" className="auth-role is-student"><GraduationCap aria-hidden="true" /><span><small>Dành cho</small><b>Học sinh</b></span></Link>
+                <Link href="/phu-huynh" className="auth-role is-parent"><UsersRound aria-hidden="true" /><span><small>Dành cho</small><b>Phụ huynh</b></span></Link>
               </div>
             </div>
           </div>
