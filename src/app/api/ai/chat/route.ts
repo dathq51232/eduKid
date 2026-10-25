@@ -21,6 +21,10 @@ export async function POST(request: Request) {
   if (!rateLimit(`aichat:${viewer.userId}`, 12, 5 * 60_000)) {
     return NextResponse.json({ error: 'Bạn hỏi nhanh quá — đợi khoảng một phút rồi tiếp tục nhé.' }, { status: 429 });
   }
+  // Van chặn theo phút: gói miễn phí Gemini chỉ nhận ~10 lượt/phút — chặn giật liên tục trước khi Google chặn.
+  if (!rateLimit(`aichat-rpm:${viewer.userId}`, 8, 60_000)) {
+    return NextResponse.json({ error: 'Hỏi chậm thôi thầy cô — gói miễn phí của Gemini chỉ nhận khoảng 10 lượt mỗi phút, nghỉ chút rồi hỏi tiếp nhé.' }, { status: 429 });
+  }
 
   const config = await loadTeacherAiConfig(viewer.userId);
   if (!config?.openai && !config?.gemini) {
@@ -61,6 +65,13 @@ export async function POST(request: Request) {
       } catch { /* không lưu được thì lần sau tự thử chuyển lại */ }
     }
     return new Response(s.stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Ai-Model': s.model, 'X-Ai-Provider': provider } });
+  }
+
+  // 429 (hết lượt mỗi phút của gói miễn phí): stream đã tự chờ 22 giây và thử lại ngầm rồi —
+  // đừng gọi thêm lần nào nữa (lãng phí quota), trả thẳng lời nhắc nghỉ.
+  if (s.httpStatus === 429) {
+    await logAiUsage(viewer.userId, provider, chosen.model, 'chat', false, s.error);
+    return NextResponse.json({ error: s.error }, { status: 429 });
   }
 
   // Không stream được (lỗi hết hạn/thiếu model) — dùng đường không stream cũ, kèm fallback nhà cung cấp khi quá tải.

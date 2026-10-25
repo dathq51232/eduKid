@@ -44,7 +44,7 @@ function apiError(body: unknown, status: number, provider: string): string {
   if (/API key not valid|API_KEY_INVALID|invalid_api_key|Incorrect API key/i.test(msg)) {
     return `API key ${provider === 'gemini' ? 'Gemini' : 'OpenAI'} không hợp lệ — kiểm tra lại key (đã copy đủ, chưa bị thu hồi).`;
   }
-  if (status === 429) return `Vượt giới hạn calls của ${provider === 'gemini' ? 'Gemini' : 'OpenAI'} — đợi ít phút rồi thử lại (gói miễn phí giới hạn số lần mỗi phút).`;
+  if (status === 429) return `Gói miễn phí của Gemini chỉ cho khoảng 10 lượt mỗi phút — nghỉ khoảng 1 phút rồi hỏi tiếp nhé (hoặc nối thêm key GPT ở Cài đặt API để có phương án dự phòng).`;
   if (status === 503) return `Máy chủ ${provider === 'gemini' ? 'Gemini' : 'OpenAI'} đang quá tải — thử lại sau ít phút, hoặc chuyển sang nhà cung cấp khác trong Cài đặt API.`;
   return msg;
 }
@@ -141,6 +141,7 @@ export async function streamChatCompletion(
       });
       let model = opts.model;
       let noThinking = true;
+      let waited429 = false;
       for (let tries = 0; tries < 4; tries++) {
         const res = await call(model, noThinking);
         if (res.status === 200 && res.body) return { ok: true, stream: sseTextStream(res, 'gemini'), model };
@@ -148,6 +149,9 @@ export async function streamChatCompletion(
         const alt = /use models\/([a-z0-9.-]+)/i.exec(msg)?.[1];
         if (alt && alt !== model) { model = alt; continue; }
         if (/thinking/i.test(msg) && noThinking) { noThinking = false; continue; }
+        // Gói miễn phí giới hạn ~10 lượt/phút: tự nghỉ 22 giây rồi thử lại một lần —
+        // thầy cô chỉ thấy "Đang soạn…" dài thêm chút thay vì nhận thông báo lỗi.
+        if (res.status === 429 && !waited429) { waited429 = true; await new Promise((r) => setTimeout(r, 22_000)); continue; }
         return { ok: false, error: msg, httpStatus: res.status };
       }
       return { ok: false, error: 'Không gọi được Gemini sau các lần thử.' };
