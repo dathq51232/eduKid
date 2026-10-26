@@ -325,7 +325,7 @@ export function ranking(total: number[]): { team: number; score: number; rank: n
 }
 
 /* ====================================================================== DANH BẠ PHỤ HUYNH */
-export type Contact = { id: string; student_id: string; name: string; relation: string; phone: string; note: string | null; updated_at?: string };
+export type Contact = { id: string; student_id: string; name: string; relation: string; phone: string; zalo?: string | null; note: string | null; updated_at?: string; /** phụ huynh: true = số do gia đình tự nhập (được xoá) */ mine?: boolean };
 export const RELATIONS = ['Bố', 'Mẹ', 'Ông', 'Bà', 'Anh', 'Chị', 'Cô', 'Dì', 'Chú', 'Bác', 'Người giám hộ'];
 
 /** Chuẩn hóa số: bỏ dấu cách/chấm/gạch, +84 → 0. Trả null nếu không giống số điện thoại. */

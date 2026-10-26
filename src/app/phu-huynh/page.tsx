@@ -4,8 +4,11 @@ import { redirect } from 'next/navigation';
 import { Star } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import MiloMascot from '@/components/mascot/MiloMascot';
+import ParentContactForm from '@/components/classroom/ParentContactForm';
 import RedeemInviteForm from '@/components/classroom/RedeemInviteForm';
 import SignOutButton from '@/components/classroom/SignOutButton';
+import { STATUS_LABEL } from '@/lib/classroom/diary';
+import type { Contact } from '@/lib/classroom/class-tools';
 import { getViewer } from '@/lib/auth/viewer';
 import { createClient } from '@/lib/supabase/server';
 
@@ -14,6 +17,13 @@ export const dynamic = 'force-dynamic';
 
 type Child = { id: string; display_name: string; grade: number };
 type Result = { student_id: string; lesson_title: string | null; lesson_code: string; score: number; total: number; points: number; created_at: string };
+/** Một ngày Sổ lớp của con: thông báo cả lớp + dòng riêng của em (migration 0031) */
+type DiaryDay = { day: string; announcement: string | null; status: string; tags: string[]; note: string | null };
+
+const fmtDay = (iso: string) => {
+  const d = new Date(`${iso}T00:00:00`);
+  return d.toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'numeric' });
+};
 
 export default async function ParentsPage() {
   const viewer = await getViewer();
@@ -50,13 +60,18 @@ export default async function ParentsPage() {
   if (viewer.isStudent && viewer.studentId) {
     const supabase = await createClient();
     // RLS: học sinh chỉ đọc được kết quả của chính mình
-    const [{ data: me }, { data: results }] = await Promise.all([
+    const [{ data: me }, { data: results }, { data: diary }, { data: contactData }] = await Promise.all([
       supabase.from('students').select('display_name, grade').eq('id', viewer.studentId).maybeSingle(),
       supabase.from('lesson_results').select('lesson_title, lesson_code, score, total, points, created_at').order('created_at', { ascending: false }).limit(50),
+      // Sổ lớp + danh bạ gia đình (migration 0031): chưa chạy migration thì bỏ qua, trang vẫn hiện
+      supabase.rpc('parent_diary_recent', { p_days: 30 }),
+      supabase.rpc('parent_my_contacts'),
     ]);
     const childName = (me as { display_name?: string } | null)?.display_name ?? viewer.displayName;
     const childGrade = (me as { grade?: number } | null)?.grade ?? null;
     const list = (results ?? []) as Result[];
+    const days = ((diary ?? []) as DiaryDay[]).filter((d) => d.announcement || d.note || d.tags?.length || (d.status && d.status !== 'present'));
+    const contacts = ((contactData ?? []) as Contact[]).filter((c) => c && c.id);
     const best = new Map<string, number>();
     for (const r of list) best.set(r.lesson_code, Math.max(best.get(r.lesson_code) ?? 0, r.points));
     const avg = list.length ? Math.round(list.reduce((s, r) => s + (r.score * 100) / r.total, 0) / list.length) : 0;
@@ -74,6 +89,37 @@ export default async function ParentsPage() {
           <p className="adm-alert is-info" role="status">
             Bạn đang xem tiến độ của con bằng mã PIN dùng chung. Muốn con học bài trên máy này, chuyển sang góc học của bé: <Link href="/hoc-sinh">Vào góc học của bé →</Link>
           </p>
+
+          {days.length > 0 && (
+            <section className="dash-card ph-diary">
+              <h2>Tin nhắn từ cô giáo</h2>
+              <p className="dash-muted">Thông báo của lớp và nhận xét hằng ngày của cô dành cho con (30 ngày gần nhất).</p>
+              <ul className="ph-diary-list">
+                {days.map((d) => (
+                  <li key={d.day} className="ph-diary-day">
+                    <span className="ph-diary-date">{fmtDay(d.day)}</span>
+                    <div className="ph-diary-body">
+                      {d.announcement && <p className="ph-diary-announce">{d.announcement}</p>}
+                      {d.status && d.status !== 'present' && <p className="ph-diary-absence">{STATUS_LABEL[d.status as 'excused' | 'unexcused'] ?? 'Vắng'}</p>}
+                      {(d.tags ?? []).length > 0 && (
+                        <ul className="ph-diary-tags">
+                          {(d.tags ?? []).map((t) => <li key={t} className={t.startsWith('★') ? 'is-praise' : 'is-remind'}>{t}</li>)}
+                        </ul>
+                      )}
+                      {d.note && <p className="ph-diary-note">Cô ghi chú: {d.note}</p>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <section className="dash-card">
+            <h2>Điện thoại &amp; Zalo của gia đình</h2>
+            <p className="dash-muted">Cập nhật để cô chủ nhiệm liên hệ khi cần. Mỗi gia đình lưu tối đa 3 số; thầy cô xem số này trong Danh bạ phụ huynh của lớp.</p>
+            <ParentContactForm initial={contacts} />
+          </section>
+
           <ul className="stat-row">
             <li className="stat-tile tone-blue"><span>Bài đã làm</span><strong>{best.size}</strong></li>
             <li className="stat-tile tone-green"><span>Đúng trung bình</span><strong>{list.length ? `${avg}%` : '—'}</strong></li>

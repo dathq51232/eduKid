@@ -4030,6 +4030,8 @@ button.diary-pill { cursor: pointer; }
 .pc-pn { font-weight: 600; line-height: 1.2; }
 .pc-pn small { display: block; color: var(--muted); font-size: 12.5px; }
 .pc-phone { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pc-zalo-no { display: block; font-size: .78em; font-weight: 600; color: #0068ff; }
+.pcs-by-teacher { font-size: .85em; align-self: center; }
 .pc-act { display: flex; gap: 6px; flex-wrap: wrap; }
 .pc-btn { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 0 10px; border: 0; border-radius: 10px; background: var(--blue-soft); color: var(--blue); font: inherit; font-weight: 700; font-size: 13px; text-decoration: none; white-space: nowrap; cursor: pointer; }
 .pc-btn svg { width: 15px; height: 15px; }

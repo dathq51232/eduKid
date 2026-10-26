@@ -54,7 +54,8 @@ export default function ClassDiary({ classId, className, students, initialTab = 
     if (tab !== 'msg' || phones) return;
     void supabase.rpc('teacher_contacts', { p_class: classId }).then(({ data, error: e }) => {
       const m: Record<string, string> = {};
-      if (!e) ((data ?? []) as { student_id: string; phone: string }[]).forEach((c) => { m[c.student_id] ??= c.phone; });
+      // Ưu tiên số Zalo phụ huynh khai (migration 0031), không có thì dùng số điện thoại
+      if (!e) ((data ?? []) as { student_id: string; phone: string; zalo?: string | null }[]).forEach((c) => { m[c.student_id] ??= c.zalo || c.phone; });
       setPhones(m);
     });
   }, [tab, phones, supabase, classId]);

@@ -12,7 +12,7 @@ import {
 } from '@/lib/classroom/class-tools';
 
 type Props = { classId: string; className: string; students: ToolStudent[] };
-type Draft = { id: string | null; student_id: string; name: string; relation: string; phone: string; note: string; top?: boolean };
+type Draft = { id: string | null; student_id: string; name: string; relation: string; phone: string; zalo: string; note: string; top?: boolean };
 const HIDE_KEY = 'gv-an-so-ph';
 
 export default function ParentContacts({ classId, className, students }: Props) {
@@ -56,12 +56,16 @@ export default function ParentContacts({ classId, className, students }: Props) 
     const phone = normalizePhone(draft.phone);
     if (!draft.student_id) { setErr('Chọn em trước.'); return; }
     if (!phone) { setErr('Số điện thoại chưa đúng (cần 10 số, ví dụ 0912 345 678).'); return; }
+    const zalo = draft.zalo.trim() ? normalizePhone(draft.zalo) : null;
+    if (draft.zalo.trim() && !zalo) { setErr('Số Zalo chưa đúng. Để trống nếu Zalo trùng số điện thoại.'); return; }
     setBusy(true); setErr('');
     const { error } = await supabase.rpc('teacher_contact_save', {
       p_class: classId, p_student: draft.student_id, p_id: draft.id, p_name: draft.name, p_relation: draft.relation, p_phone: phone, p_note: draft.note || null,
+      // Chỉ gửi p_zalo khi có (0031): chưa chạy 0031 thì vẫn lưu được như cũ
+      ...(zalo ? { p_zalo: zalo } : draft.id && contacts.find((c) => c.id === draft.id)?.zalo ? { p_zalo: null } : {}),
     });
     setBusy(false);
-    if (error) { setErr(/too_many/.test(error.message) ? 'Mỗi em lưu tối đa 3 số.' : /invalid_phone/.test(error.message) ? 'Số điện thoại chưa đúng.' : 'Chưa lưu được. Thử lại nhé.'); return; }
+    if (error) { setErr(/too_many/.test(error.message) ? 'Mỗi em lưu tối đa 3 số.' : /invalid_phone/.test(error.message) ? 'Số điện thoại chưa đúng.' : /invalid_zalo/.test(error.message) ? 'Số Zalo chưa đúng.' : /p_zalo|function/i.test(error.message) ? 'Muốn lưu số Zalo riêng: chạy supabase/migrations/0031_parent_hub.sql trên Supabase.' : 'Chưa lưu được. Thử lại nhé.'); return; }
     setDraft(null); setOk('Đã lưu số điện thoại.'); void load();
   };
   const remove = async (c: Contact) => {
@@ -71,7 +75,7 @@ export default function ParentContacts({ classId, className, students }: Props) 
     setDraft(null); void load();
   };
   const copy = (p: string) => { void navigator.clipboard?.writeText(p).then(() => { setCopied(p); window.setTimeout(() => setCopied(''), 1500); }); };
-  const newDraft = (student_id = ''): Draft => ({ id: null, student_id, name: '', relation: 'Mẹ', phone: '', note: '', top: !student_id });
+  const newDraft = (student_id = ''): Draft => ({ id: null, student_id, name: '', relation: 'Mẹ', phone: '', zalo: '', note: '', top: !student_id });
 
   const form = (d: Draft) => (
     <form className="pc-form" onSubmit={(e) => { e.preventDefault(); void save(); }}>
@@ -83,6 +87,7 @@ export default function ParentContacts({ classId, className, students }: Props) 
       <input value={d.name} onChange={(e) => setDraft({ ...d, name: e.target.value })} placeholder="Tên phụ huynh" maxLength={80} aria-label="Tên phụ huynh" />
       <input value={d.relation} onChange={(e) => setDraft({ ...d, relation: e.target.value })} list="pc-rel" placeholder="Quan hệ" maxLength={30} aria-label="Quan hệ" className="pc-rel" />
       <input value={d.phone} onChange={(e) => setDraft({ ...d, phone: e.target.value })} placeholder="Số điện thoại" inputMode="tel" autoFocus aria-label="Số điện thoại" className="pc-phone-in" />
+      <input value={d.zalo} onChange={(e) => setDraft({ ...d, zalo: e.target.value })} placeholder="Số Zalo (nếu khác)" inputMode="tel" aria-label="Số Zalo nếu khác số điện thoại" className="pc-phone-in" />
       <input value={d.note} onChange={(e) => setDraft({ ...d, note: e.target.value })} placeholder="Ghi chú (vd: gọi sau 17h)" maxLength={200} aria-label="Ghi chú" />
       <button type="submit" className="btn btn-primary btn-sm" disabled={busy}>{busy ? 'Đang lưu…' : 'Lưu'}</button>
       <button type="button" className="btn btn-outline btn-sm" onClick={() => { setDraft(null); setErr(''); }}>Hủy</button>
@@ -125,14 +130,14 @@ export default function ParentContacts({ classId, className, students }: Props) 
                   {list.map((c) => draft?.id === c.id ? <div key={c.id} className="pc-c is-edit">{form(draft)}<button type="button" className="ct-link pc-del" onClick={() => void remove(c)}><Trash2 aria-hidden="true" /> Xóa số này</button></div> : (
                     <div key={c.id} className="pc-c">
                       <span className="pc-pn">{c.name || <i className="dash-muted">—</i>}<small>{c.relation}</small></span>
-                      <span className="pc-phone">{hide ? maskPhone(c.phone) : formatPhone(c.phone)}</span>
+                      <span className="pc-phone">{hide ? maskPhone(c.phone) : formatPhone(c.phone)}{c.zalo && c.zalo !== c.phone && <small className="pc-zalo-no">Zalo: {hide ? maskPhone(c.zalo) : formatPhone(c.zalo)}</small>}</span>
                       <span className="pc-act">
                         <a href={telHref(c.phone)} className="pc-btn"><Phone aria-hidden="true" /> Gọi</a>
-                        <a href={zaloHref(c.phone)} target="_blank" rel="noopener noreferrer" className="pc-btn is-zalo"><MessageCircle aria-hidden="true" /> Zalo</a>
+                        <a href={zaloHref(c.zalo || c.phone)} target="_blank" rel="noopener noreferrer" className="pc-btn is-zalo"><MessageCircle aria-hidden="true" /> Zalo</a>
                         <button type="button" className="pc-btn" onClick={() => copy(c.phone)}><Copy aria-hidden="true" /> {copied === c.phone ? 'Đã chép' : 'Chép'}</button>
                       </span>
                       <span className="pc-memo">{c.note}</span>
-                      <button type="button" className="ct-x" onClick={() => { setErr(''); setDraft({ id: c.id, student_id: s.id, name: c.name, relation: c.relation, phone: formatPhone(c.phone), note: c.note ?? '' }); }} aria-label={`Sửa số của ${s.name}`}><Pencil aria-hidden="true" /></button>
+                      <button type="button" className="ct-x" onClick={() => { setErr(''); setDraft({ id: c.id, student_id: s.id, name: c.name, relation: c.relation, phone: formatPhone(c.phone), zalo: c.zalo ? formatPhone(c.zalo) : '', note: c.note ?? '' }); }} aria-label={`Sửa số của ${s.name}`}><Pencil aria-hidden="true" /></button>
                     </div>
                   ))}
                   {editingHere && !draft.id ? <div className="pc-c is-edit">{form(draft)}</div>
