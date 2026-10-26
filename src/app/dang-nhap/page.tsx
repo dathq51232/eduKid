@@ -8,7 +8,7 @@ import BrandLogo, { BrandWord } from '@/components/brand/BrandLogo';
 import { createClient } from '@/lib/supabase/client';
 import { safeNext } from '@/lib/auth/safe-next';
 
-type Tab = 'student' | 'adult';
+type Tab = 'student' | 'parent' | 'adult';
 type Classmate = { id: string; name: string };
 const TONES = ['blue', 'green', 'coral', 'purple', 'yellow', 'sky'];
 
@@ -83,7 +83,7 @@ function saveRemembered(v: Remembered | null) {
   }
 }
 
-function StudentLogin({ configured, initialCode, next = '' }: { configured: boolean; initialCode: string; next?: string }) {
+function StudentLogin({ configured, initialCode, next = '', parentMode = false }: { configured: boolean; initialCode: string; next?: string; parentMode?: boolean }) {
   const router = useRouter();
   const [step, setStep] = useState<'code' | 'name' | 'pin'>('code');
   const [code, setCode] = useState(initialCode);
@@ -95,6 +95,8 @@ function StudentLogin({ configured, initialCode, next = '' }: { configured: bool
   const [busy, setBusy] = useState(false);
   const pinRef = useRef<HTMLInputElement>(null);
   const inFlight = useRef(false);
+  // Tab phụ huynh dùng chung mã lớp + PIN của con: chỉ khác lời nhăn (gọi "bạn/con") và trang đích
+  const you = parentMode ? 'Bạn' : 'Em';
 
   // Thiết bị đã nhớ em (và không mở bằng link của lớp khác) -> vào thẳng bước nhập PIN
   useEffect(() => {
@@ -115,16 +117,16 @@ function StudentLogin({ configured, initialCode, next = '' }: { configured: bool
       const res = await fetch('/api/hoc-sinh/lop', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: value }) });
       const data = await res.json();
       if (!res.ok) {
-        setError(res.status === 429 ? 'Em thử nhiều quá rồi, đợi một lát nhé.' : data.error === 'not_configured' ? 'Máy chủ chưa bật đăng nhập học sinh.' : data.error === 'server_error' ? 'Máy chủ chưa kết nối được cơ sở dữ liệu. Em nhờ thầy cô báo quản trị nhé.' : data.error === 'class_archived' ? 'Lớp này đang được lưu trữ. Em nhờ thầy cô bấm "Mở lại lớp" nhé.' : 'Không tìm thấy lớp. Em xem lại mã lớp trên thẻ nhé.');
+        setError(res.status === 429 ? `${you} thử nhiều quá rồi, đợi một lát nhé.` : data.error === 'not_configured' ? 'Máy chủ chưa bật đăng nhập học sinh.' : data.error === 'server_error' ? 'Máy chủ chưa kết nối được cơ sở dữ liệu. Em nhờ thầy cô báo quản trị nhé.' : data.error === 'class_archived' ? `Lớp này đang được lưu trữ. ${you} nhờ thầy cô bấm "Mở lại lớp" nhé.` : `Không tìm thấy lớp. ${you} xem lại mã lớp trên thẻ nhé.`);
         return false;
       }
-      if (!data.students.length) { setError('Lớp này chưa có bạn nào có tài khoản. Em hỏi thầy cô nhé.'); return false; }
+      if (!data.students.length) { setError(parentMode ? 'Lớp này chưa có danh sách học sinh. Bạn hỏi thầy cô nhé.' : 'Lớp này chưa có bạn nào có tài khoản. Em hỏi thầy cô nhé.'); return false; }
       setCode(data.code);
       setClassName(data.className);
       setMates(data.students);
       return true;
     } catch {
-      setError('Không kết nối được. Em thử lại nhé.');
+      setError(`Không kết nối được. ${you} thử lại nhé.`);
       return false;
     } finally {
       setBusy(false);
@@ -147,7 +149,7 @@ function StudentLogin({ configured, initialCode, next = '' }: { configured: bool
 
   const login = async (value: string) => {
     if (!me || inFlight.current) return;
-    if (value.length !== 6) { setError('Mã PIN có 6 số. Em nhập đủ 6 số nhé.'); return; }
+    if (value.length !== 6) { setError(parentMode ? 'Mã PIN của con có 6 số. Bạn nhập đủ 6 số nhé.' : 'Mã PIN có 6 số. Em nhập đủ 6 số nhé.'); return; }
     inFlight.current = true;
     setError('');
     setBusy(true);
@@ -156,6 +158,12 @@ function StudentLogin({ configured, initialCode, next = '' }: { configured: bool
       const data = await res.json();
       if (res.ok) {
         saveRemembered({ code, className, id: me.id, name: me.name });
+        // Phụ huynh dùng PIN của con để xem tiến độ -> về /phu-huynh; học sinh quay lại đúng trang học
+        if (parentMode) {
+          router.replace('/phu-huynh');
+          router.refresh();
+          return;
+        }
         // Bị chuyển tới đây từ trang học (vd. /lam-bai?…) thì quay lại đúng trang đó; còn lại về trang học sinh
         router.replace(next.startsWith('/chon-bai') || next.startsWith('/lam-bai') || next.startsWith('/tro-choi') || next.startsWith('/thanh-tich') || next.startsWith('/ket-qua') || next.startsWith('/hoc-sinh') ? next : (data.next ?? '/hoc-sinh'));
         router.refresh();
@@ -163,15 +171,15 @@ function StudentLogin({ configured, initialCode, next = '' }: { configured: bool
       }
       setPin('');
       pinRef.current?.focus();
-      if (data.error === 'locked') setError(`Tài khoản tạm khóa ${data.minutes} phút vì nhập sai nhiều lần. Em nhờ thầy cô mở khóa nhé.`);
-      else if (data.error === 'wrong_pin') setError(`Mã PIN chưa đúng. Em còn ${data.remaining} lần thử.`);
-      else if (res.status === 429) setError('Em thử nhiều quá rồi, đợi một lát nhé.');
+      if (data.error === 'locked') setError(`Tài khoản tạm khóa ${data.minutes} phút vì nhập sai nhiều lần. ${you} nhờ thầy cô mở khóa nhé.`);
+      else if (data.error === 'wrong_pin') setError(`Mã PIN chưa đúng. ${you} còn ${data.remaining} lần thử.`);
+      else if (res.status === 429) setError(`${you} thử nhiều quá rồi, đợi một lát nhé.`);
       else if (res.status === 404 || res.status === 403) {
         saveRemembered(null);
-        setError('Không tìm thấy em trong lớp này nữa. Em chọn lại lớp và tên nhé.');
-      } else setError('Không đăng nhập được. Em hỏi thầy cô nhé.');
+        setError(parentMode ? 'Không tìm thấy học sinh trong lớp này nữa. Bạn chọn lại lớp và tên nhé.' : 'Không tìm thấy em trong lớp này nữa. Em chọn lại lớp và tên nhé.');
+      } else setError(`Không đăng nhập được. ${you} hỏi thầy cô nhé.`);
     } catch {
-      setError('Không kết nối được. Em thử lại nhé.');
+      setError(`Không kết nối được. ${you} thử lại nhé.`);
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -191,7 +199,7 @@ function StudentLogin({ configured, initialCode, next = '' }: { configured: bool
     return (
       <form className="auth-form" onSubmit={findClass}>
         <label className="adm-field">
-          <span>Mã lớp (trên thẻ đăng nhập)</span>
+          <span>{parentMode ? 'Mã lớp (trên thẻ đăng nhập của con)' : 'Mã lớp (trên thẻ đăng nhập)'}</span>
           <input className="class-code-input" inputMode="text" autoCapitalize="characters" autoComplete="off" placeholder="ABC-123" maxLength={8} required value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} />
         </label>
         {error && <p className="adm-alert is-error" role="alert">{error}</p>}
@@ -203,7 +211,7 @@ function StudentLogin({ configured, initialCode, next = '' }: { configured: bool
   if (step === 'name') {
     return (
       <div className="auth-form">
-        <p className="auth-step-title">Lớp {className} — em là bạn nào?</p>
+        <p className="auth-step-title">Lớp {className} — {parentMode ? 'chọn tên con bạn' : 'em là bạn nào?'}</p>
         {error && <p className="adm-alert is-error" role="alert">{error}</p>}
         <ul className="name-grid">
           {mates.map((m, i) => (
@@ -223,7 +231,10 @@ function StudentLogin({ configured, initialCode, next = '' }: { configured: bool
   return (
     <form className="auth-form" onSubmit={(e) => { e.preventDefault(); void login(pin); }}>
       <p className="auth-step-title">
-        {className ? <>Lớp {className} · </> : null}Chào <strong>{me?.name}</strong>! Em nhập mã PIN rồi bấm <b>Vào lớp</b> (hoặc Enter).
+        {className ? <>Lớp {className} · </> : null}
+        {parentMode
+          ? <>Con bạn <strong>{me?.name}</strong>. Nhập mã PIN 6 số rồi bấm <b>Xem tiến độ</b> (hoặc Enter).</>
+          : <>Chào <strong>{me?.name}</strong>! Em nhập mã PIN rồi bấm <b>Vào lớp</b> (hoặc Enter).</>}
       </p>
       <label className="sr-only" htmlFor="pin-input">Mã PIN</label>
       <input
@@ -255,10 +266,10 @@ function StudentLogin({ configured, initialCode, next = '' }: { configured: bool
         <button type="button" onMouseDown={keepFocus} onClick={() => setPin(pin.slice(0, -1))} disabled={busy} aria-label="Xóa một số"><Delete aria-hidden="true" /></button>
       </div>
       <button type="submit" className="btn btn-yellow auth-submit" disabled={busy || !configured}>
-        <LogIn aria-hidden="true" /> {busy ? 'Đang vào lớp…' : 'Vào lớp'}
+        <LogIn aria-hidden="true" /> {busy ? (parentMode ? 'Đang mở tiến độ…' : 'Đang vào lớp…') : (parentMode ? 'Xem tiến độ' : 'Vào lớp')}
       </button>
       <div className="pin-links">
-        <button type="button" className="auth-back" onClick={() => void notMe()} disabled={busy}>Không phải {me?.name}? Chọn tên khác</button>
+        <button type="button" className="auth-back" onClick={() => void notMe()} disabled={busy}>{parentMode ? 'Không phải con bạn? Chọn tên khác' : `Không phải ${me?.name}? Chọn tên khác`}</button>
         <button type="button" className="auth-back" onClick={() => { saveRemembered(null); setMe(null); setMates([]); setPin(''); setError(''); setStep('code'); }} disabled={busy}>Đổi lớp</button>
       </div>
     </form>
@@ -268,7 +279,7 @@ function StudentLogin({ configured, initialCode, next = '' }: { configured: bool
 function LoginScreen() {
   const params = useSearchParams();
   const next = safeNext(params.get('next'));
-  const [tab, setTab] = useState<Tab>(params.get('vai') === 'nguoi-lon' || next.startsWith('/quan-tri') || next.startsWith('/giao-vien') || next.startsWith('/phu-huynh') ? 'adult' : 'student');
+  const [tab, setTab] = useState<Tab>(params.get('vai') === 'phu-huynh' || next.startsWith('/phu-huynh') ? 'parent' : params.get('vai') === 'nguoi-lon' || next.startsWith('/quan-tri') || next.startsWith('/giao-vien') ? 'adult' : 'student');
   const configured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   // Mỗi trình duyệt chỉ giữ MỘT phiên đăng nhập (cookie). Báo trước để thầy cô không vô tình bị thay bằng tài khoản học sinh và ngược lại.
   const [signedIn, setSignedIn] = useState(false);
@@ -295,6 +306,9 @@ function LoginScreen() {
           <button type="button" className={`auth-role is-student${tab === 'student' ? ' is-on' : ''}`} onClick={() => setTab('student')}>
             <GraduationCap aria-hidden="true" /><span><small>Dành cho</small><b>Học sinh</b></span>
           </button>
+          <button type="button" className={`auth-role is-parent${tab === 'parent' ? ' is-on' : ''}`} onClick={() => setTab('parent')}>
+            <Users aria-hidden="true" /><span><small>Dành cho</small><b>Phụ huynh</b></span>
+          </button>
         </div>
       </aside>
       <div className="auth-card">
@@ -313,16 +327,26 @@ function LoginScreen() {
         {!configured && (
           <p className="adm-alert is-warn">Chưa kết nối Supabase nên chưa đăng nhập được. Xem hướng dẫn trong docs/AUTH-SETUP.md.</p>
         )}
-        <div className="auth-tabs" role="tablist" aria-label="Ai đăng nhập?">
+        <div className="auth-tabs auth-tabs-login" role="tablist" aria-label="Ai đăng nhập?">
           <button type="button" role="tab" aria-selected={tab === 'student'} className="auth-tab" onClick={() => setTab('student')}>
             <GraduationCap aria-hidden="true" /> Học sinh
           </button>
+          <button type="button" role="tab" aria-selected={tab === 'parent'} className="auth-tab" onClick={() => setTab('parent')}>
+            <Users aria-hidden="true" /> Phụ huynh
+          </button>
           <button type="button" role="tab" aria-selected={tab === 'adult'} className="auth-tab" onClick={() => setTab('adult')}>
-            <Users aria-hidden="true" /> Thầy cô
+            <Presentation aria-hidden="true" /> Thầy cô
           </button>
         </div>
         <div role="tabpanel">
-          {tab === 'student' ? <StudentLogin configured={configured} initialCode={(params.get('lop') ?? '').toUpperCase().slice(0, 8)} next={next} /> : <AdultLogin next={next} configured={configured} />}
+          {tab === 'student' && <StudentLogin configured={configured} initialCode={(params.get('lop') ?? '').toUpperCase().slice(0, 8)} next={next} />}
+          {tab === 'parent' && (
+            <>
+              <p className="adm-alert is-info">Phụ huynh dùng chung <strong>mã lớp</strong> và <strong>mã PIN của con</strong> (trên thẻ đăng nhập) để xem tiến độ học, không cần tạo tài khoản riêng.</p>
+              <StudentLogin configured={configured} initialCode={(params.get('lop') ?? '').toUpperCase().slice(0, 8)} next={next} parentMode />
+            </>
+          )}
+          {tab === 'adult' && <AdultLogin next={next} configured={configured} />}
         </div>
         <Link href="/" className="auth-back"><ArrowLeft size={16} aria-hidden="true" /> Về trang chủ</Link>
       </div>

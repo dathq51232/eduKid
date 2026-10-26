@@ -1297,7 +1297,7 @@ a.adm-row-title:hover { color: var(--link); text-decoration: underline; }
   .main-nav-learn { order: 3; width: 100%; }
 }
 @media (max-width: 900px) {
-  .main-nav-home .main-nav-list, .main-nav-learn .main-nav-list { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .main-nav-home .main-nav-list, .main-nav-learn .main-nav-list { display: grid; grid-template-columns: repeat(4, 1fr); }
   .main-nav-home .main-nav-link, .main-nav-learn .main-nav-link { justify-content: center; }
 }
 @media (max-width: 560px) {
@@ -1922,6 +1922,7 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--brand-blue); ou
 .auth-switch a { color: var(--link); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .auth-back { border: 0; background: none; font: inherit; cursor: pointer; }
 .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: 16px; background: var(--surface-2); }
+.auth-tabs-login { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .auth-tab { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; }
 .auth-tab svg { width: 20px; height: 20px; }
 .auth-tab[aria-selected="true"] { background: var(--surface); color: var(--brand-blue); box-shadow: var(--shadow-sm); }
@@ -4183,6 +4184,8 @@ button.diary-pill { cursor: pointer; }
 .auth-role b { display: block; font-size: 20px; line-height: 1.1; }
 .auth-role.is-teacher { background: linear-gradient(135deg, #1d5fe0, #4b9bff); }
 .auth-role.is-student { background: linear-gradient(135deg, #16a34a, #4ade80); }
+.auth-role.is-parent { background: linear-gradient(135deg, #ef8b0d, #f9b234); }
+.auth-hero .auth-roles { flex-wrap: wrap; justify-content: center; }
 .auth-role:hover { transform: translateY(-2px); }
 .auth-role.is-on { outline: 3px solid rgb(255 200 61); outline-offset: 3px; }
 :root[data-theme="dark"] .auth-hero-tag { color: #9cc2ff; }

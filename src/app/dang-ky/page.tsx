@@ -8,7 +8,7 @@ import BrandLogo from '@/components/brand/BrandLogo';
 import { createClient } from '@/lib/supabase/client';
 import { ADMIN_CONTACT, FREE_STUDENT_LIMIT } from '@/lib/contact';
 
-type Role = 'teacher';
+type Role = 'teacher' | 'parent';
 
 function signupError(message: string): string {
   if (/already registered|already exists/i.test(message)) return 'Email này đã có tài khoản. Bạn hãy đăng nhập.';
@@ -21,7 +21,7 @@ function signupError(message: string): string {
 export default function SignupPage() {
   const router = useRouter();
   const configured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-  const role: Role = 'teacher'; // chỉ còn tài khoản giáo viên (đã bỏ mục phụ huynh)
+  const [role, setRole] = useState<Role>('teacher');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -71,12 +71,21 @@ export default function SignupPage() {
       <div className="auth-card">
         <Link href="/" className="brand auth-brand" aria-label="EduChain Kids - Trang chủ"><BrandLogo size={40} /></Link>
         <h1>Đăng ký</h1>
-        <p className="auth-sub">Dành cho thầy cô. Tài khoản học sinh do thầy cô tạo trong mục Quản lý lớp.</p>
+        <p className="auth-sub">Dành cho thầy cô và phụ huynh. Tài khoản học sinh do thầy cô tạo trong mục Quản lý lớp.</p>
         {!configured && <p className="adm-alert is-warn">Chưa kết nối Supabase nên chưa đăng ký được. Xem docs/AUTH-SETUP.md.</p>}
         {done ? (
           <p className="adm-alert is-ok" role="status">{done}</p>
         ) : (
           <form className="auth-form" onSubmit={submit}>
+            <fieldset className="role-pick">
+              <legend>Bạn là</legend>
+              <label className={role === 'teacher' ? 'is-on' : undefined}>
+                <input type="radio" name="role" value="teacher" checked={role === 'teacher'} onChange={() => setRole('teacher')} /> Giáo viên
+              </label>
+              <label className={role === 'parent' ? 'is-on' : undefined}>
+                <input type="radio" name="role" value="parent" checked={role === 'parent'} onChange={() => setRole('parent')} /> Phụ huynh
+              </label>
+            </fieldset>
             <label className="adm-field"><span>Họ tên</span>
               <input autoComplete="name" required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} />
             </label>
