@@ -4,7 +4,7 @@ import { FEATURES } from '@/lib/features';
 export type ToolKey =
   | 'so-lop' | 'goi-ten' | 'ke-hoach' | 'giao-bai' | 'phieu-bai-tap' | 'phieu-chinh-ta'
   | 'lo-hong' | 'de-kiem-tra' | 'nhan-xet' | 'ket-qua-truong' | 'phieu-tien-bo' | 'thu-khen' | 'lop'
-  | 'nhom' | 'thi-dua' | 'hen-gio' | 'danh-ba';
+  | 'nhom' | 'thi-dua' | 'hen-gio' | 'danh-ba' | 'bai-giang-3d';
 export type ToolTone = 'green' | 'yellow' | 'blue' | 'violet' | 'red' | 'coral';
 export type Tool = { key: ToolKey; label: string; desc: string; group: string; tone: ToolTone; path: string; keywords: string };
 
@@ -15,6 +15,7 @@ const ALL: Tool[] = [
   { key: 'thi-dua', label: 'Thi đua tổ', desc: 'Cộng điểm tổ, tổng kết tuần', group: 'Trên lớp', tone: 'coral', path: 'thi-dua', keywords: 'thi dua to diem cong tru co tong ket tuan sinh hoat lop' },
   { key: 'hen-gio', label: 'Hẹn giờ', desc: 'Đồng hồ đếm ngược chiếu bảng', group: 'Trên lớp', tone: 'violet', path: 'hen-gio', keywords: 'hen gio dem nguoc dong ho bam gio thao luan' },
   { key: 'ke-hoach', label: 'Kế hoạch bài dạy', desc: 'Giáo án, lịch báo giảng', group: 'Dạy học', tone: 'green', path: 'ke-hoach', keywords: 'giao an ke hoach lich bao giang soan bai word' },
+  { key: 'bai-giang-3d', label: 'Bài giảng 3D', desc: 'Xưởng mô hình 3D, bài STEM lớp 1–5', group: 'Dạy học', tone: 'blue', path: 'bai-giang-3d', keywords: 'bai giang 3d mo hinh stem truc quan trinh chieu xuong sa ban' },
   { key: 'giao-bai', label: 'Giao bài về nhà', desc: 'Hạn nộp, em nào chưa làm', group: 'Dạy học', tone: 'violet', path: 'giao-bai', keywords: 'giao bai ve nha han nop' },
   { key: 'phieu-bai-tap', label: 'Phiếu bài tập', desc: 'In kèm đáp án', group: 'Dạy học', tone: 'yellow', path: 'phieu-bai-tap', keywords: 'phieu bai tap in dap an' },
   { key: 'phieu-chinh-ta', label: 'Phiếu chính tả', desc: 'Tranh, tập chép, đáp án', group: 'Dạy học', tone: 'blue', path: 'phieu-chinh-ta', keywords: 'chinh ta tap chep' },
