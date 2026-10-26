@@ -3,7 +3,7 @@
 // Danh bạ phụ huynh: số điện thoại từng em (tối đa 3 người), bấm Gọi / Zalo / Chép, dán cả danh sách từ Excel,
 // ẩn số khi chiếu màn hình. DỮ LIỆU CÁ NHÂN: chỉ giáo viên của lớp xem được, mọi lần xem/sửa có nhật ký (migration 0028).
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ClipboardPaste, Copy, Eye, EyeOff, MessageCircle, Pencil, Phone, Plus, Search, Trash2, X } from 'lucide-react';
+import { ClipboardPaste, Copy, Eye, EyeOff, MapPin, MessageCircle, Pencil, Phone, Plus, Search, Trash2, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import ZaloGroupLink from '@/components/classroom/ZaloGroupLink';
 import { fold } from '@/lib/classroom/teacher-nav';
@@ -28,6 +28,10 @@ export default function ParentContacts({ classId, className, students }: Props) 
   const [ok, setOk] = useState('');
   const [paste, setPaste] = useState(false);
   const [copied, setCopied] = useState('');
+  // Địa chỉ nhà theo em (migration 0033): phụ huynh tự cập nhật ở Góc phụ huynh, cô cũng sửa được
+  const [addr, setAddr] = useState<Record<string, string>>({});
+  const [addrOk, setAddrOk] = useState(false);
+  const [addrEdit, setAddrEdit] = useState<{ student_id: string; text: string } | null>(null);
 
   useEffect(() => { try { setHide(localStorage.getItem(HIDE_KEY) === '1'); } catch { /* bỏ qua */ } }, []);
   const toggleHide = () => setHide((h) => { try { localStorage.setItem(HIDE_KEY, h ? '0' : '1'); } catch { /* bỏ qua */ } return !h; });
@@ -36,6 +40,9 @@ export default function ParentContacts({ classId, className, students }: Props) 
     if (!supabase) { setLoaded(true); return; }
     const { data, error } = await supabase.rpc('teacher_contacts', { p_class: classId });
     if (error) setMissing(true); else setContacts((data ?? []) as Contact[]);
+    const { data: a, error: ae } = await supabase.rpc('teacher_family_addresses', { p_class: classId });
+    setAddrOk(!ae);
+    if (!ae) setAddr((a ?? {}) as Record<string, string>);
     setLoaded(true);
   }, [supabase, classId]);
   useEffect(() => { void load(); }, [load]);
@@ -49,6 +56,7 @@ export default function ParentContacts({ classId, className, students }: Props) 
   const f = fold(q);
   const digits = q.replace(/\D/g, '');
   const shown = students.filter((s) => !f || fold(s.name).includes(f)
+    || fold(addr[s.id] ?? '').includes(f)
     || (byStudent[s.id] ?? []).some((c) => fold(c.name).includes(f) || (digits.length >= 3 && c.phone.includes(digits))));
 
   const save = async () => {
@@ -73,6 +81,13 @@ export default function ParentContacts({ classId, className, students }: Props) 
     const { error } = await supabase.rpc('teacher_contact_delete', { p_class: classId, p_id: c.id });
     if (error) { setErr('Chưa xóa được.'); return; }
     setDraft(null); void load();
+  };
+  const saveAddr = async () => {
+    if (!supabase || !addrEdit) return;
+    const { error } = await supabase.rpc('teacher_address_save', { p_class: classId, p_student: addrEdit.student_id, p_address: addrEdit.text.trim() });
+    if (error) { setErr(/invalid_address/.test(error.message) ? 'Địa chỉ dài quá (tối đa 200 ký tự).' : 'Chưa lưu được địa chỉ.'); return; }
+    setAddr((m) => { const n = { ...m }; if (addrEdit.text.trim()) n[addrEdit.student_id] = addrEdit.text.trim(); else delete n[addrEdit.student_id]; return n; });
+    setAddrEdit(null);
   };
   const copy = (p: string) => { void navigator.clipboard?.writeText(p).then(() => { setCopied(p); window.setTimeout(() => setCopied(''), 1500); }); };
   const newDraft = (student_id = ''): Draft => ({ id: null, student_id, name: '', relation: 'Mẹ', phone: '', zalo: '', note: '', top: !student_id });
@@ -125,7 +140,20 @@ export default function ParentContacts({ classId, className, students }: Props) 
             return (
               <div key={s.id} className={`pc-st${list.length ? '' : ' is-missing'}`}>
                 <span className="pc-no">{students.indexOf(s) + 1}</span>
-                <b className="pc-name">{s.name}</b>
+                <div className="pc-name">
+                  <b>{s.name}</b>
+                  {addrOk && (addrEdit?.student_id === s.id ? (
+                    <form className="pc-addr-form" onSubmit={(e) => { e.preventDefault(); void saveAddr(); }}>
+                      <input value={addrEdit.text} maxLength={200} autoFocus placeholder="Địa chỉ nhà" aria-label={`Địa chỉ nhà của ${s.name}`} onChange={(e) => setAddrEdit({ ...addrEdit, text: e.target.value })} />
+                      <button type="submit" className="ct-link">Lưu</button>
+                      <button type="button" className="ct-link" onClick={() => setAddrEdit(null)}>Hủy</button>
+                    </form>
+                  ) : addr[s.id] ? (
+                    <button type="button" className="pc-addr" onClick={() => setAddrEdit({ student_id: s.id, text: addr[s.id] })} title="Sửa địa chỉ"><MapPin aria-hidden="true" /> {hide ? '••••••' : addr[s.id]}</button>
+                  ) : (
+                    <button type="button" className="pc-addr is-empty" onClick={() => setAddrEdit({ student_id: s.id, text: '' })}><MapPin aria-hidden="true" /> Thêm địa chỉ</button>
+                  ))}
+                </div>
                 <div className="pc-cs">
                   {list.map((c) => draft?.id === c.id ? <div key={c.id} className="pc-c is-edit">{form(draft)}<button type="button" className="ct-link pc-del" onClick={() => void remove(c)}><Trash2 aria-hidden="true" /> Xóa số này</button></div> : (
                     <div key={c.id} className="pc-c">

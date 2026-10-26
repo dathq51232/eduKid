@@ -31,17 +31,9 @@ begin
 end;
 $$;
 
--- 3) Học sinh của phiên hiện tại (PIN của con = phiên học sinh); NULL nếu không phải
-create or replace function public.my_student_id()
-returns uuid
-language sql stable security definer set search_path = ''
-as $$
-  select s.id from public.students s
-  where s.user_id = auth.uid() and s.status = 'active'
-  order by s.created_at
-  limit 1;
-$$;
-revoke all on function public.my_student_id() from public, anon, authenticated;
+-- 3) my_student_id() đã có từ 0008 (RLS của classes/students/lesson_results dùng nó) — KHÔNG định nghĩa lại,
+--    KHÔNG thu hồi quyền: thiếu quyền execute thì giáo viên và học sinh không đọc được lớp nào.
+grant execute on function public.my_student_id() to authenticated;
 
 -- 4) Sổ lớp của con: p_days ngày gần nhất có nội dung (thông báo lớp hoặc dòng của em), mới nhất trước
 create or replace function public.parent_diary_recent(p_days int default 14)
@@ -199,9 +191,6 @@ begin
   return v_id;
 end;
 $$;
-
--- my_student_id chỉ dùng bên trong các hàm trên, không mở cho client
-revoke all on function public.my_student_id() from public, anon, authenticated;
 
 -- Cấp quyền như 0028: chỉ người đã đăng nhập (authenticated) chạy được; hàm tự kiểm tra quyền bên trong
 do $$
