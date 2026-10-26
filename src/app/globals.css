@@ -4624,3 +4624,25 @@ select.s3d-btn { padding-right: 6px; }
   .s3d-ctls { top: auto; bottom: 16px; left: 12px; width: min(200px, 45%); }
   .s3d-play { bottom: 12px; }
 }
+
+/* ===== Gọi tên: Bịt mắt bắt vịt ===== */
+.cd { position: absolute; inset: 0; background: linear-gradient(#cfe9ff, #a7d07a 45%, #8fc463); }
+.cd .callon-hint { background: rgb(255 255 255 / .9); padding: 6px 12px; border-radius: 999px; }
+.cd-svg { width: 100%; height: 100%; min-height: 0; display: block; font-family: var(--font-display, 'Quicksand'), sans-serif; }
+.cd-flip { transform: scaleX(var(--face, 1)); transform-origin: 0 0; }
+.cd-waddle { transform-origin: 0 0; }
+.cd-duck.is-move .cd-waddle { animation: cd-waddle .32s ease-in-out infinite alternate; }
+@keyframes cd-waddle { from { transform: rotate(-7deg) translateY(0); } to { transform: rotate(7deg) translateY(-3px); } }
+.cd-duck.is-caught .cd-waddle { animation: cd-flap .25s ease-in-out infinite alternate; }
+@keyframes cd-flap { from { transform: translateY(0) rotate(-4deg); } to { transform: translateY(-10px) rotate(4deg); } }
+.cd-duck.is-got > g:last-of-type rect { fill: #fde047; stroke: #f59e0b; }
+.cd-duck.is-got .cd-waddle { animation: cd-flap .25s ease-in-out infinite alternate; }
+.cd-bubble { animation: cd-pop .18s ease-out both; }
+@keyframes cd-pop { from { opacity: .2; } to { opacity: 1; } }
+.cd-kid.is-walk .cd-leg1 { animation: cd-step .34s ease-in-out infinite alternate; transform-origin: -10px -34px; }
+.cd-kid.is-walk .cd-leg2 { animation: cd-step .34s ease-in-out infinite alternate-reverse; transform-origin: 6px -34px; }
+@keyframes cd-step { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
+.cd-kid.is-walk .cd-arms { animation: cd-grope .5s ease-in-out infinite alternate; transform-origin: 0 -76px; }
+@keyframes cd-grope { from { transform: rotate(-8deg); } to { transform: rotate(10deg); } }
+.cd-kid.is-catch .cd-arms { transform: rotate(-12deg) translateX(6px); transform-origin: 0 -76px; }
+@media (prefers-reduced-motion: reduce) { .cd-duck.is-move .cd-waddle, .cd-kid.is-walk .cd-leg1, .cd-kid.is-walk .cd-leg2, .cd-kid.is-walk .cd-arms { animation-duration: 1s; } }

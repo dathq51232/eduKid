@@ -1,13 +1,14 @@
 'use client';
 
-// Gọi tên – Dò bài: 4 kiểu gọi (vòng quay, bốc thăm, đua thú, trứng nở) để chiếu lên màn hình lớp.
+// Gọi tên – Dò bài: 5 kiểu gọi (vòng quay, bốc thăm, đua thú, trứng nở, bịt mắt bắt vịt) để chiếu lên màn hình lớp.
 // Không gọi lại em đã lên, bỏ qua em vắng, hiện một câu dò bài theo bài đang học, chấm ✓ ✗ ★.
 // Tất cả lưu trên máy đang chiếu (localStorage) — chưa gửi lên máy chủ.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Eye, EyeOff, Maximize2, Timer, Minimize2, RotateCcw, Users, Volume2, VolumeX, X } from 'lucide-react';
 import MiloMascot, { type MiloVariant } from '@/components/mascot/MiloMascot';
+import DuckCatch from '@/components/classroom/DuckCatch';
 import {
-  CALL_MODES, DURATIONS, addTally, raceLineup, candidatesOf, lotHops, lotsFor, pickOne, presentOf, raceFor, racePos, restoreState, shortName, sliceAt, spinEase, spinTurns, wheelAngle,
+  CALL_MODES, DURATIONS, addTally, duckPen, raceLineup, candidatesOf, lotHops, lotsFor, pickOne, presentOf, raceFor, racePos, restoreState, shortName, sliceAt, spinEase, spinTurns, wheelAngle,
   type CallMode, type CallState, type RaceSlot, type Student, type Tally,
 } from '@/lib/classroom/callon';
 import { bookLessons, lessonPool, type ExamQuestion } from '@/lib/exams/matrix';
@@ -91,13 +92,15 @@ function useSound(on: boolean) {
   const drum = useCallback(() => { beep(110 + Math.random() * 30, 80, 'triangle', 0.13); noise(60, 200, 0.18, 'lowpass', 0.8); }, [beep, noise]);
   const crack = useCallback(() => { for (let k = 0; k < 7; k++) at(() => noise(35, 3000 + Math.random() * 3000, 0.22, 'highpass', 0.8), k * 45 + Math.random() * 20); }, [noise]);
   const chirp = useCallback(() => { [0, 170, 420, 590].forEach((t) => at(() => beep(2200, 110, 'sine', 0.07, 3400), t)); }, [beep]);
+  /** tiếng vịt kêu "quạc quạc" */
+  const quack = useCallback(() => { beep(560, 120, 'sawtooth', 0.045, 420); at(() => beep(540, 130, 'sawtooth', 0.04, 400), 170); }, [beep]);
   /** "ta-da": hợp âm rồi chuỗi nốt lấp lánh */
   const fanfare = useCallback(() => {
     [392, 523, 659].forEach((f) => beep(f, 420, 'square', 0.04));
     [784, 988, 1175, 1568].forEach((f, i) => at(() => beep(f, 260, 'triangle', 0.06), 220 + i * 90));
     at(() => [523, 659, 784, 1047].forEach((f) => beep(f, 700, 'triangle', 0.045)), 620);
   }, [beep]);
-  return { beep, tick, chime, whoosh, riffle, countBeep, whistle, step, cheer, dice, knock, drum, crack, chirp, fanfare };
+  return { beep, tick, chime, whoosh, riffle, countBeep, whistle, step, cheer, dice, knock, drum, crack, chirp, fanfare, quack };
 }
 
 export default function CallOn({ classId, className, grade, students, absentToday = [] }: { classId: string; className: string; grade: number; students: Student[]; /** em vắng hôm nay theo Sổ lớp */ absentToday?: string[] }) {
@@ -112,7 +115,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
   const [full, setFull] = useState(false);
   const [notice, setNotice] = useState('');
   const boardRef = useRef<HTMLDivElement>(null);
-  const { tick, chime, whoosh, riffle, countBeep, whistle, step, cheer, dice, knock, drum, crack, chirp, fanfare } = useSound(s.sound);
+  const { tick, chime, whoosh, riffle, countBeep, whistle, step, cheer, dice, knock, drum, crack, chirp, fanfare, quack } = useSound(s.sound);
   // Thời gian chạy luôn theo lựa chọn của thầy cô. Không rút ngắn theo cài đặt "giảm chuyển động" của máy:
   // Windows tắt "Animation effects" (máy yếu, chế độ Best performance) làm trò chơi chỉ chạy 0,6 giây.
   const secs = s.duration;
@@ -318,6 +321,25 @@ export default function CallOn({ classId, className, grade, students, absentToda
     later(() => { reveal(st); chirp(); }, ms);
   };
 
+  /* -------------------------------------------- 5. bịt mắt bắt vịt */
+  const [pen, setPen] = useState<Student[] | null>(null);
+  const [duckRun, setDuckRun] = useState<{ key: number; target: Student | null }>({ key: 0, target: null });
+  const penList = pen ?? [];
+  // vào kiểu Bắt vịt lần đầu: thả vịt vào sân (giữ nguyên giữa các lần vẽ lại)
+  useEffect(() => { if (s.mode === 'ducks' && !pen && loaded && present.length) setPen(duckPen(candidatesOf(students, s).list, present, null)); }, [s, pen, loaded, present, students]);
+  const newPen = () => { if (phase === 'running') return; closeResult(); setPen(duckPen(candidatesOf(students, s).list, present, null)); dice(); };
+  const runDucks = () => {
+    const { list, newRound } = candidatesOf(students, s);
+    if (newRound) { setS((x) => ({ ...x, called: [], round: x.round + 1 })); setNotice('Cả lớp đã được gọi — bắt đầu vòng mới.'); }
+    const ducks = duckPen(list, present, pen ?? penList);
+    const st = pickOne(ducks.filter((d) => list.some((c) => c.id === d.id)));
+    if (!st) return;
+    setPen(ducks);
+    setPhase('running');
+    setDuckRun((r) => ({ key: r.key + 1, target: st }));
+  };
+  const duckSfx = useMemo(() => ({ quack, step, whoosh, cheer, whistle }), [quack, step, whoosh, cheer, whistle]);
+
   /* -------------------------------------------- nút chính + phím cách */
   const go = () => {
     if (phase === 'running') return;
@@ -327,6 +349,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
     if (s.mode === 'wheel') spinWheel();
     else if (s.mode === 'lots') drawLot();
     else if (s.mode === 'race') runRace();
+    else if (s.mode === 'ducks') runDucks();
     else tapEgg(wasDone ? 0 : taps);
   };
   const goRef = useRef(go);
@@ -491,6 +514,16 @@ export default function CallOn({ classId, className, grade, students, absentToda
               <span className="ce-shell" aria-hidden="true"><i /><i /></span>
               {taps > 0 && phase !== 'done' && <span className="ce-count" aria-hidden="true">{taps === 3 ? 'Sắp nở…' : `${taps}/3`}</span>}
             </button>
+          </div>
+        )}
+
+        {s.mode === 'ducks' && (
+          <div className="cd">
+            <div className="callon-stagebar">
+              <p className="callon-hint">{phase === 'running' ? 'Bạn bịt mắt đang tìm vịt…' : `Trong sân có ${penList.length} chú vịt · bấm Bịt mắt bắt vịt`}</p>
+              <button type="button" className="callon-chip" onClick={newPen} disabled={phase === 'running'}>🎲 Thả vịt mới</button>
+            </div>
+            <DuckCatch ducks={penList} target={duckRun.target} runKey={duckRun.key} seconds={secs} caughtId={phase === 'done' && picked ? picked.id : null} onCaught={(st) => reveal(st)} sfx={duckSfx} />
           </div>
         )}
 
