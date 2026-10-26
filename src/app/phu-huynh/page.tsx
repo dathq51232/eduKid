@@ -87,6 +87,8 @@ export default async function ParentsPage() {
     const contacts = ((o?.contacts ?? oldContacts ?? []) as Contact[]).filter((c) => c && c.id);
     const days = ((diary ?? []) as DiaryDay[]).filter((d) => d.announcement || d.note || d.tags?.length || (d.status && d.status !== 'present'));
     const latestAnn = days.find((d) => d.announcement);
+    // ngày của thông báo mới nhất đã hiện ở khung vàng: chỉ giữ trong dòng thời gian nếu còn nhận xét / vắng
+    const timeline = days.filter((d) => d !== latestAnn || d.note || d.tags?.length || (d.status && d.status !== 'present'));
     const list = (results ?? []) as Result[];
     const lessons = new Set(list.map((r) => r.lesson_code)).size;
     const avg = list.length ? Math.round(list.reduce((s, r) => s + (r.score * 100) / r.total, 0) / list.length) : 0;
@@ -96,7 +98,7 @@ export default async function ParentsPage() {
     const monthName = `tháng ${new Date().toLocaleDateString('vi-VN', { month: 'numeric', timeZone: 'Asia/Ho_Chi_Minh' })}`;
     return (
       <>
-        <ParentHeader childCorner />
+        <ParentHeader />
         <main className="ph wrap">
           {ovErr && <p className="adm-alert is-warn">Một số mục chưa bật: hãy chạy <code>supabase/migrations/0033_parent_family.sql</code> trên Supabase.</p>}
           <section className="ph-hero">
@@ -139,7 +141,7 @@ export default async function ParentsPage() {
               )}
               {days.length === 0 ? <p className="dash-muted">Chưa có tin nhắn nào trong 30 ngày qua. Khi cô ghi Sổ lớp, nhận xét của con sẽ hiện ở đây.</p> : (
                 <ul className="ph-tl">
-                  {days.slice(0, 12).map((d) => (
+                  {timeline.slice(0, 12).map((d) => (
                     <li key={d.day}>
                       <span className="ph-date"><b>{Number(d.day.slice(8))}</b>{weekday(d.day)} · {Number(d.day.slice(5, 7))}</span>
                       <div>
