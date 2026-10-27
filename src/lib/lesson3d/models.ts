@@ -1,14 +1,15 @@
-// Mô hình 3D có sẵn của Kenney (kenney.nl, giấy phép CC0: dùng tự do, không bắt buộc ghi tên).
-// File .glb đã nén (meshopt + ảnh WebP 256px) nằm ở public/models/kenney/, mỗi file 4–31 KB.
+// Mô hình 3D có sẵn của Kenney (kenney.nl) và Quaternius (quaternius.com), giấy phép CC0: dùng tự do, không bắt buộc ghi tên.
+// File .glb đã nén (meshopt + ảnh WebP 256px) nằm ở public/models/<kenney|quaternius>/, mỗi file khoảng 3–40 KB.
 // Chỉ tải khi đồ vật xuất hiện trên sa bàn (lần đầu), sau đó dùng lại từ bộ nhớ; lúc đang tải hiện khối mờ giữ chỗ.
 import * as THREE from 'three';
 import type { Asset } from './assets';
+import { EXTRA_MODELS } from './model-list';
 
-export const MODEL_DIR = '/models/kenney/';
+export const MODEL_ROOT = '/models/';
 /** Sân khấu nghe sự kiện này để vẽ lại đường nối / ghim khi mô hình vừa tải xong */
 export const MODEL_EVENT = 'l3d-model-loaded';
 
-type Def = { file: string; name: string; cat: string; s: number; box: [number, number, number]; kw?: string };
+type Def = { dir?: string; file: string; name: string; cat: string; s: number; box: [number, number, number]; kw?: string; y?: number };
 
 const CITY = 'Khu phố';
 const ROAD = 'Giao thông'; // xếp chung nhóm với đường, đèn, biển báo tự dựng
@@ -55,20 +56,20 @@ function getLoader() {
 }
 
 /** Tải (một lần) mô hình gốc; mỗi đồ vật dùng bản sao */
-export function loadModel(file: string): Promise<THREE.Group> {
-  let p = cache.get(file);
+export function loadModel(path: string): Promise<THREE.Group> {
+  let p = cache.get(path);
   if (!p) {
-    p = getLoader().then((l) => l.load(`${MODEL_DIR}${file}.glb`)).then((g) => {
+    p = getLoader().then((l) => l.load(`${MODEL_ROOT}${path}.glb`)).then((g) => {
       g.traverse((m) => {
         const mm = m as THREE.Mesh; if (!mm.isMesh) return;
         mm.castShadow = true; mm.receiveShadow = true;
-        // vật liệu hai mặt của Kenney gây sọc bóng (shadow acne): chỉ vẽ mặt ngoài
-        (Array.isArray(mm.material) ? mm.material : [mm.material]).forEach((x) => { x.side = THREE.FrontSide; });
+        // vật liệu hai mặt của Kenney gây sọc bóng (shadow acne): chỉ vẽ mặt ngoài — trừ lá cây / cánh hoa dạng tấm cắt viền
+        (Array.isArray(mm.material) ? mm.material : [mm.material]).forEach((x) => { if (!x.alphaTest && !x.transparent) x.side = THREE.FrontSide; });
       });
       return g;
     });
-    p.catch(() => cache.delete(file)); // lỗi mạng: lần sau thử lại
-    cache.set(file, p);
+    p.catch(() => cache.delete(path)); // lỗi mạng: lần sau thử lại
+    cache.set(path, p);
   }
   return p;
 }
@@ -79,7 +80,7 @@ function build(d: Def): THREE.Group {
   const ph = new THREE.Mesh(new THREE.BoxGeometry(w * d.s, Math.max(h, 0.05) * d.s, z * d.s), new THREE.MeshStandardMaterial({ color: '#cbd5e1', transparent: true, opacity: 0.35 }));
   ph.position.y = (Math.max(h, 0.05) * d.s) / 2; g.add(ph);
   if (typeof window === 'undefined') return g;
-  void loadModel(d.file).then((src) => {
+  void loadModel(`${d.dir ?? 'kenney'}/${d.file}`).then((src) => {
     const c = src.clone(true); c.scale.setScalar(d.s);
     c.position.y = 0.02; // nhích khỏi mặt sa bàn, tránh nhấp nháy (z-fighting) ở mặt đường
     const id = g.userData.id as string | undefined; const ghost = !!g.userData.ghost;
@@ -98,7 +99,15 @@ function build(d: Def): THREE.Group {
   return g;
 }
 
-export const MODEL_ASSETS: Asset[] = DEFS.map((d) => ({
-  id: `k-${d.file}`, cat: d.cat, name: d.name, color: '#ffffff', fixed: true, kw: `${d.kw ?? ''} kenney`,
-  thumb: `${MODEL_DIR}thumbs/${d.file}.webp`, b: () => build(d),
-}));
+const ALL: Def[] = [
+  ...DEFS,
+  ...EXTRA_MODELS.map(([dir, file, name, cat, s, box, kw, y]) => ({ dir, file, name, cat, s, box, kw, y })),
+];
+
+export const MODEL_ASSETS: Asset[] = ALL.map((d) => {
+  const dir = d.dir ?? 'kenney';
+  return {
+    id: `${dir === 'kenney' ? 'k' : 'q'}-${d.file}`, cat: d.cat, name: d.name, color: '#ffffff', fixed: true, kw: `${d.kw ?? ''} ${dir}`,
+    y: d.y, thumb: `${MODEL_ROOT}${dir}/thumbs/${d.file}.webp`, b: () => build(d),
+  };
+});

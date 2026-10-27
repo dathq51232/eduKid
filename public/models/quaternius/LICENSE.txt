@@ -1,0 +1,6 @@
+Mô hình 3D trong thư mục này: Quaternius (quaternius.com), giấy phép CC0 1.0 (Public Domain)
+https://creativecommons.org/publicdomain/zero/1.0/
+Tải từ poly.pizza: Farm Animal Pack, Animated Animal Pack, Animated Fish Bundle, Ultimate Food Pack, Cars Bundle,
+Modular Train Pack, Farm Buildings Bundle, Ultimate Space Kit, Ultimate Stylized Nature Pack.
+Đã xử lý cho web: FBX/OBJ -> glTF (FBX2glTF, obj2gltf), bỏ hoạt ảnh và khung xương (giữ tư thế đứng yên), đặt lên mặt đất,
+bỏ kim loại, nén meshopt + ảnh WebP 256px (gltf-transform).
