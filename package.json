@@ -29,7 +29,8 @@
     "check:schedule": "tsx scripts/check-schedule.ts",
     "check:spelling": "tsx scripts/check-spelling.ts",
     "check:count-shapes": "tsx scripts/check-count-shapes.ts",
-    "check:chess": "tsx scripts/check-chess.ts"
+    "check:chess": "tsx scripts/check-chess.ts",
+    "check:xiangqi": "tsx scripts/check-xiangqi.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",

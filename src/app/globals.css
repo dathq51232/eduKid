@@ -4857,3 +4857,15 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .chs-side > .ct-link svg { width: 16px; height: 16px; }
 @media (max-width: 900px) { .chl { grid-template-columns: 1fr; } }
 @media (max-width: 560px) { .chs-emote { right: 8px; } }
+
+/* Cờ tướng: trang chơi */
+.xq-play { grid-template-columns: minmax(0, clamp(300px, calc((100svh - 300px) * .913), 600px)) minmax(260px, 1fr); }
+.xq-capline { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 22px; }
+.xq-capline em { color: var(--muted); font-style: normal; font-weight: 800; font-size: 14px; }
+.xq-caps svg { margin-right: -6px; }
+.xq-mv.is-r { color: #b4231a; }
+.xq-legend { color: var(--muted); font-size: 13px; }
+.xq-av.is-w { background: #fde3df; color: #b4231a; }
+.xq-av.is-b { background: #e5e7eb; color: #1f2937; }
+.xq-board svg { touch-action: manipulation; }
+@media (max-width: 900px) { .xq-play { grid-template-columns: 1fr; } }

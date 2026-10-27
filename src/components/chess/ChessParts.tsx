@@ -28,11 +28,11 @@ export function MoveList({ sans }: { sans: string[] }) {
 }
 
 export type ChessTab = 'bot' | 'online' | 'cup';
-export function ChessTabs({ active }: { active: ChessTab }) {
+export function ChessTabs({ active, base = '/co/vua' }: { active: ChessTab; base?: string }) {
   return (
     <nav className="chs-tabs" aria-label="Chế độ chơi">
-      {active === 'bot' ? <span aria-current="page">Chơi với máy</span> : <Link href="/co/vua">Chơi với máy</Link>}
-      {active === 'online' ? <span aria-current="page">Đấu với bạn</span> : <Link href="/co/vua/ban">Đấu với bạn</Link>}
+      {active === 'bot' ? <span aria-current="page">Chơi với máy</span> : <Link href={base}>Chơi với máy</Link>}
+      {active === 'online' ? <span aria-current="page">Đấu với bạn</span> : <Link href={`${base}/ban`}>Đấu với bạn</Link>}
       <span className="is-soon">Giải đấu <em>sắp có</em></span>
     </nav>
   );

@@ -33,7 +33,7 @@ export function XqDisc({ p, piece, lifted = false }: { p: string; piece: XqPiece
       <circle r="35" fill="#000" filter={`url(#${p}grainV)`} opacity=".14" />
       <circle r="28.5" fill="none" stroke={ink} strokeWidth="2.2" opacity=".85" />
       <circle r="27" fill="none" stroke="#fff6e4" strokeWidth=".9" opacity=".6" />
-      <text y={name.length > 3 ? 6.5 : 8.5} textAnchor="middle" fontSize={name.length > 4 ? 17 : name.length > 3 ? 19.5 : 24} fontWeight="800" fill={ink} fontFamily="var(--font-display), system-ui, sans-serif" letterSpacing="-.2">{name}</text>
+      <text y={name.length > 3 ? 6.5 : 8.5} textAnchor="middle" fontSize={name.length > 4 ? 18 : name.length > 3 ? 19.5 : 24} fontWeight="800" fill={ink} fontFamily="var(--font-display), system-ui, sans-serif" letterSpacing="-.5">{name}</text>
     </g>
   );
 }
@@ -45,11 +45,12 @@ type Props = {
   targets?: (XqPoint & { capture?: boolean })[];
   lastMove?: { from: XqPoint; to: XqPoint } | null;
   check?: XqPoint | null;
+  hint?: { from: XqPoint; to: XqPoint } | null;
   onPoint?: (pt: XqPoint) => void;
   label?: string;
 };
 
-export default function XiangqiBoard({ board, orientation = 'r', selected, targets = [], lastMove, check, onPoint, label }: Props) {
+export default function XiangqiBoard({ board, orientation = 'r', selected, targets = [], lastMove, check, hint, onPoint, label }: Props) {
   const p = `xq${useId().replace(/:/g, '')}`;
   const flip = orientation === 'b';
   const X = (f: number) => GX + (flip ? 8 - f : f) * C;
@@ -132,6 +133,16 @@ export default function XiangqiBoard({ board, orientation = 'r', selected, targe
         {targets.map((t) => t.capture
           ? <circle key={`t${t.f}${t.r}`} cx={X(t.f)} cy={Y(t.r)} r="41" className="xq-tgt-cap" />
           : <circle key={`t${t.f}${t.r}`} cx={X(t.f)} cy={Y(t.r)} r="12" className="xq-tgt" />)}
+        {hint && (() => {
+          // Mũi tên gợi ý từ quân cần đi tới điểm đích
+          const x1 = X(hint.from.f), y1 = Y(hint.from.r), x2 = X(hint.to.f), y2 = Y(hint.to.r);
+          const L = Math.hypot(x2 - x1, y2 - y1) || 1, ux = (x2 - x1) / L, uy = (y2 - y1) / L;
+          const ex = x2 - ux * 26, ey = y2 - uy * 26;
+          return <g aria-hidden="true" style={{ pointerEvents: 'none' }}>
+            <line x1={x1 + ux * 20} y1={y1 + uy * 20} x2={ex} y2={ey} className="chs-arrow" />
+            <polygon points={`${x2 - ux * 4},${y2 - uy * 4} ${ex - uy * 22},${ey + ux * 22} ${ex + uy * 22},${ey - ux * 22}`} className="chs-arrow-head" />
+          </g>;
+        })()}
       </svg>
     </div>
   );

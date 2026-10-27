@@ -12,7 +12,8 @@ export const TIME_CONTROLS: TimeControl[] = [
 export type ResultReason = 'checkmate' | 'stalemate' | 'repetition' | 'fifty' | 'material' | 'timeout' | 'resign' | 'agreement' | 'timeout_vs_material';
 export type GameResult = { winner: Color | null; reason: ResultReason };
 
-export const REASON_TEXT: Record<ResultReason, string> = {
+// Lời giải thích kết quả, dùng chung cho cờ vua và cờ tướng
+export const REASON_TEXT: Record<ResultReason | 'perpetual_check' | 'move_limit', string> = {
   checkmate: 'Chiếu hết',
   stalemate: 'Hết nước đi (hòa pat)',
   repetition: 'Lặp lại thế cờ 3 lần',
@@ -22,6 +23,8 @@ export const REASON_TEXT: Record<ResultReason, string> = {
   timeout_vs_material: 'Hết giờ nhưng đối thủ không đủ quân chiếu hết',
   resign: 'Xin thua',
   agreement: 'Hai bên đồng ý hòa',
+  perpetual_check: 'Chiếu dai (chiếu liên tục lặp lại thế cờ) bị xử thua',
+  move_limit: 'Luật 60 nước không ăn quân',
 };
 
 /** Kết quả theo luật trên bàn cờ (không tính đồng hồ/xin thua). null = ván còn tiếp. */
@@ -77,3 +80,15 @@ export function fmtClock(ms: number): string {
 }
 
 export const SIDE_NAME: Record<Color, string> = { w: 'Trắng', b: 'Đen' };
+
+/** Lời giải thích kết quả theo loại cờ (cờ tướng: hết nước đi là THUA, chiếu hết gọi là chiếu bí) */
+export function reasonText(reason: string | null | undefined, variant: 'chess' | 'xiangqi' = 'chess'): string {
+  if (!reason) return '';
+  if (variant === 'xiangqi') {
+    if (reason === 'checkmate') return 'Chiếu bí';
+    if (reason === 'stalemate') return 'Hết nước đi (bị vây) nên thua';
+    if (reason === 'material') return 'Hai bên không còn quân tấn công';
+    if (reason === 'timeout_vs_material') return 'Hết giờ nhưng đối thủ không còn quân tấn công';
+  }
+  return (REASON_TEXT as Record<string, string>)[reason] ?? '';
+}

@@ -42,20 +42,20 @@ export async function namesFor(ids: string[]): Promise<Record<string, { name: st
   return out;
 }
 
-export async function ratingsFor(ids: string[]): Promise<Record<string, number>> {
+export async function ratingsFor(ids: string[], variant: 'chess' | 'xiangqi' = 'chess'): Promise<Record<string, number>> {
   const uniq = [...new Set(ids)].filter(Boolean);
   if (!uniq.length) return {};
-  const { data } = await createAdminClient().from('chess_ratings').select('student_id, rating').in('student_id', uniq);
+  const { data } = await createAdminClient().from('chess_ratings').select('student_id, rating').in('student_id', uniq).eq('variant', variant);
   return Object.fromEntries(((data ?? []) as { student_id: string; rating: number }[]).map((r) => [r.student_id, r.rating]));
 }
 
-export const GAME_COLS = 'id, school_id, white, black, base, inc, moves, ply, fen, white_ms, black_ms, turn_at, status, result, reason, draw_offer, emote, rated, created_at, updated_at, finished_at';
+export const GAME_COLS = 'id, school_id, variant, white, black, base, inc, moves, ply, fen, white_ms, black_ms, turn_at, status, result, reason, draw_offer, emote, rated, created_at, updated_at, finished_at';
 
 export const isMissingTable = (msg?: string) => /relation|does not exist|schema cache|Could not find/i.test(msg ?? '');
 
 /** Dữ liệu ván gửi về trình duyệt: kèm tên hai bên, điểm, giờ máy chủ để đồng bộ đồng hồ */
 export async function gamePayload(row: GameRow) {
-  const [names, ratings] = await Promise.all([namesFor([row.white, row.black]), ratingsFor([row.white, row.black])]);
+  const [names, ratings] = await Promise.all([namesFor([row.white, row.black]), ratingsFor([row.white, row.black], row.variant ?? 'chess')]);
   return {
     game: row,
     players: {

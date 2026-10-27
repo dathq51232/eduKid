@@ -31,12 +31,16 @@ export default function ChessHubPage() {
               <li className="is-soon"><Trophy aria-hidden="true" /> Giải toàn trường <em>sắp có</em></li>
             </ul>
           </Link>
-          <div className="chh-card is-xq is-soon" aria-disabled="true">
+          <Link href="/co/tuong" className="chh-card is-xq">
             <span className="chh-art chh-xq" aria-hidden="true"><XqDiscIcon piece={{ side: 'r', kind: 'k' }} size={70} /><XqDiscIcon piece={{ side: 'b', kind: 'h' }} size={70} /><XqDiscIcon piece={{ side: 'r', kind: 'c' }} size={70} /></span>
             <b>Cờ tướng</b>
             <span>Luật thi đấu cờ tướng · bàn 9×10</span>
-            <ul><li><em>Sắp có</em></li></ul>
-          </div>
+            <ul>
+              <li><Bot aria-hidden="true" /> Chơi với máy · 3 mức</li>
+              <li><Swords aria-hidden="true" /> Đấu với bạn trong trường</li>
+              <li className="is-soon"><Trophy aria-hidden="true" /> Giải toàn trường <em>sắp có</em></li>
+            </ul>
+          </Link>
         </div>
       </main>
     </>

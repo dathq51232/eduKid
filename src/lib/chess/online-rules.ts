@@ -1,18 +1,41 @@
-// Trọng tài ván cờ vua trực tuyến: dựng lại ván từ danh sách nước (UCI), kiểm tra nước đi bằng chess.js,
-// tính đồng hồ theo giờ máy chủ, quyết định kết quả. Hàm thuần (không gọi database) để kiểm thử được.
+// Trọng tài ván cờ trực tuyến (cờ vua và cờ tướng): dựng lại ván từ danh sách nước, kiểm tra nước đi
+// (cờ vua: chess.js; cờ tướng: bộ luật src/lib/xiangqi), tính đồng hồ theo giờ máy chủ, quyết định kết quả.
+// Hàm thuần (không gọi database) để kiểm thử được.
 import { Chess, type Color } from 'chess.js';
 import { boardResult, timeoutResult, type ResultReason } from './game';
+import { XqGame, UCI_RE as XQ_UCI, type XqReason } from '@/lib/xiangqi/engine';
+
+export type Variant = 'chess' | 'xiangqi';
+export type AnyReason = ResultReason | XqReason;
+/** Trọng tài theo loại cờ: thử một nước trên ván đã có; xử khi hết giờ */
+type Referee = {
+  uci: RegExp;
+  tryMove: (moves: string[], uci: string) => { fen: string; result: { winner: Color | null; reason: AnyReason } | null } | null;
+  timeout: (moves: string[], flagged: Color) => { winner: Color | null; reason: AnyReason };
+};
+const CHESS_REF: Referee = {
+  uci: /^[a-h][1-8][a-h][1-8][qrbn]?$/,
+  tryMove: (moves, uci) => { const g = replay(moves); try { g.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] }); } catch { return null; } return { fen: g.fen(), result: boardResult(g) }; },
+  timeout: (moves, flagged) => timeoutResult(replay(moves), flagged),
+};
+const XQ_REF: Referee = {
+  uci: XQ_UCI,
+  tryMove: (moves, uci) => { const g = XqGame.fromMoves(moves); if (!g.move(uci)) return null; return { fen: g.fen(), result: g.result() }; },
+  // Hết giờ là thua; nếu đối thủ không còn quân tấn công (xe, mã, pháo, tốt) thì hòa
+  timeout: (moves, flagged) => { const g = XqGame.fromMoves(moves); const other: Color = flagged === 'w' ? 'b' : 'w'; return g.canMate(other) ? { winner: other, reason: 'timeout' } : { winner: null, reason: 'timeout_vs_material' }; },
+};
+const refOf = (row: Pick<GameRow, 'variant'>) => (row.variant === 'xiangqi' ? XQ_REF : CHESS_REF);
 
 export type GameStatus = 'active' | 'finished' | 'aborted';
 export type GameRow = {
   id: string; school_id: string; white: string; black: string;
   base: number; inc: number; moves: string[]; ply: number; fen: string;
   white_ms: number; black_ms: number; turn_at: string;
-  status: GameStatus; result: '1-0' | '0-1' | '1/2-1/2' | null; reason: ResultReason | null;
+  status: GameStatus; result: '1-0' | '0-1' | '1/2-1/2' | null; reason: AnyReason | null; variant: Variant;
   draw_offer: Color | null; emote: { by: Color; code: string; at: string } | null;
   rated: boolean; created_at: string; updated_at: string; finished_at: string | null;
 };
-export type Patch = Partial<Omit<GameRow, 'id' | 'school_id' | 'white' | 'black' | 'base' | 'inc' | 'created_at'>>;
+export type Patch = Partial<Omit<GameRow, 'id' | 'school_id' | 'white' | 'black' | 'base' | 'inc' | 'created_at' | 'variant'>>;
 export type Decision = { ok: true; patch: Patch; finished: boolean } | { ok: false; error: string };
 
 export const EMOTES: { code: string; text: string }[] = [
@@ -31,8 +54,6 @@ export const ONLINE_TCS = [
   { base: 900, inc: 10, label: '15 phút + 10 giây' },
 ];
 
-const UCI = /^[a-h][1-8][a-h][1-8][qrbn]?$/;
-
 export function replay(moves: string[]): Chess {
   const g = new Chess();
   for (const m of moves) g.move({ from: m.slice(0, 2), to: m.slice(2, 4), promotion: m[4] });
@@ -50,7 +71,7 @@ export function clockAt(row: Pick<GameRow, 'white_ms' | 'black_ms' | 'turn_at' |
 }
 
 const resultOf = (winner: Color | null): GameRow['result'] => (winner === 'w' ? '1-0' : winner === 'b' ? '0-1' : '1/2-1/2');
-const finish = (now: number, winner: Color | null, reason: ResultReason): Patch => ({
+const finish = (now: number, winner: Color | null, reason: AnyReason): Patch => ({
   status: 'finished', result: resultOf(winner), reason, draw_offer: null, finished_at: new Date(now).toISOString(), updated_at: new Date(now).toISOString(),
 });
 
@@ -60,7 +81,7 @@ export function decideFlag(row: GameRow, now: number): Decision {
   const t = turnOf(row);
   const left = clockAt(row, now)[t];
   if (left > 0) return { ok: false, error: 'not_flagged' };
-  const r = timeoutResult(replay(row.moves), t);
+  const r = refOf(row).timeout(row.moves, t);
   return { ok: true, finished: true, patch: { ...finish(now, r.winner, r.reason), [t === 'w' ? 'white_ms' : 'black_ms']: 0 } };
 }
 
@@ -68,20 +89,21 @@ export function decideMove(row: GameRow, side: Color, uci: string, expectPly: nu
   if (row.status !== 'active') return { ok: false, error: 'not_active' };
   if (expectPly !== row.ply) return { ok: false, error: 'stale' };
   if (turnOf(row) !== side) return { ok: false, error: 'not_your_turn' };
-  if (!UCI.test(uci)) return { ok: false, error: 'bad_move' };
+  const ref = refOf(row);
+  if (!ref.uci.test(uci)) return { ok: false, error: 'bad_move' };
   const flag = decideFlag(row, now);
   if (flag.ok) return flag; // hết giờ trước khi kịp đi: ván kết thúc
-  const g = replay(row.moves);
-  try { g.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] }); } catch { return { ok: false, error: 'illegal' }; }
+  const tried = ref.tryMove(row.moves, uci);
+  if (!tried) return { ok: false, error: 'illegal' };
   const left = clockAt(row, now)[side] + row.inc * 1000;
   const iso = new Date(now).toISOString();
   const patch: Patch = {
-    moves: [...row.moves, uci], ply: row.ply + 1, fen: g.fen(),
+    moves: [...row.moves, uci], ply: row.ply + 1, fen: tried.fen,
     [side === 'w' ? 'white_ms' : 'black_ms']: Math.round(left), turn_at: iso, updated_at: iso,
     // Đi quân nghĩa là không nhận lời xin hòa của đối thủ; lời xin hòa của chính mình vẫn giữ
     draw_offer: row.draw_offer === side ? side : null,
   };
-  const r = boardResult(g);
+  const r = tried.result;
   if (r) return { ok: true, finished: true, patch: { ...patch, ...finish(now, r.winner, r.reason) } };
   return { ok: true, finished: false, patch };
 }

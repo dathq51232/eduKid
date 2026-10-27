@@ -23,7 +23,7 @@ const base = (over: Partial<GameRow> = {}): GameRow => ({
   id: 'g', school_id: 's', white: 'A', black: 'B', base: 300, inc: 3, moves: [], ply: 0,
   fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', white_ms: 300000, black_ms: 300000,
   turn_at: new Date(T0).toISOString(), status: 'active', result: null, reason: null, draw_offer: null, emote: null, rated: false,
-  created_at: '', updated_at: '', finished_at: null, ...over,
+  created_at: '', updated_at: '', finished_at: null, variant: 'chess', ...over,
 });
 const apply = (r: GameRow, p: object): GameRow => ({ ...r, ...p } as GameRow);
 
