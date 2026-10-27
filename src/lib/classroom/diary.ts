@@ -7,7 +7,7 @@ export type Student = { id: string; name: string };
 export type Pronoun = 'co' | 'thay';
 
 export const PRAISE_TAGS = ['★ Phát biểu tốt', '★ Tiến bộ', '★ Giúp bạn', '★ Viết đẹp', '★ Ngoan, lễ phép'];
-export const REMIND_TAGS = ['Quên đồ dùng', 'Chưa làm bài', 'Nói chuyện riêng', 'Đi học muộn'];
+export const REMIND_TAGS = ['Cần cố gắng hơn', 'Quên đồ dùng', 'Chưa làm bài', 'Nói chuyện riêng', 'Đi học muộn'];
 export const isPraise = (t: string) => t.startsWith('★');
 
 export const STATUS_LABEL: Record<Status, string> = { present: 'Có mặt', excused: 'Vắng có phép', unexcused: 'Vắng không phép' };
@@ -47,12 +47,14 @@ const PRAISE_TEXT: Record<string, string> = {
   '★ Ngoan, lễ phép': 'ngoan, lễ phép',
 };
 const REMIND_TEXT: Record<string, string> = {
+  'Cần cố gắng hơn': 'cần cố gắng hơn khi trả lời câu hỏi bài cũ',
   'Quên đồ dùng': 'quên mang đồ dùng học tập',
   'Chưa làm bài': 'chưa làm bài tập về nhà',
   'Nói chuyện riêng': 'còn nói chuyện riêng trong giờ học',
   'Đi học muộn': 'đi học muộn',
 };
 const REMIND_ASK: Record<string, string> = {
+  'Cần cố gắng hơn': 'cùng con ôn lại bài cũ tối nay',
   'Quên đồ dùng': 'nhắc con chuẩn bị đủ sách vở, đồ dùng tối nay',
   'Chưa làm bài': 'nhắc con hoàn thành bài tập tối nay',
   'Nói chuyện riêng': 'nhắc nhở con tập trung nghe giảng',

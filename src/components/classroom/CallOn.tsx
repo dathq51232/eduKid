@@ -24,6 +24,12 @@ const SUBJECTS: { code: SubjectCode; name: string; milo: MiloVariant }[] = [
 ];
 const COLORS = ['#2457c5', '#d93f45', '#1f9d6b', '#ffc83d', '#6d3fe0', '#2f8de0'];
 const LETTERS = 'ABCDEFGH';
+/** Nhãn ghi vào Sổ lớp và lời nhận xét hiện trên thẻ khi chấm */
+const OK_TAG = '★ Phát biểu tốt';
+const TRY_TAG = 'Cần cố gắng hơn';
+const OK_LINES = ['Em phát biểu rất tốt! 🌟', 'Giỏi quá! Cả lớp cho bạn một tràng pháo tay nhé! 👏', 'Chính xác! Em học bài rất chăm. ⭐', 'Tuyệt vời! Em trả lời to, rõ và đúng. 🎉'];
+const TRY_LINES = ['Em cần cố gắng hơn, về ôn lại bài nhé! 💪', 'Gần đúng rồi! Lần sau em sẽ làm được. 🌱', 'Không sao đâu, mình cùng xem lại đáp án nhé! 📖', 'Em chú ý nghe giảng hơn nữa nhé, cô tin em làm được! 💪'];
+const pickLine = (a: string[]) => a[Math.floor(Math.random() * a.length)];
 
 type Phase = 'idle' | 'running' | 'done';
 type RaceLane = ReturnType<typeof raceFor>[number];
@@ -127,6 +133,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
   const [chosen, setChosen] = useState<number[]>([]);
   const [verdict, setVerdict] = useState<'ok' | 'no' | null>(null);
   const [diaryNote, setDiaryNote] = useState('');
+  const [comment, setComment] = useState('');
   const supabase = useMemo(() => { try { return createClient(); } catch { return null; } }, []);
   // Thời gian chạy luôn theo lựa chọn của thầy cô. Không rút ngắn theo cài đặt "giảm chuyển động" của máy:
   // Windows tắt "Animation effects" (máy yếu, chế độ Best performance) làm trò chơi chỉ chạy 0,6 giây.
@@ -181,7 +188,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
     setPicked(st);
     setQuestion(nextQuestion());
     setShowAnswer(false);
-    setBig(true); setChosen([]); setVerdict(null); setDiaryNote('');
+    setBig(true); setChosen([]); setVerdict(null); setDiaryNote(''); setComment('');
     setPhase('done');
     setS((x) => ({ ...x, called: x.called.includes(st.id) ? x.called : [...x.called, st.id] }));
     fanfare();
@@ -191,10 +198,10 @@ export default function CallOn({ classId, className, grade, students, absentToda
   }, [nextQuestion, fanfare]);
 
   /** Thêm "★ Phát biểu tốt" vào Sổ lớp hôm nay của em */
-  const praise = async (st: Student) => {
+  const praise = async (st: Student, tag = OK_TAG) => {
     if (!supabase) return;
-    const { error } = await supabase.rpc('teacher_diary_add_tag', { p_class: classId, p_student: st.id, p_tag: '★ Phát biểu tốt' });
-    setDiaryNote(error ? (/function|schema cache|does not exist/i.test(error.message) ? 'Chưa ghi được vào Sổ lớp: cần chạy migration 0038.' : 'Chưa ghi được vào Sổ lớp, thầy cô ghi tay giúp nhé.') : `Đã ghi “★ Phát biểu tốt” cho ${shortName(st.name)} vào Sổ lớp hôm nay.`);
+    const { error } = await supabase.rpc('teacher_diary_add_tag', { p_class: classId, p_student: st.id, p_tag: tag });
+    setDiaryNote(error ? (/function|schema cache|does not exist/i.test(error.message) ? 'Chưa ghi được vào Sổ lớp: cần chạy migration 0038.' : 'Chưa ghi được vào Sổ lớp, thầy cô ghi tay giúp nhé.') : `Đã ghi “${tag}” cho ${shortName(st.name)} vào Sổ lớp hôm nay.`);
   };
   const shrinkLater = () => later(() => setBig(false), 2600);
   /** Chấm: đúng → tiếng "ting", +1 đúng, ghi lời khen; chưa đúng → tiếng nhẹ, +1 chưa đúng. Sau đó thẻ tự thu nhỏ. */
@@ -202,14 +209,15 @@ export default function CallOn({ classId, className, grade, students, absentToda
     if (!picked || verdict) return;
     setVerdict(ok ? 'ok' : 'no');
     setS((x) => addTally(x, picked.id, ok ? 'ok' : 'no'));
-    if (ok) { right(); void praise(picked); } else { wrong(); setShowAnswer(true); }
+    setComment(pickLine(ok ? OK_LINES : TRY_LINES));
+    if (ok) { right(); void praise(picked); } else { wrong(); setShowAnswer(true); void praise(picked, TRY_TAG); }
     shrinkLater();
   };
   const mark = (m: keyof Tally) => {
     if (!picked) return;
     if (m === 'star') {
       setS((x) => addTally(x, picked.id, 'star'));
-      right(); void praise(picked);
+      right(); void praise(picked); setComment(pickLine(OK_LINES));
       if (!verdict) setVerdict('ok');
       shrinkLater();
       return;
@@ -233,7 +241,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
     const want = optList.map((_, i) => i).filter(isRight);
     judge(want.length === chosen.length && want.every((i) => chosen.includes(i)));
   };
-  const closeResult = () => { setPhase('idle'); setPicked(null); setQuestion(null); setNotice(''); setTaps(0); setFlipped(null); setHot(null); setCelebrate(false); setVerdict(null); setChosen([]); setDiaryNote(''); setBig(true); };
+  const closeResult = () => { setPhase('idle'); setPicked(null); setQuestion(null); setNotice(''); setTaps(0); setFlipped(null); setHot(null); setCelebrate(false); setVerdict(null); setChosen([]); setDiaryNote(''); setComment(''); setBig(true); };
 
   /* -------------------------------------------- 1. vòng quay */
   // ô trên vòng = các em còn có thể được gọi; giữ nguyên trong lúc quay và lúc hiện kết quả
@@ -598,8 +606,9 @@ export default function CallOn({ classId, className, grade, students, absentToda
             <div className="callon-who">
               <MiloMascot variant={subject.milo} size={64} />
               <div><p>Mời bạn lên bảng</p><h2>{picked.name}</h2></div>
-              {verdict && <span className={`callon-verdict is-${verdict}`}>{verdict === 'ok' ? '✓ Đúng rồi!' : '✗ Chưa đúng'}</span>}
+              {verdict && <span className={`callon-verdict is-${verdict}`}>{verdict === 'ok' ? '✓ Phát biểu tốt' : '✗ Cần cố gắng hơn'}</span>}
             </div>
+            {comment && <p className={`callon-comment is-${verdict ?? 'ok'}`} role="status">{comment}</p>}
             {question && (big || !verdict) && (
               <div className="callon-q">
                 <small>Câu dò bài · {subject.name}{lessonTitle ? ` · ${lessonTitle}` : ''}</small>
