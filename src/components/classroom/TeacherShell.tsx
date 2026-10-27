@@ -38,6 +38,7 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
   const current = toolOfPath(pathname);
   const [drawer, setDrawer] = useState(false);
   const [palette, setPalette] = useState(false);
+  const [unread, setUnread] = useState(0); // tin nhắn phụ huynh chưa đọc (migration 0037)
   const [switcher, setSwitcher] = useState(false);
 
   // đếm số lần mở từng công cụ (cho mục "Dùng nhanh" ở trang Hôm nay)
@@ -50,6 +51,14 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
       localStorage.setItem(USAGE_KEY, JSON.stringify(c));
     } catch { /* bỏ qua */ }
   }, [pathname, current]);
+
+  // Số tin nhắn phụ huynh chưa đọc: hiện cạnh mục "Tin nhắn phụ huynh" (tải lại khi đổi trang)
+  useEffect(() => {
+    if (!active) return;
+    let sb: ReturnType<typeof createClient> | null = null;
+    try { sb = createClient(); } catch { return; }
+    void sb.rpc('teacher_messages', { p_class: active.id, p_limit: 1 }).then(({ data, error }) => { if (!error) setUnread((data as { unread?: number } | null)?.unread ?? 0); });
+  }, [active, pathname]);
 
   // Ctrl+K / Cmd+K mở ô tìm nhanh
   useEffect(() => {
@@ -79,6 +88,7 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
             return (
               <Link key={t.key} href={toolHref(t, active.id)} className={`tsh-nav${on ? ' is-on' : ''}`} aria-current={on ? 'page' : undefined}>
                 <span className={`tsh-ic tone-${t.tone}`}><Icon aria-hidden="true" /></span>{t.label}
+                {t.key === 'tin-nhan' && unread > 0 && <span className="tsh-badge" aria-label={`${unread} tin chưa đọc`}>{unread}</span>}
               </Link>
             );
           })}

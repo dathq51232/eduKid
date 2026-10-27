@@ -19,28 +19,40 @@ export function TodoList({ items, day }: { items: TodayItem[]; day: string }) {
     try { localStorage.setItem(key, JSON.stringify(n)); } catch { /* bỏ qua */ }
     return n;
   });
+  const [showDone, setShowDone] = useState(false);
   const isDone = (t: TodayItem) => t.tone === 'done' || done.includes(t.title);
-  const sorted = [...items].sort((a, b) => Number(isDone(a)) - Number(isDone(b)));
-  if (!items.length) return <p className="dash-muted tdy-empty">Không có việc gấp. Bài giao, giáo án và kỳ kiểm tra đều ổn. 🎉</p>;
+  const rank = { urgent: 0, soon: 1, info: 2, done: 3 } as const;
+  const pending = items.filter((t) => !isDone(t)).sort((a, b) => rank[a.tone] - rank[b.tone]);
+  const finished = items.filter(isDone);
+  const row = (t: TodayItem) => {
+    const d = isDone(t); const tag = TONE_TAG[t.tone];
+    return (
+      <li key={t.title} className={`tdy-task is-${t.tone}${d ? ' is-done' : ''}`}>
+        <button type="button" className="tdy-check" role="checkbox" aria-checked={d} aria-label={d ? `Bỏ đánh dấu xong: ${t.title}` : `Đánh dấu xong: ${t.title}`} onClick={() => t.tone !== 'done' && toggle(t.title)}>
+          {d && <Check aria-hidden="true" />}
+        </button>
+        <div className="tdy-task-txt">
+          <b>{t.title}{tag && !d && <span className={`tdy-tag is-${t.tone}`}>{tag}</span>}</b>
+          <span>{t.detail}</span>
+        </div>
+        {!d && <Link href={t.href} className="tdy-go">{t.cta}</Link>}
+      </li>
+    );
+  };
   return (
-    <ul className="tdy-tasks">
-      {sorted.map((t) => {
-        const d = isDone(t);
-        const tag = TONE_TAG[t.tone];
-        return (
-          <li key={t.title} className={`tdy-task${d ? ' is-done' : ''}`}>
-            <button type="button" className="tdy-check" role="checkbox" aria-checked={d} aria-label={d ? `Bỏ đánh dấu xong: ${t.title}` : `Đánh dấu xong: ${t.title}`} onClick={() => t.tone !== 'done' && toggle(t.title)}>
-              {d && <Check aria-hidden="true" />}
-            </button>
-            <div className="tdy-task-txt">
-              <b>{t.title}{tag && !d && <span className={`tdy-tag is-${t.tone}`}>{tag}</span>}</b>
-              <span>{t.detail}</span>
-            </div>
-            {!d && <Link href={t.href} className="tdy-go">{t.cta}</Link>}
-          </li>
-        );
-      })}
-    </ul>
+    <>
+      {pending.length === 0
+        ? <p className="dash-muted tdy-empty">Không còn việc gấp. Bài giao, giáo án và điểm danh đều ổn. 🎉</p>
+        : <ul className="tdy-tasks">{pending.map(row)}</ul>}
+      {finished.length > 0 && (
+        <div className="tdy-done">
+          <button type="button" className="ct-link" onClick={() => setShowDone((v) => !v)} aria-expanded={showDone}>
+            <Check aria-hidden="true" /> Đã xong {finished.length} việc {showDone ? '· ẩn bớt' : '· xem'}
+          </button>
+          {showDone && <ul className="tdy-tasks">{finished.map(row)}</ul>}
+        </div>
+      )}
+    </>
   );
 }
 

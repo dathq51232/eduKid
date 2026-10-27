@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { KIND_ICON, ago, leaveRange, senderLabel, type Inbox } from '@/lib/classroom/messages';
 import { redirect } from 'next/navigation';
-import { BookCheck, BookOpen, CalendarDays, ChevronRight, Dices, Eye, ListTodo, MailOpen, School, Send, Target, Zap } from 'lucide-react';
-import { QuickTools, TodoList } from '@/components/classroom/TeacherToday';
+import { BookCheck, BookOpen, CalendarDays, ChevronRight, Dices, Eye, ListTodo, MailOpen, School, Send, Target } from 'lucide-react';
+import { TodoList } from '@/components/classroom/TeacherToday';
 import { alertsOf, summarize, type RangeData } from '@/lib/classroom/diary';
 import { SUBJECT_NAMES } from '@/lib/plans/generate';
 import LearnHeader from '@/components/LearnHeader';
@@ -155,7 +155,7 @@ export default async function TeacherHome() {
   const pct = (x: number | null) => (x === null ? '–' : `${Math.round(x * 100)}`);
   const delta = k && k.rate !== null && k.prevRate !== null ? Math.round((k.rate - k.prevRate) * 100) : null;
   const maxSpark = Math.max(1, ...(k?.spark ?? [1]));
-  const ddmm = (iso: string | null) => (iso ? `${new Date(iso).getDate()}/${new Date(iso).getMonth() + 1}` : '');
+  const pendingCount = todo.filter((t) => t.tone !== 'done').length;
 
   return (
     <main className="tdy">
@@ -186,71 +186,45 @@ export default async function TeacherHome() {
 
       {active && k && (
         <>
-          <section className="tdy-kpis" aria-label="Số liệu lớp">
-            <Link href={`${base}/so-lop`} className="tdy-card tdy-kpi">
-              <span className="tdy-kpi-lab"><span className="tsh-ic tone-yellow"><BookCheck aria-hidden="true" /></span>Điểm danh hôm nay</span>
-              {!k.diaryOn ? <><b className="tdy-kpi-val is-sm">Chưa bật</b><span className="tdy-kpi-sub">Chạy migration 0026 để dùng Sổ lớp</span></>
-                : k.attendanceSaved ? <><b className="tdy-kpi-val">{k.students - k.absent}<small>/{k.students} có mặt</small></b><span className="tdy-bar"><i style={{ width: `${((k.students - k.absent) / Math.max(1, k.students)) * 100}%` }} className="is-green" /></span><span className="tdy-kpi-sub">{k.absent ? `${k.absent} em vắng` : 'Cả lớp đi học đủ'}</span></>
-                : <><b className="tdy-kpi-val is-muted">—<small> chưa điểm danh</small></b><span className="tdy-bar"><i style={{ width: 0 }} /></span><span className="tdy-kpi-sub">Bấm để điểm danh</span></>}
+          {/* 1 · Số liệu lớp: một hàng gọn, bấm để mở chi tiết */}
+          <section className="tdy-stats" aria-label="Số liệu lớp">
+            <Link href={`${base}/so-lop`} className="tdy-stat">
+              <span className="tsh-ic tone-yellow"><BookCheck aria-hidden="true" /></span>
+              {!k.diaryOn ? <span><b>Chưa bật</b><small>Sổ lớp (migration 0026)</small></span>
+                : k.attendanceSaved ? <span><b>{k.students - k.absent}<i>/{k.students}</i></b><small>{k.absent ? `có mặt · ${k.absent} em vắng` : 'có mặt · đủ lớp'}</small></span>
+                : <span><b className="is-muted">—</b><small className="is-warn">chưa điểm danh</small></span>}
             </Link>
-            <Link href={`${base}/giao-bai`} className="tdy-card tdy-kpi">
-              <span className="tdy-kpi-lab"><span className="tsh-ic tone-blue"><BookOpen aria-hidden="true" /></span>Luyện bài 7 ngày</span>
-              <b className="tdy-kpi-val">{k.practiced}<small>/{k.students} em</small></b>
+            <Link href={`${base}/giao-bai`} className="tdy-stat">
+              <span className="tsh-ic tone-blue"><BookOpen aria-hidden="true" /></span>
+              <span><b>{k.practiced}<i>/{k.students}</i></b><small>luyện bài 7 ngày</small></span>
               <span className="tdy-spark" aria-label={`Số em luyện bài mỗi ngày: ${k.spark.join(', ')}`}>{k.spark.map((n, i) => <i key={i} className={i === 6 ? 'is-today' : ''} style={{ height: `${12 + (n / maxSpark) * 88}%` }} />)}</span>
-              <span className="tdy-kpi-sub">{k.students - k.practiced > 0 ? <><b className="is-bad">{k.students - k.practiced} em</b> chưa luyện bài nào</> : 'Cả lớp đều đã luyện bài'}</span>
             </Link>
-            <Link href={`${base}/giao-bai`} className="tdy-card tdy-kpi">
-              <span className="tdy-kpi-lab"><span className="tsh-ic tone-violet"><Send aria-hidden="true" /></span>Bài giao đang mở</span>
-              {k.openFirst ? <>
-                <b className="tdy-kpi-val">{k.openFirst.done}<small>/{k.openFirst.assigned} đã nộp</small></b>
-                <span className="tdy-bar"><i className="is-violet" style={{ width: `${(k.openFirst.done / Math.max(1, k.openFirst.assigned)) * 100}%` }} /></span>
-                <span className="tdy-kpi-sub">“{k.openFirst.title}”{k.openFirst.due ? ` · hạn ${ddmm(k.openFirst.due)}` : ''}{k.open > 1 ? ` · +${k.open - 1} bài` : ''}</span>
-              </> : <><b className="tdy-kpi-val is-sm">Chưa có</b><span className="tdy-kpi-sub">Giao một bài ngắn cho cả lớp</span></>}
+            <Link href={`${base}/giao-bai`} className="tdy-stat">
+              <span className="tsh-ic tone-violet"><Send aria-hidden="true" /></span>
+              {k.openFirst
+                ? <span><b>{k.openFirst.done}<i>/{k.openFirst.assigned}</i></b><small title={k.openFirst.title}>đã nộp “{k.openFirst.title}”{k.open > 1 ? ` · +${k.open - 1} bài` : ''}</small></span>
+                : <span><b className="is-muted">0</b><small>bài giao đang mở</small></span>}
             </Link>
-            <Link href={`${base}/lo-hong`} className="tdy-card tdy-kpi">
-              <span className="tdy-kpi-lab"><span className="tsh-ic tone-green"><Target aria-hidden="true" /></span>Đúng trung bình</span>
-              <b className="tdy-kpi-val">{pct(k.rate)}<small>%</small></b>
-              <span className="tdy-bar"><i className="is-green" style={{ width: `${(k.rate ?? 0) * 100}%` }} /></span>
-              <span className="tdy-kpi-sub">{delta === null ? '7 ngày qua' : <><b className={delta >= 0 ? 'is-good' : 'is-bad'}>{delta >= 0 ? '▲' : '▼'} {Math.abs(delta)}%</b> so với tuần trước</>}</span>
+            <Link href={`${base}/lo-hong`} className="tdy-stat">
+              <span className="tsh-ic tone-green"><Target aria-hidden="true" /></span>
+              {k.practiced >= 5 && k.rate !== null
+                ? <span><b>{pct(k.rate)}<i>%</i></b><small>đúng TB 7 ngày{delta !== null ? <> · <em className={delta >= 0 ? 'is-good' : 'is-bad'}>{delta >= 0 ? '▲' : '▼'}{Math.abs(delta)}%</em></> : ''}</small></span>
+                : <span><b className="is-muted">—</b><small>đúng TB · cần ≥5 em luyện{k.practiced ? ` (mới ${k.practiced})` : ''}</small></span>}
             </Link>
           </section>
 
-          {inbox && inbox.items.length > 0 && (
-            <section className={`tdy-card tdy-inbox${inbox.unread ? ' has-new' : ''}`} aria-labelledby="tdy-inbox">
-              <div className="tdy-inbox-hd">
-                <h2 id="tdy-inbox"><MailOpen aria-hidden="true" /> Tin nhắn phụ huynh {inbox.unread > 0 && <span className="tdy-inbox-badge">{inbox.unread} mới</span>}</h2>
-                <Link href={`${base}/tin-nhan`} className="tdy-go">Mở hộp thư</Link>
-              </div>
-              <ul className="tdy-inbox-list">
-                {inbox.items.slice(0, 4).map((m) => (
-                  <li key={m.id} className={m.status === 'new' ? 'is-new' : undefined}>
-                    <Link href={`${base}/tin-nhan`}>
-                      <span className="tdy-inbox-ic" aria-hidden="true">{KIND_ICON[m.kind]}</span>
-                      <span className="tdy-inbox-txt">
-                        <b>{senderLabel(m)} <small>· phụ huynh em {m.student_name}</small></b>
-                        <span>{m.kind === 'leave' ? <em>Xin phép nghỉ {leaveRange(m)}: </em> : null}{m.body}</span>
-                      </span>
-                      <small className="tdy-inbox-time">{ago(m.created_at)}</small>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+          {/* 2 · Cần xử lý: việc gấp xếp trước, việc đã xong thu gọn */}
+          <section className="tdy-card tdy-todo" aria-labelledby="tdy-todo">
+            <h2 id="tdy-todo"><ListTodo aria-hidden="true" /> Cần xử lý {pendingCount > 0 && <span className="tdy-count">{pendingCount}</span>}</h2>
+            <TodoList items={todo} day={todayIso} />
+          </section>
 
-          <div className="tdy-grid">
-            <section className="tdy-card tdy-todo" aria-labelledby="tdy-todo">
-              <h2 id="tdy-todo"><ListTodo aria-hidden="true" /> Việc cần làm</h2>
-              <TodoList items={todo} day={todayIso} />
-            </section>
-
+          {/* 3 · Hôm nay dạy | Tin nhắn phụ huynh + Cần để ý */}
+          <div className="tdy-cols">
             <section className="tdy-card tdy-sched" aria-labelledby="tdy-sched">
-              <h2 id="tdy-sched"><CalendarDays aria-hidden="true" /> Lịch hôm nay <Link href={`${base}/ke-hoach`}>Giáo án</Link></h2>
+              <h2 id="tdy-sched"><CalendarDays aria-hidden="true" /> Hôm nay dạy <Link href={`${base}/ke-hoach`}>Giáo án</Link></h2>
               {todayPlans.length === 0 ? (
-                <div className="tdy-empty">
-                  <p className="dash-muted">Chưa có tiết nào được soạn cho hôm nay.</p>
-                  <Link href={`${base}/ke-hoach`} className="tdy-go">Nạp lịch báo giảng</Link>
-                </div>
+                <p className="tdy-line">Chưa có tiết nào được soạn cho hôm nay. <Link href={`${base}/ke-hoach`}>Nạp lịch báo giảng</Link></p>
               ) : (
                 <ul className="tdy-slots">
                   {todayPlans.map((p) => (
@@ -264,48 +238,72 @@ export default async function TeacherHome() {
               )}
             </section>
 
-            <section className="tdy-card tdy-watch" aria-labelledby="tdy-watch">
-              <h2 id="tdy-watch"><Eye aria-hidden="true" /> Cần để ý</h2>
-              {watch.length === 0 ? <p className="dash-muted">Chưa có em nào cần chú ý. Số liệu lấy từ Sổ lớp và bài luyện 2 tuần qua.</p> : (
-                <ul className="tdy-kids">
-                  {watch.map((w) => (
-                    <li key={w.id}>
-                      <Link href={`${base}/hoc-sinh/${w.id}`} className="tdy-kid">
-                        <span className={`tdy-kid-av is-${w.tone}`} aria-hidden="true">{w.name.trim().split(/\s+/).slice(-2).map((x) => x[0]).join('')}</span>
-                        <span><b>{w.name}</b><small>{w.text}</small></span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </div>
+            <div className="tdy-stack">
+              <section className={`tdy-card tdy-inbox${inbox?.unread ? ' has-new' : ''}`} aria-labelledby="tdy-inbox">
+                <h2 id="tdy-inbox"><MailOpen aria-hidden="true" /> Tin nhắn phụ huynh {inbox && inbox.unread > 0 && <span className="tdy-inbox-badge">{inbox.unread} mới</span>} <Link href={`${base}/tin-nhan`}>Hộp thư</Link></h2>
+                {!inbox ? <p className="tdy-line">Chưa bật: chạy migration 0037 trên Supabase.</p>
+                  : inbox.items.length === 0 ? <p className="tdy-line">Chưa có tin nhắn. Phụ huynh nhắn cô từ trang Phụ huynh.</p> : (
+                  <ul className="tdy-inbox-list">
+                    {inbox.items.slice(0, 3).map((m) => (
+                      <li key={m.id} className={m.status === 'new' ? 'is-new' : undefined}>
+                        <Link href={`${base}/tin-nhan`}>
+                          <span className="tdy-inbox-ic" aria-hidden="true">{KIND_ICON[m.kind]}</span>
+                          <span className="tdy-inbox-txt">
+                            <b>{senderLabel(m)} <small>Phụ huynh em {m.student_name}</small></b>
+                            <span>{m.kind === 'leave' ? <em>Xin nghỉ {leaveRange(m)}: </em> : null}{m.body}</span>
+                          </span>
+                          <small className="tdy-inbox-time">{ago(m.created_at)}</small>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
 
-          <section aria-labelledby="tdy-quick">
-            <h2 id="tdy-quick" className="tdy-sect"><Zap aria-hidden="true" /> Dùng nhanh <span>· tự sắp theo số lần thầy cô mở trên máy này</span></h2>
-            <QuickTools classId={active.id} />
-          </section>
+              {watch.length > 0 && (
+                <section className="tdy-card tdy-watch" aria-labelledby="tdy-watch">
+                  <h2 id="tdy-watch"><Eye aria-hidden="true" /> Cần để ý</h2>
+                  <ul className="tdy-kids">
+                    {watch.map((w) => (
+                      <li key={w.id}>
+                        <Link href={`${base}/hoc-sinh/${w.id}`} className="tdy-kid">
+                          <span className={`tdy-kid-av is-${w.tone}`} aria-hidden="true">{w.name.trim().split(/\s+/).slice(-2).map((x) => x[0]).join('')}</span>
+                          <span><b>{w.name}</b><small>{w.text}</small></span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+          </div>
         </>
       )}
 
-      <section aria-labelledby="tdy-classes">
-        <h2 id="tdy-classes" className="tdy-sect"><School aria-hidden="true" /> Lớp của tôi <span>· {(school as { name?: string } | null)?.name ?? 'Giáo viên'}{planText ? ` · ${planText}` : ''}</span></h2>
-        {list.length === 0 ? <p className="dash-muted">Chưa có lớp nào.</p> : (
-          <ul className="class-list">
-            {list.map((c) => (
-              <li key={c.id}>
-                <Link href={`/giao-vien/lop/${c.id}`} className={`class-tile${c.status !== 'active' ? ' is-archived' : ''}`}>
-                  <span className="class-tile-name">Lớp {c.name}</span>
-                  <span className="class-tile-meta">Khối {c.grade} · {count.get(c.id) ?? 0} học sinh{c.status !== 'active' ? ' · đã lưu trữ' : ''}</span>
-                  <span className="class-tile-code">Mã lớp <strong>{c.join_code}</strong></span>
-                  <ChevronRight className="class-tile-go" aria-hidden="true" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-        <p className="dash-muted tdy-note">Mỗi giáo viên phụ trách 1 lớp. Cuối năm học, lưu trữ lớp hiện tại (trong trang Học sinh &amp; mã lớp) để tạo lớp mới.</p>
-      </section>
+      {active ? (
+        <p className="tdy-foot">
+          <School aria-hidden="true" /> Lớp {active.name} · mã lớp <b>{active.join_code}</b> · {(school as { name?: string } | null)?.name ?? 'Giáo viên'}{planText ? ` · ${planText}` : ''}
+          <Link href={`/giao-vien/lop/${active.id}`}>Học sinh &amp; mã lớp <ChevronRight aria-hidden="true" /></Link>
+        </p>
+      ) : (
+        <section aria-labelledby="tdy-classes">
+          <h2 id="tdy-classes" className="tdy-sect"><School aria-hidden="true" /> Lớp của tôi <span>· {(school as { name?: string } | null)?.name ?? 'Giáo viên'}{planText ? ` · ${planText}` : ''}</span></h2>
+          {list.length === 0 ? <p className="dash-muted">Chưa có lớp nào.</p> : (
+            <ul className="class-list">
+              {list.map((c) => (
+                <li key={c.id}>
+                  <Link href={`/giao-vien/lop/${c.id}`} className={`class-tile${c.status !== 'active' ? ' is-archived' : ''}`}>
+                    <span className="class-tile-name">Lớp {c.name}</span>
+                    <span className="class-tile-meta">Khối {c.grade} · {count.get(c.id) ?? 0} học sinh{c.status !== 'active' ? ' · đã lưu trữ' : ''}</span>
+                    <span className="class-tile-code">Mã lớp <strong>{c.join_code}</strong></span>
+                    <ChevronRight className="class-tile-go" aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
     </main>
   );
 }

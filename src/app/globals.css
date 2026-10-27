@@ -4979,3 +4979,47 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .inb-act { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .inb-empty { padding: 24px 0; }
 @media (max-width: 560px) { .inb-body { padding-left: 14px; } .pm-kinds button { flex-direction: column; gap: 2px; font-size: 13.5px; min-height: 58px; } .pm-field input[type=date] { padding-inline: 8px; font-size: 15px; } }
+
+/* ==================================================================
+   Trang "Hôm nay" của giáo viên — bố cục gọn (số liệu 1 hàng · Cần xử lý · Hôm nay dạy | Tin nhắn + Cần để ý)
+================================================================== */
+.tsh-navs { align-content: start; } /* các nhóm xếp sát nhau, không giãn đều theo chiều cao */
+.tsh-nav { position: relative; }
+.tsh-badge { margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: 99px; background: #f59e0b; color: #fff; font-size: 12px; font-weight: 800; text-align: center; }
+.tdy-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.tdy-stat { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-decoration: none; box-shadow: var(--shadow-sm); transition: border-color .15s, transform .15s; }
+.tdy-stat:hover { border-color: var(--line-strong); transform: translateY(-1px); }
+.tdy-stat .tsh-ic { width: 34px; height: 34px; border-radius: 10px; }
+.tdy-stat > span:nth-child(2) { display: grid; min-width: 0; flex: 1; }
+.tdy-stat b { font-size: 22px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tdy-stat b i { color: var(--muted); font-size: 14px; font-style: normal; font-weight: 700; }
+.tdy-stat b.is-muted { color: var(--muted); }
+.tdy-stat small { overflow: hidden; color: var(--muted); font-size: 12.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.tdy-stat small.is-warn { color: #c2323a; font-weight: 700; }
+.tdy-stat em { font-style: normal; font-weight: 800; }
+.tdy-stat em.is-good { color: #15803d; } .tdy-stat em.is-bad { color: #c2323a; }
+.tdy-stat .tdy-spark { flex: none; width: 44px; height: 24px; }
+.tdy-count { padding: 1px 9px; border-radius: 99px; background: #ef4444; color: #fff; font-size: 12.5px; font-weight: 800; }
+
+.tdy-task.is-urgent .tdy-task-txt b { color: var(--ink); }
+.tdy-task.is-urgent { box-shadow: inset 3px 0 0 #ef4444; padding-left: 10px; margin-left: -10px; }
+.tdy-done { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); }
+.tdy-done .ct-link { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 700; }
+.tdy-done .ct-link svg { width: 16px; height: 16px; color: #16a34a; }
+.tdy-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.tdy-stack { display: grid; gap: 14px; }
+.tdy-inbox { margin-top: 0; }
+.tdy-inbox h2 .tdy-inbox-badge { margin-left: 2px; }
+.tdy-line { color: var(--muted); font-size: 14px; font-weight: 600; padding: 4px 0; }
+.tdy-line a { color: var(--brand-blue); font-weight: 700; white-space: nowrap; }
+.tdy-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--muted); font-size: 13.5px; font-weight: 600; }
+.tdy-foot > svg { width: 16px; height: 16px; }
+.tdy-foot b { color: var(--brand-blue); letter-spacing: .04em; }
+.tdy-foot a { display: inline-flex; align-items: center; margin-left: auto; color: var(--brand-blue); font-weight: 700; text-decoration: none; }
+.tdy-foot a svg { width: 16px; height: 16px; }
+@media (max-width: 1100px) { .tdy-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 860px) { .tdy-cols { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .tdy-stat { min-height: 56px; padding: 8px 10px; } .tdy-stat b { font-size: 19px; } .tdy-stat small { white-space: normal; line-height: 1.25; } .tdy-stat .tdy-spark { display: none; } .tdy-foot a { margin-left: 0; } .tdy-task { flex-wrap: wrap; } .tdy-task .tdy-go { margin-left: 38px; } .tdy-task.is-urgent { margin-left: -10px; } }
+.tdy-inbox-txt b small { display: block; font-size: 12.5px; }
+.tdy-inbox-txt > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; line-height: 1.35; }
+@media (max-width: 560px) { .tdy-task .tdy-task-txt { flex-basis: calc(100% - 40px); } .tdy-task .tdy-go { margin-top: 6px; } }
