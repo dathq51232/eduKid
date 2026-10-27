@@ -5142,3 +5142,76 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
   .home-sample { display: none; }
   .home-welcome { margin-inline: 16px; }
 }
+
+/* ---------- Gọi tên – Dò bài: thẻ câu hỏi phóng to, ô tích đáp án ---------- */
+.callon-rtools { position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; z-index: 1; }
+.callon-rtools .callon-close { position: static; }
+.callon-result .callon-who { padding-right: 96px; }
+.callon-verdict { margin-left: auto; padding: 6px 14px; border-radius: 999px; font-size: 18px; font-weight: 800; white-space: nowrap; animation: result-in .35s cubic-bezier(.2, .9, .3, 1.2); }
+.callon-verdict.is-ok { background: #dcfce7; color: #15803d; }
+.callon-verdict.is-no { background: #fee2e2; color: #b91c1c; }
+.callon-result.is-ok { border-color: #22c55e; box-shadow: 0 6px 0 #15803d; }
+.callon-result.is-no { border-color: #f87171; box-shadow: 0 6px 0 #b91c1c; }
+.callon-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin-top: 10px; }
+.callon-choice { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; border: 2px solid #c9d4ea; border-radius: 14px; background: #fff; color: #1e2b4a; font: inherit; font-size: 18px; text-align: left; cursor: pointer; transition: transform .1s, background .15s, border-color .15s; }
+.callon-choice:hover:not(:disabled) { border-color: #2457c5; background: #f0f5ff; }
+.callon-choice:active:not(:disabled) { transform: translateY(2px); }
+.callon-choice:disabled { cursor: default; }
+.callon-choice b { color: #2457c5; }
+.callon-box { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border: 2.5px solid #9fb0d0; border-radius: 8px; background: #fff; }
+.callon-box svg { width: 22px; height: 22px; stroke-width: 3.5; }
+.callon-choice.is-on { border-color: #2457c5; background: #e8efff; }
+.callon-choice.is-on .callon-box { border-color: #2457c5; background: #2457c5; color: #fff; }
+.callon-choice.is-right { border-color: #22c55e; background: #dcfce7; }
+.callon-choice.is-right .callon-box { border-color: #16a34a; background: #16a34a; color: #fff; }
+.callon-choice.is-wrong { border-color: #f87171; background: #fee2e2; animation: callon-shake .4s; }
+.callon-choice.is-wrong .callon-box { border-color: #dc2626; background: #dc2626; color: #fff; }
+.callon-choice.is-dim { opacity: .55; }
+@keyframes callon-shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.callon-lock { grid-column: 1 / -1; justify-self: start; min-height: 46px; padding: 8px 18px; border: 0; border-radius: 12px; background: #2457c5; color: #fff; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer; }
+.callon-lock:disabled { opacity: .5; cursor: default; }
+.callon-diary { margin-top: 10px; padding: 8px 12px; border-radius: 12px; background: #fff8e1; color: #6b4e00; font-size: 14.5px; font-weight: 700; }
+/* phóng to: chiếm gần hết sân chơi, chữ to cho cả lớp đọc */
+.callon-result.is-big { left: 4%; right: 4%; top: 62px; bottom: 22px; width: auto; display: flex; flex-direction: column; padding: 24px 32px 22px; overflow: auto; }
+.mode-race .callon-result.is-big { left: 4%; right: 4%; }
+.callon-result.is-big .callon-who .milo { width: 84px; }
+.callon-result.is-big .callon-who p { font-size: 20px; }
+.callon-result.is-big .callon-who h2 { font-size: clamp(34px, 4vw, 56px); }
+.callon-result.is-big .callon-verdict { font-size: clamp(20px, 2.2vw, 30px); padding: 8px 20px; }
+.callon-result.is-big .callon-q { flex: 1; margin-top: 16px; padding: 18px 24px; border-left-width: 8px; }
+.callon-result.is-big .callon-q small { font-size: clamp(15px, 1.4vw, 19px); }
+.callon-result.is-big .callon-q > p { margin-top: 6px; font-size: clamp(28px, 3.2vw, 48px); line-height: 1.3; }
+.callon-result.is-big .callon-st, .callon-result.is-big .callon-opts { font-size: clamp(22px, 2.4vw, 34px); }
+.callon-result.is-big .callon-choices { gap: 14px 22px; margin-top: 18px; }
+.callon-result.is-big .callon-choice { min-height: 74px; padding: 12px 18px; border-width: 3px; border-radius: 18px; font-size: clamp(22px, 2.5vw, 36px); }
+.callon-result.is-big .callon-box { width: 44px; height: 44px; border-width: 3px; border-radius: 11px; }
+.callon-result.is-big .callon-box svg { width: 32px; height: 32px; }
+.callon-result.is-big .callon-lock { min-height: 60px; font-size: 22px; }
+.callon-result.is-big .callon-ans { min-height: 52px; font-size: 20px; }
+.callon-result.is-big .callon-diary { font-size: 18px; }
+.callon-result.is-big .callon-marks button { min-height: 66px; font-size: 22px; }
+.callon-result.is-big .callon-close { width: 48px; height: 48px; }
+.callon-result.is-big .callon-close svg { width: 24px; height: 24px; }
+@media (max-width: 700px) {
+  .callon-choices { grid-template-columns: 1fr; }
+  .callon-result.is-big { position: relative; left: auto; right: auto; top: auto; bottom: auto; margin: 12px; }
+}
+/* vừa màn hình thấp (máy chiếu 768p, cửa sổ có thanh bên): co chữ theo chiều cao */
+.callon-result.is-big { padding: 18px 26px 18px; }
+.callon-result.is-big .callon-who .milo { width: clamp(52px, 8vh, 84px); }
+.callon-result.is-big .callon-who p { font-size: clamp(15px, 2.2vh, 20px); }
+.callon-result.is-big .callon-who h2 { font-size: clamp(28px, min(4vw, 6.2vh), 56px); }
+.callon-result.is-big .callon-q { margin-top: 10px; padding: 14px 22px; }
+.callon-result.is-big .callon-q > p { font-size: clamp(22px, min(3.2vw, 4.8vh), 48px); }
+.callon-result.is-big .callon-choices { gap: clamp(8px, 1.4vh, 14px) 20px; margin-top: clamp(8px, 1.6vh, 18px); }
+.callon-result.is-big .callon-choice { min-height: clamp(50px, 7.4vh, 74px); padding: 8px 16px; font-size: clamp(20px, min(2.5vw, 3.8vh), 36px); }
+.callon-result.is-big .callon-box { width: clamp(32px, 4.6vh, 44px); height: clamp(32px, 4.6vh, 44px); }
+.callon-result.is-big .callon-marks button { min-height: clamp(48px, 7vh, 66px); font-size: clamp(17px, 2.4vh, 22px); }
+.callon-who { flex-wrap: wrap; }
+.callon-who > div { flex: 1; min-width: 0; }
+.callon-result:not(.is-big) .callon-verdict { flex-basis: 100%; margin-left: 0; text-align: center; font-size: 17px; }
+.callon-result.is-big .callon-q > p.is-long { font-size: clamp(20px, min(2.3vw, 3.5vh), 36px); }
+.callon-result.is-big .callon-q > p.is-xlong { font-size: clamp(18px, min(1.8vw, 2.8vh), 30px); line-height: 1.4; }
+.callon-result.is-big .callon-choice { line-height: 1.22; }
+.callon-result.is-big .callon-ans { min-height: 40px; margin-top: 8px; font-size: clamp(15px, 2vh, 20px); }
+.callon-result.is-big .callon-marks { margin-top: 10px; }

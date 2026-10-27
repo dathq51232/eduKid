@@ -2,9 +2,11 @@
 
 // Gọi tên – Dò bài: 5 kiểu gọi (vòng quay, bốc thăm, đua thú, trứng nở, bịt mắt bắt vịt) để chiếu lên màn hình lớp.
 // Không gọi lại em đã lên, bỏ qua em vắng, hiện một câu dò bài theo bài đang học, chấm ✓ ✗ ★.
-// Tất cả lưu trên máy đang chiếu (localStorage) — chưa gửi lên máy chủ.
+// Trạng thái gọi tên lưu trên máy đang chiếu (localStorage). Em trả lời đúng / phát biểu hay thì tự thêm
+// "★ Phát biểu tốt" vào Sổ lớp hôm nay (migration 0038; chưa chạy thì chỉ đếm trên máy).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Eye, EyeOff, Maximize2, Timer, Minimize2, RotateCcw, Users, Volume2, VolumeX, X } from 'lucide-react';
+import { Check, Eye, EyeOff, Maximize2, Timer, Minimize2, RotateCcw, Users, Volume2, VolumeX, X } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 import MiloMascot, { type MiloVariant } from '@/components/mascot/MiloMascot';
 import DuckCatch from '@/components/classroom/DuckCatch';
 import {
@@ -100,7 +102,11 @@ function useSound(on: boolean) {
     [784, 988, 1175, 1568].forEach((f, i) => at(() => beep(f, 260, 'triangle', 0.06), 220 + i * 90));
     at(() => [523, 659, 784, 1047].forEach((f) => beep(f, 700, 'triangle', 0.045)), 620);
   }, [beep]);
-  return { beep, tick, chime, whoosh, riffle, countBeep, whistle, step, cheer, dice, knock, drum, crack, chirp, fanfare, quack };
+  /** trả lời đúng: "ting ting" đi lên */
+  const right = useCallback(() => { [784, 988, 1319, 1568].forEach((f, i) => at(() => { beep(f, 260, 'triangle', 0.09); beep(f * 2, 120, 'sine', 0.025); }, i * 95)); }, [beep]);
+  /** trả lời chưa đúng: "è è" trầm, nhẹ nhàng (không chê) */
+  const wrong = useCallback(() => { beep(220, 230, 'sawtooth', 0.05, 160); at(() => beep(196, 320, 'sawtooth', 0.05, 130), 260); }, [beep]);
+  return { beep, tick, chime, whoosh, riffle, countBeep, whistle, step, cheer, dice, knock, drum, crack, chirp, fanfare, quack, right, wrong };
 }
 
 export default function CallOn({ classId, className, grade, students, absentToday = [] }: { classId: string; className: string; grade: number; students: Student[]; /** em vắng hôm nay theo Sổ lớp */ absentToday?: string[] }) {
@@ -115,7 +121,13 @@ export default function CallOn({ classId, className, grade, students, absentToda
   const [full, setFull] = useState(false);
   const [notice, setNotice] = useState('');
   const boardRef = useRef<HTMLDivElement>(null);
-  const { tick, chime, whoosh, riffle, countBeep, whistle, step, cheer, dice, knock, drum, crack, chirp, fanfare, quack } = useSound(s.sound);
+  const { tick, chime, whoosh, riffle, countBeep, whistle, step, cheer, dice, knock, drum, crack, chirp, fanfare, quack, right, wrong } = useSound(s.sound);
+  // Thẻ câu hỏi: phóng to giữa màn hình để cả lớp đọc; chấm xong tự thu nhỏ
+  const [big, setBig] = useState(true);
+  const [chosen, setChosen] = useState<number[]>([]);
+  const [verdict, setVerdict] = useState<'ok' | 'no' | null>(null);
+  const [diaryNote, setDiaryNote] = useState('');
+  const supabase = useMemo(() => { try { return createClient(); } catch { return null; } }, []);
   // Thời gian chạy luôn theo lựa chọn của thầy cô. Không rút ngắn theo cài đặt "giảm chuyển động" của máy:
   // Windows tắt "Animation effects" (máy yếu, chế độ Best performance) làm trò chơi chỉ chạy 0,6 giây.
   const secs = s.duration;
@@ -169,6 +181,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
     setPicked(st);
     setQuestion(nextQuestion());
     setShowAnswer(false);
+    setBig(true); setChosen([]); setVerdict(null); setDiaryNote('');
     setPhase('done');
     setS((x) => ({ ...x, called: x.called.includes(st.id) ? x.called : [...x.called, st.id] }));
     fanfare();
@@ -177,12 +190,50 @@ export default function CallOn({ classId, className, grade, students, absentToda
     window.setTimeout(() => setCelebrate(false), 2200);
   }, [nextQuestion, fanfare]);
 
+  /** Thêm "★ Phát biểu tốt" vào Sổ lớp hôm nay của em */
+  const praise = async (st: Student) => {
+    if (!supabase) return;
+    const { error } = await supabase.rpc('teacher_diary_add_tag', { p_class: classId, p_student: st.id, p_tag: '★ Phát biểu tốt' });
+    setDiaryNote(error ? (/function|schema cache|does not exist/i.test(error.message) ? 'Chưa ghi được vào Sổ lớp: cần chạy migration 0038.' : 'Chưa ghi được vào Sổ lớp, thầy cô ghi tay giúp nhé.') : `Đã ghi “★ Phát biểu tốt” cho ${shortName(st.name)} vào Sổ lớp hôm nay.`);
+  };
+  const shrinkLater = () => later(() => setBig(false), 2600);
+  /** Chấm: đúng → tiếng "ting", +1 đúng, ghi lời khen; chưa đúng → tiếng nhẹ, +1 chưa đúng. Sau đó thẻ tự thu nhỏ. */
+  const judge = (ok: boolean) => {
+    if (!picked || verdict) return;
+    setVerdict(ok ? 'ok' : 'no');
+    setS((x) => addTally(x, picked.id, ok ? 'ok' : 'no'));
+    if (ok) { right(); void praise(picked); } else { wrong(); setShowAnswer(true); }
+    shrinkLater();
+  };
   const mark = (m: keyof Tally) => {
     if (!picked) return;
-    setS((x) => addTally(x, picked.id, m));
-    closeResult();
+    if (m === 'star') {
+      setS((x) => addTally(x, picked.id, 'star'));
+      right(); void praise(picked);
+      if (!verdict) setVerdict('ok');
+      shrinkLater();
+      return;
+    }
+    judge(m === 'ok');
   };
-  const closeResult = () => { setPhase('idle'); setPicked(null); setQuestion(null); setNotice(''); setTaps(0); setFlipped(null); setHot(null); setCelebrate(false); };
+  // Câu chọn đáp án: bấm ô để tích, tự chấm (câu nhiều đáp án: tích rồi bấm "Chốt")
+  const key = (question?.answer ?? {}) as { correct?: string | string[] };
+  const tfOpts = question?.type === 'true_false' && !question.options.length ? ['Đúng', 'Sai'] : null;
+  const optList = tfOpts ?? (question && question.type !== 'ordering' ? question.options : []);
+  const choosable = !!question && (question.type === 'single_choice' || question.type === 'multiple_choice' || question.type === 'true_false') && optList.length > 0 && key.correct !== undefined;
+  const isRight = (i: number) => Array.isArray(key.correct) ? key.correct.includes(optList[i]) : key.correct === optList[i];
+  const pickOpt = (i: number) => {
+    if (verdict) return;
+    if (question?.type === 'multiple_choice') { setChosen((c) => (c.includes(i) ? c.filter((x) => x !== i) : [...c, i])); return; }
+    setChosen([i]);
+    judge(isRight(i));
+  };
+  const lockMulti = () => {
+    if (!chosen.length) return;
+    const want = optList.map((_, i) => i).filter(isRight);
+    judge(want.length === chosen.length && want.every((i) => chosen.includes(i)));
+  };
+  const closeResult = () => { setPhase('idle'); setPicked(null); setQuestion(null); setNotice(''); setTaps(0); setFlipped(null); setHot(null); setCelebrate(false); setVerdict(null); setChosen([]); setDiaryNote(''); setBig(true); };
 
   /* -------------------------------------------- 1. vòng quay */
   // ô trên vòng = các em còn có thể được gọi; giữ nguyên trong lúc quay và lúc hiện kết quả
@@ -539,30 +590,55 @@ export default function CallOn({ classId, className, grade, students, absentToda
           </div>
         )}
         {phase === 'done' && picked && !celebrate && (
-          <div className="callon-result" role="dialog" aria-label={`Mời ${picked.name}`}>
-            <button type="button" className="callon-close" aria-label="Đóng" onClick={closeResult}><X aria-hidden="true" /></button>
+          <div className={`callon-result${big ? ' is-big' : ''}${verdict ? ` is-${verdict}` : ''}`} role="dialog" aria-label={`Mời ${picked.name}`}>
+            <div className="callon-rtools">
+              <button type="button" className="callon-close" aria-label={big ? 'Thu nhỏ' : 'Phóng to'} title={big ? 'Thu nhỏ' : 'Phóng to'} onClick={() => setBig((v) => !v)}>{big ? <Minimize2 aria-hidden="true" /> : <Maximize2 aria-hidden="true" />}</button>
+              <button type="button" className="callon-close" aria-label="Đóng" title="Đóng" onClick={closeResult}><X aria-hidden="true" /></button>
+            </div>
             <div className="callon-who">
               <MiloMascot variant={subject.milo} size={64} />
               <div><p>Mời bạn lên bảng</p><h2>{picked.name}</h2></div>
+              {verdict && <span className={`callon-verdict is-${verdict}`}>{verdict === 'ok' ? '✓ Đúng rồi!' : '✗ Chưa đúng'}</span>}
             </div>
-            {question && (
+            {question && (big || !verdict) && (
               <div className="callon-q">
                 <small>Câu dò bài · {subject.name}{lessonTitle ? ` · ${lessonTitle}` : ''}</small>
-                <p>{question.prompt}</p>
+                <p className={question.prompt.length > 260 ? 'is-xlong' : question.prompt.length > 140 ? 'is-long' : undefined}>{question.prompt}</p>
                 {question.statements?.length ? <ul className="callon-st">{question.statements.map((t) => <li key={t}>{t}</li>)}</ul> : null}
                 {question.blanks?.length ? <ul className="callon-st">{question.blanks.map((t) => <li key={t}>{t.replace(/\{\}/g, '……')}</li>)}</ul> : null}
-                {question.options.length > 0 && question.type !== 'ordering' && (
-                  <ol className="callon-opts">{question.options.map((o, i) => <li key={o}><b>{LETTERS[i]}.</b> {o}</li>)}</ol>
+                {choosable ? (
+                  <div className={`callon-choices${question.type === 'multiple_choice' ? ' is-multi' : ''}`} role={question.type === 'multiple_choice' ? 'group' : 'radiogroup'} aria-label="Chọn đáp án">
+                    {optList.map((o, i) => {
+                      const on = chosen.includes(i);
+                      const cls = verdict ? (isRight(i) ? ' is-right' : on ? ' is-wrong' : ' is-dim') : on ? ' is-on' : '';
+                      return (
+                        <button key={o} type="button" role={question.type === 'multiple_choice' ? 'checkbox' : 'radio'} aria-checked={on} className={`callon-choice${cls}`} onClick={() => pickOpt(i)} disabled={!!verdict}>
+                          <span className="callon-box" aria-hidden="true">{(on || (verdict && isRight(i))) ? <Check /> : null}</span>
+                          <b>{tfOpts ? '' : `${LETTERS[i]}.`}</b> <span>{o}</span>
+                        </button>
+                      );
+                    })}
+                    {question.type === 'multiple_choice' && !verdict && <button type="button" className="callon-lock" onClick={lockMulti} disabled={!chosen.length}>Chốt đáp án</button>}
+                  </div>
+                ) : (
+                  <>
+                    {question.options.length > 0 && question.type !== 'ordering' && (
+                      <ol className="callon-opts">{question.options.map((o, i) => <li key={o}><b>{LETTERS[i]}.</b> {o}</li>)}</ol>
+                    )}
+                    {question.type === 'ordering' && <p className="callon-st">Sắp xếp: {question.options.join(' · ')}</p>}
+                  </>
                 )}
-                {question.type === 'ordering' && <p className="callon-st">Sắp xếp: {question.options.join(' · ')}</p>}
-                <button type="button" className="callon-ans" onClick={() => setShowAnswer((v) => !v)}>
-                  {showAnswer ? <><EyeOff aria-hidden="true" /> Đáp án: <strong>{answerText(question)}</strong></> : <><Eye aria-hidden="true" /> Xem đáp án</>}
-                </button>
+                {!(choosable && verdict) && (
+                  <button type="button" className="callon-ans" onClick={() => setShowAnswer((v) => !v)}>
+                    {showAnswer ? <><EyeOff aria-hidden="true" /> Đáp án: <strong>{answerText(question)}</strong></> : <><Eye aria-hidden="true" /> Xem đáp án</>}
+                  </button>
+                )}
               </div>
             )}
+            {diaryNote && <p className="callon-diary" role="status">{diaryNote}</p>}
             <div className="callon-marks">
-              <button type="button" className="m-ok" onClick={() => mark('ok')}>✓ Đúng</button>
-              <button type="button" className="m-no" onClick={() => mark('no')}>✗ Chưa đúng</button>
+              {!verdict && <button type="button" className="m-ok" onClick={() => mark('ok')}>✓ Đúng</button>}
+              {!verdict && <button type="button" className="m-no" onClick={() => mark('no')}>✗ Chưa đúng</button>}
               <button type="button" className="m-star" onClick={() => mark('star')}>★ Phát biểu hay</button>
             </div>
           </div>
