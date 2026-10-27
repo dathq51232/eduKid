@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Check, MessageCircle, Pin, School, Star, TrendingUp, UserRound } from 'lucide-react';
+import { Bell, Check, MessageCircle, Pin, School, Star, TrendingUp, UserRound } from 'lucide-react';
 import ParentHeader from '@/components/parent/ParentHeader';
 import FamilyInfo from '@/components/parent/FamilyInfo';
 import ParentMessages from '@/components/parent/ParentMessages';
@@ -18,7 +18,8 @@ export const metadata: Metadata = { title: 'Phụ huynh · EduChain Kids' };
 export const dynamic = 'force-dynamic';
 
 type Child = { id: string; display_name: string; grade: number };
-type Result = { student_id: string; lesson_title: string | null; lesson_code: string; score: number; total: number; points: number; created_at: string };
+type Result = { student_id: string; lesson_title: string | null; lesson_code: string; subject_code?: string | null; score: number; total: number; points: number; created_at: string };
+const SUBJ: Record<string, string> = { toan: 'Toán', 'tieng-viet': 'Tiếng Việt', 'tieng-anh': 'Tiếng Anh' };
 /** Một ngày Sổ lớp của con: thông báo cả lớp + dòng riêng của em (migration 0031) */
 type DiaryDay = { day: string; announcement: string | null; status: string; tags: string[]; note: string | null };
 
@@ -79,7 +80,7 @@ export default async function ParentsPage() {
     const [{ data: ov, error: ovErr }, { data: diary }, { data: results }, { data: me }, { data: oldContacts }, { data: msgs, error: msgErr }] = await Promise.all([
       supabase.rpc('parent_overview'), // migration 0033
       supabase.rpc('parent_diary_recent', { p_days: 30 }), // migration 0031
-      supabase.from('lesson_results').select('lesson_title, lesson_code, score, total, points, created_at').order('created_at', { ascending: false }).limit(50),
+      supabase.from('lesson_results').select('lesson_title, lesson_code, subject_code, score, total, points, created_at').order('created_at', { ascending: false }).limit(100),
       supabase.from('students').select('display_name, grade').eq('id', viewer.studentId).maybeSingle(),
       supabase.rpc('parent_my_contacts'),
       supabase.rpc('parent_messages_mine', { p_limit: 20 }), // migration 0037
@@ -99,6 +100,21 @@ export default async function ParentsPage() {
     const month = o?.month;
     const praiseToday = today?.tags?.find((t) => t.startsWith('★'));
     const monthName = `tháng ${new Date().toLocaleDateString('vi-VN', { month: 'numeric', timeZone: 'Asia/Ho_Chi_Minh' })}`;
+    const messages = msgErr ? null : ((msgs ?? []) as ParentMsg[]);
+    // Cô trả lời trong 3 ngày gần đây: báo ngay đầu trang
+    const newReplies = (messages ?? []).filter((m) => m.reply && m.replied_at && Date.now() - Date.parse(m.replied_at) < 3 * 86400_000).length;
+    // Luyện tập 7 ngày (giờ Việt Nam) và độ đúng theo môn
+    const vn = (t: string | number) => new Date(new Date(t).getTime() + 7 * 3600_000).toISOString().slice(0, 10);
+    const todayVn = vn(Date.now());
+    const last7 = Array.from({ length: 7 }, (_, i) => vn(Date.now() - (6 - i) * 86400_000));
+    const perDay = last7.map((d) => list.filter((r) => vn(r.created_at) === d).length);
+    const maxDay = Math.max(1, ...perDay);
+    const week = list.filter((r) => vn(r.created_at) >= last7[0]);
+    const bySubj = Object.keys(SUBJ).map((k) => {
+      const rs = list.filter((r) => r.subject_code === k);
+      return { k, n: rs.length, pct: rs.length ? Math.round(rs.reduce((t, r) => t + (r.score * 100) / r.total, 0) / rs.length) : null };
+    }).filter((x) => x.n > 0);
+    const weak = bySubj.filter((x) => (x.pct ?? 100) < 70).sort((a, b) => (a.pct ?? 0) - (b.pct ?? 0))[0];
     return (
       <>
         <ParentHeader />
@@ -126,21 +142,19 @@ export default async function ParentsPage() {
             </div>
           </section>
 
+          {newReplies > 0 && (
+            <a href="#pm-title" className="ph-alert"><Bell aria-hidden="true" /> <span><b>{cls?.teacher ? `Cô ${cls.teacher.trim().split(/\s+/).slice(-1)[0]}` : 'Cô'} vừa trả lời {newReplies} tin nhắn</b> của gia đình · Xem ngay</span></a>
+          )}
+
           <ul className="ph-tiles">
-            <li><span className="ph-ic is-green" aria-hidden="true">📅</span><div><span>Đi học {monthName}</span><b>{month?.days ? `${month.present}/${month.days} ngày` : '—'}</b></div></li>
-            <li><span className="ph-ic is-yellow" aria-hidden="true">⭐</span><div><span>Lời khen của cô</span><b>{month ? month.praise : '—'}</b></div></li>
-            <li><span className="ph-ic is-red" aria-hidden="true">🔔</span><div><span>Cô nhắc nhở</span><b>{month ? month.remind : '—'}</b></div></li>
-            <li><span className="ph-ic is-purple" aria-hidden="true">🎯</span><div><span>Bài luyện · đúng</span><b>{list.length ? `${lessons} · ${avg}%` : '—'}</b></div></li>
+            <li><span className="ph-ic is-green" aria-hidden="true">📅</span><div><span>Đi học {monthName}</span><b>{month?.days ? `${month.present}/${month.days} ngày` : <em>Cô chưa ghi</em>}</b></div></li>
+            <li><span className="ph-ic is-yellow" aria-hidden="true">⭐</span><div><span>Cô khen</span><b>{month ? `${month.praise} lần` : <em>Chưa có</em>}</b></div></li>
+            <li><span className="ph-ic is-red" aria-hidden="true">🔔</span><div><span>Cô nhắc nhở</span><b>{month ? `${month.remind} lần` : <em>Chưa có</em>}</b></div></li>
+            <li><span className="ph-ic is-purple" aria-hidden="true">🎯</span><div><span>Luyện 7 ngày qua</span><b>{week.length ? `${week.length} bài` : <em>Chưa làm bài</em>}</b></div></li>
           </ul>
 
-          <ParentMessages
-            people={contacts.map((c) => ({ name: c.name, relation: c.relation }))}
-            teacher={cls?.teacher ?? null}
-            childName={childName}
-            initial={msgErr ? null : ((msgs ?? []) as ParentMsg[])}
-          />
-
           <div className="ph-grid">
+            <div className="ph-side">
             <section className="ph-card" aria-labelledby="ph-msg-title">
               <div className="ph-card-hd">
                 <div><h2 id="ph-msg-title"><MessageCircle aria-hidden="true" /> Tin nhắn từ cô</h2><p className="ph-sub">Thông báo của lớp và nhận xét hằng ngày dành cho con</p></div>
@@ -170,17 +184,40 @@ export default async function ParentsPage() {
               )}
             </section>
 
-            <div className="ph-side">
-              <FamilyInfo contacts={contacts} address={o?.address ?? null} className={cls?.name ?? null} />
               <section className="ph-card" aria-labelledby="ph-res-title">
-                <div className="ph-card-hd"><div><h2 id="ph-res-title"><TrendingUp aria-hidden="true" /> Con luyện tập</h2><p className="ph-sub">{list.length ? `Đúng trung bình ${avg}% · ${list.length} lượt gần nhất` : 'Con chưa làm bài nào'}</p></div></div>
-                {list.length > 0 && <div className="ph-bar" aria-hidden="true"><i style={{ width: `${avg}%` }} /></div>}
-                {list.length === 0 ? <p className="dash-muted">Kết quả sẽ hiện ở đây sau mỗi bài con luyện tập.</p> : (
-                  <ul className="ph-res">
-                    {list.slice(0, 5).map((r, i) => <li key={i}><span>{r.lesson_title ?? r.lesson_code}</span><b>{r.score}/{r.total}</b></li>)}
-                  </ul>
+                <div className="ph-card-hd"><div><h2 id="ph-res-title"><TrendingUp aria-hidden="true" /> Con luyện tập</h2><p className="ph-sub">{list.length ? `${lessons} bài · đúng trung bình ${avg}% (${list.length} lượt gần nhất)` : 'Con chưa làm bài nào'}</p></div></div>
+                {list.length === 0 ? <p className="dash-muted">Kết quả sẽ hiện ở đây sau mỗi bài con luyện tập. Gia đình nhắc con học một bài nhỏ mỗi ngày nhé!</p> : (
+                  <>
+                    <div className="ph-week" aria-label={`Số bài 7 ngày qua: ${perDay.join(', ')}`}>
+                      {last7.map((d, i) => (
+                        <div key={d} className={d === todayVn ? 'is-today' : undefined}>
+                          <span><i style={{ height: `${perDay[i] ? 18 + (perDay[i] / maxDay) * 82 : 4}%` }} /></span>
+                          <b>{perDay[i] || ''}</b><small>{weekday(d)}</small>
+                        </div>
+                      ))}
+                    </div>
+                    {bySubj.length > 0 && (
+                      <ul className="ph-subj">
+                        {bySubj.map((x) => <li key={x.k}><span>{SUBJ[x.k]}</span><i aria-hidden="true"><i style={{ width: `${x.pct}%` }} className={(x.pct ?? 0) >= 80 ? 'is-good' : (x.pct ?? 0) >= 60 ? 'is-mid' : 'is-low'} /></i><b>{x.pct}%</b></li>)}
+                      </ul>
+                    )}
+                    {weak && <p className="ph-tip">💡 Con còn chưa chắc môn <b>{SUBJ[weak.k]}</b> (đúng {weak.pct}%). Gia đình động viên con làm lại các bài môn này nhé.</p>}
+                    <ul className="ph-res">
+                      {list.slice(0, 4).map((r, i) => <li key={i}><span>{r.lesson_title ?? r.lesson_code}</span><b>{r.score}/{r.total}</b></li>)}
+                    </ul>
+                  </>
                 )}
               </section>
+            </div>
+
+            <div className="ph-side">
+              <ParentMessages
+                people={contacts.map((c) => ({ name: c.name, relation: c.relation }))}
+                teacher={cls?.teacher ?? null}
+                childName={childName}
+                initial={messages}
+              />
+              <FamilyInfo contacts={contacts} address={o?.address ?? null} className={cls?.name ?? null} />
             </div>
           </div>
         </main>

@@ -3,7 +3,7 @@
 // Phụ huynh nhắn cô giáo: xin phép nghỉ (chọn ngày), hỏi han, nhắn khác. Chọn người gửi từ danh bạ gia đình
 // (Bố/Mẹ/…), tin hiện ngay trên trang "Hôm nay" của cô kèm tên con. Bên dưới là các tin đã gửi và lời trả lời của cô.
 import { useMemo, useState } from 'react';
-import { CalendarDays, Send } from 'lucide-react';
+import { CalendarDays, MessageCircle, Send, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { KIND_ICON, KIND_LABEL, SEND_ERROR, STATUS_TEXT, ago, isMissing, leaveRange, senderLabel, type MsgKind, type ParentMsg } from '@/lib/classroom/messages';
 import { RELATIONS } from '@/lib/classroom/class-tools';
@@ -27,6 +27,11 @@ export default function ParentMessages({ people, teacher, childName, initial }: 
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(initial === null ? SEND_ERROR.missing : '');
   const [sent, setSent] = useState(false);
+  // Ô viết thu gọn: bấm "Xin phép nghỉ" / "Nhắn cô" mới mở
+  const [open, setOpen] = useState(false);
+  const [all, setAll] = useState(false);
+  const start = (k: MsgKind) => { setKind(k); setOpen(true); setSent(false); setErr(initial === null ? SEND_ERROR.missing : ''); };
+  const fresh = (iso: string | null) => !!iso && Date.now() - Date.parse(iso) < 3 * 86400_000;
   const co = teacher ? `cô ${teacher.trim().split(/\s+/).slice(-1)[0]}` : 'cô';
 
   const send = async () => {
@@ -41,7 +46,7 @@ export default function ParentMessages({ people, teacher, childName, initial }: 
     });
     if (error) { setBusy(false); setErr(isMissing(error.message) ? SEND_ERROR.missing : SEND_ERROR[Object.keys(SEND_ERROR).find((k) => error.message.includes(k)) ?? ''] ?? 'Chưa gửi được, vui lòng thử lại.'); return; }
     const { data } = await supabase.rpc('parent_messages_mine', { p_limit: 20 });
-    setList((data ?? []) as ParentMsg[]); setBody(''); setBusy(false); setSent(true);
+    setList((data ?? []) as ParentMsg[]); setBody(''); setBusy(false); setSent(true); setOpen(false);
   };
 
   const quick = kind === 'leave'
@@ -53,9 +58,18 @@ export default function ParentMessages({ people, teacher, childName, initial }: 
   return (
     <section className="ph-card pm" aria-labelledby="pm-title">
       <div className="ph-card-hd">
-        <div><h2 id="pm-title"><Send aria-hidden="true" /> Nhắn {co}</h2><p className="ph-sub">Xin phép cho con nghỉ học, hoặc hỏi han {co}. Tin nhắn hiện ngay trên trang làm việc của {co}.</p></div>
+        <div><h2 id="pm-title"><Send aria-hidden="true" /> Nhắn {co}</h2><p className="ph-sub">Xin phép cho con nghỉ học hoặc hỏi han {co}. {co[0].toUpperCase() + co.slice(1)} thấy tin ngay trên trang làm việc.</p></div>
       </div>
 
+      {!open && (
+        <div className="pm-start">
+          <button type="button" className="btn btn-primary" onClick={() => start('leave')}><CalendarDays aria-hidden="true" /> Xin phép nghỉ</button>
+          <button type="button" className="btn btn-outline" onClick={() => start('question')}><MessageCircle aria-hidden="true" /> Nhắn {co}</button>
+        </div>
+      )}
+      {sent && !open && <p className="adm-alert is-ok" role="status">Đã gửi tin nhắn cho {co}. Lời trả lời sẽ hiện ngay bên dưới.</p>}
+
+      {open && (<>
       <div className="pm-kinds" role="radiogroup" aria-label="Loại tin nhắn">
         {(['leave', 'question', 'other'] as MsgKind[]).map((k) => (
           <button key={k} type="button" role="radio" aria-checked={kind === k} className={kind === k ? 'is-on' : ''} onClick={() => setKind(k)}>
@@ -90,21 +104,25 @@ export default function ParentMessages({ people, teacher, childName, initial }: 
         </label>
         <div className="pm-quick">{quick.map((q) => <button key={q} type="button" onClick={() => setBody(q)}>{q}</button>)}</div>
         {err && <p className="adm-alert is-error" role="alert">{err}</p>}
-        {sent && <p className="adm-alert is-ok" role="status">Đã gửi tin nhắn cho {co}. Lời trả lời sẽ hiện ngay bên dưới.</p>}
-        <button type="button" className="btn btn-primary pm-send" onClick={() => void send()} disabled={busy || initial === null}><Send aria-hidden="true" /> {busy ? 'Đang gửi…' : kind === 'leave' ? 'Gửi xin phép' : 'Gửi tin nhắn'}</button>
+        <div className="pm-btns">
+          <button type="button" className="btn btn-primary pm-send" onClick={() => void send()} disabled={busy || initial === null}><Send aria-hidden="true" /> {busy ? 'Đang gửi…' : kind === 'leave' ? 'Gửi xin phép' : 'Gửi tin nhắn'}</button>
+          <button type="button" className="btn btn-outline pm-close" onClick={() => setOpen(false)}><X aria-hidden="true" /> Đóng</button>
+        </div>
       </div>
+      </>)}
 
       {list.length > 0 && (
         <div className="pm-hist">
-          <h3>Tin đã gửi</h3>
-          <ul>{list.map((m) => (
-            <li key={m.id} className={`is-${m.status}`}>
+          <h3>Tin đã gửi &amp; lời cô trả lời</h3>
+          <ul>{list.slice(0, all ? 20 : 3).map((m) => (
+            <li key={m.id} className={`is-${m.status}${m.reply && fresh(m.replied_at) ? ' is-fresh' : ''}`}>
               <div className="pm-hd"><b>{KIND_ICON[m.kind]} {KIND_LABEL[m.kind]}{m.kind === 'leave' && ` · ${leaveRange(m)}`}</b><span className={`pm-st is-${m.status}`}>{STATUS_TEXT[m.status]}</span></div>
               <p>{m.body}</p>
               <small>{senderLabel(m)} · {ago(m.created_at)}</small>
-              {m.reply && <div className="pm-reply"><b>Cô trả lời{m.replied_at ? ` · ${ago(m.replied_at)}` : ''}:</b> {m.reply}</div>}
+              {m.reply && <div className="pm-reply">{fresh(m.replied_at) && <span className="pm-new">Mới</span>}<b>Cô trả lời{m.replied_at ? ` · ${ago(m.replied_at)}` : ''}:</b> {m.reply}</div>}
             </li>
           ))}</ul>
+          {list.length > 3 && <button type="button" className="pm-more" onClick={() => setAll((v) => !v)}>{all ? 'Thu gọn' : `Xem thêm ${list.length - 3} tin`}</button>}
         </div>
       )}
     </section>

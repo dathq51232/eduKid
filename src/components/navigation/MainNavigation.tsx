@@ -7,6 +7,8 @@ import { BookOpen, Crown, Puzzle, Trophy, Users, type LucideIcon } from 'lucide-
 type NavItem = {
   href: string;
   label: string;
+  /** nhãn ngắn trên điện thoại (thanh 5 ô) */
+  short?: string;
   icon: LucideIcon;
   /** Các đường dẫn cũng thuộc về mục này (để tô sáng đúng tab) */
   match: string[];
@@ -14,10 +16,10 @@ type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: '/chon-bai', label: 'Học tập', icon: BookOpen, match: ['/chon-bai', '/lam-bai', '/ket-qua'] },
-  { href: '/tro-choi', label: 'Game trí tuệ', icon: Puzzle, match: ['/tro-choi'] },
+  { href: '/tro-choi', label: 'Game trí tuệ', short: 'Game', icon: Puzzle, match: ['/tro-choi'] },
   { href: '/co', label: 'Đấu cờ', icon: Crown, match: ['/co'] },
   { href: '/thanh-tich', label: 'Thành tích', icon: Trophy, match: ['/thanh-tich'] },
-  { href: '/phu-huynh', label: 'Phụ huynh', icon: Users, match: ['/phu-huynh'] },
+  { href: '/phu-huynh', label: 'Phụ huynh', short: 'Bố mẹ', icon: Users, match: ['/phu-huynh'] },
 ];
 
 const isActive = (pathname: string, item: NavItem) =>
@@ -36,7 +38,8 @@ export default function MainNavigation({ className = '' }: { className?: string 
             <li key={item.href}>
               <Link href={item.href} className="main-nav-link" aria-current={active ? 'page' : undefined}>
                 <Icon className="main-nav-icon" aria-hidden="true" strokeWidth={2.3} />
-                <span>{item.label}</span>
+                <span className={item.short ? 'nav-long' : undefined}>{item.label}</span>
+                {item.short && <span className="nav-short">{item.short}</span>}
               </Link>
             </li>
           );

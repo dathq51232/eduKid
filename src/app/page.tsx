@@ -3,6 +3,7 @@ import { ArrowRight, BookOpen, Calculator, ClipboardList, FileText, Gamepad2, Gr
 import LearnHeader from '@/components/LearnHeader';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import GameArt from '@/components/games/GameArt';
+import HomeWelcome from '@/components/home/HomeWelcome';
 import { GAMES } from '@/lib/games/catalog';
 import { SUBJECT_MASCOT } from '@/lib/mascots';
 import { CONTENT } from '@/lib/content';
@@ -48,6 +49,7 @@ export default function HomePage() {
     <>
       <LearnHeader />
       <main className="site-shell home">
+        <HomeWelcome />
         {/* ---------------------------------------------- Hero (tranh nền + Milo giữ nguyên) */}
         <section id="home" className="home-hero wrap">
           <div className="home-hero-card">
@@ -92,7 +94,7 @@ export default function HomePage() {
               <div className="auth-roles">
                 <Link href="/dang-nhap?vai=nguoi-lon" className="auth-role is-teacher"><Presentation aria-hidden="true" /><span><small>Dành cho</small><b>Giáo viên</b></span></Link>
                 <Link href="/dang-nhap" className="auth-role is-student"><GraduationCap aria-hidden="true" /><span><small>Dành cho</small><b>Học sinh</b></span></Link>
-                <Link href="/phu-huynh" className="auth-role is-parent"><Users aria-hidden="true" /><span><small>Dành cho</small><b>Phụ huynh</b></span></Link>
+                <Link href="/dang-nhap?vai=phu-huynh&next=/phu-huynh" className="auth-role is-parent"><Users aria-hidden="true" /><span><small>Dành cho</small><b>Phụ huynh</b></span></Link>
               </div>
             </div>
           </div>
