@@ -1,12 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Award as AwardIcon, Check, ChevronLeft, ChevronRight, FileDown, ImageDown, Printer, Upload, X } from 'lucide-react';
+import { Award as AwardIcon, Check, ChevronLeft, ChevronRight, FileDown, ImageDown, Palette, Printer, RotateCcw, Upload, X } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { asciiFilename } from '@/lib/filename';
 import { zipStore } from '@/lib/xlsx';
 import { buildImagePdf, downloadBytes } from '@/lib/praise/pdf';
 import { canvasBlob, drawLetter, loadImage, loadPraiseFonts, loadTemplateAssets, renderLetterCanvas, type LetterData } from '@/lib/praise/render';
+import { isCustomized, readDesigns, writeDesigns, type PraiseDesign } from '@/lib/praise/design';
 import { LETTER_H, LETTER_W, PRAISE_REASONS, PRAISE_TEMPLATES, defaultTemplateFor, fillReason, templateById, type PraiseTemplateId } from '@/lib/praise/templates';
+
+const PraiseEditor = dynamic(() => import('./PraiseEditor'), { ssr: false });
 
 type Student = { id: string; name: string };
 type AwardRow = { student_id: string; title: string; awarded_on: string };
@@ -92,6 +96,20 @@ export default function PraiseLetters({ className, grade, students, awards, teac
 
   const selected = useMemo(() => students.filter((st) => rows[st.id]?.on), [students, rows]);
   const tpl = templateById(s.tpl);
+  // ------------------------------------------------ thiết kế riêng (trình chỉnh sửa kiểu Canva), lưu theo từng mẫu
+  const [designs, setDesigns] = useState<Record<string, PraiseDesign>>({});
+  useEffect(() => { setDesigns(readDesigns()); }, []);
+  const design = designs[tpl.id] ?? null;
+  const [editing, setEditing] = useState(false);
+  const saveDesign = (d: PraiseDesign | null) => {
+    const next = { ...designs };
+    if (d && isCustomized(d)) next[tpl.id] = d; else delete next[tpl.id];
+    const err = writeDesigns(next);
+    if (err) { setMsg({ kind: 'error', text: err }); return false; }
+    setDesigns(next);
+    setMsg({ kind: 'ok', text: d && isCustomized(d) ? 'Đã lưu thiết kế. Thư xuất PDF / ảnh / in sẽ dùng thiết kế này.' : 'Đã đưa thư về mẫu gốc.' });
+    return true;
+  };
   const commonReason = s.reason === CUSTOM ? s.customReason : PRAISE_REASONS[s.reason] ?? PRAISE_REASONS[0];
 
   const letterFor = useCallback((st: Student): LetterData => {
@@ -112,15 +130,15 @@ export default function PraiseLetters({ className, grade, students, awards, teac
     let live = true;
     const id = setTimeout(async () => {
       await loadPraiseFonts();
-      const assets = await loadTemplateAssets(tpl).catch(() => null);
+      const assets = await loadTemplateAssets(tpl, design).catch(() => null);
       const c = preview.current;
       const ctx = c?.getContext('2d');
       if (!live || !assets || !ctx) return;
-      drawLetter(ctx, tpl, assets, letterFor(shown));
+      drawLetter(ctx, tpl, assets, letterFor(shown), design);
       c!.dataset.ready = '1';
     }, 120);
     return () => { live = false; clearTimeout(id); };
-  }, [tpl, letterFor, shown]);
+  }, [tpl, letterFor, shown, design]);
 
   // ------------------------------------------------ ảnh thu nhỏ các mẫu
   const thumbs = useRef<(HTMLCanvasElement | null)[]>([]);
@@ -148,11 +166,11 @@ export default function PraiseLetters({ className, grade, students, awards, teac
     if (!selected.length) { askToPick(); return null; }
     setMsg(null);
     await loadPraiseFonts();
-    const assets = await loadTemplateAssets(tpl);
+    const assets = await loadTemplateAssets(tpl, design);
     const out: { student: Student; blob: Blob; w: number; h: number }[] = [];
     for (const [i, st] of selected.entries()) {
       setBusy(`${label} ${i + 1}/${selected.length}…`);
-      const c = renderLetterCanvas(tpl, assets, letterFor(st), scale);
+      const c = renderLetterCanvas(tpl, assets, letterFor(st), scale, design);
       out.push({ student: st, blob: await canvasBlob(c, type, type === 'image/jpeg' ? 0.9 : undefined), w: c.width, h: c.height });
       await new Promise((r) => setTimeout(r, 0)); // nhường cho giao diện cập nhật tiến độ
     }
@@ -377,7 +395,10 @@ export default function PraiseLetters({ className, grade, students, awards, teac
 
         <aside className="praise-preview" aria-label="Xem trước và tải về">
           <section className="dash-section praise-card">
-            <h2>Xem trước</h2>
+            <div className="praise-prev-head">
+              <h2>Xem trước</h2>
+              {isCustomized(design) && <span className="praise-custom-tag">Đã chỉnh sửa</span>}
+            </div>
             <canvas ref={preview} width={LETTER_W} height={LETTER_H} className="praise-canvas" role="img" aria-label={`Thư khen của ${shown.name}`} />
             <div className="praise-pager">
               <button type="button" className="btn btn-outline btn-sm" disabled={selected.length < 2} onClick={() => setPage((p) => (p - 1 + selected.length) % selected.length)} aria-label="Thư trước"><ChevronLeft aria-hidden="true" /></button>
@@ -390,6 +411,10 @@ export default function PraiseLetters({ className, grade, students, awards, teac
                 <button type="button" className="mini-btn" onClick={() => { selectAll(true); setMsg(null); }}>Chọn cả lớp ({students.length} em)</button>
               </p>
             )}
+            <div className="praise-edit-row">
+              <button type="button" className="btn btn-outline btn-sm praise-edit-btn" disabled={!!busy} onClick={() => { setMsg(null); setEditing(true); }}><Palette aria-hidden="true" /> Chỉnh sửa thiết kế</button>
+              {isCustomized(design) && <button type="button" className="btn btn-outline btn-sm" disabled={!!busy} onClick={() => saveDesign(null)}><RotateCcw aria-hidden="true" /> Về mẫu gốc</button>}
+            </div>
             <div className="praise-dl">
               <button type="button" className="btn btn-primary btn-sm" disabled={!!busy} onClick={() => void downloadPdf()}><FileDown aria-hidden="true" /> Tải PDF{selected.length ? ` (${selected.length} trang)` : ''}</button>
               <button type="button" className="btn btn-outline btn-sm" disabled={!!busy} onClick={() => void downloadPng()}><ImageDown aria-hidden="true" /> Tải ảnh PNG</button>
@@ -401,6 +426,10 @@ export default function PraiseLetters({ className, grade, students, awards, teac
           </section>
         </aside>
       </div>
+
+      {editing && (
+        <PraiseEditor tpl={tpl} data={letterFor(shown)} initial={design} onClose={() => setEditing(false)} onSave={(d) => { if (saveDesign(d)) setEditing(false); }} />
+      )}
 
       {printUrls.length > 0 && (
         <div className="praise-print" aria-hidden="true">
