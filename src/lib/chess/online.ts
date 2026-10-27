@@ -24,6 +24,16 @@ export async function chessMe(): Promise<ChessMeResult> {
   return { ok: true, me: { studentId: v.studentId, schoolId: c.school_id, name: (st as { display_name?: string } | null)?.display_name ?? 'Em', className: c.name } };
 }
 
+/** Chỉ cần biết em là học sinh nào (dùng cho mỗi nước đi — ít truy vấn hơn chessMe để phản hồi nhanh) */
+export async function chessStudentId(): Promise<{ ok: true; studentId: string } | { ok: false; error: 'signed_out' | 'not_student' | 'not_configured' }> {
+  const v = await getViewer();
+  if (v.state === 'not_configured') return { ok: false, error: 'not_configured' };
+  if (v.state !== 'ok') return { ok: false, error: 'signed_out' };
+  if (!v.isStudent || !v.studentId) return { ok: false, error: 'not_student' };
+  if (!hasServiceRole()) return { ok: false, error: 'not_configured' };
+  return { ok: true, studentId: v.studentId };
+}
+
 /** Tên + lớp của các học sinh (chỉ hiện tên trong cùng trường) */
 export async function namesFor(ids: string[]): Promise<Record<string, { name: string; cls: string }>> {
   const uniq = [...new Set(ids)].filter(Boolean);

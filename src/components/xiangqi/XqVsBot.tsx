@@ -11,6 +11,7 @@ import { xqEvaluate, xqPickMove } from '@/lib/xiangqi/bot';
 import { BOT_LEVELS, type BotLevel } from '@/lib/chess/bot';
 import { TIME_CONTROLS, fmtClock, reasonText } from '@/lib/chess/game';
 import { playSound } from '@/lib/sound';
+import { LiveClock } from '@/components/chess/ChessParts';
 
 type Pick = 'w' | 'b' | 'x';
 type Setup = { pick: Pick; level: BotLevel; tc: string };
@@ -57,7 +58,6 @@ export default function XqVsBot() {
   const tc = TIME_CONTROLS.find((t) => t.id === setup.tc) ?? TIME_CONTROLS[0];
   const timed = tc.base > 0;
   const clock = useRef({ w: 0, b: 0, since: 0 });
-  const [, force] = useState(0);
   const ask = useXqWorker();
   const gen = useRef(0);
   const g = gRef.current;
@@ -94,8 +94,7 @@ export default function XqVsBot() {
         c[side] = 0; c.since = Date.now();
         finish(gRef.current.canMate(other(side)) ? { winner: other(side), reason: 'timeout' } : { winner: null, reason: 'timeout_vs_material' });
       }
-      force((n) => n + 1);
-    }, 100);
+    }, 250); // chỉ kiểm tra hết giờ; con số trên đồng hồ do LiveClock tự vẽ
     return () => clearInterval(id);
   }, [phase, timed, result, finish]);
 
@@ -148,7 +147,6 @@ export default function XqVsBot() {
   const checkPt = g.inCheck() ? pt(g.bd.king(g.bd.side)) : null;
   const orientation: XSide = flip ? other(me) : me;
   const levelInfo = BOT_LEVELS.find((l) => l.id === setup.level)!;
-  const timeLeft = (c: XSide) => { const k = clock.current; return c === g.turn() && !result ? k[c] - (Date.now() - k.since) : k[c]; };
   const status = result
     ? (result.winner === null ? `Hòa · ${reasonText(result.reason, 'xiangqi')}` : `${result.winner === me ? 'Em thắng' : 'Máy thắng'} · ${reasonText(result.reason, 'xiangqi')}`)
     : thinking ? 'Máy đang nghĩ…' : g.turn() === me ? (g.inCheck() ? 'Tướng của em đang bị chiếu!' : 'Đến lượt em') : '';
@@ -190,7 +188,7 @@ export default function XqVsBot() {
     );
   }
 
-  const Card = ({ side }: { side: XSide }) => {
+  const card = (side: XSide) => {
     const isMe = side === me; const active = !result && g.turn() === side;
     const caps = side === 'w' ? cap.w : cap.b; const adv = side === 'w' ? cap.diff : -cap.diff;
     return (
@@ -201,7 +199,7 @@ export default function XqVsBot() {
           <span className="xq-capline"><CapturedRow kinds={caps} side={side === 'w' ? 'b' : 'r'} />{adv > 0 && <em>+{adv}</em>}</span>
         </div>
         {!isMe && thinking && <span className="chs-think" aria-hidden="true"><i /><i /><i /></span>}
-        {timed && <span className={`chs-clock${active ? ' is-on' : ''}${timeLeft(side) < 20000 ? ' is-low' : ''}`}>{fmtClock(timeLeft(side))}</span>}
+        {timed && <LiveClock key={`${side}-${clock.current.since}-${result ? 'end' : 'on'}`} left={clock.current[side]} since={clock.current.since} running={active} fmt={fmtClock} />}
       </div>
     );
   };
@@ -209,9 +207,9 @@ export default function XqVsBot() {
   return (
     <section className="chs-play xq-play">
       <div className="chs-main">
-        <Card side={other(orientation)} />
+        {card(other(orientation))}
         <XiangqiBoard board={board} orientation={orientation === 'w' ? 'r' : 'b'} selected={sel !== null ? pt(sel) : null} targets={targets} lastMove={last} check={checkPt} hint={hint ? { from: pt(hint.from), to: pt(hint.to) } : null} onPoint={onPoint} label={`Bàn cờ tướng, em cầm quân ${XQ_SIDE[me]}`} />
-        <Card side={orientation} />
+        {card(orientation)}
       </div>
       <aside className="chs-side">
         <p className={`chs-status${result ? ' is-end' : ''}`} role="status" aria-live="polite">{status || ' '}</p>

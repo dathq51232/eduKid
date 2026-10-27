@@ -1,6 +1,7 @@
 'use client';
 // Mảnh giao diện dùng chung cho các trang cờ vua: tab chế độ, danh sách nước đi có hình quân.
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import type { Color, PieceSymbol } from 'chess.js';
 import { PieceIcon } from './ChessPieces';
 
@@ -36,4 +37,19 @@ export function ChessTabs({ active, base = '/co/vua' }: { active: ChessTab; base
       <span className="is-soon">Giải đấu <em>sắp có</em></span>
     </nav>
   );
+}
+
+/**
+ * Đồng hồ tự chạy: chỉ thành phần này vẽ lại theo nhịp, không kéo cả bàn cờ vẽ lại theo.
+ * left = thời gian còn lại (ms) tại mốc since (Date.now() của máy này); running = đang trừ giờ.
+ */
+export function LiveClock({ left, since, running, fmt }: { left: number; since: number; running: boolean; fmt: (ms: number) => string }) {
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (!running) return;
+    const t = setInterval(() => tick((n) => n + 1), 250);
+    return () => clearInterval(t);
+  }, [running]);
+  const ms = running ? left - (Date.now() - since) : left;
+  return <span className={`chs-clock${running ? ' is-on' : ''}${ms < 20000 ? ' is-low' : ''}`}>{fmt(ms)}</span>;
 }

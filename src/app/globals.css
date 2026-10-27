@@ -4698,10 +4698,13 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .chs-play { position: relative; display: grid; grid-template-columns: minmax(0, clamp(320px, calc(100svh - 330px), 640px)) minmax(260px, 1fr); gap: 20px; align-items: start; }
 .chs-main { display: grid; gap: 10px; }
 .chs-board, .xq-board { position: relative; border-radius: 22px; overflow: hidden; box-shadow: 0 18px 34px rgb(42 22 7 / .35); user-select: none; -webkit-user-select: none; }
-.xq-board svg { display: block; width: 100%; height: auto; cursor: pointer; }
+.xq-board svg, .chs-board svg { display: block; width: 100%; height: auto; cursor: pointer; }
+/* Hai lớp: nền gỗ tĩnh (vẽ một lần, lớp riêng) + lớp quân cờ trong suốt phía trên */
+.xq-bg, .chs-bg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; transform: translateZ(0); }
+.xq-fg, .chs-fg { position: relative; }
 .xq-last circle { fill: rgb(30 110 220 / .55); }
 .xq-last path { stroke: #1e6edc; stroke-width: 4; }
-.xq-check { fill: rgb(229 72 77 / .5); filter: blur(5px); }
+.xq-check { fill: rgb(229 72 77 / .38); stroke: rgb(229 72 77 / .7); stroke-width: 4; }
 .xq-tgt { fill: rgb(30 110 60 / .75); stroke: #e9ffe9; stroke-width: 2; }
 .xq-tgt-cap { fill: none; stroke: rgb(220 38 38 / .8); stroke-width: 5; stroke-dasharray: 10 6; }
 .chs-board svg { display: block; width: 100%; height: auto; cursor: pointer; }
@@ -4712,7 +4715,7 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .chs-hint { fill: rgb(245 158 11 / .28); }
 .chs-arrow { stroke: #f59e0b; stroke-width: 16; stroke-linecap: round; opacity: .9; pointer-events: none; }
 .chs-arrow-head { fill: #f59e0b; opacity: .9; pointer-events: none; }
-.chs-check { fill: rgb(229 72 77 / .55); filter: blur(6px); }
+.chs-check { fill: rgb(229 72 77 / .4); stroke: rgb(229 72 77 / .7); stroke-width: 4; }
 .chs-tgt { fill: rgb(30 43 74 / .32); pointer-events: none; }
 .chs-tgt-cap { fill: none; stroke: rgb(30 43 74 / .35); stroke-width: 8; pointer-events: none; }
 .chs-coord text { font: 800 22px/1 system-ui, sans-serif; fill: #f1d3a1; opacity: .9; pointer-events: none; }
@@ -4720,7 +4723,7 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .chs-piece.is-ghost { opacity: .35; }
 .chs-piece.is-moved { animation: chs-slide .22s ease-out; }
 @keyframes chs-slide { from { transform: translate(var(--dx), var(--dy)); } to { transform: translate(0, 0); } }
-.chs-drag { pointer-events: none; filter: drop-shadow(0 8px 6px rgb(0 0 0 / .3)); }
+.chs-drag { pointer-events: none; }
 .chs-promo { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; background: rgb(15 20 35 / .55); backdrop-filter: blur(2px); }
 .chs-promo p { color: #fff; font-weight: 800; font-size: 18px; }
 .chs-promo > div { display: flex; gap: 8px; padding: 10px; border-radius: 18px; background: var(--surface); }

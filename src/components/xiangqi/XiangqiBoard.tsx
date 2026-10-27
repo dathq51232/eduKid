@@ -3,8 +3,8 @@
 // Bàn cờ tướng gỗ chạm (theo mẫu bàn gỗ truyền thống): 9 đường dọc × 10 đường ngang, sông, cung tướng,
 // dấu chữ thập ở vị trí pháo/tốt, quân tròn bằng gỗ khắc chữ Hán đỏ / đen. Mặt bàn không có chữ.
 // Thành phần này chỉ vẽ và báo điểm được chạm; luật cờ tướng nằm ở src/lib/xiangqi.
-import { useId } from 'react';
-import { WoodDefs, WoodFrame, WoodSurface } from '@/components/chess/Wood';
+import { memo, useId } from 'react';
+import { DiscDefs, WoodDefs, WoodFrame, WoodSurface } from '@/components/chess/Wood';
 import { XQ_GLYPHS } from '@/lib/xiangqi/glyphs';
 
 export type XqSide = 'r' | 'b';
@@ -27,16 +27,16 @@ const H = 2 * T + 2 * PAD + 9 * C;
 const GX = T + PAD, GY = T + PAD;
 const INK = '#3a2210';
 
-/** Quân cờ tướng gỗ (tâm 0,0; bán kính ~36), khắc tên quân tiếng Việt */
+/** Quân cờ tướng gỗ (tâm 0,0; bán kính ~36), khắc chữ Hán. Không dùng bộ lọc SVG (bóng là hình elip) để máy yếu vẫn mượt. */
 export function XqDisc({ p, piece, lifted = false }: { p: string; piece: XqPiece; lifted?: boolean }) {
   const red = piece.side === 'r';
   const ink = red ? '#b4231a' : '#2a1d14';
   const ch = XQ_HAN[piece.side][piece.kind];
   return (
-    <g filter={`url(#${p}${lifted ? 'lift' : 'shadow'})`}>
+    <g>
+      <ellipse cx={lifted ? 3 : 1.5} cy={lifted ? 12 : 6} rx="37" ry="35" fill="#2a1607" opacity={lifted ? 0.28 : 0.32} />
       <circle cy="3.5" r="36" fill={`url(#${p}edge)`} />
       <circle r="35" fill={`url(#${p}disc)`} stroke="#9a6b3b" strokeWidth="1.5" />
-      <circle r="35" fill="#000" filter={`url(#${p}grainV)`} opacity=".14" />
       <circle r="28.5" fill="none" stroke={ink} strokeWidth="2.2" opacity=".85" />
       <circle r="27" fill="none" stroke="#fff6e4" strokeWidth=".9" opacity=".6" />
       <path d={XQ_GLYPHS[ch]} transform="translate(-23 -23) scale(.46)" fill={ink}><title>{XQ_VIET[piece.kind]}</title></path>
@@ -56,39 +56,11 @@ type Props = {
   label?: string;
 };
 
-export default function XiangqiBoard({ board, orientation = 'r', selected, targets = [], lastMove, check, hint, onPoint, label }: Props) {
+function XiangqiBoard({ board, orientation = 'r', selected, targets = [], lastMove, check, hint, onPoint, label }: Props) {
   const p = `xq${useId().replace(/:/g, '')}`;
   const flip = orientation === 'b';
   const X = (f: number) => GX + (flip ? 8 - f : f) * C;
   const Y = (r: number) => GY + (flip ? 9 - r : r) * C;
-
-  const line = (x1: number, y1: number, x2: number, y2: number, k: string) => (
-    <g key={k}>
-      <line x1={x1 + 1.2} y1={y1 + 1.2} x2={x2 + 1.2} y2={y2 + 1.2} stroke="#efc993" strokeWidth="2" opacity=".55" />
-      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={INK} strokeWidth="2.4" strokeLinecap="round" />
-    </g>
-  );
-  const lines: React.ReactNode[] = [];
-  for (let r = 0; r <= 9; r++) lines.push(line(GX, GY + r * C, GX + 8 * C, GY + r * C, `h${r}`));
-  for (let f = 0; f <= 8; f++) {
-    if (f === 0 || f === 8) lines.push(line(GX + f * C, GY, GX + f * C, GY + 9 * C, `v${f}`));
-    else { lines.push(line(GX + f * C, GY, GX + f * C, GY + 4 * C, `vt${f}`)); lines.push(line(GX + f * C, GY + 5 * C, GX + f * C, GY + 9 * C, `vb${f}`)); }
-  }
-  for (const [r0, r1] of [[0, 2], [7, 9]]) {
-    lines.push(line(GX + 3 * C, GY + r0 * C, GX + 5 * C, GY + r1 * C, `d${r0}a`));
-    lines.push(line(GX + 5 * C, GY + r0 * C, GX + 3 * C, GY + r1 * C, `d${r0}b`));
-  }
-  // Dấu chữ thập vị trí pháo, tốt
-  const marks: [number, number][] = [[1, 2], [7, 2], [1, 7], [7, 7], ...[0, 2, 4, 6, 8].flatMap((f) => [[f, 3], [f, 6]] as [number, number][])];
-  const markPaths = marks.map(([f, r]) => {
-    const x = GX + f * C, y = GY + r * C, g = 7, l = 15;
-    let d = '';
-    for (const sx of [-1, 1]) {
-      if ((f === 0 && sx === -1) || (f === 8 && sx === 1)) continue;
-      for (const sy of [-1, 1]) d += `M${x + sx * (g + l)} ${y + sy * g}H${x + sx * g}V${y + sy * (g + l)}`;
-    }
-    return <path key={`m${f}${r}`} d={d} fill="none" stroke={INK} strokeWidth="2.2" />;
-  });
 
   const hit = (e: React.PointerEvent<SVGSVGElement>) => {
     if (!onPoint) return;
@@ -102,14 +74,9 @@ export default function XiangqiBoard({ board, orientation = 'r', selected, targe
 
   return (
     <div className="xq-board">
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label ?? 'Bàn cờ tướng'} onPointerDown={hit} style={{ touchAction: 'manipulation' }}>
-        <WoodDefs p={p} />
-        <WoodFrame p={p} w={W} h={H} t={T} />
-        <WoodSurface p={p} x={T} y={T} w={W - 2 * T} h={H - 2 * T} />
-        {/* viền đôi quanh lưới */}
-        <rect x={GX - 9} y={GY - 9} width={8 * C + 18} height={9 * C + 18} fill="none" stroke={INK} strokeWidth="4" />
-        {lines}
-        {markPaths}
+      <XqBackdrop />
+      <svg className="xq-fg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label ?? 'Bàn cờ tướng'} onPointerDown={hit} style={{ touchAction: 'manipulation' }}>
+        <DiscDefs p={p} />
         {lastMove && [lastMove.from, lastMove.to].map((pt, i) => (
           <g key={`lm${i}`} transform={`translate(${X(pt.f)} ${Y(pt.r)})`} className="xq-last">
             {i === 0 ? <circle r="10" /> : <path d="M-40 -26v-14h14M26 -40h14v14M40 26v14h-14M-26 40h-14v-14" fill="none" />}
@@ -139,6 +106,52 @@ export default function XiangqiBoard({ board, orientation = 'r', selected, targe
   );
 }
 
+// Lớp nền tĩnh (khung chạm, vân gỗ, đường kẻ): vẽ MỘT lần, nằm ở lớp riêng phía dưới.
+// Quân cờ di chuyển ở lớp trên nên trình duyệt không phải tính lại vân gỗ (bộ lọc SVG nặng) mỗi nước đi.
+const XqBackdrop = memo(function XqBackdrop() {
+  const p = `xb${useId().replace(/:/g, '')}`;
+  const line = (x1: number, y1: number, x2: number, y2: number, k: string) => (
+    <g key={k}>
+      <line x1={x1 + 1.2} y1={y1 + 1.2} x2={x2 + 1.2} y2={y2 + 1.2} stroke="#efc993" strokeWidth="2" opacity=".55" />
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={INK} strokeWidth="2.4" strokeLinecap="round" />
+    </g>
+  );
+  const lines: React.ReactNode[] = [];
+  for (let r = 0; r <= 9; r++) lines.push(line(GX, GY + r * C, GX + 8 * C, GY + r * C, `h${r}`));
+  for (let f = 0; f <= 8; f++) {
+    if (f === 0 || f === 8) lines.push(line(GX + f * C, GY, GX + f * C, GY + 9 * C, `v${f}`));
+    else { lines.push(line(GX + f * C, GY, GX + f * C, GY + 4 * C, `vt${f}`)); lines.push(line(GX + f * C, GY + 5 * C, GX + f * C, GY + 9 * C, `vb${f}`)); }
+  }
+  for (const [r0, r1] of [[0, 2], [7, 9]]) {
+    lines.push(line(GX + 3 * C, GY + r0 * C, GX + 5 * C, GY + r1 * C, `d${r0}a`));
+    lines.push(line(GX + 5 * C, GY + r0 * C, GX + 3 * C, GY + r1 * C, `d${r0}b`));
+  }
+  // Dấu chữ thập vị trí pháo, tốt
+  const marks: [number, number][] = [[1, 2], [7, 2], [1, 7], [7, 7], ...[0, 2, 4, 6, 8].flatMap((f) => [[f, 3], [f, 6]] as [number, number][])];
+  const markPaths = marks.map(([f, r]) => {
+    const x = GX + f * C, y = GY + r * C, g = 7, l = 15;
+    let d = '';
+    for (const sx of [-1, 1]) {
+      if ((f === 0 && sx === -1) || (f === 8 && sx === 1)) continue;
+      for (const sy of [-1, 1]) d += `M${x + sx * (g + l)} ${y + sy * g}H${x + sx * g}V${y + sy * (g + l)}`;
+    }
+    return <path key={`m${f}${r}`} d={d} fill="none" stroke={INK} strokeWidth="2.2" />;
+  });
+
+  return (
+    <svg className="xq-bg" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+      <WoodDefs p={p} />
+      <WoodFrame p={p} w={W} h={H} t={T} />
+      <WoodSurface p={p} x={T} y={T} w={W - 2 * T} h={H - 2 * T} />
+      <rect x={GX - 9} y={GY - 9} width={8 * C + 18} height={9 * C + 18} fill="none" stroke={INK} strokeWidth="4" />
+      {lines}
+      {markPaths}
+    </svg>
+  );
+});
+
+export default memo(XiangqiBoard);
+
 /** Thế cờ ban đầu */
 export function xqStart(): (XqPiece | null)[][] {
   const B: (XqPiece | null)[][] = [...Array(10)].map(() => Array(9).fill(null));
@@ -154,7 +167,7 @@ export function XqDiscIcon({ piece, size = 64 }: { piece: XqPiece; size?: number
   const p = `xqi${useId().replace(/:/g, '')}`;
   return (
     <svg viewBox="-42 -42 84 90" width={size} height={size * 90 / 84} aria-hidden="true">
-      <WoodDefs p={p} />
+      <DiscDefs p={p} />
       <XqDisc p={p} piece={piece} />
     </svg>
   );

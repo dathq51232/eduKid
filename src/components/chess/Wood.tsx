@@ -84,3 +84,20 @@ export function WoodSurface({ p, x, y, w, h }: { p: string; x: number; y: number
     </g>
   );
 }
+
+/** Chỉ các dải màu cho quân cờ tướng (không có bộ lọc) — dùng ở lớp quân cờ */
+export function DiscDefs({ p }: { p: string }) {
+  return (
+    <defs>
+      <radialGradient id={`${p}disc`} cx=".38" cy=".32" r=".75">
+        <stop offset="0" stopColor="#fbf0da" />
+        <stop offset=".6" stopColor="#ecd3a6" />
+        <stop offset="1" stopColor="#d4b07a" />
+      </radialGradient>
+      <linearGradient id={`${p}edge`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#c99c63" />
+        <stop offset="1" stopColor="#8c6236" />
+      </linearGradient>
+    </defs>
+  );
+}

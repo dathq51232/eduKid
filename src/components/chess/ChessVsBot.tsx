@@ -7,7 +7,7 @@ import { Chess, type Color, type PieceSymbol } from 'chess.js';
 import { Bot, Flag, Handshake, Lightbulb, Play, RefreshCcw, RotateCcw, Undo2, User } from 'lucide-react';
 import ChessBoard, { type BoardMove } from './ChessBoard';
 import { PieceIcon } from './ChessPieces';
-import { MoveList } from './ChessParts';
+import { LiveClock, MoveList } from './ChessParts';
 import { BOT_LEVELS, Board, pickMove, type BotLevel, type BotMove } from '@/lib/chess/bot';
 import { REASON_TEXT, SIDE_NAME, TIME_CONTROLS, boardResult, captured, fmtClock, timeoutResult, type GameResult } from '@/lib/chess/game';
 import { playSound } from '@/lib/sound';
@@ -57,7 +57,6 @@ export default function ChessVsBot() {
   const tc = TIME_CONTROLS.find((t) => t.id === setup.tc) ?? TIME_CONTROLS[0];
   const timed = tc.base > 0;
   const clock = useRef({ w: 0, b: 0, since: 0 });
-  const [, force] = useState(0);
   const ask = useBotWorker();
   const gen = useRef(0); // đổi ván thì bỏ qua nước máy của ván cũ
 
@@ -106,8 +105,7 @@ export default function ChessVsBot() {
       const c = clock.current; const side = gameRef.current.turn();
       const left = c[side] - (Date.now() - c.since);
       if (left <= 0) { c[side] = 0; c.since = Date.now(); finish(timeoutResult(gameRef.current, side)); }
-      force((n) => n + 1);
-    }, 100);
+    }, 250); // chỉ kiểm tra hết giờ; con số trên đồng hồ do LiveClock tự vẽ
     return () => clearInterval(id);
   }, [phase, timed, result, finish]);
 
@@ -144,7 +142,6 @@ export default function ChessVsBot() {
 
   const cap = useMemo(() => captured(new Chess(fen)), [fen]);
   const orientation: Color = flip ? other(me) : me;
-  const timeLeft = (c: Color) => { const k = clock.current; return c === g.turn() && !result ? k[c] - (Date.now() - k.since) : k[c]; };
   const levelInfo = BOT_LEVELS.find((l) => l.id === setup.level)!;
   const status = result
     ? (result.winner === null ? `Hòa · ${REASON_TEXT[result.reason]}` : `${result.winner === me ? 'Em thắng' : 'Máy thắng'} · ${REASON_TEXT[result.reason]}`)
@@ -194,7 +191,7 @@ export default function ChessVsBot() {
     );
   }
 
-  const Card = ({ side }: { side: Color }) => {
+  const card = (side: Color) => {
     const isMe = side === me; const active = !result && g.turn() === side;
     const caps = side === 'w' ? cap.w : cap.b; const adv = side === 'w' ? cap.diff : -cap.diff;
     return (
@@ -205,7 +202,7 @@ export default function ChessVsBot() {
           <span className="chs-caps">{caps.map((t: PieceSymbol, i) => <PieceIcon key={i} type={t} color={other(side)} size={18} />)}{adv > 0 && <em>+{adv}</em>}</span>
         </div>
         {!isMe && thinking && <span className="chs-think" aria-hidden="true"><i /><i /><i /></span>}
-        {timed && <span className={`chs-clock${active ? ' is-on' : ''}${timeLeft(side) < 20000 ? ' is-low' : ''}`}>{fmtClock(timeLeft(side))}</span>}
+        {timed && <LiveClock key={`${side}-${clock.current.since}-${result ? 'end' : 'on'}`} left={clock.current[side]} since={clock.current.since} running={active} fmt={fmtClock} />}
       </div>
     );
   };
@@ -214,9 +211,9 @@ export default function ChessVsBot() {
   return (
     <section className="chs-play">
       <div className="chs-main">
-        <Card side={orientation === 'w' ? 'b' : 'w'} />
+        {card(orientation === 'w' ? 'b' : 'w')}
         <ChessBoard fen={fen} orientation={orientation} movable={result || thinking ? null : me} lastMove={last} hint={hint} onMove={(m) => { apply(m); }} label={`Bàn cờ, em cầm quân ${SIDE_NAME[me]}`} />
-        <Card side={orientation} />
+        {card(orientation)}
       </div>
       <aside className="chs-side">
         <p className={`chs-status${result ? ' is-end' : ''}`} role="status" aria-live="polite">{status || ' '}</p>

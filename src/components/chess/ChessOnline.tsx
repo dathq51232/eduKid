@@ -9,7 +9,7 @@ import { Chess, type Color } from 'chess.js';
 import { ArrowLeft, Flag, Handshake, Loader2, RefreshCcw, X } from 'lucide-react';
 import ChessBoard, { type BoardMove } from './ChessBoard';
 import { PieceIcon } from './ChessPieces';
-import { MoveList } from './ChessParts';
+import { LiveClock, MoveList } from './ChessParts';
 import { reasonText, SIDE_NAME, captured, fmtClock } from '@/lib/chess/game';
 import { EMOTES, ERROR_TEXT, replay } from '@/lib/chess/online-rules';
 import { playSound } from '@/lib/sound';
@@ -17,7 +17,16 @@ import { playSound } from '@/lib/sound';
 const other = (c: Color): Color => (c === 'w' ? 'b' : 'w');
 
 export default function ChessOnline({ id, meId }: { id: string; meId: string }) {
-  const { pl, err, note, load, act, g, me, turn, active, clock, serverNow } = useOnlineGame(id, meId);
+  const { pl, err, note, load, act, g, me, turn, active, clockFor, serverNow } = useOnlineGame(id, meId);
+  const [, bump] = useState(0);
+  // Bong bóng biểu cảm tự ẩn sau vài giây (không cần nhịp vẽ lại liên tục)
+  useEffect(() => {
+    if (!g?.emote) return;
+    const left = 7000 - (serverNow() - Date.parse(g.emote.at));
+    if (left <= 0) return;
+    const t = setTimeout(() => bump((n) => n + 1), left + 50);
+    return () => clearTimeout(t);
+  }, [g?.emote]); // eslint-disable-line react-hooks/exhaustive-deps
   const [pending, setPending] = useState<string | null>(null); // nước vừa gửi, chờ máy chủ xác nhận
   const [flip, setFlip] = useState(false);
   const [confirmResign, setConfirmResign] = useState(false);
@@ -69,9 +78,9 @@ export default function ChessOnline({ id, meId }: { id: string; meId: string }) 
     ? (result.winner === null ? `Hòa · ${reasonText(result.reason)}` : `${result.winner === me ? 'Em thắng' : `${pl.players[result.winner].name} thắng`} · ${reasonText(result.reason)}`)
     : pending ? 'Đang gửi nước đi…' : turn === me ? (shown.inCheck() ? 'Vua của em đang bị chiếu!' : 'Đến lượt em') : `Chờ ${pl.players[turn].name} đi…`;
 
-  const Card = ({ side }: { side: Color }) => {
+  const card = (side: Color) => {
     const p = pl.players[side]; const on = active && turn === side; const caps = side === 'w' ? cap.w : cap.b; const adv = side === 'w' ? cap.diff : -cap.diff;
-    const t = clock[side];
+    const ck = clockFor(side);
     return (
       <div className={`chs-card${on ? ' is-active' : ''}`}>
         <span className="chl-av" aria-hidden="true">{p.name.trim().split(/\s+/).slice(-1)[0]?.[0]?.toUpperCase()}</span>
@@ -80,7 +89,7 @@ export default function ChessOnline({ id, meId }: { id: string; meId: string }) 
           <span className="chs-caps">{caps.map((x, i) => <PieceIcon key={i} type={x} color={other(side)} size={18} />)}{adv > 0 && <em>+{adv}</em>}</span>
         </div>
         {emote && emote.by === side && <span className="chs-emote" role="status">{EMOTES.find((e) => e.code === emote.code)?.text}</span>}
-        <span className={`chs-clock${on ? ' is-on' : ''}${t < 20000 ? ' is-low' : ''}`}>{fmtClock(t)}</span>
+        <LiveClock key={`${side}-${g.ply}-${g.status}`} left={ck.left} since={ck.since} running={ck.running} fmt={fmtClock} />
       </div>
     );
   };
@@ -88,9 +97,9 @@ export default function ChessOnline({ id, meId }: { id: string; meId: string }) 
   return (
     <section className="chs-play">
       <div className="chs-main">
-        <Card side={other(orientation)} />
+        {card(other(orientation))}
         <ChessBoard fen={shown.fen()} orientation={orientation} movable={active && !pending ? me : null} lastMove={lastV ? { from: lastV.from, to: lastV.to } : null} onMove={(m) => void onMove(m)} label={`Bàn cờ, em cầm quân ${SIDE_NAME[me]}`} />
-        <Card side={orientation} />
+        {card(orientation)}
       </div>
       <aside className="chs-side">
         <Link href="/co/vua/ban" className="ct-link"><ArrowLeft aria-hidden="true" /> Về sảnh đấu</Link>

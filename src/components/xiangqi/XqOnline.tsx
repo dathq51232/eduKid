@@ -8,6 +8,7 @@ import { ArrowLeft, Flag, Handshake, Loader2, RefreshCcw, X } from 'lucide-react
 import XiangqiBoard, { XqDiscIcon } from './XiangqiBoard';
 import { CapturedRow, XQ_SIDE, XqMoveList, boardOf, capturedOf, idx, pt, vnHistory } from './xq-ui';
 import { useOnlineGame } from '@/components/chess/useOnlineGame';
+import { LiveClock } from '@/components/chess/ChessParts';
 import { XqGame, sqName, type XSide } from '@/lib/xiangqi/engine';
 import { fmtClock, reasonText } from '@/lib/chess/game';
 import { EMOTES, ERROR_TEXT } from '@/lib/chess/online-rules';
@@ -17,7 +18,16 @@ const other = (c: XSide): XSide => (c === 'w' ? 'b' : 'w');
 const ptOf = (s: string) => ({ f: s.charCodeAt(0) - 97, r: 9 - Number(s[1]) });
 
 export default function XqOnline({ id, meId }: { id: string; meId: string }) {
-  const { pl, err, note, load, act, g, me, turn, active, clock, serverNow } = useOnlineGame(id, meId);
+  const { pl, err, note, load, act, g, me, turn, active, clockFor, serverNow } = useOnlineGame(id, meId);
+  const [, bump] = useState(0);
+  // Bong bóng biểu cảm tự ẩn sau vài giây (không cần nhịp vẽ lại liên tục)
+  useEffect(() => {
+    if (!g?.emote) return;
+    const left = 7000 - (serverNow() - Date.parse(g.emote.at));
+    if (left <= 0) return;
+    const t = setTimeout(() => bump((n) => n + 1), left + 50);
+    return () => clearTimeout(t);
+  }, [g?.emote]); // eslint-disable-line react-hooks/exhaustive-deps
   const [pending, setPending] = useState<string | null>(null);
   const [sel, setSel] = useState<number | null>(null);
   const [flip, setFlip] = useState(false);
@@ -71,8 +81,8 @@ export default function XqOnline({ id, meId }: { id: string; meId: string }) {
     ? (result.winner === null ? `Hòa · ${reasonText(result.reason, 'xiangqi')}` : `${result.winner === me ? 'Em thắng' : `${pl.players[result.winner].name} thắng`} · ${reasonText(result.reason, 'xiangqi')}`)
     : pending ? 'Đang gửi nước đi…' : turn === me ? (game.inCheck() ? 'Tướng của em đang bị chiếu!' : 'Đến lượt em') : `Chờ ${pl.players[turn].name} đi…`;
 
-  const Card = ({ side }: { side: XSide }) => {
-    const p = pl.players[side]; const on = active && turn === side; const t = clock[side];
+  const card = (side: XSide) => {
+    const p = pl.players[side]; const on = active && turn === side; const ck = clockFor(side);
     const caps = side === 'w' ? cap.w : cap.b; const adv = side === 'w' ? cap.diff : -cap.diff;
     return (
       <div className={`chs-card${on ? ' is-active' : ''}`}>
@@ -82,7 +92,7 @@ export default function XqOnline({ id, meId }: { id: string; meId: string }) {
           <span className="xq-capline"><CapturedRow kinds={caps} side={side === 'w' ? 'b' : 'r'} />{adv > 0 && <em>+{adv}</em>}</span>
         </div>
         {emote && emote.by === side && <span className="chs-emote" role="status">{EMOTES.find((e) => e.code === emote.code)?.text}</span>}
-        <span className={`chs-clock${on ? ' is-on' : ''}${t < 20000 ? ' is-low' : ''}`}>{fmtClock(t)}</span>
+        <LiveClock key={`${side}-${g.ply}-${g.status}`} left={ck.left} since={ck.since} running={ck.running} fmt={fmtClock} />
       </div>
     );
   };
@@ -90,9 +100,9 @@ export default function XqOnline({ id, meId }: { id: string; meId: string }) {
   return (
     <section className="chs-play xq-play">
       <div className="chs-main">
-        <Card side={other(orientation)} />
+        {card(other(orientation))}
         <XiangqiBoard board={boardOf(game.bd)} orientation={orientation === 'w' ? 'r' : 'b'} selected={sel !== null ? pt(sel) : null} targets={targets} lastMove={last} check={checkPt} onPoint={onPoint} label={`Bàn cờ tướng, em cầm quân ${XQ_SIDE[me]}`} />
-        <Card side={orientation} />
+        {card(orientation)}
       </div>
       <aside className="chs-side">
         <Link href="/co/tuong/ban" className="ct-link"><ArrowLeft aria-hidden="true" /> Về sảnh đấu</Link>

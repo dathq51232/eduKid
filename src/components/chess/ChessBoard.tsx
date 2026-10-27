@@ -2,7 +2,7 @@
 
 // Bàn cờ vua: chạm-chạm hoặc kéo-thả, chấm gợi ý nước hợp lệ, tô nước vừa đi, vua bị chiếu đỏ, chọn quân phong cấp.
 // Luật lấy từ chess.js; bàn chỉ hiển thị và báo nước người chơi chọn qua onMove.
-import { useId, useMemo, useRef, useState } from 'react';
+import { memo, useId, useMemo, useRef, useState } from 'react';
 import { Chess, type Color, type PieceSymbol, type Square } from 'chess.js';
 import { PieceShape, PIECE_NAME } from './ChessPieces';
 import { WoodDefs, WoodFrame } from './Wood';
@@ -23,8 +23,7 @@ const S = 100;
 const T = 44; // khung gỗ
 const VB = 800 + 2 * T;
 
-export default function ChessBoard({ fen, orientation, movable, lastMove, hint, onMove, label }: Props) {
-  const wp = `ch${useId().replace(/:/g, '')}`;
+function ChessBoard({ fen, orientation, movable, lastMove, hint, onMove, label }: Props) {
   const game = useMemo(() => new Chess(fen), [fen]);
   const board = game.board();
   const turn = game.turn();
@@ -91,30 +90,16 @@ export default function ChessBoard({ fen, orientation, movable, lastMove, hint, 
   if (game.inCheck()) for (const row of board) for (const c of row) if (c && c.type === 'k' && c.color === turn) checkSq = c.square;
 
   const animTo = lastMove && draggedRef.current !== lastMove.to ? lastMove : null;
-  const files = orientation === 'w' ? FILES : [...FILES].reverse().join('');
 
   return (
     <div className="chs-board" onKeyDown={key}>
-      <svg ref={svgRef} viewBox={`0 0 ${VB} ${VB}`} role="img" aria-label={label ?? 'Bàn cờ vua'} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={() => setDrag(null)} style={{ touchAction: 'none' }}>
-        <WoodDefs p={wp} />
-        <WoodFrame p={wp} w={VB} h={VB} t={T} />
+      <ChessBackdrop orientation={orientation} />
+      <svg ref={svgRef} className="chs-fg" viewBox={`0 0 ${VB} ${VB}`} role="img" aria-label={label ?? 'Bàn cờ vua'} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={() => setDrag(null)} style={{ touchAction: 'none' }}>
         <g transform={`translate(${T} ${T})`}>
-        {Array.from({ length: 64 }, (_, i) => {
-          const x = (i % 8) * S, y = Math.floor(i / 8) * S; const dark = ((i % 8) + Math.floor(i / 8)) % 2 === 1;
-          return <rect key={i} x={x} y={y} width={S} height={S} className={dark ? 'chs-dk' : 'chs-lt'} />;
-        })}
-        <rect width="800" height="800" fill="#000" filter={`url(#${wp}grain)`} opacity=".42" />
         {lastMove && [lastMove.from, lastMove.to].map((s) => { const p = pos(s); return <rect key={`l${s}`} x={p.x} y={p.y} width={S} height={S} className="chs-last" />; })}
         {hint && (() => { const p = pos(hint.from); return <rect x={p.x} y={p.y} width={S} height={S} className="chs-hint" />; })()}
         {sel && (() => { const p = pos(sel); return <rect x={p.x} y={p.y} width={S} height={S} className="chs-sel" />; })()}
         {checkSq && (() => { const p = pos(checkSq); return <circle cx={p.x + 50} cy={p.y + 50} r="48" className="chs-check" />; })()}
-        {/* toạ độ */}
-        {[...Array(8)].map((_, i) => (
-          <g key={`c${i}`} className="chs-coord">
-            <text x={i * S + 50} y={800 + 31} textAnchor="middle">{files[i]}</text>
-            <text x={-22} y={i * S + 57} textAnchor="middle">{orientation === 'w' ? 8 - i : i + 1}</text>
-          </g>
-        ))}
         {board.flat().map((c) => {
           if (!c) return null;
           const p = pos(c.square);
@@ -122,7 +107,7 @@ export default function ChessBoard({ fen, orientation, movable, lastMove, hint, 
           const anim = animTo && animTo.to === c.square ? (() => { const f = pos(animTo.from); return { dx: f.x - p.x, dy: f.y - p.y }; })() : null;
           return (
             <g key={`${c.square}${anim ? `-${fen}` : ''}`} className={`chs-piece${dragging ? ' is-ghost' : ''}${anim ? ' is-moved' : ''}`} style={anim ? ({ '--dx': `${anim.dx}px`, '--dy': `${anim.dy}px` } as React.CSSProperties) : undefined}>
-              <g transform={`translate(${p.x + 5} ${p.y + 5}) scale(${90 / 45})`} filter={`url(#${wp}shadow)`}><PieceShape type={c.type} color={c.color} /></g>
+              <g transform={`translate(${p.x + 5} ${p.y + 5}) scale(${90 / 45})`}><ellipse cx="22.5" cy="39.6" rx="12.5" ry="2.8" fill="#2a1607" opacity=".3" /><PieceShape type={c.type} color={c.color} /></g>
             </g>
           );
         })}
@@ -158,3 +143,30 @@ export default function ChessBoard({ fen, orientation, movable, lastMove, hint, 
     </div>
   );
 }
+
+// Lớp nền tĩnh (khung chạm, ô gỗ có vân, toạ độ): chỉ vẽ lại khi lật bàn. Quân cờ ở lớp trên, không dùng bộ lọc SVG.
+const ChessBackdrop = memo(function ChessBackdrop({ orientation }: { orientation: Color }) {
+  const wp = `cb${useId().replace(/:/g, '')}`;
+  const files = orientation === 'w' ? FILES : [...FILES].reverse().join('');
+  return (
+    <svg className="chs-bg" viewBox={`0 0 ${VB} ${VB}`} aria-hidden="true">
+      <WoodDefs p={wp} />
+      <WoodFrame p={wp} w={VB} h={VB} t={T} />
+      <g transform={`translate(${T} ${T})`}>
+        {Array.from({ length: 64 }, (_, i) => {
+          const x = (i % 8) * S, y = Math.floor(i / 8) * S; const dark = ((i % 8) + Math.floor(i / 8)) % 2 === 1;
+          return <rect key={i} x={x} y={y} width={S} height={S} className={dark ? 'chs-dk' : 'chs-lt'} />;
+        })}
+        <rect width="800" height="800" fill="#000" filter={`url(#${wp}grain)`} opacity=".42" />
+        {[...Array(8)].map((_, i) => (
+          <g key={`c${i}`} className="chs-coord">
+            <text x={i * S + 50} y={800 + 31} textAnchor="middle">{files[i]}</text>
+            <text x={-22} y={i * S + 57} textAnchor="middle">{orientation === 'w' ? 8 - i : i + 1}</text>
+          </g>
+        ))}
+      </g>
+    </svg>
+  );
+});
+
+export default memo(ChessBoard);
