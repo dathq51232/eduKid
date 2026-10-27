@@ -1,11 +1,16 @@
-// Mẫu thư khen. Toàn bộ hình trang trí tự vẽ bằng SVG (không dùng ảnh ngoài),
-// cộng thêm sticker 3D có sẵn của app (public/stickers). Khổ chuẩn 1414 × 1000 (tỉ lệ A4 ngang).
+// Mẫu thư khen. Phần lớn hình trang trí tự vẽ bằng SVG, cộng thêm sticker 3D có sẵn của app (public/stickers).
+// Các mẫu "Tranh vẽ" dùng ảnh nền có sẵn (public/praise/*.webp, đã xoá chữ tiếng nước ngoài, thay bằng nhãn tiếng Việt).
+// Khổ chuẩn 1414 × 1000 (tỉ lệ A4 ngang).
 import type { StickerId } from '@/lib/stickers';
 
 export const LETTER_W = 1414;
 export const LETTER_H = 1000;
 
-export type PraiseTemplateId = 'ong-vang' | 'bau-troi' | 'vuon-hoa' | 'huy-chuong' | 'do-vang' | 'pastel' | 'vien-vang' | 'bong-bay' | 'song-xanh';
+export type PraiseTemplateId = 'ong-vang' | 'bau-troi' | 'vuon-hoa' | 'huy-chuong' | 'do-vang' | 'pastel' | 'vien-vang' | 'bong-bay' | 'song-xanh'
+  | 'ong-mat' | 'giai-nhat' | 'cu-meo' | 'tot-nghiep' | 'cong-chua' | 'mu-xanh' | 'sac-mau' | 'ban-be' | 'bang-go';
+
+/** Chữ trang trí cố định trên ảnh nền (thay cho chữ tiếng nước ngoài trong mẫu gốc); \n để xuống dòng */
+export type PraiseLabel = { text: string; x: number; y: number; size: number; color: string; rot?: number; font?: 'baloo' | 'oswald' | 'script'; stroke?: string };
 
 export type PraiseTemplate = {
   id: PraiseTemplateId;
@@ -14,9 +19,23 @@ export type PraiseTemplate = {
   grades: number[];
   tag: string;
   /** nhóm hiển thị: Vui nhộn / Trang trọng */
-  style: 'Vui nhộn' | 'Trang trọng';
+  style: 'Vui nhộn' | 'Trang trọng' | 'Tranh vẽ';
   /** SVG nền + họa tiết (vẽ trước, dưới chữ) */
   art: () => string;
+  /** ảnh nền thay cho SVG (mẫu tranh vẽ) */
+  bg?: string;
+  /** vùng chữ theo chiều ngang [trái, phải] — mặc định lấy theo side */
+  area?: [number, number];
+  /** mép dưới tối đa của khối chữ (mặc định 748) */
+  bottom?: number;
+  /** khoảng trống thêm sau tiêu đề THƯ KHEN */
+  gap?: number;
+  /** dòng đầu của khối ký tên (mặc định 790) và độ rộng tối đa của chữ ký tên */
+  footY?: number;
+  signW?: number;
+  /** nền trắng mờ dưới khối chữ cho ảnh nền nhiều màu */
+  panel?: { x: number; y: number; w: number; h: number; alpha: number };
+  labels?: PraiseLabel[];
   stickers: { id: StickerId; x: number; y: number; w: number; rot?: number }[];
   ink: string;
   title: { fill: string; ring: string; size: number };
@@ -122,6 +141,21 @@ const svg = (body: string) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${LETTER_W}" height="${LETTER_H}" viewBox="0 0 ${LETTER_W} ${LETTER_H}">${body}</svg>`;
 
 // ------------------------------------------------------------------ 4 mẫu
+
+/** Mẫu tranh vẽ: ảnh nền + chữ đặt trong vùng trống của tranh */
+type PicOpts = Pick<PraiseTemplate, 'area' | 'top' | 'bottom' | 'gap' | 'footY' | 'signW' | 'ink' | 'panel' | 'labels'> & {
+  signX?: number; title: [fill: string, ring: string, size: number]; name: [fill: string, ring: string];
+};
+function pic(id: PraiseTemplateId, label: string, grades: number[], o: PicOpts): PraiseTemplate {
+  const tag = grades.length === 5 ? 'Lớp 1 – 5' : `Lớp ${grades[0]} – ${grades[grades.length - 1]}`;
+  return {
+    id, label, grades, tag, style: 'Tranh vẽ', art: () => '', bg: `/praise/${id}.webp`, stickers: [],
+    ink: o.ink, title: { fill: o.title[0], ring: o.title[1], size: o.title[2] }, name: { fill: o.name[0], ring: o.name[1] }, wish: o.name[0],
+    top: o.top, side: 100, layout: 'fun', accent: o.ink, school: false, signX: o.signX ?? 707,
+    area: o.area, bottom: o.bottom, gap: o.gap, footY: o.footY, signW: o.signW, panel: o.panel, labels: o.labels,
+  };
+}
+
 export const PRAISE_TEMPLATES: PraiseTemplate[] = [
   {
     id: 'ong-vang', style: 'Vui nhộn', label: 'Ong vàng', grades: [1, 2], tag: 'Lớp 1 – 2',
@@ -277,6 +311,22 @@ export const PRAISE_TEMPLATES: PraiseTemplate[] = [
       ${rosette(150, 150, 62)}`),
     stickers: [{ id: 'whale', x: 1190, y: 330, w: 150 }, { id: 'goldfish', x: 80, y: 560, w: 120 }],
   },
+
+  // ------------------------------------------------------------------ mẫu tranh vẽ (ảnh nền)
+  ...[
+    pic('ong-mat', 'Ong mật', [1, 2], { area: [480, 1050], top: 150, bottom: 680, footY: 718, signX: 575, signW: 280, ink: '#6b3d12', title: ['#6b3d12', '#fde68a', 100], name: ['#d9480f', '#fff3c4'],
+      labels: [{ text: 'Ong chăm\nchỉ', x: 248, y: 618, size: 26, color: '#6b3d12' }, { text: 'Cô tự hào\nvề con!', x: 721, y: 905, size: 21, color: '#8a4b10' }] }),
+    pic('giai-nhat', 'Giải nhất', [3, 4, 5], { area: [385, 1105], top: 168, bottom: 752, ink: '#1d2a5c', title: ['#1d2a5c', '#f6c445', 120], name: ['#c2410c', '#fde68a'],
+      labels: [{ text: 'VINH DANH', x: 737, y: 126, size: 40, color: '#1d2a5c', font: 'oswald' }, { text: 'CHĂM\nHỌC', x: 186, y: 724, size: 26, color: '#6b3d12' }, { text: 'CON\nGIỎI\nLẮM!', x: 1112, y: 835, size: 21, color: '#1d2a5c' }, { text: 'TUYỆT\nVỜI!', x: 1247, y: 920, size: 18, color: '#fde68a' }] }),
+    pic('cu-meo', 'Cú mèo', [1, 2, 3], { area: [375, 1185], top: 60, bottom: 760, signX: 785, ink: '#1e3a8a', title: ['#1e3a8a', '#fde68a', 128], name: ['#db2777', '#fce7f3'],
+      labels: [{ text: 'Ước mơ lớn', x: 205, y: 720, size: 32, color: '#ffffff', rot: -5, stroke: '#7c3aed' }, { text: 'Chăm chỉ', x: 208, y: 797, size: 32, color: '#ffffff', rot: -5, stroke: '#16a34a' }, { text: 'Tốt bụng', x: 220, y: 870, size: 32, color: '#ffffff', rot: -5, stroke: '#db2777' }, { text: 'Con thật\ntuyệt vời!', x: 1300, y: 640, size: 36, color: '#e11d48', rot: -12 }] }),
+    pic('tot-nghiep', 'Bé tốt nghiệp', [1, 2, 3, 4, 5], { area: [455, 960], top: 168, bottom: 690, footY: 715, signW: 420, ink: '#1e3a5f', title: ['#e8502a', '#ffffff', 108], name: ['#1e3a8a', '#fde68a'] }),
+    pic('cong-chua', 'Công chúa', [1, 2, 3], { area: [410, 1005], top: 168, bottom: 745, signX: 528, signW: 260, ink: '#6b2148', title: ['#db2777', '#ffffff', 128], name: ['#7e22ce', '#fae8ff'] }),
+    pic('mu-xanh', 'Mũ cử nhân', [3, 4, 5], { area: [330, 1085], top: 105, bottom: 640, footY: 700, signX: 975, signW: 270, ink: '#1e3a8a', title: ['#1e3a8a', '#dbeafe', 128], name: ['#b91c1c', '#ffffff'] }),
+    pic('sac-mau', 'Sắc màu', [1, 2, 3, 4, 5], { area: [380, 1000], top: 115, bottom: 760, signX: 790, signW: 270, ink: '#1e293b', title: ['#7c3aed', '#ffffff', 120], name: ['#e11d48', '#ffffff'], panel: { x: 360, y: 95, w: 660, h: 700, alpha: 0.55 } }),
+    pic('ban-be', 'Bạn bè', [1, 2, 3, 4, 5], { area: [150, 1000], top: 45, bottom: 520, footY: 440, signX: 1160, signW: 300, ink: '#1e3a5f', title: ['#2563eb', '#ffffff', 120], name: ['#e11d48', '#ffffff'] }),
+    pic('bang-go', 'Bảng gỗ', [1, 2, 3, 4, 5], { area: [270, 1190], top: 288, bottom: 610, footY: 640, signX: 735, signW: 420, ink: '#5b3415', title: ['#7c2d12', '#fde68a', 100], name: ['#b91c1c', '#fff7ed'] }),
+  ],
 ];
 
 export const templateById = (id: string): PraiseTemplate => PRAISE_TEMPLATES.find((t) => t.id === id) ?? PRAISE_TEMPLATES[0];

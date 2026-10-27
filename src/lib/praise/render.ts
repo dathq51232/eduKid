@@ -68,7 +68,7 @@ const artSrc = (t: PraiseTemplate) => `data:image/svg+xml;charset=utf-8,${encode
 
 /** Tải sẵn hình nền + sticker của một mẫu */
 export async function loadTemplateAssets(t: PraiseTemplate) {
-  const [art, ...stickers] = await Promise.all([loadImage(artSrc(t)), ...t.stickers.map((s) => loadImage(`/stickers/${s.id}.webp`))]);
+  const [art, ...stickers] = await Promise.all([loadImage(t.bg ?? artSrc(t)), ...t.stickers.map((s) => loadImage(`/stickers/${s.id}.webp`))]);
   return { art, stickers };
 }
 
@@ -104,8 +104,7 @@ function ringText(ctx: Ctx, text: string, x: number, y: number, fill: string, ri
 
 /** Phần chữ chính; trả về mép dưới. dry = chỉ đo, không vẽ */
 function drawBody(ctx: Ctx, t: PraiseTemplate, d: LetterData, s: number, dry: boolean): number {
-  const x0 = t.side;
-  const x1 = LETTER_W - t.side;
+  const [x0, x1] = t.area ?? [t.side, LETTER_W - t.side];
   const cx = (x0 + x1) / 2;
   const maxW = x1 - x0;
   const hasSchool = t.school && d.school.trim().length > 0;
@@ -127,7 +126,7 @@ function drawBody(ctx: Ctx, t: PraiseTemplate, d: LetterData, s: number, dry: bo
   const ts = t.title.size * s;
   ctx.font = `800 ${ts}px ${FF.baloo}`;
   if (!dry) ringText(ctx, 'THƯ KHEN', cx, y + ts * 0.55, t.title.fill, t.title.ring, 18 * s);
-  y += ts * 1.04;
+  y += ts * 1.04 + (t.gap ?? 0) * s;
 
   y += 12 * s;
   if (d.lead.trim()) lines(`500 ${46 * s}px ${FF.oswald}`, d.lead, 46 * s, 1.24, t.ink, true);
@@ -300,6 +299,32 @@ export function drawLetter(ctx: Ctx, t: PraiseTemplate, assets: { art: HTMLImage
     ctx.drawImage(im, -st.w / 2, -h / 2, st.w, h);
     ctx.restore();
   });
+  if (t.panel) {
+    const p = t.panel;
+    ctx.save();
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = '#ffffff';
+    ctx.filter = 'blur(18px)';
+    ctx.beginPath();
+    ctx.ellipse(p.x + p.w / 2, p.y + p.h / 2, p.w / 2, p.h / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  for (const lb of t.labels ?? []) {
+    ctx.save();
+    ctx.translate(lb.x, lb.y);
+    if (lb.rot) ctx.rotate((lb.rot * Math.PI) / 180);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `800 ${lb.size}px ${FF[lb.font ?? 'baloo']}`;
+    const rows = lb.text.split('\n');
+    rows.forEach((row, i) => {
+      const yy = (i - (rows.length - 1) / 2) * lb.size * 1.05;
+      if (lb.stroke) ringText(ctx, row, 0, yy, lb.color, lb.stroke, lb.size * 0.22);
+      else { ctx.fillStyle = lb.color; ctx.fillText(row, 0, yy); }
+    });
+    ctx.restore();
+  }
 
   if (t.layout === 'formal') {
     let s = 1;
@@ -312,34 +337,37 @@ export function drawLetter(ctx: Ctx, t: PraiseTemplate, assets: { art: HTMLImage
 
   // Chữ dài thì thu cả khối cho vừa trước phần ký tên
   let s = 1;
-  while (s > 0.62 && drawBody(ctx, t, d, s, true) > CONTENT_BOTTOM) s -= 0.03;
+  const bottom = t.bottom ?? CONTENT_BOTTOM;
+  while (s > 0.5 && drawBody(ctx, t, d, s, true) > bottom) s -= 0.03;
   drawBody(ctx, t, d, s, false);
 
   // Khối ký tên
   const sx = t.signX;
+  const fy = (t.footY ?? 790) - 790;
+  const sw = t.signW ?? 560;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = t.ink;
   if (d.placeDate.trim()) {
-    fitFont(ctx, d.placeDate, '700', FF.baloo, 31, 560);
-    ctx.fillText(d.placeDate, sx, 790);
+    fitFont(ctx, d.placeDate, '700', FF.baloo, 31, sw);
+    ctx.fillText(d.placeDate, sx, 790 + fy);
   }
   if (d.role.trim()) {
-    fitFont(ctx, upper(d.role), '800', FF.baloo, 31, 600);
-    ctx.fillText(upper(d.role), sx, 829);
+    fitFont(ctx, upper(d.role), '800', FF.baloo, 31, sw);
+    ctx.fillText(upper(d.role), sx, 829 + fy);
   }
   if (d.signature) {
     const im = d.signature;
-    const k = Math.min(280 / im.naturalWidth, 80 / im.naturalHeight);
+    const k = Math.min(Math.min(280, sw) / im.naturalWidth, 80 / im.naturalHeight);
     const w = im.naturalWidth * k, h = im.naturalHeight * k;
-    ctx.drawImage(im, sx - w / 2, 884 - h / 2, w, h);
+    ctx.drawImage(im, sx - w / 2, 884 + fy - h / 2, w, h);
     if (d.teacher.trim()) {
-      fitFont(ctx, d.teacher, '700', FF.baloo, 30, 560);
-      ctx.fillText(d.teacher, sx, 930);
+      fitFont(ctx, d.teacher, '700', FF.baloo, 30, sw);
+      ctx.fillText(d.teacher, sx, 930 + fy);
     }
   } else if (d.teacher.trim()) {
-    fitFont(ctx, d.teacher, '600', FF.script, 52, 520);
-    ctx.fillText(d.teacher, sx, 908);
+    fitFont(ctx, d.teacher, '600', FF.script, 52, Math.min(520, sw));
+    ctx.fillText(d.teacher, sx, 908 + fy);
   }
   ctx.restore();
 }
