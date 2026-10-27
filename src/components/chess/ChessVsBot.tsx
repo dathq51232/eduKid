@@ -6,11 +6,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Chess, type Color, type PieceSymbol } from 'chess.js';
 import { Bot, Flag, Handshake, Lightbulb, Play, RefreshCcw, RotateCcw, Undo2, User } from 'lucide-react';
 import ChessBoard, { type BoardMove } from './ChessBoard';
-import { PieceIcon } from './ChessPieces';
-import { LiveClock, MoveList } from './ChessParts';
+import { PIECE_NAME, PieceIcon } from './ChessPieces';
+import { BoardAlerts, LiveClock, MoveList, SoundButton, TurnBar } from './ChessParts';
 import { BOT_LEVELS, Board, pickMove, type BotLevel, type BotMove } from '@/lib/chess/bot';
 import { REASON_TEXT, SIDE_NAME, TIME_CONTROLS, boardResult, captured, fmtClock, timeoutResult, type GameResult } from '@/lib/chess/game';
-import { playSound } from '@/lib/sound';
+import { sfx } from '@/lib/chess/sound-pref';
 
 type Pick = 'w' | 'b' | 'r';
 type Setup = { pick: Pick; level: BotLevel; tc: string };
@@ -65,7 +65,7 @@ export default function ChessVsBot() {
 
   const finish = useCallback((r: GameResult) => {
     setResult(r); setShowResult(true); setThinking(false); setHint(null); setNote('');
-    playSound(r.winner === null ? 'complete' : r.winner === me ? 'complete' : 'timeout');
+    sfx(r.winner === null ? 'complete' : r.winner === me ? 'complete' : 'timeout');
   }, [me]);
 
   const apply = useCallback((m: BoardMove) => {
@@ -77,7 +77,7 @@ export default function ChessVsBot() {
       c[mv.color] = c[mv.color] - (now - c.since) + tc.inc * 1000; c.since = now;
     }
     setFen(game.fen()); setSans(game.history()); setLast({ from: mv.from, to: mv.to }); setHint(null); setNote('');
-    playSound(game.inCheck() ? 'check' : mv.captured ? 'capture' : 'move');
+    sfx(game.inCheck() ? 'check' : mv.captured ? 'capture' : 'move');
     const r = boardResult(game);
     if (r) finish(r);
     return true;
@@ -146,6 +146,13 @@ export default function ChessVsBot() {
   const status = result
     ? (result.winner === null ? `Hòa · ${REASON_TEXT[result.reason]}` : `${result.winner === me ? 'Em thắng' : 'Máy thắng'} · ${REASON_TEXT[result.reason]}`)
     : thinking ? 'Máy đang nghĩ…' : g.turn() === me ? (g.inCheck() ? 'Vua của em đang bị chiếu!' : 'Đến lượt em') : '';
+  // Nước vừa đi + chiếu (để báo lượt rõ ràng và hiện chữ CHIẾU thật to)
+  const lastV = g.history({ verbose: true }).slice(-1)[0];
+  const lastText = lastV ? `${lastV.color === me ? 'Em' : 'Máy'} vừa đi ${PIECE_NAME[lastV.piece]} ${lastV.from} → ${lastV.to}${lastV.captured ? `, ăn ${PIECE_NAME[lastV.captured]}` : ''}` : null;
+  const inCheck = g.inCheck();
+  const checkKey = inCheck ? sans.length : null;
+  const turnTone = result ? 'end' : g.turn() === me ? (inCheck ? 'check' : 'me') : 'wait';
+  const turnTitle = result ? status : g.turn() === me ? (inCheck ? 'Đến lượt em · Vua đang bị chiếu!' : 'Đến lượt em đi') : 'Lượt của máy · máy đang nghĩ…';
 
   if (phase === 'setup') {
     return (
@@ -202,7 +209,7 @@ export default function ChessVsBot() {
           <span className="chs-caps">{caps.map((t: PieceSymbol, i) => <PieceIcon key={i} type={t} color={other(side)} size={18} />)}{adv > 0 && <em>+{adv}</em>}</span>
         </div>
         {!isMe && thinking && <span className="chs-think" aria-hidden="true"><i /><i /><i /></span>}
-        {timed && <LiveClock key={`${side}-${clock.current.since}-${result ? 'end' : 'on'}`} left={clock.current[side]} since={clock.current.since} running={active} fmt={fmtClock} />}
+        {timed && <LiveClock key={`${side}-${clock.current.since}-${result ? 'end' : 'on'}`} left={clock.current[side]} since={clock.current.since} running={active} fmt={fmtClock} sound={side === me} />}
       </div>
     );
   };
@@ -212,7 +219,11 @@ export default function ChessVsBot() {
     <section className="chs-play">
       <div className="chs-main">
         {card(orientation === 'w' ? 'b' : 'w')}
-        <ChessBoard fen={fen} orientation={orientation} movable={result || thinking ? null : me} lastMove={last} hint={hint} onMove={(m) => { apply(m); }} label={`Bàn cờ, em cầm quân ${SIDE_NAME[me]}`} />
+        <TurnBar tone={turnTone} title={turnTitle} sub={lastText ?? `Em cầm quân ${SIDE_NAME[me]}${me === 'w' ? ', được đi trước' : ''}`} />
+        <div className="chs-boardwrap">
+          <ChessBoard fen={fen} orientation={orientation} movable={result || thinking ? null : me} lastMove={last} hint={hint} onMove={(m) => { apply(m); }} label={`Bàn cờ, em cầm quân ${SIDE_NAME[me]}`} />
+          <BoardAlerts moveKey={sans.length} moveText={lastText} checkKey={checkKey} checkTitle={result?.reason === 'checkmate' ? 'CHIẾU HẾT!' : 'CHIẾU!'} checkSub={result ? undefined : g.turn() === me ? 'Vua của em đang bị chiếu — hãy cứu Vua!' : 'Em đang chiếu Vua của máy'} />
+        </div>
         {card(orientation)}
       </div>
       <aside className="chs-side">
@@ -227,6 +238,7 @@ export default function ChessVsBot() {
           <button type="button" className="btn btn-outline btn-sm is-danger" onClick={resign} disabled={!!result}><Flag aria-hidden="true" /> Xin thua</button>
         </div>
         <div className="chs-tools">
+          <SoundButton />
           <button type="button" className="btn btn-primary btn-sm" onClick={start}><RotateCcw aria-hidden="true" /> Ván mới</button>
           <button type="button" className="ct-link" onClick={() => { gen.current++; setPhase('setup'); }}>Đổi cài đặt</button>
         </div>

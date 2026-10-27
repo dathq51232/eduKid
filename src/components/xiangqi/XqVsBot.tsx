@@ -4,14 +4,14 @@
 // gợi ý nước, đi lại (khi không tính giờ), xin hòa, xin thua, lật bàn, ghi nước kiểu Việt (P2-5, M8.7…).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Bot, Flag, Handshake, Lightbulb, Play, RefreshCcw, RotateCcw, Undo2, User } from 'lucide-react';
-import XiangqiBoard, { XqDiscIcon } from './XiangqiBoard';
+import XiangqiBoard, { XQ_VIET, XqDiscIcon } from './XiangqiBoard';
 import { CapturedRow, XQ_RULES, XQ_SIDE, XqMoveList, boardOf, capturedOf, idx, pt, vnHistory } from './xq-ui';
-import { XqGame, sqName, type XSide } from '@/lib/xiangqi/engine';
+import { XqGame, kindOf, sqName, type XSide } from '@/lib/xiangqi/engine';
 import { xqEvaluate, xqPickMove } from '@/lib/xiangqi/bot';
 import { BOT_LEVELS, type BotLevel } from '@/lib/chess/bot';
 import { TIME_CONTROLS, fmtClock, reasonText } from '@/lib/chess/game';
-import { playSound } from '@/lib/sound';
-import { LiveClock } from '@/components/chess/ChessParts';
+import { sfx } from '@/lib/chess/sound-pref';
+import { BoardAlerts, LiveClock, SoundButton, TurnBar } from '@/components/chess/ChessParts';
 
 type Pick = 'w' | 'b' | 'x';
 type Setup = { pick: Pick; level: BotLevel; tc: string };
@@ -63,14 +63,14 @@ export default function XqVsBot() {
   const g = gRef.current;
   const bot = other(me);
 
-  const finish = useCallback((r: Result) => { setResult(r); setShowResult(true); setThinking(false); setHint(null); setNote(''); playSound(r.winner === null || r.winner === me ? 'complete' : 'timeout'); }, [me]);
+  const finish = useCallback((r: Result) => { setResult(r); setShowResult(true); setThinking(false); setHint(null); setNote(''); sfx(r.winner === null || r.winner === me ? 'complete' : 'timeout'); }, [me]);
 
   const apply = useCallback((uci: string) => {
     const game = gRef.current; const mover = game.turn();
     const m = game.move(uci); if (!m) return false;
     if (timed) { const now = Date.now(); const c = clock.current; c[mover] = c[mover] - (now - c.since) + tc.inc * 1000; c.since = now; }
     setVer((v) => v + 1); setSel(null); setHint(null); setNote('');
-    playSound(game.inCheck() ? 'check' : m.cap ? 'capture' : 'move');
+    sfx(game.inCheck() ? 'check' : m.cap ? 'capture' : 'move');
     const r = game.result(); if (r) finish(r);
     return true;
   }, [timed, tc.inc, finish]);
@@ -150,6 +150,14 @@ export default function XqVsBot() {
   const status = result
     ? (result.winner === null ? `Hòa · ${reasonText(result.reason, 'xiangqi')}` : `${result.winner === me ? 'Em thắng' : 'Máy thắng'} · ${reasonText(result.reason, 'xiangqi')}`)
     : thinking ? 'Máy đang nghĩ…' : g.turn() === me ? (g.inCheck() ? 'Tướng của em đang bị chiếu!' : 'Đến lượt em') : '';
+  // Nước vừa đi + chiếu tướng (báo lượt rõ ràng, chữ CHIẾU TƯỚNG thật to)
+  const lastH = g.bd.hist[g.bd.hist.length - 1];
+  const lastPiece = lastH ? g.get(lastH.m.to) : null;
+  const lastText = lastH && lastPiece ? `${lastPiece.side === me ? 'Em' : 'Máy'} vừa đi ${XQ_VIET[lastPiece.kind]} (${notes[notes.length - 1] ?? ''})${lastH.m.cap ? `, ăn ${XQ_VIET[kindOf(lastH.m.cap)]}` : ''}` : null;
+  const inCheck = g.inCheck();
+  const checkKey = inCheck ? g.ucis.length : null;
+  const turnTone = result ? 'end' : g.turn() === me ? (inCheck ? 'check' : 'me') : 'wait';
+  const turnTitle = result ? status : g.turn() === me ? (inCheck ? 'Đến lượt em · Tướng đang bị chiếu!' : 'Đến lượt em đi') : 'Lượt của máy · máy đang nghĩ…';
 
   if (phase === 'setup') {
     return (
@@ -199,7 +207,7 @@ export default function XqVsBot() {
           <span className="xq-capline"><CapturedRow kinds={caps} side={side === 'w' ? 'b' : 'r'} />{adv > 0 && <em>+{adv}</em>}</span>
         </div>
         {!isMe && thinking && <span className="chs-think" aria-hidden="true"><i /><i /><i /></span>}
-        {timed && <LiveClock key={`${side}-${clock.current.since}-${result ? 'end' : 'on'}`} left={clock.current[side]} since={clock.current.since} running={active} fmt={fmtClock} />}
+        {timed && <LiveClock key={`${side}-${clock.current.since}-${result ? 'end' : 'on'}`} left={clock.current[side]} since={clock.current.since} running={active} fmt={fmtClock} sound={side === me} />}
       </div>
     );
   };
@@ -208,7 +216,11 @@ export default function XqVsBot() {
     <section className="chs-play xq-play">
       <div className="chs-main">
         {card(other(orientation))}
-        <XiangqiBoard board={board} orientation={orientation === 'w' ? 'r' : 'b'} selected={sel !== null ? pt(sel) : null} targets={targets} lastMove={last} check={checkPt} hint={hint ? { from: pt(hint.from), to: pt(hint.to) } : null} onPoint={onPoint} label={`Bàn cờ tướng, em cầm quân ${XQ_SIDE[me]}`} />
+        <TurnBar tone={turnTone} title={turnTitle} sub={lastText ?? `Em cầm quân ${XQ_SIDE[me]}${me === 'w' ? ', được đi trước' : ''}`} />
+        <div className="chs-boardwrap">
+          <XiangqiBoard board={board} orientation={orientation === 'w' ? 'r' : 'b'} selected={sel !== null ? pt(sel) : null} targets={targets} lastMove={last} check={checkPt} hint={hint ? { from: pt(hint.from), to: pt(hint.to) } : null} onPoint={onPoint} label={`Bàn cờ tướng, em cầm quân ${XQ_SIDE[me]}`} />
+          <BoardAlerts moveKey={g.ucis.length} moveText={lastText} checkKey={checkKey} checkTitle={result?.reason === 'checkmate' ? 'CHIẾU BÍ!' : 'CHIẾU TƯỚNG!'} checkSub={result ? undefined : g.turn() === me ? 'Tướng của em đang bị chiếu — hãy cứu Tướng!' : 'Em đang chiếu Tướng của máy'} />
+        </div>
         {card(orientation)}
       </div>
       <aside className="chs-side">
@@ -224,6 +236,7 @@ export default function XqVsBot() {
           <button type="button" className="btn btn-outline btn-sm is-danger" onClick={() => { if (!result) finish({ winner: bot, reason: 'resign' }); }} disabled={!!result}><Flag aria-hidden="true" /> Xin thua</button>
         </div>
         <div className="chs-tools">
+          <SoundButton />
           <button type="button" className="btn btn-primary btn-sm" onClick={start}><RotateCcw aria-hidden="true" /> Ván mới</button>
           <button type="button" className="ct-link" onClick={() => { gen.current++; setPhase('setup'); }}>Đổi cài đặt</button>
         </div>

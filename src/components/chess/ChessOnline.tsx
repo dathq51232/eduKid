@@ -8,11 +8,11 @@ import { useOnlineGame } from './useOnlineGame';
 import { Chess, type Color } from 'chess.js';
 import { ArrowLeft, Flag, Handshake, Loader2, RefreshCcw, X } from 'lucide-react';
 import ChessBoard, { type BoardMove } from './ChessBoard';
-import { PieceIcon } from './ChessPieces';
-import { LiveClock, MoveList } from './ChessParts';
+import { PIECE_NAME, PieceIcon } from './ChessPieces';
+import { BoardAlerts, LiveClock, MoveList, SoundButton, TurnBar } from './ChessParts';
 import { reasonText, SIDE_NAME, captured, fmtClock } from '@/lib/chess/game';
 import { EMOTES, ERROR_TEXT, replay } from '@/lib/chess/online-rules';
-import { playSound } from '@/lib/sound';
+import { notifyTurn, sfx } from '@/lib/chess/sound-pref';
 
 const other = (c: Color): Color => (c === 'w' ? 'b' : 'w');
 
@@ -48,16 +48,17 @@ export default function ChessOnline({ id, meId }: { id: string; meId: string }) 
     if (!g) return;
     if (lastPly.current >= 0 && g.ply > lastPly.current) {
       const h = game.history({ verbose: true }); const m = h[h.length - 1];
-      playSound(game.inCheck() ? 'check' : m?.captured ? 'capture' : 'move');
+      sfx(game.inCheck() ? 'check' : m?.captured ? 'capture' : 'move');
+      if (g.status === 'active' && (g.ply % 2 === 0 ? 'w' : 'b') === (pl?.players.w.id === meId ? 'w' : 'b')) notifyTurn();
     }
-    if (prevStatus.current === 'active' && g.status !== 'active') { playSound('complete'); void load(); }
+    if (prevStatus.current === 'active' && g.status !== 'active') { sfx('complete'); void load(); }
     lastPly.current = g.ply; prevStatus.current = g.status;
-  }, [g, game, load]);
+  }, [g, game, load]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onMove = async (m: BoardMove) => {
     if (!g || !me || turn !== me || pending) return;
     const uci = `${m.from}${m.to}${m.promotion ?? ''}`;
-    setPending(uci); playSound('move');
+    setPending(uci); sfx('move');
     await act({ action: 'move', uci, ply: g.ply });
     setPending(null);
   };
@@ -77,6 +78,13 @@ export default function ChessOnline({ id, meId }: { id: string; meId: string }) 
   const status = g.status === 'aborted' ? 'Ván đã hủy' : result
     ? (result.winner === null ? `Hòa · ${reasonText(result.reason)}` : `${result.winner === me ? 'Em thắng' : `${pl.players[result.winner].name} thắng`} · ${reasonText(result.reason)}`)
     : pending ? 'Đang gửi nước đi…' : turn === me ? (shown.inCheck() ? 'Vua của em đang bị chiếu!' : 'Đến lượt em') : `Chờ ${pl.players[turn].name} đi…`;
+  // Báo lượt rõ ràng + chữ CHIẾU thật to
+  const moverName = (c: Color) => (c === me ? 'Em' : pl.players[c].name);
+  const lastText = lastV ? `${moverName(lastV.color)} vừa đi ${PIECE_NAME[lastV.piece]} ${lastV.from} → ${lastV.to}${lastV.captured ? `, ăn ${PIECE_NAME[lastV.captured]}` : ''}` : null;
+  const inCheck = shown.inCheck();
+  const plyNow = shown.history().length;
+  const turnTone = !active ? 'end' : pending ? 'wait' : turn === me ? (inCheck ? 'check' : 'me') : 'wait';
+  const turnTitle = !active ? status : pending ? 'Đang gửi nước đi…' : turn === me ? (inCheck ? 'Đến lượt em · Vua đang bị chiếu!' : 'Đến lượt em đi') : `Lượt của ${pl.players[turn].name} · đang chờ bạn đi…`;
 
   const card = (side: Color) => {
     const p = pl.players[side]; const on = active && turn === side; const caps = side === 'w' ? cap.w : cap.b; const adv = side === 'w' ? cap.diff : -cap.diff;
@@ -89,7 +97,7 @@ export default function ChessOnline({ id, meId }: { id: string; meId: string }) 
           <span className="chs-caps">{caps.map((x, i) => <PieceIcon key={i} type={x} color={other(side)} size={18} />)}{adv > 0 && <em>+{adv}</em>}</span>
         </div>
         {emote && emote.by === side && <span className="chs-emote" role="status">{EMOTES.find((e) => e.code === emote.code)?.text}</span>}
-        <LiveClock key={`${side}-${g.ply}-${g.status}`} left={ck.left} since={ck.since} running={ck.running} fmt={fmtClock} />
+        <LiveClock key={`${side}-${g.ply}-${g.status}`} left={ck.left} since={ck.since} running={ck.running} fmt={fmtClock} sound={side === me} />
       </div>
     );
   };
@@ -98,7 +106,11 @@ export default function ChessOnline({ id, meId }: { id: string; meId: string }) 
     <section className="chs-play">
       <div className="chs-main">
         {card(other(orientation))}
-        <ChessBoard fen={shown.fen()} orientation={orientation} movable={active && !pending ? me : null} lastMove={lastV ? { from: lastV.from, to: lastV.to } : null} onMove={(m) => void onMove(m)} label={`Bàn cờ, em cầm quân ${SIDE_NAME[me]}`} />
+        <TurnBar tone={turnTone} title={turnTitle} sub={lastText ?? `Em cầm quân ${SIDE_NAME[me]}${me === 'w' ? ', được đi trước' : ''}`} />
+        <div className="chs-boardwrap">
+          <ChessBoard fen={shown.fen()} orientation={orientation} movable={active && !pending ? me : null} lastMove={lastV ? { from: lastV.from, to: lastV.to } : null} onMove={(m) => void onMove(m)} label={`Bàn cờ, em cầm quân ${SIDE_NAME[me]}`} />
+          <BoardAlerts moveKey={plyNow} moveText={lastText} checkKey={inCheck ? plyNow : null} checkTitle={result?.reason === 'checkmate' ? 'CHIẾU HẾT!' : 'CHIẾU!'} checkSub={result ? undefined : turn === me ? 'Vua của em đang bị chiếu — hãy cứu Vua!' : `Em đang chiếu Vua của ${pl.players[other(me)].name}`} />
+        </div>
         {card(orientation)}
       </div>
       <aside className="chs-side">
@@ -117,6 +129,7 @@ export default function ChessOnline({ id, meId }: { id: string; meId: string }) 
           <>
             <div className="chs-emotes" aria-label="Gửi biểu cảm">{EMOTES.map((e) => <button key={e.code} type="button" onClick={() => void act({ action: 'emote', code: e.code })} title={e.text}>{e.text}</button>)}</div>
             <div className="chs-tools">
+              <SoundButton />
               {g.ply < 2
                 ? <button type="button" className="btn btn-outline btn-sm" onClick={() => void act({ action: 'abort' })}><X aria-hidden="true" /> Hủy ván</button>
                 : <button type="button" className="btn btn-outline btn-sm" onClick={() => void act({ action: 'draw_offer' })} disabled={myOffer}><Handshake aria-hidden="true" /> Xin hòa</button>}

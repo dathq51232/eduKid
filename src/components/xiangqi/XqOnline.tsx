@@ -5,14 +5,14 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Flag, Handshake, Loader2, RefreshCcw, X } from 'lucide-react';
-import XiangqiBoard, { XqDiscIcon } from './XiangqiBoard';
+import XiangqiBoard, { XQ_VIET, XqDiscIcon } from './XiangqiBoard';
 import { CapturedRow, XQ_SIDE, XqMoveList, boardOf, capturedOf, idx, pt, vnHistory } from './xq-ui';
 import { useOnlineGame } from '@/components/chess/useOnlineGame';
-import { LiveClock } from '@/components/chess/ChessParts';
-import { XqGame, sqName, type XSide } from '@/lib/xiangqi/engine';
+import { BoardAlerts, LiveClock, SoundButton, TurnBar } from '@/components/chess/ChessParts';
+import { XqGame, kindOf, sqName, type XSide } from '@/lib/xiangqi/engine';
 import { fmtClock, reasonText } from '@/lib/chess/game';
 import { EMOTES, ERROR_TEXT } from '@/lib/chess/online-rules';
-import { playSound } from '@/lib/sound';
+import { notifyTurn, sfx } from '@/lib/chess/sound-pref';
 
 const other = (c: XSide): XSide => (c === 'w' ? 'b' : 'w');
 const ptOf = (s: string) => ({ f: s.charCodeAt(0) - 97, r: 9 - Number(s[1]) });
@@ -43,11 +43,12 @@ export default function XqOnline({ id, meId }: { id: string; meId: string }) {
     if (!g) return;
     if (lastPly.current >= 0 && g.ply > lastPly.current) {
       const x = XqGame.fromMoves(g.moves.slice(0, -1)); const m = x.move(g.moves[g.moves.length - 1]);
-      playSound(x.inCheck() ? 'check' : m?.cap ? 'capture' : 'move');
+      sfx(x.inCheck() ? 'check' : m?.cap ? 'capture' : 'move');
+      if (g.status === 'active' && (g.ply % 2 === 0 ? 'w' : 'b') === (pl?.players.w.id === meId ? 'w' : 'b')) notifyTurn();
     }
-    if (prevStatus.current === 'active' && g.status !== 'active') { playSound('complete'); void load(); }
+    if (prevStatus.current === 'active' && g.status !== 'active') { sfx('complete'); void load(); }
     lastPly.current = g.ply; prevStatus.current = g.status;
-  }, [g, load]);
+  }, [g, load]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (err && !pl) return (
     <section className="chl-empty"><h2>Không mở được ván cờ</h2><p>{ERROR_TEXT[err] ?? 'Thử tải lại trang nhé.'}</p><Link href="/co/tuong/ban" className="btn btn-primary">Về sảnh đấu</Link></section>
@@ -60,7 +61,7 @@ export default function XqOnline({ id, meId }: { id: string; meId: string }) {
     const i = idx(p); const pc = game.get(i);
     if (sel !== null && game.movesFrom(sel).some((m) => m.to === i)) {
       const uci = sqName(sel) + sqName(i);
-      setSel(null); setPending(uci); playSound('move');
+      setSel(null); setPending(uci); sfx('move');
       void act({ action: 'move', uci, ply: g.ply }).finally(() => setPending(null));
       return;
     }
@@ -80,6 +81,14 @@ export default function XqOnline({ id, meId }: { id: string; meId: string }) {
   const status = g.status === 'aborted' ? 'Ván đã hủy' : result
     ? (result.winner === null ? `Hòa · ${reasonText(result.reason, 'xiangqi')}` : `${result.winner === me ? 'Em thắng' : `${pl.players[result.winner].name} thắng`} · ${reasonText(result.reason, 'xiangqi')}`)
     : pending ? 'Đang gửi nước đi…' : turn === me ? (game.inCheck() ? 'Tướng của em đang bị chiếu!' : 'Đến lượt em') : `Chờ ${pl.players[turn].name} đi…`;
+  // Báo lượt rõ ràng + chữ CHIẾU TƯỚNG thật to
+  const lastH = game.bd.hist[game.bd.hist.length - 1];
+  const lastPiece = lastH ? game.get(lastH.m.to) : null;
+  const lastText = lastH && lastPiece ? `${lastPiece.side === me ? 'Em' : pl.players[lastPiece.side].name} vừa đi ${XQ_VIET[lastPiece.kind]}${notes[game.ucis.length - 1] ? ` (${notes[game.ucis.length - 1]})` : ''}${lastH.m.cap ? `, ăn ${XQ_VIET[kindOf(lastH.m.cap)]}` : ''}` : null;
+  const inCheck = game.inCheck();
+  const plyNow = game.ucis.length;
+  const turnTone = !active ? 'end' : pending ? 'wait' : turn === me ? (inCheck ? 'check' : 'me') : 'wait';
+  const turnTitle = !active ? status : pending ? 'Đang gửi nước đi…' : turn === me ? (inCheck ? 'Đến lượt em · Tướng đang bị chiếu!' : 'Đến lượt em đi') : `Lượt của ${pl.players[turn].name} · đang chờ bạn đi…`;
 
   const card = (side: XSide) => {
     const p = pl.players[side]; const on = active && turn === side; const ck = clockFor(side);
@@ -92,7 +101,7 @@ export default function XqOnline({ id, meId }: { id: string; meId: string }) {
           <span className="xq-capline"><CapturedRow kinds={caps} side={side === 'w' ? 'b' : 'r'} />{adv > 0 && <em>+{adv}</em>}</span>
         </div>
         {emote && emote.by === side && <span className="chs-emote" role="status">{EMOTES.find((e) => e.code === emote.code)?.text}</span>}
-        <LiveClock key={`${side}-${g.ply}-${g.status}`} left={ck.left} since={ck.since} running={ck.running} fmt={fmtClock} />
+        <LiveClock key={`${side}-${g.ply}-${g.status}`} left={ck.left} since={ck.since} running={ck.running} fmt={fmtClock} sound={side === me} />
       </div>
     );
   };
@@ -101,7 +110,11 @@ export default function XqOnline({ id, meId }: { id: string; meId: string }) {
     <section className="chs-play xq-play">
       <div className="chs-main">
         {card(other(orientation))}
-        <XiangqiBoard board={boardOf(game.bd)} orientation={orientation === 'w' ? 'r' : 'b'} selected={sel !== null ? pt(sel) : null} targets={targets} lastMove={last} check={checkPt} onPoint={onPoint} label={`Bàn cờ tướng, em cầm quân ${XQ_SIDE[me]}`} />
+        <TurnBar tone={turnTone} title={turnTitle} sub={lastText ?? `Em cầm quân ${XQ_SIDE[me]}${me === 'w' ? ', được đi trước' : ''}`} />
+        <div className="chs-boardwrap">
+          <XiangqiBoard board={boardOf(game.bd)} orientation={orientation === 'w' ? 'r' : 'b'} selected={sel !== null ? pt(sel) : null} targets={targets} lastMove={last} check={checkPt} onPoint={onPoint} label={`Bàn cờ tướng, em cầm quân ${XQ_SIDE[me]}`} />
+          <BoardAlerts moveKey={plyNow} moveText={lastText} checkKey={inCheck ? plyNow : null} checkTitle={result?.reason === 'checkmate' ? 'CHIẾU BÍ!' : 'CHIẾU TƯỚNG!'} checkSub={result ? undefined : turn === me ? 'Tướng của em đang bị chiếu — hãy cứu Tướng!' : `Em đang chiếu Tướng của ${pl.players[other(me)].name}`} />
+        </div>
         {card(orientation)}
       </div>
       <aside className="chs-side">
@@ -120,6 +133,7 @@ export default function XqOnline({ id, meId }: { id: string; meId: string }) {
           <>
             <div className="chs-emotes" aria-label="Gửi biểu cảm">{EMOTES.map((e) => <button key={e.code} type="button" onClick={() => void act({ action: 'emote', code: e.code })} title={e.text}>{e.text}</button>)}</div>
             <div className="chs-tools">
+              <SoundButton />
               {g.ply < 2
                 ? <button type="button" className="btn btn-outline btn-sm" onClick={() => void act({ action: 'abort' })}><X aria-hidden="true" /> Hủy ván</button>
                 : <button type="button" className="btn btn-outline btn-sm" onClick={() => void act({ action: 'draw_offer' })} disabled={myOffer}><Handshake aria-hidden="true" /> Xin hòa</button>}

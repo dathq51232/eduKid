@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import { Check, MessageCircle, Pin, School, Star, TrendingUp, UserRound } from 'lucide-react';
 import ParentHeader from '@/components/parent/ParentHeader';
 import FamilyInfo from '@/components/parent/FamilyInfo';
+import ParentMessages from '@/components/parent/ParentMessages';
+import type { ParentMsg } from '@/lib/classroom/messages';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import RedeemInviteForm from '@/components/classroom/RedeemInviteForm';
 import SignOutButton from '@/components/classroom/SignOutButton';
@@ -74,12 +76,13 @@ export default async function ParentsPage() {
   // Phụ huynh dùng chung mã PIN của con nên phiên này là phiên của học sinh: dashboard phụ huynh, không có tab học / game
   if (viewer.isStudent && viewer.studentId) {
     const supabase = await createClient();
-    const [{ data: ov, error: ovErr }, { data: diary }, { data: results }, { data: me }, { data: oldContacts }] = await Promise.all([
+    const [{ data: ov, error: ovErr }, { data: diary }, { data: results }, { data: me }, { data: oldContacts }, { data: msgs, error: msgErr }] = await Promise.all([
       supabase.rpc('parent_overview'), // migration 0033
       supabase.rpc('parent_diary_recent', { p_days: 30 }), // migration 0031
       supabase.from('lesson_results').select('lesson_title, lesson_code, score, total, points, created_at').order('created_at', { ascending: false }).limit(50),
       supabase.from('students').select('display_name, grade').eq('id', viewer.studentId).maybeSingle(),
       supabase.rpc('parent_my_contacts'),
+      supabase.rpc('parent_messages_mine', { p_limit: 20 }), // migration 0037
     ]);
     const o = (ovErr ? null : ov) as Overview | null;
     const childName = o?.child?.name ?? (me as { display_name?: string } | null)?.display_name ?? viewer.displayName;
@@ -129,6 +132,13 @@ export default async function ParentsPage() {
             <li><span className="ph-ic is-red" aria-hidden="true">🔔</span><div><span>Cô nhắc nhở</span><b>{month ? month.remind : '—'}</b></div></li>
             <li><span className="ph-ic is-purple" aria-hidden="true">🎯</span><div><span>Bài luyện · đúng</span><b>{list.length ? `${lessons} · ${avg}%` : '—'}</b></div></li>
           </ul>
+
+          <ParentMessages
+            people={contacts.map((c) => ({ name: c.name, relation: c.relation }))}
+            teacher={cls?.teacher ?? null}
+            childName={childName}
+            initial={msgErr ? null : ((msgs ?? []) as ParentMsg[])}
+          />
 
           <div className="ph-grid">
             <section className="ph-card" aria-labelledby="ph-msg-title">

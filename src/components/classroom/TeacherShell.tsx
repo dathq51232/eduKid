@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
+  MailOpen,
   Award, BookCheck, ChevronDown, ClipboardCheck, Dices, FileText, GraduationCap, Home, LayoutGrid, LogOut, Menu, MessageSquareHeart,
   NotebookPen, Radar, Search, Send, SpellCheck, Table2, Users, X, UsersRound, Trophy, Timer, Contact, Box, type LucideIcon,
 } from 'lucide-react';
@@ -20,7 +21,7 @@ import { TOOLS, TOOL_GROUPS, classIdOfPath, fold, toolHref, toolOfPath, type Too
 export const TOOL_ICON: Record<ToolKey, LucideIcon> = {
   'so-lop': BookCheck, 'goi-ten': Dices, 'ke-hoach': NotebookPen, 'giao-bai': Send, 'phieu-bai-tap': FileText, 'phieu-chinh-ta': SpellCheck,
   'lo-hong': Radar, 'de-kiem-tra': Table2, 'nhan-xet': ClipboardCheck, 'ket-qua-truong': GraduationCap, 'phieu-tien-bo': MessageSquareHeart,
-  'thu-khen': Award, lop: Users, nhom: UsersRound, 'thi-dua': Trophy, 'hen-gio': Timer, 'danh-ba': Contact, 'bai-giang-3d': Box,
+  'thu-khen': Award, lop: Users, nhom: UsersRound, 'thi-dua': Trophy, 'hen-gio': Timer, 'danh-ba': Contact, 'bai-giang-3d': Box, 'tin-nhan': MailOpen,
 };
 export const USAGE_KEY = 'gv-dung-nhanh';
 

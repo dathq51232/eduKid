@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { KIND_ICON, ago, leaveRange, senderLabel, type Inbox } from '@/lib/classroom/messages';
 import { redirect } from 'next/navigation';
-import { BookCheck, BookOpen, CalendarDays, ChevronRight, Dices, Eye, ListTodo, School, Send, Target, Zap } from 'lucide-react';
+import { BookCheck, BookOpen, CalendarDays, ChevronRight, Dices, Eye, ListTodo, MailOpen, School, Send, Target, Zap } from 'lucide-react';
 import { QuickTools, TodoList } from '@/components/classroom/TeacherToday';
 import { alertsOf, summarize, type RangeData } from '@/lib/classroom/diary';
 import { SUBJECT_NAMES } from '@/lib/plans/generate';
@@ -72,16 +73,20 @@ export default async function TeacherHome() {
   let k: Kpis | null = null;
   let todayPlans: { id: string; subject: string; title: string; period: number | null }[] = [];
   let watch: Watch[] = [];
+  let inbox: Inbox | null = null;
   if (active) {
     const since14 = new Date(nowMs - 14 * 86400_000).toISOString();
-    const [{ data: plans, error: planErr }, { data: asg, error: asgErr }, { data: roster }, { data: diary, error: diaryErr }, { data: month }] = await Promise.all([
+    const [{ data: plans, error: planErr }, { data: asg, error: asgErr }, { data: roster }, { data: diary, error: diaryErr }, { data: month }, { data: msgs, error: msgErr }] = await Promise.all([
       supabase.rpc('teacher_list_plans', { p_class: active.id }),
       supabase.rpc('teacher_list_assignments', { p_class: active.id }),
       supabase.rpc('teacher_class_roster', { p_class: active.id }),
       // Sổ lớp (migration 0026) — chưa chạy migration thì bỏ qua
       supabase.rpc('teacher_diary_day', { p_class: active.id, p_day: todayIso }),
       supabase.rpc('teacher_diary_range', { p_class: active.id, p_from: `${todayIso.slice(0, 7)}-01`, p_to: todayIso }),
+      // Tin nhắn phụ huynh (migration 0037) — chưa chạy migration thì bỏ qua
+      supabase.rpc('teacher_messages', { p_class: active.id, p_limit: 5 }),
     ]);
+    inbox = msgErr ? null : (msgs as Inbox | null);
     const students = ((roster ?? []) as { student_id: string; display_name: string; membership_status: string }[])
       .filter((r) => r.membership_status === 'active').map((r) => ({ id: r.student_id, name: r.display_name }));
     const ids = students.map((x) => x.id);
@@ -125,6 +130,9 @@ export default async function TeacherHome() {
       todo.unshift(k.attendanceSaved
         ? { tone: 'done', title: 'Điểm danh hôm nay', detail: `${ids.length - k.absent}/${ids.length} em có mặt.`, href: `/giao-vien/lop/${active.id}/so-lop`, cta: 'Mở Sổ lớp' }
         : { tone: 'urgent', title: 'Điểm danh lớp ' + active.name, detail: 'Cả lớp mặc định có mặt, chỉ cần bấm em vắng.', href: `/giao-vien/lop/${active.id}/so-lop`, cta: 'Điểm danh' });
+    }
+    if (inbox?.unread) {
+      todo.unshift({ tone: 'urgent', title: `${inbox.unread} tin nhắn phụ huynh chưa đọc`, detail: inbox.pending_leave ? `Có ${inbox.pending_leave} tin xin phép nghỉ đang chờ cô đồng ý.` : 'Phụ huynh hỏi han, nhắn cô.', href: `/giao-vien/lop/${active.id}/tin-nhan`, cta: 'Đọc tin' });
     }
     todayPlans = planErr ? [] : ((plans ?? []) as { id: string; subject: string; title: string; period: number | null; teach_date: string | null }[])
       .filter((p) => p.teach_date === todayIso).sort((a, b) => (a.period ?? 99) - (b.period ?? 99));
@@ -206,6 +214,29 @@ export default async function TeacherHome() {
               <span className="tdy-kpi-sub">{delta === null ? '7 ngày qua' : <><b className={delta >= 0 ? 'is-good' : 'is-bad'}>{delta >= 0 ? '▲' : '▼'} {Math.abs(delta)}%</b> so với tuần trước</>}</span>
             </Link>
           </section>
+
+          {inbox && inbox.items.length > 0 && (
+            <section className={`tdy-card tdy-inbox${inbox.unread ? ' has-new' : ''}`} aria-labelledby="tdy-inbox">
+              <div className="tdy-inbox-hd">
+                <h2 id="tdy-inbox"><MailOpen aria-hidden="true" /> Tin nhắn phụ huynh {inbox.unread > 0 && <span className="tdy-inbox-badge">{inbox.unread} mới</span>}</h2>
+                <Link href={`${base}/tin-nhan`} className="tdy-go">Mở hộp thư</Link>
+              </div>
+              <ul className="tdy-inbox-list">
+                {inbox.items.slice(0, 4).map((m) => (
+                  <li key={m.id} className={m.status === 'new' ? 'is-new' : undefined}>
+                    <Link href={`${base}/tin-nhan`}>
+                      <span className="tdy-inbox-ic" aria-hidden="true">{KIND_ICON[m.kind]}</span>
+                      <span className="tdy-inbox-txt">
+                        <b>{senderLabel(m)} <small>· phụ huynh em {m.student_name}</small></b>
+                        <span>{m.kind === 'leave' ? <em>Xin phép nghỉ {leaveRange(m)}: </em> : null}{m.body}</span>
+                      </span>
+                      <small className="tdy-inbox-time">{ago(m.created_at)}</small>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <div className="tdy-grid">
             <section className="tdy-card tdy-todo" aria-labelledby="tdy-todo">

@@ -1,6 +1,6 @@
 // Âm thanh phản hồi tạo bằng Web Audio, không cần file mp3.
 
-export type SoundName = 'correct' | 'wrong' | 'complete' | 'tick' | 'tickSoft' | 'tickUrgent' | 'warn' | 'timeout' | 'move' | 'capture' | 'check';
+export type SoundName = 'correct' | 'wrong' | 'complete' | 'tick' | 'tickSoft' | 'tickUrgent' | 'warn' | 'timeout' | 'move' | 'capture' | 'check' | 'turn';
 
 type Note = { freq: number; at: number; dur: number; gain?: number; wave?: OscillatorType };
 
@@ -39,6 +39,11 @@ const NOTES: Record<SoundName, Note[]> = {
   check: [
     { freq: 880, at: 0, dur: 0.09, gain: 0.25 },
     { freq: 660, at: 0.1, dur: 0.12, gain: 0.25 },
+  ],
+  // Cờ: tới lượt em (sau khi đối thủ đi)
+  turn: [
+    { freq: 587, at: 0, dur: 0.1, gain: 0.22, wave: 'triangle' },
+    { freq: 880, at: 0.11, dur: 0.16, gain: 0.22, wave: 'triangle' },
   ],
   complete: [
     { freq: 523, at: 0, dur: 0.14 },
