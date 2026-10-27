@@ -1,10 +1,11 @@
 'use client';
 
-// Bàn cờ tướng gỗ chạm (theo mẫu bàn gỗ truyền thống): 9 đường dọc × 10 đường ngang, sông "Sở hà – Hán giới", cung tướng,
-// dấu chữ thập ở vị trí pháo/tốt, quân tròn bằng gỗ khắc tên quân bằng tiếng Việt (đỏ / đen).
+// Bàn cờ tướng gỗ chạm (theo mẫu bàn gỗ truyền thống): 9 đường dọc × 10 đường ngang, sông, cung tướng,
+// dấu chữ thập ở vị trí pháo/tốt, quân tròn bằng gỗ khắc chữ Hán đỏ / đen. Mặt bàn không có chữ.
 // Thành phần này chỉ vẽ và báo điểm được chạm; luật cờ tướng nằm ở src/lib/xiangqi.
 import { useId } from 'react';
 import { WoodDefs, WoodFrame, WoodSurface } from '@/components/chess/Wood';
+import { XQ_GLYPHS } from '@/lib/xiangqi/glyphs';
 
 export type XqSide = 'r' | 'b';
 export type XqKind = 'k' | 'a' | 'e' | 'h' | 'r' | 'c' | 'p';
@@ -12,6 +13,11 @@ export type XqPiece = { side: XqSide; kind: XqKind };
 export type XqPoint = { f: number; r: number }; // f: 0–8 từ trái sang (nhìn từ bên Đỏ), r: 0–9 từ trên (bên Đen) xuống
 
 export const XQ_VIET: Record<XqKind, string> = { k: 'Tướng', a: 'Sĩ', e: 'Tượng', h: 'Mã', r: 'Xe', c: 'Pháo', p: 'Tốt' };
+/** Chữ Hán khắc trên quân (Đỏ: 帥仕相傌俥炮兵 · Đen: 將士象馬車砲卒) */
+export const XQ_HAN: Record<'r' | 'b', Record<XqKind, string>> = {
+  r: { k: '帥', a: '仕', e: '相', h: '傌', r: '俥', c: '炮', p: '兵' },
+  b: { k: '將', a: '士', e: '象', h: '馬', r: '車', c: '砲', p: '卒' },
+};
 
 export const C = 80; // khoảng cách giữa hai đường
 const PAD = 66; // mặt gỗ quanh lưới
@@ -25,7 +31,7 @@ const INK = '#3a2210';
 export function XqDisc({ p, piece, lifted = false }: { p: string; piece: XqPiece; lifted?: boolean }) {
   const red = piece.side === 'r';
   const ink = red ? '#b4231a' : '#2a1d14';
-  const name = XQ_VIET[piece.kind];
+  const ch = XQ_HAN[piece.side][piece.kind];
   return (
     <g filter={`url(#${p}${lifted ? 'lift' : 'shadow'})`}>
       <circle cy="3.5" r="36" fill={`url(#${p}edge)`} />
@@ -33,7 +39,7 @@ export function XqDisc({ p, piece, lifted = false }: { p: string; piece: XqPiece
       <circle r="35" fill="#000" filter={`url(#${p}grainV)`} opacity=".14" />
       <circle r="28.5" fill="none" stroke={ink} strokeWidth="2.2" opacity=".85" />
       <circle r="27" fill="none" stroke="#fff6e4" strokeWidth=".9" opacity=".6" />
-      <text y={name.length > 3 ? 6.5 : 8.5} textAnchor="middle" fontSize={name.length > 4 ? 18 : name.length > 3 ? 19.5 : 24} fontWeight="800" fill={ink} fontFamily="var(--font-display), system-ui, sans-serif" letterSpacing="-.5">{name}</text>
+      <path d={XQ_GLYPHS[ch]} transform="translate(-23 -23) scale(.46)" fill={ink}><title>{XQ_VIET[piece.kind]}</title></path>
     </g>
   );
 }
@@ -83,13 +89,6 @@ export default function XiangqiBoard({ board, orientation = 'r', selected, targe
     }
     return <path key={`m${f}${r}`} d={d} fill="none" stroke={INK} strokeWidth="2.2" />;
   });
-  const river = (txt: string, cx: number) => (
-    <g key={txt}>
-      <text x={cx + 1.5} y={GY + 4.5 * C + 15} textAnchor="middle" className="xq-river is-hi">{txt}</text>
-      <text x={cx} y={GY + 4.5 * C + 13.5} textAnchor="middle" className="xq-river">{txt}</text>
-    </g>
-  );
-  const files = [...Array(9)].map((_, i) => i);
 
   const hit = (e: React.PointerEvent<SVGSVGElement>) => {
     if (!onPoint) return;
@@ -111,14 +110,6 @@ export default function XiangqiBoard({ board, orientation = 'r', selected, targe
         <rect x={GX - 9} y={GY - 9} width={8 * C + 18} height={9 * C + 18} fill="none" stroke={INK} strokeWidth="4" />
         {lines}
         {markPaths}
-        {river('SỞ HÀ', GX + 2 * C)}{river('HÁN GIỚI', GX + 6 * C)}
-        {/* số cột: Đen ở trên đếm 1→9 từ trái, Đỏ ở dưới đếm 1→9 từ phải (đúng quy ước ghi nước) */}
-        {files.map((i) => (
-          <g key={`n${i}`} className="xq-num">
-            <text x={GX + i * C} y={T + 19} textAnchor="middle">{flip ? 9 - i : i + 1}</text>
-            <text x={GX + i * C} y={H - T - 6} textAnchor="middle">{flip ? i + 1 : 9 - i}</text>
-          </g>
-        ))}
         {lastMove && [lastMove.from, lastMove.to].map((pt, i) => (
           <g key={`lm${i}`} transform={`translate(${X(pt.f)} ${Y(pt.r)})`} className="xq-last">
             {i === 0 ? <circle r="10" /> : <path d="M-40 -26v-14h14M26 -40h14v14M40 26v14h-14M-26 40h-14v-14" fill="none" />}

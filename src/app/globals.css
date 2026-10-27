@@ -4699,7 +4699,6 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .chs-main { display: grid; gap: 10px; }
 .chs-board, .xq-board { position: relative; border-radius: 22px; overflow: hidden; box-shadow: 0 18px 34px rgb(42 22 7 / .35); user-select: none; -webkit-user-select: none; }
 .xq-board svg { display: block; width: 100%; height: auto; cursor: pointer; }
-.xq-num text { font: 700 19px/1 system-ui, sans-serif; fill: #5a3618; opacity: .75; }
 .xq-last circle { fill: rgb(30 110 220 / .55); }
 .xq-last path { stroke: #1e6edc; stroke-width: 4; }
 .xq-check { fill: rgb(229 72 77 / .5); filter: blur(5px); }
@@ -4788,8 +4787,6 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 @media (prefers-reduced-motion: reduce) { .chs-piece.is-moved { animation: none; } }
 /* Chế độ tối: viền sáng cho quân đen nhỏ trong danh sách nước đi / quân bị ăn */
 [data-theme="dark"] .chs-san svg, [data-theme="dark"] .chs-caps svg { filter: drop-shadow(0 0 .8px #e9edf7) drop-shadow(0 0 .8px #e9edf7); }
-.xq-river { font: 800 44px/1 var(--font-display), system-ui, sans-serif; letter-spacing: .12em; fill: #4a2a12; opacity: .85; }
-.xq-river.is-hi { fill: #f0cf9c; opacity: .45; }
 
 /* Cờ vua trực tuyến: sảnh (chl-*) và ván đấu */
 .chl { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); gap: 20px; align-items: start; }
