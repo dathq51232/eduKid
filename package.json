@@ -28,11 +28,13 @@
     "check:exams": "tsx scripts/check-exams.ts",
     "check:schedule": "tsx scripts/check-schedule.ts",
     "check:spelling": "tsx scripts/check-spelling.ts",
-    "check:count-shapes": "tsx scripts/check-count-shapes.ts"
+    "check:count-shapes": "tsx scripts/check-count-shapes.ts",
+    "check:chess": "tsx scripts/check-chess.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.1",
+    "chess.js": "^1.4.0",
     "lucide-react": "^0.468.0",
     "next": "^15.2.4",
     "react": "^19.0.0",
