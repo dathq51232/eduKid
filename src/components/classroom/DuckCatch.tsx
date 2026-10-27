@@ -106,7 +106,7 @@ export default function DuckCatch({ ducks, target, runKey, seconds, caughtId, on
           const u = Math.min(1, (t - R.tf) / (R.T - R.tf)); const e = u * u * (3 - 2 * u);
           const side = R.from.x < R.spot!.x ? -1 : 1;
           g.x = R.dFrom!.x + (R.spot!.x - R.dFrom!.x) * e; g.y = R.dFrom!.y + (R.spot!.y - R.dFrom!.y) * e; g.vx = (R.spot!.x - R.dFrom!.x) * 0.5; g.vy = 0;
-          K.x = R.from.x + (R.spot!.x + side * 58 - R.from.x) * e + Math.sin(t * 6) * 6 * (1 - u);
+          K.x = R.from.x + (R.spot!.x + side * 92 - R.from.x) * e + Math.sin(t * 6) * 6 * (1 - u);
           K.y = R.from.y + (R.spot!.y + 4 - R.from.y) * e;
           K.face = side < 0 ? 1 : -1;
         }
@@ -147,7 +147,7 @@ export default function DuckCatch({ ducks, target, runKey, seconds, caughtId, on
       });
 
       // trêu chọc thỉnh thoảng
-      if (now > chatter && P.length) {
+      if (now > chatter && P.length && !R?.done) {
         chatter = now + (live ? 1300 : 3200) + Math.random() * 1200;
         const i = Math.floor(Math.random() * P.length);
         if (!(R?.done && i === R.targetIdx)) say(i, LINES[Math.floor(Math.random() * LINES.length)], 1500, !!live && Math.random() < 0.6);
@@ -165,7 +165,7 @@ export default function DuckCatch({ ducks, target, runKey, seconds, caughtId, on
         if (b) b.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) scale(${s.toFixed(3)})`);
       });
       if (kidRef.current) {
-        kidRef.current.setAttribute('transform', `translate(${K.x.toFixed(1)} ${K.y.toFixed(1)}) scale(${(depth(K.y) * 1.12).toFixed(3)})`);
+        kidRef.current.setAttribute('transform', `translate(${K.x.toFixed(1)} ${K.y.toFixed(1)}) scale(${(depth(K.y) * 1.3).toFixed(3)})`);
         kidRef.current.style.setProperty('--face', String(K.face));
         kidRef.current.classList.toggle('is-walk', K.walk);
         kidRef.current.classList.toggle('is-catch', K.catch);
@@ -236,32 +236,62 @@ function Duck() {
   );
 }
 
-/** Bạn nhỏ đội nón lá, bịt mắt khăn đỏ, hai tay quờ phía trước (hướng mặt sang phải) */
+/** Bạn nhỏ đội nón lá, áo bà ba nâu, thắt lưng vải, bịt mắt khăn đỏ, hai tay quờ phía trước (hướng mặt sang phải) */
 function Kid() {
   return (
     <g>
-      <ellipse cx="0" cy="2" rx="34" ry="9" fill="rgb(70 50 20 / .2)" />
-      <g className="cd-legs">
-        <path className="cd-leg1" d="M-10 -34 l-6 34 h10 l4 -30z" fill="#4b3a2a" />
-        <path className="cd-leg2" d="M6 -34 l8 34 h10 l-8 -34z" fill="#4b3a2a" />
-        <ellipse cx="-11" cy="0" rx="8" ry="3.5" fill="#f2c9a0" />
-        <ellipse cx="18" cy="0" rx="8" ry="3.5" fill="#f2c9a0" />
+      <ellipse cx="2" cy="2" rx="46" ry="9" fill="rgb(70 50 20 / .22)"/>
+      {/* chân sau */}
+      <g className="cd-leg1">
+        <path d="M-6 -50 C-14 -40 -22 -30 -30 -22 L-20 -14 C-12 -24 -2 -34 6 -44 Z" fill="#4a3426"/>
+        <path d="M-29 -23 L-38 -6 L-30 -3 L-21 -15 Z" fill="#e8b48a"/>
+        <path d="M-40 -6 q-6 2 -6 6 q10 2 18 0 l-2 -6z" fill="#e8b48a"/>
       </g>
-      <path d="M-22 -36 q-2 -38 10 -48 h24 q12 10 10 48z" fill="#8b5e3c" />
-      <path d="M-20 -46 h40" stroke="#e7e5e4" strokeWidth="5" />
+      {/* chân trước */}
+      <g className="cd-leg2">
+        <path d="M0 -52 C10 -46 22 -38 28 -30 L22 -20 C14 -26 4 -34 -6 -40 Z" fill="#5a3f2c"/>
+        <path d="M22 -26 L30 -30 L34 -6 L26 -6 Z" fill="#f0c19a"/>
+        <path d="M24 -6 q12 -2 20 4 q-10 4 -22 2z" fill="#f0c19a"/>
+      </g>
+      {/* tay sau */}
       <g className="cd-arms">
-        <path d="M8 -76 q22 -2 40 4" stroke="#8b5e3c" strokeWidth="10" strokeLinecap="round" fill="none" />
-        <path d="M-6 -76 q20 6 38 10" stroke="#7a5232" strokeWidth="10" strokeLinecap="round" fill="none" />
-        <circle cx="50" cy="-72" r="6" fill="#f2c9a0" />
-        <circle cx="34" cy="-65" r="6" fill="#f2c9a0" />
+        <path d="M6 -98 C20 -102 34 -104 48 -104" stroke="#7a5a3c" strokeWidth="11" strokeLinecap="round" fill="none"/>
+        <path d="M44 -104 L60 -106" stroke="#e8b48a" strokeWidth="8" strokeLinecap="round"/>
+        <path d="M60 -110 l8 -3 M61 -107 l9 -1 M61 -104 l9 1 M59 -101 l7 3" stroke="#e8b48a" strokeWidth="3.4" strokeLinecap="round"/>
       </g>
-      <circle cx="2" cy="-98" r="18" fill="#f2c9a0" />
-      <path d="M-14 -104 q2 -10 16 -12 q14 2 16 10" fill="#2b1d14" />
-      <rect x="-17" y="-104" width="38" height="9" rx="3" fill="#dc2626" />
-      <path d="M-17 -100 q-14 4 -22 14 M-17 -99 q-10 10 -12 20" stroke="#dc2626" strokeWidth="5" fill="none" strokeLinecap="round" />
-      <path d="M4 -86 q6 4 10 0" stroke="#b45309" strokeWidth="2.4" fill="none" strokeLinecap="round" />
-      <path d="M-34 -110 L2 -142 L38 -110 q-36 8 -72 0z" fill="#e9d29a" stroke="#b9975b" strokeWidth="2" />
-      <path d="M-20 -114 L2 -136 M2 -136 L24 -114" stroke="#c7a76a" strokeWidth="1.5" />
+      {/* thân áo bà ba */}
+      <path d="M-16 -104 C-6 -110 10 -110 20 -104 C24 -90 26 -70 24 -52 C10 -48 -10 -48 -24 -54 C-24 -72 -22 -90 -16 -104 Z" fill="#8a6a4a"/>
+      <path d="M2 -106 L6 -90 L10 -106" stroke="#6e5238" strokeWidth="2" fill="none"/>
+      <path d="M-12 -86 q14 2 30 -2" stroke="#6e5238" strokeWidth="1.5" fill="none" opacity=".5"/>
+      {/* thắt lưng vải trắng ngà + nút buộc */}
+      <path d="M-24 -60 C-10 -55 10 -55 25 -60 L25 -53 C10 -48 -10 -48 -24 -53 Z" fill="#f1e9d6"/>
+      <path d="M-20 -57 q-8 6 -10 18 l6 1 q2 -10 8 -16z M-20 -57 q-2 8 2 18 l5 -2 q-4 -8 -3 -16z" fill="#f1e9d6" stroke="#d6cbb3" strokeWidth="1"/>
+      {/* tay trước */}
+      <g className="cd-arms">
+        <path d="M10 -96 C24 -94 38 -90 52 -86" stroke="#8a6a4a" strokeWidth="12" strokeLinecap="round" fill="none"/>
+        <path d="M50 -86 L64 -83" stroke="#f0c19a" strokeWidth="9" strokeLinecap="round"/>
+        <path d="M65 -89 l9 -4 M66 -86 l10 -2 M66 -83 l10 1 M65 -80 l8 3 M61 -88 l2 -7" stroke="#f0c19a" strokeWidth="3.6" strokeLinecap="round"/>
+      </g>
+      {/* đầu */}
+      <circle cx="10" cy="-126" r="26" fill="#f0c19a"/>
+      <path d="M-16 -126 C-17 -146 2 -156 20 -151 C32 -148 37 -140 36 -132 C26 -140 6 -140 -6 -132 C-8 -124 -10 -114 -14 -112 C-17 -116 -16 -122 -16 -126 Z" fill="#2b1d14"/>
+      <ellipse cx="-6" cy="-120" rx="5" ry="6.5" fill="#e8b48a"/>
+      {/* khăn đỏ bịt mắt + đuôi khăn bay */}
+      <path d="M-12 -136 C2 -132 20 -132 34 -136 L34 -126 C20 -122 2 -122 -12 -126 Z" fill="#dc2626"/>
+      <path d="M-12 -132 C-24 -138 -34 -132 -44 -136 C-36 -128 -24 -126 -12 -128 Z" fill="#dc2626"/>
+      <path d="M-12 -130 C-22 -126 -30 -118 -42 -118 C-32 -114 -20 -118 -12 -126 Z" fill="#b91c1c"/>
+      <circle cx="-12" cy="-131" r="4" fill="#b91c1c"/>
+      {/* miệng cười, má */}
+      <path d="M16 -114 q10 12 20 -2 q-10 3 -20 2z" fill="#7f1d1d"/>
+      <path d="M21 -108 q6 3 11 -2" stroke="#f87171" strokeWidth="3" fill="none" strokeLinecap="round"/>
+      <ellipse cx="26" cy="-120" rx="4" ry="2.4" fill="#fca5a5" opacity=".8"/>
+      {/* nón lá */}
+      <g transform="translate(0 4) rotate(-8 10 -146)">
+        <path d="M-36 -144 L10 -186 L56 -144 C40 -138 -20 -138 -36 -144 Z" fill="#ead7a4" stroke="#b9975b" strokeWidth="2"/>
+        <path d="M-20 -146 L10 -180 M10 -180 L40 -146 M-6 -144 L10 -184 M10 -184 L26 -144" stroke="#c9a96e" strokeWidth="1.2"/>
+        <path d="M-28 -152 q38 6 76 0 M-18 -162 q28 5 56 0 M-6 -172 q16 3 32 0" stroke="#c9a96e" strokeWidth="1.2" fill="none"/>
+        <path d="M-36 -144 C-20 -138 40 -138 56 -144" stroke="#a8844a" strokeWidth="2.4" fill="none"/>
+      </g>
     </g>
   );
 }

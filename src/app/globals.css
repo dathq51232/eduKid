@@ -4639,10 +4639,10 @@ select.s3d-btn { padding-right: 6px; }
 .cd-duck.is-got .cd-waddle { animation: cd-flap .25s ease-in-out infinite alternate; }
 .cd-bubble { animation: cd-pop .18s ease-out both; }
 @keyframes cd-pop { from { opacity: .2; } to { opacity: 1; } }
-.cd-kid.is-walk .cd-leg1 { animation: cd-step .34s ease-in-out infinite alternate; transform-origin: -10px -34px; }
-.cd-kid.is-walk .cd-leg2 { animation: cd-step .34s ease-in-out infinite alternate-reverse; transform-origin: 6px -34px; }
+.cd-kid.is-walk .cd-leg1 { animation: cd-step .34s ease-in-out infinite alternate; transform-origin: -6px -50px; }
+.cd-kid.is-walk .cd-leg2 { animation: cd-step .34s ease-in-out infinite alternate-reverse; transform-origin: 0 -52px; }
 @keyframes cd-step { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
-.cd-kid.is-walk .cd-arms { animation: cd-grope .5s ease-in-out infinite alternate; transform-origin: 0 -76px; }
+.cd-kid.is-walk .cd-arms { animation: cd-grope .5s ease-in-out infinite alternate; transform-origin: 8px -96px; }
 @keyframes cd-grope { from { transform: rotate(-8deg); } to { transform: rotate(10deg); } }
-.cd-kid.is-catch .cd-arms { transform: rotate(-12deg) translateX(6px); transform-origin: 0 -76px; }
+.cd-kid.is-catch .cd-arms { transform: rotate(14deg) translateX(4px); transform-origin: 8px -96px; }
 @media (prefers-reduced-motion: reduce) { .cd-duck.is-move .cd-waddle, .cd-kid.is-walk .cd-leg1, .cd-kid.is-walk .cd-leg2, .cd-kid.is-walk .cd-arms { animation-duration: 1s; } }
