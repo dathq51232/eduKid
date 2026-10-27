@@ -3,6 +3,7 @@
 //  rotor: bộ phận quay khi có hiệu ứng "Tự quay"; lights: đèn giao thông; bulb: bóng đèn bật/tắt;
 //  parts: các bộ phận tách rời được; beam: đòn cân; hands: kim đồng hồ.
 import * as THREE from 'three';
+import { MODEL_ASSETS } from './models';
 
 export type AssetOpts = { color: string; name: string; on?: boolean };
 export type Asset = {
@@ -17,6 +18,8 @@ export type Asset = {
   onoff?: boolean;
   /** không đổi màu */
   fixed?: boolean;
+  /** ảnh nhỏ dựng sẵn (mô hình tải từ file .glb) */
+  thumb?: string;
   b: (o: AssetOpts) => THREE.Group;
 };
 
@@ -248,6 +251,9 @@ export const ASSETS: Asset[] = [
   { id: 'sign', cat: 'Bảng & chữ', name: 'Bảng chữ', color: '#1f6b45', text: true, kw: 'tieu de bang', b: ({ color, name }) => { const board = textBox(2.4, 1.2, 0.08, '#c69a5b', textTexture(name, { bg: color, border: '#c69a5b' })); board.position.y = 1.6; return grp(mesh(cyl(0.06, 0.06, 1.2, 5), M(TRUNK), 0, 0.6), board); } },
   { id: 'label', cat: 'Bảng & chữ', name: 'Nhãn chữ nổi', color: '#2457c5', text: true, y: 2, kw: 'chu tieu de', b: ({ color, name }) => { const t = textTexture(name, { bg: color, w: 512, h: 128, size: 56 }); const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t })); s.scale.set(3, 0.75, 1); return grp(s); } },
 ];
+
+// Mô hình Kenney (khu phố, giao thông, nhân vật) xếp sau đồ vật tự dựng
+ASSETS.push(...MODEL_ASSETS);
 
 export const ASSET_BY_ID: Record<string, Asset> = Object.fromEntries(ASSETS.map((a) => [a.id, a]));
 export const ASSET_CATS = [...new Set(ASSETS.map((a) => a.cat))];

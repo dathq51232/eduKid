@@ -1,0 +1,4 @@
+Mô hình 3D trong thư mục này: Kenney (www.kenney.nl), giấy phép CC0 1.0 (Public Domain)
+https://creativecommons.org/publicdomain/zero/1.0/
+Nguồn: github.com/KenneyNL/Starter-Kit-City-Builder, github.com/KenneyNL/Starter-Kit-3D-Platformer
+Đã nén lại cho web: npx @gltf-transform/cli optimize in.glb out.glb --compress meshopt --texture-compress webp --texture-size 256 --simplify false

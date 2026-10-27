@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { ASSET_BY_ID, type Part } from './assets';
+import { MODEL_EVENT } from './models';
 import type { BaseType, Lesson3D, Link3D, Obj3D } from './types';
 
 type Node = { root: THREE.Group; body: THREE.Group; key: string; pts?: THREE.Points; seeds?: number[][]; ang: number; rad: number; t0: number };
@@ -74,7 +75,7 @@ export class Stage3D {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.target.set(0, 1.5, 0); this.controls.enableDamping = true; this.controls.maxPolarAngle = 1.42; this.controls.minDistance = 4; this.controls.maxDistance = 42;
     this.scene.add(new THREE.HemisphereLight(0xeaf4ff, 0x6b7f5a, 1.1));
-    const dl = new THREE.DirectionalLight(0xfff2dc, 1.5); dl.position.set(8, 14, 6); dl.castShadow = true; dl.shadow.mapSize.set(1024, 1024);
+    const dl = new THREE.DirectionalLight(0xfff2dc, 1.5); dl.position.set(8, 14, 6); dl.castShadow = true; dl.shadow.mapSize.set(1024, 1024); dl.shadow.normalBias = 0.03;
     Object.assign(dl.shadow.camera, { left: -16, right: 16, top: 12, bottom: -12 }); this.scene.add(dl);
     this.scene.add(this.slab, this.linkGroup);
     this.selBox.visible = false; this.scene.add(this.selBox);
@@ -92,11 +93,15 @@ export class Stage3D {
     el.addEventListener('dragover', this.onDragOver);
     el.addEventListener('drop', this.onDrop);
     this.ro = new ResizeObserver(() => this.resize()); this.ro.observe(el); this.resize();
+    window.addEventListener(MODEL_EVENT, this.onModel);
     this.raf = requestAnimationFrame(this.frame);
   }
 
+  /** mô hình .glb vừa tải xong: vẽ lại đường nối / ghim theo kích thước thật */
+  private onModel = () => { if (this.lesson) { this.buildLinks(); this.syncPins(); } };
   dispose() {
     cancelAnimationFrame(this.raf); this.ro.disconnect();
+    window.removeEventListener(MODEL_EVENT, this.onModel);
     const cv = this.renderer.domElement;
     cv.removeEventListener('pointermove', this.onMove); cv.removeEventListener('pointerdown', this.onDown); cv.removeEventListener('pointerup', this.onUp);
     this.el.removeEventListener('dragover', this.onDragOver); this.el.removeEventListener('drop', this.onDrop);
@@ -217,7 +222,7 @@ export class Stage3D {
   startPlacing(type: string | null) {
     if (this.ghost) this.scene.remove(this.ghost); this.ghost = null; this.placing = type;
     if (!type) return; const a = ASSET_BY_ID[type]; if (!a) return;
-    const g = a.b({ color: a.color, name: a.name });
+    const g = a.b({ color: a.color, name: a.name }); g.userData.ghost = true;
     g.traverse((m) => { const mm = m as THREE.Mesh; if (mm.material && !Array.isArray(mm.material)) { mm.material = (mm.material as THREE.Material).clone(); (mm.material as THREE.Material).transparent = true; (mm.material as THREE.Material).opacity = 0.5; } m.raycast = () => {}; });
     g.visible = false; this.ghost = g; this.scene.add(g);
   }
@@ -324,6 +329,7 @@ export function makeThumbs(ids: string[]): Record<string, string> {
   const cam = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
   ids.forEach((id) => {
     const a = ASSET_BY_ID[id]; if (!a) return;
+    if (a.thumb) { out[id] = a.thumb; return; }
     const g = a.b({ color: a.color, name: a.text ? 'Chữ' : a.name, on: a.onoff ? true : undefined }); sc.add(g);
     const box = new THREE.Box3().setFromObject(g); const c = box.getCenter(new THREE.Vector3()); const s = box.getSize(new THREE.Vector3()).length() || 1;
     cam.position.set(c.x + s * 0.95, c.y + s * 0.6, c.z + s * 1.25); cam.lookAt(c); r.render(sc, cam);

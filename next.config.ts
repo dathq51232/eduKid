@@ -9,12 +9,12 @@ const SB_WS = SB.replace(/^ http/, ' ws');
 
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: https://*.supabase.co${SB}`,
   "media-src 'self' data: blob:",
   "font-src 'self' data:",
-  `connect-src 'self' https://*.supabase.co wss://*.supabase.co${SB}${SB_WS}`,
+  `connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co${SB}${SB_WS}`,
   "frame-src 'self' blob: data:",
   "frame-ancestors 'self'",
   "object-src 'none'",
