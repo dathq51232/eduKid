@@ -6303,6 +6303,8 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .wsb-bar { width: 100%; max-width: 760px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .wsb-bar .btn { margin-left: auto; }
 .wsb-warn { font-size: 13px; color: #b45309; }
+.wsb-std { padding: 10px 14px 12px; border-radius: 14px; background: linear-gradient(135deg, color-mix(in srgb, var(--brand-blue) 10%, var(--surface)), var(--surface)); border: 1px solid color-mix(in srgb, var(--brand-blue) 30%, var(--line)); }
+.wsb-std p { margin: 6px 0 0; font-size: 12.5px; }
 .wsb-tip { width: 100%; max-width: 760px; margin: -6px 0 0; font-size: 12.5px; }
 .wsb-page { width: 100%; max-width: 760px; background: #fff; box-shadow: 0 6px 24px rgb(15 23 42 / .14); border-radius: 2px; }
 .wsb-page svg { display: block; width: 100%; height: auto; }
@@ -6313,6 +6315,6 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
   body.ws-printing > *:not(.ws-print-root) { display: none !important; }
   body.ws-printing { background: #fff !important; margin: 0 !important; }
   body.ws-printing .ws-print-root { display: block; }
-  .ws-print-page { display: block; width: 210mm; height: 297mm; break-after: page; overflow: hidden; }
+  .ws-print-page { display: block; break-after: page; overflow: hidden; }
   .ws-print-page:last-child { break-after: auto; }
 }

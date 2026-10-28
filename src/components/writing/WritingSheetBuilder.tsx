@@ -9,7 +9,7 @@ import { BookOpenText, Eye, EyeOff, FilePlus2, Minus, Plus, Printer, RotateCcw, 
 import SheetPageSvg, { MOTIFS, Motif } from './SheetPageSvg';
 import { FLORALS, Floral, FloralScope } from './floral';
 import { STICKERS } from '@/lib/stickers';
-import { DEFAULT_SHEET, LINE_COLORS, TAP_FONTS, fontFamily, layoutSheet, loadTapFont, normalizeSheet, type Corner, type SheetSettings } from '@/lib/writing/sheet';
+import { DEFAULT_SHEET, FALLBACK_FONT, LINE_COLORS, PAGE_SIZES, TAP_FONTS, fallbackScale, pageDims, textSegments, fontFamily, layoutSheet, loadTapFont, normalizeSheet, type Corner, type SheetSettings } from '@/lib/writing/sheet';
 import { VERSE_GROUPS } from '@/lib/writing/verses';
 import { deleteTask, listTasks, saveTask, setTaskActive, taskError, type WritingTask } from '@/lib/writing/tasks';
 
@@ -25,6 +25,18 @@ const DECO_PRESETS: { label: string; v: Partial<SheetSettings> }[] = [
   { label: 'Oải hương', v: { corners: { tl: 'f:oai-huong', tr: 'none', bl: 'none', br: 'f:oai-huong' }, decoSize: 36, border: 'song', borderColor: '#8b5cf6' } },
   { label: 'Hình vẽ vui', v: { corners: { tl: 'm:may', tr: 'm:mat-troi', bl: 'none', br: 'm:bong' }, decoSize: 26, decoColor: '#3b82f6', border: 'none' } },
   { label: 'Không trang trí', v: { corners: { tl: 'none', tr: 'none', bl: 'none', br: 'none' }, border: 'none' } },
+];
+
+// Mẫu theo chương trình tập viết tiểu học: chữ cỡ vừa (chữ thường cao 2 li) học ở lớp 1–2, cỡ nhỏ (1 li) từ cuối lớp 1;
+// lớp 4–5 viết cỡ nhỏ, có thể tập chữ nghiêng nét thanh đậm. Ô li 2 mm là cỡ vở ô li thông dụng (chỉnh lại được).
+const STANDARDS: { id: string; label: string; hint: string; v: Partial<SheetSettings> }[] = [
+  { id: 'l1-chu', label: 'Lớp 1 — chữ cái, vần (cỡ vừa)', hint: 'Vở 4 ô li, chữ thường cao 2 li, lặp kín dòng; 1 dòng mẫu, 3 dòng tô.', v: { paper: 4, oli: 2, size: 'vua', grid: 'ngang', layout: 'lap', font: 'hp4hn', sample: 1, trace: 3, blank: 2, vertical: true, margin: true } },
+  { id: 'l1-cau', label: 'Lớp 1 — từ, câu ứng dụng (cỡ vừa)', hint: 'Cỡ vừa, viết cả câu; 1 dòng mẫu, 2 dòng tô, 2 dòng trống.', v: { paper: 4, oli: 2, size: 'vua', grid: 'ngang', layout: 'cau', font: 'hp4hn', sample: 1, trace: 2, blank: 2, vertical: true, margin: true } },
+  { id: 'l23-hoa', label: 'Lớp 2–3 — chữ hoa (cỡ vừa)', hint: 'Chữ hoa cao 5 li, lặp kín dòng.', v: { paper: 4, oli: 2, size: 'vua', grid: 'ngang', layout: 'lap', font: 'hp4hn', sample: 1, trace: 2, blank: 2 } },
+  { id: 'l23-cau', label: 'Lớp 2–3 — câu ứng dụng (cỡ nhỏ)', hint: 'Cỡ nhỏ: chữ thường cao 1 li; 1 dòng mẫu, 1 dòng tô, 3 dòng trống.', v: { paper: 4, oli: 2, size: 'nho', grid: 'ngang', layout: 'cau', font: 'hp4hn', sample: 1, trace: 1, blank: 3 } },
+  { id: 'l45', label: 'Lớp 4–5 — đoạn thơ, ca dao (cỡ nhỏ)', hint: 'Cỡ nhỏ, chữ đứng; 1 dòng mẫu, 3 dòng trống.', v: { paper: 4, oli: 2, size: 'nho', grid: 'ngang', layout: 'cau', font: 'hp4hn', sample: 1, trace: 0, blank: 3 } },
+  { id: 'l45-nghieng', label: 'Lớp 4–5 — chữ nghiêng nét thanh đậm', hint: 'Chữ sáng tạo cho đội tuyển viết chữ đẹp.', v: { paper: 4, oli: 2, size: 'nho', grid: 'ngang', layout: 'cau', font: 'kieu5', sample: 1, trace: 1, blank: 2 } },
+  { id: 'toan', label: 'Phiếu Toán — ô li vuông (như vở Toán)', hint: 'Ô li vuông, đậm mỗi 4 li; chữ in cho số và phép tính, mỗi phép tính trên một ô lớn.', v: { paper: 4, oli: 2.2, size: 'vua', grid: 'vuong', layout: 'cau', font: 'in-n', sample: 1, trace: 0, blank: 0, margin: false, lineColor: '#8b5cf6' } },
 ];
 
 function Stepper({ label, value, min, max, onChange, hint }: { label: string; value: number; min: number; max: number; onChange: (v: number) => void; hint?: string }) {
@@ -82,6 +94,7 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
   const [measureV, setMeasureV] = useState(0);
   const [group, setGroup] = useState(VERSE_GROUPS[0].id);
   const [corner, setCorner] = useState<Corner>('tl');
+  const [std, setStd] = useState<string | null>(null);
   const [tasks, setTasks] = useState<WritingTask[] | null>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -109,8 +122,14 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
     if (!ready || typeof document === 'undefined') return null; // chờ font (và tránh lệch khi dựng trang ở máy chủ)
     const c = document.createElement('canvas').getContext('2d')!;
     c.font = `100px "${fontFamily(s.font)}", cursive`;
+    const c2 = document.createElement('canvas').getContext('2d')!;
+    c2.font = `${100 * fallbackScale(s.font)}px ${FALLBACK_FONT}`;
     const cache = new Map<string, number>();
-    const measure = (t: string) => { let w = cache.get(t); if (w === undefined) { w = c.measureText(t).width / 100; cache.set(t, w); } return w; };
+    const measure = (t: string) => {
+      let w = cache.get(t);
+      if (w === undefined) { w = textSegments(t, s.font).reduce((a, g) => a + (g.safe ? c : c2).measureText(g.t).width, 0) / 100; cache.set(t, w); }
+      return w;
+    };
     return layoutSheet(s, measure);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s, measureV, ready]);
@@ -127,12 +146,14 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
     document.body.classList.add('ws-printing');
     // khổ giấy A4, không lề: chỉ gắn trong lúc in trang vở (các trang in khác của app giữ cài đặt riêng)
     const st = document.createElement('style');
-    st.textContent = '@page { size: A4 portrait; margin: 0; }';
+    const d = pageDims(s.pageSize);
+    st.textContent = `@page { size: ${d.w}mm ${d.h}mm; margin: 0; }`;
     document.head.appendChild(st);
     const done = () => { document.body.classList.remove('ws-printing'); st.remove(); setPrinting(false); };
     window.addEventListener('afterprint', done, { once: true });
     const t = window.setTimeout(() => { void document.fonts.ready.then(() => window.print()); }, 150);
     return () => { window.clearTimeout(t); window.removeEventListener('afterprint', done); document.body.classList.remove('ws-printing'); st.remove(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [printing]);
 
   const addVerse = (v: string) => setS((o) => ({ ...o, text: o.text.trim() ? `${o.text.trim()}\n${v}` : v, layout: group === 'chu-cai' ? 'lap' : o.layout }));
@@ -154,6 +175,15 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
   return (
     <div className="wsb">
       <aside className="wsb-panel" aria-label="Cài đặt trang vở">
+        <div className="wsb-std">
+          <label className="wsb-f"><span>Mẫu theo chương trình tiểu học</span>
+            <select value="" onChange={(e) => { const st = STANDARDS.find((x) => x.id === e.target.value); if (st) { setS((o) => ({ ...o, ...st.v })); setStd(st.id); } }}>
+              <option value="">— Chọn mẫu chuẩn để điền nhanh —</option>
+              {STANDARDS.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
+            </select>
+          </label>
+          {std && <p className="dash-muted">{STANDARDS.find((x) => x.id === std)?.hint} Vẫn chỉnh tay được mọi mục bên dưới.</p>}
+        </div>
         <details open className="wsb-sec">
           <summary>1. Nội dung luyện viết</summary>
           <label className="wsb-f"><span>Tiêu đề trang</span><input value={s.title} maxLength={120} onChange={(e) => set('title', e.target.value)} placeholder="VD: Luyện viết ca dao tuần 8" /></label>
@@ -206,7 +236,14 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
         </details>
 
         <details open className="wsb-sec">
-          <summary>3. Giấy ô li</summary>
+          <summary>3. Giấy ô li & khổ giấy</summary>
+          <div className="wsb-seg" role="radiogroup" aria-label="Kiểu kẻ">
+            <button type="button" role="radio" aria-checked={s.grid === 'ngang'} className={s.grid === 'ngang' ? 'is-on' : ''} onClick={() => set('grid', 'ngang')}>Vở tập viết</button>
+            <button type="button" role="radio" aria-checked={s.grid === 'vuong'} className={s.grid === 'vuong' ? 'is-on' : ''} onClick={() => set('grid', 'vuong')}>Ô li vuông (vở Toán)</button>
+          </div>
+          <label className="wsb-f"><span>Khổ giấy</span>
+            <select value={s.pageSize} onChange={(e) => set('pageSize', e.target.value as SheetSettings['pageSize'])}>{PAGE_SIZES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}</select>
+          </label>
           <div className="wsb-seg" role="radiogroup" aria-label="Loại vở">
             <button type="button" role="radio" aria-checked={s.paper === 4} className={s.paper === 4 ? 'is-on' : ''} onClick={() => set('paper', 4)}>Vở 4 ô li</button>
             <button type="button" role="radio" aria-checked={s.paper === 5} className={s.paper === 5 ? 'is-on' : ''} onClick={() => set('paper', 5)}>Vở 5 ô li</button>
@@ -215,7 +252,7 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
             <input type="range" min={1.5} max={3.5} step={0.1} value={s.oli} onChange={(e) => set('oli', Number(e.target.value))} />
           </label>
           <div className="wsb-f"><span>Màu đường kẻ</span><Swatches label="Màu đường kẻ" value={s.lineColor} onChange={(c) => set('lineColor', c)} /></div>
-          <label className="wsb-check"><input type="checkbox" checked={s.vertical} onChange={(e) => set('vertical', e.target.checked)} /> Đường kẻ dọc (ô vuông)</label>
+          {s.grid === 'ngang' && <label className="wsb-check"><input type="checkbox" checked={s.vertical} onChange={(e) => set('vertical', e.target.checked)} /> Đường kẻ dọc mỗi ô lớn</label>}
           <label className="wsb-check"><input type="checkbox" checked={s.margin} onChange={(e) => set('margin', e.target.checked)} /> Lề đỏ bên trái
             {s.margin && <input type="color" value={s.marginColor} onChange={(e) => set('marginColor', e.target.value)} aria-label="Màu lề" />}
           </label>
@@ -279,11 +316,11 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
 
       <section className="wsb-preview" aria-label="Xem trước trang vở">
         <div className="wsb-bar">
-          <b>{layout ? `${pages.length} trang A4` : 'Trang A4'}</b>
+          <b>{layout ? `${pages.length} trang · ${pageDims(s.pageSize).label}` : 'Trang vở'}</b>
           {layout && layout.overflow.length > 0 && <span className="wsb-warn">Có từ dài hơn dòng kẻ — chọn cỡ nhỏ hoặc ô li nhỏ hơn.</span>}
           <button type="button" className="btn btn-primary btn-sm" disabled={!ready || !pages.length} onClick={() => setPrinting(true)}><Printer aria-hidden="true" /> In / Lưu PDF</button>
         </div>
-        <p className="dash-muted wsb-tip">Khi in: chọn khổ A4, tỉ lệ 100% (không “vừa trang”), bỏ đầu trang / chân trang của trình duyệt.</p>
+        <p className="dash-muted wsb-tip">Khi in: chọn đúng khổ giấy, tỉ lệ 100% (không “vừa trang”), bỏ đầu trang / chân trang của trình duyệt.</p>
         {!ready && <p className="dash-muted" role="status">Đang nạp font chữ…</p>}
         {ready && layout && pages.map((p, i) => (
           <div key={i} className="wsb-page"><SheetPageSvg s={s} layout={layout} page={p} index={i} /></div>

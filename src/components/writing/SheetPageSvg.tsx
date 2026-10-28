@@ -4,7 +4,7 @@
 // Cùng một SVG dùng để xem trước trên màn hình và để in (trình duyệt in đúng 210 x 297 mm).
 import { Fragment } from 'react';
 import { FloralScope, Floral } from './floral';
-import { PAGE_H, PAGE_W, fontFamily, type Corner, type SheetLayout, type SheetPage, type SheetSettings } from '@/lib/writing/sheet';
+import { FALLBACK_FONT, fallbackScale, fontFamily, textSegments, type Corner, type FontId, type SheetLayout, type SheetPage, type SheetSettings } from '@/lib/writing/sheet';
 
 export const MOTIFS: { id: string; label: string }[] = [
   { id: 'hoa', label: 'Chùm hoa' }, { id: 'la', label: 'Cành lá' }, { id: 'sao', label: 'Ngôi sao' }, { id: 'buom', label: 'Bướm' },
@@ -136,11 +136,11 @@ const flipOf = (corner: Corner, id: string, s: number) => {
   return `translate(${h ? s : 0} ${v ? s : 0}) scale(${h ? -1 : 1} ${v ? -1 : 1})`;
 };
 
-function CornerDeco({ corner, value, size, color }: { corner: Corner; value: string; size: number; color: string }) {
+function CornerDeco({ corner, value, size, color, W, H }: { corner: Corner; value: string; size: number; color: string; W: number; H: number }) {
   if (!value || value === 'none') return null;
   const m = 5; // cách mép giấy
-  const x = corner === 'tl' || corner === 'bl' ? m : PAGE_W - m - size;
-  const y = corner === 'tl' || corner === 'tr' ? m : PAGE_H - m - size;
+  const x = corner === 'tl' || corner === 'bl' ? m : W - m - size;
+  const y = corner === 'tl' || corner === 'tr' ? m : H - m - size;
   if (value.startsWith('f:')) {
     // hoa văn bo góc: lật gương theo cả hai chiều để cành hoa luôn ôm mép giấy
     const h = corner === 'tr' || corner === 'br', v = corner === 'bl' || corner === 'br';
@@ -162,10 +162,10 @@ function CornerDeco({ corner, value, size, color }: { corner: Corner; value: str
   );
 }
 
-function Border({ s }: { s: SheetSettings }) {
+function Border({ s, W, H }: { s: SheetSettings; W: number; H: number }) {
   const c = s.borderColor;
   const m = 6;
-  const w = PAGE_W - m * 2, h = PAGE_H - m * 2;
+  const w = W - m * 2, h = H - m * 2;
   switch (s.border) {
     case 'don': return <rect x={m} y={m} width={w} height={h} rx="3" fill="none" stroke={c} strokeWidth="0.6" />;
     case 'doi': return (<g fill="none" stroke={c}><rect x={m} y={m} width={w} height={h} rx="3" strokeWidth="0.9" /><rect x={m + 1.6} y={m + 1.6} width={w - 3.2} height={h - 3.2} rx="2" strokeWidth="0.3" /></g>);
@@ -196,7 +196,15 @@ function Grid({ s, page, li, sq }: { s: SheetSettings; page: SheetPage; li: numb
     const main = i % s.paper === 0;
     lines.push(<line key={`h${i}`} x1={x0} x2={x1} y1={y} y2={y} stroke={s.lineColor} strokeWidth={main ? 0.26 : 0.12} strokeOpacity={main ? 0.85 : 0.5} />);
   }
-  if (s.vertical) {
+  if (s.grid === 'vuong') {
+    // ô li vuông (như vở Toán): kẻ dọc mỗi li, đậm mỗi ô lớn
+    const m = Math.round((x1 - x0) / li);
+    for (let j = 0; j <= m; j++) {
+      const x = x0 + j * li;
+      const main = j % s.paper === 0;
+      lines.push(<line key={`v${j}`} x1={x} x2={x} y1={y0} y2={y1} stroke={s.lineColor} strokeWidth={main ? 0.26 : 0.12} strokeOpacity={main ? 0.85 : 0.5} />);
+    }
+  } else if (s.vertical) {
     const m = Math.round((x1 - x0) / sq);
     for (let j = 0; j <= m; j++) {
       const x = x0 + j * sq;
@@ -207,21 +215,27 @@ function Grid({ s, page, li, sq }: { s: SheetSettings; page: SheetPage; li: numb
   return <g>{lines}</g>;
 }
 
-function Header({ s, page }: { s: SheetSettings; page: SheetPage }) {
+/** Chữ vẽ bằng font tập viết; ký tự font không vẽ đúng thì vẽ bằng font hệ thống (cỡ khớp chiều cao chữ thường) */
+function SegText({ text, font, fs }: { text: string; font: FontId; fs: number }) {
+  return (<>{textSegments(text, font).map((g, i) => g.safe ? <tspan key={i}>{g.t}</tspan> : <tspan key={i} fontFamily={FALLBACK_FONT} fontSize={fs * fallbackScale(font)}>{g.t}</tspan>)}</>);
+}
+
+function Header({ s, page, W }: { s: SheetSettings; page: SheetPage; W: number }) {
   const { x0, x1, y0 } = page.grid;
   const mid = (x0 + x1) / 2;
   // tránh hoa văn góc trên đè lên dòng Họ tên / Ngày
   const padL = s.corners.tl !== 'none' ? Math.max(0, 5 + s.decoSize * 0.45 - x0) : 0;
-  const padR = s.corners.tr !== 'none' ? Math.max(0, 5 + s.decoSize * 0.45 - (PAGE_W - x1)) : 0;
+  const padR = s.corners.tr !== 'none' ? Math.max(0, 5 + s.decoSize * 0.45 - (W - x1)) : 0;
+  const narrow = W < 200; // khổ nhỏ: Ngày xuống dòng dưới
   const t = s.title.trim();
   return (
     <g fontFamily={`${fontFamily('in-n')}, Arial, sans-serif`} fill="#1f2937">
-      {t && <text x={mid} y={y0 - (s.header ? 13.5 : 5)} textAnchor="middle" fontSize="7.4" fontFamily={`${fontFamily('hp4b')}, cursive`} fill={s.ink}>{t}</text>}
+      {t && <text x={mid} y={y0 - (s.header ? (narrow ? 15.5 : 13.5) : 5)} textAnchor="middle" fontSize="7.4" fontFamily={`${fontFamily('hp4b')}, cursive`} fill={s.ink} style={{ whiteSpace: 'pre' }}><SegText text={t} font="hp4b" fs={7.4} /></text>}
       {s.header && (
         <g fontSize="3.6">
-          <text x={x0 + padL} y={y0 - 4}>Họ và tên: <tspan fill="#94a3b8">.........................................................</tspan></text>
-          <text x={x0 + 110 + padL * 0.5 - padR * 0.5} y={y0 - 4}>Lớp: <tspan fill="#94a3b8">...............</tspan></text>
-          <text x={x1 - padR} y={y0 - 4} textAnchor="end">Ngày: <tspan fill="#94a3b8">......./......./...........</tspan></text>
+          <text x={x0 + padL} y={y0 - (narrow ? 8.5 : 4)}>Họ và tên: <tspan fill="#94a3b8">{narrow ? '.......................................' : '.........................................................'}</tspan></text>
+          <text x={narrow ? x1 - padR : x0 + (x1 - x0) * 0.59 + padL * 0.5 - padR * 0.5} y={y0 - (narrow ? 8.5 : 4)} textAnchor={narrow ? 'end' : 'start'}>Lớp: <tspan fill="#94a3b8">...............</tspan></text>
+          <text x={x1 - padR} y={y0 - 3.5} textAnchor="end">Ngày: <tspan fill="#94a3b8">......./......./...........</tspan></text>
         </g>
       )}
     </g>
@@ -230,24 +244,25 @@ function Header({ s, page }: { s: SheetSettings; page: SheetPage }) {
 
 export default function SheetPageSvg({ s, layout, page, index, className }: { s: SheetSettings; layout: SheetLayout; page: SheetPage; index: number; className?: string }) {
   const fam = `${fontFamily(s.font)}, cursive`;
+  const { W, H } = layout;
   const traceProps = s.traceStyle === 'mo'
     ? { fill: s.traceColor, fillOpacity: 0.55 }
     : s.traceStyle === 'cham'
       ? { fill: 'none', stroke: s.traceColor, strokeWidth: 0.22, strokeDasharray: '0.05 0.55', strokeLinecap: 'round' as const }
       : { fill: 'none', stroke: s.traceColor, strokeWidth: 0.16 };
   return (
-    <svg className={className} viewBox={`0 0 ${PAGE_W} ${PAGE_H}`} width="210mm" height="297mm" xmlns="http://www.w3.org/2000/svg" role="img" aria-label={`Trang vở ${index + 1}`}>
+    <svg className={className} viewBox={`0 0 ${W} ${H}`} width={`${W}mm`} height={`${H}mm`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label={`Trang vở ${index + 1}`}>
       <FloralScope>
-      <rect width={PAGE_W} height={PAGE_H} fill="#fff" />
-      <Border s={s} />
-      {(['tl', 'tr', 'bl', 'br'] as Corner[]).map((c) => <CornerDeco key={c} corner={c} value={s.corners[c]} size={s.decoSize} color={s.decoColor} />)}
-      {page.header && <Header s={s} page={page} />}
+      <rect width={W} height={H} fill="#fff" />
+      <Border s={s} W={W} H={H} />
+      {(['tl', 'tr', 'bl', 'br'] as Corner[]).map((c) => <CornerDeco key={c} corner={c} value={s.corners[c]} size={s.decoSize} color={s.decoColor} W={W} H={H} />)}
+      {page.header && <Header s={s} page={page} W={W} />}
       <Grid s={s} page={page} li={layout.li} sq={layout.sq} />
       <g fontFamily={fam} fontSize={layout.fs}>
         {page.rows.map((r, i) => (
           <Fragment key={i}>
             {r.pieces.map((p, j) => (
-              <text key={j} x={p.x} y={r.base} {...(r.kind === 'mau' ? { fill: s.ink } : traceProps)}>{p.text}</text>
+              <text key={j} x={p.x} y={r.base} style={{ whiteSpace: 'pre' }} {...(r.kind === 'mau' ? { fill: s.ink } : traceProps)}><SegText text={p.text} font={s.font} fs={layout.fs} /></text>
             ))}
           </Fragment>
         ))}
