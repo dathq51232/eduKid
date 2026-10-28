@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getViewer } from '@/lib/auth/viewer';
+import { getVerifiedViewer } from '@/lib/auth/viewer';
 import { hasStudentLoginConfig, isUuid } from '@/lib/auth/student-credentials';
 import { issueStudentPin } from '@/lib/classroom/accounts';
 
@@ -8,7 +8,7 @@ import { issueStudentPin } from '@/lib/classroom/accounts';
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string; sid: string }> }) {
   const { id, sid } = await params;
   if (!hasStudentLoginConfig()) return NextResponse.json({ error: 'Máy chủ chưa cấu hình tài khoản học sinh.' }, { status: 503 });
-  const viewer = await getViewer();
+  const viewer = await getVerifiedViewer();
   if (viewer.state !== 'ok') return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });
   if (!viewer.isTeacher || !isUuid(id) || !isUuid(sid)) return NextResponse.json({ error: 'Không có quyền.' }, { status: 403 });
 

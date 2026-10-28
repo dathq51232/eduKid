@@ -3,7 +3,7 @@ import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { hasSupabaseEnv } from '@/lib/supabase/env';
 
-// Người đang xem trang. Vai trò luôn đọc từ database bằng phiên đăng nhập đã xác thực (getUser),
+// Người đang xem trang. Vai trò luôn đọc từ database bằng phiên đăng nhập (API route quyền cao dùng getVerifiedViewer),
 // không bao giờ lấy từ dữ liệu do trình duyệt gửi. Đây là lớp giao diện; quyền thật do RLS và hàm DB kiểm tra.
 export type Viewer =
   | { state: 'not_configured' }
@@ -24,11 +24,30 @@ export type Viewer =
       schoolNameHint: string;
     };
 
-export const getViewer = cache(async (): Promise<Viewer> => {
+type AuthUser = { id: string; email?: string; user_metadata?: Record<string, unknown> };
+
+/** Đọc người dùng từ access token trong cookie, không gọi mạng (bỏ một vòng hỏi máy chủ Auth mỗi lần chuyển trang).
+ *  Chữ ký token vẫn được PostgREST kiểm tra ở mọi truy vấn phía sau: token giả thì không đọc được vai trò nào. */
+async function tokenUser(supabase: Awaited<ReturnType<typeof createClient>>): Promise<AuthUser | null> {
+  const { data } = await supabase.auth.getSession(); // tự làm mới token khi đã hết hạn
+  const token = data.session?.access_token;
+  if (!token) return null;
+  try {
+    const part = token.split('.')[1] ?? '';
+    const c = JSON.parse(Buffer.from(part.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')) as { sub?: string; email?: string; exp?: number; user_metadata?: Record<string, unknown> };
+    if (!c.sub || !c.exp || c.exp * 1000 < Date.now() + 5_000) return null;
+    return { id: c.sub, email: c.email, user_metadata: c.user_metadata };
+  } catch { return null; }
+}
+
+async function loadViewer(verify: boolean): Promise<Viewer> {
   if (!hasSupabaseEnv()) return { state: 'not_configured' };
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  const user = auth.user;
+  let user: AuthUser | null = verify ? null : await tokenUser(supabase);
+  if (!user) {
+    const { data: auth } = await supabase.auth.getUser();
+    user = auth.user;
+  }
   if (!user) return { state: 'signed_out' };
 
   const [{ data: roles }, { data: profile }, { data: student }, { data: apps }] = await Promise.all([
@@ -59,7 +78,13 @@ export const getViewer = cache(async (): Promise<Viewer> => {
     wantsTeacher: meta.wants_teacher === true,
     schoolNameHint: typeof meta.school_name === 'string' ? meta.school_name.slice(0, 180) : '',
   };
-});
+}
+
+/** Dùng cho trang (giao diện): nhanh, đọc người dùng từ token; dữ liệu vẫn do RLS bảo vệ. */
+export const getViewer = cache(() => loadViewer(false));
+
+/** Dùng cho API route có quyền cao (khoá dịch vụ, service role): luôn hỏi máy chủ Auth để xác thực người dùng. */
+export const getVerifiedViewer = cache(() => loadViewer(true));
 
 /** Trang chính theo vai trò sau khi đăng nhập */
 export function homeFor(v: Viewer): string {

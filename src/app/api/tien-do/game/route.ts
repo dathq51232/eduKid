@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getViewer } from '@/lib/auth/viewer';
+import { getVerifiedViewer } from '@/lib/auth/viewer';
 import { learningGate } from '@/lib/auth/gate';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient, hasServiceRole } from '@/lib/supabase/admin';
@@ -8,7 +8,7 @@ import { rateLimit } from '@/lib/rate-limit';
 
 // Lưu một lượt chơi game của học sinh đang đăng nhập (kiểm tra giới hạn hợp lý trước khi ghi).
 export async function POST(request: Request) {
-  const viewer = await getViewer();
+  const viewer = await getVerifiedViewer();
   // Khách / người lớn: không lưu gì (không phải lỗi — bài vẫn lưu trên trình duyệt như chế độ khách)
   if (viewer.state !== 'ok') return NextResponse.json({ saved: false, reason: 'guest' });
   if (!viewer.isStudent || !viewer.studentId) return NextResponse.json({ saved: false, reason: 'not_student' });

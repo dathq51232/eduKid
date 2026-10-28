@@ -19,7 +19,7 @@ export async function updateSession(request: NextRequest) {
   if (!hasSession) return requiresLogin(request.nextUrl.pathname) ? toLogin(request) : response;
 
   // Phiên còn hạn > 5 phút và không phải trang học cần kiểm tra học phí / khối: khỏi gọi Supabase Auth ở middleware
-  // (mỗi lần chuyển trang đỡ một lượt gọi mạng). Trang vẫn tự xác thực bằng getUser() trong getViewer, RLS vẫn kiểm tra.
+  // (mỗi lần chuyển trang đỡ một lượt gọi mạng). Trang đọc người dùng từ token (getViewer), API quyền cao xác thực lại bằng getUser (getVerifiedViewer); RLS vẫn kiểm tra.
   const path0 = request.nextUrl.pathname;
   const gated = GATED.includes(path0) || path0.startsWith('/hoc-sinh/de/');
   if (!gated) {

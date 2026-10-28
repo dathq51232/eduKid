@@ -3,9 +3,10 @@
 // Mức 3 (vận dụng giải quyết vấn đề). Quy đổi từ cấp độ L1–L5 của app: L1–L2 → M1, L3 → M2, L4–L5 → M3.
 // Câu hỏi đều do EduChain Kids tự soạn/tự sinh (không chép SGK/SGV/VBT).
 
-import { CONTENT } from '../content';
+// Chỉ dùng các khối đã nạp (trang giáo viên nạp đúng khối của lớp qua grade-loader) — không kéo cả 5 khối vào gói mã.
+import { CONTENT_LIVE as CONTENT } from '../content/store';
 import type { ContentLesson, Level } from '../content/types';
-import { generateOne, practiceIdFor } from '../practice';
+import { generateOne, practiceIdFor } from '../practice/core';
 import type { PracticeQuestion } from '../practice/kit';
 import { makeRng } from '../practice/rng';
 import type { AnswerKey, QuestionType, SubjectCode } from '../types';

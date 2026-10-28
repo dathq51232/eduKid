@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getViewer } from '@/lib/auth/viewer';
+import { getVerifiedViewer } from '@/lib/auth/viewer';
 import { createClient } from '@/lib/supabase/server';
 import { hasServiceRole } from '@/lib/supabase/admin';
 import { rateLimit } from '@/lib/rate-limit';
@@ -13,7 +13,7 @@ import { validateKey } from '@/lib/ai/providers';
 // DELETE /api/ai/keys  → gỡ key (provider: openai | gemini | all).
 
 export async function GET() {
-  const viewer = await getViewer();
+  const viewer = await getVerifiedViewer();
   if (viewer.state !== 'ok') return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });
   if (!viewer.isTeacher && !viewer.isAdmin) return NextResponse.json({ error: 'Chỉ dành cho giáo viên.' }, { status: 403 });
 
@@ -29,7 +29,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const viewer = await getViewer();
+  const viewer = await getVerifiedViewer();
   if (viewer.state !== 'ok') return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });
   if (!viewer.isTeacher && !viewer.isAdmin) return NextResponse.json({ error: 'Chỉ dành cho giáo viên.' }, { status: 403 });
   if (!rateLimit(`aikeys:${viewer.userId}`, 15, 60_000)) return NextResponse.json({ error: 'Thao tác quá nhanh — đợi chút rồi thử lại.' }, { status: 429 });
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const viewer = await getViewer();
+  const viewer = await getVerifiedViewer();
   if (viewer.state !== 'ok') return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });
   if (!viewer.isTeacher && !viewer.isAdmin) return NextResponse.json({ error: 'Chỉ dành cho giáo viên.' }, { status: 403 });
   if (!hasServiceRole()) return NextResponse.json({ error: 'Máy chủ chưa cấu hình đầy đủ.' }, { status: 503 });

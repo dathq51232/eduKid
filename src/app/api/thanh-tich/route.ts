@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getViewer } from '@/lib/auth/viewer';
+import { getVerifiedViewer } from '@/lib/auth/viewer';
 import { createClient } from '@/lib/supabase/server';
 import type { AchievementsPayload, BoardRow, MyAchievements } from '@/lib/achievements';
 
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 // Thành tích thật + bảng điểm cao nhất tuần/tháng của MỘT lớp (migration 0012).
 // Học sinh: lớp của chính em. Thầy cô: truyền ?lop=<id lớp mình dạy>. Quyền xem kiểm tra trong database.
 export async function GET(request: Request) {
-  const viewer = await getViewer();
+  const viewer = await getVerifiedViewer();
   if (viewer.state === 'not_configured') return NextResponse.json({ error: 'not_configured' }, { status: 503 });
   if (viewer.state !== 'ok') return NextResponse.json({ error: 'signed_out' }, { status: 401 });
   const supabase = await createClient();

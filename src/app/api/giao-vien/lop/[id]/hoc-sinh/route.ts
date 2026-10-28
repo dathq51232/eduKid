@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getViewer } from '@/lib/auth/viewer';
+import { getVerifiedViewer } from '@/lib/auth/viewer';
 import { hasStudentLoginConfig, isUuid } from '@/lib/auth/student-credentials';
 import { POLICY_VERSION, dbError, issueStudentPin } from '@/lib/classroom/accounts';
 
@@ -10,7 +10,7 @@ import { POLICY_VERSION, dbError, issueStudentPin } from '@/lib/classroom/accoun
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!hasStudentLoginConfig()) return NextResponse.json({ error: 'Máy chủ chưa cấu hình tài khoản học sinh (xem docs/AUTH-SETUP.md).' }, { status: 503 });
-  const viewer = await getViewer();
+  const viewer = await getVerifiedViewer();
   if (viewer.state !== 'ok') return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });
   if (!viewer.isTeacher) return NextResponse.json({ error: 'Chỉ giáo viên đã được duyệt mới thêm được học sinh.' }, { status: 403 });
   if (!isUuid(id)) return NextResponse.json({ error: 'Lớp không hợp lệ.' }, { status: 400 });

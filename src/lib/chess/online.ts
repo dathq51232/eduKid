@@ -1,6 +1,6 @@
 import 'server-only';
 // Phần máy chủ của cờ vua trực tuyến: xác định học sinh + trường, đọc/ghi ván bằng service_role.
-import { getViewer } from '@/lib/auth/viewer';
+import { getVerifiedViewer } from '@/lib/auth/viewer';
 import { createAdminClient, hasServiceRole } from '@/lib/supabase/admin';
 import type { GameRow } from './online-rules';
 
@@ -8,7 +8,7 @@ export type ChessMe = { studentId: string; schoolId: string; name: string; class
 export type ChessMeResult = { ok: true; me: ChessMe } | { ok: false; error: 'signed_out' | 'not_student' | 'no_class' | 'not_configured' };
 
 export async function chessMe(): Promise<ChessMeResult> {
-  const v = await getViewer();
+  const v = await getVerifiedViewer();
   if (v.state === 'not_configured') return { ok: false, error: 'not_configured' };
   if (v.state !== 'ok') return { ok: false, error: 'signed_out' };
   if (!v.isStudent || !v.studentId) return { ok: false, error: 'not_student' };
@@ -26,7 +26,7 @@ export async function chessMe(): Promise<ChessMeResult> {
 
 /** Chỉ cần biết em là học sinh nào (dùng cho mỗi nước đi — ít truy vấn hơn chessMe để phản hồi nhanh) */
 export async function chessStudentId(): Promise<{ ok: true; studentId: string } | { ok: false; error: 'signed_out' | 'not_student' | 'not_configured' }> {
-  const v = await getViewer();
+  const v = await getVerifiedViewer();
   if (v.state === 'not_configured') return { ok: false, error: 'not_configured' };
   if (v.state !== 'ok') return { ok: false, error: 'signed_out' };
   if (!v.isStudent || !v.studentId) return { ok: false, error: 'not_student' };

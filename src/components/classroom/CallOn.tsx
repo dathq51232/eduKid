@@ -14,6 +14,7 @@ import {
   type CallMode, type CallState, type RaceSlot, type Student, type Tally,
 } from '@/lib/classroom/callon';
 import { bookLessons, lessonPool, type ExamQuestion } from '@/lib/exams/matrix';
+import { useGradeContent } from '@/components/learn/GradeReady';
 import { answerText } from '@/lib/exams/word';
 import type { SubjectCode } from '@/lib/types';
 
@@ -158,7 +159,9 @@ export default function CallOn({ classId, className, grade, students, absentToda
   const present = useMemo(() => presentOf(students, s), [students, s]);
   const { list: cands } = useMemo(() => candidatesOf(students, s), [students, s]);
   const calledCount = present.filter((x) => s.called.includes(x.id)).length;
-  const lessons = useMemo(() => bookLessons(s.subject as SubjectCode, grade), [s.subject, grade]);
+  const bank = useGradeContent(grade); // ngân hàng bài của khối: tải riêng, xong thì danh sách bài hiện ra
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const lessons = useMemo(() => bookLessons(s.subject as SubjectCode, grade), [s.subject, grade, bank.version]);
   const subject = SUBJECTS.find((x) => x.code === s.subject) ?? SUBJECTS[0];
   const mode = CALL_MODES.find((m) => m.id === s.mode) ?? CALL_MODES[0];
 

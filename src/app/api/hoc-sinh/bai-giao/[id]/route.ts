@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getViewer } from '@/lib/auth/viewer';
+import { getVerifiedViewer } from '@/lib/auth/viewer';
 import { learningGate } from '@/lib/auth/gate';
 import { createClient } from '@/lib/supabase/server';
 import type { ExamItem } from '@/lib/classroom/assignments';
@@ -12,7 +12,7 @@ import { createAdminClient, hasServiceRole } from '@/lib/supabase/admin';
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: 'Đề không hợp lệ.' }, { status: 400 });
-  const viewer = await getViewer();
+  const viewer = await getVerifiedViewer();
   if (viewer.state !== 'ok' || !viewer.isStudent || !viewer.studentId) return NextResponse.json({ error: 'Em cần đăng nhập bằng tài khoản học sinh.' }, { status: 401 });
   if (!hasServiceRole()) return NextResponse.json({ error: 'Máy chủ chưa cấu hình lưu bài.' }, { status: 503 });
   if (!rateLimit(`nopde:${viewer.studentId}`, 20, 60 * 60_000)) return NextResponse.json({ error: 'Em nộp quá nhiều lần, thử lại sau.' }, { status: 429 });

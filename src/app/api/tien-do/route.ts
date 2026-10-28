@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getViewer } from '@/lib/auth/viewer';
+import { getVerifiedViewer } from '@/lib/auth/viewer';
 import { learningGate } from '@/lib/auth/gate';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient, hasServiceRole } from '@/lib/supabase/admin';
@@ -9,7 +9,7 @@ import { rateLimit } from '@/lib/rate-limit';
 // Lưu kết quả một bài học cho HỌC SINH đang đăng nhập.
 // Máy chủ chấm lại toàn bộ; học sinh không ghi thẳng vào bảng (RLS chặn), chỉ máy chủ ghi bằng service_role.
 export async function POST(request: Request) {
-  const viewer = await getViewer();
+  const viewer = await getVerifiedViewer();
   // Khách / người lớn: không lưu gì (không phải lỗi — bài vẫn lưu trên trình duyệt như chế độ khách)
   if (viewer.state !== 'ok') return NextResponse.json({ saved: false, reason: 'guest' });
   if (!viewer.isStudent || !viewer.studentId) return NextResponse.json({ saved: false, reason: 'not_student' });

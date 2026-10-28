@@ -8,6 +8,7 @@ import GapsView, { GAP_PERIODS } from '@/components/classroom/GapsView';
 import { computeGaps, type ResultRow } from '@/lib/classroom/gaps';
 import { compareViName } from '@/lib/classroom/names';
 import { createClient } from '@/lib/supabase/server';
+import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
 
 export const metadata: Metadata = { title: 'Lỗ hổng kiến thức của lớp · EduChain Kids' };
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,7 @@ export const dynamic = 'force-dynamic';
 // Gom đúng/sai từng câu các em đã làm trên app theo bài + dạng bài → dạng lớp hay sai, em cần kèm; giao bài ôn ngay.
 export default async function GapsPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ d?: string }> }) {
   const { id } = await params;
+  warmClass(id);
   const sp = await searchParams;
   const viewer = await getViewer();
   if (viewer.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Lỗ hổng kiến thức" /></main></>);
@@ -25,10 +27,10 @@ export default async function GapsPage({ params, searchParams }: { params: Promi
   const days = GAP_PERIODS.find((p) => String(p.d) === sp.d)?.d ?? 30;
 
   const supabase = await createClient();
-  const { data: cls } = await supabase.from('classes').select('id, name, grade').eq('id', id).maybeSingle();
+  const { data: cls } = await classRow(id);
   if (!cls) notFound();
   const c = cls as { id: string; name: string; grade: number };
-  const { data: roster } = await supabase.rpc('teacher_class_roster', { p_class: id });
+  const { data: roster } = await classRoster(id);
   const students = ((roster ?? []) as RosterRow[])
     .filter((r) => r.membership_status === 'active')
     .map((r) => ({ id: r.student_id, name: r.display_name }))

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getViewer } from '@/lib/auth/viewer';
+import { getVerifiedViewer } from '@/lib/auth/viewer';
 import { hasServiceRole } from '@/lib/supabase/admin';
 import { rateLimit } from '@/lib/rate-limit';
 import { countTodayUsage, loadTeacherAiConfig, logAiUsage, saveTeacherAiKeys } from '@/lib/ai/teacher-keys';
@@ -14,7 +14,7 @@ export const maxDuration = 60; // sinh văn bản có thể mất 10–30 giây,
 const DAILY_LIMIT = 150; // đủ dùng thật sự, tránh key bị lạm dụng nếu máy tính dùng chung bị bỏ quên
 
 export async function POST(request: Request) {
-  const viewer = await getViewer();
+  const viewer = await getVerifiedViewer();
   if (viewer.state !== 'ok') return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });
   if (!viewer.isTeacher && !viewer.isAdmin) return NextResponse.json({ error: 'Chỉ dành cho giáo viên.' }, { status: 403 });
   if (!hasServiceRole()) return NextResponse.json({ error: 'Máy chủ chưa cấu hình đầy đủ (xem docs/tro-ly-ai.md).' }, { status: 503 });

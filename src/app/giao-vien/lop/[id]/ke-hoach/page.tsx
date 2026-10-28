@@ -9,6 +9,7 @@ import type { RosterRow } from '@/components/classroom/ClassManager';
 import { getViewer } from '@/lib/auth/viewer';
 import { computeGaps, type ResultRow } from '@/lib/classroom/gaps';
 import { createClient } from '@/lib/supabase/server';
+import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
 import { lessonInfos } from '@/lib/plans/lessons';
 import type { SubjectCode } from '@/lib/types';
 
@@ -18,6 +19,7 @@ export const dynamic = 'force-dynamic';
 // Kế hoạch bài dạy. Quyền: giáo viên (ở đây) + database (giáo án chỉ người soạn đọc/ghi, chỉ gắn được lớp mình dạy).
 export default async function PlanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  warmClass(id);
   const viewer = await getViewer();
   if (viewer.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Kế hoạch bài dạy" /></main></>);
   if (viewer.state === 'signed_out') redirect(`/dang-nhap?next=/giao-vien/lop/${id}/ke-hoach`);
@@ -25,12 +27,12 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
   const supabase = await createClient();
-  const { data: cls } = await supabase.from('classes').select('id, name, grade').eq('id', id).maybeSingle();
+  const { data: cls } = await classRow(id);
   if (!cls) notFound();
   const c = cls as { id: string; name: string; grade: number };
 
   // Dạng bài lớp còn hay sai trong 30 ngày (từ bài luyện trên app) — gợi ý cho phần Luyện tập
-  const { data: roster } = await supabase.rpc('teacher_class_roster', { p_class: id });
+  const { data: roster } = await classRoster(id);
   const students = ((roster ?? []) as RosterRow[]).filter((r) => r.membership_status === 'active').map((r) => ({ id: r.student_id, name: r.display_name }));
   const since = new Date(Date.now() - 30 * 86400_000).toISOString();
   const { data: rows } = students.length

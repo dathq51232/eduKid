@@ -33,6 +33,10 @@ const SECURITY_HEADERS = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  experimental: {
+    // giữ trang vừa xem trong bộ nhớ trình duyệt một lúc: quay lại tab vừa mở thì hiện ngay, không chờ máy chủ dựng lại
+    staleTimes: { dynamic: 30, static: 300 },
+  },
   async headers() {
     // Trang dev (next dev) cần 'unsafe-eval' cho hot reload: chỉ gắn CSP khi chạy bản production
     if (process.env.NODE_ENV !== 'production') return [];

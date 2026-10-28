@@ -9,6 +9,7 @@ import type { RosterRow } from '@/components/classroom/ClassManager';
 import { getViewer } from '@/lib/auth/viewer';
 import { compareViName } from '@/lib/classroom/names';
 import { createClient } from '@/lib/supabase/server';
+import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
 
 export const metadata: Metadata = { title: 'Gọi tên – Dò bài · EduChain Kids' };
 export const dynamic = 'force-dynamic';
@@ -17,6 +18,7 @@ export const dynamic = 'force-dynamic';
 // Quyền kiểm tra ở đây (giáo viên) và trong database (teacher_class_roster chỉ trả lớp được phân công).
 export default async function CallOnPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  warmClass(id);
   const viewer = await getViewer();
   if (viewer.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Gọi tên – Dò bài" /></main></>);
   if (viewer.state === 'signed_out') redirect(`/dang-nhap?next=/giao-vien/lop/${id}/goi-ten`);
@@ -24,11 +26,11 @@ export default async function CallOnPage({ params }: { params: Promise<{ id: str
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
   const supabase = await createClient();
-  const { data: cls } = await supabase.from('classes').select('id, name, grade').eq('id', id).maybeSingle();
+  const { data: cls } = await classRow(id);
   if (!cls) notFound();
   const vnToday = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
   const [{ data: roster }, { data: diary, error: diaryErr }] = await Promise.all([
-    supabase.rpc('teacher_class_roster', { p_class: id }),
+    classRoster(id),
     // em vắng hôm nay theo Sổ lớp (migration 0026) — chưa chạy migration thì bỏ qua
     supabase.rpc('teacher_diary_day', { p_class: id, p_day: vnToday }),
   ]);

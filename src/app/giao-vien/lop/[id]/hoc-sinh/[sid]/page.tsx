@@ -7,6 +7,7 @@ import NotConfigured from '@/components/classroom/NotConfigured';
 import CsvButton from '@/components/classroom/CsvButton';
 import { getViewer } from '@/lib/auth/viewer';
 import { createClient } from '@/lib/supabase/server';
+import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
 import { gameById } from '@/lib/games/catalog';
 import type { GameId } from '@/lib/games/catalog';
 import {
@@ -24,6 +25,7 @@ const tone = (p: number) => (p >= 80 ? 'is-good' : p >= 50 ? 'is-mid' : 'is-low'
 // Kiểm tra 2 lớp: lớp phải đọc được qua RLS và học sinh phải đang ở trong danh sách lớp (hàm teacher_class_roster).
 export default async function StudentProgressPage({ params }: { params: Promise<{ id: string; sid: string }> }) {
   const { id, sid } = await params;
+  warmClass(id);
   const viewer = await getViewer();
   if (viewer.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Tiến độ học sinh" /></main></>);
   if (viewer.state === 'signed_out') redirect(`/dang-nhap?next=/giao-vien/lop/${id}/hoc-sinh/${sid}`);
@@ -31,9 +33,9 @@ export default async function StudentProgressPage({ params }: { params: Promise<
   if (!UUID.test(id) || !UUID.test(sid)) notFound();
 
   const supabase = await createClient();
-  const { data: cls } = await supabase.from('classes').select('id, name, grade').eq('id', id).maybeSingle();
+  const { data: cls } = await classRow(id);
   if (!cls) notFound();
-  const { data: roster } = await supabase.rpc('teacher_class_roster', { p_class: id });
+  const { data: roster } = await classRoster(id);
   const student = ((roster ?? []) as { student_id: string; display_name: string; membership_status: string }[]).find((r) => r.student_id === sid);
   if (!student) notFound();
 

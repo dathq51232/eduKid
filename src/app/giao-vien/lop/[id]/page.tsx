@@ -10,6 +10,7 @@ import { ClassLeaderboard } from '@/components/achievements/LiveAchievements';
 import type { LessonResult } from '@/lib/classroom/progress';
 import { getViewer } from '@/lib/auth/viewer';
 import { createClient } from '@/lib/supabase/server';
+import { classRoster, warmClass } from '@/lib/classroom/class-page';
 import { FEATURES } from '@/lib/features';
 
 export const metadata: Metadata = { title: 'Quản lý lớp · EduChain Kids' };
@@ -19,6 +20,7 @@ export const dynamic = 'force-dynamic';
 // (RLS chỉ trả lớp được phân công; các hàm teacher_* báo not_allowed với lớp khác).
 export default async function ClassPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  warmClass(id);
   const viewer = await getViewer();
   if (viewer.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Quản lý lớp" /></main></>);
   if (viewer.state === 'signed_out') redirect(`/dang-nhap?next=/giao-vien/lop/${id}`);
@@ -30,7 +32,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   if (!cls) notFound(); // lớp không tồn tại HOẶC không được phân công — trả cùng một kết quả
 
   const [{ data: roster }, { data: summary }, { data: pinRows, error: pinErr }, { data: billing }, { data: planRows }] = await Promise.all([
-    supabase.rpc('teacher_class_roster', { p_class: id }),
+    classRoster(id),
     supabase.rpc('class_results_summary', { p_class: id }),
     // PIN học sinh (migration 0009) — chỉ giáo viên của lớp đọc được; lỗi (chưa chạy migration) thì coi như chưa có PIN
     supabase.rpc('teacher_class_pins', { p_class: id }),

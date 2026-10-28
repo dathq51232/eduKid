@@ -12,6 +12,7 @@ import { questionMeta, type ResultRow } from '@/lib/classroom/gaps';
 import { compareViName } from '@/lib/classroom/names';
 import type { CompactResult } from '@/lib/classroom/report';
 import { createClient } from '@/lib/supabase/server';
+import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
 import type { SubjectCode } from '@/lib/types';
 
 export const metadata: Metadata = { title: 'Phiếu báo tiến bộ · EduChain Kids' };
@@ -22,6 +23,7 @@ const SUBJECTS: SubjectCode[] = ['toan', 'tieng-viet', 'tieng-anh'];
 // Phiếu báo tiến bộ cho phụ huynh. Quyền: giáo viên dạy lớp (RLS lesson_results chỉ trả học sinh lớp mình dạy).
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  warmClass(id);
   const viewer = await getViewer();
   if (viewer.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Phiếu báo tiến bộ" /></main></>);
   if (viewer.state === 'signed_out') redirect(`/dang-nhap?next=/giao-vien/lop/${id}/phieu-tien-bo`);
@@ -29,10 +31,10 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
   const supabase = await createClient();
-  const { data: cls } = await supabase.from('classes').select('id, name, grade').eq('id', id).maybeSingle();
+  const { data: cls } = await classRow(id);
   if (!cls) notFound();
   const c = cls as { id: string; name: string; grade: number };
-  const { data: roster } = await supabase.rpc('teacher_class_roster', { p_class: id });
+  const { data: roster } = await classRoster(id);
   const students = ((roster ?? []) as RosterRow[])
     .filter((r) => r.membership_status === 'active')
     .map((r) => ({ id: r.student_id, name: r.display_name }))

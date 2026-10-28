@@ -8,7 +8,7 @@ import CommentsBoard from '@/components/classroom/CommentsBoard';
 import type { RosterRow } from '@/components/classroom/ClassManager';
 import { getViewer } from '@/lib/auth/viewer';
 import { compareViName } from '@/lib/classroom/names';
-import { createClient } from '@/lib/supabase/server';
+import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
 import { FEATURES } from '@/lib/features';
 
 export const metadata: Metadata = { title: 'Nhận xét học sinh · EduChain Kids' };
@@ -17,6 +17,7 @@ export const dynamic = 'force-dynamic';
 // Nhận xét tuần / học kỳ / cả năm. Quyền kiểm tra ở đây (giáo viên) và trong database (teaches_class).
 export default async function CommentsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  warmClass(id);
   if (!FEATURES.teacherRecords) redirect(`/giao-vien/lop/${id}`); // tính năng đang tắt (src/lib/features.ts)
   const viewer = await getViewer();
   if (viewer.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Nhận xét học sinh" /></main></>);
@@ -24,10 +25,9 @@ export default async function CommentsPage({ params }: { params: Promise<{ id: s
   if (!viewer.isTeacher && !viewer.isAdmin) redirect('/giao-vien');
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
-  const supabase = await createClient();
-  const { data: cls } = await supabase.from('classes').select('id, name, grade').eq('id', id).maybeSingle();
+  const { data: cls } = await classRow(id);
   if (!cls) notFound();
-  const { data: roster } = await supabase.rpc('teacher_class_roster', { p_class: id });
+  const { data: roster } = await classRoster(id);
   const students = ((roster ?? []) as RosterRow[])
     .filter((r) => r.membership_status === 'active')
     .map((r) => ({ id: r.student_id, name: r.display_name }))
