@@ -125,7 +125,7 @@ export default function HandwritingPractice({ grade: g0, classId, studentId, stu
       <header className="hp-head">
         <div>
           <h1><PenLine aria-hidden="true" /> Luyện chữ đẹp</h1>
-          <p className="dash-muted">{studentName ? `${studentName} ơi, ` : ''}tô theo nét đứt màu xanh, viết chậm và đều tay. Viết xong bấm “Chấm điểm”.</p>
+          <p className="dash-muted">{studentName ? `${studentName} ơi, tô` : 'Tô'} theo nét đứt màu xanh, viết chậm và đều tay. Viết xong bấm “Chấm điểm”.</p>
         </div>
         <label className="hp-grade">Lớp <select value={grade} onChange={(e) => { setGrade(Number(e.target.value)); setIdx(0); }}>{[1, 2, 3, 4, 5].map((g) => <option key={g} value={g}>{g}</option>)}</select></label>
       </header>

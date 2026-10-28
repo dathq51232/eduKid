@@ -6166,3 +6166,42 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .page-loading-dot:nth-child(3) { animation-delay: .3s; background: var(--brand-green, #22c55e); }
 @keyframes page-dot { 0%, 80%, 100% { transform: scale(.5); opacity: .4; } 40% { transform: scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .page-loading-dot { animation: none; opacity: .7; } }
+
+/* ===== Khu giáo viên: cột trái gọn theo nhóm + hàng tab ngang các công cụ trong nhóm ===== */
+.tsh-gnav { min-height: 46px; font-size: 15px; }
+.tsh-gnav .tsh-ic { width: 32px; height: 32px; border-radius: 10px; }
+.tsh-gnav .tsh-ic svg { width: 18px; height: 18px; }
+.tsh-count { margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: 99px; background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 700; text-align: center; }
+.tsh-nav.is-on .tsh-count { background: var(--surface); color: var(--brand-blue); }
+.tsh-mini-btn { width: 100%; margin-top: 10px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; cursor: pointer; text-align: left; }
+.tsh-mini-btn .tsh-ic { background: var(--surface-2); color: var(--muted); }
+.tsh-mtop-class { white-space: nowrap; }
+.tsh-gtabs { position: sticky; top: 0; z-index: 20; display: flex; gap: 6px; overflow-x: auto; padding: 10px 24px; background: color-mix(in srgb, var(--surface) 94%, transparent); border-bottom: 1px solid var(--line); backdrop-filter: blur(8px); scrollbar-width: thin; }
+.tsh-gtab { position: relative; display: inline-flex; flex: none; align-items: center; gap: 8px; min-height: 42px; padding: 5px 14px 5px 7px; border-radius: 12px; color: var(--ink); font-size: 14.5px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.tsh-gtab:hover { background: var(--surface-2); }
+.tsh-gtab.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 -3px 0 var(--brand-blue); }
+.tsh-gtab .tsh-badge { margin-left: 2px; }
+.tsh-main > .tsh-gtabs + .dash.wrap, .tsh-main > .tsh-gtabs + main.wrap { padding-top: 18px; }
+/* cột trái thu gọn thành dải biểu tượng (để chiếu bảng rộng hơn) */
+.tsh.is-mini { grid-template-columns: 78px minmax(0, 1fr); }
+.tsh.is-mini .tsh-side { padding: 14px 8px 10px; align-items: center; }
+.tsh.is-mini .tsh-brand { flex-direction: column; gap: 6px; padding: 0 0 6px; }
+.tsh.is-mini .tsh-brand > a { width: 40px; overflow: hidden; }
+.tsh.is-mini .tsh-nav-t, .tsh.is-mini .tsh-class-txt, .tsh.is-mini .tsh-class-btn > svg, .tsh.is-mini .tsh-search kbd, .tsh.is-mini .tsh-me-txt, .tsh.is-mini .tsh-count { display: none; }
+.tsh.is-mini .tsh-class-btn { justify-content: center; padding: 8px; min-height: 52px; }
+.tsh.is-mini .tsh-class-menu { width: 220px; right: auto; }
+.tsh.is-mini .tsh-search { justify-content: center; width: 48px; padding: 6px; }
+.tsh.is-mini .tsh-navs { width: 100%; }
+.tsh.is-mini .tsh-nav { justify-content: center; padding: 6px; position: relative; }
+.tsh.is-mini .tsh-nav .tsh-badge { position: absolute; top: 2px; right: 6px; }
+.tsh.is-mini .tsh-me { flex-direction: column; padding-top: 10px; }
+.tsh-tab-dot { position: absolute; top: 8px; margin-left: 18px; width: 9px; height: 9px; border-radius: 50%; background: #ef4444; }
+.tsh-tabs a { position: relative; }
+@media (max-width: 900px) {
+  .tsh.is-mini { grid-template-columns: minmax(0, 1fr); }
+  .tsh-mini-btn { display: none; }
+  .tsh.is-mini .tsh-side { align-items: stretch; padding: 16px 12px 12px; }
+  .tsh.is-mini .tsh-nav-t, .tsh.is-mini .tsh-class-txt, .tsh.is-mini .tsh-me-txt { display: revert; }
+  .tsh-gtabs { top: 61px; padding: 8px 12px; }
+  .tsh-gtab { min-height: 40px; font-size: 14px; }
+}

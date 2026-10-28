@@ -4,7 +4,7 @@ import { FEATURES } from '@/lib/features';
 export type ToolKey =
   | 'so-lop' | 'goi-ten' | 'ke-hoach' | 'giao-bai' | 'phieu-bai-tap' | 'phieu-chinh-ta'
   | 'lo-hong' | 'de-kiem-tra' | 'nhan-xet' | 'ket-qua-truong' | 'phieu-tien-bo' | 'thu-khen' | 'lop'
-  | 'nhom' | 'thi-dua' | 'hen-gio' | 'danh-ba' | 'bai-giang-3d' | 'tin-nhan' | 'trien-lam';
+  | 'nhom' | 'thi-dua' | 'hen-gio' | 'danh-ba' | 'bai-giang-3d' | 'tin-nhan' | 'trien-lam' | 'luyen-chu';
 export type ToolTone = 'green' | 'yellow' | 'blue' | 'violet' | 'red' | 'coral';
 export type Tool = { key: ToolKey; label: string; desc: string; group: string; tone: ToolTone; path: string; keywords: string };
 
@@ -16,6 +16,7 @@ const ALL: Tool[] = [
   { key: 'hen-gio', label: 'Hẹn giờ', desc: 'Đồng hồ đếm ngược chiếu bảng', group: 'Trên lớp', tone: 'violet', path: 'hen-gio', keywords: 'hen gio dem nguoc dong ho bam gio thao luan' },
   { key: 'ke-hoach', label: 'Kế hoạch bài dạy', desc: 'Giáo án, lịch báo giảng', group: 'Dạy học', tone: 'green', path: 'ke-hoach', keywords: 'giao an ke hoach lich bao giang soan bai word' },
   { key: 'bai-giang-3d', label: 'Bài giảng 3D', desc: 'Xưởng mô hình 3D, bài STEM lớp 1–5', group: 'Dạy học', tone: 'blue', path: 'bai-giang-3d', keywords: 'bai giang 3d mo hinh stem truc quan trinh chieu xuong sa ban' },
+  { key: 'luyen-chu', label: 'Luyện chữ', desc: 'Tô chữ mẫu ô li, chấm điểm', group: 'Dạy học', tone: 'violet', path: 'luyen-chu', keywords: 'luyen chu viet chu dep o li to chu mau tap viet chu hoa' },
   { key: 'giao-bai', label: 'Giao bài về nhà', desc: 'Hạn nộp, em nào chưa làm', group: 'Dạy học', tone: 'violet', path: 'giao-bai', keywords: 'giao bai ve nha han nop' },
   { key: 'phieu-bai-tap', label: 'Phiếu bài tập', desc: 'In kèm đáp án', group: 'Dạy học', tone: 'yellow', path: 'phieu-bai-tap', keywords: 'phieu bai tap in dap an' },
   { key: 'phieu-chinh-ta', label: 'Phiếu chính tả', desc: 'Tranh, tập chép, đáp án', group: 'Dạy học', tone: 'blue', path: 'phieu-chinh-ta', keywords: 'chinh ta tap chep' },
@@ -33,6 +34,33 @@ const ALL: Tool[] = [
 
 export const TOOLS: Tool[] = ALL.filter((t) => FEATURES.teacherRecords || (t.key !== 'nhan-xet' && t.key !== 'ket-qua-truong'));
 export const TOOL_GROUPS = ['Trên lớp', 'Dạy học', 'Đánh giá', 'Phụ huynh', 'Lớp'];
+/** Nhóm công cụ: cột trái chỉ hiện các nhóm, công cụ trong nhóm hiện thành hàng tab ngang ở đầu trang */
+export type ToolGroup = { key: string; label: string; short: string; tone: ToolTone };
+export const GROUPS: ToolGroup[] = [
+  { key: 'Trên lớp', label: 'Trên lớp', short: 'Trên lớp', tone: 'green' },
+  { key: 'Dạy học', label: 'Dạy học', short: 'Dạy học', tone: 'violet' },
+  { key: 'Đánh giá', label: 'Đánh giá', short: 'Đánh giá', tone: 'red' },
+  { key: 'Phụ huynh', label: 'Phụ huynh', short: 'Phụ huynh', tone: 'coral' },
+  { key: 'Lớp', label: 'Lớp & học sinh', short: 'Lớp', tone: 'blue' },
+];
+export const toolsOfGroup = (g: string) => TOOLS.filter((t) => t.group === g);
+export const groupOfTool = (k: ToolKey | null) => (k ? TOOLS.find((t) => t.key === k)?.group ?? null : null);
+const LAST_KEY = 'gv-nhom-cuoi';
+/** Công cụ mở gần nhất trong nhóm (trên máy này) — bấm nhóm ở cột trái thì mở công cụ đó */
+export function lastToolOf(g: string): Tool {
+  const list = toolsOfGroup(g);
+  try {
+    const k = (JSON.parse(localStorage.getItem(LAST_KEY) ?? '{}') as Record<string, string>)[g];
+    return list.find((t) => t.key === k) ?? list[0];
+  } catch { return list[0]; }
+}
+export function rememberTool(k: ToolKey) {
+  const g = groupOfTool(k); if (!g) return;
+  try {
+    const m = JSON.parse(localStorage.getItem(LAST_KEY) ?? '{}') as Record<string, string>;
+    m[g] = k; localStorage.setItem(LAST_KEY, JSON.stringify(m));
+  } catch { /* bỏ qua */ }
+}
 export const toolHref = (t: Tool, classId: string) => `/giao-vien/lop/${classId}${t.path ? `/${t.path}` : ''}`;
 /** Công cụ ứng với đường dẫn đang mở (để tô sáng và đếm số lần dùng) */
 export function toolOfPath(pathname: string): ToolKey | null {

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  MailOpen, GalleryHorizontalEnd,
+  MailOpen, GalleryHorizontalEnd, PenLine, PanelLeftClose, PanelLeftOpen,
   Award, BookCheck, ChevronDown, ClipboardCheck, Dices, FileText, GraduationCap, Home, LayoutGrid, LogOut, Menu, MessageSquareHeart,
   NotebookPen, Radar, Search, Send, SpellCheck, Table2, Users, X, UsersRound, Trophy, Timer, Contact, Box, type LucideIcon,
 } from 'lucide-react';
@@ -16,13 +16,16 @@ import { createClient } from '@/lib/supabase/client';
 import { MiniTimer } from '@/components/classroom/ClassTimer';
 import AiAssistant from '@/components/classroom/AiAssistant';
 import { FEATURES } from '@/lib/features';
-import { TOOLS, TOOL_GROUPS, classIdOfPath, fold, toolHref, toolOfPath, type Tool, type ToolKey } from '@/lib/classroom/teacher-nav';
+import { GROUPS, TOOLS, classIdOfPath, fold, groupOfTool, lastToolOf, rememberTool, toolHref, toolOfPath, toolsOfGroup, type Tool, type ToolKey } from '@/lib/classroom/teacher-nav';
 
 export const TOOL_ICON: Record<ToolKey, LucideIcon> = {
   'so-lop': BookCheck, 'goi-ten': Dices, 'ke-hoach': NotebookPen, 'giao-bai': Send, 'phieu-bai-tap': FileText, 'phieu-chinh-ta': SpellCheck,
   'lo-hong': Radar, 'de-kiem-tra': Table2, 'nhan-xet': ClipboardCheck, 'ket-qua-truong': GraduationCap, 'phieu-tien-bo': MessageSquareHeart,
-  'thu-khen': Award, lop: Users, nhom: UsersRound, 'thi-dua': Trophy, 'hen-gio': Timer, 'danh-ba': Contact, 'bai-giang-3d': Box, 'tin-nhan': MailOpen, 'trien-lam': GalleryHorizontalEnd,
+  'thu-khen': Award, lop: Users, nhom: UsersRound, 'thi-dua': Trophy, 'hen-gio': Timer, 'danh-ba': Contact, 'bai-giang-3d': Box, 'tin-nhan': MailOpen, 'trien-lam': GalleryHorizontalEnd, 'luyen-chu': PenLine,
 };
+/** Biểu tượng của nhóm công cụ (cột trái gọn) */
+export const GROUP_ICON: Record<string, LucideIcon> = { 'Trên lớp': BookCheck, 'Dạy học': NotebookPen, 'Đánh giá': Radar, 'Phụ huynh': MessageSquareHeart, Lớp: Users };
+const MINI_KEY = 'gv-cot-trai-gon';
 export const USAGE_KEY = 'gv-dung-nhanh';
 
 type ShellClass = { id: string; name: string; grade: number; status: string; students: number };
@@ -40,11 +43,26 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
   const [palette, setPalette] = useState(false);
   const [unread, setUnread] = useState(0); // tin nhắn phụ huynh chưa đọc (migration 0037)
   const [switcher, setSwitcher] = useState(false);
+  const curGroup = groupOfTool(current);
+  // cột trái thu gọn thành dải biểu tượng (nhớ trên máy này)
+  const [mini, setMini] = useState(false);
+  useEffect(() => { try { setMini(localStorage.getItem(MINI_KEY) === '1'); } catch { /* bỏ qua */ } }, []);
+  const toggleMini = () => setMini((v) => { try { localStorage.setItem(MINI_KEY, v ? '0' : '1'); } catch { /* bỏ qua */ } return !v; });
+  // bấm nhóm: mở công cụ dùng gần nhất trong nhóm
+  const [lastHref, setLastHref] = useState<Record<string, ToolKey>>({});
+  useEffect(() => { setLastHref(Object.fromEntries(GROUPS.map((g) => [g.key, lastToolOf(g.key)?.key]).filter(([, k]) => k)) as Record<string, ToolKey>); }, [pathname]);
+  const groupHref = (g: string) => {
+    if (!active) return '/giao-vien';
+    const t = TOOLS.find((x) => x.key === lastHref[g]) ?? toolsOfGroup(g)[0];
+    return t ? toolHref(t, active.id) : '/giao-vien';
+  };
 
   // đếm số lần mở từng công cụ (cho mục "Dùng nhanh" ở trang Hôm nay)
   useEffect(() => {
     setDrawer(false); setSwitcher(false);
-    if (!current || current === 'lop') return;
+    if (!current) return;
+    rememberTool(current);
+    if (current === 'lop') return;
     try {
       const c = JSON.parse(localStorage.getItem(USAGE_KEY) ?? '{}') as Record<string, number>;
       c[current] = (c[current] ?? 0) + 1;
@@ -59,6 +77,13 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
     try { sb = createClient(); } catch { return; }
     void sb.rpc('teacher_messages', { p_class: active.id, p_limit: 1 }).then(({ data, error }) => { if (!error) setUnread((data as { unread?: number } | null)?.unread ?? 0); });
   }, [active, pathname]);
+
+  // hàng tab ngang trên điện thoại: cuộn tới tab đang mở
+  useEffect(() => {
+    const el = document.querySelector<HTMLElement>('.tsh-gtab.is-on');
+    const bar = el?.parentElement;
+    if (el && bar && bar.scrollWidth > bar.clientWidth) bar.scrollTo({ left: el.offsetLeft - (bar.clientWidth - el.offsetWidth) / 2, behavior: 'auto' });
+  }, [pathname]);
 
   // Ctrl+K / Cmd+K mở ô tìm nhanh
   useEffect(() => {
@@ -76,29 +101,26 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
 
   const nav = (
     <>
-      <Link href="/giao-vien" className={`tsh-nav${pathname === '/giao-vien' ? ' is-on' : ''}`} aria-current={pathname === '/giao-vien' ? 'page' : undefined}>
-        <span className="tsh-ic tone-blue"><Home aria-hidden="true" /></span>Hôm nay
+      <Link href="/giao-vien" className={`tsh-nav${pathname === '/giao-vien' ? ' is-on' : ''}`} aria-current={pathname === '/giao-vien' ? 'page' : undefined} title="Hôm nay">
+        <span className="tsh-ic tone-blue"><Home aria-hidden="true" /></span><span className="tsh-nav-t">Hôm nay</span>
       </Link>
-      {active && TOOL_GROUPS.map((g) => (
-        <div key={g} className="tsh-group">
-          <p className="tsh-group-title">{g}</p>
-          {TOOLS.filter((t) => t.group === g).map((t) => {
-            const Icon = TOOL_ICON[t.key];
-            const on = current === t.key;
-            return (
-              <Link key={t.key} href={toolHref(t, active.id)} className={`tsh-nav${on ? ' is-on' : ''}`} aria-current={on ? 'page' : undefined}>
-                <span className={`tsh-ic tone-${t.tone}`}><Icon aria-hidden="true" /></span>{t.label}
-                {t.key === 'tin-nhan' && unread > 0 && <span className="tsh-badge" aria-label={`${unread} tin chưa đọc`}>{unread}</span>}
-              </Link>
-            );
-          })}
-        </div>
-      ))}
+      {active && GROUPS.filter((g) => toolsOfGroup(g.key).length).map((g) => {
+        const Icon = GROUP_ICON[g.key] ?? LayoutGrid;
+        const on = curGroup === g.key;
+        const n = toolsOfGroup(g.key).length;
+        return (
+          <Link key={g.key} href={groupHref(g.key)} className={`tsh-nav tsh-gnav${on ? ' is-on' : ''}`} aria-current={on ? 'true' : undefined} title={g.label}>
+            <span className={`tsh-ic tone-${g.tone}`}><Icon aria-hidden="true" /></span><span className="tsh-nav-t">{g.label}</span>
+            {g.key === 'Phụ huynh' && unread > 0 ? <span className="tsh-badge" aria-label={`${unread} tin chưa đọc`}>{unread}</span> : n > 1 ? <span className="tsh-count" aria-hidden="true">{n}</span> : null}
+          </Link>
+        );
+      })}
     </>
   );
+  const groupTools = active && curGroup ? toolsOfGroup(curGroup) : [];
 
   return (
-    <div className="tsh">
+    <div className={`tsh${mini ? ' is-mini' : ''}`}>
       <aside className={`tsh-side${drawer ? ' is-open' : ''}`} aria-label="Công cụ giáo viên">
         <div className="tsh-brand">
           <Link href="/" aria-label="EduChain Kids - Trang chủ"><BrandLogo size={30} /></Link>
@@ -120,10 +142,15 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
             )}
           </div>
         ) : <p className="tsh-noclass">Chưa có lớp. Tạo lớp ở trang Hôm nay.</p>}
-        <button type="button" className="tsh-search" onClick={() => setPalette(true)}>
-          <Search aria-hidden="true" /> Tìm em, công cụ… <kbd>Ctrl K</kbd>
+        <button type="button" className="tsh-search" onClick={() => setPalette(true)} title="Tìm nhanh (Ctrl K)">
+          <Search aria-hidden="true" /> <span className="tsh-nav-t">Tìm em, công cụ…</span> <kbd>Ctrl K</kbd>
         </button>
-        <nav className="tsh-navs">{nav}</nav>
+        <nav className="tsh-navs">
+          {nav}
+          <button type="button" className="tsh-nav tsh-mini-btn" onClick={toggleMini} aria-label={mini ? 'Mở rộng cột trái' : 'Thu gọn cột trái'} title={mini ? 'Mở rộng cột trái' : 'Thu gọn cột trái'}>
+            <span className="tsh-ic">{mini ? <PanelLeftOpen aria-hidden="true" /> : <PanelLeftClose aria-hidden="true" />}</span><span className="tsh-nav-t">Thu gọn menu</span>
+          </button>
+        </nav>
         <div className="tsh-me">
           <span className="tsh-me-av" aria-hidden="true">{initials(teacherName)}</span>
           <span className="tsh-me-txt"><b>{teacherName}</b><span>{schoolName || 'Giáo viên'}</span></span>
@@ -139,7 +166,23 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
           <Link href="/" aria-label="Trang chủ"><BrandLogo size={26} /></Link>
           {active && <span className="tsh-mtop-class">Lớp {active.name}</span>}
           <button type="button" className="tsh-icon-btn" aria-label="Tìm nhanh" onClick={() => setPalette(true)}><Search aria-hidden="true" /></button>
+          <button type="button" className="tsh-icon-btn" aria-label="Mở menu" onClick={() => setDrawer(true)}><Menu aria-hidden="true" /></button>
         </div>
+        {/* hàng tab ngang: các công cụ cùng nhóm với trang đang mở */}
+        {active && groupTools.length > 1 && (
+          <nav className="tsh-gtabs" aria-label={`Công cụ nhóm ${curGroup}`}>
+            {groupTools.map((t) => {
+              const Icon = TOOL_ICON[t.key];
+              const on = current === t.key;
+              return (
+                <Link key={t.key} href={toolHref(t, active.id)} className={`tsh-gtab${on ? ' is-on' : ''}`} aria-current={on ? 'page' : undefined} title={t.desc}>
+                  <span className={`tsh-ic tone-${t.tone}`}><Icon aria-hidden="true" /></span>{t.label}
+                  {t.key === 'tin-nhan' && unread > 0 && <span className="tsh-badge" aria-label={`${unread} tin chưa đọc`}>{unread}</span>}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
         {children}
       </div>
 
@@ -147,10 +190,15 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
       {active && (
         <nav className="tsh-tabs" aria-label="Điều hướng giáo viên">
           <Link href="/giao-vien" className={pathname === '/giao-vien' ? 'is-on' : ''}><Home aria-hidden="true" />Hôm nay</Link>
-          <Link href={`/giao-vien/lop/${active.id}/so-lop`} className={current === 'so-lop' ? 'is-on' : ''}><BookCheck aria-hidden="true" />Sổ lớp</Link>
-          <Link href={`/giao-vien/lop/${active.id}/goi-ten`} className={`tsh-tab-big${current === 'goi-ten' ? ' is-on' : ''}`}><span><Dices aria-hidden="true" /></span>Gọi tên</Link>
-          <Link href={`/giao-vien/lop/${active.id}/ke-hoach`} className={current === 'ke-hoach' ? 'is-on' : ''}><NotebookPen aria-hidden="true" />Dạy học</Link>
-          <button type="button" onClick={() => setDrawer(true)}><Menu aria-hidden="true" />Thêm</button>
+          {GROUPS.filter((g) => g.key !== 'Lớp' && toolsOfGroup(g.key).length).map((g) => {
+            const Icon = GROUP_ICON[g.key] ?? LayoutGrid;
+            return (
+              <Link key={g.key} href={groupHref(g.key)} className={curGroup === g.key ? 'is-on' : ''}>
+                <Icon aria-hidden="true" />{g.short}
+                {g.key === 'Phụ huynh' && unread > 0 && <span className="tsh-tab-dot" aria-label={`${unread} tin chưa đọc`} />}
+              </Link>
+            );
+          })}
         </nav>
       )}
 
