@@ -17,9 +17,10 @@ type Progress = Record<string, number>;
 const readProgress = (): Progress => { try { return JSON.parse(localStorage.getItem(PROGRESS) ?? '{}') as Progress; } catch { return {}; } };
 const INK = ['#1e3a8a', '#111827', '#7c3aed', '#be123c'];
 
-export default function HandwritingPractice({ grade: g0, classId, studentId, studentName }: { grade: number; classId?: string | null; studentId?: string | null; studentName?: string | null }) {
+export default function HandwritingPractice({ grade: g0, classId, studentId, studentName, extraSets }: { grade: number; classId?: string | null; studentId?: string | null; studentName?: string | null; extraSets?: WriteSet[] }) {
   const [grade, setGrade] = useState(Math.min(5, Math.max(1, g0 || 1)));
-  const sets = useMemo(() => setsForGrade(grade), [grade]);
+  // bài cô giao (câu thơ, ca dao) đứng đầu danh sách
+  const sets = useMemo(() => [...(extraSets ?? []).filter((x) => x.items.length), ...setsForGrade(grade)], [grade, extraSets]);
   const [setId, setSetId] = useState(sets[0]?.id ?? 'thuong');
   const set: WriteSet = sets.find((s) => s.id === setId) ?? sets[0] ?? WRITE_SETS[0];
   const [idx, setIdx] = useState(0);
