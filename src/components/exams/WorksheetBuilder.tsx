@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { FileDown, FileText, RefreshCw, Shuffle } from 'lucide-react';
+import { FileDown, FileText, Library, RefreshCw, Shuffle } from 'lucide-react';
+import MyBankPanel from './MyBankPanel';
+import { useMyBank } from './useMyBank';
 import AssignPaperForm from '@/components/classroom/AssignPaperForm';
 import type { ExamItem } from '@/lib/classroom/assignments';
 import { bookLessons, buildPaper, defaultMatrix, replaceSlot, totals, type Matrix, type Paper } from '@/lib/exams/matrix';
@@ -37,6 +39,8 @@ export default function WorksheetBuilder({ classId, className, grade, presetLess
   const [matrix, setMatrix] = useState<Matrix | null>(null);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [note, setNote] = useState('');
+  const bank = useMyBank(subject, grade);
+  const [bankOpen, setBankOpen] = useState(false);
 
   useEffect(() => { try { setSchool(localStorage.getItem(SCHOOL_KEY) ?? ''); } catch { /* bỏ qua */ } }, []);
   useEffect(() => { try { if (school) localStorage.setItem(SCHOOL_KEY, school); } catch { /* bỏ qua */ } }, [school]);
@@ -89,6 +93,19 @@ export default function WorksheetBuilder({ classId, className, grade, presetLess
           <p className="dash-muted">Chọn bài đang học, số câu và độ khó — máy chọn câu từ ngân hàng câu hỏi tự soạn của EduChain Kids, đáp án in ở trang riêng. Dùng cho giờ luyện tập trên lớp hoặc lớp chưa đủ máy; cũng có thể giao làm trên app.</p>
         </div>
       </header>
+
+      <section className="dash-section no-print mybank-bar" aria-label="Ngân hàng của tôi">
+        <div>
+          <b><Library aria-hidden="true" /> Ngân hàng của tôi: {bank.mine ? `${bank.mine.length} câu ${SUBJECT_NAME[subject]}` : '…'}</b>
+          <span className="dash-muted">Câu cô nạp từ tài liệu hoặc sinh bằng AI được trộn vào phiếu cùng ngân hàng của app.</span>
+          {bank.error && <span className="dash-muted">{bank.error}</span>}
+        </div>
+        <button type="button" className="btn btn-outline btn-sm" onClick={() => setBankOpen(true)}><Library aria-hidden="true" /> Nạp tài liệu · Sinh câu</button>
+      </section>
+      {bankOpen && (
+        <MyBankPanel subject={subject} grade={grade} lessons={lessons} defaultLessonId={chosen[0]?.id ?? lessons[0]?.id ?? ''} mine={bank.mine}
+          onSaved={bank.add} onDeleted={bank.remove} onClose={() => setBankOpen(false)} />
+      )}
 
       <section className="dash-section exam-setup no-print" aria-label="Thiết lập phiếu">
         <div className="exam-form">

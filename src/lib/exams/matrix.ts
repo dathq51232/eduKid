@@ -65,6 +65,14 @@ function toExam(q: PracticeQuestion, lessonTitle: string): ExamQuestion {
 }
 
 const poolCache = new Map<string, ExamQuestion[]>();
+/** Câu trong "Ngân hàng của tôi" (migration 0044) theo bài — trộn chung khi ra đề / phiếu bài tập */
+const CUSTOM = new Map<string, ExamQuestion[]>();
+export function setCustomQuestions(byLesson: Map<string, ExamQuestion[]>) {
+  CUSTOM.clear();
+  byLesson.forEach((v, k) => CUSTOM.set(k, v));
+  poolCache.clear();
+}
+export const customCount = (lessonId: string) => CUSTOM.get(lessonId)?.length ?? 0;
 /** Kho câu của một bài: câu soạn sẵn + câu sinh tự động (nhiều seed), đã bỏ trùng và câu có hình */
 export function lessonPool(lessonId: string): ExamQuestion[] {
   const hit = poolCache.get(lessonId);
@@ -80,6 +88,7 @@ export function lessonPool(lessonId: string): ExamQuestion[] {
     seen.add(k);
     out.push(toExam(q, lesson.title));
   };
+  for (const q of CUSTOM.get(lessonId) ?? []) if (!seen.has(q.key)) { seen.add(q.key); out.push(q); }
   for (const q of lesson.questions as PracticeQuestion[]) add(q);
   const gen = practiceIdFor(lessonId);
   if (gen) {

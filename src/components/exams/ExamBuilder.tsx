@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FileDown, FilePlus2, FolderOpen, Printer, RefreshCw, Save, Shuffle, Table2, Trash2 } from 'lucide-react';
+import { FileDown, FilePlus2, FolderOpen, Library, Printer, RefreshCw, Save, Shuffle, Table2, Trash2 } from 'lucide-react';
+import MyBankPanel from './MyBankPanel';
+import { useMyBank } from './useMyBank';
 import { createClient } from '@/lib/supabase/client';
 import AssignPaperForm from '@/components/classroom/AssignPaperForm';
 import type { ExamItem } from '@/lib/classroom/assignments';
@@ -59,6 +61,10 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
   const [papers, setPapers] = useState<Paper[]>([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
+  // Ngân hàng của tôi (câu nạp từ tài liệu / sinh bằng AI) — trộn vào kho chọn câu
+  const bank = useMyBank(subject, grade);
+  const [bankOpen, setBankOpen] = useState(false);
+  useEffect(() => { setMatrix((m) => (m ? { ...m } : m)); }, [bank.ver]);
 
   useEffect(() => { try { setSchool(localStorage.getItem(SCHOOL_KEY) ?? ''); } catch { /* bỏ qua */ } }, []);
   useEffect(() => { try { localStorage.setItem(SCHOOL_KEY, school); } catch { /* bỏ qua */ } }, [school]);
@@ -197,6 +203,19 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
           </p>
         </div>
       </header>
+
+      <section className="dash-section no-print mybank-bar" aria-label="Ngân hàng của tôi">
+        <div>
+          <b><Library aria-hidden="true" /> Ngân hàng của tôi: {bank.mine ? `${bank.mine.length} câu ${SUBJECT_NAME[subject]}` : '…'}</b>
+          <span className="dash-muted">Nạp đề từ file Word, Excel hoặc sinh câu nâng cao bằng AI — câu đã lưu được trộn vào ma trận cùng ngân hàng của app.</span>
+          {bank.error && <span className="dash-muted">{bank.error}</span>}
+        </div>
+        <button type="button" className="btn btn-outline btn-sm" onClick={() => setBankOpen(true)}><Library aria-hidden="true" /> Nạp tài liệu · Sinh câu</button>
+      </section>
+      {bankOpen && (
+        <MyBankPanel subject={subject} grade={grade} lessons={lessons} defaultLessonId={chosen[0]?.id ?? lessons[0]?.id ?? ''} mine={bank.mine}
+          onSaved={bank.add} onDeleted={bank.remove} onClose={() => setBankOpen(false)} />
+      )}
 
       {saved.length > 0 && (
         <section className="dash-section no-print" aria-label="Đề đã lưu">
