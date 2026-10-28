@@ -27,3 +27,4 @@ Kết quả mong đợi của 10_e2e: q1 true, q2 true, q3 false, q4 true, q5 tr
 - `106_plan_library_images.sql` (tự tạo giả lập schema storage rồi chạy 0024): hình kho giáo án chỉ trường mình đọc/ghi, nạp giáo án theo từng phần, giáo án lớn (bản gốc HTML) lưu được.
 - `0025_admin_edit_teacher.sql` rồi `107_admin_edit_teacher.sql`: chỉ quản trị hệ thống sửa được tên giáo viên và tên trường; giáo viên khác, khách bị chặn; mỗi lần sửa ghi nhật ký.
 - `0026_class_diary.sql` rồi `108_class_diary.sql`: sổ lớp chỉ giáo viên của lớp đọc/ghi; lưu lại cả ngày giữ dấu đã chép tin nhắn; chặn học sinh lớp khác, trạng thái lạ, ngày tương lai; bảng không đọc trực tiếp được.
+- `112_class_gallery.sql` (tự tạo giả lập schema storage rồi chạy 0039): phòng triển lãm — giáo viên treo / duyệt / xoá, học sinh tự nộp vào thư mục riêng (chờ duyệt), không nộp hộ bạn / không nộp thư khen, gia đình thả tim; lớp khác, giáo viên khác, khách bị chặn; tên các bạn rút gọn khi chọn "tên gọi".

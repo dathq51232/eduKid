@@ -4,7 +4,7 @@ import { FEATURES } from '@/lib/features';
 export type ToolKey =
   | 'so-lop' | 'goi-ten' | 'ke-hoach' | 'giao-bai' | 'phieu-bai-tap' | 'phieu-chinh-ta'
   | 'lo-hong' | 'de-kiem-tra' | 'nhan-xet' | 'ket-qua-truong' | 'phieu-tien-bo' | 'thu-khen' | 'lop'
-  | 'nhom' | 'thi-dua' | 'hen-gio' | 'danh-ba' | 'bai-giang-3d' | 'tin-nhan';
+  | 'nhom' | 'thi-dua' | 'hen-gio' | 'danh-ba' | 'bai-giang-3d' | 'tin-nhan' | 'trien-lam';
 export type ToolTone = 'green' | 'yellow' | 'blue' | 'violet' | 'red' | 'coral';
 export type Tool = { key: ToolKey; label: string; desc: string; group: string; tone: ToolTone; path: string; keywords: string };
 
@@ -26,6 +26,7 @@ const ALL: Tool[] = [
   { key: 'tin-nhan', label: 'Tin nhắn phụ huynh', desc: 'Xin phép nghỉ, hỏi han', group: 'Phụ huynh', tone: 'coral', path: 'tin-nhan', keywords: 'tin nhan phu huynh xin phep nghi hoc hoi han tra loi hop thu' },
   { key: 'danh-ba', label: 'Danh bạ phụ huynh', desc: 'Số điện thoại, Zalo', group: 'Phụ huynh', tone: 'green', path: 'danh-ba', keywords: 'danh ba phu huynh so dien thoai zalo goi lien lac' },
   { key: 'phieu-tien-bo', label: 'Phiếu báo tiến bộ', desc: 'Lời nhắn cho phụ huynh', group: 'Phụ huynh', tone: 'coral', path: 'phieu-tien-bo', keywords: 'phieu bao tien bo phu huynh' },
+  { key: 'trien-lam', label: 'Phòng triển lãm', desc: 'Phòng 3D: thư khen, tranh, nét chữ', group: 'Phụ huynh', tone: 'blue', path: 'trien-lam', keywords: 'phong trien lam 3d trung bay tac pham tranh ve my thuat net chu luyen chu thu khen phu huynh xem' },
   { key: 'thu-khen', label: 'Thư khen', desc: 'PDF, ảnh PNG, in', group: 'Phụ huynh', tone: 'violet', path: 'thu-khen', keywords: 'thu khen giay khen' },
   { key: 'lop', label: 'Học sinh & mã lớp', desc: 'Thêm em, PIN, thẻ đăng nhập', group: 'Lớp', tone: 'blue', path: '', keywords: 'hoc sinh pin ma lop the dang nhap them em quan ly lop' },
 ];

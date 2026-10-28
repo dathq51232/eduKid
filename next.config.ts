@@ -12,7 +12,7 @@ const CSP = [
   "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: https://*.supabase.co${SB}`,
-  "media-src 'self' data: blob:",
+  `media-src 'self' data: blob: https://*.supabase.co${SB}`, // tiếng giới thiệu tác phẩm (Phòng triển lãm) nằm trong Supabase Storage
   "font-src 'self' data:",
   `connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co${SB}${SB_WS}`,
   "frame-src 'self' blob: data:",
@@ -27,7 +27,7 @@ const SECURITY_HEADERS = [
   { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
+  { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self), geolocation=(), payment=()' },
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
 ];
 

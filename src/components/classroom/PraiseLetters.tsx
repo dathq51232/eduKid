@@ -7,6 +7,8 @@ import { asciiFilename } from '@/lib/filename';
 import { zipStore } from '@/lib/xlsx';
 import { buildImagePdf, downloadBytes } from '@/lib/praise/pdf';
 import { canvasBlob, drawLetter, loadImage, loadPraiseFonts, loadTemplateAssets, renderLetterCanvas, type LetterData } from '@/lib/praise/render';
+import { addItem, canvasToImage, galleryError } from '@/lib/gallery/client';
+import { createClient } from '@/lib/supabase/client';
 import { isCustomized, readDesigns, writeDesigns, type PraiseDesign } from '@/lib/praise/design';
 import { LETTER_H, LETTER_W, PRAISE_REASONS, PRAISE_TEMPLATES, defaultTemplateFor, fillReason, templateById, type PraiseTemplateId } from '@/lib/praise/templates';
 
@@ -66,8 +68,8 @@ function placeDate(place: string, iso: string) {
  * (có thể ghi lời khen / dòng riêng cho từng em), rồi tải PDF, ảnh PNG hoặc in.
  * Mọi thứ vẽ ngay trên máy giáo viên; tên học sinh không gửi đi đâu.
  */
-export default function PraiseLetters({ className, grade, students, awards, teacherName, schoolName }: {
-  className: string; grade: number; students: Student[]; awards: AwardRow[]; teacherName: string; schoolName: string;
+export default function PraiseLetters({ classId, className, grade, students, awards, teacherName, schoolName }: {
+  classId?: string; className: string; grade: number; students: Student[]; awards: AwardRow[]; teacherName: string; schoolName: string;
 }) {
   const [s, setS] = useState<Settings>(() => readSettings(grade, teacherName, schoolName, false));
   const [loaded, setLoaded] = useState(false);
@@ -183,6 +185,32 @@ export default function PraiseLetters({ className, grade, students, awards, teac
     h?.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   };
   const fileBase = asciiFilename(`thu-khen-lop-${className}`);
+  // ------------------------------------------------ treo thư lên Phòng triển lãm của lớp (migration 0039)
+  const [hang, setHang] = useState(true);
+  useEffect(() => { try { setHang(localStorage.getItem('edukid:thu-khen-treo') !== '0'); } catch { /* bỏ qua */ } }, []);
+  const toggleHang = (v: boolean) => { setHang(v); try { localStorage.setItem('edukid:thu-khen-treo', v ? '1' : '0'); } catch { /* bỏ qua */ } };
+  const hangTitle = `Thư khen ${s.ky}`.trim();
+  const postToGallery = async (base: string) => {
+    if (!classId || !hang || !selected.length) return base;
+    try {
+      const { data, error } = await createClient().rpc('gallery_list', { p_class: classId });
+      if (error) throw error;
+      const have = new Set(((data as { items?: { kind: string; student_id: string | null; title: string }[] })?.items ?? [])
+        .filter((i) => i.kind === 'praise').map((i) => `${i.student_id}|${i.title}`));
+      const todo = selected.filter((st) => !have.has(`${st.id}|${hangTitle}`));
+      if (!todo.length) return `${base} Các thư này đã có trên Phòng triển lãm.`;
+      const assets = await loadTemplateAssets(tpl, design, true);
+      for (const [i, st] of todo.entries()) {
+        setBusy(`Đang treo lên Phòng triển lãm ${i + 1}/${todo.length}…`);
+        const c = renderLetterCanvas(tpl, assets, letterFor(st), 1, design);
+        await addItem(classId, { student: st.id, kind: 'praise', title: hangTitle, note: '', image: await canvasToImage(c, 0.88), w: c.width, h: c.height });
+      }
+      return `${base} Đã treo ${todo.length} thư lên Phòng triển lãm của lớp${todo.length < selected.length ? ` (bỏ qua ${selected.length - todo.length} thư đã treo)` : ''}.`;
+    } catch (e) {
+      return `${base} Chưa treo được lên Phòng triển lãm: ${galleryError(e)}`;
+    }
+  };
+
   const run = async (fn: () => Promise<void>) => {
     try { await fn(); } catch (e) { setMsg({ kind: 'error', text: e instanceof Error ? e.message : 'Có lỗi khi tạo thư khen.' }); } finally { setBusy(''); }
   };
@@ -192,7 +220,7 @@ export default function PraiseLetters({ className, grade, students, awards, teac
     if (!imgs) return;
     const pages = await Promise.all(imgs.map(async (x) => ({ jpeg: new Uint8Array(await x.blob.arrayBuffer()), width: x.w, height: x.h })));
     downloadBytes(`${fileBase}.pdf`, buildImagePdf(pages), 'application/pdf');
-    setMsg({ kind: 'ok', text: `Đã tạo file PDF ${pages.length} trang (A4 ngang).` });
+    setMsg({ kind: 'ok', text: await postToGallery(`Đã tạo file PDF ${pages.length} trang (A4 ngang).`) });
   });
 
   const downloadPng = () => run(async () => {
@@ -206,7 +234,7 @@ export default function PraiseLetters({ className, grade, students, awards, teac
       const entries = await Promise.all(imgs.map(async (x, i) => [enc.encode(nameOf(x.student, i)), new Uint8Array(await x.blob.arrayBuffer())] as [Uint8Array, Uint8Array]));
       downloadBytes(`${fileBase}-anh.zip`, zipStore(entries), 'application/zip');
     }
-    setMsg({ kind: 'ok', text: imgs.length === 1 ? 'Đã tải ảnh PNG.' : `Đã tải ${imgs.length} ảnh PNG (gói .zip).` });
+    setMsg({ kind: 'ok', text: await postToGallery(imgs.length === 1 ? 'Đã tải ảnh PNG.' : `Đã tải ${imgs.length} ảnh PNG (gói .zip).`) });
   });
 
   const [printUrls, setPrintUrls] = useState<string[]>([]);
@@ -214,6 +242,8 @@ export default function PraiseLetters({ className, grade, students, awards, teac
     const imgs = await renderAll(2, 'image/jpeg', 'Đang chuẩn bị bản in');
     if (!imgs) return;
     setPrintUrls(imgs.map((x) => URL.createObjectURL(x.blob)));
+    const t = await postToGallery('');
+    if (t.trim()) setMsg({ kind: 'ok', text: t.trim() });
   });
   useEffect(() => {
     if (!printUrls.length) return;
@@ -420,6 +450,12 @@ export default function PraiseLetters({ className, grade, students, awards, teac
               <button type="button" className="btn btn-outline btn-sm" disabled={!!busy} onClick={() => void downloadPng()}><ImageDown aria-hidden="true" /> Tải ảnh PNG</button>
               <button type="button" className="btn btn-outline btn-sm" disabled={!!busy} onClick={() => void doPrint()}><Printer aria-hidden="true" /> In</button>
             </div>
+            {classId && (
+              <label className="praise-hang">
+                <input type="checkbox" checked={hang} onChange={(e) => toggleHang(e.target.checked)} />
+                <span>Treo lên <a href={`/giao-vien/lop/${classId}/trien-lam`}>Phòng triển lãm</a> của lớp khi tải / in (phụ huynh vào xem được)</span>
+              </label>
+            )}
             {busy && <p className="adm-alert is-info" role="status">{busy}</p>}
             {msg && <p className={`adm-alert is-${msg.kind}`} role={msg.kind === 'error' ? 'alert' : 'status'}>{msg.text}</p>}
             <p className="dash-muted praise-note">PDF, ảnh và bản in xuất nét cao 2828 × 2000 px (khoảng 240 dpi trên A4), mỗi em một trang A4 ngang. Khi in, chọn khổ A4, hướng ngang, lề “Không” để thư phủ kín trang.</p>

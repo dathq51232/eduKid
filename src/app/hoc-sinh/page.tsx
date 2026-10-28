@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { BookOpen, CheckCircle2, ChevronRight, ClipboardList, Clock, Crown, CreditCard, Flame, Gamepad2, Lock, RotateCcw, Sparkles, Star, Trophy } from 'lucide-react';
+import { BookOpen, CheckCircle2, ChevronRight, ClipboardList, Clock, Crown, CreditCard, Flame, Gamepad2, Lock, PenLine, RotateCcw, Sparkles, Star, Trophy } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
+import GalleryTeaser from '@/components/gallery/GalleryTeaser';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import SignOutButton from '@/components/classroom/SignOutButton';
@@ -134,9 +135,12 @@ export default async function StudentHome() {
                 <Link href="/tro-choi"><Gamepad2 aria-hidden="true" /> Game trí tuệ</Link>
                 <Link href="/co"><Crown aria-hidden="true" /> Đấu cờ</Link>
                 <Link href="/thanh-tich"><Trophy aria-hidden="true" /> Thành tích</Link>
+                <Link href="/luyen-chu"><PenLine aria-hidden="true" /> Luyện chữ</Link>
               </div>
             )}
           </section>
+
+          <GalleryTeaser />
 
           <section className="sd-week" aria-labelledby="sd-week-t">
             <h2 id="sd-week-t"><Flame aria-hidden="true" /> Chuỗi ngày học</h2>

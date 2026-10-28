@@ -5,6 +5,7 @@ import { Bell, Check, MessageCircle, Pin, School, Star, TrendingUp, UserRound } 
 import ParentHeader from '@/components/parent/ParentHeader';
 import FamilyInfo from '@/components/parent/FamilyInfo';
 import ParentMessages from '@/components/parent/ParentMessages';
+import GalleryTeaser from '@/components/gallery/GalleryTeaser';
 import type { ParentMsg } from '@/lib/classroom/messages';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import RedeemInviteForm from '@/components/classroom/RedeemInviteForm';
@@ -152,6 +153,8 @@ export default async function ParentsPage() {
             <li><span className="ph-ic is-red" aria-hidden="true">🔔</span><div><span>Cô nhắc nhở</span><b>{month ? `${month.remind} lần` : <em>Chưa có</em>}</b></div></li>
             <li><span className="ph-ic is-purple" aria-hidden="true">🎯</span><div><span>Luyện 7 ngày qua</span><b>{week.length ? `${week.length} bài` : <em>Chưa làm bài</em>}</b></div></li>
           </ul>
+
+          <GalleryTeaser variant="parent" />
 
           <div className="ph-grid">
             <div className="ph-side">

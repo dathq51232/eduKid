@@ -44,6 +44,7 @@ export default async function PraisePage({ params }: { params: Promise<{ id: str
       <main className="dash wrap">
         <Link href={`/giao-vien/lop/${id}`} className="dash-back no-print"><ArrowLeft aria-hidden="true" /> Lớp {c.name}</Link>
         <PraiseLetters
+          classId={c.id}
           className={c.name}
           grade={c.grade}
           students={students}
