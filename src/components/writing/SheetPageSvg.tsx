@@ -136,7 +136,9 @@ const flipOf = (corner: Corner, id: string, s: number) => {
   return `translate(${h ? s : 0} ${v ? s : 0}) scale(${h ? -1 : 1} ${v ? -1 : 1})`;
 };
 
-function CornerDeco({ corner, value, size, color, W, H }: { corner: Corner; value: string; size: number; color: string; W: number; H: number }) {
+export type UserDeco = Record<string, { url: string; flip: boolean }>;
+
+function CornerDeco({ corner, value, size, color, W, H, user }: { corner: Corner; value: string; size: number; color: string; W: number; H: number; user?: UserDeco }) {
   if (!value || value === 'none') return null;
   const m = 5; // cách mép giấy
   const x = corner === 'tl' || corner === 'bl' ? m : W - m - size;
@@ -147,6 +149,17 @@ function CornerDeco({ corner, value, size, color, W, H }: { corner: Corner; valu
     return (
       <g transform={`translate(${x} ${y})`}>
         <g transform={`translate(${h ? size : 0} ${v ? size : 0}) scale(${(h ? -1 : 1) * size / 100} ${(v ? -1 : 1) * size / 100})`}><Floral id={value.slice(2)} /></g>
+      </g>
+    );
+  }
+  if (value.startsWith('u:')) {
+    // ảnh của tôi (kho — migration 0043): đã thu vào khung vuông, canh sát góc trên-trái → lật gương cho các góc khác
+    const u = user?.[value.slice(2)];
+    if (!u) return null;
+    const h = u.flip && (corner === 'tr' || corner === 'br'), v = u.flip && (corner === 'bl' || corner === 'br');
+    return (
+      <g transform={`translate(${x + (h ? size : 0)} ${y + (v ? size : 0)}) scale(${h ? -1 : 1} ${v ? -1 : 1})`}>
+        <image href={u.url} x={0} y={0} width={size} height={size} preserveAspectRatio="xMinYMin meet" />
       </g>
     );
   }
@@ -224,8 +237,10 @@ function Header({ s, page, W }: { s: SheetSettings; page: SheetPage; W: number }
   const { x0, x1, y0 } = page.grid;
   const mid = (x0 + x1) / 2;
   // tránh hoa văn góc trên đè lên dòng Họ tên / Ngày
-  const padL = s.corners.tl !== 'none' ? Math.max(0, 5 + s.decoSize * 0.45 - x0) : 0;
-  const padR = s.corners.tr !== 'none' ? Math.max(0, 5 + s.decoSize * 0.45 - (W - x1)) : 0;
+  // hoa văn dạng cành ôm mép chỉ chiếm ~nửa ô; ảnh / tranh dán chiếm gần cả ô
+  const reach = (v: string) => (v === 'none' ? 0 : /^[us]:/.test(v) ? 0.95 : 0.45);
+  const padL = Math.max(0, 5 + s.decoSize * reach(s.corners.tl) - x0) * (s.corners.tl !== 'none' ? 1 : 0);
+  const padR = Math.max(0, 5 + s.decoSize * reach(s.corners.tr) - (W - x1)) * (s.corners.tr !== 'none' ? 1 : 0);
   const narrow = W < 200; // khổ nhỏ: Ngày xuống dòng dưới
   const t = s.title.trim();
   return (
@@ -242,7 +257,7 @@ function Header({ s, page, W }: { s: SheetSettings; page: SheetPage; W: number }
   );
 }
 
-export default function SheetPageSvg({ s, layout, page, index, className }: { s: SheetSettings; layout: SheetLayout; page: SheetPage; index: number; className?: string }) {
+export default function SheetPageSvg({ s, layout, page, index, className, user }: { s: SheetSettings; layout: SheetLayout; page: SheetPage; index: number; className?: string; user?: UserDeco }) {
   const fam = `${fontFamily(s.font)}, cursive`;
   const { W, H } = layout;
   const traceProps = s.traceStyle === 'mo'
@@ -255,7 +270,7 @@ export default function SheetPageSvg({ s, layout, page, index, className }: { s:
       <FloralScope>
       <rect width={W} height={H} fill="#fff" />
       <Border s={s} W={W} H={H} />
-      {(['tl', 'tr', 'bl', 'br'] as Corner[]).map((c) => <CornerDeco key={c} corner={c} value={s.corners[c]} size={s.decoSize} color={s.decoColor} W={W} H={H} />)}
+      {(['tl', 'tr', 'bl', 'br'] as Corner[]).map((c) => <CornerDeco key={c} corner={c} value={s.corners[c]} size={s.decoSize} color={s.decoColor} W={W} H={H} user={user} />)}
       {page.header && <Header s={s} page={page} W={W} />}
       <Grid s={s} page={page} li={layout.li} sq={layout.sq} />
       <g fontFamily={fam} fontSize={layout.fs}>

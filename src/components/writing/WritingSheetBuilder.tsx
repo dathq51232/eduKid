@@ -5,8 +5,10 @@
 // hoạ tiết góc vở, viền trang; lưu thành bài giao cho lớp (học sinh luyện thêm trên màn hình).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpenText, Eye, EyeOff, FilePlus2, Minus, Plus, Printer, RotateCcw, Save, Trash2 } from 'lucide-react';
-import SheetPageSvg, { MOTIFS, Motif } from './SheetPageSvg';
+import { BookOpenText, Eye, EyeOff, FilePlus2, Minus, Plus, Printer, RotateCcw, Save, Trash2, Upload } from 'lucide-react';
+import SheetPageSvg, { MOTIFS, Motif, type UserDeco } from './SheetPageSvg';
+import { assetError, assetUsage, deleteAsset, fmtMB, listAssets, uploadAsset, type TeacherAsset } from '@/lib/assets/client';
+import { IMAGE_ACCEPT, baseName, prepareDeco } from '@/lib/assets/image';
 import { FLORALS, Floral, FloralScope } from './floral';
 import { STICKERS } from '@/lib/stickers';
 import { DEFAULT_SHEET, FALLBACK_FONT, LINE_COLORS, PAGE_SIZES, TAP_FONTS, fallbackScale, pageDims, textSegments, fontFamily, layoutSheet, loadTapFont, normalizeSheet, type Corner, type SheetSettings } from '@/lib/writing/sheet';
@@ -61,10 +63,61 @@ function Swatches({ value, onChange, label, colors = LINE_COLORS }: { value: str
   );
 }
 
-function DecoPick({ value, onChange, color }: { value: string; onChange: (v: string) => void; color: string }) {
+/** Ảnh của tôi: tải ảnh lên kho, tự xoá nền trắng, cắt viền, thu vào khung vuông canh sát góc */
+function MyDecos({ list, value, onChange, onChanged }: { list: TeacherAsset[] | null; value: string; onChange: (v: string) => void; onChanged: (l: TeacherAsset[]) => void }) {
+  const [white, setWhite] = useState(true);
+  const [corner, setCornerAlign] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ kind: 'ok' | 'error' | 'info'; text: string } | null>(null);
+  const [usage, setUsage] = useState<{ bytes: number; limit: number } | null>(null);
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => { void assetUsage().then((u) => { if (u) setUsage(u); }); }, [list?.length]);
+  const pick = async (f: File) => {
+    setBusy(true); setMsg(null);
+    try {
+      const r = await prepareDeco(f, { removeWhite: white, align: corner ? 'corner' : 'center' });
+      const row = await uploadAsset('deco', baseName(f), r.blob, { meta: { flip: corner, fill: r.fill } });
+      onChanged([row, ...(list ?? [])]);
+      onChange(`u:${row.id}`);
+      setMsg({ kind: 'ok', text: 'Đã thêm ảnh vào kho và đặt vào góc đang chọn.' });
+    } catch (e) { setMsg({ kind: 'error', text: assetError(e) }); }
+    finally { setBusy(false); if (ref.current) ref.current.value = ''; }
+  };
+  const remove = async (a: TeacherAsset) => {
+    if (!window.confirm(`Xoá ảnh “${a.name}” khỏi kho?`)) return;
+    try { await deleteAsset(a); onChanged((list ?? []).filter((x) => x.id !== a.id)); if (value === `u:${a.id}`) onChange('none'); }
+    catch (e) { setMsg({ kind: 'error', text: assetError(e) }); }
+  };
+  return (
+    <div className="wsb-mine">
+      <b className="wsb-deco-h">Ảnh của tôi {usage && <small>· kho {fmtMB(usage.bytes)} / {fmtMB(usage.limit)}</small>}</b>
+      <input ref={ref} type="file" accept={IMAGE_ACCEPT} hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void pick(f); }} />
+      <div className="wsb-mine-opts">
+        <label className="wsb-check"><input type="checkbox" checked={white} onChange={(e) => setWhite(e.target.checked)} /> Xoá nền trắng</label>
+        <label className="wsb-check"><input type="checkbox" checked={corner} onChange={(e) => setCornerAlign(e.target.checked)} /> Canh sát góc, lật theo góc</label>
+      </div>
+      <div className="wsb-deco">
+        <button type="button" className="wsb-up" disabled={busy} onClick={() => ref.current?.click()} title="PNG, JPG, WebP, SVG — tự cắt viền, thu vừa khung hoạ tiết"><Upload aria-hidden="true" />{busy ? '…' : 'Tải ảnh'}</button>
+        {(list ?? []).map((a) => (
+          <span key={a.id} className="wsb-mine-it">
+            <button type="button" role="radio" aria-checked={value === `u:${a.id}`} className={value === `u:${a.id}` ? 'is-on' : ''} onClick={() => onChange(`u:${a.id}`)} title={a.name} aria-label={a.name}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- ảnh trong kho riêng (đường dẫn ký) */}
+              {a.url ? <img src={a.url} alt="" loading="lazy" /> : '?'}
+            </button>
+            <button type="button" className="wsb-mine-x" aria-label={`Xoá ảnh ${a.name}`} onClick={() => void remove(a)}><Trash2 aria-hidden="true" /></button>
+          </span>
+        ))}
+      </div>
+      {msg && <p className={`adm-alert is-${msg.kind}`} role="status">{msg.text}</p>}
+    </div>
+  );
+}
+
+function DecoPick({ value, onChange, color, mine }: { value: string; onChange: (v: string) => void; color: string; mine?: React.ReactNode }) {
   return (
     <div className="wsb-deco" role="radiogroup">
       <button type="button" role="radio" aria-checked={value === 'none'} className={value === 'none' ? 'is-on' : ''} onClick={() => onChange('none')} title="Không">∅</button>
+      {mine && <div className="wsb-deco-full">{mine}</div>}
       <b className="wsb-deco-h">Hoa văn bo góc (hoa thật)</b>
       {FLORALS.map((f) => (
         <button key={f.id} type="button" role="radio" aria-checked={value === `f:${f.id}`} className={`is-floral${value === `f:${f.id}` ? ' is-on' : ''}`} onClick={() => onChange(`f:${f.id}`)} title={f.label} aria-label={f.label}>
@@ -95,6 +148,9 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
   const [group, setGroup] = useState(VERSE_GROUPS[0].id);
   const [corner, setCorner] = useState<Corner>('tl');
   const [std, setStd] = useState<string | null>(null);
+  const [decos, setDecos] = useState<TeacherAsset[] | null>(null);
+  useEffect(() => { void listAssets(['deco']).then(setDecos, () => setDecos([])); }, []);
+  const userDeco: UserDeco = useMemo(() => Object.fromEntries((decos ?? []).filter((a) => a.url).map((a) => [a.id, { url: a.url as string, flip: a.meta.flip !== false }])), [decos]);
   const [tasks, setTasks] = useState<WritingTask[] | null>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -151,7 +207,10 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
     document.head.appendChild(st);
     const done = () => { document.body.classList.remove('ws-printing'); st.remove(); setPrinting(false); };
     window.addEventListener('afterprint', done, { once: true });
-    const t = window.setTimeout(() => { void document.fonts.ready.then(() => window.print()); }, 150);
+    // chờ font và ảnh của tôi ở góc vở tải xong rồi mới in
+    const imgs = Object.values(s.corners).filter((v) => v.startsWith('u:')).map((v) => userDeco[v.slice(2)]?.url).filter(Boolean) as string[];
+    const ready = Promise.all([document.fonts.ready, ...imgs.map((u) => { const im = new Image(); im.src = u; return im.decode().catch(() => undefined); })]);
+    const t = window.setTimeout(() => { void ready.then(() => window.print()); }, 150);
     return () => { window.clearTimeout(t); window.removeEventListener('afterprint', done); document.body.classList.remove('ws-printing'); st.remove(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [printing]);
@@ -276,7 +335,8 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
             </div>
             <span><b>{CORNERS.find((c) => c.k === corner)?.label}</b><small>Bấm góc trên hình trang vở rồi chọn hoạ tiết hoặc tranh dán bên dưới.</small></span>
           </div>
-          <DecoPick value={s.corners[corner]} color={s.decoColor} onChange={(v) => setS((o) => ({ ...o, corners: { ...o.corners, [corner]: v } }))} />
+          <DecoPick value={s.corners[corner]} color={s.decoColor} onChange={(v) => setS((o) => ({ ...o, corners: { ...o.corners, [corner]: v } }))}
+            mine={<MyDecos list={decos} value={s.corners[corner]} onChange={(v) => setS((o) => ({ ...o, corners: { ...o.corners, [corner]: v } }))} onChanged={setDecos} />} />
           <label className="wsb-f"><span>Cỡ hoa văn / hoạ tiết: <b>{s.decoSize} mm</b></span><input type="range" min={12} max={50} value={s.decoSize} onChange={(e) => set('decoSize', Number(e.target.value))} /></label>
           <div className="wsb-f"><span>Màu hình vẽ đơn giản <small>(hoa văn hoa thật giữ màu tự nhiên)</small></span><Swatches label="Màu hoạ tiết" value={s.decoColor} onChange={(c) => set('decoColor', c)} /></div>
           <label className="wsb-f"><span>Viền trang</span>
@@ -328,12 +388,12 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
         <p className="dash-muted wsb-tip">Khi in: chọn đúng khổ giấy, tỉ lệ 100% (không “vừa trang”), bỏ đầu trang / chân trang của trình duyệt.</p>
         {!ready && <p className="dash-muted" role="status">Đang nạp font chữ…</p>}
         {ready && layout && pages.map((p, i) => (
-          <div key={i} className="wsb-page"><SheetPageSvg s={s} layout={layout} page={p} index={i} /></div>
+          <div key={i} className="wsb-page"><SheetPageSvg s={s} layout={layout} page={p} index={i} user={userDeco} /></div>
         ))}
       </section>
 
       {printing && layout && createPortal(
-        <div className="ws-print-root">{pages.map((p, i) => <SheetPageSvg key={i} s={s} layout={layout} page={p} index={i} className="ws-print-page" />)}</div>,
+        <div className="ws-print-root">{pages.map((p, i) => <SheetPageSvg key={i} s={s} layout={layout} page={p} index={i} className="ws-print-page" user={userDeco} />)}</div>,
         document.body,
       )}
     </div>

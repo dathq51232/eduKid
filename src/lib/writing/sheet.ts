@@ -96,7 +96,7 @@ export type SheetSettings = {
   blank: number; // số dòng để trống
   traceStyle: TraceStyle;
   traceColor: string;
-  corners: Record<Corner, string>; // 'none' | 'f:<hoa văn bo góc>' | 'm:<hoạ tiết>' | 's:<tranh dán>'
+  corners: Record<Corner, string>; // 'none' | 'f:<hoa văn bo góc>' | 'm:<hoạ tiết>' | 's:<tranh dán>' | 'u:<ảnh của tôi>'
   decoSize: number; // mm
   decoColor: string;
   border: BorderStyle;
@@ -125,7 +125,7 @@ export function normalizeSheet(raw: unknown): SheetSettings {
   const num = (v: unknown, lo: number, hi: number, def: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : def);
   const str = (v: unknown, def: string, max = 2000) => (typeof v === 'string' ? v.slice(0, max) : def);
   const color = (v: unknown, def: string) => (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? v : def);
-  const corner = (v: unknown) => (typeof v === 'string' && /^(none|[msf]:[a-z0-9-]{1,20})$/.test(v) ? v : 'none');
+  const corner = (v: unknown) => (typeof v === 'string' && /^(none|[msfu]:[a-z0-9-]{1,40})$/.test(v) ? v : 'none');
   const c = (r.corners ?? {}) as Partial<Record<Corner, string>>;
   return {
     title: str(r.title, d.title, 120), header: r.header ?? d.header, headerEvery: r.headerEvery ?? d.headerEvery,

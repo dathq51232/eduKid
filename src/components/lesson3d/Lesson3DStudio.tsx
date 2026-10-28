@@ -4,7 +4,9 @@
 // Bài tự lưu vào bảng lessons3d (migration 0034) sau mỗi lần sửa.
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Copy, Eye, Grid3x3, Maximize, Pause, Play, Plus, Trash2, X, Zap } from 'lucide-react';
+import { ArrowLeft, Copy, Eye, Grid3x3, Maximize, Pause, Play, Plus, Trash2, Upload, X, Zap } from 'lucide-react';
+import { assetError, assetUsage, deleteAsset, fmtMB, listAssets, uploadAsset, type TeacherAsset } from '@/lib/assets/client';
+import { baseName, prepareBoard } from '@/lib/assets/image';
 import { createClient } from '@/lib/supabase/client';
 import { ASSETS, ASSET_BY_ID, ASSET_CATS } from '@/lib/lesson3d/assets';
 import type { Runtime, Stage3D } from '@/lib/lesson3d/engine';
@@ -48,6 +50,12 @@ export default function Lesson3DStudio({ classId, lessonId, initial }: { classId
   const [play, setPlay] = useState<Play | null>(null);
   const [rt, setRt] = useState<Runtime>({});
   const [sceneOn, setSceneOn] = useState(-1);
+  // vật thể của tôi (kho — migration 0043)
+  const [mine, setMine] = useState<TeacherAsset[] | null>(null);
+  const [mineMsg, setMineMsg] = useState<{ kind: 'ok' | 'error' | 'info' | 'warn'; text: string } | null>(null);
+  const [mineBusy, setMineBusy] = useState('');
+  const [usage, setUsage] = useState<{ bytes: number; limit: number } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const ref = useRef({ L, placing, play, tab });
   ref.current = { L, placing, play, tab };
 
@@ -77,6 +85,54 @@ export default function Lesson3DStudio({ classId, lessonId, initial }: { classId
     return () => { alive = false; engRef.current?.dispose(); engRef.current = null; };
   }, [addObj, updObj]);
   useEffect(() => { engRef.current?.setLesson(L); }, [L]);
+  const applyMine = useCallback(async (list: TeacherAsset[]) => {
+    const { registerUserAssets } = await import('@/lib/lesson3d/user-assets');
+    registerUserAssets(list);
+    setMine(list);
+    engRef.current?.setLesson(ref.current.L); // dựng các vật thể của tôi đã có trong bài
+  }, []);
+  useEffect(() => {
+    let live = true;
+    void listAssets(['model', 'image']).then((l) => { if (live) void applyMine(l); }, (e) => { if (live) { setMine([]); setMineMsg({ kind: 'info', text: assetError(e) }); } });
+    void assetUsage().then((u) => { if (live && u) setUsage(u); });
+    return () => { live = false; };
+  }, [applyMine]);
+  const onUpload = async (file: File) => {
+    setMineMsg(null);
+    try {
+      let row: TeacherAsset;
+      if (/\.glb$/i.test(file.name)) {
+        const { prepareModel } = await import('@/lib/lesson3d/user-model');
+        const r = await prepareModel(file, setMineBusy);
+        setMineBusy('Đang tải lên kho…');
+        row = await uploadAsset('model', baseName(file), r.blob, { thumb: r.thumb, meta: { tris: r.info.tris, size: r.info.size } });
+        if (r.warn) setMineMsg({ kind: 'warn', text: r.warn });
+      } else {
+        setMineBusy('Đang chuẩn hoá ảnh…');
+        const r = await prepareBoard(file);
+        setMineBusy('Đang tải lên kho…');
+        row = await uploadAsset('image', baseName(file), r.blob, { thumb: r.thumb, meta: { w: r.w, h: r.h } });
+      }
+      await applyMine([row, ...(mine ?? [])]);
+      setPlacing(`u-${row.id}`);
+      setMineMsg((m) => m ?? { kind: 'ok', text: `Đã thêm “${row.name}” vào Vật thể của tôi — bấm lên sa bàn để đặt.` });
+      void assetUsage().then((u) => { if (u) setUsage(u); });
+    } catch (e) { setMineMsg({ kind: 'error', text: assetError(e) }); }
+    finally { setMineBusy(''); if (fileRef.current) fileRef.current.value = ''; }
+  };
+  const removeMine = async (a: TeacherAsset) => {
+    const type = `u-${a.id}`;
+    const used = L.objects.filter((o) => o.type === type).length;
+    if (!window.confirm(`Xoá “${a.name}” khỏi kho?${used ? ` ${used} đồ vật này trong bài cũng bị xoá.` : ''}`)) return;
+    try {
+      await deleteAsset(a);
+      if (used) update((d) => { const gone = new Set(d.objects.filter((o) => o.type === type).map((o) => o.id)); d.objects = d.objects.filter((o) => !gone.has(o.id)); d.links = d.links.filter((l) => !gone.has(l.from) && !gone.has(l.to)); return d; });
+      const { unregisterUserAsset } = await import('@/lib/lesson3d/user-assets');
+      unregisterUserAsset(a.id);
+      setMine((l) => (l ?? []).filter((x) => x.id !== a.id));
+      void assetUsage().then((u) => { if (u) setUsage(u); });
+    } catch (e) { setMineMsg({ kind: 'error', text: assetError(e) }); }
+  };
   useEffect(() => { if (engRef.current) engRef.current.snap = snap; }, [snap]);
   useEffect(() => { engRef.current?.setLite(lite); }, [lite]);
   useEffect(() => { engRef.current?.startPlacing(placing); }, [placing]);
@@ -148,7 +204,7 @@ export default function Lesson3DStudio({ classId, lessonId, initial }: { classId
     <button key={id} type="button" className="s3d-item" draggable aria-pressed={placing === id} title="Bấm rồi bấm lên sa bàn, hoặc kéo thả vào sa bàn"
       onClick={() => setPlacing((p) => (p === id ? null : id))} onDragStart={(e) => e.dataTransfer.setData('text/plain', id)}>
       {/* eslint-disable-next-line @next/next/no-img-element -- ảnh nhỏ dựng tại chỗ (data URL) */}
-      {thumbs[id] ? <img src={thumbs[id]} alt="" /> : <span className="s3d-ph" />}<span>{a.name}</span>
+      {thumbs[id] ?? a.thumb ? <img src={thumbs[id] ?? a.thumb} alt="" /> : <span className="s3d-ph" />}<span>{a.name}</span>
     </button>
   ); };
 
@@ -177,6 +233,23 @@ export default function Lesson3DStudio({ classId, lessonId, initial }: { classId
             <div className="s3d-pane-h"><h2>Thư viện 3D <small>{ASSETS.length} đồ vật</small></h2>
               <input className="s3d-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm: cây, đèn, khối, pin…" aria-label="Tìm đồ vật" /></div>
             <div className="s3d-lib-list">
+              <section className="s3d-mine">
+                <h3>Vật thể của tôi {usage && <small>{fmtMB(usage.bytes)} / {fmtMB(usage.limit)}</small>}</h3>
+                <input ref={fileRef} type="file" accept=".glb,image/png,image/jpeg,image/webp,image/gif,image/svg+xml" hidden onChange={(e) => { const fl = e.target.files?.[0]; if (fl) void onUpload(fl); }} />
+                <div className="s3d-grid">
+                  <button type="button" className="s3d-item s3d-up" disabled={!!mineBusy} onClick={() => fileRef.current?.click()} title="Mô hình .glb hoặc ảnh (tự thu về vừa 1 ô sa bàn)">
+                    <span className="s3d-up-ic"><Upload aria-hidden="true" /></span><span>{mineBusy || 'Tải lên .glb / ảnh'}</span>
+                  </button>
+                  {(mine ?? []).filter((a) => ASSET_BY_ID[`u-${a.id}`] && (!f || fold(a.name).includes(f))).map((a) => (
+                    <div key={a.id} className="s3d-mine-it">
+                      {libItem(`u-${a.id}`)}
+                      <button type="button" className="s3d-mine-x" aria-label={`Xoá ${a.name} khỏi kho`} title="Xoá khỏi kho" onClick={() => void removeMine(a)}><X aria-hidden="true" /></button>
+                    </div>
+                  ))}
+                </div>
+                {mineMsg && <p className={`s3d-note s3d-mine-msg is-${mineMsg.kind}`} role="status">{mineMsg.text}</p>}
+                {mine && !mine.length && !mineMsg && <p className="s3d-note">Tải mô hình .glb (Blender, SketchUp, Tinkercad, Poly Pizza…) hoặc ảnh: app tự thu về vừa 1 ô sa bàn, đặt đáy chạm sàn.</p>}
+              </section>
               {suggested.length > 0 && !f && <section><h3>Gợi ý cho bài này</h3><div className="s3d-grid">{suggested.map(libItem)}</div></section>}
               {libCats.map(({ c, items }) => <section key={c}><h3>{c}</h3><div className="s3d-grid">{items.map((a) => libItem(a.id))}</div></section>)}
             </div>

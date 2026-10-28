@@ -42,17 +42,35 @@ const DEFS: Def[] = [
 ];
 
 const cache = new Map<string, Promise<THREE.Group>>();
-let loader: Promise<{ load: (url: string) => Promise<THREE.Group> }> | null = null;
+type GltfLoader = { load: (url: string) => Promise<THREE.Group>; parse: (buf: ArrayBuffer) => Promise<THREE.Group> };
+let loader: Promise<GltfLoader> | null = null;
 
-function getLoader() {
+export function getLoader(): Promise<GltfLoader> {
   loader ??= Promise.all([
     import('three/examples/jsm/loaders/GLTFLoader.js'),
     import('three/examples/jsm/libs/meshopt_decoder.module.js'),
   ]).then(([{ GLTFLoader }, { MeshoptDecoder }]) => {
     const l = new GLTFLoader(); l.setMeshoptDecoder(MeshoptDecoder);
-    return { load: async (url: string) => (await l.loadAsync(url)).scene };
+    return {
+      load: async (url: string) => (await l.loadAsync(url)).scene,
+      parse: async (buf: ArrayBuffer) => (await l.parseAsync(buf, '')).scene,
+    };
   });
   return loader;
+}
+
+/** Tải mô hình từ đường dẫn đầy đủ (vật thể giáo viên tự tải lên), nhớ theo khoá riêng vì đường dẫn ký đổi mỗi phiên */
+export function loadModelUrl(key: string, url: string): Promise<THREE.Group> {
+  let p = cache.get(key);
+  if (!p) {
+    p = getLoader().then((l) => l.load(url)).then((g) => {
+      g.traverse((m) => { const mm = m as THREE.Mesh; if (mm.isMesh) { mm.castShadow = true; mm.receiveShadow = true; } });
+      return g;
+    });
+    p.catch(() => cache.delete(key));
+    cache.set(key, p);
+  }
+  return p;
 }
 
 /** Tải (một lần) mô hình gốc; mỗi đồ vật dùng bản sao */
