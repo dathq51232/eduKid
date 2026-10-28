@@ -116,6 +116,10 @@ export type SheetSettings = {
   decoColor: string;
   border: BorderStyle;
   borderColor: string;
+  /** khung ô li: 'auto' = tự vừa trang; 'fixed' = giáo viên khoá số hàng × số cột ô lớn (hoạ tiết góc không làm đổi khung) */
+  gridMode: 'auto' | 'fixed';
+  rows: number; // số ô lớn theo chiều dọc (khi khoá)
+  cols: number; // số ô lớn theo chiều ngang (khi khoá)
 };
 
 export const LINE_COLORS: { c: string; label: string }[] = [
@@ -131,6 +135,7 @@ export const DEFAULT_SHEET: SheetSettings = {
   ink: '#1e3a8a', sample: 1, trace: 2, blank: 2, traceStyle: 'mo', traceColor: '#94a3b8',
   corners: { tl: 'f:hong', tr: 'none', bl: 'none', br: 'f:hong' }, decoSize: 34, cornerPos: DEFAULT_CORNER_POS, decoColor: '#ec4899',
   border: 'none', borderColor: '#8b5cf6',
+  gridMode: 'auto', rows: 0, cols: 0,
 };
 
 /** Sửa / bổ sung các khoá thiếu khi đọc cài đặt đã lưu (bản cũ hoặc dữ liệu lạ) */
@@ -159,6 +164,7 @@ export function normalizeSheet(raw: unknown): SheetSettings {
     decoColor: color(r.decoColor, d.decoColor),
     border: (['none', 'don', 'doi', 'cham', 'song'] as BorderStyle[]).includes(r.border as BorderStyle) ? (r.border as BorderStyle) : 'none',
     borderColor: color(r.borderColor, d.borderColor),
+    gridMode: r.gridMode === 'fixed' ? 'fixed' : 'auto', rows: Math.round(num(r.rows, 0, 200, 0)), cols: Math.round(num(r.cols, 0, 200, 0)),
   };
 }
 
@@ -169,7 +175,9 @@ export const PAGE_H = 297;
 export type RowKind = 'mau' | 'to' | 'trong';
 export type SheetRow = { kind: RowKind; base: number; pieces: { text: string; x: number }[] };
 export type SheetPage = { header: boolean; grid: { x0: number; x1: number; y0: number; y1: number; textX: number }; rows: SheetRow[] };
-export type SheetLayout = { pages: SheetPage[]; li: number; sq: number; fs: number; pitch: number; overflow: string[]; W: number; H: number };
+export type SheetLayout = { pages: SheetPage[]; li: number; sq: number; fs: number; pitch: number; overflow: string[]; W: number; H: number;
+  /** khung ô li trang đầu (số ô lớn) và giới hạn khi khoá khung */
+  rows: number; cols: number; maxRows: number; maxCols: number };
 
 /** Đo chiều rộng chữ (mm) — truyền vào hàm đo bằng canvas sau khi font đã nạp */
 export type Measure = (text: string) => number; // trả về độ rộng ứng với cỡ chữ 1 mm
@@ -190,7 +198,9 @@ export function layoutSheet(s: SheetSettings, measure: Measure): SheetLayout {
   const pitch = Math.max(1, Math.ceil((asc + desc - 0.01) / s.paper)) * sq;
   const firstBase = Math.max(1, Math.ceil((asc - 0.01) / s.paper)) * sq;
 
-  const cols = Math.floor((PAGE_W - PAD * 2) / sq);
+  const fixed = s.gridMode === 'fixed' && s.rows > 0 && s.cols > 0;
+  const maxCols = Math.floor((PAGE_W - 10) / sq);
+  const cols = fixed ? Math.min(maxCols, s.cols) : Math.floor((PAGE_W - PAD * 2) / sq);
   const gw = cols * sq;
   const x0 = (PAGE_W - gw) / 2;
   const x1 = x0 + gw;
@@ -199,12 +209,17 @@ export function layoutSheet(s: SheetSettings, measure: Measure): SheetLayout {
 
   const headH = s.header ? (PAGE_W < 200 ? 26 : 24) : 14; // tiêu đề + dòng họ tên / chỉ tiêu đề
   // chừa chỗ cho hoạ tiết góc để không đè lên dòng kẻ
-  // (theo cỡ riêng từng góc; hoạ tiết giáo viên kéo vào giữa trang thì không đẩy dòng kẻ)
-  const decoH = (c: Corner) => (s.corners[c] === 'none' || (s.cornerPos?.[c]?.y ?? 0) > 20 ? 0 : 5 + cornerSize(s, c) * 0.85 + 1);
+  // (chỉ theo góc có hoạ tiết và cỡ hoạ tiết — kéo hoạ tiết đi đâu cũng không làm thêm / bớt hàng ô li)
+  const decoH = (c: Corner) => (s.corners[c] === 'none' ? 0 : 5 + cornerSize(s, c) * 0.85 + 1);
   const topDeco = Math.max(decoH('tl'), decoH('tr'));
   const bottomDeco = Math.max(decoH('bl'), decoH('br'));
   const gridTop = (header: boolean) => Math.max(PAD + (header ? headH : 2), topDeco);
+  // khoá khung: mọi trang cùng một khung, bắt đầu ngay dưới tiêu đề, không phụ thuộc hoạ tiết góc
+  const fixedTop = PAD + (s.header ? headH : 14);
+  const maxRows = Math.max(1, Math.floor((PAGE_H - 5 - fixedTop) / sq));
+  const fixedRows = Math.min(maxRows, Math.max(1, s.rows));
   const grid = (header: boolean) => {
+    if (fixed) return { x0, x1, y0: fixedTop, y1: fixedTop + fixedRows * sq, textX };
     const y0 = gridTop(header);
     const avail = PAGE_H - Math.max(PAD, bottomDeco) - y0;
     const y1 = y0 + Math.floor(avail / sq) * sq;
@@ -259,5 +274,6 @@ export function layoutSheet(s: SheetSettings, measure: Measure): SheetLayout {
     if (!rows.length) break; // phòng khi trang quá nhỏ
     if (pages.length >= 30) break;
   }
-  return { pages, li, sq, fs, pitch, overflow, W: PAGE_W, H: PAGE_H };
+  const g0 = grid(s.header);
+  return { pages, li, sq, fs, pitch, overflow, W: PAGE_W, H: PAGE_H, rows: Math.round((g0.y1 - g0.y0) / sq), cols, maxRows, maxCols };
 }

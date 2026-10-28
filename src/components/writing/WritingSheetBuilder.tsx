@@ -5,7 +5,7 @@
 // hoạ tiết góc vở, viền trang; lưu thành bài giao cho lớp (học sinh luyện thêm trên màn hình).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpenText, Eye, EyeOff, FilePlus2, Move, Minus, Plus, Printer, RotateCcw, Save, Trash2, Upload } from 'lucide-react';
+import { BookOpenText, Eye, EyeOff, FilePlus2, Lock, Move, Minus, Plus, Printer, RotateCcw, Save, Trash2, Upload } from 'lucide-react';
 import SheetPageSvg, { MOTIFS, Motif, type UserDeco } from './SheetPageSvg';
 import { assetError, assetUsage, deleteAsset, fmtMB, listAssets, uploadAsset, type TeacherAsset } from '@/lib/assets/client';
 import { IMAGE_ACCEPT, baseName, prepareDeco } from '@/lib/assets/image';
@@ -331,6 +331,20 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
           <label className="wsb-f"><span>Cỡ ô li: <b>{s.oli.toFixed(1)} mm</b> <small>(ô lớn {(s.oli * s.paper).toFixed(1)} mm)</small></span>
             <input type="range" min={1.5} max={3.5} step={0.1} value={s.oli} onChange={(e) => set('oli', Number(e.target.value))} />
           </label>
+          <div className="wsb-f"><span>Khung ô li</span>
+            <div className="wsb-seg" role="radiogroup" aria-label="Khung ô li">
+              <button type="button" role="radio" aria-checked={s.gridMode === 'auto'} className={s.gridMode === 'auto' ? 'is-on' : ''} onClick={() => set('gridMode', 'auto')}>Tự vừa trang</button>
+              <button type="button" role="radio" aria-checked={s.gridMode === 'fixed'} className={s.gridMode === 'fixed' ? 'is-on' : ''}
+                onClick={() => setS((o) => ({ ...o, gridMode: 'fixed', rows: o.rows > 0 ? o.rows : layout?.rows ?? 20, cols: o.cols > 0 ? o.cols : layout?.cols ?? 18 }))}><Lock aria-hidden="true" /> Khoá hàng × cột</button>
+            </div>
+            {s.gridMode === 'fixed' && layout ? (
+              <div className="wsb-grid-fix">
+                <Stepper label="Số hàng (ô lớn)" value={Math.min(s.rows, layout.maxRows)} min={1} max={layout.maxRows} onChange={(v) => set('rows', v)} hint={`tối đa ${layout.maxRows}`} />
+                <Stepper label="Số cột (ô lớn)" value={Math.min(s.cols, layout.maxCols)} min={1} max={layout.maxCols} onChange={(v) => set('cols', v)} hint={`tối đa ${layout.maxCols}`} />
+                <small>Khung {(layout.cols * layout.sq / 10).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} × {(layout.rows * layout.sq / 10).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} cm, giữ nguyên ở mọi trang — kéo hoạ tiết góc đi đâu cũng không thêm / bớt hàng.</small>
+              </div>
+            ) : <small>Khung ô li tự lấp đầy trang, chừa chỗ cho hoạ tiết góc ({layout ? `${layout.rows} hàng × ${layout.cols} cột` : '…'}).</small>}
+          </div>
           <div className="wsb-f"><span>Màu đường kẻ</span><Swatches label="Màu đường kẻ" value={s.lineColor} onChange={(c) => set('lineColor', c)} /></div>
           <div className="wsb-f"><span>Đường kẻ dọc</span>
             <div className="wsb-seg" role="radiogroup" aria-label="Đường kẻ dọc">
