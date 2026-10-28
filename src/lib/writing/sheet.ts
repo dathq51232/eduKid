@@ -112,7 +112,7 @@ export const DEFAULT_SHEET: SheetSettings = {
   title: 'Luyện viết chữ đẹp', header: true, headerEvery: false,
   text: 'Ăn quả nhớ kẻ trồng cây\nUống nước nhớ nguồn',
   layout: 'cau', font: 'hp4hn', size: 'vua', paper: 4, oli: 2,
-  lineColor: '#8b5cf6', grid: 'ngang', pageSize: 'a4', vertical: true, margin: true, marginColor: '#ef4444',
+  lineColor: '#8b5cf6', grid: 'vuong', pageSize: 'a4', vertical: true, margin: true, marginColor: '#ef4444',
   ink: '#1e3a8a', sample: 1, trace: 2, blank: 2, traceStyle: 'mo', traceColor: '#94a3b8',
   corners: { tl: 'f:hong', tr: 'none', bl: 'none', br: 'f:hong' }, decoSize: 34, decoColor: '#ec4899',
   border: 'none', borderColor: '#8b5cf6',
