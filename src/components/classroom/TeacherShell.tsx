@@ -51,6 +51,25 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
   // bấm nhóm: mở công cụ dùng gần nhất trong nhóm
   const [lastHref, setLastHref] = useState<Record<string, ToolKey>>({});
   useEffect(() => { setLastHref(Object.fromEntries(GROUPS.map((g) => [g.key, lastToolOf(g.key)?.key]).filter(([, k]) => k)) as Record<string, ToolKey>); }, [pathname]);
+  // rê chuột vào nhóm ở cột trái: xổ ra bảng các công cụ bên trong (chỉ máy tính có chuột)
+  const [fly, setFly] = useState<{ g: string; top: number; left: number } | null>(null);
+  const flyTimer = useRef<number | null>(null);
+  const keepFly = () => { if (flyTimer.current) { window.clearTimeout(flyTimer.current); flyTimer.current = null; } };
+  const closeFly = (ms = 160) => { keepFly(); flyTimer.current = window.setTimeout(() => setFly(null), ms); };
+  const openFly = (g: string, el: HTMLElement) => {
+    if (!window.matchMedia('(hover: hover) and (min-width: 901px)').matches) return;
+    keepFly();
+    const show = () => {
+      const r = el.getBoundingClientRect();
+      const side = el.closest('.tsh-side')?.getBoundingClientRect();
+      const h = 58 + toolsOfGroup(g).length * 50;
+      setFly({ g, left: (side?.right ?? r.right) + 6, top: Math.max(8, Math.min(r.top - 6, window.innerHeight - h - 8)) });
+    };
+    // đang mở bảng nhóm khác: chờ một nhịp rồi mới đổi, để rê chéo sang bảng không bị nhảy nhóm
+    if (fly && fly.g !== g) flyTimer.current = window.setTimeout(show, 200);
+    else show();
+  };
+  useEffect(() => { setFly(null); }, [pathname]);
   const groupHref = (g: string) => {
     if (!active) return '/giao-vien';
     const t = TOOLS.find((x) => x.key === lastHref[g]) ?? toolsOfGroup(g)[0];
@@ -109,7 +128,8 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
         const on = curGroup === g.key;
         const n = toolsOfGroup(g.key).length;
         return (
-          <Link key={g.key} href={groupHref(g.key)} className={`tsh-nav tsh-gnav${on ? ' is-on' : ''}`} aria-current={on ? 'true' : undefined} title={g.label}>
+          <Link key={g.key} href={groupHref(g.key)} className={`tsh-nav tsh-gnav${on ? ' is-on' : ''}${fly?.g === g.key ? ' is-fly' : ''}`} aria-current={on ? 'true' : undefined}
+            onMouseEnter={(e) => openFly(g.key, e.currentTarget)} onMouseLeave={() => closeFly()}>
             <span className={`tsh-ic tone-${g.tone}`}><Icon aria-hidden="true" /></span><span className="tsh-nav-t">{g.label}</span>
             {g.key === 'Phụ huynh' && unread > 0 ? <span className="tsh-badge" aria-label={`${unread} tin chưa đọc`}>{unread}</span> : n > 1 ? <span className="tsh-count" aria-hidden="true">{n}</span> : null}
           </Link>
@@ -158,6 +178,22 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
           <form action="/dang-xuat" method="post"><button type="submit" className="tsh-icon-btn" aria-label="Đăng xuất" title="Đăng xuất"><LogOut aria-hidden="true" /></button></form>
         </div>
       </aside>
+      {fly && active && (
+        <div className="tsh-fly" role="menu" aria-label={`Công cụ nhóm ${fly.g}`} style={{ top: fly.top, left: fly.left }} onMouseEnter={keepFly} onMouseLeave={() => closeFly(120)}>
+          <b className="tsh-fly-h">{GROUPS.find((x) => x.key === fly.g)?.label ?? fly.g}</b>
+          {toolsOfGroup(fly.g).map((t) => {
+            const Icon = TOOL_ICON[t.key];
+            const on = current === t.key;
+            return (
+              <Link key={t.key} href={toolHref(t, active.id)} role="menuitem" className={`tsh-fly-i${on ? ' is-on' : ''}`} aria-current={on ? 'page' : undefined} onClick={() => setFly(null)}>
+                <span className={`tsh-ic tone-${t.tone}`}><Icon aria-hidden="true" /></span>
+                <span className="tsh-fly-t"><b>{t.label}</b>{t.desc && <small>{t.desc}</small>}</span>
+                {t.key === 'tin-nhan' && unread > 0 && <span className="tsh-badge" aria-label={`${unread} tin chưa đọc`}>{unread}</span>}
+              </Link>
+            );
+          })}
+        </div>
+      )}
       {drawer && <div className="tsh-scrim" onClick={() => setDrawer(false)} aria-hidden="true" />}
 
       <div className="tsh-main">
