@@ -5,6 +5,9 @@ export type GalleryStatus = 'shown' | 'pending' | 'hidden';
 export type HeartEmoji = 'heart' | 'star' | 'clap' | 'wow';
 export type ThemeKey = 'nang' | 'bien' | 'rung' | 'nha-giao' | 'tet' | 'cuoi-ky';
 export type NameMode = 'full' | 'given';
+/** Cỡ khung cả bức tường (1 = mặc định; nhỏ hơn thì treo được nhiều em hơn) */
+export type WallSizes = Partial<Record<GalleryKind, number>>;
+export const SIZE_PRESETS: { k: number; label: string }[] = [{ k: 0.55, label: 'Rất nhỏ' }, { k: 0.7, label: 'Nhỏ' }, { k: 0.85, label: 'Vừa' }, { k: 1, label: 'Lớn' }];
 
 export type GalleryItem = {
   id: string;
@@ -22,6 +25,9 @@ export type GalleryItem = {
   created_at: string;
   hearts: number;
   my_heart: HeartEmoji | null;
+  /** thứ tự trên tường, cỡ khung riêng (migration 0040; chưa chạy thì không có) */
+  pos?: number | null;
+  scale?: number;
   /** đường dẫn ảnh / tiếng đã ký (gắn ở trình duyệt) */
   url?: string;
   audio_url?: string;
@@ -33,7 +39,7 @@ export type GalleryData = {
   teacher: boolean;
   mine: string[];
   class: { id: string; name: string; grade: number } | null;
-  settings: { name_mode: NameMode; theme: ThemeKey };
+  settings: { name_mode: NameMode; theme: ThemeKey; sizes?: WallSizes };
   items: GalleryItem[];
 };
 
@@ -65,3 +71,12 @@ export const fmtDate = (iso: string) => {
 
 /** Lần cuối gia đình mở phòng triển lãm (localStorage, theo lớp) — để báo "tác phẩm mới" */
 export const SEEN_KEY = 'edukid:trien-lam-seen';
+
+/** Sắp thứ tự trên tường: theo pos (cô xếp) rồi mới nhất trước */
+export function wallOrder(a: GalleryItem, b: GalleryItem) {
+  const pa = a.pos ?? 1e9, pb = b.pos ?? 1e9;
+  return pa - pb || b.taken_on.localeCompare(a.taken_on) || b.created_at.localeCompare(a.created_at);
+}
+
+/** Cỡ khung tự chọn theo số tác phẩm khi cô chưa chỉnh: nhiều em thì khung nhỏ lại, treo nhiều hàng */
+export const autoSize = (n: number) => (n <= 4 ? 1 : n <= 10 ? 0.85 : n <= 20 ? 0.7 : 0.55);

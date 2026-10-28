@@ -2,62 +2,69 @@
 // tường trong cùng = thư khen, tường trái = tranh mỹ thuật, tường phải = bài luyện chữ, tường cửa vào = biển tên lớp.
 // Đi lại bằng phím mũi tên / WASD, kéo chuột (vuốt) để nhìn quanh, bấm vào tranh để lại gần và xem lớn.
 import * as THREE from 'three';
-import { WALL_LABEL, type GalleryKind, type RoomTheme } from './types';
+import { WALL_LABEL, autoSize, type GalleryKind, type RoomTheme } from './types';
 
-export type RoomItem = { id: string; kind: GalleryKind; url?: string; w: number; h: number; name: string; title: string; mine: boolean };
-export type Slot = { id: string; kind: GalleryKind; x: number; y: number; z: number; yaw: number; fw: number; fh: number; mine: boolean };
-export type Layout = { W: number; L: number; H: number; slots: Slot[] };
+export type RoomItem = { id: string; kind: GalleryKind; url?: string; w: number; h: number; name: string; title: string; mine: boolean; scale?: number };
+export type Slot = { id: string; kind: GalleryKind; x: number; y: number; z: number; yaw: number; fw: number; fh: number; mine: boolean; k: number };
+export type Layout = { W: number; L: number; H: number; slots: Slot[]; sizes: Record<GalleryKind, number> };
 export type Pose = { x: number; z: number; yaw: number };
 
-const H = 5.4;
+const H = 6;
 const EYE = 1.6;
-const ROWS2 = [1.3, 3.6];
-const ROW1 = 1.8;
+const AVAIL = H - 1.0; // từ sàn tới dưới biển tên tường
 const BOX: Record<GalleryKind, [number, number]> = { praise: [2.1, 1.5], art: [1.8, 1.55], writing: [1.8, 1.55] };
-const STEP_SIDE = 2.35;
-const STEP_BACK = 2.55;
+const KINDS: GalleryKind[] = ['praise', 'art', 'writing'];
 
-/** Tính kích thước phòng và vị trí từng khung (dùng chung cho sân khấu 3D và bản đồ nhỏ) */
-export function layoutRoom(items: RoomItem[]): Layout {
-  const by = (k: GalleryKind) => items.filter((i) => i.kind === k);
-  const art = by('art'), wr = by('writing'), pr = by('praise');
-  const sideN = Math.max(art.length, wr.length, 1);
-  const sideRows = sideN > 5 ? 2 : 1;
-  const sidePer = Math.ceil(sideN / sideRows);
-  const L = Math.max(11, sidePer * STEP_SIDE + 4.6);
-  const backN = Math.max(pr.length, 1);
-  const backRows = backN > 4 ? 2 : 1;
-  const backPer = Math.ceil(backN / backRows);
-  const W = Math.max(9.5, backPer * STEP_BACK + 2.2);
-  const size = (it: RoomItem): [number, number] => {
-    const [bw, bh] = BOX[it.kind];
-    const r = Math.max(0.2, it.w / Math.max(1, it.h));
-    return r > bw / bh ? [bw, bw / r] : [bh * r, bh];
-  };
-  const slots: Slot[] = [];
-  const side = (list: RoomItem[], left: boolean) => {
-    const rows = list.length > 5 ? 2 : 1;
+
+/** Tính kích thước phòng và vị trí từng khung (dùng chung cho sân khấu 3D và bản đồ nhỏ).
+ *  sizes: cỡ khung cả bức tường (0.4–1.4); item.scale: cỡ riêng từng khung. */
+export function layoutRoom(items: RoomItem[], sizes: Partial<Record<GalleryKind, number>> = {}): Layout {
+  const ks = {} as Record<GalleryKind, number>;
+  type Row = { list: { it: RoomItem; fw: number; fh: number; w: number }[]; len: number; y: number };
+  const walls = {} as Record<GalleryKind, Row[]>;
+  for (const kind of KINDS) {
+    const list = items.filter((i) => i.kind === kind);
+    const k = Math.max(0.4, Math.min(1.4, sizes[kind] ?? autoSize(list.length)));
+    ks[kind] = k;
+    const [bw, bh] = BOX[kind];
+    const rowH = 2.35 * k * (bh / 1.55);
+    const maxRows = Math.max(1, Math.min(4, Math.floor(AVAIL / rowH)));
+    const pref = Math.max(2, Math.round((kind === 'praise' ? 4 : 5) / k));
+    const rows = Math.min(maxRows, Math.max(1, Math.ceil(list.length / pref)));
     const per = Math.ceil(list.length / rows) || 1;
-    list.forEach((it, i) => {
-      const row = Math.floor(i / per), col = i % per;
-      // hàng xếp từ phía cửa vào trong
-      const z = L / 2 - 2.6 - col * STEP_SIDE;
-      const [fw, fh] = size(it);
-      slots.push({ id: it.id, kind: it.kind, x: left ? -W / 2 + 0.06 : W / 2 - 0.06, y: rows === 2 ? ROWS2[row] : ROW1, z, yaw: left ? Math.PI / 2 : -Math.PI / 2, fw, fh, mine: it.mine });
-    });
-  };
-  side(art, true);
-  side(wr, false);
-  const rows = pr.length > 4 ? 2 : 1;
-  const per = Math.ceil(pr.length / rows) || 1;
-  pr.forEach((it, i) => {
-    const row = Math.floor(i / per), col = i % per;
-    const n = Math.min(per, pr.length - row * per);
-    const x = (col - (n - 1) / 2) * STEP_BACK;
-    const [fw, fh] = size(it);
-    slots.push({ id: it.id, kind: it.kind, x, y: rows === 2 ? ROWS2[row] : ROW1, z: -L / 2 + 0.06, yaw: 0, fw, fh, mine: it.mine });
-  });
-  return { W, L, H, slots };
+    const base = Math.max(0.1, (AVAIL - rows * rowH) / 2);
+    const out: Row[] = [];
+    for (let r = 0; r < rows; r++) {
+      const part = list.slice(r * per, (r + 1) * per).map((it) => {
+        const sc = Math.max(0.4, Math.min(1.6, it.scale ?? 1)) * k;
+        const ratio = Math.max(0.2, it.w / Math.max(1, it.h));
+        const [fw, fh] = ratio > bw / bh ? [bw * sc, (bw * sc) / ratio] : [bh * sc * ratio, bh * sc];
+        return { it, fw, fh, w: fw + 0.3 * k + 0.5 * k };
+      });
+      const y = rows === 1 ? Math.max(1.85, 0.5 * k + (bh * k) / 2 + 0.35) : base + r * rowH + 0.5 * k + (bh * k + 0.3 * k) / 2;
+      out.push({ list: part, len: part.reduce((a, b) => a + b.w, 0), y });
+    }
+    walls[kind] = out;
+  }
+  const longest = (k: GalleryKind) => Math.max(0, ...walls[k].map((r) => r.len));
+  const L = Math.max(11, Math.max(longest('art'), longest('writing')) + 3.6);
+  const W = Math.max(9.5, longest('praise') + 2.4);
+  const slots: Slot[] = [];
+  for (const kind of KINDS) {
+    for (const row of walls[kind]) {
+      let cum = 0;
+      for (const { it, fw, fh, w } of row.list) {
+        const c = cum + w / 2; cum += w;
+        if (kind === 'praise') slots.push({ id: it.id, kind, x: -row.len / 2 + c, y: row.y, z: -L / 2 + 0.06, yaw: 0, fw, fh, mine: it.mine, k: ks[kind] });
+        else {
+          const left = kind === 'art';
+          // hàng xếp từ phía cửa vào trong
+          slots.push({ id: it.id, kind, x: left ? -W / 2 + 0.06 : W / 2 - 0.06, y: row.y, z: L / 2 - 1.8 - c, yaw: left ? Math.PI / 2 : -Math.PI / 2, fw, fh, mine: it.mine, k: ks[kind] });
+        }
+      }
+    }
+  }
+  return { W, L, H, slots, sizes: ks };
 }
 
 /* ------------------------------------------------------------ vẽ chữ / họa tiết lên canvas làm texture */
@@ -86,7 +93,11 @@ export class GalleryScene {
   private room = new THREE.Group();
   private pickables: THREE.Mesh[] = [];
   private textures: THREE.Texture[] = [];
-  private layout: Layout = { W: 10, L: 12, H, slots: [] };
+  private layout: Layout = { W: 10, L: 12, H, slots: [], sizes: { praise: 1, art: 1, writing: 1 } };
+  private imgCache = new Map<string, THREE.Texture>();
+  private frames = new Map<string, { g: THREE.Group; s: Slot }>();
+  private sel: string | null = null;
+  private selMesh: THREE.Mesh | null = null;
   private yaw = 0;
   private pitch = 0;
   private pos = new THREE.Vector3(0, EYE, 4);
@@ -130,10 +141,10 @@ export class GalleryScene {
   }
 
   /* ------------------------------------------------------------ dựng phòng */
-  setItems(items: RoomItem[], className: string, theme?: RoomTheme) {
-    if (theme) this.theme = theme;
+  setItems(items: RoomItem[], className: string, opts: { theme?: RoomTheme; sizes?: Partial<Record<GalleryKind, number>>; keepCam?: boolean } = {}) {
+    if (opts.theme) this.theme = opts.theme;
     this.clearRoom();
-    const lay = layoutRoom(items);
+    const lay = layoutRoom(items, opts.sizes);
     this.layout = lay;
     const { W, L } = lay;
     const t = this.theme;
@@ -236,12 +247,15 @@ export class GalleryScene {
     // khung tranh
     const byId = new Map(items.map((i) => [i.id, i]));
     for (const s of lay.slots) this.addFrame(s, byId.get(s.id)!);
-    if (!items.some((i) => i.kind === 'praise')) this.emptyNote(0, ROW1, -L / 2 + 0.07, 0);
-    if (!items.some((i) => i.kind === 'art')) this.emptyNote(-W / 2 + 0.07, ROW1, 0, Math.PI / 2);
-    if (!items.some((i) => i.kind === 'writing')) this.emptyNote(W / 2 - 0.07, ROW1, 0, -Math.PI / 2);
+    if (!items.some((i) => i.kind === 'praise')) this.emptyNote(0, 1.85, -L / 2 + 0.07, 0);
+    if (!items.some((i) => i.kind === 'art')) this.emptyNote(-W / 2 + 0.07, 1.85, 0, Math.PI / 2);
+    if (!items.some((i) => i.kind === 'writing')) this.emptyNote(W / 2 - 0.07, 1.85, 0, -Math.PI / 2);
 
-    this.pos.set(0, EYE, L / 2 - 1.6);
-    this.yaw = 0; this.pitch = -0.02;
+    // dọn ảnh của tác phẩm đã xoá khỏi bộ nhớ
+    for (const [id, tex] of this.imgCache) if (!byId.has(id)) { tex.dispose(); this.imgCache.delete(id); }
+    if (opts.keepCam) this.clampPos(this.pos);
+    else { this.pos.set(0, EYE, L / 2 - 1.6); this.yaw = 0; this.pitch = -0.02; }
+    if (this.sel) this.setSelected(this.sel);
     this.applyCam();
     this.emitPose(true);
   }
@@ -304,7 +318,8 @@ export class GalleryScene {
     const g = new THREE.Group();
     g.position.set(s.x, s.y, s.z);
     g.rotation.y = s.yaw;
-    const bw = 0.07, mat = 0.08;
+    const pk = Math.max(0.55, s.k);
+    const bw = 0.07 * pk, mat = 0.08 * pk;
     // quầng sáng trên tường (giả đèn rọi)
     const glowTex = this.glowTex ??= canvasTex(128, 128, (c) => {
       const gr = c.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,248,220,.55)'); gr.addColorStop(1, 'rgba(255,248,220,0)');
@@ -314,19 +329,23 @@ export class GalleryScene {
     glow.position.set(0, 0.12, 0.002); g.add(glow);
     // khung gỗ + viền giấy
     const frame = new THREE.Mesh(new THREE.BoxGeometry(s.fw + 2 * (bw + mat), s.fh + 2 * (bw + mat), 0.06), new THREE.MeshLambertMaterial({ color: it.mine ? '#d4a017' : t.frame }));
-    frame.position.z = 0.03; g.add(frame);
+    frame.position.z = 0.03; frame.userData.id = it.id; g.add(frame);
+    this.pickables.push(frame);
     const matM = new THREE.Mesh(new THREE.PlaneGeometry(s.fw + 2 * mat, s.fh + 2 * mat), new THREE.MeshBasicMaterial({ color: '#fffdf7' }));
     matM.position.z = 0.061; g.add(matM);
     const imgMat = new THREE.MeshBasicMaterial({ color: '#e5e7eb', toneMapped: false });
     const img = new THREE.Mesh(new THREE.PlaneGeometry(s.fw, s.fh), imgMat);
     img.position.z = 0.062; img.userData.id = it.id; g.add(img);
     this.pickables.push(img);
-    if (it.url) {
+    const cached = this.imgCache.get(it.id);
+    if (cached) { imgMat.map = cached; imgMat.color.set('#ffffff'); }
+    else if (it.url) {
       this.loader.load(it.url, (tex) => {
         if (this.disposed) { tex.dispose(); return; }
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.anisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
-        this.textures.push(tex);
+        this.imgCache.get(it.id)?.dispose();
+        this.imgCache.set(it.id, tex); // giữ lại khi sắp xếp lại phòng, không tải lại ảnh
         imgMat.map = tex; imgMat.color.set('#ffffff'); imgMat.needsUpdate = true;
       }, undefined, () => { imgMat.color.set('#fecaca'); });
     }
@@ -339,20 +358,35 @@ export class GalleryScene {
       c.fillStyle = '#6b7280'; fitText(c, it.title || '', 470, 30, 600); c.fillText(it.title || '', 256, 94);
     });
     this.textures.push(plate);
-    const pm = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.225), new THREE.MeshBasicMaterial({ map: plate, transparent: true }));
-    pm.position.set(0, -s.fh / 2 - bw - mat - 0.2, 0.01); g.add(pm);
+    const pm = new THREE.Mesh(new THREE.PlaneGeometry(0.9 * pk, 0.225 * pk), new THREE.MeshBasicMaterial({ map: plate, transparent: true }));
+    pm.position.set(0, -s.fh / 2 - bw - mat - 0.2 * pk, 0.01); pm.userData.id = it.id; g.add(pm);
+    this.pickables.push(pm);
     if (it.mine) {
       const star = this.starTex ??= canvasTex(128, 128, (c) => {
         c.fillStyle = '#facc15'; c.strokeStyle = '#b45309'; c.lineWidth = 6; c.beginPath();
         for (let i = 0; i < 10; i++) { const r = i % 2 ? 26 : 58, a = -Math.PI / 2 + (i * Math.PI) / 5; c.lineTo(64 + r * Math.cos(a), 64 + r * Math.sin(a)); }
         c.closePath(); c.fill(); c.stroke();
       });
-      const sm = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.36), new THREE.MeshBasicMaterial({ map: star, transparent: true }));
+      const sm = new THREE.Mesh(new THREE.PlaneGeometry(0.36 * pk, 0.36 * pk), new THREE.MeshBasicMaterial({ map: star, transparent: true }));
       sm.position.set(s.fw / 2 + bw + mat - 0.05, s.fh / 2 + bw + mat - 0.05, 0.08); g.add(sm);
     }
     this.room.add(g);
+    this.frames.set(it.id, { g, s });
   }
   private glowTex?: THREE.Texture;
+
+  /** Viền sáng quanh khung đang chọn (chế độ sắp xếp) */
+  setSelected(id: string | null) {
+    if (this.selMesh) { this.selMesh.parent?.remove(this.selMesh); this.selMesh.geometry.dispose(); (this.selMesh.material as THREE.Material).dispose(); this.selMesh = null; }
+    this.sel = id;
+    const f = id ? this.frames.get(id) : null;
+    if (!f) return;
+    const pk = Math.max(0.55, f.s.k);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(f.s.fw + 0.3 * pk + 0.18, f.s.fh + 0.3 * pk + 0.18), new THREE.MeshBasicMaterial({ color: '#06b6d4' }));
+    m.position.z = 0.004;
+    f.g.add(m);
+    this.selMesh = m;
+  }
   private starTex?: THREE.Texture;
 
   private clearRoom() {
@@ -363,6 +397,8 @@ export class GalleryScene {
       mats.forEach((x) => x.dispose());
     });
     this.room.clear();
+    this.frames.clear();
+    this.selMesh = null;
     this.textures.forEach((t) => t.dispose());
     this.textures = [];
     this.glowTex = undefined; this.starTex = undefined;
@@ -372,6 +408,7 @@ export class GalleryScene {
   /* ------------------------------------------------------------ camera */
   get size() { return { W: this.layout.W, L: this.layout.L }; }
   get slots() { return this.layout.slots; }
+  get layoutInfo(): Layout { return this.layout; }
 
   private applyCam() {
     this.camera.position.copy(this.pos);
@@ -387,11 +424,12 @@ export class GalleryScene {
   focus(id: string) {
     const s = this.layout.slots.find((x) => x.id === id);
     if (!s) return;
-    const d = Math.max(s.fw, s.fh) * 1.05 + 0.9;
+    // khung treo cao thì đứng xa hơn để không phải ngửa cổ
+    const d = Math.max(Math.max(s.fw, s.fh) * 1.05 + 0.9, Math.abs(s.y - EYE) * 1.5);
     const nx = -Math.sin(s.yaw), nz = -Math.cos(s.yaw); // hướng nhìn vào khung
     const target = new THREE.Vector3(s.x - nx * d, EYE, s.z - nz * d);
     this.clampPos(target);
-    const pitch = Math.atan2(s.y - EYE, d) * 0.9;
+    const pitch = Math.max(-0.25, Math.min(0.42, Math.atan2(s.y - EYE, d) * 0.85));
     this.flyTo(target, s.yaw, pitch);
   }
   /** Đi tới một điểm trên bản đồ nhỏ, giữ hướng nhìn */
@@ -467,7 +505,7 @@ export class GalleryScene {
     const v = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     this.ray.setFromCamera(v, this.camera);
     const hit = this.ray.intersectObjects(this.pickables, false)[0];
-    return hit && hit.distance < 14 ? (hit.object.userData.id as string) : null;
+    return hit ? (hit.object.userData.id as string) : null;
   }
 
   private resize() {
@@ -530,6 +568,8 @@ export class GalleryScene {
     this.el.removeEventListener('blur', this.clearKeys);
     document.removeEventListener('visibilitychange', this.onVis);
     this.clearRoom();
+    this.imgCache.forEach((t) => t.dispose());
+    this.imgCache.clear();
     this.renderer.dispose();
     cv.remove();
   }

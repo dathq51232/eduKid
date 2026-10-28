@@ -1,7 +1,7 @@
 'use client';
 // Gọi Supabase cho Phòng triển lãm: đọc danh sách, ký đường dẫn ảnh, tải file lên, thêm / sửa / xoá, thả tim.
 import { createClient } from '@/lib/supabase/client';
-import type { GalleryData, GalleryItem, GalleryKind, HeartEmoji, NameMode, ThemeKey } from './types';
+import type { GalleryData, GalleryItem, GalleryKind, HeartEmoji, NameMode, ThemeKey, WallSizes } from './types';
 
 export const BUCKET = 'class-gallery';
 
@@ -15,6 +15,7 @@ const ERR: Record<string, string> = {
 export function galleryError(e: unknown): string {
   const m = (e as { message?: string })?.message ?? String(e ?? '');
   for (const k of Object.keys(ERR)) if (m.includes(k)) return ERR[k];
+  if (/gallery_(arrange|edit)/i.test(m) && /does not exist|schema cache|Could not find/i.test(m)) return 'Máy chủ chưa có chức năng sắp xếp: chạy migration 0040_gallery_layout.sql trên Supabase rồi thử lại.';
   if (/gallery_(list|add)|function .* does not exist|schema cache/i.test(m)) return 'Máy chủ chưa có Phòng triển lãm: chạy migration 0039_class_gallery.sql trên Supabase rồi thử lại.';
   if (/bucket/i.test(m)) return 'Chưa có kho ảnh "class-gallery": chạy migration 0039 trên Supabase.';
   return m || 'Có lỗi, thử lại sau.';
@@ -118,4 +119,16 @@ export function canvasToImage(c: HTMLCanvasElement, quality = 0.86): Promise<Blo
     if (b && b.type === 'image/webp') return resolve(b);
     c.toBlob((j) => (j ? resolve(j) : reject(new Error('Không tạo được ảnh.'))), 'image/jpeg', quality);
   }, 'image/webp', quality));
+}
+
+/** Lưu bố cục: cỡ khung từng tường + thứ tự, cỡ từng khung (migration 0040) */
+export async function arrange(classId: string, sizes: WallSizes, items: { id: string; pos: number; scale: number }[]) {
+  const { error } = await createClient().rpc('gallery_arrange', { p_class: classId, p_sizes: sizes, p_items: items });
+  if (error) throw new Error(galleryError(error));
+}
+
+/** Sửa thông tin: tên, lời nhận xét, gắn em (null + classWide = cả lớp), chuyển tường (migration 0040) */
+export async function editItem(id: string, p: { title: string; note: string; student: string | null; classWide: boolean; kind: GalleryKind }) {
+  const { error } = await createClient().rpc('gallery_edit', { p_id: id, p_title: p.title, p_note: p.note, p_student: p.student, p_class_wide: p.classWide, p_kind: p.kind });
+  if (error) throw new Error(galleryError(error));
 }

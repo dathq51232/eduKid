@@ -4,15 +4,15 @@
 // ẩn / xoá / sửa lời nhận xét, ghi âm lời giới thiệu, Hành trình nét chữ của từng em, chọn chủ đề trang trí.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Check, Eye, EyeOff, GalleryHorizontalEnd, Inbox, PenLine, Plus, Settings2, Trash2, TrendingUp, Upload, X } from 'lucide-react';
+import { Check, Eye, EyeOff, GalleryHorizontalEnd, Inbox, LayoutDashboard, PenLine, Plus, Settings2, Trash2, TrendingUp, Upload } from 'lucide-react';
 import GalleryView from './GalleryView';
 import ScanUpload from './ScanUpload';
 import WritingJourney from './WritingJourney';
 import ArtViewer from './ArtViewer';
-import AudioRecorder from './AudioRecorder';
-import { deleteItem, galleryError, loadGallery, saveSettings, updateItem, uploadFile } from '@/lib/gallery/client';
+import { ArrangePanel, EditItemDialog } from './ArrangePanel';
+import { arrange, deleteItem, editItem, galleryError, loadGallery, saveSettings, updateItem, uploadFile } from '@/lib/gallery/client';
 import { sampleItems } from '@/lib/gallery/samples';
-import { KIND_LABEL, THEMES, fmtDate, type GalleryData, type GalleryItem, type NameMode, type ThemeKey } from '@/lib/gallery/types';
+import { KIND_LABEL, THEMES, autoSize, fmtDate, wallOrder, type GalleryData, type GalleryItem, type GalleryKind, type NameMode, type ThemeKey, type WallSizes } from '@/lib/gallery/types';
 
 type Tab = 'phong' | 'them' | 'duyet' | 'quan-ly' | 'net-chu';
 type Student = { id: string; name: string };
@@ -38,10 +38,80 @@ export default function GalleryManager({ classId, className, students }: { class
   const theme = data?.settings.theme ?? 'nang';
   const nameMode = data?.settings.name_mode ?? 'given';
   const setSettings = async (nm: NameMode, th: ThemeKey) => {
-    try { await saveSettings(classId, nm, th); setData((d) => (d ? { ...d, settings: { name_mode: nm, theme: th } } : d)); setMsg('Đã lưu cài đặt phòng.'); }
+    try { await saveSettings(classId, nm, th); setData((d) => (d ? { ...d, settings: { ...d.settings, name_mode: nm, theme: th } } : d)); setMsg('Đã lưu cài đặt phòng.'); }
     catch (e) { setMsg(galleryError(e)); }
   };
-  const viewItems = empty || err ? (showSample ? samples ?? [] : []) : items;
+  // ------------------------------------------------ sắp xếp & chỉnh sửa (migration 0040)
+  const [arrangeOn, setArrangeOn] = useState(false);
+  const [over, setOver] = useState<Record<string, { pos?: number; scale?: number }>>({});
+  const [draftSizes, setDraftSizes] = useState<WallSizes | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [praiseFirst, setPraiseFirst] = useState(false);
+  const draft = useMemo(() => items.map((i) => (over[i.id] ? { ...i, ...over[i.id] } : i)), [items, over]);
+  const sizes: WallSizes = draftSizes ?? data?.settings.sizes ?? {};
+  const dirty = Object.keys(over).length > 0 || draftSizes !== null;
+  const autoK = useMemo(() => {
+    const n = (k: GalleryKind) => draft.filter((i) => i.kind === k && i.status === 'shown').length;
+    return { praise: autoSize(n('praise')), art: autoSize(n('art')), writing: autoSize(n('writing')) };
+  }, [draft]);
+  const wall = (k: GalleryKind, list = draft) => list.filter((i) => i.kind === k && i.status === 'shown').sort(wallOrder);
+  const move = (id: string, d: -1 | 1 | 'first' | 'last') => {
+    const it = draft.find((i) => i.id === id); if (!it) return;
+    const ids = wall(it.kind).map((i) => i.id);
+    const at = ids.indexOf(id);
+    ids.splice(at, 1);
+    const to = d === 'first' ? 0 : d === 'last' ? ids.length : Math.max(0, Math.min(ids.length, at + d));
+    ids.splice(to, 0, id);
+    setOver((o) => { const n = { ...o }; ids.forEach((x, i) => { n[x] = { ...n[x], pos: i }; }); return n; });
+  };
+  const scaleOf = (id: string, v: number) => setOver((o) => ({ ...o, [id]: { ...o[id], scale: Math.round(Math.max(0.4, Math.min(1.6, v)) * 100) / 100 } }));
+  const setSize = (k: GalleryKind, v: number | undefined) => setDraftSizes((cur) => {
+    const n = { ...(cur ?? data?.settings.sizes ?? {}) };
+    if (v === undefined) delete n[k]; else n[k] = v;
+    return n;
+  });
+  const cancelArrange = () => { setOver({}); setDraftSizes(null); };
+  const saveArrange = async () => {
+    setBusy(true);
+    try {
+      const payload = (['praise', 'art', 'writing'] as GalleryKind[]).flatMap((k) => wall(k).map((i, pos) => ({ id: i.id, pos, scale: i.scale ?? 1 })));
+      await arrange(classId, sizes, payload);
+      const byId = new Map(payload.map((p) => [p.id, p]));
+      setData((d) => (d ? { ...d, settings: { ...d.settings, sizes }, items: d.items.map((i) => (byId.has(i.id) ? { ...i, pos: byId.get(i.id)!.pos, scale: byId.get(i.id)!.scale } : i)) } : d));
+      setOver({}); setDraftSizes(null);
+      setMsg('Đã lưu bố cục phòng triển lãm.');
+    } catch (e) { setMsg(galleryError(e)); } finally { setBusy(false); }
+  };
+  const patchLocal = (id: string, p: Partial<GalleryItem>) => setData((d) => (d ? { ...d, items: d.items.map((i) => (i.id === id ? { ...i, ...p } : i)) } : d));
+  const hideItem = async (id: string) => {
+    setBusy(true);
+    try { await updateItem(id, { status: 'hidden' }); patchLocal(id, { status: 'hidden' }); setSelected(null); setMsg('Đã ẩn khỏi tường (xem lại ở mục Quản lý).'); }
+    catch (e) { setMsg(galleryError(e)); } finally { setBusy(false); }
+  };
+  const removeItem = async (id: string) => {
+    const it = items.find((i) => i.id === id); if (!it) return;
+    if (!window.confirm(`Xoá hẳn ${KIND_LABEL[it.kind].toLowerCase()} “${it.title || ''}” của ${it.student_name || 'cả lớp'}?`)) return;
+    setBusy(true);
+    try { await deleteItem(id); setData((d) => (d ? { ...d, items: d.items.filter((i) => i.id !== id) } : d)); setSelected(null); setMsg('Đã xoá.'); }
+    catch (e) { setMsg(galleryError(e)); } finally { setBusy(false); }
+  };
+  const saveEdit = async (id: string, p: { title: string; note: string; student: string | null; classWide: boolean; kind: GalleryKind; audio: Blob | null; clearAudio: boolean }) => {
+    const it = items.find((i) => i.id === id);
+    await editItem(id, p);
+    if (p.audio) { const a = await uploadFile(classId, p.audio); await updateItem(id, { audio: a }); }
+    else if (p.clearAudio) await updateItem(id, { clearAudio: true });
+    patchLocal(id, {
+      title: p.title.trim(), note: p.note.trim(), student_id: p.student, student_name: p.student ? students.find((s) => s.id === p.student)?.name ?? null : null,
+      kind: p.kind, ...(it && it.kind !== p.kind ? { pos: null } : {}), ...(p.clearAudio && !p.audio ? { audio_path: null, audio_url: undefined } : {}),
+    });
+    if (p.audio) void reload();
+    setMsg('Đã lưu thông tin tác phẩm.');
+  };
+  const editingItem = editing ? items.find((i) => i.id === editing) ?? null : null;
+
+  const viewItems = empty || err ? (showSample ? samples ?? [] : []) : arrangeOn ? draft : items;
   const sorted = useMemo(() => [...items].sort((a, b) => b.created_at.localeCompare(a.created_at)), [items]);
 
   const TABS: { key: Tab; label: string; Icon: typeof Eye; badge?: number }[] = [
@@ -73,6 +143,13 @@ export default function GalleryManager({ classId, className, students }: { class
 
       {tab === 'phong' && (
         <GalleryView items={viewItems} className={className} theme={theme} mine={[]} canHeart={false}
+          sizes={sizes} selected={arrangeOn ? selected : null} onSelect={arrangeOn ? setSelected : undefined}
+          editPanel={arrangeOn && data ? (
+            <ArrangePanel items={draft} sizes={sizes} auto={autoK} selected={draft.find((i) => i.id === selected) ?? null} dirty={dirty} busy={busy} classId={classId}
+              onSize={setSize} onMove={move} onScale={scaleOf} onEdit={setEditing} onHide={(id) => void hideItem(id)} onDelete={(id) => void removeItem(id)}
+              onSave={() => void saveArrange()} onCancel={cancelArrange} onUploadPraise={() => { setPraiseFirst(true); setTab('them'); }}
+              onClose={() => { if (dirty && !window.confirm('Bỏ các thay đổi chưa lưu?')) return; cancelArrange(); setArrangeOn(false); setSelected(null); }} />
+          ) : undefined}
           banner={(empty || err) ? (
             <p className="adm-alert is-info gm-sample">
               {showSample && !samples ? 'Đang dựng phòng mẫu…' : showSample ? 'Đây là PHÒNG MẪU (tranh và thư khen minh hoạ) để thầy cô hình dung. Thêm tác phẩm thật ở mục “Thêm tác phẩm”.' : 'Phòng đang trống.'}
@@ -82,6 +159,7 @@ export default function GalleryManager({ classId, className, students }: { class
           ) : undefined}
           tools={data && (
             <span className="gm-set">
+              {!empty && !arrangeOn && <button type="button" className="btn btn-primary btn-sm" onClick={() => { setArrangeOn(true); setMsg(''); }}><LayoutDashboard aria-hidden="true" /> Sắp xếp & chỉnh sửa</button>}
               <label>Trang trí <select value={theme} onChange={(e) => void setSettings(nameMode, e.target.value as ThemeKey)}>
                 {(Object.keys(THEMES) as ThemeKey[]).map((k) => <option key={k} value={k}>{THEMES[k].label}</option>)}
               </select></label>
@@ -96,7 +174,7 @@ export default function GalleryManager({ classId, className, students }: { class
       {tab === 'them' && (
         <section className="dash-section">
           <h2>Thêm tác phẩm lên tường</h2>
-          <ScanUpload classId={classId} students={students} kinds={['art', 'writing', 'praise']} onSaved={() => void reload()} />
+          <ScanUpload key={praiseFirst ? 'praise' : 'art'} classId={classId} students={students} kinds={praiseFirst ? ['praise', 'art', 'writing'] : ['art', 'writing', 'praise']} onSaved={() => void reload()} />
           <p className="dash-muted gm-note">Thư khen: tạo ở mục <Link href={`/giao-vien/lop/${classId}/thu-khen`}>Thư khen</Link>, tích “Treo lên Phòng triển lãm” thì thư tự lên tường khi tải PDF / ảnh / in.
             Ảnh có khuôn mặt các em: chỉ đăng khi gia đình đồng ý.</p>
         </section>
@@ -107,7 +185,7 @@ export default function GalleryManager({ classId, className, students }: { class
           <h2>Bài các em tự nộp ({pending.length})</h2>
           {!pending.length && <p className="dash-muted">Chưa có bài nào chờ duyệt. Các em nộp ở trang Phòng triển lãm hoặc Luyện chữ.</p>}
           <ul className="gm-list">
-            {pending.map((it) => <Row key={it.id} it={it} onOpen={setOpen} onChanged={reload} onMsg={setMsg} classId={classId} approve />)}
+            {pending.map((it) => <Row key={it.id} it={it} onOpen={setOpen} onChanged={reload} onMsg={setMsg} onEdit={setEditing} approve />)}
           </ul>
         </section>
       )}
@@ -117,7 +195,7 @@ export default function GalleryManager({ classId, className, students }: { class
           <h2>Tất cả tác phẩm ({items.length})</h2>
           {!items.length && <p className="dash-muted">Chưa có tác phẩm nào.</p>}
           <ul className="gm-list">
-            {sorted.map((it) => <Row key={it.id} it={it} onOpen={setOpen} onChanged={reload} onMsg={setMsg} classId={classId} />)}
+            {sorted.map((it) => <Row key={it.id} it={it} onOpen={setOpen} onChanged={reload} onMsg={setMsg} onEdit={setEditing} />)}
           </ul>
         </section>
       )}
@@ -130,17 +208,14 @@ export default function GalleryManager({ classId, className, students }: { class
       )}
 
       {open && <ArtViewer list={items} id={open} onClose={() => setOpen(null)} onGo={setOpen} canHeart={false} />}
+      {editingItem && <EditItemDialog key={editingItem.id} item={editingItem} students={students} onClose={() => setEditing(null)} onSave={(p) => saveEdit(editingItem.id, p)} />}
     </div>
   );
 }
 
-function Row({ it, onOpen, onChanged, onMsg, classId, approve }: {
-  it: GalleryItem; onOpen: (id: string) => void; onChanged: () => Promise<void> | void; onMsg: (s: string) => void; classId: string; approve?: boolean;
+function Row({ it, onOpen, onChanged, onMsg, onEdit, approve }: {
+  it: GalleryItem; onOpen: (id: string) => void; onChanged: () => Promise<void> | void; onMsg: (s: string) => void; onEdit: (id: string) => void; approve?: boolean;
 }) {
-  const [edit, setEdit] = useState(false);
-  const [title, setTitle] = useState(it.title);
-  const [note, setNote] = useState(it.note);
-  const [audio, setAudio] = useState<Blob | null>(null);
   const [busy, setBusy] = useState(false);
   const run = async (fn: () => Promise<void>, ok: string) => {
     setBusy(true);
@@ -155,33 +230,17 @@ function Row({ it, onOpen, onChanged, onMsg, classId, approve }: {
       <div className="gm-meta">
         <b>{it.student_name || 'Cả lớp'}</b> <span className={`gv-kind k-${it.kind}`}>{KIND_LABEL[it.kind]}</span>
         {it.status !== 'shown' && <span className="gv-pending">{it.status === 'pending' ? 'Chờ duyệt' : 'Đang ẩn'}</span>}
-        {!edit && <small>{it.title || '—'}{it.note ? ` · “${it.note}”` : ''} · {fmtDate(it.taken_on)}{it.hearts ? ` · ${it.hearts} lượt khen` : ''}{it.audio_path ? ' · có tiếng giới thiệu' : ''}</small>}
-        {edit && (
-          <div className="gm-edit">
-            <input value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} aria-label="Tên tác phẩm" placeholder="Tên tác phẩm" />
-            <textarea rows={2} value={note} maxLength={300} onChange={(e) => setNote(e.target.value)} aria-label="Lời nhận xét" placeholder="Lời nhận xét của cô" />
-            <AudioRecorder value={audio} onChange={setAudio} label={it.audio_path ? 'Ghi âm lại lời giới thiệu' : 'Ghi âm lời giới thiệu'} />
-            <span className="gm-edit-act">
-              <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => void run(async () => {
-                const a = audio ? await uploadFile(classId, audio) : null;
-                await updateItem(it.id, { title, note, audio: a });
-                setEdit(false); setAudio(null);
-              }, 'Đã lưu.')}><Check aria-hidden="true" /> Lưu</button>
-              {it.audio_path && <button type="button" className="mini-btn" disabled={busy} onClick={() => void run(() => updateItem(it.id, { clearAudio: true }), 'Đã xoá tiếng giới thiệu.')}>Xoá tiếng</button>}
-              <button type="button" className="mini-btn" onClick={() => setEdit(false)}><X aria-hidden="true" /> Thôi</button>
-            </span>
-          </div>
-        )}
+        <small>{it.title || '—'}{it.note ? ` · “${it.note}”` : ''} · {fmtDate(it.taken_on)}{it.hearts ? ` · ${it.hearts} lượt khen` : ''}{it.audio_path ? ' · có tiếng giới thiệu' : ''}</small>
       </div>
       <div className="gm-act">
         {approve || it.status === 'pending' ? (
-          <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => void run(() => updateItem(it.id, { status: 'shown', note: note || undefined }), 'Đã duyệt, tác phẩm lên tường.')}><Check aria-hidden="true" /> Duyệt</button>
+          <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => void run(() => updateItem(it.id, { status: 'shown' }), 'Đã duyệt, tác phẩm lên tường.')}><Check aria-hidden="true" /> Duyệt</button>
         ) : it.status === 'shown' ? (
           <button type="button" className="mini-btn" disabled={busy} onClick={() => void run(() => updateItem(it.id, { status: 'hidden' }), 'Đã ẩn khỏi tường.')}><EyeOff aria-hidden="true" /> Ẩn</button>
         ) : (
           <button type="button" className="mini-btn" disabled={busy} onClick={() => void run(() => updateItem(it.id, { status: 'shown' }), 'Đã treo lại.')}><Eye aria-hidden="true" /> Hiện</button>
         )}
-        {!edit && <button type="button" className="mini-btn" onClick={() => setEdit(true)}>Sửa</button>}
+        <button type="button" className="mini-btn" onClick={() => onEdit(it.id)}>Sửa</button>
         <button type="button" className="mini-btn is-danger" disabled={busy} aria-label="Xoá tác phẩm" onClick={() => {
           if (window.confirm(`Xoá hẳn tác phẩm “${it.title || KIND_LABEL[it.kind]}” của ${it.student_name || 'cả lớp'}?`)) void run(() => deleteItem(it.id), 'Đã xoá.');
         }}><Trash2 aria-hidden="true" /></button>

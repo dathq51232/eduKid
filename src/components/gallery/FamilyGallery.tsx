@@ -54,7 +54,7 @@ export default function FamilyGallery({ cls, canSubmit }: { cls: FamilyClass; ca
       {!data && !err && <p className="dash-muted" role="status">Đang mở phòng triển lãm…</p>}
 
       {data && tab === 'phong' && (
-        <GalleryView items={items} className={cls.class_name} theme={data.settings.theme} mine={data.mine} canHeart onHeart={heart}
+        <GalleryView items={items} className={cls.class_name} theme={data.settings.theme} sizes={data.settings.sizes} mine={data.mine} canHeart onHeart={heart}
           banner={!items.some((i) => i.status === 'shown') ? <p className="adm-alert is-info">Phòng triển lãm của lớp chưa có tác phẩm. Cô sẽ sớm treo tranh và thư khen của các con lên đây!</p> : undefined} />
       )}
       {data && tab === 'nop' && canSubmit && (
