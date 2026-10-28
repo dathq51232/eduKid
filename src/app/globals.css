@@ -6315,7 +6315,9 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
   body.ws-printing > *:not(.ws-print-root) { display: none !important; }
   body.ws-printing { background: #fff !important; margin: 0 !important; }
   body.ws-printing .ws-print-root { display: block; }
-  .ws-print-page { display: block; break-after: page; overflow: hidden; }
+  html:has(body.ws-printing), body.ws-printing { margin: 0 !important; padding: 0 !important; height: auto !important; min-height: 0 !important; overflow: visible !important; }
+  /* co trang vở vừa đúng vùng in (kể cả khi máy in tự thêm lề) để không tràn sang trang sau */
+  .ws-print-page { display: block; width: auto; height: calc(100vh - 0.6mm); max-width: 100%; margin: 0 auto; break-after: page; break-inside: avoid; overflow: hidden; }
   .ws-print-page:last-child { break-after: auto; }
 }
 
