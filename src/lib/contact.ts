@@ -11,3 +11,12 @@ export const ADMIN_CONTACT = {
 
 /** Gói miễn phí cho giáo viên: số học sinh tối đa (khớp mặc định trong migration 0019) */
 export const FREE_STUDENT_LIMIT = 3;
+
+/** Liên hệ chung của EduChain Kids (trang chủ: chân trang + nút Zalo nổi) */
+export const SITE_CONTACT = {
+  email: 'educhainkids@gmail.com',
+  phone: '0967514511',
+  phoneDisplay: '0967 514 511',
+  zalo: '0967514511',
+  zaloName: 'EduChain Kids',
+} as const;

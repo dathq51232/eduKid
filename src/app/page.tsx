@@ -1,9 +1,11 @@
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Calculator, ClipboardList, FileText, Gamepad2, GraduationCap, Languages, ListChecks, Presentation, ShieldCheck, Star, Trophy, Users } from 'lucide-react';
+import { ArrowRight, Mail, MessageCircle, Phone, BookOpen, Calculator, ClipboardList, FileText, Gamepad2, GraduationCap, Languages, ListChecks, Presentation, ShieldCheck, Star, Trophy, Users } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import GameArt from '@/components/games/GameArt';
 import HomeWelcome from '@/components/home/HomeWelcome';
+import ContactFab from '@/components/home/ContactFab';
+import { SITE_CONTACT } from '@/lib/contact';
 import { GAMES } from '@/lib/games/catalog';
 import { SUBJECT_MASCOT } from '@/lib/mascots';
 import { CONTENT } from '@/lib/content';
@@ -210,8 +212,15 @@ export default function HomePage() {
               <a href="#games">Trò chơi</a>
               <a href="#safety">Thầy cô</a>
             </nav>
+            <address className="footer-contact" aria-label="Liên hệ">
+              <span className="footer-contact-h">Liên hệ</span>
+              <a href={`mailto:${SITE_CONTACT.email}`}><Mail aria-hidden="true" /> {SITE_CONTACT.email}</a>
+              <a href={`tel:${SITE_CONTACT.phone}`}><Phone aria-hidden="true" /> {SITE_CONTACT.phoneDisplay}</a>
+              <a href={`https://zalo.me/${SITE_CONTACT.zalo}`} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" /> Zalo {SITE_CONTACT.zaloName}</a>
+            </address>
           </div>
         </footer>
+        <ContactFab />
       </main>
     </>
   );

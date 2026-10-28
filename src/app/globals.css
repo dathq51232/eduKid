@@ -6353,3 +6353,31 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .wsb-mine-it:hover .wsb-mine-x, .wsb-mine-x:focus-visible { opacity: 1; }
 .wsb-mine-x svg { width: 11px; height: 11px; }
 @media (hover: none) { .wsb-mine-x { opacity: .9; } }
+
+/* Liên hệ: chân trang + nút nổi góc dưới phải (trang chủ) */
+.footer-contact { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; font-style: normal; flex-basis: 100%; padding-top: 14px; border-top: 1px solid rgb(255 255 255 / .3); }
+.footer-contact-h { font-weight: 800; margin-right: 4px; }
+.footer-contact a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; background: rgb(255 255 255 / .18); color: #fff; font-weight: 600; font-size: 14.5px; text-decoration: none; }
+.footer-contact a:hover { background: rgb(255 255 255 / .3); }
+.footer-contact svg { width: 16px; height: 16px; }
+.cfab { position: fixed; right: 18px; bottom: 18px; z-index: 60; display: grid; justify-items: end; gap: 10px; }
+.cfab-btn { display: inline-flex; align-items: center; gap: 8px; height: 54px; min-width: 54px; padding: 0 18px 0 16px; border: 0; border-radius: 99px; background: #0068ff; color: #fff; font: inherit; font-weight: 800; font-size: 15px; box-shadow: 0 10px 26px rgb(0 104 255 / .4); cursor: pointer; animation: cfab-pulse 2.6s ease-in-out infinite; }
+.cfab-btn svg { width: 24px; height: 24px; }
+.cfab.is-open .cfab-btn { padding: 0; justify-content: center; width: 54px; animation: none; background: #334155; box-shadow: 0 8px 20px rgb(15 23 42 / .3); }
+.cfab-menu { width: min(290px, calc(100vw - 36px)); display: grid; gap: 6px; padding: 12px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 18px 44px rgb(15 23 42 / .22); animation: cfab-in .16s ease-out; }
+.cfab-h { padding: 0 4px 4px; font-size: 14px; }
+.cfab-it { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; color: var(--ink); text-decoration: none; }
+.cfab-it:hover, .cfab-it:focus-visible { background: var(--surface-2); }
+.cfab-it > span:last-child { display: grid; min-width: 0; }
+.cfab-it b { font-size: 14.5px; }
+.cfab-it small { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cfab-ic { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; color: #fff; font-weight: 800; font-size: 12px; }
+.cfab-ic svg { width: 20px; height: 20px; }
+.cfab-it.is-zalo .cfab-ic { background: #0068ff; }
+.cfab-it.is-phone .cfab-ic { background: #16a34a; }
+.cfab-it.is-mail .cfab-ic { background: #ea4335; }
+@keyframes cfab-pulse { 0%, 100% { box-shadow: 0 10px 26px rgb(0 104 255 / .4), 0 0 0 0 rgb(0 104 255 / .35); } 50% { box-shadow: 0 10px 26px rgb(0 104 255 / .4), 0 0 0 10px rgb(0 104 255 / 0); } }
+@keyframes cfab-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cfab-btn, .cfab-menu { animation: none; } }
+@media (max-width: 640px) { .cfab { right: 12px; bottom: 12px; } .cfab-lbl { display: none; } .cfab-btn { padding: 0; width: 52px; height: 52px; justify-content: center; } }
+@media print { .cfab { display: none; } }
