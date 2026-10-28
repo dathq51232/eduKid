@@ -59,7 +59,7 @@ export async function POST(request: Request) {
   const s = await streamChatCompletion(provider, chosen.key, { system: TEACHER_ASSISTANT_SYSTEM, messages, model: chosen.model });
   if (s.ok) {
     await logAiUsage(viewer.userId, provider, s.model, 'chat', true);
-    if (s.model !== chosen.model) {
+    if (s.model !== chosen.model && !s.busy) {
       try {
         await saveTeacherAiKeys(viewer.userId, provider === 'gemini' ? { gemini: { key: chosen.key, model: s.model } } : { openai: { key: chosen.key, model: s.model } });
       } catch { /* không lưu được thì lần sau tự thử chuyển lại */ }
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       const fr = await chatCompletion(fallbackProvider, fallbackChosen.key, { system: TEACHER_ASSISTANT_SYSTEM, messages, model: fallbackChosen.model });
       await logAiUsage(viewer.userId, fallbackProvider, fallbackChosen.model, 'chat', fr.ok, fr.ok ? undefined : fr.error);
       if (fr.ok) {
-        if (fr.data.model !== fallbackChosen.model) {
+        if (fr.data.model !== fallbackChosen.model && !fr.data.busy) {
           try { await saveTeacherAiKeys(viewer.userId, fallbackProvider === 'gemini' ? { gemini: { key: fallbackChosen.key, model: fr.data.model } } : { openai: { key: fallbackChosen.key, model: fr.data.model } }); } catch { /* ignore */ }
         }
         return NextResponse.json({ reply: fr.data.text, provider: fallbackProvider, model: fr.data.model, fallback: true });
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
   }
 
   // Nhà cung cấp ép đổi model — lưu lại để lần sau dùng thẳng.
-  if (result.data.model !== chosen.model) {
+  if (result.data.model !== chosen.model && !result.data.busy) {
     try {
       await saveTeacherAiKeys(viewer.userId, provider === 'gemini' ? { gemini: { key: chosen.key, model: result.data.model } } : { openai: { key: chosen.key, model: result.data.model } });
     } catch { /* không lưu được thì lần sau tự thử chuyển lại */ }

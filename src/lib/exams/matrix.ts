@@ -81,10 +81,11 @@ export function lessonPool(lessonId: string): ExamQuestion[] {
   if (!lesson) return [];
   const out: ExamQuestion[] = [];
   const seen = new Set<string>();
+  const mineP = new Set((CUSTOM.get(lessonId) ?? []).map((q) => q.prompt.trim().toLowerCase()));
   const add = (q: PracticeQuestion | null) => {
     if (!q || !printable(q)) return;
     const k = sigOf(q);
-    if (seen.has(k)) return;
+    if (seen.has(k) || mineP.has(q.prompt.trim().toLowerCase())) return; // câu cô đã lưu lại vào ngân hàng riêng: không lấy trùng
     seen.add(k);
     out.push(toExam(q, lesson.title));
   };

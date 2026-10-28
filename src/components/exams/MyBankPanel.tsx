@@ -5,10 +5,11 @@
 //  2) Sinh câu nâng cao bằng AI (API key của chính cô), có thể dựa vào tài liệu vừa nạp → duyệt từng câu → lưu;
 //  3) Xem / xoá câu trong ngân hàng. Câu đã lưu được trộn vào ma trận đề cùng ngân hàng của app.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookUp, Check, FileUp, Library, Sparkles, Trash2, TriangleAlert, X } from 'lucide-react';
+import { BookUp, Check, Copy, Cpu, FileUp, Library, Lock, Sparkles, Trash2, TriangleAlert, X } from 'lucide-react';
+import { autoLocked, makeVariants, promptNumbers } from '@/lib/bank/variants';
 import { MUC_NAME, type BookLesson, type Muc } from '@/lib/exams/matrix';
 import { ACCEPT_DOCS, checkMath, draftId, draftProblem, extractFile, extractedText, parseExtracted, parseText, type Draft, type DraftType, type Extracted } from '@/lib/bank/parse';
-import { bankError, deleteMine, generateWithAi, saveDrafts, type MyQuestion } from '@/lib/bank/client';
+import { bankError, deleteMine, generateWithAi, machineDrafts, saveDrafts, type MyQuestion } from '@/lib/bank/client';
 import type { SubjectCode } from '@/lib/types';
 
 type Tab = 'nap' | 'ai' | 'kho';
@@ -19,7 +20,25 @@ const ansText = (q: MyQuestion) => {
   return Array.isArray(a.accepted) ? a.accepted.join(' / ') : Array.isArray(a.correct) ? a.correct.join(', ') : a.correct ?? '';
 };
 
-function DraftCard({ d, n, lessons, subject, onChange, onRemove }: { d: Draft; n: number; lessons: BookLesson[]; subject: SubjectCode; onChange: (d: Draft) => void; onRemove: () => void }) {
+/** Câu tương tự (Toán): bấm số để giữ cố định, rồi tạo 3 câu đổi số — máy tự tính lại đáp án */
+function VariantRow({ d, onMake }: { d: Draft; onMake: (locked: number[]) => void }) {
+  const nums = promptNumbers(d.prompt);
+  const [locked, setLocked] = useState<number[]>(() => autoLocked(d.prompt));
+  useEffect(() => { setLocked(autoLocked(d.prompt)); }, [d.prompt]);
+  if (!nums.length) return null;
+  return (
+    <div className="mb-var">
+      <span>Câu tương tự:</span>
+      {nums.map((v, i) => (
+        <button key={i} type="button" className={locked.includes(i) ? 'is-lock' : ''} aria-pressed={locked.includes(i)} title={locked.includes(i) ? 'Đang giữ cố định — bấm để cho đổi' : 'Bấm để giữ cố định số này'}
+          onClick={() => setLocked((l) => (l.includes(i) ? l.filter((x) => x !== i) : [...l, i]))}>{locked.includes(i) && <Lock aria-hidden="true" />}{v}</button>
+      ))}
+      <button type="button" className="mini-btn" onClick={() => onMake(locked)}><Copy aria-hidden="true" /> Tạo 3 câu đổi số</button>
+    </div>
+  );
+}
+
+function DraftCard({ d, n, lessons, subject, onChange, onRemove, onVariants }: { d: Draft; n: number; lessons: BookLesson[]; subject: SubjectCode; onChange: (d: Draft) => void; onRemove: () => void; onVariants?: (locked: number[]) => void }) {
   const set = (p: Partial<Draft>) => onChange({ ...d, ...p });
   const choice = d.type === 'single_choice' || d.type === 'multiple_choice';
   const problem = draftProblem(d);
@@ -66,6 +85,7 @@ function DraftCard({ d, n, lessons, subject, onChange, onRemove }: { d: Draft; n
         <textarea rows={2} value={d.explanation} onChange={(e) => set({ explanation: e.target.value })} aria-label="Lời giải" />
       </details>
       {warn && <p className="mb-warn"><TriangleAlert aria-hidden="true" /> {warn}</p>}
+      {subject === 'toan' && onVariants && d.type !== 'true_false' && <VariantRow d={d} onMake={onVariants} />}
     </article>
   );
 }
@@ -115,8 +135,16 @@ export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, 
       const ds = await generateWithAi({ subject, grade, lessonId, lessonTitle: titleOf(lessonId), muc: ai.muc, count: ai.count, kind: ai.kind, source, note: ai.note });
       setDrafts((cur) => [...ds, ...cur]);
       setMsg({ kind: 'ok', text: `AI đã soạn ${ds.length} câu. Cô đọc kỹ, sửa nếu cần rồi lưu — đặc biệt kiểm tra đáp án.` });
-    } catch (e) { setMsg({ kind: 'error', text: e instanceof Error ? e.message : 'AI chưa trả lời được.' }); }
+    } catch (e) { setMsg({ kind: 'error', text: `${e instanceof Error ? e.message : 'AI chưa trả lời được.'} Trong lúc chờ, bấm “Sinh bằng máy (miễn phí)” để lấy câu từ bộ sinh câu của app.` }); }
     finally { setBusy(''); }
+  };
+  const runMachine = () => {
+    const skip = new Set([...drafts.map((d) => d.prompt.trim().toLowerCase()), ...(mine ?? []).map((q) => q.prompt.trim().toLowerCase())]);
+    const ds = machineDrafts(lessonId, ai.muc, ai.count, skip);
+    setDrafts((cur) => [...ds, ...cur]);
+    setMsg(ds.length
+      ? { kind: 'ok', text: `Máy đã sinh ${ds.length} câu ${MUC_NAME[ai.muc]} cho bài “${titleOf(lessonId)}” (miễn phí, không cần AI). Bấm lần nữa để có câu khác.` }
+      : { kind: 'info', text: `Bộ sinh câu của app chưa có thêm câu ${MUC_NAME[ai.muc]} cho bài này — thử mức khác, bài khác hoặc dùng AI.` });
   };
   const chosen = drafts.filter((d) => d.include);
   const bad = chosen.filter((d) => draftProblem(d));
@@ -131,6 +159,30 @@ export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, 
       setMsg({ kind: 'ok', text: `Đã lưu ${rows.length} câu vào Ngân hàng của tôi. Câu sẽ được chọn khi ra đề / phiếu bài tập của bài tương ứng.` });
     } catch (e) { setMsg({ kind: 'error', text: bankError(e) }); }
     finally { setBusy(''); }
+  };
+  // câu tương tự: chèn ngay sau câu gốc
+  const variantsOf = (d: Draft, locked?: number[]) => {
+    const r = makeVariants(d, 3, grade, locked);
+    if (!r.drafts.length) { setMsg({ kind: 'info', text: r.reason ?? 'Chưa tạo được câu tương tự.' }); return; }
+    setDrafts((ds) => { const i = ds.findIndex((x) => x.id === d.id); const out = [...ds]; out.splice(i < 0 ? 0 : i + 1, 0, ...r.drafts); return out; });
+    setMsg({ kind: 'ok', text: `Đã tạo ${r.drafts.length} câu tương tự (đổi số, máy tự tính lại đáp án) ngay dưới câu gốc — xem lại rồi lưu.` });
+  };
+  const variantsFromSaved = () => {
+    const src = (mine ?? []).filter((q) => pick.has(q.id));
+    let made = 0, skipped = 0;
+    const out: Draft[] = [];
+    for (const q of src) {
+      const a = q.answer as { correct?: string | string[]; accepted?: string[] };
+      const correct = Array.isArray(a.accepted) ? a.accepted : Array.isArray(a.correct) ? a.correct : a.correct ? [a.correct] : [];
+      const d: Draft = { id: draftId(), type: q.type, prompt: q.prompt, options: q.options ?? [], correct, muc: q.muc, lessonId: q.lesson_id ?? lessonId, explanation: q.explanation, source: q.source, include: true };
+      const r = makeVariants(d, 3, grade);
+      if (r.drafts.length) { made += r.drafts.length; out.push(...r.drafts); } else skipped++;
+    }
+    setDrafts((ds) => [...out, ...ds]);
+    setTab('nap');
+    setMsg(made
+      ? { kind: 'ok', text: `Đã tạo ${made} câu tương tự từ ${src.length - skipped} câu${skipped ? ` (${skipped} câu không có phép tính nên bỏ qua)` : ''}. Xem lại rồi bấm “Lưu vào ngân hàng”.` }
+      : { kind: 'info', text: 'Các câu đã chọn chưa có phép tính trong đề hoặc lời giải (dạng “6 x 5 = 30”) nên máy chưa đổi số được.' });
   };
   const del = async () => {
     const ids = [...pick];
@@ -195,7 +247,10 @@ export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, 
               <label className="mb-check"><input type="checkbox" checked={ai.useDoc && !!doc} disabled={!doc} onChange={(e) => setAi({ ...ai, useDoc: e.target.checked })} />
                 {doc ? <>Dựa vào tài liệu đã nạp: <b>{doc.name}</b></> : <>Chưa nạp tài liệu (mục “Nạp tài liệu”) — AI soạn theo tên bài</>}</label>
               <label className="mb-f"><span>Yêu cầu thêm <small>(không bắt buộc)</small></span><input value={ai.note} maxLength={500} onChange={(e) => setAi({ ...ai, note: e.target.value })} placeholder="VD: bài toán về tiền Việt Nam; ngữ liệu về mùa thu; không dùng số quá 1000" /></label>
-              <button type="button" className="btn btn-primary btn-sm" disabled={!!busy || !lessonId} onClick={() => void runAi()}><Sparkles aria-hidden="true" /> Sinh câu</button>
+              <div className="mb-row">
+                <button type="button" className="btn btn-primary btn-sm" disabled={!!busy || !lessonId} onClick={() => void runAi()}><Sparkles aria-hidden="true" /> Sinh câu bằng AI</button>
+                <button type="button" className="btn btn-outline btn-sm" disabled={!!busy || !lessonId} onClick={runMachine} title="Lấy câu từ bộ sinh câu tự động của app — không cần API key, không tốn lượt"><Cpu aria-hidden="true" /> Sinh bằng máy (miễn phí)</button>
+              </div>
               <p className="dash-muted mb-note">Dùng API key Gemini / OpenAI của cô (nối ở Trợ lý AI). AI có thể sai: app tự tính lại phép tính môn Toán và đánh dấu câu nghi sai, cô vẫn cần đọc kỹ trước khi lưu. Chỉ nạp tài liệu cô được phép dùng.</p>
             </section>
           )}
@@ -207,9 +262,11 @@ export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, 
                   <option value="">Tất cả bài ({mine?.length ?? 0} câu)</option>
                   {lessons.filter((l) => byLesson.has(l.id)).map((l) => <option key={l.id} value={l.id}>{l.title} ({byLesson.get(l.id)})</option>)}
                 </select>
+                {subject === 'toan' && <button type="button" className="mini-btn" disabled={!pick.size || !!busy} onClick={variantsFromSaved} title="Đổi số trong câu, máy tự tính lại đáp án — không cần AI"><Copy aria-hidden="true" /> Tạo câu tương tự {pick.size || ''}</button>}
                 <button type="button" className="mini-btn is-danger" disabled={!pick.size || !!busy} onClick={() => void del()}><Trash2 aria-hidden="true" /> Xoá {pick.size || ''}</button>
               </div>
               {!mine?.length && <p className="dash-muted">Chưa có câu nào. Nạp tài liệu hoặc sinh câu bằng AI rồi lưu lại.</p>}
+              {subject === 'toan' && !!mine?.length && <p className="dash-muted mb-note">Đánh dấu các câu mẫu rồi bấm <b>Tạo câu tương tự</b>: máy đổi số trong câu và tự tính lại đáp án (cần có phép tính trong đề hoặc lời giải dạng “6 x 5 = 30”). Không cần AI.</p>}
               <ul className="mb-list">
                 {shown.slice(0, 300).map((q) => (
                   <li key={q.id}>
@@ -234,7 +291,7 @@ export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, 
                 <button type="button" className="btn btn-primary btn-sm" disabled={!chosen.length || !!busy} onClick={() => void save()}><Check aria-hidden="true" /> Lưu {chosen.length} câu vào ngân hàng</button>
               </div>
               {drafts.map((d, i) => (
-                <DraftCard key={d.id} d={d} n={i + 1} lessons={lessons} subject={subject}
+                <DraftCard key={d.id} d={d} n={i + 1} lessons={lessons} subject={subject} onVariants={(lk) => variantsOf(d, lk)}
                   onChange={(nd) => setDrafts((ds) => ds.map((x) => (x.id === d.id ? nd : x)))} onRemove={() => setDrafts((ds) => ds.filter((x) => x.id !== d.id))} />
               ))}
               <button type="button" className="mini-btn" onClick={() => setDrafts((ds) => [...ds, { id: draftId(), type: 'single_choice', prompt: '', options: ['', '', '', ''], correct: [], muc: 2, lessonId, explanation: '', source: 'Tự soạn', include: true }])}>+ Thêm câu tự soạn</button>

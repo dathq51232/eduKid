@@ -174,6 +174,9 @@ export function parseText(lines: string[], lessons: BookLesson[], fallback: stri
       cur = { no, prompt: qm[3] ? [qm[3]] : [], opts: [], ans: '', sol: [], muc: mucTag(line) };
       continue;
     }
+    // tiêu đề phần: "I. TRẮC NGHIỆM", "PHẦN II", dòng viết hoa toàn bộ → kết thúc câu đang đọc
+    const letters = line.replace(/[^\p{L}]/gu, '');
+    if (/^(?:[IVX]{1,4}\s*[.:)]|phần\s+[IVX\d]+)/i.test(line) || (letters.length >= 4 && letters === letters.toUpperCase() && !/^[A-F]\s*[.)]/.test(line))) { push(); continue; }
     if (!cur) continue; // phần đầu đề (tiêu đề, họ tên…) bỏ qua
     const c = cur as Raw;
     if (opts) { c.opts.push(...opts); continue; }

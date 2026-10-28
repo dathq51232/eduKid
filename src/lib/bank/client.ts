@@ -1,6 +1,6 @@
 // "Ngân hàng của tôi" (migration 0044): đọc / lưu / xoá câu hỏi riêng của giáo viên; sinh câu nâng cao bằng AI.
 import { createClient } from '@/lib/supabase/client';
-import { setCustomQuestions, type ExamQuestion, type Muc } from '@/lib/exams/matrix';
+import { lessonPool, setCustomQuestions, type ExamQuestion, type Muc } from '@/lib/exams/matrix';
 import type { SubjectCode } from '@/lib/types';
 import { answerOf, checkMath, draftId, type Draft, type DraftType } from './parse';
 
@@ -72,5 +72,18 @@ export async function generateWithAi(p: { subject: SubjectCode; grade: number; l
     if (type === 'single_choice' && !d.correct.length) d.warn = 'AI chưa chỉ rõ đáp án đúng — chọn lại.';
     if (p.subject === 'toan') d.warn = checkMath(d) ?? d.warn;
     return d;
+  });
+}
+
+/** Sinh câu bằng máy (miễn phí, không cần AI): lấy câu từ bộ sinh câu tự động của app cho bài đã chọn,
+ *  đúng mức, bỏ câu đã có trong danh sách — dùng khi AI quá tải / chưa nối key. */
+export function machineDrafts(lessonId: string, muc: Muc, count: number, skip: Set<string>): Draft[] {
+  const pool = lessonPool(lessonId).filter((q) => !q.key.startsWith('tq#') && q.muc === muc && !skip.has(q.prompt.trim().toLowerCase())
+    && ['single_choice', 'multiple_choice', 'true_false', 'fill_blank'].includes(q.type));
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  return pool.slice(0, count).map((q) => {
+    const k = q.answer as { correct?: string | string[]; accepted?: string[] };
+    const correct = Array.isArray(k.accepted) ? k.accepted : Array.isArray(k.correct) ? k.correct : k.correct ? [k.correct] : [];
+    return { id: draftId(), type: q.type as DraftType, prompt: q.prompt, options: q.options ?? [], correct, muc, lessonId, explanation: q.explanation ?? '', source: 'Máy sinh', include: true };
   });
 }

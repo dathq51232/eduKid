@@ -15,6 +15,10 @@ const OPENAI_BASE = 'https://api.openai.com/v1';
 // Gemini: Google ngừng cho tài khoản mới dùng model cũ dần dần (2.5-flash bị chặn với user mới 10/2026),
 // nên đặt model mới nhất lên đầu; chat vẫn có cơ chế tự chuyển theo model Google khuyên dùng khi bị chặn.
 const GEMINI_PREFERRED = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+// Khi model đang dùng báo quá tải (503) / lỗi máy chủ: thử lại một lần rồi chuyển sang model nhẹ hơn cùng key miễn phí
+// (mỗi model có sức chứa riêng nên thường vẫn trả lời được). Model nào tài khoản không có (404) thì bỏ qua.
+const GEMINI_BUSY_FALLBACK = ['gemini-flash-lite-latest', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-flash-latest'];
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const OPENAI_PREFERRED = ['gpt-4o-mini', 'gpt-4.1-mini', 'gpt-5-mini', 'gpt-4.1-nano', 'gpt-4o'];
 
 const clean = (s: string) => s.replace(/^models\//, '').trim();
@@ -137,7 +141,7 @@ export async function streamChatCompletion(
   provider: ProviderId,
   key: string,
   opts: ChatOptions,
-): Promise<{ ok: true; stream: ReadableStream<Uint8Array>; model: string } | { ok: false; error: string; httpStatus?: number }> {
+): Promise<{ ok: true; stream: ReadableStream<Uint8Array>; model: string; busy?: boolean } | { ok: false; error: string; httpStatus?: number }> {
   const k = key.trim();
   const maxTokens = opts.maxTokens ?? 1600;
   const messages = [{ role: 'system', content: opts.system }, ...opts.messages.map((m) => ({ role: m.role, content: m.content }))];
@@ -156,9 +160,15 @@ export async function streamChatCompletion(
       let model = opts.model;
       let noThinking = true;
       let waited429 = false;
-      for (let tries = 0; tries < 4; tries++) {
+      let busy = false;
+      const spare = GEMINI_BUSY_FALLBACK.filter((m) => m !== opts.model);
+      for (let tries = 0; tries < 9; tries++) {
         const res = await call(model, noThinking);
-        if (res.status === 200 && res.body) return { ok: true, stream: sseTextStream(res, 'gemini'), model };
+        if (res.status === 200 && res.body) return { ok: true, stream: sseTextStream(res, 'gemini'), model, busy };
+        // quá tải / lỗi máy chủ: chuyển sang model dự phòng cùng key (không lưu làm mặc định)
+        if ((res.status === 503 || res.status === 500 || res.status === 502 || (busy && res.status === 404)) && spare.length) {
+          model = spare.shift()!; busy = true; noThinking = true; await sleep(400); continue;
+        }
         const msg = apiError(await res.json().catch(() => null), res.status, 'gemini');
         const alt = /use models\/([a-z0-9.-]+)/i.exec(msg)?.[1];
         if (alt && alt !== model) { model = alt; continue; }
@@ -187,7 +197,7 @@ export async function streamChatCompletion(
 }
 
 /** Gọi chat (không stream) và trả văn bản trả lời. */
-export async function chatCompletion(provider: ProviderId, key: string, opts: ChatOptions): Promise<ProviderResult<{ text: string; model: string }>> {
+export async function chatCompletion(provider: ProviderId, key: string, opts: ChatOptions): Promise<ProviderResult<{ text: string; model: string; busy?: boolean }>> {
   const k = key.trim();
   const maxTokens = opts.maxTokens ?? 1600;
   try {
@@ -205,6 +215,7 @@ export async function chatCompletion(provider: ProviderId, key: string, opts: Ch
         }),
       });
       let model = opts.model;
+      let busy = false; // trả lời bằng model dự phòng lúc quá tải — không lưu làm model mặc định
       let noThinking = true;
       let res = await call(model, noThinking);
       for (let tries = 0; tries < 3 && res.status !== 200; tries++) {
@@ -214,11 +225,22 @@ export async function chatCompletion(provider: ProviderId, key: string, opts: Ch
         if (/thinking/i.test(msg) && noThinking) { noThinking = false; res = await call(model, noThinking); continue; }
         return { ok: false, error: msg, httpStatus: res.status };
       }
+      if (res.status === 503 || res.status === 500 || res.status === 502) {
+        const first = res;
+        for (const alt of [model, ...GEMINI_BUSY_FALLBACK.filter((m) => m !== model)]) {
+          await sleep(alt === model ? 2500 : 400);
+          let r2 = await call(alt, true);
+          if (r2.status !== 200 && /thinking/i.test(apiError(r2.body, r2.status, 'gemini'))) r2 = await call(alt, false);
+          if (r2.status === 200) { res = r2; model = alt; busy = alt !== opts.model; break; }
+          if (r2.status === 429) break; // hết lượt của key: đổi model cũng không giúp
+        }
+        if (res.status !== 200) res = first;
+      }
       if (res.status !== 200) return { ok: false, error: apiError(res.body, res.status, 'gemini'), httpStatus: res.status };
       const parts = (res.body as { candidates?: { content?: { parts?: { text?: string }[] } }[] })?.candidates?.[0]?.content?.parts ?? [];
       const text = parts.map((p) => p.text ?? '').join('').trim();
       if (!text) return { ok: false, error: 'Gemini trả về đáp án rỗng — thử gửi lại câu hỏi.' };
-      return { ok: true, data: { text, model } };
+      return { ok: true, data: { text, model, busy } };
     }
     // Model thế hệ mới (gpt-5*, o*) không nhận max_tokens/temperature như cũ.
     const newGen = /^(gpt-5|o\d)/.test(opts.model);
