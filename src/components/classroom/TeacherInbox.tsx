@@ -4,9 +4,9 @@
 // Cô bấm "Đồng ý" để trả lời và ghi luôn "Vắng có phép" vào Sổ lớp những ngày xin nghỉ; hoặc gõ trả lời ngắn.
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Check, CheckCheck, MessageSquareReply, X } from 'lucide-react';
+import { Check, CheckCheck, MessageSquareReply, Trash2, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { KIND_ICON, KIND_LABEL, ago, leaveRange, senderLabel, type Inbox, type MsgStatus, type TeacherMsg } from '@/lib/classroom/messages';
+import { KIND_ICON, KIND_LABEL, ago, isMissing, leaveRange, senderLabel, type Inbox, type MsgStatus, type TeacherMsg } from '@/lib/classroom/messages';
 
 type Filter = 'all' | 'new' | 'leave';
 const ST_LABEL: Record<MsgStatus, string> = { new: 'Mới', read: 'Đã xem', approved: 'Đã đồng ý', declined: 'Không đồng ý', answered: 'Đã trả lời' };
@@ -39,6 +39,19 @@ export default function TeacherInbox({ classId, className, initial, missing }: {
     setReply((r) => ({ ...r, [m.id]: '' }));
     await reload();
   };
+  // Xoá khỏi hộp thư của cô (gia đình vẫn xem được tin đã gửi và lời trả lời) — migration 0041
+  const isDone = (m: TeacherMsg) => m.status !== 'new' && !(m.kind === 'leave' && m.status === 'read');
+  const done = box.items.filter(isDone);
+  const remove = async (ids: string[], ask: string) => {
+    if (!supabase || !ids.length || !window.confirm(ask)) return;
+    setBusy('xoa'); setNote('');
+    const { data, error } = await supabase.rpc('teacher_message_delete', { p_class: classId, p_ids: ids });
+    setBusy('');
+    if (error) { setNote(isMissing(error.message) ? 'Chưa bật chức năng xoá: chạy migration 0041_parent_messages_delete.sql trên Supabase.' : 'Chưa xoá được, thầy cô thử lại nhé.'); return; }
+    setOpen(null);
+    setNote(`Đã xoá ${(data as number) ?? ids.length} tin khỏi hộp thư. Gia đình vẫn xem lại được tin đã gửi và lời trả lời của cô.`);
+    await reload();
+  };
   const toggle = (m: TeacherMsg) => {
     const next = open === m.id ? null : m.id;
     setOpen(next);
@@ -61,6 +74,11 @@ export default function TeacherInbox({ classId, className, initial, missing }: {
         <button type="button" role="tab" aria-selected={filter === 'new'} onClick={() => setFilter('new')}>Chưa đọc <span>{box.unread}</span></button>
         <button type="button" role="tab" aria-selected={filter === 'leave'} onClick={() => setFilter('leave')}>Xin phép chờ duyệt <span>{box.pending_leave}</span></button>
         <button type="button" role="tab" aria-selected={filter === 'all'} onClick={() => setFilter('all')}>Tất cả <span>{box.items.length}</span></button>
+        {done.length > 0 && (
+          <button type="button" className="inb-clean" disabled={busy === 'xoa'} onClick={() => void remove(done.map((m) => m.id), `Xoá ${done.length} tin đã xem / đã trả lời khỏi hộp thư? Tin mới và tin xin phép chưa duyệt được giữ lại.`)}>
+            <Trash2 aria-hidden="true" /> Xoá tin đã xử lý ({done.length})
+          </button>
+        )}
       </div>
 
       {items.length === 0 ? <p className="dash-muted inb-empty">{filter === 'new' ? 'Không có tin mới. 🎉' : 'Chưa có tin nhắn nào.'}</p> : (
@@ -94,6 +112,10 @@ export default function TeacherInbox({ classId, className, initial, missing }: {
                         <button type="button" className="btn btn-primary btn-sm" disabled={busy === m.id || !(reply[m.id] ?? '').trim()} onClick={() => void act(m, 'answered')}><MessageSquareReply aria-hidden="true" /> Gửi trả lời</button>
                       )}
                       <Link href={`/giao-vien/lop/${classId}/danh-ba`} className="ct-link">Danh bạ phụ huynh</Link>
+                      <button type="button" className="btn btn-outline btn-sm inb-del" disabled={busy === 'xoa'}
+                        onClick={() => void remove([m.id], pending ? `Tin xin phép của ${senderLabel(m)} CHƯA được duyệt. Vẫn xoá khỏi hộp thư?` : `Xoá tin của ${senderLabel(m)} khỏi hộp thư?`)}>
+                        <Trash2 aria-hidden="true" /> Xoá tin
+                      </button>
                     </div>
                   </div>
                 )}
