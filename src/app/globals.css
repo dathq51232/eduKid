@@ -6233,7 +6233,12 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .tw-head h1 { display: flex; align-items: center; gap: 8px; font-size: 24px; margin: 0 0 4px; }
 .tw-head h1 svg { width: 24px; height: 24px; color: var(--brand-blue); }
 .wsb { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 18px; align-items: start; }
-.wsb-panel { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; display: grid; gap: 10px; padding-right: 4px; scrollbar-width: thin; }
+.wsb-panel { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; overflow-x: hidden; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding-right: 4px; scrollbar-width: thin; min-width: 0; }
+/* nội dung bảng cài đặt luôn co theo bề rộng cột (không đẩy ngang, không phải kéo thanh cuộn) */
+.wsb-panel > *, .wsb-sec > *, .wsb-f > *, .wsb-bank > *, .wsb-pos > * { min-width: 0; max-width: 100%; }
+.wsb-bank-h select { min-width: 0; }
+.wsb-bank-list button { max-width: 100%; overflow-wrap: anywhere; }
+.wsb-preview { min-width: 0; }
 .wsb-sec { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px 14px 12px; }
 .wsb-sec > summary { cursor: pointer; padding: 10px 0 8px; font-weight: 800; font-size: 15px; list-style: none; display: flex; align-items: center; justify-content: space-between; }
 .wsb-sec > summary::after { content: '▾'; color: var(--muted); transition: transform .15s; }
@@ -6308,7 +6313,18 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .wsb-tip { width: 100%; max-width: 760px; margin: -6px 0 0; font-size: 12.5px; }
 .wsb-page { width: 100%; max-width: 760px; background: #fff; box-shadow: 0 6px 24px rgb(15 23 42 / .14); border-radius: 2px; }
 .wsb-page svg { display: block; width: 100%; height: auto; }
-@media (max-width: 1000px) { .wsb { grid-template-columns: minmax(0, 1fr); } .wsb-panel { position: static; max-height: none; } }
+@media (max-width: 1180px) { .wsb { grid-template-columns: minmax(270px, 330px) minmax(0, 1fr); gap: 12px; } }
+@media (max-width: 900px) { .wsb { grid-template-columns: minmax(0, 1fr); } .wsb-panel { position: static; max-height: none; overflow: visible; padding-right: 0; } .wsb-page { max-width: 520px; margin-inline: auto; } }
+@media (max-width: 520px) { .wsb-sec { padding: 2px 10px 10px; } .wsb-seg button { padding: 7px 4px; font-size: 12px; } .wsb-font-demo { font-size: 24px; } }
+.wsb-pos { display: grid; gap: 8px; padding: 10px; border-radius: 12px; background: var(--surface-2); }
+.wsb-pos > small { color: var(--muted); font-size: 12px; }
+.wsb-pos-h { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; }
+.wsb-pos-h > svg { width: 16px; height: 16px; color: var(--brand-blue); flex: none; }
+.wsb-pos-h .mini-btn { margin-left: auto; }
+.ws-drag { cursor: grab; touch-action: none; }
+.ws-drag:active { cursor: grabbing; }
+.ws-drag-box { fill: transparent; stroke: transparent; stroke-width: .5; stroke-dasharray: 1.5 1; }
+.ws-drag:hover .ws-drag-box, .ws-drag.is-on .ws-drag-box { stroke: #3b82f6; }
 /* in: chỉ in các trang vở, đúng khổ A4 */
 .ws-print-root { display: none; }
 @media print {

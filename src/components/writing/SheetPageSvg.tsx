@@ -4,7 +4,7 @@
 // Cùng một SVG dùng để xem trước trên màn hình và để in (trình duyệt in đúng 210 x 297 mm).
 import { Fragment } from 'react';
 import { FloralScope, Floral } from './floral';
-import { FALLBACK_FONT, fallbackScale, fontFamily, textSegments, type Corner, type FontId, type SheetLayout, type SheetPage, type SheetSettings } from '@/lib/writing/sheet';
+import { cornerBox, cornerSize, FALLBACK_FONT, fallbackScale, fontFamily, textSegments, type Corner, type FontId, type SheetLayout, type SheetPage, type SheetSettings } from '@/lib/writing/sheet';
 
 export const MOTIFS: { id: string; label: string }[] = [
   { id: 'hoa', label: 'Chùm hoa' }, { id: 'la', label: 'Cành lá' }, { id: 'sao', label: 'Ngôi sao' }, { id: 'buom', label: 'Bướm' },
@@ -138,11 +138,9 @@ const flipOf = (corner: Corner, id: string, s: number) => {
 
 export type UserDeco = Record<string, { url: string; flip: boolean }>;
 
-function CornerDeco({ corner, value, size, color, W, H, user }: { corner: Corner; value: string; size: number; color: string; W: number; H: number; user?: UserDeco }) {
+function CornerDeco({ corner, value, s, color, W, H, user }: { corner: Corner; value: string; s: SheetSettings; color: string; W: number; H: number; user?: UserDeco }) {
   if (!value || value === 'none') return null;
-  const m = 5; // cách mép giấy
-  const x = corner === 'tl' || corner === 'bl' ? m : W - m - size;
-  const y = corner === 'tl' || corner === 'tr' ? m : H - m - size;
+  const { x, y, size } = cornerBox(s, corner, W, H);
   if (value.startsWith('f:')) {
     // hoa văn bo góc: lật gương theo cả hai chiều để cành hoa luôn ôm mép giấy
     const h = corner === 'tr' || corner === 'br', v = corner === 'bl' || corner === 'br';
@@ -239,8 +237,9 @@ function Header({ s, page, W }: { s: SheetSettings; page: SheetPage; W: number }
   // tránh hoa văn góc trên đè lên dòng Họ tên / Ngày
   // hoa văn dạng cành ôm mép chỉ chiếm ~nửa ô; ảnh / tranh dán chiếm gần cả ô
   const reach = (v: string) => (v === 'none' ? 0 : /^[us]:/.test(v) ? 0.95 : 0.45);
-  const padL = Math.max(0, 5 + s.decoSize * reach(s.corners.tl) - x0) * (s.corners.tl !== 'none' ? 1 : 0);
-  const padR = Math.max(0, 5 + s.decoSize * reach(s.corners.tr) - (W - x1)) * (s.corners.tr !== 'none' ? 1 : 0);
+  const near = (c: Corner) => s.corners[c] !== 'none' && (s.cornerPos?.[c]?.y ?? 0) <= 20 ? 1 : 0;
+  const padL = Math.max(0, 5 + (s.cornerPos?.tl?.x ?? 0) + cornerSize(s, 'tl') * reach(s.corners.tl) - x0) * near('tl');
+  const padR = Math.max(0, 5 + (s.cornerPos?.tr?.x ?? 0) + cornerSize(s, 'tr') * reach(s.corners.tr) - (W - x1)) * near('tr');
   const narrow = W < 200; // khổ nhỏ: Ngày xuống dòng dưới
   const t = s.title.trim();
   return (
@@ -257,7 +256,11 @@ function Header({ s, page, W }: { s: SheetSettings; page: SheetPage; W: number }
   );
 }
 
-export default function SheetPageSvg({ s, layout, page, index, className, user }: { s: SheetSettings; layout: SheetLayout; page: SheetPage; index: number; className?: string; user?: UserDeco }) {
+export default function SheetPageSvg({ s, layout, page, index, className, user, onCornerDown, activeCorner }: {
+  s: SheetSettings; layout: SheetLayout; page: SheetPage; index: number; className?: string; user?: UserDeco;
+  /** chỉ ở bản xem trước: kéo hoạ tiết góc để đổi vị trí */
+  onCornerDown?: (c: Corner, e: React.PointerEvent<SVGGElement>) => void; activeCorner?: Corner;
+}) {
   const fam = `${fontFamily(s.font)}, cursive`;
   const { W, H } = layout;
   const traceProps = s.traceStyle === 'mo'
@@ -270,9 +273,20 @@ export default function SheetPageSvg({ s, layout, page, index, className, user }
       <FloralScope>
       <rect width={W} height={H} fill="#fff" />
       <Border s={s} W={W} H={H} />
-      {(['tl', 'tr', 'bl', 'br'] as Corner[]).map((c) => <CornerDeco key={c} corner={c} value={s.corners[c]} size={s.decoSize} color={s.decoColor} W={W} H={H} user={user} />)}
       {page.header && <Header s={s} page={page} W={W} />}
       <Grid s={s} page={page} li={layout.li} sq={layout.sq} />
+      {/* hoạ tiết góc vẽ sau dòng kẻ: kéo vào trong trang vẫn nhìn rõ */}
+      {(['tl', 'tr', 'bl', 'br'] as Corner[]).map((c) => {
+        const deco = <CornerDeco key={c} corner={c} value={s.corners[c]} s={s} color={s.decoColor} W={W} H={H} user={user} />;
+        if (!onCornerDown || s.corners[c] === 'none') return deco;
+        const b = cornerBox(s, c, W, H);
+        return (
+          <g key={c} className={`ws-drag${activeCorner === c ? ' is-on' : ''}`} onPointerDown={(e) => onCornerDown(c, e)}>
+            <rect x={b.x} y={b.y} width={b.size} height={b.size} rx="2" className="ws-drag-box" />
+            {deco}
+          </g>
+        );
+      })}
       <g fontFamily={fam} fontSize={layout.fs}>
         {page.rows.map((r, i) => (
           <Fragment key={i}>

@@ -72,6 +72,19 @@ export const PAGE_SIZES: { id: PageSize; label: string; w: number; h: number }[]
 ];
 export const pageDims = (id: PageSize) => PAGE_SIZES.find((p) => p.id === id) ?? PAGE_SIZES[0];
 export type Corner = 'tl' | 'tr' | 'bl' | 'br';
+export type CornerPos = { x: number; y: number; k: number };
+export const CORNER_POS0: CornerPos = { x: 0, y: 0, k: 100 };
+export const DEFAULT_CORNER_POS: Record<Corner, CornerPos> = { tl: CORNER_POS0, tr: CORNER_POS0, bl: CORNER_POS0, br: CORNER_POS0 };
+/** cỡ thật (mm) của hoạ tiết ở một góc */
+export const cornerSize = (s: Pick<SheetSettings, 'decoSize' | 'cornerPos'>, c: Corner) => s.decoSize * (s.cornerPos?.[c]?.k ?? 100) / 100;
+/** toạ độ góc trên-trái (mm) của hoạ tiết, luôn nằm trong trang */
+export function cornerBox(s: Pick<SheetSettings, 'decoSize' | 'cornerPos'>, c: Corner, W: number, H: number) {
+  const size = cornerSize(s, c), p = s.cornerPos?.[c] ?? CORNER_POS0, m = 5;
+  const left = c === 'tl' || c === 'bl', top = c === 'tl' || c === 'tr';
+  const x = left ? m + p.x : W - m - size - p.x;
+  const y = top ? m + p.y : H - m - size - p.y;
+  return { x: Math.min(W - size, Math.max(0, x)), y: Math.min(H - size, Math.max(0, y)), size };
+}
 export type BorderStyle = 'none' | 'don' | 'doi' | 'cham' | 'song';
 
 export type SheetSettings = {
@@ -98,6 +111,8 @@ export type SheetSettings = {
   traceColor: string;
   corners: Record<Corner, string>; // 'none' | 'f:<hoa văn bo góc>' | 'm:<hoạ tiết>' | 's:<tranh dán>' | 'u:<ảnh của tôi>'
   decoSize: number; // mm
+  /** vị trí riêng từng góc: x, y = khoảng dịch vào trong tính từ mép ngang / mép dọc (mm); k = cỡ riêng (% cỡ chung) */
+  cornerPos: Record<Corner, CornerPos>;
   decoColor: string;
   border: BorderStyle;
   borderColor: string;
@@ -114,7 +129,7 @@ export const DEFAULT_SHEET: SheetSettings = {
   layout: 'cau', font: 'hp4hn', size: 'vua', paper: 4, oli: 2,
   lineColor: '#8b5cf6', grid: 'vuong', pageSize: 'a4', vertical: true, margin: true, marginColor: '#ef4444',
   ink: '#1e3a8a', sample: 1, trace: 2, blank: 2, traceStyle: 'mo', traceColor: '#94a3b8',
-  corners: { tl: 'f:hong', tr: 'none', bl: 'none', br: 'f:hong' }, decoSize: 34, decoColor: '#ec4899',
+  corners: { tl: 'f:hong', tr: 'none', bl: 'none', br: 'f:hong' }, decoSize: 34, cornerPos: DEFAULT_CORNER_POS, decoColor: '#ec4899',
   border: 'none', borderColor: '#8b5cf6',
 };
 
@@ -127,6 +142,8 @@ export function normalizeSheet(raw: unknown): SheetSettings {
   const color = (v: unknown, def: string) => (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? v : def);
   const corner = (v: unknown) => (typeof v === 'string' && /^(none|[msfu]:[a-z0-9-]{1,40})$/.test(v) ? v : 'none');
   const c = (r.corners ?? {}) as Partial<Record<Corner, string>>;
+  const cp = (r.cornerPos ?? {}) as Partial<Record<Corner, Partial<CornerPos>>>;
+  const pos = (v: Partial<CornerPos> | undefined): CornerPos => ({ x: num(v?.x, -5, 300, 0), y: num(v?.y, -5, 400, 0), k: num(v?.k, 40, 200, 100) });
   return {
     title: str(r.title, d.title, 120), header: r.header ?? d.header, headerEvery: r.headerEvery ?? d.headerEvery,
     text: str(r.text, d.text, 4000), layout: r.layout === 'lap' ? 'lap' : 'cau',
@@ -137,7 +154,9 @@ export function normalizeSheet(raw: unknown): SheetSettings {
     ink: color(r.ink, d.ink), sample: num(r.sample, 0, 3, d.sample), trace: num(r.trace, 0, 6, d.trace), blank: num(r.blank, 0, 10, d.blank),
     traceStyle: r.traceStyle === 'cham' || r.traceStyle === 'rong' ? r.traceStyle : 'mo', traceColor: color(r.traceColor, d.traceColor),
     corners: { tl: corner(c.tl), tr: corner(c.tr), bl: corner(c.bl), br: corner(c.br) },
-    decoSize: num(r.decoSize, 12, 50, d.decoSize), decoColor: color(r.decoColor, d.decoColor),
+    decoSize: num(r.decoSize, 12, 50, d.decoSize),
+    cornerPos: { tl: pos(cp.tl), tr: pos(cp.tr), bl: pos(cp.bl), br: pos(cp.br) },
+    decoColor: color(r.decoColor, d.decoColor),
     border: (['none', 'don', 'doi', 'cham', 'song'] as BorderStyle[]).includes(r.border as BorderStyle) ? (r.border as BorderStyle) : 'none',
     borderColor: color(r.borderColor, d.borderColor),
   };
@@ -180,9 +199,10 @@ export function layoutSheet(s: SheetSettings, measure: Measure): SheetLayout {
 
   const headH = s.header ? (PAGE_W < 200 ? 26 : 24) : 14; // tiêu đề + dòng họ tên / chỉ tiêu đề
   // chừa chỗ cho hoạ tiết góc để không đè lên dòng kẻ
-  const decoH = 5 + s.decoSize * 0.85 + 1;
-  const topDeco = s.corners.tl !== 'none' || s.corners.tr !== 'none' ? decoH : 0;
-  const bottomDeco = s.corners.bl !== 'none' || s.corners.br !== 'none' ? decoH : 0;
+  // (theo cỡ riêng từng góc; hoạ tiết giáo viên kéo vào giữa trang thì không đẩy dòng kẻ)
+  const decoH = (c: Corner) => (s.corners[c] === 'none' || (s.cornerPos?.[c]?.y ?? 0) > 20 ? 0 : 5 + cornerSize(s, c) * 0.85 + 1);
+  const topDeco = Math.max(decoH('tl'), decoH('tr'));
+  const bottomDeco = Math.max(decoH('bl'), decoH('br'));
   const gridTop = (header: boolean) => Math.max(PAD + (header ? headH : 2), topDeco);
   const grid = (header: boolean) => {
     const y0 = gridTop(header);

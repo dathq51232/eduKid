@@ -5,13 +5,13 @@
 // hoạ tiết góc vở, viền trang; lưu thành bài giao cho lớp (học sinh luyện thêm trên màn hình).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpenText, Eye, EyeOff, FilePlus2, Minus, Plus, Printer, RotateCcw, Save, Trash2, Upload } from 'lucide-react';
+import { BookOpenText, Eye, EyeOff, FilePlus2, Move, Minus, Plus, Printer, RotateCcw, Save, Trash2, Upload } from 'lucide-react';
 import SheetPageSvg, { MOTIFS, Motif, type UserDeco } from './SheetPageSvg';
 import { assetError, assetUsage, deleteAsset, fmtMB, listAssets, uploadAsset, type TeacherAsset } from '@/lib/assets/client';
 import { IMAGE_ACCEPT, baseName, prepareDeco } from '@/lib/assets/image';
 import { FLORALS, Floral, FloralScope } from './floral';
 import { STICKERS } from '@/lib/stickers';
-import { DEFAULT_SHEET, FALLBACK_FONT, LINE_COLORS, PAGE_SIZES, TAP_FONTS, fallbackScale, pageDims, textSegments, fontFamily, layoutSheet, loadTapFont, normalizeSheet, type Corner, type SheetSettings } from '@/lib/writing/sheet';
+import { CORNER_POS0, DEFAULT_CORNER_POS, DEFAULT_SHEET, FALLBACK_FONT, LINE_COLORS, PAGE_SIZES, TAP_FONTS, fallbackScale, pageDims, textSegments, fontFamily, layoutSheet, loadTapFont, normalizeSheet, type Corner, type CornerPos, type SheetSettings } from '@/lib/writing/sheet';
 import { VERSE_GROUPS } from '@/lib/writing/verses';
 import { deleteTask, listTasks, saveTask, setTaskActive, taskError, type WritingTask } from '@/lib/writing/tasks';
 
@@ -158,6 +158,31 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
   const [printing, setPrinting] = useState(false);
   const loadedPrefs = useRef(false);
   const set = useCallback(<K extends keyof SheetSettings>(k: K, v: SheetSettings[K]) => setS((o) => ({ ...o, [k]: v })), []);
+  const setPos = useCallback((c: Corner, p: Partial<CornerPos>) => setS((o) => ({ ...o, cornerPos: { ...o.cornerPos, [c]: { ...(o.cornerPos?.[c] ?? CORNER_POS0), ...p } } })), []);
+
+  // kéo hoạ tiết góc trên trang xem trước để đổi vị trí (đơn vị mm; góc phải / dưới tính vào trong từ mép phải / dưới)
+  const onCornerDown = useCallback((c: Corner, e: React.PointerEvent<SVGGElement>) => {
+    const svg = e.currentTarget.ownerSVGElement;
+    if (!svg) return;
+    e.preventDefault();
+    setCorner(c);
+    const vb = svg.viewBox.baseVal, r = svg.getBoundingClientRect();
+    const mm = vb.width / r.width;
+    const sx = e.clientX, sy = e.clientY;
+    const p0 = s.cornerPos?.[c] ?? CORNER_POS0;
+    const fx = c === 'tl' || c === 'bl' ? 1 : -1, fy = c === 'tl' || c === 'tr' ? 1 : -1;
+    const size = s.decoSize * p0.k / 100;
+    const maxX = vb.width - 5 - size, maxY = vb.height - 5 - size;
+    const move = (ev: PointerEvent) => {
+      const x = Math.round(Math.min(maxX, Math.max(-5, p0.x + fx * (ev.clientX - sx) * mm)));
+      const y = Math.round(Math.min(maxY, Math.max(-5, p0.y + fy * (ev.clientY - sy) * mm)));
+      setPos(c, { x, y });
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  }, [s.cornerPos, s.decoSize, setPos]);
 
   // cài đặt lần trước (trên máy này)
   useEffect(() => {
@@ -326,7 +351,7 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
           <summary>4. Trang trí</summary>
           <label className="wsb-check"><input type="checkbox" checked={s.header} onChange={(e) => set('header', e.target.checked)} /> Dòng Họ tên · Lớp · Ngày</label>
           <label className="wsb-check"><input type="checkbox" checked={s.headerEvery} onChange={(e) => set('headerEvery', e.target.checked)} /> Lặp tiêu đề ở mọi trang</label>
-          <div className="wsb-presets">{DECO_PRESETS.map((p) => <button key={p.label} type="button" className="mini-btn" onClick={() => setS((o) => ({ ...o, ...p.v }))}>{p.label}</button>)}</div>
+          <div className="wsb-presets">{DECO_PRESETS.map((p) => <button key={p.label} type="button" className="mini-btn" onClick={() => setS((o) => ({ ...o, ...p.v, cornerPos: DEFAULT_CORNER_POS }))}>{p.label}</button>)}</div>
           <div className="wsb-corners">
             <div className="wsb-cpage" role="tablist" aria-label="Chọn góc vở">
               {CORNERS.map((c) => (
@@ -337,7 +362,24 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
           </div>
           <DecoPick value={s.corners[corner]} color={s.decoColor} onChange={(v) => setS((o) => ({ ...o, corners: { ...o.corners, [corner]: v } }))}
             mine={<MyDecos list={decos} value={s.corners[corner]} onChange={(v) => setS((o) => ({ ...o, corners: { ...o.corners, [corner]: v } }))} onChanged={setDecos} />} />
-          <label className="wsb-f"><span>Cỡ hoa văn / hoạ tiết: <b>{s.decoSize} mm</b></span><input type="range" min={12} max={50} value={s.decoSize} onChange={(e) => set('decoSize', Number(e.target.value))} /></label>
+          <label className="wsb-f"><span>Cỡ hoa văn / hoạ tiết (cả 4 góc): <b>{s.decoSize} mm</b></span><input type="range" min={12} max={50} value={s.decoSize} onChange={(e) => set('decoSize', Number(e.target.value))} /></label>
+          {s.corners[corner] !== 'none' && (() => {
+            const p = s.cornerPos?.[corner] ?? CORNER_POS0;
+            const { w, h } = pageDims(s.pageSize);
+            const size = s.decoSize * p.k / 100;
+            const right = corner === 'tr' || corner === 'br', bottom = corner === 'bl' || corner === 'br';
+            return (
+              <div className="wsb-pos">
+                <div className="wsb-pos-h"><Move aria-hidden="true" /> Vị trí {CORNERS.find((c) => c.k === corner)?.label.toLowerCase()}
+                  <button type="button" className="mini-btn" disabled={p.x === 0 && p.y === 0 && p.k === 100} onClick={() => setPos(corner, CORNER_POS0)}><RotateCcw aria-hidden="true" /> Về sát góc</button>
+                </div>
+                <small>Kéo thả hoạ tiết ngay trên trang vở, hoặc chỉnh bằng thanh trượt.</small>
+                <label className="wsb-f"><span>Cách mép {right ? 'phải' : 'trái'}: <b>{p.x} mm</b></span><input type="range" min={-5} max={Math.max(0, Math.floor(w - 10 - size))} value={p.x} onChange={(e) => setPos(corner, { x: Number(e.target.value) })} /></label>
+                <label className="wsb-f"><span>Cách mép {bottom ? 'dưới' : 'trên'}: <b>{p.y} mm</b></span><input type="range" min={-5} max={Math.max(0, Math.floor(h - 10 - size))} value={p.y} onChange={(e) => setPos(corner, { y: Number(e.target.value) })} /></label>
+                <label className="wsb-f"><span>Cỡ riêng góc này: <b>{p.k}%</b> <small>({Math.round(size)} mm)</small></span><input type="range" min={40} max={200} step={5} value={p.k} onChange={(e) => setPos(corner, { k: Number(e.target.value) })} /></label>
+              </div>
+            );
+          })()}
           <div className="wsb-f"><span>Màu hình vẽ đơn giản <small>(hoa văn hoa thật giữ màu tự nhiên)</small></span><Swatches label="Màu hoạ tiết" value={s.decoColor} onChange={(c) => set('decoColor', c)} /></div>
           <label className="wsb-f"><span>Viền trang</span>
             <select value={s.border} onChange={(e) => set('border', e.target.value as SheetSettings['border'])}>
@@ -388,7 +430,7 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
         <p className="dash-muted wsb-tip">Khi in: chọn đúng khổ giấy, tỉ lệ 100% (không “vừa trang”), bỏ đầu trang / chân trang của trình duyệt.</p>
         {!ready && <p className="dash-muted" role="status">Đang nạp font chữ…</p>}
         {ready && layout && pages.map((p, i) => (
-          <div key={i} className="wsb-page"><SheetPageSvg s={s} layout={layout} page={p} index={i} user={userDeco} /></div>
+          <div key={i} className="wsb-page"><SheetPageSvg s={s} layout={layout} page={p} index={i} user={userDeco} onCornerDown={onCornerDown} activeCorner={corner} /></div>
         ))}
       </section>
 
