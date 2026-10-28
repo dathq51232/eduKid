@@ -8,14 +8,16 @@ const store = new Map<string, string>();
 
 import { CONTENT } from '../src/lib/content';
 import { getQuestionSet } from '../src/lib/data';
-import { DEMO_QUESTIONS } from '../src/lib/demo-data';
+import '../src/lib/content';
+import '../src/lib/practice';
+import { demoQuestions } from '../src/lib/demo-data';
 import { isPracticeId, questionById, signature } from '../src/lib/practice';
 import { coreSig, MUC_LIST } from '../src/lib/sets';
 
 /** Lõi câu (đề + hình + đáp án): cùng lõi = cùng một câu với học sinh dù lựa chọn nhiễu khác */
 const coreOf = (q: { id: string; prompt: string }) => {
   const g = isPracticeId(q.id) ? questionById(q.id) : null;
-  return coreSig(g ?? { prompt: q.prompt, key: DEMO_QUESTIONS.find((d) => d.id === q.id)?.answerKey });
+  return coreSig(g ?? { prompt: q.prompt, key: demoQuestions().find((d) => d.id === q.id)?.answerKey });
 };
 
 const CHAIN = Number(process.argv[2] ?? 6);

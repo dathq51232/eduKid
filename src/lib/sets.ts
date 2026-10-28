@@ -9,10 +9,10 @@
 //   - Các bài khác: câu của bài đó + câu của các bài HỌC TRƯỚC cùng môn + câu ngân hàng (đề ôn) nằm trong phạm vi
 //     kiến thức của bài (kiểm bằng scopeProblems — không vượt trước). Đề ôn tập lấy từ toàn bộ học kì của môn.
 
-import { CONTENT } from './content';
+import { CONTENT_LIVE as CONTENT } from './content/store';
 import { scopeProblems } from './content/scope';
 import type { ContentLesson, Level } from './content/types';
-import { generateOne, isPracticeId, practiceIdFor, signature, type GeneratedQuestion } from './practice';
+import { generateOne, isPracticeId, practiceIdFor, signature, type GeneratedQuestion } from './practice/core';
 import { makeRng, type Rng } from './practice/rng';
 
 import { MUC, type Muc } from './basics';

@@ -18,6 +18,15 @@ export async function updateSession(request: NextRequest) {
   const hasSession = request.cookies.getAll().some((c) => c.name.startsWith('sb-') && c.name.includes('-auth-token'));
   if (!hasSession) return requiresLogin(request.nextUrl.pathname) ? toLogin(request) : response;
 
+  // Phiên còn hạn > 5 phút và không phải trang học cần kiểm tra học phí / khối: khỏi gọi Supabase Auth ở middleware
+  // (mỗi lần chuyển trang đỡ một lượt gọi mạng). Trang vẫn tự xác thực bằng getUser() trong getViewer, RLS vẫn kiểm tra.
+  const path0 = request.nextUrl.pathname;
+  const gated = GATED.includes(path0) || path0.startsWith('/hoc-sinh/de/');
+  if (!gated) {
+    const exp = sessionExpiry(request);
+    if (exp && exp * 1000 - Date.now() > 5 * 60_000) return response;
+  }
+
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll() {
@@ -95,4 +104,24 @@ function toLogin(request: NextRequest) {
 const LOGIN_REQUIRED = ['/chon-bai', '/lam-bai', '/ket-qua', '/tro-choi', '/thanh-tich'];
 export function requiresLogin(pathname: string): boolean {
   return LOGIN_REQUIRED.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+/** Hạn của access token trong cookie phiên Supabase (giây, epoch) — chỉ đọc để quyết định có cần làm mới phiên không,
+ *  KHÔNG dùng để xác thực. Cookie có thể bị chia nhỏ (.0, .1…) và có tiền tố "base64-". */
+function sessionExpiry(request: NextRequest): number | null {
+  try {
+    const all = request.cookies.getAll().filter((c) => c.name.startsWith('sb-') && /-auth-token(\.\d+)?$/.test(c.name));
+    if (!all.length) return null;
+    const raw = all.sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true })).map((c) => c.value).join('');
+    let json = raw;
+    if (raw.startsWith('base64-')) {
+      const b64 = raw.slice(7).replace(/-/g, '+').replace(/_/g, '/');
+      const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4));
+      json = new TextDecoder().decode(Uint8Array.from(bin, (ch) => ch.charCodeAt(0)));
+    }
+    const v = JSON.parse(json) as { expires_at?: number } | null;
+    return typeof v?.expires_at === 'number' ? v.expires_at : null;
+  } catch {
+    return null;
+  }
 }

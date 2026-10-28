@@ -3,7 +3,7 @@
 // Tiếng Anh (Global Success). Đáp án nằm ở đây chỉ để chấm thử trên trình duyệt; với dữ liệu thật,
 // đáp án và lời giải nằm ở bảng question_keys và được chấm bằng submit_quiz_answer trên server.
 
-import { CONTENT } from './content';
+import { CONTENT_LIVE, contentVersion } from './content/store';
 import { defaultTimeLimit } from './levels';
 import { shuffle } from './shuffle';
 import type { AnswerKey, Lesson, Question, Subject } from './types';
@@ -16,7 +16,8 @@ export const SUBJECTS: Subject[] = [
 
 export const GRADES = [1, 2, 3, 4, 5];
 
-export const DEMO_LESSONS: Lesson[] = CONTENT.map((l, i) => ({
+function toLessons(): Lesson[] {
+  return CONTENT_LIVE.map((l, i) => ({
   id: l.id,
   subject: l.subject,
   grade: l.grade,
@@ -28,6 +29,7 @@ export const DEMO_LESSONS: Lesson[] = CONTENT.map((l, i) => ({
   kind: l.kind ?? 'book',
   sortOrder: i + 1,
 }));
+}
 
 type DemoQuestion = Question & {
   answerKey: AnswerKey;
@@ -35,7 +37,8 @@ type DemoQuestion = Question & {
   solution?: string;
 };
 
-export const DEMO_QUESTIONS: DemoQuestion[] = CONTENT.flatMap((l) =>
+function toQuestions(): DemoQuestion[] {
+  return CONTENT_LIVE.flatMap((l) =>
   l.questions.map((q, i) => {
     const id = `${l.id}-q${i + 1}`;
     return {
@@ -55,3 +58,19 @@ export const DEMO_QUESTIONS: DemoQuestion[] = CONTENT.flatMap((l) =>
     };
   }),
 );
+}
+
+// Danh sách bài / câu soạn sẵn của các khối ĐÃ NẠP (trang học của học sinh nạp từng khối; máy chủ nạp đủ 5 khối).
+// Tính lại khi có khối mới được nạp.
+let ver = -1;
+let lessonsCache: Lesson[] = [];
+let questionsCache: DemoQuestion[] = [];
+function sync() {
+  const v = contentVersion();
+  if (v === ver) return;
+  ver = v;
+  lessonsCache = toLessons();
+  questionsCache = toQuestions();
+}
+export function demoLessons(): Lesson[] { sync(); return lessonsCache; }
+export function demoQuestions(): DemoQuestion[] { sync(); return questionsCache; }

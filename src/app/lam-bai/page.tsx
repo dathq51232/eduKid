@@ -16,6 +16,7 @@ import { ArrowLeft, ArrowRight, Check, Clock, Dices, Flag, Lightbulb, Play, Refr
 import Figure from '@/components/Figure';
 import KnowledgeCard from '@/components/KnowledgeCard';
 import LearnHeader from '@/components/LearnHeader';
+import GradeGate from '@/components/learn/GradeGate';
 import QuestionRenderer from '@/components/questions/QuestionRenderer';
 import VoiceHelp from '@/components/VoiceHelp';
 import Confetti from '@/components/learn/Confetti';
@@ -32,7 +33,7 @@ import { syncEnabled, syncLessonResult, writeSyncStatus } from '@/lib/progress-s
 import { MUC, MUC_LIST, parseMuc, type Muc } from '@/lib/sets';
 import { totals } from '@/lib/scoring';
 import { TIMER_SOUND_MODES, playSound, readTimerSound, saveTimerSound, timerSoundFor, type TimerSoundMode } from '@/lib/sound';
-import { isPracticeId, newSeed } from '@/lib/practice';
+import { isPracticeId, newSeed } from '@/lib/practice/core';
 import { lastShownSet, rememberShownSet } from '@/lib/set-history';
 import { getVoiceStatus, questionSegments, segmentsFor, speakSegments, stopSpeaking } from '@/lib/speech';
 import type { AnswerRecord, AnswerValue, Question } from '@/lib/types';
@@ -857,7 +858,9 @@ function LamBaiContent() {
 export default function LamBaiPage() {
   return (
     <Suspense fallback={null}>
-      <LamBaiContent />
+      <GradeGate>
+        <LamBaiContent />
+      </GradeGate>
     </Suspense>
   );
 }

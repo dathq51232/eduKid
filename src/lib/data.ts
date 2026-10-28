@@ -5,10 +5,10 @@
 //                        kèm difficulty -> level, time_limit_sec -> timeLimit
 //   - gradeAnswer     -> rpc('submit_quiz_answer', ...) — trả correct, explanation, solution
 
-import { DEMO_LESSONS, DEMO_QUESTIONS, SUBJECTS } from './demo-data';
+import { demoLessons, demoQuestions, SUBJECTS } from './demo-data';
 import { shuffle } from './shuffle';
 import { gradeLocal } from './grading';
-import { generateOne, generatePractice, isPracticeId, newSeed, practiceLesson, questionById, signature, PER_LEVEL, type GeneratedQuestion } from './practice';
+import { generateOne, generatePractice, isPracticeId, newSeed, practiceLesson, questionById, signature, PER_LEVEL, type GeneratedQuestion } from './practice/core';
 import { buildSet, coreSig, eligiblePool, generatorFor, type Avoid, type Muc } from './sets';
 import { readSetEntry, saveSetEntry } from './set-history';
 import type { AnswerValue, GradeResult, Lesson, Question, Subject, SubjectCode } from './types';
@@ -22,12 +22,12 @@ export function getSubject(code: SubjectCode): Subject {
 }
 
 export function getLessons(subject: SubjectCode, grade: number): Lesson[] {
-  return DEMO_LESSONS.filter((l) => l.subject === subject && l.grade === grade).sort((a, b) => a.sortOrder - b.sortOrder);
+  return demoLessons().filter((l) => l.subject === subject && l.grade === grade).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 export function getLesson(lessonId: string): Lesson | undefined {
   if (isPracticeId(lessonId)) return practiceLesson(lessonId);
-  return DEMO_LESSONS.find((l) => l.id === lessonId);
+  return demoLessons().find((l) => l.id === lessonId);
 }
 
 /** Câu hỏi của bài. Bài luyện tập ngẫu nhiên (mã "lt-…") cần seed để sinh đề. */
@@ -36,7 +36,7 @@ export function getQuestions(lessonId: string, seed?: number): Question[] {
     if (!seed) return [];
     return generatePractice(lessonId, seed).map((q) => practiceToQuestion(q, lessonId));
   }
-  return DEMO_QUESTIONS.filter((q) => q.lessonId === lessonId).map(demoToQuestion);
+  return demoQuestions().filter((q) => q.lessonId === lessonId).map(demoToQuestion);
 }
 
 /**
@@ -55,7 +55,7 @@ export function getQuestionSet(lessonId: string, seed?: number, muc: Muc = 1, pr
     if (qs.every(Boolean)) return { questions: qs as Question[] };
   }
   const built = buildSet(lessonId, seed, muc, avoidFrom(lessonId, prev, muc));
-  const byId = new Map(DEMO_QUESTIONS.map((q) => [q.id, q]));
+  const byId = new Map(demoQuestions().map((q) => [q.id, q]));
   const questions = built.picks.flatMap((p) => {
     if (p.kind === 'gen') return [practiceToQuestion(p.q, lessonId)];
     const d = byId.get(p.id);
@@ -71,13 +71,13 @@ function questionFromId(id: string, lessonId: string): Question | null {
     const g = questionById(id);
     return g ? practiceToQuestion(g, lessonId) : null;
   }
-  const d = DEMO_QUESTIONS.find((q) => q.id === id);
+  const d = demoQuestions().find((q) => q.id === id);
   return d ? demoToQuestion(d) : null;
 }
 
 /** Mã câu của một bộ: "goc" = bộ câu gốc của bài; số = bộ đã tạo với seed đó */
 function setIds(lessonId: string, ref: string, muc: Muc): { ids: string[]; prev?: string } {
-  if (ref === 'goc') return { ids: DEMO_QUESTIONS.filter((q) => q.lessonId === lessonId).map((q) => q.id) };
+  if (ref === 'goc') return { ids: demoQuestions().filter((q) => q.lessonId === lessonId).map((q) => q.id) };
   const s = Number(ref);
   if (!Number.isInteger(s) || s <= 0) return { ids: [] };
   const saved = readSetEntry(lessonId, s);
@@ -100,7 +100,7 @@ function avoidFrom(lessonId: string, prev: string | null | undefined, muc: Muc):
       avoid.prompts.add(q.prompt);
       avoid.sigs.add(signature(q));
       const g = isPracticeId(id) ? questionById(id) : null;
-      const d = g ? null : DEMO_QUESTIONS.find((x) => x.id === id);
+      const d = g ? null : demoQuestions().find((x) => x.id === id);
       avoid.cores.add(coreSig(g ?? { prompt: q.prompt, key: d?.answerKey }));
     }
     ref = older;
@@ -151,13 +151,13 @@ export function getReplacement(lessonId: string, current: Question, excludeIds: 
   const pool = eligiblePool(lessonId).filter((e) => e.level === current.level && !skip.has(e.id) && !prompts.has(e.prompt));
   if (pool.length && (!gen || Math.random() < 0.5)) {
     const pick = pool[Math.floor(Math.random() * pool.length)];
-    const d = DEMO_QUESTIONS.find((q) => q.id === pick.id);
+    const d = demoQuestions().find((q) => q.id === pick.id);
     if (d) return demoToQuestion(d);
   }
   return fromGenerator();
 }
 
-function demoToQuestion(q: (typeof DEMO_QUESTIONS)[number]): Question {
+function demoToQuestion(q: ReturnType<typeof demoQuestions>[number]): Question {
   return {
     id: q.id,
     lessonId: q.lessonId,
@@ -173,13 +173,13 @@ function demoToQuestion(q: (typeof DEMO_QUESTIONS)[number]): Question {
 
 export function countQuestions(lessonId: string): number {
   if (isPracticeId(lessonId)) return PER_LEVEL * 5;
-  return DEMO_QUESTIONS.filter((q) => q.lessonId === lessonId).length;
+  return demoQuestions().filter((q) => q.lessonId === lessonId).length;
 }
 
 /** Tổng thời gian tối đa (giây) của một bài = cộng thời gian từng câu. */
 export function lessonTimeLimit(lessonId: string): number {
   if (isPracticeId(lessonId)) return generatePractice(lessonId, 1).reduce((s, q) => s + q.timeLimit, 0); // ước lượng theo một đề mẫu
-  return DEMO_QUESTIONS.filter((q) => q.lessonId === lessonId).reduce((s, q) => s + q.timeLimit, 0);
+  return demoQuestions().filter((q) => q.lessonId === lessonId).reduce((s, q) => s + q.timeLimit, 0);
 }
 
 // meta: thời gian em đã dùng cho câu và câu có hết giờ hay không. Khi nối Supabase gửi kèm
@@ -197,7 +197,7 @@ export async function gradeAnswer(
     if (answer === null) return { correct: false, explanation: gq.explanation, solution: gq.solution };
     return { correct: gradeLocal(gq.type, answer, gq.key), explanation: gq.explanation, solution: gq.solution };
   }
-  const q = DEMO_QUESTIONS.find((item) => item.id === questionId);
+  const q = demoQuestions().find((item) => item.id === questionId);
   if (!q) return { correct: false };
   if (answer === null) return { correct: false, explanation: q.explanation, solution: q.solution }; // hết giờ
   return { correct: gradeLocal(q.type, answer, q.answerKey), explanation: q.explanation, solution: q.solution };

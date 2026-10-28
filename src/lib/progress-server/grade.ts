@@ -1,5 +1,6 @@
 import 'server-only';
-import { DEMO_QUESTIONS } from '@/lib/demo-data';
+import '@/lib/content'; // nạp đủ 5 khối bài soạn sẵn để chấm
+import { demoQuestions } from '@/lib/demo-data';
 import { getLesson } from '@/lib/data';
 import { gradeLocal } from '@/lib/grading';
 import { lessonBonus, questionPoints } from '@/lib/levels';
@@ -30,7 +31,7 @@ function allowedFor(lessonId: string, questionId: string): boolean {
     const gen = generatorFor(lessonId);
     return Boolean(gen && questionId.startsWith(`${gen}~`));
   }
-  const q = DEMO_QUESTIONS.find((d) => d.id === questionId);
+  const q = demoQuestions().find((d) => d.id === questionId);
   if (!q) return false;
   return q.lessonId === lessonId || eligiblePool(lessonId).some((e) => e.id === questionId);
 }
@@ -57,7 +58,7 @@ export function gradeLessonSubmission(lessonId: string, submitted: SubmittedAnsw
       ({ type, key, level } = g);
       limit = g.timeLimit;
     } else {
-      const d = DEMO_QUESTIONS.find((x) => x.id === a.questionId)!;
+      const d = demoQuestions().find((x) => x.id === a.questionId)!;
       type = d.type; key = d.answerKey; level = d.level; limit = d.timeLimit;
     }
     const spent = Math.min(Math.max(Number.isFinite(a.spentMs) ? Math.round(a.spentMs) : 0, 0), limit * 1000);

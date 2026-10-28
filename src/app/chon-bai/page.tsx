@@ -9,6 +9,7 @@ import Sticker from '@/components/learn/Sticker';
 import { SUBJECT_MASCOT } from '@/lib/mascots';
 import type { StickerId } from '@/lib/stickers';
 import LearnHeader from '@/components/LearnHeader';
+import GradeGate from '@/components/learn/GradeGate';
 import LessonToc, { lessonAnchor, lessonBadge, type TocGroup } from '@/components/LessonToc';
 import { GRADES, SUBJECTS, countQuestions, getLessons, getSubject, isSubjectCode, lessonTimeLimit, parseGrade } from '@/lib/data';
 import { rankFor } from '@/lib/levels';
@@ -299,7 +300,9 @@ function ChonBaiContent() {
 export default function ChonBaiPage() {
   return (
     <Suspense fallback={null}>
-      <ChonBaiContent />
+      <GradeGate>
+        <ChonBaiContent />
+      </GradeGate>
     </Suspense>
   );
 }
