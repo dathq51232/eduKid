@@ -1,7 +1,7 @@
 // Vẽ thư khen lên canvas ngay trên trình duyệt (không gửi dữ liệu đi đâu, không dùng thư viện ngoài).
 // Cùng một hàm vẽ cho: ảnh xem trước, ảnh PNG, trang PDF và bản in.
 import { LETTER_H, LETTER_W, type PraiseTemplate } from './templates';
-import { adjOf, fillVars, type BlockAdj, type BlockKey, type DesignItem, type PraiseDesign } from './design';
+import { EMOJIS, adjOf, fillVars, type BlockAdj, type BlockKey, type DesignItem, type PraiseDesign } from './design';
 
 export type LetterData = {
   school: string;
@@ -69,15 +69,32 @@ const artSrc = (t: PraiseTemplate) => `data:image/svg+xml;charset=utf-8,${encode
 
 export type LetterAssets = { art: HTMLImageElement; stickers: HTMLImageElement[]; items?: Map<string, HTMLImageElement> };
 
-/** Tải sẵn hình nền + sticker của một mẫu, và ảnh trong thiết kế tuỳ chỉnh (nếu có) */
-export async function loadTemplateAssets(t: PraiseTemplate, design?: PraiseDesign | null): Promise<LetterAssets> {
-  const [art, ...stickers] = await Promise.all([loadImage(t.bg ?? artSrc(t)), ...t.stickers.map((s) => loadImage(`/stickers/${s.id}.webp`))]);
-  return { art, stickers, items: await loadItemImages(design) };
+/** Bản nét cao (đã phóng to bằng AI, gấp đôi) của hình nền, sticker, biểu tượng — chỉ dùng khi xuất PDF / ảnh / in */
+const HD_EMOJI = new Set(EMOJIS);
+export function hdSrc(src: string): string | null {
+  let m = /^\/praise\/([\w-]+)\.webp$/.exec(src);
+  if (m) return `/praise/hd/${m[1]}.webp`;
+  m = /^\/stickers\/([\w-]+)\.webp$/.exec(src);
+  if (m) return `/stickers/hd/${m[1]}.webp`;
+  m = /^\/emoji\/([\w-]+)\.png$/.exec(src);
+  if (m && HD_EMOJI.has(m[1])) return `/emoji/hd/${m[1]}.webp`;
+  return null;
 }
-export async function loadItemImages(design?: PraiseDesign | null) {
+/** hd: thử bản nét cao trước, lỗi thì dùng bản thường */
+const loadBest = (src: string, hd: boolean) => {
+  const h = hd ? hdSrc(src) : null;
+  return h ? loadImage(h).catch(() => loadImage(src)) : loadImage(src);
+};
+
+/** Tải sẵn hình nền + sticker của một mẫu, và ảnh trong thiết kế tuỳ chỉnh (nếu có). hd = true khi xuất file / in */
+export async function loadTemplateAssets(t: PraiseTemplate, design?: PraiseDesign | null, hd = false): Promise<LetterAssets> {
+  const [art, ...stickers] = await Promise.all([t.bg ? loadBest(t.bg, hd) : loadImage(artSrc(t)), ...t.stickers.map((s) => loadBest(`/stickers/${s.id}.webp`, hd))]);
+  return { art, stickers, items: await loadItemImages(design, hd) };
+}
+export async function loadItemImages(design?: PraiseDesign | null, hd = false) {
   const items = new Map<string, HTMLImageElement>();
   const srcs = [...new Set((design?.items ?? []).filter((i) => i.kind === 'image').map((i) => (i as { src: string }).src))];
-  await Promise.all(srcs.map(async (src) => { try { items.set(src, await loadImage(src)); } catch { /* ảnh lỗi: bỏ qua */ } }));
+  await Promise.all(srcs.map(async (src) => { try { items.set(src, await loadBest(src, hd)); } catch { /* ảnh lỗi: bỏ qua */ } }));
   return items;
 }
 
@@ -557,6 +574,8 @@ export function renderLetterCanvas(t: PraiseTemplate, assets: LetterAssets, d: L
   c.height = Math.round(LETTER_H * scale);
   const ctx = c.getContext('2d');
   if (!ctx) throw new Error('Trình duyệt không hỗ trợ vẽ ảnh (canvas).');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   ctx.scale(scale, scale);
   drawLetter(ctx, t, assets, d, design);
   return c;

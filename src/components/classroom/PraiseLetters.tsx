@@ -166,12 +166,12 @@ export default function PraiseLetters({ className, grade, students, awards, teac
     if (!selected.length) { askToPick(); return null; }
     setMsg(null);
     await loadPraiseFonts();
-    const assets = await loadTemplateAssets(tpl, design);
+    const assets = await loadTemplateAssets(tpl, design, true);
     const out: { student: Student; blob: Blob; w: number; h: number }[] = [];
     for (const [i, st] of selected.entries()) {
       setBusy(`${label} ${i + 1}/${selected.length}…`);
       const c = renderLetterCanvas(tpl, assets, letterFor(st), scale, design);
-      out.push({ student: st, blob: await canvasBlob(c, type, type === 'image/jpeg' ? 0.9 : undefined), w: c.width, h: c.height });
+      out.push({ student: st, blob: await canvasBlob(c, type, type === 'image/jpeg' ? 0.92 : undefined), w: c.width, h: c.height });
       await new Promise((r) => setTimeout(r, 0)); // nhường cho giao diện cập nhật tiến độ
     }
     return out;
@@ -188,7 +188,7 @@ export default function PraiseLetters({ className, grade, students, awards, teac
   };
 
   const downloadPdf = () => run(async () => {
-    const imgs = await renderAll(1.5, 'image/jpeg', 'Đang tạo PDF');
+    const imgs = await renderAll(2, 'image/jpeg', 'Đang tạo PDF');
     if (!imgs) return;
     const pages = await Promise.all(imgs.map(async (x) => ({ jpeg: new Uint8Array(await x.blob.arrayBuffer()), width: x.w, height: x.h })));
     downloadBytes(`${fileBase}.pdf`, buildImagePdf(pages), 'application/pdf');
@@ -196,7 +196,7 @@ export default function PraiseLetters({ className, grade, students, awards, teac
   });
 
   const downloadPng = () => run(async () => {
-    const imgs = await renderAll(1.5, 'image/png', 'Đang tạo ảnh');
+    const imgs = await renderAll(2, 'image/png', 'Đang tạo ảnh');
     if (!imgs) return;
     const nameOf = (st: Student, i: number) => `${String(i + 1).padStart(2, '0')}-${asciiFilename(st.name)}.png`;
     if (imgs.length === 1) {
@@ -211,7 +211,7 @@ export default function PraiseLetters({ className, grade, students, awards, teac
 
   const [printUrls, setPrintUrls] = useState<string[]>([]);
   const doPrint = () => run(async () => {
-    const imgs = await renderAll(1.25, 'image/jpeg', 'Đang chuẩn bị bản in');
+    const imgs = await renderAll(2, 'image/jpeg', 'Đang chuẩn bị bản in');
     if (!imgs) return;
     setPrintUrls(imgs.map((x) => URL.createObjectURL(x.blob)));
   });
@@ -422,7 +422,7 @@ export default function PraiseLetters({ className, grade, students, awards, teac
             </div>
             {busy && <p className="adm-alert is-info" role="status">{busy}</p>}
             {msg && <p className={`adm-alert is-${msg.kind}`} role={msg.kind === 'error' ? 'alert' : 'status'}>{msg.text}</p>}
-            <p className="dash-muted praise-note">PDF và bản in: mỗi em một trang A4 ngang. Khi in, chọn khổ A4, hướng ngang, lề “Không” để thư phủ kín trang.</p>
+            <p className="dash-muted praise-note">PDF, ảnh và bản in xuất nét cao 2828 × 2000 px (khoảng 240 dpi trên A4), mỗi em một trang A4 ngang. Khi in, chọn khổ A4, hướng ngang, lề “Không” để thư phủ kín trang.</p>
           </section>
         </aside>
       </div>
