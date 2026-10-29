@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { Pencil, Search } from 'lucide-react';
 import CsvButton from '@/components/classroom/CsvButton';
 import { createClient } from '@/lib/supabase/client';
-import { FREE_STUDENT_LIMIT } from '@/lib/contact';
+import { FREE_STUDENT_LIMIT, TEACHER_TRIAL_DAYS } from '@/lib/contact';
 import { useAdminUser } from './AdminContext';
 
-type Row = { teacher_id: string; display_name: string; email: string | null; school_name: string | null; classes: number; students_used: number; student_limit: number; note: string | null; joined_at: string };
+type Row = { teacher_id: string; display_name: string; email: string | null; school_name: string | null; classes: number; students_used: number; student_limit: number; note: string | null; joined_at: string; trial_until?: string | null };
 const PRESETS = [3, 10, 20, 40];
 const fmtDay = (s: string) => { const d = new Date(s); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; };
 
@@ -34,13 +34,24 @@ export default function TeacherPlans() {
   const save = async (r: Row) => {
     const e = edit[r.teacher_id];
     if (!e) return;
-    if (e.limit < r.students_used && !window.confirm(`${r.display_name} đang có ${r.students_used} học sinh. Đặt giới hạn ${e.limit} thì các em hiện có vẫn học bình thường nhưng không thêm được em mới. Tiếp tục?`)) return;
+    if (e.limit < r.students_used && !window.confirm(`${r.display_name} đang có ${r.students_used} học sinh. Đặt giới hạn ${e.limit} thì (khi hết dùng thử) chỉ ${e.limit} em vào lớp sớm nhất học được, các em còn lại tạm khoá phần học (bài đã làm vẫn giữ). Tiếp tục?`)) return;
     setBusy(true);
     const { error } = await supabase.rpc('admin_set_teacher_limit', { p_teacher: r.teacher_id, p_limit: e.limit, p_note: e.note });
     setBusy(false);
     if (error) return setMsg({ kind: 'error', text: 'Chưa lưu được (giới hạn từ 1 đến 200).' });
     setMsg({ kind: 'ok', text: `Đã đặt giới hạn ${e.limit} học sinh cho ${r.display_name}.` });
     setEdit((x) => { const n = { ...x }; delete n[r.teacher_id]; return n; });
+    void load();
+  };
+
+  // dùng thử đủ lớp (migration 0045): gia hạn thêm / kết thúc
+  const setTrial = async (r: Row, days: number) => {
+    if (days === 0 && !window.confirm(`Kết thúc dùng thử của ${r.display_name}? Các em ngoài ${r.student_limit} chỗ của gói sẽ tạm khoá phần học.`)) return;
+    setBusy(true);
+    const { error } = await supabase.rpc('admin_set_teacher_trial', { p_teacher: r.teacher_id, p_days: days });
+    setBusy(false);
+    if (error) return setMsg({ kind: 'error', text: /function|schema cache/i.test(error.message) ? 'Chưa bật dùng thử: hãy chạy supabase/migrations/0045_teacher_trial.sql trên Supabase.' : 'Chưa lưu được.' });
+    setMsg({ kind: 'ok', text: days ? `${r.display_name}: dùng thử đủ lớp thêm ${days} ngày (tính từ hôm nay).` : `Đã kết thúc dùng thử của ${r.display_name}.` });
     void load();
   };
 
@@ -72,7 +83,7 @@ export default function TeacherPlans() {
         <h1>Giáo viên</h1>
         <CsvButton filename="giao-vien.csv" header={['Họ tên', 'Email', 'Trường', 'Số lớp', 'Học sinh đang có', 'Giới hạn', 'Ghi chú', 'Ngày đăng ký']} rows={csvRows} />
       </div>
-      <p className="adm-muted">Giáo viên đăng ký miễn phí và dùng ngay: 1 lớp, tối đa {FREE_STUDENT_LIMIT} học sinh. Khi thầy cô liên hệ xin thêm, đặt giới hạn mới ở đây (tối đa 40 em / lớp). Bấm <strong>Sửa tên, trường</strong> để đổi tên giáo viên hoặc tên trường hiện trên trang của thầy cô. {rows.length ? `${rows.length} giáo viên, ${full} người đã dùng hết chỗ.` : ''}</p>
+      <p className="adm-muted">Giáo viên đăng ký miễn phí và dùng ngay: 1 lớp, <strong>dùng thử đủ 40 học sinh trong {TEACHER_TRIAL_DAYS} ngày</strong>, sau đó gói {FREE_STUDENT_LIMIT} học sinh (các em ngoài số chỗ tạm khoá phần học). Khi thầy cô liên hệ, đặt giới hạn mới ở đây (tối đa 40 em / lớp) hoặc gia hạn dùng thử. Bấm <strong>Sửa tên, trường</strong> để đổi tên giáo viên hoặc tên trường hiện trên trang của thầy cô. {rows.length ? `${rows.length} giáo viên, ${full} người đã dùng hết chỗ.` : ''}</p>
       {msg && <p className={`adm-alert ${msg.kind === 'ok' ? 'is-ok' : 'is-error'}`} role="status">{msg.text}</p>}
       <label className="billing-search"><Search aria-hidden="true" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm theo tên, email hoặc trường" aria-label="Tìm giáo viên" /></label>
       {rows.length === 0 ? <p className="adm-muted">Không có giáo viên nào.</p> : (
@@ -106,7 +117,18 @@ export default function TeacherPlans() {
                         <td>{r.school_name ?? '—'}<br /><small>{r.classes} lớp</small></td>
                       </>
                     )}
-                    <td><span className={`status-chip ${r.students_used >= r.student_limit ? 'tone-coral' : 'tone-green'}`}>{r.students_used}/{r.student_limit}</span>{r.note && <><br /><small>{r.note}</small></>}</td>
+                    <td><span className={`status-chip ${r.students_used >= r.student_limit ? 'tone-coral' : 'tone-green'}`}>{r.students_used}/{r.student_limit}</span>{r.note && <><br /><small>{r.note}</small></>}
+                      {(() => {
+                        const on = r.trial_until && Date.parse(r.trial_until) > Date.now();
+                        return (
+                          <div className="plan-trial">
+                            <small>{on ? <>Dùng thử đủ lớp đến <b>{fmtDay(r.trial_until as string)}</b></> : r.trial_until ? `Hết dùng thử ${fmtDay(r.trial_until)}` : 'Không dùng thử'}</small>
+                            <button type="button" className="mini-btn" disabled={busy} onClick={() => void setTrial(r, TEACHER_TRIAL_DAYS)}>+{TEACHER_TRIAL_DAYS} ngày thử</button>
+                            {on && <button type="button" className="mini-btn" disabled={busy} onClick={() => void setTrial(r, 0)}>Kết thúc thử</button>}
+                          </div>
+                        );
+                      })()}
+                    </td>
                     <td>
                       <div className="plan-edit">
                         {PRESETS.map((n) => <button key={n} type="button" className={`mini-btn${(e?.limit ?? r.student_limit) === n ? ' is-on' : ''}`} onClick={() => setEdit((x) => ({ ...x, [r.teacher_id]: { limit: n, note: x[r.teacher_id]?.note ?? r.note ?? '' } }))}>{n}</button>)}

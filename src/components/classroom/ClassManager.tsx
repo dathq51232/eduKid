@@ -42,7 +42,7 @@ function billingChip(b?: BillingRow) {
   return <span className="dash-muted">Miễn phí</span>;
 }
 
-export default function ClassManager({ cls, roster, summary, pins = {}, top, billing, plan }: { cls: Cls; roster: RosterRow[]; summary: SummaryRow[]; pins?: Record<string, string>; /** khối hiện ngay dưới tiêu đề lớp */ top?: React.ReactNode; /** tình trạng học phí (migration 0018) */ billing?: BillingRow[]; /** gói của giáo viên (migration 0019): giới hạn + số em đang dùng ở mọi lớp */ plan?: { limit: number; used: number } | null }) {
+export default function ClassManager({ cls, roster, summary, pins = {}, top, billing, plan, lockedIds = [] }: { cls: Cls; roster: RosterRow[]; summary: SummaryRow[]; pins?: Record<string, string>; /** khối hiện ngay dưới tiêu đề lớp */ top?: React.ReactNode; /** tình trạng học phí (migration 0018) */ billing?: BillingRow[]; /** gói của giáo viên (migration 0019): giới hạn + số em đang dùng ở mọi lớp */ plan?: { limit: number; used: number } | null; /** em tạm khoá vì hết thời gian dùng thử (0045) */ lockedIds?: string[] }) {
   const billMap = new Map((billing ?? []).map((b) => [b.student_id, b]));
   const showBilling = (billing ?? []).some((b) => b.reason !== 'free');
   const router = useRouter();
@@ -227,7 +227,7 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
                     <tr key={r.student_id}>
                       <th scope="row"><Link href={`/giao-vien/lop/${cls.id}/hoc-sinh/${r.student_id}`} className="student-link" title="Xem tiến độ chi tiết">{r.display_name}</Link></th>
                       <td className="pin-cell">{pins[r.student_id] ? (showPins ? <b className="pin-value">{pins[r.student_id]}</b> : <span aria-label="PIN đang ẩn">••••••</span>) : <span className="dash-muted" title="PIN tạo trước khi bật lưu PIN — bấm “Đặt PIN mới” để có PIN xem lại được">Chưa lưu</span>}</td>
-                      <td><span className={`status-chip tone-${st.tone}`}>{st.label}</span></td>
+                      <td><span className={`status-chip tone-${st.tone}`}>{st.label}</span>{lockedIds.includes(r.student_id) && <> <span className="status-chip tone-coral" title="Hết thời gian dùng thử: em nằm ngoài số chỗ của gói — liên hệ quản trị để mở">Tạm khoá (gói)</span></>}</td>
                       {showBilling && <td>{billingChip(billMap.get(r.student_id))}</td>}
                       <td>{s?.lessons_done ? <Link href={`/giao-vien/lop/${cls.id}/hoc-sinh/${r.student_id}`} className="student-link">{s.lessons_done} bài</Link> : 0}</td>
                       <td>{s?.lessons_done ? `${s.avg_percent}%` : '—'}</td>

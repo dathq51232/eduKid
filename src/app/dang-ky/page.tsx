@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, UserPlus } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import { createClient } from '@/lib/supabase/client';
-import { ADMIN_CONTACT, FREE_STUDENT_LIMIT } from '@/lib/contact';
+import { ADMIN_CONTACT, FREE_STUDENT_LIMIT, TEACHER_TRIAL_DAYS } from '@/lib/contact';
 
 type Role = 'teacher' | 'parent';
 
@@ -101,7 +101,7 @@ export default function SignupPage() {
               </label>
             )}
             {role === 'teacher' ? (
-              <p className="adm-alert is-info">Giáo viên đăng ký <strong>miễn phí</strong>, dùng được ngay: 1 lớp, tối đa {FREE_STUDENT_LIMIT} học sinh. Cần thêm học sinh, liên hệ quản trị {ADMIN_CONTACT.phoneDisplay} (Zalo) — {ADMIN_CONTACT.email}.</p>
+              <p className="adm-alert is-info">Giáo viên đăng ký <strong>miễn phí</strong>, dùng được ngay: 1 lớp, <strong>dùng thử đủ lớp 40 học sinh trong {TEACHER_TRIAL_DAYS} ngày</strong>; sau đó gói miễn phí {FREE_STUDENT_LIMIT} học sinh. Cần thêm học sinh, liên hệ quản trị {ADMIN_CONTACT.phoneDisplay} (Zalo) — {ADMIN_CONTACT.email}.</p>
             ) : (
               <p className="adm-alert is-info">Sau khi đăng ký, nhập mã mời do thầy cô gửi để xem tiến độ của con.</p>
             )}

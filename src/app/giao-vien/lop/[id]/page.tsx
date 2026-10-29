@@ -41,6 +41,9 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
     // Gói của giáo viên (migration 0019): giới hạn học sinh; quản trị xem lớp thì không giới hạn
     supabase.rpc('teacher_my_plan'),
   ]);
+  // em đang tạm khoá vì hết chỗ trong gói (migration 0045); chưa chạy migration thì bỏ qua
+  const { data: lockedRows } = await supabase.rpc('teacher_locked_students', { p_class: id });
+  const lockedIds = ((lockedRows ?? []) as { student_id: string }[]).map((r) => r.student_id);
   const planRow = ((planRows ?? []) as { student_limit: number; students_used: number }[])[0];
   const plan = planRow ? { limit: planRow.student_limit, used: planRow.students_used } : null;
   const pins: Record<string, string> = Object.fromEntries(((pinRows ?? []) as { student_id: string; pin: string }[]).map((p) => [p.student_id, p.pin]));
@@ -73,6 +76,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
           pins={pins}
           billing={(billing ?? []) as BillingRow[]}
           plan={plan}
+          lockedIds={lockedIds}
         />
         {FEATURES.teacherRecords && (
           <section className="dash-section comments-entry no-print">

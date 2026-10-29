@@ -12,7 +12,8 @@ import SignOutButton from '@/components/classroom/SignOutButton';
 import { CreateClassForm, TeacherRequestForm } from '@/components/classroom/TeacherForms';
 import { getViewer } from '@/lib/auth/viewer';
 import ContactAdmin from '@/components/ContactAdmin';
-import { FREE_STUDENT_LIMIT } from '@/lib/contact';
+import { FREE_STUDENT_LIMIT, TEACHER_TRIAL_DAYS } from '@/lib/contact';
+import { fmtDay } from '@/lib/billing';
 import { createClient } from '@/lib/supabase/server';
 import { FEATURES } from '@/lib/features';
 import { buildToday, type TodayItem } from '@/lib/classroom/today';
@@ -39,7 +40,7 @@ export default async function TeacherHome() {
           </div>
           <section className="dash-card">
             <h2>Đăng ký dùng miễn phí cho giáo viên</h2>
-            <p>Nhập tên trường để bắt đầu ngay — không cần chờ duyệt. Gói miễn phí: <strong>1 lớp, tối đa {FREE_STUDENT_LIMIT} học sinh</strong>, dùng đủ các công cụ giao bài, đề kiểm tra, phiếu bài tập. Muốn thêm học sinh, liên hệ quản trị.</p>
+            <p>Nhập tên trường để bắt đầu ngay — không cần chờ duyệt. Giáo viên mới được <strong>dùng thử đủ lớp 40 học sinh trong {TEACHER_TRIAL_DAYS} ngày</strong>, sau đó gói miễn phí 1 lớp, tối đa {FREE_STUDENT_LIMIT} học sinh; dùng đủ các công cụ giao bài, đề kiểm tra, phiếu bài tập. Muốn thêm học sinh, liên hệ quản trị.</p>
             <TeacherRequestForm schoolHint={viewer.schoolNameHint} />
           </section>
           <ContactAdmin title="Liên hệ quản trị" compact />
@@ -55,8 +56,10 @@ export default async function TeacherHome() {
     viewer.teacherSchoolId ? supabase.from('schools').select('name').eq('id', viewer.teacherSchoolId).maybeSingle() : Promise.resolve({ data: null }),
     supabase.rpc('teacher_my_plan'),
   ]);
-  const plan = ((planRows ?? []) as { student_limit: number; students_used: number }[])[0];
-  const planText = plan ? `${plan.student_limit <= FREE_STUDENT_LIMIT ? 'Gói miễn phí' : 'Gói của thầy cô'}: ${plan.students_used}/${plan.student_limit} học sinh` : null;
+  const plan = ((planRows ?? []) as { student_limit: number; students_used: number; trial_until?: string | null; base_limit?: number; locked?: number }[])[0];
+  const trialUntil = plan?.trial_until ?? null;
+  const trialDays = trialUntil ? Math.max(1, Math.ceil((Date.parse(trialUntil) - Date.now()) / 86_400_000)) : 0;
+  const planText = plan ? `${trialUntil ? `Dùng thử đủ lớp đến ${fmtDay(trialUntil)}` : plan.student_limit <= FREE_STUDENT_LIMIT ? 'Gói miễn phí' : 'Gói của thầy cô'}: ${plan.students_used}/${plan.student_limit} học sinh` : null;
   const count = new Map<string, number>();
   for (const m of (members ?? []) as { class_id: string }[]) count.set(m.class_id, (count.get(m.class_id) ?? 0) + 1);
   const list = (classes ?? []) as ClassRow[];
@@ -180,7 +183,16 @@ export default async function TeacherHome() {
           <CreateClassForm />
         </section>
       )}
-      {plan && plan.students_used >= plan.student_limit && (
+      {trialUntil && plan && (
+        <p className="adm-alert is-info" role="status">
+          Thầy cô đang <strong>dùng thử đủ lớp (tối đa 40 học sinh)</strong> đến hết {fmtDay(trialUntil)} — còn {trialDays} ngày.
+          Sau đó gói miễn phí giữ {plan.base_limit ?? FREE_STUDENT_LIMIT} em vào lớp sớm nhất; các em còn lại tạm khoá phần học (bài đã làm vẫn giữ) cho đến khi được mở gói.
+        </p>
+      )}
+      {plan && (plan.locked ?? 0) > 0 && (
+        <ContactAdmin note={`Đã hết thời gian dùng thử: ${plan.locked} em đang tạm khoá (gói hiện có ${plan.student_limit} chỗ). Liên hệ để mở gói cho cả lớp — các em học lại ngay, không mất bài.`} />
+      )}
+      {plan && !trialUntil && !(plan.locked ?? 0) && plan.students_used >= plan.student_limit && (
         <ContactAdmin note={`Thầy cô đã dùng hết ${plan.student_limit} chỗ học sinh của gói. Liên hệ để được mở thêm.`} />
       )}
 

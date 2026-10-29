@@ -41,7 +41,7 @@ export default async function StudentHome() {
   // Học phí (migration 0018): hết hạn thì mọi nút học dẫn tới trang đóng phí (máy chủ cũng chặn ở middleware + API)
   const gate = await learningGate(supabase, viewer.userId);
   const locked = gate.is_student && !gate.active;
-  const PAY = '/hoc-sinh/dong-phi';
+  const PAY = gate.reason === 'plan_locked' ? '/hoc-sinh#tam-khoa' : '/hoc-sinh/dong-phi';
   const tasks = ((assigned ?? []) as MyAssignment[]);
   const todo = tasks.filter((t) => t.status === 'open' && !t.done)
     .sort((a, b) => (a.due_at ?? '9999').localeCompare(b.due_at ?? '9999'));
@@ -74,6 +74,9 @@ export default async function StudentHome() {
     <>
       <LearnHeader />
       <main className="dash wrap sd">
+        {gate.reason === 'plan_locked' && (
+          <p id="tam-khoa" className="adm-alert is-warn tuition-banner" role="status"><Lock aria-hidden="true" /> Tài khoản của em đang tạm khoá vì lớp đã hết thời gian dùng thử. Bài em đã làm vẫn được giữ nguyên — khi thầy cô mở thêm chỗ, em học tiếp được ngay.</p>
+        )}
         {gate.reason === 'expired' && (
           <p className="adm-alert is-warn tuition-banner" role="status"><Lock aria-hidden="true" /> Thời gian học của em đã hết. Nhờ bố mẹ đóng học phí để học tiếp nhé! <Link href={PAY} className="btn btn-yellow btn-sm"><CreditCard aria-hidden="true" /> Đóng học phí</Link></p>
         )}

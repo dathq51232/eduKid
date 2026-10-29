@@ -7,7 +7,7 @@ export type BillingPublic = {
   enabled: boolean; price_month: number; price_year: number; trial_days: number;
   bank_bin: string | null; bank_name: string | null; account_no: string | null; account_name: string | null; note: string | null; year_end: string;
 };
-export type Gate = { is_student: boolean; grade: number | null; active: boolean; reason: 'free' | 'paid' | 'trial' | 'expired' | 'not_student'; until: string | null };
+export type Gate = { is_student: boolean; grade: number | null; active: boolean; reason: 'free' | 'paid' | 'trial' | 'expired' | 'not_student' | 'plan_locked'; until: string | null };
 export type PaymentRow = { id: string; code: string; plan: Plan; amount: number; status: 'pending' | 'confirmed' | 'cancelled'; created_at: string; confirmed_at: string | null; period_to: string | null };
 
 export const vnd = (n: number) => `${Math.round(n).toLocaleString('vi-VN').replace(/,/g, '.')}đ`;

@@ -67,7 +67,8 @@ export async function updateSession(request: NextRequest) {
       if (grade) redirect.cookies.set(GRADE_COOKIE, String(grade), { path: '/', sameSite: 'lax', maxAge: 12 * 3600 });
       return redirect;
     };
-    if (gate.is_student && !gate.active) return go('/hoc-sinh/dong-phi');
+    // hết chỗ trong gói của thầy cô (migration 0045) -> trang của em (có thông báo); hết học phí -> trang đóng phí
+    if (gate.is_student && !gate.active) return go(gate.reason === 'plan_locked' ? '/hoc-sinh' : '/hoc-sinh/dong-phi');
     if (grade && GRADE_LOCKED.includes(path)) {
       const q = request.nextUrl.searchParams;
       const asked = Number(q.get('grade') ?? grade);
