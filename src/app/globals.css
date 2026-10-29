@@ -6473,3 +6473,62 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 /* quản trị giáo viên: dùng thử đủ lớp (0045) */
 .plan-trial { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 6px; }
 .plan-trial small { flex-basis: 100%; }
+
+/* Thư khen: 4 thẻ bước + ảnh học sinh trên thư */
+.praise-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; position: sticky; top: 8px; z-index: 3; padding: 6px; border-radius: 18px; background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(8px); box-shadow: var(--shadow-sm); }
+.praise-tabs button { display: flex; align-items: center; gap: 7px; min-width: 0; padding: 8px 8px; border: 2px solid transparent; border-radius: 14px; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.praise-tabs button:hover { background: var(--surface-2); }
+.praise-tabs button.is-on { border-color: var(--blue); background: var(--blue-soft); }
+.praise-tabs button:not(.is-on) .praise-n { background: var(--surface-2); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
+.praise-tab-txt { display: grid; min-width: 0; }
+.praise-tab-txt b { display: flex; align-items: center; gap: 5px; font-size: 15px; white-space: nowrap; }
+.praise-tab-txt b svg { width: 16px; height: 16px; flex: none; }
+.praise-tab-txt small { overflow: hidden; color: var(--muted); font-size: 12.5px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.praise-card > h2 + * { margin-top: 14px; }
+.praise-card > * + * { margin-top: 12px; }
+.praise-next { display: flex; justify-content: flex-end; padding-top: 4px; }
+.praise-next .btn svg { width: 16px; height: 16px; }
+.praise-switch { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 14px; background: var(--blue-soft); cursor: pointer; }
+.praise-switch input { width: 22px; height: 22px; margin-top: 2px; accent-color: var(--blue); flex: none; }
+.praise-switch span { display: grid; gap: 2px; }
+.praise-switch small { color: var(--muted); font-size: 13.5px; }
+.praise-ph-opts { display: grid; gap: 12px; }
+.praise-ph-opts.is-off { opacity: .55; }
+.praise-opt { display: grid; gap: 6px; }
+.praise-opt .praise-seg { flex-wrap: wrap; justify-self: start; }
+.praise-spots { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.praise-spots .mini-btn.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.praise-drag-hint { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
+.praise-drag-hint svg { width: 14px; height: 14px; }
+.praise-colors { display: flex; flex-wrap: wrap; gap: 8px; }
+.praise-colors button { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line-strong); cursor: pointer; }
+.praise-colors button.is-on { box-shadow: 0 0 0 3px var(--blue); }
+.praise-ph-box { display: grid; gap: 8px; padding: 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); }
+.praise-ph-box h3 { margin: 0; font-size: 16px; }
+.praise-ph-box h3 small { color: var(--muted); font-weight: 600; }
+.praise-ph-box p { margin: 0; font-size: 14px; }
+.praise-ph-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.praise-ph { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; overflow: hidden; border: 2px solid var(--line-strong); border-radius: 50%; background: var(--surface); color: var(--muted); cursor: pointer; }
+.praise-ph img { width: 100%; height: 100%; object-fit: cover; }
+.praise-ph.is-empty { border-style: dashed; }
+.praise-ph.is-empty:hover { border-color: var(--blue); color: var(--blue); }
+.praise-ph svg { width: 20px; height: 20px; }
+.praise-ph.is-lg { width: 72px; height: 72px; border-radius: 16px; }
+.praise-ph-cell { width: 56px; }
+.praise-ph-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; max-height: 420px; overflow-y: auto; padding: 2px; }
+.praise-ph-item { display: grid; justify-items: center; gap: 4px; padding: 8px 4px; border-radius: 12px; background: var(--surface); text-align: center; font-size: 13px; font-weight: 700; }
+.praise-ph-item.is-shown { box-shadow: 0 0 0 2px var(--blue); }
+.praise-ph-item > span { overflow-wrap: anywhere; }
+.praise-ph-acts { display: flex; gap: 4px; }
+.praise-ph-acts .mini-btn { padding: 2px 8px; font-size: 12px; }
+.praise-unmatched { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.praise-unmatched li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13.5px; }
+.praise-unmatched li > span { flex: 1 1 140px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.praise-unmatched select { min-height: 34px; border: 1px solid var(--line-strong); border-radius: 9px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13.5px; }
+.praise-demo-tag { margin: 0; padding: 6px 10px; border-radius: 10px; background: #fff7e6; color: #8a5a00; font-size: 13px; font-weight: 600; }
+.praise-ph-box input[type=range], .praise-ph-opts input[type=range] { width: 100%; accent-color: var(--blue); }
+.praise-preview .praise-card { display: grid; gap: 12px; }
+@media (max-width: 1100px) { .praise-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .praise-tabs { position: static; } }
+.praise-check { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.praise-check input { width: 18px; height: 18px; accent-color: var(--blue); }

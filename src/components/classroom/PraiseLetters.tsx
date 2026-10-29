@@ -1,7 +1,8 @@
 'use client';
+/* eslint-disable @next/next/no-img-element -- ảnh học sinh là blob trên máy giáo viên, không qua next/image */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Award as AwardIcon, Check, ChevronLeft, ChevronRight, FileDown, ImageDown, Palette, Printer, RotateCcw, Upload, X } from 'lucide-react';
+import { Award as AwardIcon, Camera, Check, ChevronLeft, ChevronRight, FileDown, ImageDown, ImagePlus, Move, Palette, Printer, RotateCcw, Upload, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { asciiFilename } from '@/lib/filename';
 import { zipStore } from '@/lib/xlsx';
@@ -10,6 +11,7 @@ import { canvasBlob, drawLetter, loadImage, loadPraiseFonts, loadTemplateAssets,
 import { addItem, canvasToImage, galleryError } from '@/lib/gallery/client';
 import { createClient } from '@/lib/supabase/client';
 import { isCustomized, readDesigns, writeDesigns, type PraiseDesign } from '@/lib/praise/design';
+import { DEFAULT_SLOT, PHOTO_SHAPES, PHOTO_SPOTS, deletePhoto, loadPhotos, matchFiles, prepPhoto, readSlots, saveCrop, savePhoto, slotBox, writeSlot, type PhotoSlot, type StudentPhoto } from '@/lib/praise/photos';
 import { LETTER_H, LETTER_W, PRAISE_REASONS, PRAISE_TEMPLATES, defaultTemplateFor, fillReason, templateById, type PraiseTemplateId } from '@/lib/praise/templates';
 
 const PraiseEditor = dynamic(() => import('./PraiseEditor'), { ssr: false });
@@ -18,6 +20,9 @@ type Student = { id: string; name: string };
 type AwardRow = { student_id: string; title: string; awarded_on: string };
 type Row = { on: boolean; reason: number; extra: string };
 type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;
+type Tab = 'mau' | 'noidung' | 'hocsinh' | 'anh';
+const DEMO = '__demo'; // ảnh thử (chỉ dùng để xem trước, không in vào thư thật)
+const FRAME_COLORS = ['#ffffff', '#f59e0b', '#ec4899', '#2457c5', '#16a34a', '#c0161b', '#7c3aed', '#111827'];
 
 /** Cài đặt chung lưu trên máy giáo viên (không chứa tên học sinh) */
 type Settings = {
@@ -114,15 +119,28 @@ export default function PraiseLetters({ classId, className, grade, students, awa
   };
   const commonReason = s.reason === CUSTOM ? s.customReason : PRAISE_REASONS[s.reason] ?? PRAISE_REASONS[0];
 
-  const letterFor = useCallback((st: Student): LetterData => {
+  // ------------------------------------------------ ảnh học sinh (lưu trong trình duyệt trên máy này, không tải lên máy chủ)
+  const scope = classId ?? 'mau';
+  const [slots, setSlots] = useState<Record<string, PhotoSlot>>({});
+  useEffect(() => { setSlots(readSlots()); }, []);
+  const slot = slots[tpl.id] ?? DEFAULT_SLOT;
+  const setSlot = useCallback((patch: Partial<PhotoSlot>) => setSlots((all) => writeSlot(all, tpl.id, { ...(all[tpl.id] ?? DEFAULT_SLOT), ...patch })), [tpl.id]);
+  const [photos, setPhotos] = useState<Record<string, StudentPhoto>>({});
+  useEffect(() => { let live = true; void loadPhotos(scope).then((p) => { if (live) setPhotos(p); }); return () => { live = false; }; }, [scope]);
+  const demo = photos[DEMO] ?? null;
+  const withPhoto = students.filter((st) => photos[st.id]).length;
+
+  const letterFor = useCallback((st: Student, preview = false): LetterData => {
     const r = rows[st.id] ?? { on: false, reason: COMMON, extra: '' };
     const reason = r.reason >= 0 ? PRAISE_REASONS[r.reason] : commonReason;
     return {
       school: s.school, lead: s.lead, name: st.name, className, extra: r.extra,
       reason: fillReason(reason, s.ky), wish: s.wish, placeDate: placeDate(s.place, date),
       role: s.role, teacher: s.teacher, closing: s.closing, signature: useSignImage ? signature : null,
+      // xem trước: em chưa có ảnh thì dùng ảnh thử (nếu có); thư xuất thật chỉ dùng ảnh của chính em
+      photo: slot.on ? { slot, photo: photos[st.id] ?? (preview ? demo : null) } : null,
     };
-  }, [rows, commonReason, s, className, date, signature, useSignImage]);
+  }, [rows, commonReason, s, className, date, signature, useSignImage, slot, photos, demo]);
 
   // ------------------------------------------------ xem trước
   const preview = useRef<HTMLCanvasElement>(null);
@@ -136,7 +154,7 @@ export default function PraiseLetters({ classId, className, grade, students, awa
       const c = preview.current;
       const ctx = c?.getContext('2d');
       if (!live || !assets || !ctx) return;
-      drawLetter(ctx, tpl, assets, letterFor(shown), design);
+      drawLetter(ctx, tpl, assets, letterFor(shown, true), design);
       c!.dataset.ready = '1';
     }, 120);
     return () => { live = false; clearTimeout(id); };
@@ -178,11 +196,10 @@ export default function PraiseLetters({ classId, className, grade, students, awa
     }
     return out;
   };
-  /** chưa chọn em nào: nhắc rồi đưa thầy cô tới mục 3 để chọn */
+  /** chưa chọn em nào: nhắc rồi mở thẻ Học sinh để chọn */
   const askToPick = () => {
-    setMsg({ kind: 'error', text: 'Chưa chọn em nào. Đánh dấu các em được khen ở mục 3 “Học sinh được khen” (hoặc bấm “Chọn cả lớp”), rồi bấm tải lại.' });
-    const h = document.getElementById('pr-step3');
-    h?.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    setMsg({ kind: 'error', text: 'Chưa chọn em nào. Đánh dấu các em được khen ở thẻ 3 “Học sinh” (hoặc bấm “Chọn cả lớp”), rồi bấm tải lại.' });
+    goTab('hocsinh');
   };
   const fileBase = asciiFilename(`thu-khen-lop-${className}`);
   // ------------------------------------------------ treo thư lên Phòng triển lãm của lớp (migration 0039)
@@ -271,6 +288,92 @@ export default function PraiseLetters({ classId, className, grade, students, awa
     } catch { setMsg({ kind: 'error', text: 'Không đọc được ảnh chữ ký.' }); }
   };
 
+  // ------------------------------------------------ thẻ (tab) bên trái
+  const [tab, setTab] = useState<Tab>('mau');
+  const goTab = (t: Tab) => {
+    setTab(t);
+    document.getElementById('pr-tabs')?.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
+  };
+
+  // ------------------------------------------------ tải ảnh học sinh
+  const fileFor = useRef<string | null>(null);
+  const oneInput = useRef<HTMLInputElement>(null);
+  const [unmatched, setUnmatched] = useState<{ file: File; to: string }[]>([]);
+  const putPhoto = async (id: string, file: File) => {
+    const { blob, photo } = await prepPhoto(file);
+    await savePhoto(scope, id, blob, photo);
+    setPhotos((p) => { if (p[id]) URL.revokeObjectURL(p[id].url); return { ...p, [id]: photo }; });
+  };
+  const pickOne = (id: string) => { fileFor.current = id; oneInput.current?.click(); };
+  const onOneFile = async (f: File | undefined) => {
+    const id = fileFor.current;
+    if (!f || !id) return;
+    try {
+      await putPhoto(id, f);
+      if (id === DEMO) setMsg({ kind: 'ok', text: 'Đã gắn ảnh thử. Thư xem trước của các em chưa có ảnh sẽ dùng ảnh này (không in vào thư thật).' });
+      else { const st = students.find((x) => x.id === id); if (st) { setRow(id, { on: true }); const i = selected.findIndex((x) => x.id === id); setPage(i >= 0 ? i : selected.length); } }
+      if (!slot.on) setSlot({ on: true });
+    } catch (e) { setMsg({ kind: 'error', text: e instanceof Error ? e.message : 'Không đọc được ảnh.' }); }
+  };
+  const onManyFiles = async (list: FileList | null) => {
+    const files = [...(list ?? [])].slice(0, 60);
+    if (!files.length) return;
+    setBusy('Đang đọc ảnh…');
+    const res = matchFiles(files, students);
+    let ok = 0;
+    for (const r of res) {
+      if (!r.student) continue;
+      try { await putPhoto(r.student.id, r.file); ok++; setRow(r.student.id, { on: true }); } catch { /* ảnh lỗi: để ghép tay */ r.student = null; }
+    }
+    setBusy('');
+    const left = res.filter((r) => !r.student).map((r) => ({ file: r.file, to: '' }));
+    setUnmatched(left);
+    if (ok && !slot.on) setSlot({ on: true });
+    setMsg({ kind: ok ? 'ok' : 'info', text: `Đã gắn ${ok} ảnh theo tên file.${left.length ? ` Còn ${left.length} ảnh chưa nhận ra tên — chọn em cho từng ảnh ở dưới.` : ''}` });
+  };
+  const assignUnmatched = async (i: number, to: string) => {
+    const u = unmatched[i];
+    if (!u || !to) return;
+    try { await putPhoto(to, u.file); setRow(to, { on: true }); setUnmatched((x) => x.filter((_, j) => j !== i)); } catch (e) { setMsg({ kind: 'error', text: e instanceof Error ? e.message : 'Không đọc được ảnh.' }); }
+  };
+  const removePhoto = (id: string) => {
+    void deletePhoto(scope, id);
+    setPhotos((p) => { const n = { ...p }; if (n[id]) URL.revokeObjectURL(n[id].url); delete n[id]; return n; });
+  };
+  const setCrop = (id: string, patch: Partial<Pick<StudentPhoto, 'zoom' | 'ox' | 'oy'>>) => setPhotos((p) => {
+    const cur = p[id];
+    if (!cur) return p;
+    const next = { ...cur, ...patch };
+    void saveCrop(scope, id, { zoom: next.zoom, ox: next.ox, oy: next.oy });
+    return { ...p, [id]: next };
+  });
+
+  // kéo khung ảnh ngay trên bản xem trước
+  const drag = useRef<{ dx: number; dy: number } | null>(null);
+  const toLetter = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    return { x: ((e.clientX - r.left) / r.width) * LETTER_W, y: ((e.clientY - r.top) / r.height) * LETTER_H };
+  };
+  const shownPhoto = photos[shown.id] ?? demo;
+  const slotVisible = slot.on && (!!shownPhoto || slot.empty === 'frame');
+  const onPrevDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!slotVisible) return;
+    const p = toLetter(e), b = slotBox(slot);
+    if (p.x < b.x || p.x > b.x + b.w || p.y < b.y || p.y > b.y + b.h) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    drag.current = { dx: p.x - slot.x, dy: p.y - slot.y };
+  };
+  const onPrevMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const p = toLetter(e);
+    if (!drag.current) {
+      const b = slotBox(slot);
+      e.currentTarget.style.cursor = slotVisible && p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h ? 'grab' : '';
+      return;
+    }
+    setSlot({ x: Math.round(Math.min(LETTER_W - 40, Math.max(40, p.x - drag.current.dx))), y: Math.round(Math.min(LETTER_H - 40, Math.max(40, p.y - drag.current.dy))) });
+  };
+  const onPrevUp = () => { drag.current = null; };
+
   const withAward = students.filter((st) => latestAward.has(st.id));
   const selectAwarded = () => setRows((p) => {
     const n = { ...p };
@@ -279,6 +382,19 @@ export default function PraiseLetters({ classId, className, grade, students, awa
   });
   const selectAll = (on: boolean) => setRows((p) => Object.fromEntries(Object.entries(p).map(([k, v]) => [k, { ...v, on }])));
 
+  const TABS: { id: Tab; n: number; label: string; info: string }[] = [
+    { id: 'mau', n: 1, label: 'Mẫu thư', info: tpl.label },
+    { id: 'noidung', n: 2, label: 'Nội dung', info: s.ky ? `Lời khen ${s.ky}` : 'Lời khen chung' },
+    { id: 'hocsinh', n: 3, label: 'Học sinh', info: `${selected.length}/${students.length} em được khen` },
+    { id: 'anh', n: 4, label: 'Ảnh học sinh', info: slot.on ? `${withPhoto}/${students.length} em có ảnh` : 'Chưa gắn ảnh' },
+  ];
+  const nextTab = (t: Tab) => {
+    const i = TABS.findIndex((x) => x.id === t);
+    const n = TABS[i + 1];
+    return n ? <div className="praise-next"><button type="button" className="btn btn-primary btn-sm" onClick={() => goTab(n.id)}>Tiếp: {n.label} <ChevronRight aria-hidden="true" /></button></div> : null;
+  };
+  const shownHasOwn = !!photos[shown.id];
+
   return (
     <div className="praise">
       <style>{'@media print { @page { size: A4 landscape; margin: 0; } }'}</style>
@@ -286,14 +402,26 @@ export default function PraiseLetters({ classId, className, grade, students, awa
         <div>
           <p className="dash-kicker">Lớp {className} · Khối {grade}</p>
           <h1><AwardIcon aria-hidden="true" /> Thư khen</h1>
-          <p className="dash-muted">Chọn mẫu, viết lời khen một lần rồi chọn các em được khen để tạo cả lớp cùng lúc. Thư được vẽ ngay trên máy của thầy cô, tên học sinh không gửi đi đâu.</p>
+          <p className="dash-muted">Làm lần lượt 4 bước bên trái, thư xem trước bên phải cập nhật ngay. Thư và ảnh được xử lý trên máy của thầy cô, không gửi đi đâu.</p>
         </div>
       </header>
 
+      <input ref={oneInput} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { void onOneFile(e.target.files?.[0]); e.target.value = ''; }} />
+
       <div className="praise-layout no-print">
         <div className="praise-steps">
-          <section className="dash-section praise-card" aria-labelledby="pr-step1">
-            <h2 id="pr-step1"><span className="praise-n">1</span> Chọn mẫu</h2>
+          <nav id="pr-tabs" className="praise-tabs" role="tablist" aria-label="Các bước làm thư khen">
+            {TABS.map((t) => (
+              <button key={t.id} type="button" role="tab" id={`pr-tab-${t.id}`} aria-selected={tab === t.id} aria-controls={`pr-panel-${t.id}`} className={tab === t.id ? 'is-on' : ''} onClick={() => setTab(t.id)}>
+                <span className="praise-n">{t.n}</span>
+                <span className="praise-tab-txt"><b>{t.label}</b><small>{t.info}</small></span>
+              </button>
+            ))}
+          </nav>
+
+          {tab === 'mau' && (
+          <section className="dash-section praise-card" role="tabpanel" id="pr-panel-mau" aria-labelledby="pr-tab-mau">
+            <h2 id="pr-step1">Chọn mẫu thư <small>· {PRAISE_TEMPLATES.length} mẫu, mẫu hợp khối {grade} hiện rõ hơn</small></h2>
             <div className="praise-tpls" role="radiogroup" aria-label="Mẫu thư khen">
               {PRAISE_TEMPLATES.map((t, i) => {
                 const fit = t.grades.includes(grade);
@@ -307,10 +435,13 @@ export default function PraiseLetters({ classId, className, grade, students, awa
                 );
               })}
             </div>
+            {nextTab('mau')}
           </section>
+          )}
 
-          <section className="dash-section praise-card" aria-labelledby="pr-step2">
-            <h2 id="pr-step2"><span className="praise-n">2</span> Nội dung chung</h2>
+          {tab === 'noidung' && (
+          <section className="dash-section praise-card" role="tabpanel" id="pr-panel-noidung" aria-labelledby="pr-tab-noidung">
+            <h2 id="pr-step2">Nội dung chung <small>· dùng cho mọi thư</small></h2>
             <div className="praise-form">
               <label className="adm-field"><span>Lời mở</span>
                 <input value={s.lead} maxLength={80} onChange={(e) => set('lead', e.target.value)} />
@@ -372,10 +503,13 @@ export default function PraiseLetters({ classId, className, grade, students, awa
                 </label>
               )}
             </div>
+            {nextTab('noidung')}
           </section>
+          )}
 
-          <section className="dash-section praise-card" aria-labelledby="pr-step3">
-            <h2 id="pr-step3"><span className="praise-n">3</span> Học sinh được khen <small>({selected.length}/{students.length})</small></h2>
+          {tab === 'hocsinh' && (
+          <section className="dash-section praise-card" role="tabpanel" id="pr-panel-hocsinh" aria-labelledby="pr-tab-hocsinh">
+            <h2 id="pr-step3">Học sinh được khen <small>({selected.length}/{students.length}) · bấm ô ảnh để gắn ảnh từng em</small></h2>
             {students.length === 0 ? (
               <p className="adm-alert is-info">Lớp chưa có học sinh. Thêm học sinh ở trang quản lý lớp trước.</p>
             ) : (
@@ -387,7 +521,7 @@ export default function PraiseLetters({ classId, className, grade, students, awa
                 </div>
                 <div className="table-scroll">
                   <table className="roster-table praise-table">
-                    <thead><tr><th scope="col"><span className="sr-only">Chọn</span></th><th scope="col">Họ và tên</th><th scope="col">Lời khen · dòng riêng (không bắt buộc)</th></tr></thead>
+                    <thead><tr><th scope="col"><span className="sr-only">Chọn</span></th><th scope="col">Ảnh</th><th scope="col">Họ và tên</th><th scope="col">Lời khen · dòng riêng (không bắt buộc)</th></tr></thead>
                     <tbody>
                       {students.map((st) => {
                         const r = rows[st.id];
@@ -395,6 +529,11 @@ export default function PraiseLetters({ classId, className, grade, students, awa
                         return (
                           <tr key={st.id} className={r.on ? 'is-on' : ''}>
                             <td><input type="checkbox" checked={r.on} aria-label={`Khen ${st.name}`} onChange={(e) => setRow(st.id, { on: e.target.checked })} /></td>
+                            <td className="praise-ph-cell">
+                              {photos[st.id]
+                                ? <button type="button" className="praise-ph" title={`Đổi ảnh của ${st.name}`} onClick={() => pickOne(st.id)}><img src={photos[st.id].url} alt={`Ảnh của ${st.name}`} /></button>
+                                : <button type="button" className="praise-ph is-empty" title={`Tải ảnh của ${st.name}`} aria-label={`Tải ảnh của ${st.name}`} onClick={() => pickOne(st.id)}><Camera aria-hidden="true" /></button>}
+                            </td>
                             <td className="praise-name">
                               {st.name}
                               {aw && r.extra !== aw.title && (
@@ -420,7 +559,107 @@ export default function PraiseLetters({ classId, className, grade, students, awa
                 </div>
               </>
             )}
+            {nextTab('hocsinh')}
           </section>
+          )}
+
+          {tab === 'anh' && (
+          <section className="dash-section praise-card" role="tabpanel" id="pr-panel-anh" aria-labelledby="pr-tab-anh">
+            <h2 id="pr-step4">Ảnh học sinh trên thư</h2>
+            <label className="praise-switch">
+              <input type="checkbox" checked={slot.on} onChange={(e) => setSlot({ on: e.target.checked })} />
+              <span><b>Gắn ảnh học sinh lên thư</b><small>Khung ảnh nằm ở vị trí riêng cho mẫu “{tpl.label}”. Kéo khung ngay trên bản xem trước để đổi chỗ.</small></span>
+            </label>
+
+            <div className={`praise-ph-opts${slot.on ? '' : ' is-off'}`}>
+              <div className="praise-opt"><span className="praise-label">Kiểu khung</span>
+                <div className="praise-seg" role="radiogroup" aria-label="Kiểu khung ảnh">
+                  {PHOTO_SHAPES.map((x) => <button key={x.id} type="button" role="radio" aria-checked={slot.shape === x.id} className={slot.shape === x.id ? 'is-on' : ''} onClick={() => setSlot({ shape: x.id, on: true })}>{x.label}</button>)}
+                </div>
+              </div>
+              <div className="praise-opt"><span className="praise-label">Vị trí nhanh</span>
+                <div className="praise-spots">
+                  {PHOTO_SPOTS.map((x) => <button key={x.id} type="button" className={`mini-btn${Math.abs(slot.x - x.x) < 4 && Math.abs(slot.y - x.y) < 4 ? ' is-on' : ''}`} onClick={() => setSlot({ x: x.x, y: x.y, on: true })}>{x.label}</button>)}
+                  <span className="dash-muted praise-drag-hint"><Move aria-hidden="true" /> hoặc kéo trên bản xem trước</span>
+                </div>
+              </div>
+              <div className="praise-row2">
+                <label className="adm-field"><span>Cỡ khung: <b>{slot.size}</b></span><input type="range" min={120} max={460} step={10} value={slot.size} onChange={(e) => setSlot({ size: Number(e.target.value), on: true })} /></label>
+                <label className="adm-field"><span>Độ dày viền: <b>{slot.bw}</b></span><input type="range" min={0} max={24} value={slot.bw} onChange={(e) => setSlot({ bw: Number(e.target.value) })} /></label>
+              </div>
+              <div className="praise-opt"><span className="praise-label">Màu viền</span>
+                <div className="praise-colors">
+                  {FRAME_COLORS.map((c) => <button key={c} type="button" aria-label={`Viền màu ${c}`} aria-pressed={slot.border === c} className={slot.border === c ? 'is-on' : ''} style={{ background: c }} onClick={() => setSlot({ border: c })} />)}
+                </div>
+              </div>
+              <label className="praise-check"><input type="checkbox" checked={slot.wrap} onChange={(e) => setSlot({ wrap: e.target.checked })} /> Chữ tự thu nhỏ, nhường chỗ cho ảnh (không bị ảnh che)</label>
+              <div className="praise-opt"><span className="praise-label">Em chưa có ảnh</span>
+                <div className="praise-seg" role="radiogroup" aria-label="Em chưa có ảnh">
+                  <button type="button" role="radio" aria-checked={slot.empty === 'hide'} className={slot.empty === 'hide' ? 'is-on' : ''} onClick={() => setSlot({ empty: 'hide' })}>Bỏ khung</button>
+                  <button type="button" role="radio" aria-checked={slot.empty === 'frame'} className={slot.empty === 'frame' ? 'is-on' : ''} onClick={() => setSlot({ empty: 'frame' })}>Khung trống (dán ảnh sau)</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="praise-ph-box">
+              <h3>Ảnh thử để xem mẫu trước</h3>
+              <p className="dash-muted">Chưa có ảnh các em? Tải một ảnh bất kỳ để xem thư trông thế nào. Ảnh thử chỉ hiện ở bản xem trước, <b>không in vào thư thật</b>.</p>
+              <div className="praise-ph-row">
+                {demo
+                  ? <button type="button" className="praise-ph is-lg" onClick={() => pickOne(DEMO)} title="Đổi ảnh thử"><img src={demo.url} alt="Ảnh thử" /></button>
+                  : <button type="button" className="praise-ph is-lg is-empty" onClick={() => pickOne(DEMO)} aria-label="Tải ảnh thử"><ImagePlus aria-hidden="true" /></button>}
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => pickOne(DEMO)}><Upload aria-hidden="true" /> {demo ? 'Đổi ảnh thử' : 'Tải ảnh thử'}</button>
+                {demo && <button type="button" className="mini-btn" onClick={() => removePhoto(DEMO)}><X aria-hidden="true" /> Bỏ ảnh thử</button>}
+              </div>
+            </div>
+
+            <div className="praise-ph-box">
+              <h3>Ảnh của các em <small>({withPhoto}/{students.length})</small></h3>
+              <p className="dash-muted">Chọn nhiều ảnh cùng lúc, đặt tên file theo tên học sinh (vd <code>Nguyen Minh An.jpg</code> hoặc <code>an.jpg</code>) để tự ghép; hoặc bấm vào từng ô bên dưới.</p>
+              <label className="btn btn-primary btn-sm praise-upload"><Upload aria-hidden="true" /> Tải nhiều ảnh cùng lúc
+                <input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={(e) => { void onManyFiles(e.target.files); e.target.value = ''; }} />
+              </label>
+              {unmatched.length > 0 && (
+                <ul className="praise-unmatched">
+                  {unmatched.map((u, i) => (
+                    <li key={`${u.file.name}-${i}`}>
+                      <span title={u.file.name}>{u.file.name}</span>
+                      <select value="" aria-label={`Ảnh ${u.file.name} của em nào`} onChange={(e) => void assignUnmatched(i, e.target.value)}>
+                        <option value="">— Ảnh của em nào? —</option>
+                        {students.map((st) => <option key={st.id} value={st.id}>{st.name}{photos[st.id] ? ' (đã có ảnh)' : ''}</option>)}
+                      </select>
+                      <button type="button" className="mini-btn" aria-label="Bỏ ảnh này" onClick={() => setUnmatched((x) => x.filter((_, j) => j !== i))}><X aria-hidden="true" /></button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="praise-ph-grid">
+                {students.map((st) => (
+                  <div key={st.id} className={`praise-ph-item${shown.id === st.id ? ' is-shown' : ''}`}>
+                    {photos[st.id]
+                      ? <button type="button" className="praise-ph is-lg" title={`Xem thư của ${st.name}`} onClick={() => { setRow(st.id, { on: true }); const i = selected.findIndex((x) => x.id === st.id); setPage(i >= 0 ? i : selected.length); }}><img src={photos[st.id].url} alt={`Ảnh của ${st.name}`} /></button>
+                      : <button type="button" className="praise-ph is-lg is-empty" aria-label={`Tải ảnh của ${st.name}`} onClick={() => pickOne(st.id)}><Camera aria-hidden="true" /></button>}
+                    <span>{st.name}</span>
+                    {photos[st.id] && <span className="praise-ph-acts"><button type="button" className="mini-btn" onClick={() => pickOne(st.id)}>Đổi</button><button type="button" className="mini-btn" onClick={() => removePhoto(st.id)} aria-label={`Xoá ảnh của ${st.name}`}><X aria-hidden="true" /></button></span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {slot.on && shownPhoto && (
+              <div className="praise-ph-box">
+                <h3>Căn ảnh {shownHasOwn ? <>của <b>{shown.name}</b></> : 'thử'} trong khung</h3>
+                <div className="praise-row2">
+                  <label className="adm-field"><span>Phóng to</span><input type="range" min={1} max={3} step={0.05} value={shownPhoto.zoom} onChange={(e) => setCrop(shownHasOwn ? shown.id : DEMO, { zoom: Number(e.target.value) })} /></label>
+                  <label className="adm-field"><span>Dời ngang</span><input type="range" min={-1} max={1} step={0.05} value={shownPhoto.ox} onChange={(e) => setCrop(shownHasOwn ? shown.id : DEMO, { ox: Number(e.target.value) })} /></label>
+                  <label className="adm-field"><span>Dời dọc</span><input type="range" min={-1} max={1} step={0.05} value={shownPhoto.oy} onChange={(e) => setCrop(shownHasOwn ? shown.id : DEMO, { oy: Number(e.target.value) })} /></label>
+                </div>
+                <p className="dash-muted">Bấm mũi tên ở bản xem trước để chuyển sang em khác rồi căn ảnh của em đó.</p>
+              </div>
+            )}
+            <p className="dash-muted praise-note">Ảnh chỉ lưu trong trình duyệt trên máy này, không tải lên máy chủ. Nếu bật “Treo lên Phòng triển lãm”, thư (kèm ảnh) sẽ được đăng cho phụ huynh lớp xem.</p>
+          </section>
+          )}
         </div>
 
         <aside className="praise-preview" aria-label="Xem trước và tải về">
@@ -429,7 +668,9 @@ export default function PraiseLetters({ classId, className, grade, students, awa
               <h2>Xem trước</h2>
               {isCustomized(design) && <span className="praise-custom-tag">Đã chỉnh sửa</span>}
             </div>
-            <canvas ref={preview} width={LETTER_W} height={LETTER_H} className="praise-canvas" role="img" aria-label={`Thư khen của ${shown.name}`} />
+            <canvas ref={preview} width={LETTER_W} height={LETTER_H} className="praise-canvas" role="img" aria-label={`Thư khen của ${shown.name}`}
+              onPointerDown={onPrevDown} onPointerMove={onPrevMove} onPointerUp={onPrevUp} onPointerCancel={onPrevUp} style={slotVisible ? { touchAction: 'none' } : undefined} />
+            {slot.on && !shownHasOwn && demo && <p className="praise-demo-tag">Đang dùng ảnh thử — thư thật của {shown.name} {slot.empty === 'frame' ? 'sẽ có khung trống' : 'sẽ không có ảnh'}.</p>}
             <div className="praise-pager">
               <button type="button" className="btn btn-outline btn-sm" disabled={selected.length < 2} onClick={() => setPage((p) => (p - 1 + selected.length) % selected.length)} aria-label="Thư trước"><ChevronLeft aria-hidden="true" /></button>
               <span>{selected.length ? `Thư ${Math.min(page, selected.length - 1) + 1} / ${selected.length}` : 'Chưa chọn em nào — đang xem mẫu'}</span>
@@ -437,7 +678,7 @@ export default function PraiseLetters({ classId, className, grade, students, awa
             </div>
             {!selected.length && students.length > 0 && (
               <p className="adm-alert is-info praise-pick-hint">
-                Đang xem thư mẫu. Chọn các em được khen ở mục 3 để xem thư từng em và tải về.
+                Đang xem thư mẫu. Chọn các em được khen ở thẻ 3 “Học sinh” để xem thư từng em và tải về.
                 <button type="button" className="mini-btn" onClick={() => { selectAll(true); setMsg(null); }}>Chọn cả lớp ({students.length} em)</button>
               </p>
             )}
@@ -464,12 +705,12 @@ export default function PraiseLetters({ classId, className, grade, students, awa
       </div>
 
       {editing && (
-        <PraiseEditor tpl={tpl} data={letterFor(shown)} initial={design} onClose={() => setEditing(false)} onSave={(d) => { if (saveDesign(d)) setEditing(false); }} />
+        <PraiseEditor tpl={tpl} data={letterFor(shown, true)} initial={design} onClose={() => setEditing(false)} onSave={(d) => { if (saveDesign(d)) setEditing(false); }} />
       )}
 
       {printUrls.length > 0 && (
         <div className="praise-print" aria-hidden="true">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+          
           {printUrls.map((u) => <img key={u} src={u} alt="" />)}
         </div>
       )}

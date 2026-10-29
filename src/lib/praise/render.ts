@@ -1,6 +1,7 @@
 // Vẽ thư khen lên canvas ngay trên trình duyệt (không gửi dữ liệu đi đâu, không dùng thư viện ngoài).
 // Cùng một hàm vẽ cho: ảnh xem trước, ảnh PNG, trang PDF và bản in.
 import { LETTER_H, LETTER_W, type PraiseTemplate } from './templates';
+import { drawPhoto, slotBox, type LetterPhoto } from './photos';
 import { EMOJIS, adjOf, fillVars, type BlockAdj, type BlockKey, type DesignItem, type PraiseDesign } from './design';
 
 export type LetterData = {
@@ -19,6 +20,8 @@ export type LetterData = {
   closing: string;
   /** ảnh chữ ký (tùy chọn) — chỉ nằm trên máy giáo viên */
   signature?: HTMLImageElement | null;
+  /** ảnh học sinh trong khung (tùy chọn) — chỉ nằm trên máy giáo viên */
+  photo?: LetterPhoto | null;
 };
 
 const F = { baloo: 'PraiseBaloo', oswald: 'PraiseOswald', script: 'PraiseScript' };
@@ -523,17 +526,60 @@ export function drawLetter(ctx: Ctx, t0: PraiseTemplate, assets: LetterAssets, d
 
   const B = baseBoxes(ctx, t, d);
   const s = B.s;
-  if (t.layout === 'formal') {
-    withAdj(ctx, B.title, adjOf(design, 'title'), () => drawFormalBody(ctx, t, d, s, false, 'title'));
-    withAdj(ctx, B.body, adjOf(design, 'body'), () => drawFormalBody(ctx, t, d, s, false, 'rest'));
-    withAdj(ctx, B.sign, adjOf(design, 'sign'), () => drawFormalFooter(ctx, t, d));
-  } else {
-    withAdj(ctx, B.title, adjOf(design, 'title'), () => drawBody(ctx, t, d, s, false, 'title'));
-    withAdj(ctx, B.body, adjOf(design, 'body'), () => drawBody(ctx, t, d, s, false, 'rest'));
-    withAdj(ctx, B.sign, adjOf(design, 'sign'), () => drawSign(ctx, t, d));
+  const parts: [BlockKey, (c: Ctx) => void][] = t.layout === 'formal'
+    ? [['title', (c) => drawFormalBody(c, t, d, s, false, 'title')], ['body', (c) => drawFormalBody(c, t, d, s, false, 'rest')], ['sign', (c) => drawFormalFooter(c, t, d)]]
+    : [['title', (c) => drawBody(c, t, d, s, false, 'title')], ['body', (c) => drawBody(c, t, d, s, false, 'rest')], ['sign', (c) => drawSign(c, t, d)]];
+  // ảnh học sinh: chữ tự thu nhỏ / dời sang bên để không bị khung ảnh che
+  const ph = d.photo, room = ph && ph.slot.on && ph.slot.wrap !== false && (ph.photo || ph.slot.empty === 'frame') ? slotBox(ph.slot) : null;
+  for (const [k, draw] of parts) {
+    const a = adjOf(design, k);
+    const fit = room && !a.hide ? makeRoom(B[k], a, room, draw) : null;
+    if (fit) { ctx.save(); ctx.translate(fit.cx2, fit.cy); ctx.scale(fit.k, fit.k); ctx.translate(-fit.cx, -fit.cy); }
+    withAdj(ctx, B[k], a, () => draw(ctx));
+    if (fit) ctx.restore();
   }
+  if (d.photo) drawPhoto(ctx, d.photo);
   for (const it of design?.items ?? []) drawItem(ctx, it, d, assets);
   ctx.restore();
+}
+
+/** Đo phần chữ thật của một khối (vẽ thử lên canvas nhỏ rồi tìm điểm có mực) */
+let inkCanvas: HTMLCanvasElement | null = null;
+function inkBox(b: Box, a: BlockAdj, draw: (c: Ctx) => void): Box | null {
+  const K = 0.25, W = Math.ceil(LETTER_W * K), H = Math.ceil(LETTER_H * K);
+  inkCanvas ??= document.createElement('canvas');
+  inkCanvas.width = W; inkCanvas.height = H;
+  const ic = inkCanvas.getContext('2d', { willReadFrequently: true });
+  if (!ic) return null;
+  ic.setTransform(K, 0, 0, K, 0, 0);
+  ic.clearRect(0, 0, LETTER_W, LETTER_H);
+  ic.save();
+  const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+  ic.translate(cx + a.dx, cy + a.dy); ic.scale(a.k, a.k); ic.translate(-cx, -cy);
+  draw(ic);
+  ic.restore();
+  const data = ic.getImageData(0, 0, W, H).data;
+  let x0 = W, x1 = -1, y0 = H, y1 = -1;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (data[(y * W + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return null;
+  return { x: x0 / K, y: y0 / K, w: (x1 - x0 + 1) / K, h: (y1 - y0 + 1) / K };
+}
+function makeRoom(b: Box, a: BlockAdj, P: { x: number; y: number; w: number; h: number }, draw: (c: Ctx) => void) {
+  const r = inkBox(b, a, draw);
+  if (!r) return null;
+  const gap = 18;
+  const overlapX = r.x < P.x + P.w + gap && r.x + r.w > P.x - gap, overlapY = r.y < P.y + P.h && r.y + r.h > P.y;
+  if (!overlapX || !overlapY) return null;
+  const A = adjBox(b, a);
+  const left = P.x + P.w / 2 < r.x + r.w / 2; // ảnh ở bên trái phần chữ
+  const lo = left ? P.x + P.w + gap : Math.min(A.x, r.x), hi = left ? Math.max(A.x + A.w, r.x + r.w) : P.x - gap;
+  const free = hi - lo;
+  if (free < r.w * 0.5) return null; // ảnh nằm giữa chữ: không cố nhường
+  const k = Math.min(1, free / r.w);
+  const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+  const w2 = r.w * k;
+  const cx2 = Math.min(hi - w2 / 2, Math.max(lo + w2 / 2, cx));
+  return { cx, cy, cx2, k };
 }
 
 /** Khối ký tên (kiểu vui nhộn và tranh vẽ) */
