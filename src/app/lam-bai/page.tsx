@@ -12,7 +12,9 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Check, Clock, Dices, Flag, Lightbulb, Play, RefreshCw, SkipForward, Sparkles, Volume2, VolumeX, X } from 'lucide-react';
+import { AlarmClock, ArrowLeft, ArrowRight, Check, Clock, Dices, Flag, House, Lightbulb, Play, RefreshCw, SkipForward, Sparkles, Star, Volume2, VolumeX, X } from 'lucide-react';
+import { LogoMark, BrandWord } from '@/components/brand/BrandLogo';
+import { QuizBackdrop, QuizSideProps, StudentPill } from '@/components/learn/QuizScene';
 import Figure from '@/components/Figure';
 import KnowledgeCard from '@/components/KnowledgeCard';
 import LearnHeader from '@/components/LearnHeader';
@@ -60,20 +62,16 @@ const MAX_SWAPS = 3; // số lần được đổi câu trong một lượt làm
 // ---------------------------------------------------------------------------
 // Đồng hồ đếm ngược dạng vòng tròn
 // ---------------------------------------------------------------------------
-function TimerRing({ remainingMs, limitSec, paused }: { remainingMs: number; limitSec: number; paused: boolean }) {
-  const sec = Math.ceil(remainingMs / 1000);
+function TimerPill({ remainingMs, limitSec, paused }: { remainingMs: number; limitSec: number; paused: boolean }) {
+  const sec = Math.max(0, Math.ceil(remainingMs / 1000));
   const ratio = Math.max(0, Math.min(1, remainingMs / (limitSec * 1000)));
-  const tone = sec <= 5 ? 'is-danger' : ratio <= 0.25 ? 'is-low' : ratio <= 0.5 ? 'is-mid' : 'is-ok';
-  const r = 26;
-  const c = 2 * Math.PI * r;
+  const tone = sec <= 5 ? 'is-danger' : ratio <= 0.25 ? 'is-low' : 'is-ok';
+  const mmss = `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
   return (
-    <div className={`timer-ring ${tone}${paused ? ' is-paused' : ''}`} role="timer" aria-label={`Còn ${sec} giây${paused ? ', đồng hồ đang tạm dừng' : ''}`}>
-      <svg viewBox="0 0 64 64" aria-hidden="true">
-        <circle className="timer-track" cx="32" cy="32" r={r} />
-        <circle className="timer-value" cx="32" cy="32" r={r} strokeDasharray={c} strokeDashoffset={c * (1 - ratio)} />
-      </svg>
-      <span className="timer-text" aria-hidden="true">{sec}</span>
-      <span className="timer-unit" aria-hidden="true">{paused ? 'dừng' : 'giây'}</span>
+    <div className={`qz-pill qz-time ${tone}${paused ? ' is-paused' : ''}`} role="timer" aria-label={`Còn ${sec} giây${paused ? ', đồng hồ đang tạm dừng' : ''}`}>
+      <AlarmClock aria-hidden="true" />
+      <b aria-hidden="true">{mmss}</b>
+      {paused && <small aria-hidden="true">dừng</small>}
     </div>
   );
 }
@@ -627,31 +625,38 @@ function LamBaiContent() {
   const trailMessage = fb ? (fb.kind === 'correct' ? 'Giỏi quá!' : 'Cố lên, câu sau nhé!') : undefined;
 
   return (
-    <>
-      <LearnHeader />
-      <LessonDecor subject={subjectCode} animate={motion} />
+    <div className={`qz${motion ? ' is-live' : ''}`}>
+      <QuizBackdrop motion={motion} />
+      <QuizSideProps subject={subjectCode} />
 
-      <div className="quiz-bar">
+      <div className="quiz-bar qz-hud">
         <div className="quiz-bar-inner">
-          <button type="button" className="icon-button" aria-label="Thoát bài học" onClick={() => setDialog('exit')}>
-            <ArrowLeft size={22} aria-hidden="true" />
-          </button>
-          <div className="progress-track quiz-progress" role="progressbar" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Tiến độ bài học" style={{ marginTop: 0 }}>
-            <div className="progress-fill is-green" style={{ width: `${progressPercent}%` }} />
+          <div className="qz-brand" aria-hidden="true">
+            <LogoMark size={40} />
+            <span><BrandWord /><small>Học vui – Tiến bộ mỗi ngày</small></span>
           </div>
-          <span className="quiz-count">{doneCount}/{order.length}</span>
-          <button type="button" className="icon-button" aria-pressed={soundEnabled} aria-label={soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'} onClick={() => setSoundEnabled((v) => !v)}>
+          <div className="qz-pill qz-progress" role="progressbar" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Tiến độ bài học">
+            <Star className="qz-star" aria-hidden="true" />
+            <span className="qz-track"><span style={{ width: `${progressPercent}%` }} /></span>
+            <b className="quiz-count">{doneCount}/{order.length}</b>
+          </div>
+          <TimerPill remainingMs={item.remainingMs} limitSec={q.timeLimit} paused={paused && phase === 'quiz'} />
+          <span className="qz-hud-gap" />
+          <button type="button" className="icon-button qz-round" aria-pressed={soundEnabled} aria-label={soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'} onClick={() => setSoundEnabled((v) => !v)}>
             {soundEnabled ? <Volume2 size={22} aria-hidden="true" /> : <VolumeX size={22} aria-hidden="true" />}
           </button>
           <button
             type="button"
-            className={`icon-button fx-toggle${fx ? ' is-on' : ''}`}
+            className={`icon-button qz-round fx-toggle${fx ? ' is-on' : ''}`}
             aria-pressed={fx}
             aria-label={fx ? 'Tắt hiệu ứng (pháo giấy, Milo nhảy)' : 'Bật hiệu ứng (pháo giấy, Milo nhảy)'}
             title={fx ? 'Tắt hiệu ứng' : 'Bật hiệu ứng'}
             onClick={toggleFx}
           >
             <Sparkles size={22} aria-hidden="true" />
+          </button>
+          <button type="button" className="icon-button qz-round" aria-label="Thoát bài học, về danh sách bài" title="Thoát bài học" onClick={() => setDialog('exit')}>
+            <House size={22} aria-hidden="true" />
           </button>
           <button type="button" className="button button-dark quiz-submit" onClick={() => (unfinished > 0 ? setDialog('submit') : finish())}>
             <Flag size={18} aria-hidden="true" /> Nộp bài
@@ -678,7 +683,7 @@ function LamBaiContent() {
       </div>
 
       <main className={`learn-main${motion ? ' fx-on' : ''}`} style={{ paddingBottom: 240 }}>
-        <section className="question-card">
+        <section className="question-card qz-board">
           {motion && fb?.kind === 'correct' && <Confetti burst={fb.id} />}
           <MiloTrail statuses={order.map((x) => items[x.id]?.status ?? 'todo')} current={current} mood={trailMood} message={trailMessage} variant={SUBJECT_MASCOT[subjectCode]} />
           <div className="question-top">
@@ -687,7 +692,6 @@ function LamBaiContent() {
               <span className={`level-chip is-l${q.level}`}>{LEVELS[q.level].code} · {LEVELS[q.level].name}</span>
               {item.status === 'skipped' && !submitted && <span className="skip-tag">Câu để sau</span>}
             </div>
-            <TimerRing remainingMs={item.remainingMs} limitSec={q.timeLimit} paused={paused && phase === 'quiz'} />
           </div>
 
           <div className="question-tools">
@@ -779,6 +783,7 @@ function LamBaiContent() {
 
       <footer className={`feedback-bar${feedbackClass}`}>
         <div className="feedback-inner">
+          <StudentPill />
           <div className="feedback-text" aria-live="polite">
             {!submitted ? (
               <p>
@@ -851,7 +856,7 @@ function LamBaiContent() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
