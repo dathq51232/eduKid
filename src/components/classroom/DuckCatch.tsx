@@ -1,8 +1,8 @@
 'use client';
 
-// Gọi tên kiểu "Bịt mắt bắt vịt": cậu bé chăn vịt đội nón lá, cầm roi trong sân tre; mỗi chú vịt mang tên một em.
+// Gọi tên kiểu "Bắt vịt": cậu bé chăn vịt đội nón lá, cầm roi trong sân tre; mỗi chú vịt mang tên một em.
 // Vịt chạy né, thỉnh thoảng trêu "Thầy ơi em đây này!", bị vồ hụt kêu "Hụt rồi!". Hết giờ: bắt được đúng em được chọn.
-// Toàn bộ là SVG vẽ tại chỗ (không tải ảnh ngoài); vị trí cập nhật trực tiếp qua ref nên không làm React vẽ lại mỗi khung hình.
+// Vịt và nhân vật dùng tài sản cục bộ; vị trí cập nhật trực tiếp qua ref nên không làm React vẽ lại mỗi khung hình.
 import { useEffect, useRef, useState } from 'react';
 import type { Student } from '@/lib/classroom/callon';
 
@@ -186,7 +186,7 @@ export default function DuckCatch({ ducks, target, runKey, seconds, caughtId, on
   useEffect(() => { if (!caughtId && run.current?.done) { run.current = null; kid.current.catch = false; } }, [caughtId]);
 
   return (
-    <svg className="cd-svg" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Sân chơi bịt mắt bắt vịt">
+    <svg className="cd-svg" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Sân chơi bắt vịt">
       <Yard />
       <g ref={layerRef}>
         {ducks.map((d, i) => (
@@ -218,73 +218,9 @@ function Bubble({ text }: { text: string }) {
   );
 }
 
-/** Cậu bé chăn vịt phong cách tranh thiếu nhi: nón lá, áo bà ba, chân đất và cầm roi tre. */
+/** Dùng nguyên hình nhân vật theo ảnh mẫu, đã tách nền để ghép vào sân chơi. */
 function Kid() {
-  return (
-    <g>
-      <ellipse cx="2" cy="2" rx="46" ry="9" fill="rgb(70 50 20 / .22)"/>
-      {/* chân sau */}
-      <g className="cd-leg1">
-        <path d="M-7 -54 C-18 -43 -28 -32 -36 -22 L-25 -14 C-13 -24 -3 -34 8 -45 Z" fill="#39302a"/>
-        <path d="M-35 -23 L-47 -7 L-39 -2 L-25 -15 Z" fill="#e8b48a"/>
-        <path d="M-48 -7 Q-54 -3 -51 1 Q-40 4 -31 0 L-34 -6 Z" fill="#f0c19a"/>
-        <path d="M-35 -22 l9 7" stroke="#a49a8d" strokeWidth="4" strokeLinecap="round"/>
-      </g>
-      {/* chân trước */}
-      <g className="cd-leg2">
-        <path d="M1 -54 C15 -47 31 -39 39 -28 L31 -18 C20 -25 6 -32 -9 -41 Z" fill="#45403a"/>
-        <path d="M31 -23 L38 -27 L48 -7 L40 -3 Z" fill="#e8b48a"/>
-        <path d="M40 -7 Q50 -10 59 -4 Q52 3 39 1 L35 -3 Z" fill="#f0c19a"/>
-        <path d="M32 -21 l9 5" stroke="#a49a8d" strokeWidth="4" strokeLinecap="round"/>
-      </g>
-      {/* tay sau đưa ra chào đàn vịt */}
-      <g className="cd-arm-back">
-        <path d="M7 -98 C23 -103 39 -104 54 -101" stroke="#75543a" strokeWidth="13" strokeLinecap="round" fill="none"/>
-        <path d="M49 -102 L65 -103" stroke="#f0c19a" strokeWidth="10" strokeLinecap="round"/>
-        <path d="M63 -109 l2 -9 M67 -108 l5 -9 M70 -104 l8 -7 M71 -100 l10 -3 M69 -97 l8 1" stroke="#f0c19a" strokeWidth="3.5" strokeLinecap="round"/>
-      </g>
-      {/* thân áo bà ba */}
-      <path d="M-17 -105 Q0 -114 19 -104 C25 -88 27 -69 25 -53 Q2 -46 -24 -54 C-24 -72 -23 -91 -17 -105 Z" fill="#79563a" stroke="#5d402e" strokeWidth="2"/>
-      <path d="M-13 -101 Q0 -91 8 -77 L-1 -70 L-15 -84 M8 -77 Q17 -86 21 -99" fill="none" stroke="#a77c56" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M2 -102 L5 -91 L11 -103" stroke="#e1c49b" strokeWidth="2" fill="none"/>
-      <circle cx="7" cy="-84" r="1.8" fill="#e7cda6"/>
-      <circle cx="9" cy="-72" r="1.8" fill="#e7cda6"/>
-      {/* thắt lưng vải trắng ngà + nút buộc */}
-      <path d="M-24 -59 Q0 -52 25 -60 L25 -52 Q0 -45 -24 -52 Z" fill="#eee5d1" stroke="#d5c7ac" strokeWidth="1.5"/>
-      <path d="M-18 -55 Q-28 -44 -31 -34 L-24 -30 Q-18 -43 -9 -50 M-18 -54 Q-21 -43 -14 -34 L-8 -37 L-11 -52" fill="#eee5d1" stroke="#d5c7ac" strokeWidth="1.5"/>
-      {/* Tay trước nắm roi tre chéo */}
-      <g className="cd-arm-stick">
-        <path d="M-38 -18 Q10 -57 76 -107" stroke="#79502b" strokeWidth="7" strokeLinecap="round" fill="none"/>
-        <path d="M-38 -18 Q10 -57 76 -107" stroke="#e4c27e" strokeWidth="2" strokeLinecap="round" fill="none"/>
-        <path d="M10 -96 Q28 -92 44 -82" stroke="#79563a" strokeWidth="14" strokeLinecap="round" fill="none"/>
-        <path d="M40 -84 Q51 -77 61 -70" stroke="#f0c19a" strokeWidth="11" strokeLinecap="round"/>
-        <path d="M52 -78 Q61 -78 66 -71 M50 -74 Q59 -72 64 -66 M48 -70 Q57 -67 61 -61" stroke="#e8b48a" strokeWidth="3" strokeLinecap="round"/>
-      </g>
-      {/* đầu */}
-      <ellipse cx="8" cy="-126" rx="28" ry="29" fill="#f1bd96" stroke="#bb8569" strokeWidth="1.5"/>
-      <ellipse cx="-19" cy="-125" rx="5" ry="8" fill="#e8b48a" stroke="#bb8569" strokeWidth="1"/>
-      <path d="M-19 -143 Q-12 -160 5 -155 Q14 -159 23 -152 Q34 -148 36 -136 Q28 -143 20 -140 Q14 -132 9 -141 Q3 -131 -3 -141 Q-12 -132 -18 -137 Z" fill="#38251c"/>
-      <path d="M-9 -132 Q-4 -136 1 -132 M17 -132 Q22 -136 27 -132" stroke="#493024" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-      <ellipse cx="-4" cy="-125" rx="5" ry="7" fill="#fff"/>
-      <ellipse cx="21" cy="-125" rx="5" ry="7" fill="#fff"/>
-      <circle cx="-2" cy="-124" r="2.8" fill="#33241c"/>
-      <circle cx="23" cy="-124" r="2.8" fill="#33241c"/>
-      <circle cx="-1" cy="-126" r="1" fill="#fff"/>
-      <circle cx="24" cy="-126" r="1" fill="#fff"/>
-      <ellipse cx="-11" cy="-115" rx="6" ry="3.5" fill="#ef8e7d" opacity=".55"/>
-      <ellipse cx="29" cy="-115" rx="6" ry="3.5" fill="#ef8e7d" opacity=".55"/>
-      {/* Nụ cười */}
-      <path d="M4 -113 Q12 -104 22 -113" fill="#8c3d32"/>
-      <path d="M6 -113 Q12 -107 20 -113" stroke="#fff1df" strokeWidth="2" fill="none"/>
-      {/* nón lá */}
-      <g transform="translate(0 4) rotate(-5 8 -148)">
-        <path d="M-61 -133 Q-48 -151 8 -189 Q63 -150 75 -132 Q22 -126 -61 -133 Z" fill="#ead5a0" stroke="#a98248" strokeWidth="3"/>
-        <path d="M-52 -134 Q7 -141 66 -133 M-35 -145 L8 -187 M-14 -139 L8 -187 M10 -137 L8 -187 M34 -136 L8 -187 M55 -134 L8 -187" stroke="#c2a067" strokeWidth="1.8" fill="none"/>
-        <path d="M-40 -148 Q7 -137 51 -146 M-22 -160 Q8 -148 34 -158 M-4 -174 Q9 -170 21 -175" stroke="#c2a067" strokeWidth="1.5" fill="none"/>
-        <path d="M-61 -133 Q5 -124 75 -132" stroke="#8f6c3e" strokeWidth="3" fill="none"/>
-      </g>
-    </g>
-  );
+  return <image className="cd-kid-art" href="/edu-icons/duck-herder.webp" x="-70" y="-235" width="140" height="235" preserveAspectRatio="xMidYMax meet" />;
 }
 
 /** Nền: trời, cánh đồng, đình làng, rơm, cờ đuôi nheo, phần hàng rào phía sau và sân đất */

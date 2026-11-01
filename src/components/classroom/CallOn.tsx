@@ -5,6 +5,7 @@
 // Trạng thái gọi tên lưu trên máy đang chiếu (localStorage). Em trả lời đúng / phát biểu hay thì tự thêm
 // "★ Phát biểu tốt" vào Sổ lớp hôm nay (migration 0038; chưa chạy thì chỉ đếm trên máy).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 import { Check, Eye, EyeOff, Maximize2, Timer, Minimize2, RotateCcw, Users, Volume2, VolumeX, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import MiloMascot, { type MiloVariant } from '@/components/mascot/MiloMascot';
@@ -35,6 +36,14 @@ const pickLine = (a: string[]) => a[Math.floor(Math.random() * a.length)];
 
 type Phase = 'idle' | 'running' | 'done';
 type RaceLane = ReturnType<typeof raceFor>[number];
+
+const MODE_ICONS: Record<CallMode, string> = {
+  wheel: '/edu-icons/callon-wheel.webp',
+  lots: '/edu-icons/callon-lots.webp',
+  race: '/edu-icons/callon-race.webp',
+  eggs: '/edu-icons/callon-eggs.webp',
+  ducks: '/edu-icons/callon-ducks.webp',
+};
 
 const hashId = (s: string) => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 
@@ -462,9 +471,14 @@ export default function CallOn({ classId, className, grade, students, absentToda
           <p>Lớp {className} · có mặt {present.length}/{students.length} · đã gọi {calledCount}</p>
         </div>
         <nav className="callon-modes" aria-label="Kiểu gọi tên">
-          {CALL_MODES.map((m) => (
-            <button key={m.id} type="button" aria-pressed={s.mode === m.id} onClick={() => setMode(m.id)}><span aria-hidden="true">{m.icon}</span> {m.label}</button>
-          ))}
+          {CALL_MODES.map((m) => {
+            return (
+              <button key={m.id} type="button" aria-pressed={s.mode === m.id} onClick={() => setMode(m.id)}>
+                <Image className="callon-mode-icon" src={MODE_ICONS[m.id]} alt="" width={38} height={38} />
+                {m.label}
+              </button>
+            );
+          })}
         </nav>
       </header>
 
@@ -588,7 +602,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
         {s.mode === 'ducks' && (
           <div className="cd">
             <div className="callon-stagebar">
-              <p className="callon-hint">{phase === 'running' ? 'Bạn bịt mắt đang tìm vịt…' : `Trong sân có ${penList.length} chú vịt · bấm Bịt mắt bắt vịt`}</p>
+              <p className="callon-hint">{phase === 'running' ? 'Đang tìm vịt…' : `Trong sân có ${penList.length} chú vịt · bấm Bắt vịt`}</p>
               <button type="button" className="callon-chip" onClick={newPen} disabled={phase === 'running'}>🎲 Thả vịt mới</button>
             </div>
             <DuckCatch ducks={penList} target={duckRun.target} runKey={duckRun.key} seconds={secs} caughtId={phase === 'done' && picked ? picked.id : null} onCaught={(st) => reveal(st)} sfx={duckSfx} />

@@ -3925,9 +3925,10 @@ body {
 .callon-title h1 { font-size: 24px; line-height: 1.15; }
 .callon-title p { color: var(--muted); font-size: 15px; font-weight: 600; }
 .callon-modes { display: flex; gap: 6px; padding: 4px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); }
-.callon-modes button { min-height: 44px; padding: 8px 11px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.callon-modes button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 6px 11px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .callon-modes button:hover { color: var(--ink); background: var(--surface-2); }
 .callon-modes button[aria-pressed="true"] { background: var(--blue); color: #fff; box-shadow: 0 3px 0 var(--blue-deep); }
+.callon-mode-icon { display: block; width: 38px; height: 38px; flex: none; object-fit: contain; }
 .callon-toggles { display: flex; gap: 8px; margin-left: auto; }
 .callon-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .callon-chip svg { width: 18px; height: 18px; }
@@ -5360,7 +5361,7 @@ select.s3d-btn { padding-right: 6px; }
   .s3d-play { bottom: 12px; }
 }
 
-/* ===== Gọi tên: Bịt mắt bắt vịt ===== */
+/* ===== Gọi tên: Bắt vịt ===== */
 .cd { position: absolute; inset: 0; background: linear-gradient(#cfe9ff, #a7d07a 45%, #8fc463); }
 .cd .callon-hint { background: rgb(255 255 255 / .9); padding: 6px 12px; border-radius: 999px; }
 .cd-svg { width: 100%; height: 100%; min-height: 0; display: block; font-family: var(--font-display, 'Quicksand'), sans-serif; }
@@ -5374,14 +5375,12 @@ select.s3d-btn { padding-right: 6px; }
 .cd-duck.is-got .cd-waddle { animation: cd-flap .25s ease-in-out infinite alternate; }
 .cd-bubble { animation: cd-pop .18s ease-out both; }
 @keyframes cd-pop { from { opacity: .2; } to { opacity: 1; } }
-.cd-kid.is-walk .cd-leg1 { animation: cd-step .34s ease-in-out infinite alternate; transform-origin: -6px -50px; }
-.cd-kid.is-walk .cd-leg2 { animation: cd-step .34s ease-in-out infinite alternate-reverse; transform-origin: 0 -52px; }
-@keyframes cd-step { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
-.cd-kid.is-walk .cd-arm-back { animation: cd-grope .5s ease-in-out infinite alternate; transform-origin: 8px -96px; }
-.cd-kid.is-walk .cd-arm-stick { animation: cd-grope .5s ease-in-out infinite alternate; transform-origin: 8px -96px; }
-@keyframes cd-grope { from { transform: rotate(-8deg); } to { transform: rotate(10deg); } }
-.cd-kid.is-catch .cd-arm-stick { transform: rotate(14deg) translateX(4px); transform-origin: 8px -96px; }
-@media (prefers-reduced-motion: reduce) { .cd-duck.is-move .cd-waddle, .cd-kid.is-walk .cd-leg1, .cd-kid.is-walk .cd-leg2, .cd-kid.is-walk .cd-arm-back, .cd-kid.is-walk .cd-arm-stick { animation-duration: 1s; } }
+.cd-kid-art { transform-box: fill-box; transform-origin: center bottom; }
+.cd-kid.is-walk .cd-kid-art { animation: cd-kid-bob .3s ease-in-out infinite alternate; }
+@keyframes cd-kid-bob { from { transform: translateY(0) rotate(-1deg); } to { transform: translateY(-3px) rotate(1deg); } }
+.cd-kid.is-catch .cd-kid-art { animation: cd-kid-catch .4s ease-in-out 2 alternate; }
+@keyframes cd-kid-catch { to { transform: translateY(-3px) rotate(-2deg); } }
+@media (prefers-reduced-motion: reduce) { .cd-duck.is-move .cd-waddle, .cd-kid.is-walk .cd-kid-art, .cd-kid.is-catch .cd-kid-art { animation-duration: 1s; } }
 
 /* ==================================================================
    CÂU LẠC BỘ CỜ (chh-*) · CỜ VUA (chs-*)

@@ -2,12 +2,12 @@
 // Lưu trên máy đang chiếu (localStorage) theo lớp và theo ngày: em vắng, em đã gọi, điểm ✓ ✗ ★.
 
 export type CallMode = 'wheel' | 'lots' | 'race' | 'eggs' | 'ducks';
-export const CALL_MODES: { id: CallMode; label: string; icon: string; action: string }[] = [
-  { id: 'wheel', label: 'Vòng quay', icon: '🎡', action: 'Quay' },
-  { id: 'lots', label: 'Bốc thăm', icon: '🎴', action: 'Bốc thăm' },
-  { id: 'race', label: 'Đua thú', icon: '🏁', action: 'Xuất phát' },
-  { id: 'eggs', label: 'Trứng nở', icon: '🥚', action: 'Gõ trứng' },
-  { id: 'ducks', label: 'Bắt vịt', icon: '🦆', action: 'Bịt mắt bắt vịt' },
+export const CALL_MODES: { id: CallMode; label: string; action: string }[] = [
+  { id: 'wheel', label: 'Vòng quay', action: 'Quay' },
+  { id: 'lots', label: 'Bốc thăm', action: 'Bốc thăm' },
+  { id: 'race', label: 'Đua thú', action: 'Xuất phát' },
+  { id: 'eggs', label: 'Trứng nở', action: 'Gõ trứng' },
+  { id: 'ducks', label: 'Bắt vịt', action: 'Bắt vịt' },
 ];
 
 export type Student = { id: string; name: string };
@@ -177,7 +177,7 @@ export function lotHops(choices: number[], target: number, seconds: number, rand
   return out;
 }
 
-/** Bịt mắt bắt vịt: chọn tối đa n bạn vào sân. Giữ các bạn đang trong sân còn được gọi, bổ sung bạn chưa gọi,
+/** Bắt vịt: chọn tối đa n bạn vào sân. Giữ các bạn đang trong sân còn được gọi, bổ sung bạn chưa gọi,
  *  thiếu thì thêm bạn có mặt khác cho sân đủ vui (bạn đã gọi chỉ chạy cho vui, không bị bắt). */
 export function duckPen(cands: Student[], present: Student[], prev: Student[] | null, n = 10, rand: () => number = Math.random): Student[] {
   const ok = new Set(cands.map((c) => c.id));
