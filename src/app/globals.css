@@ -5377,10 +5377,11 @@ select.s3d-btn { padding-right: 6px; }
 .cd-kid.is-walk .cd-leg1 { animation: cd-step .34s ease-in-out infinite alternate; transform-origin: -6px -50px; }
 .cd-kid.is-walk .cd-leg2 { animation: cd-step .34s ease-in-out infinite alternate-reverse; transform-origin: 0 -52px; }
 @keyframes cd-step { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
-.cd-kid.is-walk .cd-arms { animation: cd-grope .5s ease-in-out infinite alternate; transform-origin: 8px -96px; }
+.cd-kid.is-walk .cd-arm-back { animation: cd-grope .5s ease-in-out infinite alternate; transform-origin: 8px -96px; }
+.cd-kid.is-walk .cd-arm-stick { animation: cd-grope .5s ease-in-out infinite alternate; transform-origin: 8px -96px; }
 @keyframes cd-grope { from { transform: rotate(-8deg); } to { transform: rotate(10deg); } }
-.cd-kid.is-catch .cd-arms { transform: rotate(14deg) translateX(4px); transform-origin: 8px -96px; }
-@media (prefers-reduced-motion: reduce) { .cd-duck.is-move .cd-waddle, .cd-kid.is-walk .cd-leg1, .cd-kid.is-walk .cd-leg2, .cd-kid.is-walk .cd-arms { animation-duration: 1s; } }
+.cd-kid.is-catch .cd-arm-stick { transform: rotate(14deg) translateX(4px); transform-origin: 8px -96px; }
+@media (prefers-reduced-motion: reduce) { .cd-duck.is-move .cd-waddle, .cd-kid.is-walk .cd-leg1, .cd-kid.is-walk .cd-leg2, .cd-kid.is-walk .cd-arm-back, .cd-kid.is-walk .cd-arm-stick { animation-duration: 1s; } }
 
 /* ==================================================================
    CÂU LẠC BỘ CỜ (chh-*) · CỜ VUA (chs-*)

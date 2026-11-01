@@ -1,6 +1,6 @@
 'use client';
 
-// Gọi tên kiểu "Bịt mắt bắt vịt": bạn nhỏ đội nón lá, bịt khăn đỏ, quờ quạng trong sân tre; mỗi chú vịt mang tên một em.
+// Gọi tên kiểu "Bịt mắt bắt vịt": cậu bé chăn vịt đội nón lá, cầm roi trong sân tre; mỗi chú vịt mang tên một em.
 // Vịt chạy né, thỉnh thoảng trêu "Thầy ơi em đây này!", bị vồ hụt kêu "Hụt rồi!". Hết giờ: bắt được đúng em được chọn.
 // Toàn bộ là SVG vẽ tại chỗ (không tải ảnh ngoài); vị trí cập nhật trực tiếp qua ref nên không làm React vẽ lại mỗi khung hình.
 import { useEffect, useRef, useState } from 'react';
@@ -218,7 +218,7 @@ function Bubble({ text }: { text: string }) {
   );
 }
 
-/** Bạn nhỏ đội nón lá, áo bà ba nâu, thắt lưng vải, bịt mắt khăn đỏ, hai tay quờ phía trước (hướng mặt sang phải) */
+/** Cậu bé chăn vịt đội nón lá, mặc áo bà ba, chân đất và cầm roi tre (hướng mặt sang phải) */
 function Kid() {
   return (
     <g>
@@ -236,10 +236,15 @@ function Kid() {
         <path d="M24 -6 q12 -2 20 4 q-10 4 -22 2z" fill="#f0c19a"/>
       </g>
       {/* tay sau */}
-      <g className="cd-arms">
+      <g className="cd-arm-back">
         <path d="M6 -98 C20 -102 34 -104 48 -104" stroke="#7a5a3c" strokeWidth="11" strokeLinecap="round" fill="none"/>
         <path d="M44 -104 L60 -106" stroke="#e8b48a" strokeWidth="8" strokeLinecap="round"/>
         <path d="M60 -110 l8 -3 M61 -107 l9 -1 M61 -104 l9 1 M59 -101 l7 3" stroke="#e8b48a" strokeWidth="3.4" strokeLinecap="round"/>
+      </g>
+      {/* roi tre giữ chắc trong tay */}
+      <g className="cd-arm-stick">
+        <path d="M66 -88 Q92 -156 126 -232" stroke="#80572e" strokeWidth="7" strokeLinecap="round" fill="none"/>
+        <path d="M66 -88 Q92 -156 126 -232" stroke="#e5c27b" strokeWidth="2" strokeLinecap="round" fill="none"/>
       </g>
       {/* thân áo bà ba */}
       <path d="M-16 -104 C-6 -110 10 -110 20 -104 C24 -90 26 -70 24 -52 C10 -48 -10 -48 -24 -54 C-24 -72 -22 -90 -16 -104 Z" fill="#8a6a4a"/>
@@ -249,20 +254,19 @@ function Kid() {
       <path d="M-24 -60 C-10 -55 10 -55 25 -60 L25 -53 C10 -48 -10 -48 -24 -53 Z" fill="#f1e9d6"/>
       <path d="M-20 -57 q-8 6 -10 18 l6 1 q2 -10 8 -16z M-20 -57 q-2 8 2 18 l5 -2 q-4 -8 -3 -16z" fill="#f1e9d6" stroke="#d6cbb3" strokeWidth="1"/>
       {/* tay trước */}
-      <g className="cd-arms">
+      <g className="cd-arm-stick">
         <path d="M10 -96 C24 -94 38 -90 52 -86" stroke="#8a6a4a" strokeWidth="12" strokeLinecap="round" fill="none"/>
-        <path d="M50 -86 L64 -83" stroke="#f0c19a" strokeWidth="9" strokeLinecap="round"/>
-        <path d="M65 -89 l9 -4 M66 -86 l10 -2 M66 -83 l10 1 M65 -80 l8 3 M61 -88 l2 -7" stroke="#f0c19a" strokeWidth="3.6" strokeLinecap="round"/>
+        <path d="M50 -86 L65 -88" stroke="#f0c19a" strokeWidth="10" strokeLinecap="round"/>
+        <path d="M61 -94 q7 -5 11 0 M62 -90 q8 -4 12 1 M62 -86 q8 -2 12 3 M60 -82 q7 0 10 5" stroke="#f0c19a" strokeWidth="3.6" strokeLinecap="round"/>
       </g>
       {/* đầu */}
       <circle cx="10" cy="-126" r="26" fill="#f0c19a"/>
       <path d="M-16 -126 C-17 -146 2 -156 20 -151 C32 -148 37 -140 36 -132 C26 -140 6 -140 -6 -132 C-8 -124 -10 -114 -14 -112 C-17 -116 -16 -122 -16 -126 Z" fill="#2b1d14"/>
       <ellipse cx="-6" cy="-120" rx="5" ry="6.5" fill="#e8b48a"/>
-      {/* khăn đỏ bịt mắt + đuôi khăn bay */}
-      <path d="M-12 -136 C2 -132 20 -132 34 -136 L34 -126 C20 -122 2 -122 -12 -126 Z" fill="#dc2626"/>
-      <path d="M-12 -132 C-24 -138 -34 -132 -44 -136 C-36 -128 -24 -126 -12 -128 Z" fill="#dc2626"/>
-      <path d="M-12 -130 C-22 -126 -30 -118 -42 -118 C-32 -114 -20 -118 -12 -126 Z" fill="#b91c1c"/>
-      <circle cx="-12" cy="-131" r="4" fill="#b91c1c"/>
+      {/* mắt nhìn theo đàn vịt */}
+      <ellipse cx="22" cy="-129" rx="4" ry="5.5" fill="#fff"/>
+      <circle cx="23" cy="-129" r="2.5" fill="#1b2a47"/>
+      <circle cx="24" cy="-130" r="0.9" fill="#fff"/>
       {/* miệng cười, má */}
       <path d="M16 -114 q10 12 20 -2 q-10 3 -20 2z" fill="#7f1d1d"/>
       <path d="M21 -108 q6 3 11 -2" stroke="#f87171" strokeWidth="3" fill="none" strokeLinecap="round"/>
