@@ -8,8 +8,8 @@ export const FONT = 'PraiseScript, cursive';
 export const PEN = 0.45 * U;
 
 export type Glyph = { text: string; x: number; base: number; w: number; guide: boolean };
-export type Sheet = { h: number; fs: number; glyphs: Glyph[]; rows: number[] };
-export type Stroke = { pts: [number, number][]; w: number };
+export type Sheet = { h: number; fs: number; glyphs: Glyph[]; rows: number[]; lineUnit?: number; rowPitch?: number };
+export type Stroke = { pts: [number, number, number?][]; w: number; color?: string; brush?: 'fountain' | 'ink' | 'pencil' };
 
 let xhCache = 0;
 function xHeight(c: CanvasRenderingContext2D) {
@@ -24,8 +24,9 @@ function xHeight(c: CanvasRenderingContext2D) {
 export const resetFontCache = () => { xhCache = 0; };
 
 /** Dàn chữ mẫu: chữ ngắn lặp lại hai dòng (dòng 1 tô theo, dòng 2 tự viết); câu dài thì xuống dòng theo từ */
-export function buildSheet(c: CanvasRenderingContext2D, text: string, repeat: boolean, margin = 60): Sheet {
-  const fs = (100 * 2 * U) / xHeight(c);
+export function buildSheet(c: CanvasRenderingContext2D, text: string, repeat: boolean, margin = 60, lineUnit = U, cellCount: 4 | 5 = 4): Sheet {
+  const rowPitch = lineUnit * cellCount * 2;
+  const fs = (100 * 2 * lineUnit) / xHeight(c);
   c.save();
   c.font = `600 ${fs}px ${FONT}`;
   const glyphs: Glyph[] = [];
@@ -33,10 +34,10 @@ export function buildSheet(c: CanvasRenderingContext2D, text: string, repeat: bo
   const maxW = CW - margin * 2;
   if (repeat) {
     const w = c.measureText(text).width;
-    const gap = Math.max(U * 2.2, w * 0.45);
-    const n = Math.max(1, Math.min(8, Math.floor((maxW + gap) / (w + gap))));
+    const gap = Math.max(lineUnit * 2.2, w * 0.45);
+    const n = Math.max(1, Math.min(32, Math.floor((maxW + gap) / (w + gap))));
     for (let r = 0; r < 2; r++) {
-      const base = ROW * (r + 1);
+      const base = rowPitch * (r + 1);
       rows.push(base);
       for (let i = 0; i < n; i++) glyphs.push({ text, x: margin + i * (w + gap), base, w, guide: r === 0 || i === 0 });
     }
@@ -50,13 +51,13 @@ export function buildSheet(c: CanvasRenderingContext2D, text: string, repeat: bo
     }
     if (line) lines.push(line);
     lines.slice(0, 3).forEach((ln, r) => {
-      const base = ROW * (r + 1);
+      const base = rowPitch * (r + 1);
       rows.push(base);
       glyphs.push({ text: ln, x: margin, base, w: c.measureText(ln).width, guide: true });
     });
   }
   c.restore();
-  return { h: ROW * rows.length + 4 * U, fs, glyphs, rows };
+  return { h: rowPitch * rows.length + 2 * lineUnit, fs, glyphs, rows, lineUnit, rowPitch };
 }
 
 /** Vẽ chữ mẫu nét đứt; mode 'to' = mọi chữ, 'viet' = chỉ chữ đầu mỗi dòng (chữ mẫu) */
@@ -80,14 +81,17 @@ export function drawTemplate(c: CanvasRenderingContext2D, sh: Sheet, mode: 'to' 
 
 export function drawStrokes(c: CanvasRenderingContext2D, strokes: Stroke[], color: string, widthAdd = 0, scale = 1) {
   c.save();
-  c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = color; c.fillStyle = color;
+  c.lineCap = 'round'; c.lineJoin = 'round';
   for (const s of strokes) {
     const w = (s.w + widthAdd) * scale;
+    c.strokeStyle = s.color ?? color; c.fillStyle = s.color ?? color;
+    c.globalAlpha = s.brush === 'pencil' ? 0.62 : 1;
     if (s.pts.length === 1) { c.beginPath(); c.arc(s.pts[0][0] * scale, s.pts[0][1] * scale, w / 2, 0, Math.PI * 2); c.fill(); continue; }
-    c.lineWidth = w;
-    c.beginPath();
-    s.pts.forEach(([x, y], i) => (i ? c.lineTo(x * scale, y * scale) : c.moveTo(x * scale, y * scale)));
-    c.stroke();
+    for (let i = 1; i < s.pts.length; i++) {
+      const [x0, y0] = s.pts[i - 1], [x1, y1, pressure] = s.pts[i];
+      c.lineWidth = s.brush === 'fountain' ? w * (0.45 + (pressure ?? 0.5) * 1.1) : w;
+      c.beginPath(); c.moveTo(x0 * scale, y0 * scale); c.lineTo(x1 * scale, y1 * scale); c.stroke();
+    }
   }
   c.restore();
 }
@@ -134,7 +138,8 @@ export function scoreWriting(sh: Sheet, strokes: Stroke[]): Result {
     if (precision < 0.75) tips.push('Nét bút ra ngoài chữ mẫu (chỗ màu đỏ): viết chậm lại, nhìn kĩ dòng kẻ.');
     // độ cao và vị trí trên dòng kẻ, từng dòng
     for (const base of sh.rows) {
-      const top = base - ROW + U, bot = base + 3 * U;
+      const lineUnit = sh.lineUnit ?? U, rowPitch = sh.rowPitch ?? ROW;
+      const top = base - rowPitch + lineUnit, bot = base + lineUnit * 3;
       const pts = strokes.flatMap((s) => s.pts).filter(([, y]) => y > top && y < bot);
       if (pts.length < 6) continue;
       const ys = pts.map((p) => p[1]).sort((a, b) => a - b);
@@ -143,7 +148,7 @@ export function scoreWriting(sh: Sheet, strokes: Stroke[]): Result {
       const glyphH = (() => {
         const c = document.createElement('canvas').getContext('2d')!; c.font = `600 ${sh.fs}px ${FONT}`;
         const g = sh.glyphs.find((x) => x.base === base)!; const m = c.measureText(g.text);
-        return m.actualBoundingBoxAscent + Math.min(m.actualBoundingBoxDescent, U * 3);
+        return m.actualBoundingBoxAscent + Math.min(m.actualBoundingBoxDescent, lineUnit * 3);
       })();
       const ratio = (lo - hi) / Math.max(1, glyphH);
       if (ratio > 1.3 && !tips.some((t) => t.includes('cao'))) tips.push('Chữ hơi cao, to hơn mẫu: viết nhỏ lại cho vừa ô li.');

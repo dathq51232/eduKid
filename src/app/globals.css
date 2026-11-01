@@ -6200,10 +6200,29 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .hp-chip-s { font-size: 10px; color: #f59e0b; letter-spacing: -1px; }
 .hp-chip.is-on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 0 0 2px #c4b5fd; color: #1f2937; }
 .hp-main { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
-.hp-paper { position: relative; width: 100%; border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-sm); background: #fffefa; border: 1px solid #e9d5ff; }
+.hp-paper { position: relative; width: 100%; max-width: 760px; justify-self: center; border-radius: 8px; overflow: hidden; box-shadow: var(--shadow-md); background: #fffefa; border: 1px solid #d5d9e2; }
 .hp-paper canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .hp-ink { touch-action: none; cursor: crosshair; }
 .hp-side { display: grid; gap: 10px; }
+.hp-grid-options { display: grid; gap: 8px; padding: 11px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.hp-grid-options > strong { font-size: 14px; }
+.hp-grid-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.hp-grid-pick button { display: grid; gap: 2px; padding: 8px 6px; border: 1px solid var(--line-strong); border-radius: 9px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.hp-grid-pick button small { color: var(--muted); font-size: 11px; }
+.hp-grid-pick button.is-on { border-color: #7c3aed; background: #f5f3ff; color: #5b21b6; }
+.hp-cell-size { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 8px; font-size: 12px; font-weight: 700; }
+.hp-cell-size b { color: var(--muted); }
+.hp-cell-size input { grid-column: 1 / -1; width: 100%; accent-color: #7c3aed; }
+.hp-brushes { display: grid; gap: 5px; }
+.hp-brushes button { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--ink); text-align: left; cursor: pointer; }
+.hp-brushes button.is-on { border-color: #a78bfa; background: #f5f3ff; }
+.hp-brushes button > span:last-child { display: grid; gap: 1px; }
+.hp-brushes button b { font-size: 12px; }
+.hp-brushes button small { color: var(--muted); font-size: 10px; }
+.hp-brush-sample { position: relative; width: 42px; height: 18px; flex: none; border-bottom: 2px solid #1e3a8a; border-radius: 45% 55% 40% 60%; transform: skewY(-8deg); }
+.hp-brush-sample.is-fountain { border-bottom-width: 1px; box-shadow: 0 2px 0 -1px #1e3a8a; }
+.hp-brush-sample.is-ink { border-bottom-width: 3px; }
+.hp-brush-sample.is-pencil { border-bottom: 2px dotted #1e3a8a; opacity: .7; }
 .hp-seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden; }
 .hp-seg button { padding: 9px; border: 0; background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
 .hp-seg button.is-on { background: #7c3aed; color: #fff; }
@@ -6227,7 +6246,7 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .hp-save { width: 100%; justify-content: center; }
 .hp-link { display: inline-flex; gap: 6px; align-items: center; font-weight: 700; }
 .hp-note { font-size: 13px; margin: 0; }
-@media (max-width: 900px) { .hp-main { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .hp-main { grid-template-columns: 1fr; } .hp-paper { max-width: 620px; } }
 
 /* Phòng triển lãm — sắp xếp & chỉnh sửa */
 .gg-card.is-sel button { border: 3px solid #06b6d4; box-shadow: 0 0 0 3px rgb(6 182 212 / .25); }
