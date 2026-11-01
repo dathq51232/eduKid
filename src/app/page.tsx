@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Mail, MessageCircle, Phone, BookOpen, Calculator, ClipboardList, FileText, Gamepad2, GraduationCap, Languages, ListChecks, Presentation, ShieldCheck, Star, Trophy, Users } from 'lucide-react';
+import { ArrowRight, Mail, MessageCircle, Phone, Activity, BookOpen, Calculator, ClipboardList, FileText, Gamepad2, GraduationCap, Languages, ListChecks, Presentation, Quote, ShieldCheck, Smartphone, Star, Timer, Trophy, Users } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import GameArt from '@/components/games/GameArt';
@@ -34,6 +34,28 @@ const teacherTools = [
   { Icon: ListChecks, text: 'Theo dõi tiến độ và lỗ hổng từng em' },
 ];
 
+const demoMetrics = [
+  { value: '4.500+', label: 'Học sinh hăng hái học', Icon: Users },
+  { value: '180+', label: 'Giáo viên đồng hành', Icon: Presentation },
+  { value: '25+', label: 'Trường học tin dùng', Icon: Trophy },
+];
+
+const parentBenefits = [
+  { title: 'Báo cáo tiến độ', text: 'Xem kết quả học tập và những bài con đã hoàn thành.', Icon: Activity, tone: 'green' },
+  { title: 'Thông báo cho phụ huynh', text: 'Nhận thông tin tổng kết và lời động viên dành cho con.', Icon: MessageCircle, tone: 'blue' },
+  { title: 'Thời gian học hợp lý', text: 'Khuyến khích con học theo từng phiên ngắn, cân bằng thời gian sử dụng thiết bị.', Icon: Timer, tone: 'yellow' },
+];
+
+const demoTestimonials = [
+  { quote: 'Bé thích linh vật Cú Xanh. Mỗi ngày làm một bài ngắn giúp con chủ động luyện tập hơn.', byline: 'Phụ huynh học sinh lớp 2 · Nội dung giả lập' },
+  { quote: 'Phiếu bài tập có đáp án giúp tôi thuận tiện hơn khi giao bài; học sinh cũng hào hứng với hoạt động của lớp.', byline: 'Giáo viên tiểu học · Nội dung giả lập' },
+];
+
+const demoFaqs = [
+  { question: 'EduChain Kids có thu phí không?', answer: 'Bản nội dung tham khảo đề xuất trải nghiệm miễn phí 7 ngày; cần xác nhận chính sách thực tế trước khi đăng.' },
+  { question: 'Có thể sử dụng trên thiết bị nào?', answer: 'EduChain Kids sử dụng trên trình duyệt web của điện thoại, máy tính bảng và máy tính.' },
+];
+
 const grades = [1, 2, 3, 4, 5];
 const answers = ['6', '7', '8', '9'];
 
@@ -52,6 +74,7 @@ export default function HomePage() {
       <LearnHeader />
       <main className="site-shell home">
         <HomeWelcome />
+        <p className="home-demo-notice wrap">Bản demo dựng từ nội dung bạn gửi. Số liệu, phản hồi và chính sách ưu đãi đang là nội dung mẫu, cần xác nhận trước khi công bố.</p>
         {/* ---------------------------------------------- Hero (tranh nền + Milo giữ nguyên) */}
         <section id="home" className="home-hero wrap">
           <div className="home-hero-card">
@@ -68,7 +91,7 @@ export default function HomePage() {
             </picture>
             <div className="home-hero-copy">
               <h1>Học theo cách của em.</h1>
-              <p className="home-lead">Mỗi ngày một bài nhỏ. Mỗi bài nhỏ mở ra một thế giới lớn.</p>
+              <p className="home-lead">Giúp con học tốt hơn mỗi ngày với những bài học ngắn. Mỗi ngày một bài nhỏ, mỗi bài nhỏ mở ra một thế giới lớn.</p>
               <div className="home-actions">
                 <Link href="/chon-bai" className="btn btn-yellow">Bắt đầu học <ArrowRight aria-hidden="true" /></Link>
                 <Link href="/tro-choi" className="btn home-btn-ghost"><Gamepad2 aria-hidden="true" /> Chơi game trí tuệ</Link>
@@ -98,6 +121,26 @@ export default function HomePage() {
                 <Link href="/dang-nhap" className="auth-role is-student"><GraduationCap aria-hidden="true" /><span><small>Dành cho</small><b>Học sinh</b></span></Link>
                 <Link href="/dang-nhap?vai=phu-huynh&next=/phu-huynh" className="auth-role is-parent"><Users aria-hidden="true" /><span><small>Dành cho</small><b>Phụ huynh</b></span></Link>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="home-proof wrap" aria-label="Số liệu minh họa">
+          <div className="home-proof-head">
+            <span>SỐ LIỆU MẪU · CẦN THAY BẰNG DỮ LIỆU ĐÃ XÁC MINH</span>
+          </div>
+          <div className="home-proof-grid">
+            {demoMetrics.map(({ value, label, Icon }) => (
+              <div className="home-proof-card" key={label}>
+                <Icon aria-hidden="true" />
+                <strong>{value}</strong>
+                <span>{label}</span>
+              </div>
+            ))}
+            <div className="home-proof-card is-rating">
+              <span className="home-proof-stars" aria-label="Năm sao">★★★★★</span>
+              <strong>4,9/5</strong>
+              <span>Đánh giá phụ huynh · Mẫu</span>
             </div>
           </div>
         </section>
@@ -200,6 +243,71 @@ export default function HomePage() {
               </ul>
             </div>
             <Link href="/giao-vien" className="btn btn-outline">Góc thầy cô <ArrowRight aria-hidden="true" /></Link>
+          </div>
+        </section>
+
+        <section id="phu-huynh" className="home-section wrap home-parent-section" aria-labelledby="parent-title">
+          <div className="home-section-head home-parent-head">
+            <div>
+              <span className="home-parent-kicker">AN TÂM ĐỒNG HÀNH · NỘI DUNG MINH HỌA</span>
+              <h2 id="parent-title">Đồng hành cùng con mỗi ngày</h2>
+              <p>Gợi ý cách giới thiệu những thông tin phụ huynh có thể quan tâm khi theo dõi việc học của con.</p>
+            </div>
+          </div>
+          <div className="home-parent-grid">
+            {parentBenefits.map(({ title, text, Icon, tone }) => (
+              <article className={`home-parent-card tone-${tone}`} key={title}>
+                <span className="home-parent-icon"><Icon aria-hidden="true" /></span>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </article>
+            ))}
+          </div>
+          <p className="home-demo-footnote"><Smartphone aria-hidden="true" /> Các tính năng thông báo và giới hạn thời gian cần đối chiếu với khả năng hiện có trước khi quảng bá.</p>
+        </section>
+
+        <section className="home-feedback wrap" aria-labelledby="feedback-title">
+          <div className="home-feedback-head">
+            <span className="home-demo-label"><Quote aria-hidden="true" /> PHẢN HỒI MẪU · KHÔNG PHẢI KHÁCH HÀNG THẬT</span>
+            <h2 id="feedback-title">Phụ huynh và thầy cô nói gì?</h2>
+            <p>Các câu dưới đây được biên tập để minh họa bố cục. Chỉ đăng phản hồi thật khi có sự đồng ý của người gửi.</p>
+          </div>
+          <div className="home-feedback-grid">
+            {demoTestimonials.map(({ quote, byline }) => (
+              <article className="home-feedback-card" key={byline}>
+                <Quote aria-hidden="true" />
+                <div className="home-feedback-stars" aria-label="Đánh giá minh họa">★★★★★</div>
+                <p>“{quote}”</p>
+                <span>{byline}</span>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="home-faq home-section wrap" aria-labelledby="faq-title">
+          <div className="home-feedback-head">
+            <span className="home-demo-label">CÂU HỎI THƯỜNG GẶP · CÂU TRẢ LỜI MẪU</span>
+            <h2 id="faq-title">Phụ huynh thường muốn biết gì?</h2>
+          </div>
+          <div className="home-faq-list">
+            {demoFaqs.map(({ question, answer }, index) => (
+              <article className="home-faq-card" key={question}>
+                <span aria-hidden="true">0{index + 1}</span>
+                <div><h3>{question}</h3><p>{answer}</p></div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section id="trial" className="home-final-cta wrap" aria-labelledby="final-cta-title">
+          <div>
+            <span className="home-final-cta-kicker">CTA MẪU · ƯU ĐÃI CẦN XÁC NHẬN</span>
+            <h2 id="final-cta-title">Bắt đầu bài học nhỏ đầu tiên hôm nay!</h2>
+            <p>Đăng nhập để khám phá bài học, trò chơi và hoạt động phù hợp với học sinh tiểu học.</p>
+          </div>
+          <div className="home-final-cta-actions">
+            <Link href="/chon-bai" className="btn btn-yellow">Bắt đầu học <ArrowRight aria-hidden="true" /></Link>
+            <Link href="/dang-nhap?vai=phu-huynh&next=/phu-huynh" className="btn home-final-cta-secondary"><Users aria-hidden="true" /> Trang phụ huynh</Link>
           </div>
         </section>
 
