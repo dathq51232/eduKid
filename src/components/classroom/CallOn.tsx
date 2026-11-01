@@ -573,9 +573,10 @@ export default function CallOn({ classId, className, grade, students, absentToda
         )}
 
         {s.mode === 'eggs' && (
-          <div className="ce">
+          <div className="ce-egg-stage">
             <p className="callon-hint">Gõ trứng 3 lần (bấm vào trứng hoặc phím cách) · trứng nở ra tên một em</p>
             <button type="button" className={`ce-egg taps-${taps}${phase === 'done' ? ' is-open' : ''}${phase === 'running' && taps === 3 ? ' is-hatching' : ''}`} onClick={go} aria-label={phase === 'done' ? 'Gõ quả trứng mới' : `Gõ trứng (${taps}/3)`}>
+              <span className="ce-extra-eggs" aria-hidden="true"><i /><i /><i /></span>
               <span className="ce-nest" aria-hidden="true" />
               {phase === 'done' && <span className="ce-milo"><MiloMascot variant={subject.milo} size={180} /></span>}
               <span className="ce-shell" aria-hidden="true"><i /><i /></span>
