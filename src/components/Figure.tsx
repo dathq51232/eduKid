@@ -1,6 +1,7 @@
 // Vẽ hình minh hoạ cho câu hỏi (src/lib/figures.ts). Toàn bộ là SVG/HTML, không tải ảnh ngoài.
 
 import type { BlockName, Figure as FigureData, ShapeName } from '@/lib/figures';
+import IllustrationIcon from '@/components/IllustrationIcon';
 
 const INK = '#1f2a44';
 
@@ -65,7 +66,7 @@ export default function Figure({ figure, compact = false }: { figure: FigureData
           {figure.groups.map((g, gi) => (
             <div key={gi} className="fig-row">
               {Array.from({ length: g.count }, (_, i) => (
-                <span key={i} className="fig-emoji" aria-hidden="true">{g.icon}</span>
+                <IllustrationIcon key={i} value={g.icon} alt="" className="fig-emoji" />
               ))}
             </div>
           ))}
@@ -79,7 +80,7 @@ export default function Figure({ figure, compact = false }: { figure: FigureData
           {figure.rows.map((r, ri) => (
             <div key={ri} className="fig-compare-row" style={{ gridTemplateColumns: `repeat(${cols}, 44px)` }}>
               {Array.from({ length: r.count }, (_, i) => (
-                <span key={i} className="fig-emoji" aria-hidden="true">{r.icon}</span>
+                <IllustrationIcon key={i} value={r.icon} alt="" className="fig-emoji" />
               ))}
             </div>
           ))}

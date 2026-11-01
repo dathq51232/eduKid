@@ -32,7 +32,7 @@ export async function loadImages(keys: string[]): Promise<Map<string, LoadedImag
   await Promise.all(keys.map(async (k) => {
     if (!cache.has(k)) cache.set(k, (async () => {
       // hình có sẵn trong app (public/), vd "/emoji/crab.png"
-      if (/^\/[a-z0-9/_-]+\.(png|jpg|gif)$/.test(k)) {
+      if (/^\/[a-z0-9/_-]+\.(png|jpg|gif|webp)$/.test(k)) {
         const r = await fetch(k);
         if (!r.ok) return null;
         const bytes = new Uint8Array(await r.arrayBuffer());

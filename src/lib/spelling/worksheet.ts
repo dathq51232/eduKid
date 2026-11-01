@@ -3,6 +3,7 @@
 
 import { PAIRS, pairById, splitWord, toneless, type PairId } from './bank';
 import { fitsLesson, NO_LIMIT, pairLesson, pairWeek } from './curriculum';
+import { illustrationIconSrc } from '@/lib/illustration-icons';
 
 export type SheetOptions = {
   pairs: PairId[];
@@ -100,7 +101,7 @@ export function makeSheet(opt: SheetOptions): Sheet {
 // ------------------------------------------------------------------ HTML
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const img = (name: string, size: number) => `<img data-img="/emoji/${name}.png" width="${size}" height="${size}" alt="" />`;
+const img = (name: string, size: number) => `<img data-img="${illustrationIconSrc(name) ?? `/emoji/${name}.png`}" width="${size}" height="${size}" alt="" />`;
 const COLORS = ['#e8f4ff', '#fff3e0', '#f1f8e9', '#fce4ec', '#ede7f6', '#e0f7fa', '#fffde7'];
 const BADGE = ['#ff8a65', '#4fc3f7', '#81c784', '#f06292', '#9575cd', '#4db6ac', '#ffb74d'];
 

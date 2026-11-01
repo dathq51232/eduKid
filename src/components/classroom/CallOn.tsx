@@ -419,8 +419,12 @@ export default function CallOn({ classId, className, grade, students, absentToda
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-      if (e.code === 'Space' || e.key === 'PageDown') { e.preventDefault(); goRef.current(); }
+      if (e.code === 'Space' || e.key === 'PageDown') {
+        const target = e.target as HTMLElement | null;
+        if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || target?.isContentEditable || target?.closest('button, a')) return;
+        e.preventDefault();
+        goRef.current();
+      }
       if (e.key === 'Escape') { setDrawer(false); }
     };
     window.addEventListener('keydown', onKey);

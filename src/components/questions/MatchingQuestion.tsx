@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { shuffle } from '@/lib/shuffle';
 import type { AnswerValue, Question } from '@/lib/types';
+import IllustrationIcon from '@/components/IllustrationIcon';
 
 type Props = {
   question: Question;
@@ -65,7 +66,7 @@ export default function MatchingQuestion({ question, answer, onAnswerChange, isS
                   disabled={isSubmitted}
                   onClick={() => pickLeft(left)}
                 >
-                  {left}
+                  <IllustrationIcon value={left} alt={left} className="match-illustration" />
                   {paired && <span className="match-pair">→ {pairs[left]}</span>}
                 </button>
               </li>
