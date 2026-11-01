@@ -104,7 +104,7 @@ export function raceLineup(cands: Student[], present: Student[], rand: () => num
   return shuffle([...first, ...fill], rand).map((student, i) => ({ student, animal: animals[i % animals.length] }));
 }
 
-const ANIMALS = ['🐢', '🐇', '🦆', '🐘', '🐎', '🐿️', '🐧', '🦒', '🐌', '🦔'];
+const ANIMALS = ['🐢', '🐰', '🦆', '🐘', '🐿️', '🐧'];
 
 /** Cuộc đua: em được gọi + tối đa 5 bạn khác; thời gian về đích (giây) — em được gọi luôn về trước. */
 export function raceFor(winner: Student, pool: Student[], rand: () => number = Math.random, lanes = 6, seconds = 4, lineup?: RaceSlot[]) {

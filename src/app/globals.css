@@ -3974,6 +3974,7 @@ body {
 .cr-name { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 150px; font-size: 16px; font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cr-lane.is-win .cr-name { color: #1e2b4a; }
 .cr-animal { position: absolute; top: 50%; font-size: 36px; line-height: 1; transform: translate(-50%, -50%) scaleX(-1); }
+.cr-animal-icon { display: block; width: 48px; height: 48px; object-fit: contain; }
 .cr-finish { position: absolute; top: 0; bottom: 0; right: 70px; z-index: 1; width: 12px; border-radius: 3px; background: repeating-linear-gradient(0deg, #1e2b4a 0 10px, #fff 10px 20px); }
 
 /* trứng nở */

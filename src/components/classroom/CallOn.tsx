@@ -9,6 +9,7 @@ import { Check, Eye, EyeOff, Maximize2, Timer, Minimize2, RotateCcw, Users, Volu
 import { createClient } from '@/lib/supabase/client';
 import MiloMascot, { type MiloVariant } from '@/components/mascot/MiloMascot';
 import DuckCatch from '@/components/classroom/DuckCatch';
+import IllustrationIcon from '@/components/IllustrationIcon';
 import {
   CALL_MODES, DURATIONS, addTally, duckPen, raceLineup, candidatesOf, lotHops, lotsFor, pickOne, presentOf, raceFor, racePos, restoreState, shortName, sliceAt, spinEase, spinTurns, wheelAngle,
   type CallMode, type CallState, type RaceSlot, type Student, type Tally,
@@ -557,13 +558,13 @@ export default function CallOn({ classId, className, grade, students, absentToda
             {count !== null && <span key={count} className="cr-count" aria-live="assertive">{count === 0 ? 'Chạy!' : count}</span>}
             <div className="cr-track">
               <span className="cr-finish" aria-hidden="true" />
-              {(race ?? (lineup ?? Array.from({ length: Math.min(6, Math.max(1, present.length)) }, (_, i) => ({ student: { id: `?${i}`, name: '?' }, animal: ['🐢', '🐇', '🦆', '🐘', '🐎', '🐿️'][i] }))).map((l) => ({ ...l, finish: 1, wobble: 1 }))).map((l) => {
+              {(race ?? (lineup ?? Array.from({ length: Math.min(6, Math.max(1, present.length)) }, (_, i) => ({ student: { id: `?${i}`, name: '?' }, animal: ['🐢', '🐰', '🦆', '🐘', '🐿️', '🐧'][i] }))).map((l) => ({ ...l, finish: 1, wobble: 1 }))).map((l) => {
                 const p = race ? racePos(raceT, l.finish, l.wobble) : 0;
                 const win = phase === 'done' && picked?.id === l.student.id;
                 return (
                   <div key={l.student.id} className={`cr-lane${win ? ' is-win' : ''}`}>
                     <span className={`cr-name${lining ? ' is-rolling' : ''}`}>{race || lineup ? l.student.name : 'Ai sẽ vào đua?'}</span>
-                    <span className="cr-animal" style={{ left: `calc(170px + ${p} * (100% - 250px))` }} aria-hidden="true">{l.animal}</span>
+                    <span className="cr-animal" style={{ left: `calc(170px + ${p} * (100% - 250px))` }} aria-hidden="true"><IllustrationIcon value={l.animal} className="cr-animal-icon" /></span>
                   </div>
                 );
               })}

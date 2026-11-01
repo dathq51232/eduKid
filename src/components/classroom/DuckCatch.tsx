@@ -192,7 +192,7 @@ export default function DuckCatch({ ducks, target, runKey, seconds, caughtId, on
         {ducks.map((d, i) => (
           <g key={d.id} ref={(el) => { duckRefs.current[i] = el; }} className={`cd-duck${caughtId === d.id ? ' is-caught' : ''}`}>
             <ellipse cx="0" cy="2" rx="30" ry="8" fill="rgb(70 50 20 / .18)" />
-            <g className="cd-flip"><g className="cd-waddle"><Duck /></g></g>
+            <g className="cd-flip"><g className="cd-waddle"><image href="/edu-icons/duck.webp" x="-41" y="-82" width="82" height="82" /></g></g>
             <g transform="translate(0 -92)">
               <rect x={-(short(d.name).length * 4.6 + 12)} y="-13" width={short(d.name).length * 9.2 + 24} height="24" rx="10" fill="#ffffff" stroke="#2457c5" strokeWidth="2.5" />
               <text x="0" y="4" textAnchor="middle" fontSize="14" fontWeight="700" fill="#1b2a47">{short(d.name)}</text>
@@ -214,24 +214,6 @@ function Bubble({ text }: { text: string }) {
     <g className="cd-bubble" transform="translate(34 -150)">
       <path d={`M0 0 h${w} a14 14 0 0 1 14 14 v20 a14 14 0 0 1 -14 14 h${-w + 34} l-22 18 l4 -18 h-16 a14 14 0 0 1 -14 -14 v-20 a14 14 0 0 1 14 -14z`} fill="#ffffff" stroke="#1b2a47" strokeWidth="2.5" />
       <text x={w / 2} y="30" textAnchor="middle" fontSize="17" fontWeight="700" fill="#1b2a47">{text}</text>
-    </g>
-  );
-}
-
-/** Chú vịt trắng mỏ cam, má hồng (hướng mặt sang phải) */
-function Duck() {
-  return (
-    <g>
-      <path d="M-10 -6 q-2 10 -8 12 h14 z M6 -6 q-1 10 -6 12 h14 z" fill="#f59e0b" />
-      <ellipse cx="0" cy="-26" rx="30" ry="22" fill="#ffffff" stroke="#e2e8f0" strokeWidth="2" />
-      <path d="M-30 -30 q-12 -8 -8 4 q6 6 10 0z" fill="#ffffff" stroke="#e2e8f0" strokeWidth="2" />
-      <path d="M-14 -30 q16 -8 22 6 q-12 10 -24 2z" fill="#f1f5f9" />
-      <circle cx="14" cy="-56" r="18" fill="#ffffff" stroke="#e2e8f0" strokeWidth="2" />
-      <path d="M8 -74 q4 -8 8 0 q2 -7 6 -1" fill="none" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" />
-      <ellipse cx="34" cy="-52" rx="11" ry="6" fill="#f97316" />
-      <circle cx="20" cy="-60" r="3.4" fill="#1b2a47" />
-      <circle cx="21" cy="-61.5" r="1.1" fill="#ffffff" />
-      <ellipse cx="13" cy="-49" rx="5" ry="3" fill="#fda4af" opacity=".8" />
     </g>
   );
 }
