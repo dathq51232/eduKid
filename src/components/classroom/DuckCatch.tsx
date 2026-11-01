@@ -218,65 +218,70 @@ function Bubble({ text }: { text: string }) {
   );
 }
 
-/** Cậu bé chăn vịt đội nón lá, mặc áo bà ba, chân đất và cầm roi tre (hướng mặt sang phải) */
+/** Cậu bé chăn vịt phong cách tranh thiếu nhi: nón lá, áo bà ba, chân đất và cầm roi tre. */
 function Kid() {
   return (
     <g>
       <ellipse cx="2" cy="2" rx="46" ry="9" fill="rgb(70 50 20 / .22)"/>
       {/* chân sau */}
       <g className="cd-leg1">
-        <path d="M-6 -50 C-14 -40 -22 -30 -30 -22 L-20 -14 C-12 -24 -2 -34 6 -44 Z" fill="#4a3426"/>
-        <path d="M-29 -23 L-38 -6 L-30 -3 L-21 -15 Z" fill="#e8b48a"/>
-        <path d="M-40 -6 q-6 2 -6 6 q10 2 18 0 l-2 -6z" fill="#e8b48a"/>
+        <path d="M-7 -54 C-18 -43 -28 -32 -36 -22 L-25 -14 C-13 -24 -3 -34 8 -45 Z" fill="#39302a"/>
+        <path d="M-35 -23 L-47 -7 L-39 -2 L-25 -15 Z" fill="#e8b48a"/>
+        <path d="M-48 -7 Q-54 -3 -51 1 Q-40 4 -31 0 L-34 -6 Z" fill="#f0c19a"/>
+        <path d="M-35 -22 l9 7" stroke="#a49a8d" strokeWidth="4" strokeLinecap="round"/>
       </g>
       {/* chân trước */}
       <g className="cd-leg2">
-        <path d="M0 -52 C10 -46 22 -38 28 -30 L22 -20 C14 -26 4 -34 -6 -40 Z" fill="#5a3f2c"/>
-        <path d="M22 -26 L30 -30 L34 -6 L26 -6 Z" fill="#f0c19a"/>
-        <path d="M24 -6 q12 -2 20 4 q-10 4 -22 2z" fill="#f0c19a"/>
+        <path d="M1 -54 C15 -47 31 -39 39 -28 L31 -18 C20 -25 6 -32 -9 -41 Z" fill="#45403a"/>
+        <path d="M31 -23 L38 -27 L48 -7 L40 -3 Z" fill="#e8b48a"/>
+        <path d="M40 -7 Q50 -10 59 -4 Q52 3 39 1 L35 -3 Z" fill="#f0c19a"/>
+        <path d="M32 -21 l9 5" stroke="#a49a8d" strokeWidth="4" strokeLinecap="round"/>
       </g>
-      {/* tay sau */}
+      {/* tay sau đưa ra chào đàn vịt */}
       <g className="cd-arm-back">
-        <path d="M6 -98 C20 -102 34 -104 48 -104" stroke="#7a5a3c" strokeWidth="11" strokeLinecap="round" fill="none"/>
-        <path d="M44 -104 L60 -106" stroke="#e8b48a" strokeWidth="8" strokeLinecap="round"/>
-        <path d="M60 -110 l8 -3 M61 -107 l9 -1 M61 -104 l9 1 M59 -101 l7 3" stroke="#e8b48a" strokeWidth="3.4" strokeLinecap="round"/>
-      </g>
-      {/* roi tre giữ chắc trong tay */}
-      <g className="cd-arm-stick">
-        <path d="M66 -88 Q92 -156 126 -232" stroke="#80572e" strokeWidth="7" strokeLinecap="round" fill="none"/>
-        <path d="M66 -88 Q92 -156 126 -232" stroke="#e5c27b" strokeWidth="2" strokeLinecap="round" fill="none"/>
+        <path d="M7 -98 C23 -103 39 -104 54 -101" stroke="#75543a" strokeWidth="13" strokeLinecap="round" fill="none"/>
+        <path d="M49 -102 L65 -103" stroke="#f0c19a" strokeWidth="10" strokeLinecap="round"/>
+        <path d="M63 -109 l2 -9 M67 -108 l5 -9 M70 -104 l8 -7 M71 -100 l10 -3 M69 -97 l8 1" stroke="#f0c19a" strokeWidth="3.5" strokeLinecap="round"/>
       </g>
       {/* thân áo bà ba */}
-      <path d="M-16 -104 C-6 -110 10 -110 20 -104 C24 -90 26 -70 24 -52 C10 -48 -10 -48 -24 -54 C-24 -72 -22 -90 -16 -104 Z" fill="#8a6a4a"/>
-      <path d="M2 -106 L6 -90 L10 -106" stroke="#6e5238" strokeWidth="2" fill="none"/>
-      <path d="M-12 -86 q14 2 30 -2" stroke="#6e5238" strokeWidth="1.5" fill="none" opacity=".5"/>
+      <path d="M-17 -105 Q0 -114 19 -104 C25 -88 27 -69 25 -53 Q2 -46 -24 -54 C-24 -72 -23 -91 -17 -105 Z" fill="#79563a" stroke="#5d402e" strokeWidth="2"/>
+      <path d="M-13 -101 Q0 -91 8 -77 L-1 -70 L-15 -84 M8 -77 Q17 -86 21 -99" fill="none" stroke="#a77c56" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M2 -102 L5 -91 L11 -103" stroke="#e1c49b" strokeWidth="2" fill="none"/>
+      <circle cx="7" cy="-84" r="1.8" fill="#e7cda6"/>
+      <circle cx="9" cy="-72" r="1.8" fill="#e7cda6"/>
       {/* thắt lưng vải trắng ngà + nút buộc */}
-      <path d="M-24 -60 C-10 -55 10 -55 25 -60 L25 -53 C10 -48 -10 -48 -24 -53 Z" fill="#f1e9d6"/>
-      <path d="M-20 -57 q-8 6 -10 18 l6 1 q2 -10 8 -16z M-20 -57 q-2 8 2 18 l5 -2 q-4 -8 -3 -16z" fill="#f1e9d6" stroke="#d6cbb3" strokeWidth="1"/>
-      {/* tay trước */}
+      <path d="M-24 -59 Q0 -52 25 -60 L25 -52 Q0 -45 -24 -52 Z" fill="#eee5d1" stroke="#d5c7ac" strokeWidth="1.5"/>
+      <path d="M-18 -55 Q-28 -44 -31 -34 L-24 -30 Q-18 -43 -9 -50 M-18 -54 Q-21 -43 -14 -34 L-8 -37 L-11 -52" fill="#eee5d1" stroke="#d5c7ac" strokeWidth="1.5"/>
+      {/* Tay trước nắm roi tre chéo */}
       <g className="cd-arm-stick">
-        <path d="M10 -96 C24 -94 38 -90 52 -86" stroke="#8a6a4a" strokeWidth="12" strokeLinecap="round" fill="none"/>
-        <path d="M50 -86 L65 -88" stroke="#f0c19a" strokeWidth="10" strokeLinecap="round"/>
-        <path d="M61 -94 q7 -5 11 0 M62 -90 q8 -4 12 1 M62 -86 q8 -2 12 3 M60 -82 q7 0 10 5" stroke="#f0c19a" strokeWidth="3.6" strokeLinecap="round"/>
+        <path d="M-38 -18 Q10 -57 76 -107" stroke="#79502b" strokeWidth="7" strokeLinecap="round" fill="none"/>
+        <path d="M-38 -18 Q10 -57 76 -107" stroke="#e4c27e" strokeWidth="2" strokeLinecap="round" fill="none"/>
+        <path d="M10 -96 Q28 -92 44 -82" stroke="#79563a" strokeWidth="14" strokeLinecap="round" fill="none"/>
+        <path d="M40 -84 Q51 -77 61 -70" stroke="#f0c19a" strokeWidth="11" strokeLinecap="round"/>
+        <path d="M52 -78 Q61 -78 66 -71 M50 -74 Q59 -72 64 -66 M48 -70 Q57 -67 61 -61" stroke="#e8b48a" strokeWidth="3" strokeLinecap="round"/>
       </g>
       {/* đầu */}
-      <circle cx="10" cy="-126" r="26" fill="#f0c19a"/>
-      <path d="M-16 -126 C-17 -146 2 -156 20 -151 C32 -148 37 -140 36 -132 C26 -140 6 -140 -6 -132 C-8 -124 -10 -114 -14 -112 C-17 -116 -16 -122 -16 -126 Z" fill="#2b1d14"/>
-      <ellipse cx="-6" cy="-120" rx="5" ry="6.5" fill="#e8b48a"/>
-      {/* mắt nhìn theo đàn vịt */}
-      <ellipse cx="22" cy="-129" rx="4" ry="5.5" fill="#fff"/>
-      <circle cx="23" cy="-129" r="2.5" fill="#1b2a47"/>
-      <circle cx="24" cy="-130" r="0.9" fill="#fff"/>
-      {/* miệng cười, má */}
-      <path d="M16 -114 q10 12 20 -2 q-10 3 -20 2z" fill="#7f1d1d"/>
-      <path d="M21 -108 q6 3 11 -2" stroke="#f87171" strokeWidth="3" fill="none" strokeLinecap="round"/>
-      <ellipse cx="26" cy="-120" rx="4" ry="2.4" fill="#fca5a5" opacity=".8"/>
+      <ellipse cx="8" cy="-126" rx="28" ry="29" fill="#f1bd96" stroke="#bb8569" strokeWidth="1.5"/>
+      <ellipse cx="-19" cy="-125" rx="5" ry="8" fill="#e8b48a" stroke="#bb8569" strokeWidth="1"/>
+      <path d="M-19 -143 Q-12 -160 5 -155 Q14 -159 23 -152 Q34 -148 36 -136 Q28 -143 20 -140 Q14 -132 9 -141 Q3 -131 -3 -141 Q-12 -132 -18 -137 Z" fill="#38251c"/>
+      <path d="M-9 -132 Q-4 -136 1 -132 M17 -132 Q22 -136 27 -132" stroke="#493024" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+      <ellipse cx="-4" cy="-125" rx="5" ry="7" fill="#fff"/>
+      <ellipse cx="21" cy="-125" rx="5" ry="7" fill="#fff"/>
+      <circle cx="-2" cy="-124" r="2.8" fill="#33241c"/>
+      <circle cx="23" cy="-124" r="2.8" fill="#33241c"/>
+      <circle cx="-1" cy="-126" r="1" fill="#fff"/>
+      <circle cx="24" cy="-126" r="1" fill="#fff"/>
+      <ellipse cx="-11" cy="-115" rx="6" ry="3.5" fill="#ef8e7d" opacity=".55"/>
+      <ellipse cx="29" cy="-115" rx="6" ry="3.5" fill="#ef8e7d" opacity=".55"/>
+      {/* Nụ cười */}
+      <path d="M4 -113 Q12 -104 22 -113" fill="#8c3d32"/>
+      <path d="M6 -113 Q12 -107 20 -113" stroke="#fff1df" strokeWidth="2" fill="none"/>
       {/* nón lá */}
-      <g transform="translate(0 4) rotate(-8 10 -146)">
-        <path d="M-36 -144 L10 -186 L56 -144 C40 -138 -20 -138 -36 -144 Z" fill="#ead7a4" stroke="#b9975b" strokeWidth="2"/>
-        <path d="M-20 -146 L10 -180 M10 -180 L40 -146 M-6 -144 L10 -184 M10 -184 L26 -144" stroke="#c9a96e" strokeWidth="1.2"/>
-        <path d="M-28 -152 q38 6 76 0 M-18 -162 q28 5 56 0 M-6 -172 q16 3 32 0" stroke="#c9a96e" strokeWidth="1.2" fill="none"/>
-        <path d="M-36 -144 C-20 -138 40 -138 56 -144" stroke="#a8844a" strokeWidth="2.4" fill="none"/>
+      <g transform="translate(0 4) rotate(-5 8 -148)">
+        <path d="M-61 -133 Q-48 -151 8 -189 Q63 -150 75 -132 Q22 -126 -61 -133 Z" fill="#ead5a0" stroke="#a98248" strokeWidth="3"/>
+        <path d="M-52 -134 Q7 -141 66 -133 M-35 -145 L8 -187 M-14 -139 L8 -187 M10 -137 L8 -187 M34 -136 L8 -187 M55 -134 L8 -187" stroke="#c2a067" strokeWidth="1.8" fill="none"/>
+        <path d="M-40 -148 Q7 -137 51 -146 M-22 -160 Q8 -148 34 -158 M-4 -174 Q9 -170 21 -175" stroke="#c2a067" strokeWidth="1.5" fill="none"/>
+        <path d="M-61 -133 Q5 -124 75 -132" stroke="#8f6c3e" strokeWidth="3" fill="none"/>
       </g>
     </g>
   );
