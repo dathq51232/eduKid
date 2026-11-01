@@ -4080,14 +4080,20 @@ body {
   .ce-egg.is-open .ce-shell i:first-child { transform: translate(min(140px, 40vw), -40px) rotate(70deg); }
 }
 @media (max-width: 900px) {
+  .callon:not(.is-full) { padding-bottom: 92px; }
   .callon-bottom {
-    position: sticky;
+    position: fixed;
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
     bottom: calc(76px + env(safe-area-inset-bottom));
-    z-index: 20;
-    padding-block: 8px;
-    background: linear-gradient(180deg, transparent, var(--bg, #f5f8ff) 24%);
+    z-index: 65;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow: var(--lift);
   }
-  .callon.is-full .callon-bottom { bottom: 8px; }
+  .callon.is-full .callon-bottom { bottom: max(8px, env(safe-area-inset-bottom)); }
 }
 
 /* Gọi tên – Dò bài: KHÔNG tắt hiệu ứng theo prefers-reduced-motion — Windows tắt "Animation effects" làm vòng quay,
