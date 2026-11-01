@@ -4079,6 +4079,16 @@ body {
   .ce-extra-eggs i { width: 70px; height: 92px; }
   .ce-egg.is-open .ce-shell i:first-child { transform: translate(min(140px, 40vw), -40px) rotate(70deg); }
 }
+@media (max-width: 900px) {
+  .callon-bottom {
+    position: sticky;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    z-index: 20;
+    padding-block: 8px;
+    background: linear-gradient(180deg, transparent, var(--bg, #f5f8ff) 24%);
+  }
+  .callon.is-full .callon-bottom { bottom: 8px; }
+}
 
 /* Gọi tên – Dò bài: KHÔNG tắt hiệu ứng theo prefers-reduced-motion — Windows tắt "Animation effects" làm vòng quay,
    đua thú, trứng nở mất chuyển động; đây là trò chơi thầy cô chủ động bật trên màn chiếu. */
