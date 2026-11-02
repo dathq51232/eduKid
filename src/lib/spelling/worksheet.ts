@@ -102,6 +102,47 @@ export function makeSheet(opt: SheetOptions): Sheet {
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const img = (name: string, size: number) => `<img data-img="${illustrationIconSrc(name) ?? `/emoji/${name}.png`}" width="${size}" height="${size}" alt="" />`;
+
+/* ---------- trình bày phiếu do giáo viên chọn (11/2026): biểu tượng góc, phông chữ, co giãn vừa 1 trang A4 ---------- */
+export const SHEET_ICONS: { id: string; label: string }[] = [
+  { id: 'logo', label: 'Logo EduChainKids (khối EDKC)' }, { id: 'word', label: 'Chữ EduChainKids' },
+  { id: 'sun-with-face', label: 'Mặt trời' }, { id: 'rainbow', label: 'Cầu vồng' }, { id: 'glowing-star', label: 'Ngôi sao' },
+  { id: 'open-book', label: 'Quyển sách' }, { id: 'pencil', label: 'Bút chì' }, { id: 'light-bulb', label: 'Bóng đèn' },
+  { id: 'trophy', label: 'Cúp' }, { id: 'school', label: 'Trường học' }, { id: 'none', label: 'Không có' },
+];
+export const BODY_FONTS = {
+  baloo: { label: 'Baloo 2 (tròn, dễ đọc)', css: "'Baloo 2', Arial, sans-serif", weight: 600 },
+  arial: { label: 'Arial', css: 'Arial, Helvetica, sans-serif', weight: 400 },
+  times: { label: 'Times New Roman', css: "'Times New Roman', Times, serif", weight: 400 },
+} as const;
+export const HAND_FONTS = {
+  dancing: { label: 'Chữ viết nghiêng mềm', css: "'Dancing Script', cursive", k: 1 },
+  hp4hn: { label: 'Chữ tập viết đứng (HP001 4H)', css: "'HP001 4H', 'Dancing Script', cursive", k: 1.3 },
+  hp30n: { label: 'Chữ tập viết đứng mẫu mới', css: "'HP001 Moi', 'Dancing Script', cursive", k: 1.3 },
+  kieu5: { label: 'Chữ nghiêng nét thanh đậm', css: "'HP001 Nghieng', 'Dancing Script', cursive", k: 1.3 },
+  body: { label: 'Giống phông của phiếu', css: '', k: 1 },
+} as const;
+export type BodyFont = keyof typeof BODY_FONTS;
+export type HandFont = keyof typeof HAND_FONTS;
+export type SheetLook = { iconL: string; iconR: string; iconSize: number; font: BodyFont; hand: HandFont; brand: boolean; scale: number };
+export const DEFAULT_LOOK: SheetLook = { iconL: 'logo', iconR: 'rainbow', iconSize: 60, font: 'baloo', hand: 'dancing', brand: true, scale: 1 };
+
+const LOGO_MARK = '/brand/logo-mark-print.png', LOGO_WORD = '/brand/logo-word-print.png';
+function cornerIcon(id: string, size: number) {
+  if (id === 'none') return '';
+  if (id === 'logo') return `<img data-img="${LOGO_MARK}" width="${size}" height="${size}" alt="EduChainKids" />`;
+  if (id === 'word') { const h = Math.round(size * 0.42); return `<img data-img="${LOGO_WORD}" width="${Math.round(h * 6.75)}" height="${h}" alt="EduChainKids" />`; }
+  return img(id, size);
+}
+/** Nhân mọi cỡ (pt) và kích thước hình trong đoạn HTML với k — để phiếu vừa 1 trang A4 */
+export function scaleHtml(html: string, k: number): string {
+  if (Math.abs(k - 1) < 0.005) return html;
+  const r = (v: number) => Math.round(v * k * 10) / 10;
+  return html
+    .replace(/(\d+(?:\.\d+)?)pt\b/g, (_, v: string) => `${r(Number(v))}pt`)
+    .replace(/<img([^>]*?) width="(\d+)" height="(\d+)"/g, (_, a: string, w: string, h: string) => `<img${a} width="${Math.round(Number(w) * k)}" height="${Math.round(Number(h) * k)}"`)
+    .replace(/cellpadding="(\d+)"/g, (_, v: string) => `cellpadding="${Math.max(0, Math.round(Number(v) * k))}"`);
+}
 const COLORS = ['#e8f4ff', '#fff3e0', '#f1f8e9', '#fce4ec', '#ede7f6', '#e0f7fa', '#fffde7'];
 const BADGE = ['#ff8a65', '#4fc3f7', '#81c784', '#f06292', '#9575cd', '#4db6ac', '#ffb74d'];
 
@@ -112,7 +153,9 @@ function wordHtml(it: Item, answers: boolean, blankWide = false) {
 }
 
 /** Toàn bộ văn bản HTML (đề + trang đáp án nếu withKey). Dùng được cho xem trước, in, xuất .docx */
-export function sheetHtml(sheet: Sheet, opts: { withKey?: boolean; school?: string; className?: string; teacher?: string } = {}): string {
+export function sheetHtml(sheet: Sheet, opts: { withKey?: boolean; school?: string; className?: string; teacher?: string; look?: Partial<SheetLook> } = {}): string {
+  const look: SheetLook = { ...DEFAULT_LOOK, ...opts.look };
+  const hand = HAND_FONTS[look.hand] ?? HAND_FONTS.dancing, bodyFont = BODY_FONTS[look.font] ?? BODY_FONTS.baloo;
   let n = 0;
   const body: string[] = [];
   const big = sheet.sections.filter((x) => x.kind === 'pics').length <= 1;
@@ -122,12 +165,12 @@ export function sheetHtml(sheet: Sheet, opts: { withKey?: boolean; school?: stri
   const info = `<p style="text-align:center;margin:0 0 2pt;font-size:12pt;color:#37474f">Trường: ${f(opts.school, '………………………………')} &emsp; Lớp: ${f(opts.className, '…………')} &emsp; Giáo viên: ${f(opts.teacher, '……………………………')}</p>`;
   const head = (answers: boolean) => `
   <table width="100%" cellspacing="0" cellpadding="0" style="width:100%"><tr>
-    <td width="16%" style="vertical-align:middle;text-align:left">${img('sun-with-face', 56)}</td>
+    <td width="${look.iconL === 'word' ? 26 : 16}%" style="vertical-align:middle;text-align:left">${cornerIcon(look.iconL, look.iconSize)}</td>
     <td style="vertical-align:middle;text-align:center">
       <p class="ws-t1" style="text-align:center;margin:0;font-size:16pt;font-weight:bold;color:#1565c0">${esc(sheet.title)}${answers ? ' — ĐÁP ÁN' : ''}</p>
       <p class="ws-t2" style="text-align:center;margin:0;font-size:24pt;font-weight:bold;color:#e53935">${esc(sheet.subtitle)}</p>
     </td>
-    <td width="16%" style="vertical-align:middle;text-align:right">${img('rainbow', 56)}</td>
+    <td width="${look.iconR === 'word' ? 26 : 16}%" style="vertical-align:middle;text-align:right">${cornerIcon(look.iconR, look.iconSize)}</td>
   </tr></table>
   ${info}
   ${sheet.scope ? `<p style="text-align:center;margin:0 0 2pt;font-size:11pt;color:#607d8b">Ôn theo bài đã học: ${esc(sheet.scope)}</p>` : ''}
@@ -161,14 +204,19 @@ export function sheetHtml(sheet: Sheet, opts: { withKey?: boolean; school?: stri
       return h + `<table width="100%" cellspacing="0" cellpadding="3" style="width:100%;border:1.5px dashed ${BADGE[i % BADGE.length]};border-radius:10px">${rows.join('')}</table>`;
     }
     // tập chép: câu mẫu + dòng kẻ ô li
-    const lines = (s.sentences ?? []).map((t) => `<p class="ws-hand" style="margin:0;font-size:${big ? 18 : 16}pt;color:#1a237e">${esc(t)}</p>`).join('');
+    const lines = (s.sentences ?? []).map((t) => `<p class="ws-hand" style="margin:0;font-size:${Math.round((big ? 18 : 16) * hand.k)}pt;color:#1a237e">${esc(t)}</p>`).join('');
     const ruled = answers ? '' : `<table width="100%" cellspacing="0" cellpadding="0" class="ws-oli" style="width:100%;margin-top:4pt">${Array.from({ length: Math.max(2, (s.sentences ?? []).length) }, () => `<tr style="height:${big ? 24 : 20}pt"><td style="border-bottom:1px solid #90caf9">&nbsp;</td></tr>`).join('')}</table>`;
     return h + lines + ruled;
   };
 
   body.push(head(false));
   sheet.sections.forEach((s, i) => body.push(sec(s, false, i)));
-  body.push(`<p style="text-align:center;margin:10pt 0 0;font-size:10pt;color:#90a4ae">Phiếu số ${sheet.seed % 10000} · EduChain Kids</p>`);
+  body.push(look.brand
+    ? `<p style="text-align:center;margin:10pt 0 0;font-size:10pt;color:#90a4ae"><img data-img="${LOGO_MARK}" width="22" height="22" alt="" /> <img data-img="${LOGO_WORD}" width="115" height="17" alt="EduChainKids" /> &nbsp;·&nbsp; Phiếu số ${sheet.seed % 10000}</p>`
+    : `<p style="text-align:center;margin:10pt 0 0;font-size:10pt;color:#90a4ae">Phiếu số ${sheet.seed % 10000} · EduChain Kids</p>`);
+  // co giãn trang đề cho vừa 1 trang A4 (trang đáp án giữ nguyên)
+  const page1 = scaleHtml(body.splice(0).join('\n'), look.scale);
+  body.push(page1);
   if (opts.withKey) {
     n = 0;
     body.push('<p style="page-break-before:always;margin:0">&nbsp;</p>');
@@ -182,7 +230,7 @@ export function sheetHtml(sheet: Sheet, opts: { withKey?: boolean; school?: stri
   }
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(sheet.title)}</title><style>
 @page { size: 21cm 29.7cm; margin: 12mm 12mm 12mm 14mm; }
-body { font-family: 'Baloo 2', 'Times New Roman', serif; font-weight: 600; font-size: 13pt; color: #263238; margin: 0; line-height: 1.25; }
+body { font-family: ${bodyFont.css}; font-weight: ${bodyFont.weight}; font-size: ${Math.round(13 * look.scale * 10) / 10}pt; color: #263238; margin: 0; line-height: 1.25; }
 @font-face { font-family: 'Baloo 2'; font-weight: 600; src: url('/fonts/praise/baloo-2-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: 'Baloo 2'; font-weight: 600; src: url('/fonts/praise/baloo-2-vietnamese-600-normal.woff2') format('woff2'); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
 @font-face { font-family: 'Baloo 2'; font-weight: 700; src: url('/fonts/praise/baloo-2-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
@@ -194,7 +242,10 @@ body { font-family: 'Baloo 2', 'Times New Roman', serif; font-weight: 600; font-
 p { margin: 0 0 4pt; }
 table td { vertical-align: top; }
 table { page-break-inside: avoid; }
-.ws-hand { font-family: 'Dancing Script', cursive; font-weight: 600; }
+.ws-hand { font-family: ${hand.css || bodyFont.css}; font-weight: ${hand.css ? (look.hand === 'dancing' ? 600 : 400) : bodyFont.weight}; }
+@font-face { font-family: 'HP001 4H'; src: url('/fonts/tap-viet/hp4hn.woff2') format('woff2'); }
+@font-face { font-family: 'HP001 Moi'; src: url('/fonts/tap-viet/hp30n.woff2') format('woff2'); }
+@font-face { font-family: 'HP001 Nghieng'; src: url('/fonts/tap-viet/kieu5.woff2') format('woff2'); }
 td[bgcolor] { border-radius: 12px; }
 </style></head><body>${body.join('\n')}</body></html>`;
 }

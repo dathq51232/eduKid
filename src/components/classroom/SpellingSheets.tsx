@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Lock, RefreshCw } from 'lucide-react';
 import DocPreview from './DocPreview';
-import { ALL_PAIRS, makeSheet, sheetHtml } from '@/lib/spelling/worksheet';
+import { ALL_PAIRS, BODY_FONTS, DEFAULT_LOOK, HAND_FONTS, SHEET_ICONS, makeSheet, sheetHtml, type BodyFont, type HandFont, type SheetLook } from '@/lib/spelling/worksheet';
 import type { PairId } from '@/lib/spelling/bank';
 import { currentWeek, HK2_WEEK, lessonForWeek, WEEKS, weekLabel } from '@/lib/spelling/curriculum';
 import { ToolIcon } from '@/components/classroom/tool-icons';
@@ -11,7 +11,27 @@ import { ToolIcon } from '@/components/classroom/tool-icons';
 const KEY = 'edukid:phieu-chinh-ta';
 type Saved = { school: string; className: string; teacher: string; pairs: PairId[]; picCount: number; wordCount: number; copy: boolean; withKey: boolean;
   /** tuần đã chọn và tuần theo lịch lúc chọn: lần sau mở, tuần tự tăng theo lịch mà vẫn giữ độ lệch giáo viên đã chỉnh */
-  week: number; weekAt: number };
+  week: number; weekAt: number;
+  /** trình bày: biểu tượng góc, phông chữ, logo chân trang, co giãn vừa trang */
+  look?: Partial<SheetLook>; fit?: boolean };
+// vùng in của trang A4 (lề 12 mm trên dưới, 12 + 14 mm hai bên), tính ra px CSS (96 px / inch)
+const MM = 96 / 25.4, AVAIL_H = (297 - 24) * MM - 6, MAX_FIT = 1.2, MIN_FIT = 0.55;
+const BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+/** Đo chiều cao trang đề (trước ngắt trang đáp án) khi dàn trên khổ A4 */
+async function measurePage1(html: string): Promise<number> {
+  const f = document.createElement('iframe');
+  f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
+  f.style.cssText = `position:fixed;left:-10000px;top:0;width:${184 * MM}px;height:600px;border:0;visibility:hidden`;
+  document.body.appendChild(f);
+  try {
+    const d = f.contentDocument!;
+    d.open(); d.write(html.replace(/<img data-img="/g, `<img src="${BLANK}" data-img="`)); d.close();
+    void d.body.offsetHeight;
+    await d.fonts?.ready; await new Promise((r) => setTimeout(r, 30));
+    const br = d.querySelector('p[style*="page-break-before"]') as HTMLElement | null;
+    return br ? br.offsetTop : d.body.scrollHeight;
+  } finally { f.remove(); }
+}
 const newSeed = () => Math.floor(Math.random() * 1_000_000_000) + 1;
 
 /** Màn hình xem trước phiếu: khổ A4, lề như khi in */
@@ -38,6 +58,11 @@ export default function SpellingSheets({ defaultClass, defaultSchool, defaultTea
   const [seed, setSeed] = useState(0);
   const [week, setWeek] = useState(() => currentWeek());
   const [weekAt] = useState(() => currentWeek());
+  const [look, setLook] = useState<SheetLook>(DEFAULT_LOOK);
+  const [fit, setFit] = useState(true);
+  const [fitScale, setFitScale] = useState(1);
+  const [tooMuch, setTooMuch] = useState(false);
+  const setL = (p: Partial<SheetLook>) => setLook((l) => ({ ...l, ...p }));
 
   // nhớ lựa chọn trên máy này (trường, lớp, giáo viên do thầy cô nhập)
   useEffect(() => {
@@ -51,6 +76,8 @@ export default function SpellingSheets({ defaultClass, defaultSchool, defaultTea
         if (typeof v.wordCount === 'number') setWordCount(v.wordCount);
         if (typeof v.copy === 'boolean') setCopy(v.copy);
         if (typeof v.withKey === 'boolean') setWithKey(v.withKey);
+        if (v.look) setLook({ ...DEFAULT_LOOK, ...v.look });
+        if (typeof v.fit === 'boolean') setFit(v.fit);
         if (typeof v.week === 'number' && typeof v.weekAt === 'number') setWeek(Math.min(HK2_WEEK, Math.max(1, v.week + (currentWeek() - v.weekAt))));
       }
     } catch { /* trình duyệt chặn lưu trữ: dùng mặc định */ }
@@ -58,8 +85,8 @@ export default function SpellingSheets({ defaultClass, defaultSchool, defaultTea
   }, []);
   useEffect(() => {
     if (!seed) return;
-    try { localStorage.setItem(KEY, JSON.stringify({ school, className, teacher, pairs, picCount, wordCount, copy, withKey, week, weekAt } satisfies Saved)); } catch { /* bỏ qua */ }
-  }, [school, className, teacher, pairs, picCount, wordCount, copy, withKey, week, weekAt, seed]);
+    try { localStorage.setItem(KEY, JSON.stringify({ school, className, teacher, pairs, picCount, wordCount, copy, withKey, week, weekAt, look, fit } satisfies Saved)); } catch { /* bỏ qua */ }
+  }, [school, className, teacher, pairs, picCount, wordCount, copy, withKey, week, weekAt, seed, look, fit]);
 
   const lesson = lessonForWeek(week);
   const learned = (id: PairId) => ALL_PAIRS.find((a) => a.id === id)!.lesson <= lesson;
@@ -81,7 +108,27 @@ export default function SpellingSheets({ defaultClass, defaultSchool, defaultTea
   const sheet = useMemo(() => (seed && usable.length ? makeSheet({ pairs: usable, picCount, wordCount, copy, seed, lesson, scope }) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [usable.join(), picCount, wordCount, copy, seed, lesson, scope]);
-  const html = useMemo(() => (sheet ? sheetHtml(sheet, { withKey, school, className, teacher }) : ''), [sheet, withKey, school, className, teacher]);
+  const baseLook = useMemo(() => ({ ...look, scale: 1 }), [look]);
+  // co giãn trang đề vừa đúng 1 trang A4: đo thử rồi nhân cỡ chữ / hình theo tỉ lệ (vài vòng cho khớp)
+  useEffect(() => {
+    if (!sheet || !fit) return;
+    let live = true;
+    const t = setTimeout(async () => {
+      const opts = { withKey, school, className, teacher };
+      let k = 1, over = false;
+      for (let i = 0; i < 6 && live; i++) {
+        const h = await measurePage1(sheetHtml(sheet, { ...opts, look: { ...baseLook, scale: k } }));
+        if (!h) break;
+        if (h <= AVAIL_H && (h >= AVAIL_H * 0.965 || k >= MAX_FIT)) break;
+        k = Math.min(MAX_FIT, Math.max(MIN_FIT, k * (AVAIL_H / h) * (h > AVAIL_H ? 0.995 : 0.99)));
+        if (k === MIN_FIT && h > AVAIL_H && i > 0) { over = true; break; }
+      }
+      if (live) { setFitScale(Math.round(k * 1000) / 1000); setTooMuch(over); }
+    }, 250);
+    return () => { live = false; clearTimeout(t); };
+  }, [sheet, fit, withKey, school, className, teacher, baseLook]);
+  const scale = fit ? fitScale : look.scale;
+  const html = useMemo(() => (sheet ? sheetHtml(sheet, { withKey, school, className, teacher, look: { ...look, scale } }) : ''), [sheet, withKey, school, className, teacher, look, scale]);
   const name = `phieu-chinh-ta-${pairs.join('-')}-so-${seed % 10000}`;
 
   return (
@@ -137,6 +184,36 @@ export default function SpellingSheets({ defaultClass, defaultSchool, defaultTea
           <label className="adm-field ws-check"><input type="checkbox" checked={withKey} onChange={(e) => setWithKey(e.target.checked)} /> <span>Kèm trang đáp án</span></label>
         </div>
         {many && (picCount > 6 || wordCount > 8) && <p className="dash-muted">Gợi ý: chọn nhiều cặp âm thì để 4 câu có tranh và 8 từ mỗi cặp để phiếu vừa một trang.</p>}
+      </section>
+
+      <section className="dash-section planner-card" aria-labelledby="ws-look">
+        <h2 id="ws-look">Trình bày phiếu</h2>
+        <div className="planner-grid">
+          <label className="adm-field"><span>Biểu tượng góc trái</span>
+            <select value={look.iconL} onChange={(e) => setL({ iconL: e.target.value })}>{SHEET_ICONS.map((i) => <option key={i.id} value={i.id}>{i.label}</option>)}</select>
+          </label>
+          <label className="adm-field"><span>Biểu tượng góc phải</span>
+            <select value={look.iconR} onChange={(e) => setL({ iconR: e.target.value })}>{SHEET_ICONS.map((i) => <option key={i.id} value={i.id}>{i.label}</option>)}</select>
+          </label>
+          <label className="adm-field"><span>Cỡ biểu tượng: {look.iconSize} px</span>
+            <input type="range" min={32} max={100} step={2} value={look.iconSize} onChange={(e) => setL({ iconSize: Number(e.target.value) })} />
+          </label>
+          <label className="adm-field ws-check"><input type="checkbox" checked={look.brand} onChange={(e) => setL({ brand: e.target.checked })} /> <span>Logo EduChainKids ở chân phiếu</span></label>
+          <label className="adm-field"><span>Phông chữ của phiếu</span>
+            <select value={look.font} onChange={(e) => setL({ font: e.target.value as BodyFont })}>{(Object.keys(BODY_FONTS) as BodyFont[]).map((k) => <option key={k} value={k}>{BODY_FONTS[k].label}</option>)}</select>
+          </label>
+          <label className="adm-field"><span>Phông chữ bài tập chép</span>
+            <select value={look.hand} onChange={(e) => setL({ hand: e.target.value as HandFont })}>{(Object.keys(HAND_FONTS) as HandFont[]).map((k) => <option key={k} value={k}>{HAND_FONTS[k].label}</option>)}</select>
+          </label>
+          <label className="adm-field ws-check"><input type="checkbox" checked={fit} onChange={(e) => setFit(e.target.checked)} /> <span>Tự co giãn vừa đúng 1 trang A4{fit && sheet ? ` (đang ${Math.round(fitScale * 100)}%)` : ''}</span></label>
+          {!fit && (
+            <label className="adm-field"><span>Cỡ chữ và hình: {Math.round(look.scale * 100)}%</span>
+              <input type="range" min={0.6} max={1.3} step={0.02} value={look.scale} onChange={(e) => setL({ scale: Number(e.target.value) })} />
+            </label>
+          )}
+        </div>
+        {fit && tooMuch && <p className="ws-warn" role="status">Phiếu nhiều nội dung quá, thu nhỏ hết mức vẫn chưa vừa 1 trang. Thầy cô bớt số câu có tranh / từ điền chữ hoặc bớt cặp âm nhé.</p>}
+        <p className="dash-muted">Phiếu nhiều bài sẽ được thu nhỏ chữ và hình cho vừa 1 trang; phiếu ít bài được phóng to cho kín trang. Phông tập viết HP001 hiện đúng khi xem, in và lưu PDF; file Word cần máy có cài phông đó.</p>
       </section>
 
       {!usable.length && <p className="dash-muted">Tuần đã chọn lớp chưa học cặp âm nào cần phân biệt (sớm nhất là c / k ở tuần 3).</p>}
