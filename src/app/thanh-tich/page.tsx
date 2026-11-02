@@ -30,10 +30,12 @@ export default async function AchievementsPage() {
             <MiloMascot mood="cheer" size={104} />
             <div>
               <h1>Thành tích</h1>
-              <p>Trang này dành cho học sinh đăng nhập bằng mã lớp và PIN. Thầy cô xem bảng <strong>Bạn điểm cao nhất</strong> tuần/tháng của từng lớp trong mục Quản lý lớp.</p>
+              <p>Trang này dành cho học sinh đăng nhập bằng mã lớp và PIN. Thầy cô xem bảng <strong>Bạn điểm cao nhất</strong> tuần/tháng của từng lớp trong mục Quản lý lớp. Bên dưới là <strong>Tủ quà EDKC</strong> học sinh sẽ thấy (số liệu minh hoạ).</p>
               <p><Link href="/giao-vien" className="btn btn-outline">Đến Quản lý lớp</Link></p>
             </div>
           </header>
+          {/* Xem trước Tủ quà EDKC mà học sinh nhìn thấy (dữ liệu minh hoạ) */}
+          <GiftShelf demo stats={{ total_points: 860, lessons_done: 14, perfect_lessons: 4, games_played: 12 }} />
         </main>
       </>
     );
