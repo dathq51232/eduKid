@@ -1,6 +1,7 @@
 // Luyện chữ trên màn hình: dựng chữ mẫu trên giấy ô li và chấm bài viết của em.
 // Chấm theo hình dáng (nét bút phủ kín chữ mẫu, không ra ngoài nhiều), độ cao chữ và vị trí trên dòng kẻ.
 // Chưa chấm được thứ tự nét (cần dữ liệu nét chuẩn của từng chữ).
+import { BRUSH, centerPath, inkOutline, outlinePath, type BrushKind } from './ink';
 export const CW = 1000;
 export const U = 20;
 export const ROW = 8 * U;
@@ -9,7 +10,7 @@ export const PEN = 0.45 * U;
 
 export type Glyph = { text: string; x: number; base: number; w: number; guide: boolean };
 export type Sheet = { h: number; fs: number; glyphs: Glyph[]; rows: number[]; lineUnit?: number; rowPitch?: number };
-export type Stroke = { pts: [number, number, number?][]; w: number; color?: string; brush?: 'fountain' | 'ink' | 'pencil' };
+export type Stroke = { pts: [number, number, number?][]; w: number; color?: string; brush?: BrushKind; taper?: [number, number] };
 
 let xhCache = 0;
 function xHeight(c: CanvasRenderingContext2D) {
@@ -83,15 +84,14 @@ export function drawStrokes(c: CanvasRenderingContext2D, strokes: Stroke[], colo
   c.save();
   c.lineCap = 'round'; c.lineJoin = 'round';
   for (const s of strokes) {
+    const b = BRUSH[s.brush ?? 'fountain'];
     const w = (s.w + widthAdd) * scale;
     c.strokeStyle = s.color ?? color; c.fillStyle = s.color ?? color;
-    c.globalAlpha = s.brush === 'pencil' ? 0.62 : 1;
-    if (s.pts.length === 1) { c.beginPath(); c.arc(s.pts[0][0] * scale, s.pts[0][1] * scale, w / 2, 0, Math.PI * 2); c.fill(); continue; }
-    for (let i = 1; i < s.pts.length; i++) {
-      const [x0, y0] = s.pts[i - 1], [x1, y1, pressure] = s.pts[i];
-      c.lineWidth = s.brush === 'fountain' ? w * (0.45 + (pressure ?? 0.5) * 1.1) : w;
-      c.beginPath(); c.moveTo(x0 * scale, y0 * scale); c.lineTo(x1 * scale, y1 * scale); c.stroke();
-    }
+    c.globalAlpha = b.alpha;
+    const pts = scale === 1 ? s.pts : s.pts.map(([x, y, p]) => [x * scale, y * scale, p] as [number, number, number?]);
+    if (s.brush === 'marker') { c.lineWidth = w; c.stroke(new Path2D(centerPath(pts))); continue; }
+    const [t0, t1] = s.taper ?? [0, 0];
+    c.fill(new Path2D(outlinePath(inkOutline(pts, { size: w, thinning: b.thinning, taperStart: t0 * scale, taperEnd: t1 * scale }))));
   }
   c.restore();
 }
@@ -107,6 +107,7 @@ function mask(w: number, h: number, draw: (c: CanvasRenderingContext2D) => void)
 
 /** Chấm bài: so nét bút với chữ mẫu (ảnh thu nhỏ một nửa cho nhanh) */
 export function scoreWriting(sh: Sheet, strokes: Stroke[]): Result {
+  const written = strokes.filter((x) => x.brush !== 'marker'); // nét dạ quang không tính điểm
   const S = 0.5;
   const w = Math.round(CW * S), h = Math.round(sh.h * S);
   const font = `600 ${sh.fs * S}px ${FONT}`;
@@ -116,8 +117,8 @@ export function scoreWriting(sh: Sheet, strokes: Stroke[]): Result {
   };
   const core = mask(w, h, (c) => text(c));
   const zone = mask(w, h, (c) => text(c, U * 1.1 * S));
-  const ink = mask(w, h, (c) => drawStrokes(c, strokes, '#000', 0, S));
-  const inkFat = mask(w, h, (c) => drawStrokes(c, strokes, '#000', U * 0.9, S));
+  const ink = mask(w, h, (c) => drawStrokes(c, written, '#000', 0, S));
+  const inkFat = mask(w, h, (c) => drawStrokes(c, written, '#000', U * 0.9, S));
   let nCore = 0, nCov = 0, nInk = 0, nIn = 0;
   const ov = document.createElement('canvas'); ov.width = w; ov.height = h;
   const oc = ov.getContext('2d')!;
@@ -140,7 +141,7 @@ export function scoreWriting(sh: Sheet, strokes: Stroke[]): Result {
     for (const base of sh.rows) {
       const lineUnit = sh.lineUnit ?? U, rowPitch = sh.rowPitch ?? ROW;
       const top = base - rowPitch + lineUnit, bot = base + lineUnit * 3;
-      const pts = strokes.flatMap((s) => s.pts).filter(([, y]) => y > top && y < bot);
+      const pts = written.flatMap((s) => s.pts).filter(([, y]) => y > top && y < bot);
       if (pts.length < 6) continue;
       const ys = pts.map((p) => p[1]).sort((a, b) => a - b);
       const lo = ys[Math.floor(ys.length * 0.95)];
