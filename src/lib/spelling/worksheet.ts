@@ -101,7 +101,8 @@ export function makeSheet(opt: SheetOptions): Sheet {
 // ------------------------------------------------------------------ HTML
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const img = (name: string, size: number) => `<img data-img="${illustrationIconSrc(name) ?? `/emoji/${name}.png`}" width="${size}" height="${size}" alt="" />`;
+// tên hình: tên trong bộ hình 3D (public/emoji, public/edu-icons) hoặc đường dẫn có sẵn trong dự án (vd /emoji/sticker/fish.webp)
+const img = (name: string, size: number) => `<img data-img="${name.startsWith('/') ? name : illustrationIconSrc(name) ?? `/emoji/${name}.png`}" width="${size}" height="${size}" alt="" />`;
 
 /* ---------- trình bày phiếu do giáo viên chọn (11/2026): biểu tượng góc, phông chữ, co giãn vừa 1 trang A4 ---------- */
 export const SHEET_ICONS: { id: string; label: string }[] = [
@@ -124,8 +125,40 @@ export const HAND_FONTS = {
 } as const;
 export type BodyFont = keyof typeof BODY_FONTS;
 export type HandFont = keyof typeof HAND_FONTS;
-export type SheetLook = { iconL: string; iconR: string; iconSize: number; font: BodyFont; hand: HandFont; brand: boolean; scale: number };
-export const DEFAULT_LOOK: SheetLook = { iconL: 'logo', iconR: 'rainbow', iconSize: 60, font: 'baloo', hand: 'dancing', brand: true, scale: 1 };
+export type CopyPaper = 'oli4' | 'oli5' | 'line';
+export const COPY_PAPERS: Record<CopyPaper, string> = { oli4: 'Vở 4 ô li', oli5: 'Vở 5 ô li', line: 'Dòng kẻ đơn' };
+export type SheetLook = { iconL: string; iconR: string; iconSize: number; font: BodyFont; hand: HandFont; brand: boolean; scale: number;
+  /** giấy cho bài tập chép và số dòng để em viết */
+  paper: CopyPaper; copyRows: number };
+export const DEFAULT_LOOK: SheetLook = { iconL: 'logo', iconR: 'rainbow', iconSize: 60, font: 'baloo', hand: 'dancing', brand: true, scale: 1, paper: 'oli4', copyRows: 3 };
+/** lề trang khi in (mm): trên, phải, dưới, trái — đặt trong trang để trình duyệt không in đường link / ngày giờ ở lề */
+export const PAGE_PAD = [12, 12, 12, 14] as const;
+const PAD = PAGE_PAD.map((v) => `${v}mm`).join(' ');
+
+/** Dòng kẻ ô li (4 hoặc 5 li mỗi dòng, ô vuông lớn) cho bài tập chép; đo bằng pt để co giãn cùng phiếu */
+function oliRows(paper: CopyPaper, rows: number): string {
+  const W = (210 - PAGE_PAD[1] - PAGE_PAD[3]) * 72 / 25.4; // bề rộng vùng viết (pt)
+  if (paper === 'line') {
+    return `<table width="100%" cellspacing="0" cellpadding="0" class="ws-oli" style="width:100%;margin-top:4pt">${Array.from({ length: rows }, () => '<tr style="height:24pt"><td style="border-bottom:1px solid #90caf9">&nbsp;</td></tr>').join('')}</table>`;
+  }
+  const n = paper === 'oli5' ? 5 : 4, li = n === 5 ? 5.4 : 6.2, cell = n * li, cols = Math.floor(W / cell);
+  const tr: string[] = [];
+  for (let l = 0; l < rows; l++) {
+    for (let r = 0; r < n; r++) {
+      const top = r === 0 ? '1pt solid #9575cd' : '0.5pt solid #d1c4e9';
+      const bottom = l === rows - 1 && r === n - 1 ? 'border-bottom:1pt solid #9575cd;' : '';
+      tr.push(`<tr style="height:${li}pt">${Array.from({ length: cols }, (_, c) => `<td style="width:${cell}pt;height:${li}pt;padding:0;border-top:${top};${bottom}border-left:${c ? '0.5pt solid #d1c4e9' : '1pt solid #9575cd'};${c === cols - 1 ? 'border-right:1pt solid #9575cd;' : ''}font-size:1pt;line-height:1pt">&nbsp;</td>`).join('')}</tr>`);
+    }
+  }
+  return `<table cellspacing="0" cellpadding="0" class="ws-oli" style="border-collapse:collapse;table-layout:fixed;width:${Math.round(cols * cell * 10) / 10}pt;margin:6pt 0 0">${tr.join('')}</table>`;
+}
+/** Số cột lưới tranh sao cho hàng cuối ít ô trống nhất (ưu tiên 4 cột) */
+function picCols(n: number): number {
+  if (n <= 4) return Math.max(1, n);
+  let best = 4, empty = 99;
+  for (const c of [4, 5, 3, 6]) { const e = (c - (n % c)) % c; if (e < empty) { empty = e; best = c; } }
+  return best;
+}
 
 const LOGO_MARK = '/brand/logo-mark-print.png', LOGO_WORD = '/brand/logo-word-print.png';
 function cornerIcon(id: string, size: number) {
@@ -159,7 +192,7 @@ export function sheetHtml(sheet: Sheet, opts: { withKey?: boolean; school?: stri
   let n = 0;
   const body: string[] = [];
   const big = sheet.sections.filter((x) => x.kind === 'pics').length <= 1;
-  const PIC = big ? 86 : 50, FS = big ? 16 : 13;
+  const FS = big ? 16 : 13;
   // thông tin do giáo viên nhập: trường, lớp, giáo viên (để trống thì in dòng chấm để viết tay)
   const f = (v: string | undefined, dots: string) => (v?.trim() ? `<b>${esc(v.trim())}</b>` : dots);
   const info = `<p style="text-align:center;margin:0 0 2pt;font-size:12pt;color:#37474f">Trường: ${f(opts.school, '………………………………')} &emsp; Lớp: ${f(opts.className, '…………')} &emsp; Giáo viên: ${f(opts.teacher, '……………………………')}</p>`;
@@ -182,13 +215,13 @@ export function sheetHtml(sheet: Sheet, opts: { withKey?: boolean; school?: stri
     const badge = `<span style="background:${BADGE[i % BADGE.length]};color:#fff;font-weight:bold;padding:1pt 8pt;border-radius:10px">Bài ${n}</span>`;
     const h = `<p style="margin:6pt 0 3pt;font-size:13pt">${badge} <b>${esc(s.heading)}</b></p>`;
     if (s.kind === 'pics') {
-      const cols = 4;
+      const cols = picCols(s.items.length), wd = Math.round(100 / cols), pic = big ? (cols >= 5 ? 72 : 86) : cols >= 5 ? 44 : 50;
       const rows: string[] = [];
       for (let k = 0; k < s.items.length; k += cols) {
-        const cells = s.items.slice(k, k + cols).map((it) => `<td width="25%" bgcolor="${COLORS[i % COLORS.length]}" style="background:${COLORS[i % COLORS.length]};border:1px solid #cfd8dc;text-align:center;vertical-align:middle;padding:${big ? 3 : 1}pt">
-          <p style="text-align:center;margin:${big ? 4 : 0}pt 0 0">${img(it.pic!, PIC)}</p>
+        const cells = s.items.slice(k, k + cols).map((it) => `<td width="${wd}%" bgcolor="${COLORS[i % COLORS.length]}" style="background:${COLORS[i % COLORS.length]};border:1px solid #cfd8dc;text-align:center;vertical-align:middle;padding:${big ? 3 : 1}pt">
+          <p style="text-align:center;margin:${big ? 4 : 0}pt 0 0">${img(it.pic!, pic)}</p>
           <p style="text-align:center;margin:2pt 0 ${big ? 4 : 0}pt;font-size:${FS}pt">${wordHtml(it, answers, true)}</p></td>`);
-        while (cells.length < cols) cells.push('<td width="25%" style="border:0"></td>');
+        while (cells.length < cols) cells.push(`<td width="${wd}%" style="border:0"></td>`);
         rows.push(`<tr>${cells.join('')}</tr>`);
       }
       return h + `<table width="100%" border="1" cellspacing="0" cellpadding="4" style="width:100%;border-collapse:collapse">${rows.join('')}</table>`;
@@ -205,7 +238,7 @@ export function sheetHtml(sheet: Sheet, opts: { withKey?: boolean; school?: stri
     }
     // tập chép: câu mẫu + dòng kẻ ô li
     const lines = (s.sentences ?? []).map((t) => `<p class="ws-hand" style="margin:0;font-size:${Math.round((big ? 18 : 16) * hand.k)}pt;color:#1a237e">${esc(t)}</p>`).join('');
-    const ruled = answers ? '' : `<table width="100%" cellspacing="0" cellpadding="0" class="ws-oli" style="width:100%;margin-top:4pt">${Array.from({ length: Math.max(2, (s.sentences ?? []).length) }, () => `<tr style="height:${big ? 24 : 20}pt"><td style="border-bottom:1px solid #90caf9">&nbsp;</td></tr>`).join('')}</table>`;
+    const ruled = answers || look.copyRows <= 0 ? '' : oliRows(look.paper, Math.min(10, look.copyRows));
     return h + lines + ruled;
   };
 
@@ -216,10 +249,12 @@ export function sheetHtml(sheet: Sheet, opts: { withKey?: boolean; school?: stri
     : `<p style="text-align:center;margin:10pt 0 0;font-size:10pt;color:#90a4ae">Phiếu số ${sheet.seed % 10000} · EduChain Kids</p>`);
   // co giãn trang đề cho vừa 1 trang A4 (trang đáp án giữ nguyên)
   const page1 = scaleHtml(body.splice(0).join('\n'), look.scale);
-  body.push(page1);
+  // mỗi trang là một khối có lề riêng (lề @page = 0 để trình duyệt không in link, ngày giờ ở mép giấy)
+  body.push(`<div class="ws-page" style="padding:${PAD}">${page1}</div>`);
   if (opts.withKey) {
     n = 0;
     body.push('<p style="page-break-before:always;margin:0">&nbsp;</p>');
+    body.push(`<div class="ws-page" style="padding:${PAD}">`);
     body.push(head(true));
     sheet.sections.filter((s) => s.kind !== 'copy').forEach((s, i) => {
       n++;
@@ -227,9 +262,12 @@ export function sheetHtml(sheet: Sheet, opts: { withKey?: boolean; school?: stri
       body.push(`<p style="margin:0 0 4pt;font-size:13pt">${s.items.map((it, k) => `${k + 1}) ${wordHtml(it, true)}`).join('&emsp; ')}</p>`);
       void i;
     });
+    body.push('</div>');
   }
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(sheet.title)}</title><style>
-@page { size: 21cm 29.7cm; margin: 12mm 12mm 12mm 14mm; }
+@page { size: 21cm 29.7cm; margin: 0; }
+.ws-page { box-sizing: border-box; }
+@media print { p[style*="page-break-before"] { font-size: 0; line-height: 0; height: 0; } }
 body { font-family: ${bodyFont.css}; font-weight: ${bodyFont.weight}; font-size: ${Math.round(13 * look.scale * 10) / 10}pt; color: #263238; margin: 0; line-height: 1.25; }
 @font-face { font-family: 'Baloo 2'; font-weight: 600; src: url('/fonts/praise/baloo-2-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: 'Baloo 2'; font-weight: 600; src: url('/fonts/praise/baloo-2-vietnamese-600-normal.woff2') format('woff2'); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
@@ -248,6 +286,11 @@ table { page-break-inside: avoid; }
 @font-face { font-family: 'HP001 Nghieng'; src: url('/fonts/tap-viet/kieu5.woff2') format('woff2'); }
 td[bgcolor] { border-radius: 12px; }
 </style></head><body>${body.join('\n')}</body></html>`;
+}
+
+/** số câu có tranh dùng được với các cặp âm đã chọn và bài đã học (để giáo viên biết chọn tối đa bao nhiêu) */
+export function picsAvailable(pairs: PairId[], lesson: number): Record<string, number> {
+  return Object.fromEntries(pairs.map((id) => [id, pairById(id).pics.filter((x) => fitsLesson(x.w, lesson)).length]));
 }
 
 export const ALL_PAIRS = PAIRS.map((p) => ({ id: p.id, title: p.title, options: p.options, kind: p.kind, lesson: pairLesson(p), week: pairWeek(p) }));

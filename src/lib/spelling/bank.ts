@@ -32,6 +32,8 @@ export const PAIRS: Pair[] = [
       { w: 'con [k]iến', pic: 'ant' }, { w: 'viên [k]ẹo', pic: 'candy' }, { w: '[k]ẹo mút', pic: 'lollipop' }, { w: 'cái [k]èn', pic: 'trumpet' },
       { w: 'con [k]ì lân', pic: 'unicorn' }, { w: '[k]im khâu', pic: 'sewing-needle' }, { w: '[k]im cương', pic: 'gem-stone' }, { w: 'quả [k]i-wi', pic: 'kiwi-fruit' },
       { w: 'thanh [k]iếm', pic: 'dagger' }, { w: '[k]ẹp giấy', pic: 'paperclip' },
+      // thêm 11/2026 (hình có sẵn trong dự án: thú vật, đồ dùng, trái cây, hình dán)
+      { w: '[c]ây', pic: '/emoji/sticker/deciduous-tree.webp' }, { w: 'con [c]ún', pic: 'dog' }, { w: 'con [c]óc', pic: 'frog' }, { w: '[c]ủ tỏi', pic: 'garlic' }, { w: '[c]ủ hành', pic: 'onion' }, { w: 'cái [k]ìm', pic: 'pliers' }, { w: 'cái [k]ẹp', pic: 'paperclip' }, { w: '[c]á vàng', pic: '/emoji/sticker/fish.webp' }, { w: '[c]on mèo', pic: 'cat' }, { w: '[c]ủ cà rốt', pic: 'carrot' },
     ],
     words: [
       '[c]á kho', 'cá [c]ờ', '[c]ổ [c]ò', '[k]ẻ ô', 'bà [k]ể', '[k]ì đà', '[c]ủ hẹ', '[c]ô bé', '[c]ụ bà', '[c]ũ [k]ĩ', 'bé [k]ê', '[c]ỗ lễ', '[k]ề vai', 'đồ [c]ổ',
@@ -50,6 +52,8 @@ export const PAIRS: Pair[] = [
       { w: '[g]ấu trúc', pic: 'panda' }, { w: 'cái [g]ương', pic: 'mirror' }, { w: '[g]ăng tay', pic: 'gloves' }, { w: 'khúc [g]ỗ', pic: 'wood' },
       { w: 'viên [g]ạch', pic: 'brick' }, { w: 'củ [g]ừng', pic: 'ginger-root' }, { w: 'con [g]ấu trắng', pic: 'polar-bear' },
       { w: 'cái [gh]ế', pic: 'chair' }, { w: 'đàn [gh]i-ta', pic: 'guitar' }, { w: 'con [gh]ẹ', pic: 'crab' },
+      // thêm 11/2026 (hình có sẵn trong dự án: thú vật, đồ dùng, trái cây, hình dán)
+      { w: '[g]à mái', pic: 'chicken' }, { w: '[g]à trống', pic: 'rooster' }, { w: '[gh]ế gỗ', pic: 'chair' }, { w: '[gh]i-ta', pic: 'guitar' }, { w: 'gà [g]ô', pic: 'baby-chick' }, { w: '[g]ừng', pic: 'ginger-root' }, { w: '[g]ấu bé', pic: 'teddy-bear' }, { w: '[gh]ế nhỏ', pic: 'chair' },
     ],
     words: [
       '[g]à mơ', '[gh]ế [g]ỗ', '[gh]i chú', 'ổ [g]à', '[gh]ẹ đỏ', 'đi [gh]e', '[g]ỗ [g]ụ', 'bé [gh]i', '[g]ò đất',
@@ -68,6 +72,8 @@ export const PAIRS: Pair[] = [
       { w: '[ng]ôi nhà', pic: 'house-with-garden' }, { w: '[ng]ọn lửa', pic: 'fire' }, { w: '[ng]ọn núi', pic: 'mountain' }, { w: 'bé [ng]ủ', pic: 'sleeping-face' },
       { w: '[ng]ân hàng', pic: 'bank' }, { w: '[ng]ọn nến', pic: 'candle' },
       { w: 'con [ngh]é', pic: 'water-buffalo' }, { w: '[ngh]e nhạc', pic: 'headphone' },
+      // thêm 11/2026 (hình có sẵn trong dự án: thú vật, đồ dùng, trái cây, hình dán)
+      { w: 'con [ng]an', pic: 'duck' }, { w: '[ng]à voi', pic: 'elephant' }, { w: '[ng]ủ', pic: 'sleeping-face' }, { w: 'quả [ng]ô', pic: 'ear-of-corn' }, { w: 'viên [ng]ọc', pic: 'gem-stone' }, { w: '[ngh]e', pic: 'headphone' }, { w: 'con [ngh]êu', pic: 'oyster' }, { w: 'củ [ngh]ệ', pic: 'ginger-root' }, { w: '[ngh]é con', pic: 'water-buffalo' }, { w: '[ng]ựa con', pic: 'horse' }, { w: '[ng]ỗng con', pic: 'goose' },
     ],
     words: [
       '[ng]ã ba', '[ng]ủ', '[ngh]ĩ', '[ng]ô non', 'bé [ngh]ỉ', '[ngh]e kể', '[ng]õ hẹp', '[ng]ừ', '[ngh]ệ', '[ng]ư phủ',
@@ -87,6 +93,8 @@ export const PAIRS: Pair[] = [
       { w: '[x]e đạp', pic: 'bicycle' }, { w: '[x]e buýt', pic: 'bus' }, { w: '[x]e máy', pic: 'motor-scooter' }, { w: '[x]e tải', pic: 'delivery-truck' },
       { w: 'quả [x]oài', pic: 'mango' }, { w: 'khúc [x]ương', pic: 'bone' }, { w: '[x]à phòng', pic: 'soap' }, { w: 'cái [x]ô', pic: 'bucket' },
       { w: '[x]úc xích', pic: 'hot-dog' }, { w: 'cây [x]ương rồng', pic: 'cactus' }, { w: '[x]e cứu hỏa', pic: 'fire-engine' },
+      // thêm 11/2026 (hình có sẵn trong dự án: thú vật, đồ dùng, trái cây, hình dán)
+      { w: '[s]ao', pic: 'glowing-star' }, { w: 'chim [s]ẻ', pic: 'bird' }, { w: 'quả [s]ơ ri', pic: 'cherries' }, { w: 'cái [x]ẻng', pic: 'shovel' }, { w: '[x]e ca', pic: 'bus' }, { w: '[x]e lu', pic: 'delivery-truck' }, { w: '[s]ữa bò', pic: 'glass-of-milk' }, { w: '[x]ô nhỏ', pic: 'bucket' }, { w: '[s]ò to', pic: 'oyster' },
     ],
     words: [
       '[s]ổ ghi', '[x]e lu', '[x]ổ [s]ố', '[x]ẻ gỗ', 'chú [s]ẻ', '[x]a quá', '[s]ở thú', '[x]ứ [s]ở', '[s]ợ', 'quả [s]u', '[s]ố ba', '[x]ù',
@@ -105,6 +113,8 @@ export const PAIRS: Pair[] = [
       { w: 'cây [n]ấm', pic: 'mushroom' }, { w: 'cây [n]ến', pic: 'candle' }, { w: 'chùm [n]ho', pic: 'grapes' }, { w: 'con [n]ai', pic: 'deer' },
       { w: 'cái [n]ơ', pic: 'ribbon' }, { w: 'giọt [n]ước', pic: 'droplet' }, { w: 'cái [n]ồi', pic: 'pot-of-food' }, { w: 'ngọn [n]úi', pic: 'snow-capped-mountain' },
       { w: '[n]am châm', pic: 'magnet' }, { w: 'chiếc [n]hẫn', pic: 'ring' },
+      // thêm 11/2026 (hình có sẵn trong dự án: thú vật, đồ dùng, trái cây, hình dán)
+      { w: 'ngọn [l]ửa', pic: 'fire' }, { w: '[l]á cây', pic: '/emoji/sticker/deciduous-tree.webp' }, { w: '[n]ai', pic: 'deer' }, { w: '[n]ơ đỏ', pic: 'ribbon' }, { w: '[l]ừa con', pic: 'donkey' }, { w: '[n]ước', pic: 'droplet' }, { w: '[l]ạc', pic: 'peanuts' }, { w: '[l]ông', pic: 'feather' },
     ],
     words: [
       '[l]á đỏ', '[n]ơ đỏ', '[l]á me', '[n]ụ', '[l]ò cò', '[l]ề', 'bé [n]ô', '[l]ê la', '[n]ề', '[l]ũ', '[n]a', '[l]ọ',
@@ -123,6 +133,8 @@ export const PAIRS: Pair[] = [
       { w: 'dưa [ch]uột', pic: 'cucumber' },
       { w: 'con [tr]âu', pic: 'water-buffalo' }, { w: 'cái [tr]ống', pic: 'drum' }, { w: 'mặt [tr]ăng', pic: 'crescent-moon' }, { w: 'quả [tr]ứng', pic: 'egg' },
       { w: 'ấm [tr]à', pic: 'teapot' }, { w: 'bức [tr]anh', pic: 'framed-picture' }, { w: '[tr]ường học', pic: 'school' }, { w: '[tr]ực thăng', pic: 'helicopter' },
+      // thêm 11/2026 (hình có sẵn trong dự án: thú vật, đồ dùng, trái cây, hình dán)
+      { w: '[ch]ó con', pic: 'dog' }, { w: '[tr]ái cam', pic: 'orange' }, { w: '[tr]ái táo', pic: 'apple' }, { w: '[tr]ái chuối', pic: 'banana' }, { w: '[tr]ái dứa', pic: '/edu-icons/pineapple.webp' }, { w: '[tr]ái ớt', pic: '/edu-icons/pepper.webp' }, { w: 'con [tr]ăn', pic: 'snake' }, { w: '[ch]ú gà', pic: 'rooster' }, { w: '[tr]ăng', pic: 'crescent-moon' }, { w: '[ch]im sẻ', pic: 'bird' },
     ],
     words: [
       '[ch]ị', '[ch]ú', '[tr]e', '[tr]í nhớ', 'lá [tr]e', '[ch]ia', '[ch]ùa', 'mẹ [ch]ở', '[tr]ụ', '[ch]e ô', '[tr]ổ', '[ch]ữ to', '[tr]ưa',
@@ -142,6 +154,8 @@ export const PAIRS: Pair[] = [
       { w: 'cây [th]ông', pic: 'evergreen-tree' }, { w: 'cái [th]ang', pic: 'ladder' }, { w: 'cái [th]ìa', pic: 'spoon' },
       { w: 'con [kh]ỉ', pic: 'monkey' }, { w: 'củ [kh]oai', pic: 'roasted-sweet-potato' }, { w: 'ổ [kh]óa', pic: 'locked' }, { w: '[kh]ăn quàng', pic: 'scarf' },
       { w: '[kh]ủng long', pic: 't-rex' }, { w: '[kh]ẩu trang', pic: 'face-with-medical-mask' },
+      // thêm 11/2026 (hình có sẵn trong dự án: thú vật, đồ dùng, trái cây, hình dán)
+      { w: 'con [h]eo', pic: 'pig' }, { w: 'cá [h]eo', pic: 'dolphin' }, { w: 'cái [kh]ăn', pic: 'scarf' }, { w: 'củ [h]ành', pic: 'onion' }, { w: '[th]ỏ con', pic: 'rabbit' }, { w: '[kh]ỉ con', pic: 'monkey' }, { w: '[h]ổ con', pic: 'tiger' }, { w: '[h]oa', pic: '/emoji/sticker/sunflower.webp' },
     ],
     words: [
       'bờ [h]ồ', 'cá [kh]ô', '[th]ủ đô', '[h]è', '[th]ả cá', '[kh]e khẽ', '[h]ổ dữ', '[h]ồ cá', '[th]ợ mỏ', '[h]ỏi', '[th]ơ', '[kh]ô',
@@ -153,7 +167,10 @@ export const PAIRS: Pair[] = [
   {
     id: 'an-ang', kind: 'van', options: ['an', 'ang'], title: 'Phân biệt an/ang',
     rule: 'Điền vần an hoặc ang, nhớ đặt dấu thanh nếu tiếng có dấu (vd: bàn → àn).',
-    pics: [{ w: 'cái th[ang]', pic: 'ladder' }, { w: 'ngân h[àng]', pic: 'bank' }, { w: 'đ[àn] ghi-ta', pic: 'guitar' }],
+    pics: [{ w: 'cái th[ang]', pic: 'ladder' }, { w: 'ngân h[àng]', pic: 'bank' }, { w: 'đ[àn] ghi-ta', pic: 'guitar' },
+      // thêm 11/2026 (hình có sẵn trong dự án: thú vật, đồ dùng, trái cây, hình dán)
+      { w: 'con ng[an]', pic: 'duck' }, { w: 'cúp v[àng]', pic: 'trophy' }, { w: 'đ[àn] gà', pic: 'baby-chick' }, { w: 'ngôi l[àng]', pic: '/emoji/sticker/house.webp' }, { w: 'cái đ[àn]', pic: 'guitar' }, { w: 'h[àng] cây', pic: '/emoji/sticker/deciduous-tree.webp' },
+    ],
     words: ['b[àn] ghế', 'b[àn] tay', 'h[àng] cây', 'n[àng] tiên', 'l[àng] quê', 's[áng] sớm', 'v[àng] tươi', 'g[an] dạ', 'đ[àn] gà', 'th[an] củi',
       'c[àng] cua', 'tr[ang] sách', 'b[ạn] bè', 'l[an] can', 'm[ang] cặp', 's[àn] nhà', 'th[ang] máy', 'ch[àng] trai', 'h[àn] gắn', 'đ[àng] hoàng'],
     copy: ['Làng em có hàng tre xanh.', 'Bạn Lan ngồi bàn đầu.', 'Sáng sớm, nắng vàng tươi.', 'Đàn gà ăn thóc ở sân.'],
@@ -161,7 +178,10 @@ export const PAIRS: Pair[] = [
   {
     id: 'at-ac', kind: 'van', options: ['at', 'ac'], title: 'Phân biệt at/ac',
     rule: 'Điền vần at hoặc ac, nhớ đặt dấu thanh nếu tiếng có dấu (vd: hát → át).',
-    pics: [{ w: 'l[ạc] đà', pic: 'two-hump-camel' }, { w: 'củ l[ạc]', pic: 'peanuts' }, { w: 'nghe nh[ạc]', pic: 'headphone' }],
+    pics: [{ w: 'l[ạc] đà', pic: 'two-hump-camel' }, { w: 'củ l[ạc]', pic: 'peanuts' }, { w: 'nghe nh[ạc]', pic: 'headphone' },
+      // thêm 11/2026 (hình có sẵn trong dự án: thú vật, đồ dùng, trái cây, hình dán)
+      { w: 'cái b[át]', pic: 'pot-of-food' }, { w: 'b[ác] sĩ', pic: 'face-with-medical-mask' }, { w: 'nhẫn b[ạc]', pic: 'ring' }, { w: 'con h[ạc]', pic: 'bird' }, { w: 'h[ạt] lạc', pic: 'peanuts' },
+    ],
     words: ['b[ác] sĩ', 'h[át] ca', 'c[ác] bạn', 'm[át] mẻ', 'th[ác] nước', 'b[át] cơm', 'thơm ng[át]', 'h[ạt] đậu', 'tóc b[ạc]', 'kh[át] nước',
       'nh[ạt] màu', 'v[ác] cuốc', 'ph[át] quà', 'bãi c[át]', 'qu[ạt] mát', 'b[ạc] hà', 'g[ạt] nước', 'l[át] gạch', 'đ[ạt] giải', 'h[ạc] trắng'],
     copy: ['Cả lớp hát vang bài ca.', 'Bác sĩ khám cho bé.', 'Bãi cát mát rượi.', 'Bé tưới nước cho cây lạc.'],

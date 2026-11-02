@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Lock, RefreshCw } from 'lucide-react';
 import DocPreview from './DocPreview';
-import { ALL_PAIRS, BODY_FONTS, DEFAULT_LOOK, HAND_FONTS, SHEET_ICONS, makeSheet, sheetHtml, type BodyFont, type HandFont, type SheetLook } from '@/lib/spelling/worksheet';
+import { ALL_PAIRS, BODY_FONTS, COPY_PAPERS, DEFAULT_LOOK, HAND_FONTS, SHEET_ICONS, makeSheet, picsAvailable, sheetHtml, type BodyFont, type CopyPaper, type HandFont, type SheetLook } from '@/lib/spelling/worksheet';
 import type { PairId } from '@/lib/spelling/bank';
 import { currentWeek, HK2_WEEK, lessonForWeek, WEEKS, weekLabel } from '@/lib/spelling/curriculum';
 import { ToolIcon } from '@/components/classroom/tool-icons';
@@ -15,21 +15,21 @@ type Saved = { school: string; className: string; teacher: string; pairs: PairId
   /** trình bày: biểu tượng góc, phông chữ, logo chân trang, co giãn vừa trang */
   look?: Partial<SheetLook>; fit?: boolean };
 // vùng in của trang A4 (lề 12 mm trên dưới, 12 + 14 mm hai bên), tính ra px CSS (96 px / inch)
-const MM = 96 / 25.4, AVAIL_H = (297 - 24) * MM - 6, MAX_FIT = 1.2, MIN_FIT = 0.55;
+const MM = 96 / 25.4, AVAIL_H = 297 * MM - 6, MAX_FIT = 1.2, MIN_FIT = 0.55;
 const BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 /** Đo chiều cao trang đề (trước ngắt trang đáp án) khi dàn trên khổ A4 */
 async function measurePage1(html: string): Promise<number> {
   const f = document.createElement('iframe');
   f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
-  f.style.cssText = `position:fixed;left:-10000px;top:0;width:${184 * MM}px;height:600px;border:0;visibility:hidden`;
+  f.style.cssText = `position:fixed;left:-10000px;top:0;width:${210 * MM}px;height:600px;border:0;visibility:hidden`;
   document.body.appendChild(f);
   try {
     const d = f.contentDocument!;
     d.open(); d.write(html.replace(/<img data-img="/g, `<img src="${BLANK}" data-img="`)); d.close();
     void d.body.offsetHeight;
     await d.fonts?.ready; await new Promise((r) => setTimeout(r, 30));
-    const br = d.querySelector('p[style*="page-break-before"]') as HTMLElement | null;
-    return br ? br.offsetTop : d.body.scrollHeight;
+    const pg = d.querySelector('.ws-page') as HTMLElement | null; // trang đề (đã gồm lề)
+    return pg ? pg.offsetHeight : d.body.scrollHeight;
   } finally { f.remove(); }
 }
 const newSeed = () => Math.floor(Math.random() * 1_000_000_000) + 1;
@@ -37,8 +37,8 @@ const newSeed = () => Math.floor(Math.random() * 1_000_000_000) + 1;
 /** Màn hình xem trước phiếu: khổ A4, lề như khi in */
 const SCREEN = `@media screen {
   html { background: #e6eaf0; }
-  body { background: #fff; max-width: 21cm; margin: 16px auto 40px !important; padding: 12mm 12mm 12mm 14mm; box-sizing: border-box; box-shadow: 0 2px 14px rgba(15,23,42,.18); }
-  p[style*="page-break-before"] { border-top: 2px dashed #9aa7b8; margin: 28px -12mm 18px -14mm !important; height: 0; overflow: hidden; }
+  body { background: #fff; max-width: 21cm; margin: 16px auto 40px !important; padding: 0; box-sizing: border-box; box-shadow: 0 2px 14px rgba(15,23,42,.18); }
+  p[style*="page-break-before"] { border-top: 2px dashed #9aa7b8; margin: 0 !important; height: 0; overflow: hidden; }
 }
 img { max-width: 100%; height: auto; }`;
 
@@ -129,6 +129,8 @@ export default function SpellingSheets({ defaultClass, defaultSchool, defaultTea
   }, [sheet, fit, withKey, school, className, teacher, baseLook]);
   const scale = fit ? fitScale : look.scale;
   const html = useMemo(() => (sheet ? sheetHtml(sheet, { withKey, school, className, teacher, look: { ...look, scale } }) : ''), [sheet, withKey, school, className, teacher, look, scale]);
+  const avail = useMemo(() => picsAvailable(usable, lesson), [usable.join(), lesson]); // eslint-disable-line react-hooks/exhaustive-deps
+  const availMin = usable.length ? Math.min(...usable.map((id) => avail[id] ?? 0)) : 0;
   const name = `phieu-chinh-ta-${pairs.join('-')}-so-${seed % 10000}`;
 
   return (
@@ -178,9 +180,20 @@ export default function SpellingSheets({ defaultClass, defaultSchool, defaultTea
           })}
         </div>
         <div className="planner-grid">
-          <label className="adm-field"><span>Câu có tranh{many ? ' (mỗi cặp)' : ''}</span><input type="number" min={0} max={16} value={picCount} onChange={(e) => setPicCount(Math.max(0, Math.min(16, Number(e.target.value) || 0)))} /></label>
+          <label className="adm-field"><span>Câu có tranh{many ? ' (mỗi cặp)' : ''} — có sẵn {availMin} tranh</span>
+            <span className="ws-count">
+              <input type="range" min={0} max={Math.max(4, Math.min(24, availMin))} value={Math.min(picCount, Math.max(4, Math.min(24, availMin)))} onChange={(e) => setPicCount(Number(e.target.value))} aria-label="Số câu có tranh" />
+              <input type="number" min={0} max={24} value={picCount} onChange={(e) => setPicCount(Math.max(0, Math.min(24, Number(e.target.value) || 0)))} aria-label="Số câu có tranh (nhập số)" />
+            </span>
+          </label>
           <label className="adm-field"><span>Từ điền chữ{many ? ' (mỗi cặp)' : ''}</span><input type="number" min={0} max={20} value={wordCount} onChange={(e) => setWordCount(Math.max(0, Math.min(20, Number(e.target.value) || 0)))} /></label>
           <label className="adm-field ws-check"><input type="checkbox" checked={copy} onChange={(e) => setCopy(e.target.checked)} /> <span>Có bài tập chép</span></label>
+          {copy && <>
+            <label className="adm-field"><span>Giấy tập chép</span>
+              <select value={look.paper} onChange={(e) => setL({ paper: e.target.value as CopyPaper })}>{(Object.keys(COPY_PAPERS) as CopyPaper[]).map((k) => <option key={k} value={k}>{COPY_PAPERS[k]}</option>)}</select>
+            </label>
+            <label className="adm-field"><span>Số dòng để em viết</span><input type="number" min={0} max={10} value={look.copyRows} onChange={(e) => setL({ copyRows: Math.max(0, Math.min(10, Number(e.target.value) || 0)) })} /></label>
+          </>}
           <label className="adm-field ws-check"><input type="checkbox" checked={withKey} onChange={(e) => setWithKey(e.target.checked)} /> <span>Kèm trang đáp án</span></label>
         </div>
         {many && (picCount > 6 || wordCount > 8) && <p className="dash-muted">Gợi ý: chọn nhiều cặp âm thì để 4 câu có tranh và 8 từ mỗi cặp để phiếu vừa một trang.</p>}

@@ -7061,3 +7061,6 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 }
 @media (max-width: 640px) { .wb-tool span { display: none; } .wb-tool { min-width: 38px; } }
 .ws-warn { margin: 0; padding: 8px 12px; border-radius: 10px; background: #fee2e2; color: #991b1b; font-size: 14px; font-weight: 600; }
+.ws-count { display: flex; align-items: center; gap: 8px; }
+.ws-count input[type="range"] { flex: 1; accent-color: #7c3aed; }
+.ws-count input[type="number"] { width: 72px; }

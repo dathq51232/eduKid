@@ -5,6 +5,7 @@ import { currentWeek, fitsLesson, lessonForWeek, pairWeek, WEEKS } from '../src/
 import { TV1_HK1 } from '../src/lib/content/tv1-hk1';
 import { makeSheet, sheetHtml } from '../src/lib/spelling/worksheet';
 import { htmlToDocx } from '../src/lib/docx-write';
+import { illustrationIconSrc } from '../src/lib/illustration-icons';
 
 let pass = 0, fail = 0;
 const ok = (c: unknown, m: string) => { if (c) pass++; else { fail++; console.log('✗', m); } };
@@ -25,7 +26,8 @@ for (const p of PAIRS) {
       ok(RULE[p.id](part.ans, base), `${p.id}: "${w}" sai luật chính tả`);
     }
   }
-  for (const x of p.pics) ok(existsSync(`public/emoji/${x.pic}.png`), `${p.id}: thiếu hình ${x.pic}`);
+  // hình: đường dẫn trong public/, hoặc tên trong bộ hình 3D (public/edu-icons, public/emoji) — cùng cách phiếu tìm hình
+  for (const x of p.pics) ok(existsSync(`public${x.pic.startsWith('/') ? x.pic : illustrationIconSrc(x.pic) ?? `/emoji/${x.pic}.png`}`), `${p.id}: thiếu hình ${x.pic}`);
   for (const o of p.options) ok(p.pics.some((x) => toneless(splitWord(x.w).ans[0]) === o) || o === 'ngh' || o === 'gh' || p.kind === 'van', `${p.id}: có tranh cho âm ${o}`);
   ok(new Set(p.words).size === p.words.length, `${p.id}: từ không trùng`);
 }
