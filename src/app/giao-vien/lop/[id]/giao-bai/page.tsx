@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import AssignmentsBoard, { type LessonOption } from '@/components/classroom/AssignmentsBoard';
@@ -10,6 +10,7 @@ import { getViewer } from '@/lib/auth/viewer';
 import { compareViName } from '@/lib/classroom/names';
 import { CONTENT } from '@/lib/content';
 import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
+import { ToolIcon } from '@/components/classroom/tool-icons';
 
 export const metadata: Metadata = { title: 'Giao bài về nhà · EduChain Kids' };
 export const dynamic = 'force-dynamic';
@@ -48,7 +49,7 @@ export default async function AssignPage({ params, searchParams }: { params: Pro
         <header className="dash-head">
           <div>
             <p className="dash-kicker">Lớp {c.name} · Khối {c.grade} · {students.length} học sinh</p>
-            <h1><Send aria-hidden="true" /> Giao bài về nhà</h1>
+            <h1><ToolIcon k="giao-bai" /> Giao bài về nhà</h1>
             <p className="dash-muted">Chọn bài, mức và hạn nộp; giao cho cả lớp hoặc một nhóm em. Các em thấy bài ở trang của mình, làm trên app như bình thường. Danh sách bên dưới cho biết em nào đã làm, em nào chưa, kết quả ra sao.</p>
           </div>
         </header>

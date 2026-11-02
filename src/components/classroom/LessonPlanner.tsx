@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, Copy, FileDown, FilePlus2, NotebookPen, Save, Sparkles, Trash2 } from 'lucide-react';
+import { CalendarDays, Copy, FileDown, FilePlus2, Save, Sparkles, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
   SUBJECT_NAMES, addDays, blankPlan, generatePlan, isPlan, mondayOf, subjectNameOf, viDate, weekdayVi,
@@ -14,6 +14,7 @@ import ScheduleImport from './ScheduleImport';
 import PlanLibrary from './PlanLibrary';
 import DocPreview from './DocPreview';
 import type { LibraryMeta } from '@/lib/plans/library';
+import { ToolIcon } from '@/components/classroom/tool-icons';
 
 type Saved = { id: string; class_id: string | null; class_name: string | null; subject: PlanSubject; grade: number; title: string; teach_date: string | null; period: number | null; updated_at: string };
 type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;
@@ -155,7 +156,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
       <header className="dash-head">
         <div>
           <p className="dash-kicker">Lớp {className} · Khối {grade}</p>
-          <h1><NotebookPen aria-hidden="true" /> Kế hoạch bài dạy</h1>
+          <h1><ToolIcon k="ke-hoach" /> Kế hoạch bài dạy</h1>
           <p className="dash-muted">Chọn bài, app soạn sẵn khung giáo án: yêu cầu cần đạt, đồ dùng, 4 hoạt động (khởi động – khám phá – luyện tập – vận dụng) và đánh giá; phần luyện tập có sẵn các dạng lớp còn hay sai. Thầy cô sửa theo lớp mình, lưu, nhân bản cho tiết sau và tải Word để chỉnh theo mẫu của trường.</p>
         </div>
       </header>

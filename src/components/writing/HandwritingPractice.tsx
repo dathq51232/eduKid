@@ -5,12 +5,13 @@
 // Học sinh trong lớp: lưu bài vào "Hành trình nét chữ" (chờ cô duyệt rồi lên tường triển lãm).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Check, ChevronRight, Eraser, GalleryHorizontalEnd, PenLine, RotateCcw, Save, Star, Undo2 } from 'lucide-react';
+import { Check, ChevronRight, Eraser, GalleryHorizontalEnd, RotateCcw, Save, Star, Undo2 } from 'lucide-react';
 import { loadPraiseFonts } from '@/lib/praise/render';
 import { drawPaper } from '@/lib/writing/paper';
 import { setsForGrade, WRITE_SETS, type WriteSet } from '@/lib/writing/letters';
 import { CW, PEN, buildSheet, drawStrokes, drawTemplate, resetFontCache, scoreWriting, type Result, type Sheet, type Stroke } from '@/lib/writing/score';
 import { addItem, canvasToImage } from '@/lib/gallery/client';
+import { ToolIcon } from '@/components/classroom/tool-icons';
 
 const PROGRESS = 'edukid:luyen-chu';
 const A4_HEIGHT = Math.round(CW * 297 / 210);
@@ -145,7 +146,7 @@ export default function HandwritingPractice({ grade: g0, classId, studentId, stu
     <div className="hp">
       <header className="hp-head">
         <div>
-          <h1><PenLine aria-hidden="true" /> Luyện chữ đẹp</h1>
+          <h1><ToolIcon k="luyen-chu" /> Luyện chữ đẹp</h1>
           <p className="dash-muted">{studentName ? `${studentName} ơi, tô` : 'Tô'} theo nét đứt màu xanh, viết chậm và đều tay. Viết xong bấm “Chấm điểm”.</p>
         </div>
         <label className="hp-grade">Lớp <select value={grade} onChange={(e) => { setGrade(Number(e.target.value)); setIdx(0); }}>{[1, 2, 3, 4, 5].map((g) => <option key={g} value={g}>{g}</option>)}</select></label>

@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Check, ClipboardCopy, FileSpreadsheet, MessageSquareHeart, Printer, RotateCcw } from 'lucide-react';
+import { Check, ClipboardCopy, FileSpreadsheet, Printer, RotateCcw } from 'lucide-react';
 import { downloadXlsx, XS } from '@/lib/xlsx';
 import { nd30HeaderHtml, nd30SignHtml } from '@/lib/doc-style';
 import { SUBJECT_VI, buildReport, reportRanges, reportText, type CompactResult, type Range, type StudentReport } from '@/lib/classroom/report';
+import { ToolIcon } from '@/components/classroom/tool-icons';
 
 type Student = { id: string; name: string };
 type Draft = { text: string; ok: boolean };
@@ -119,7 +120,7 @@ export default function ProgressReports({ classId, className, students, rows, te
       <header className="dash-head no-print">
         <div>
           <p className="dash-kicker">Lớp {className}</p>
-          <h1><MessageSquareHeart aria-hidden="true" /> Phiếu báo tiến bộ</h1>
+          <h1><ToolIcon k="phieu-tien-bo" /> Phiếu báo tiến bộ</h1>
           <p className="dash-muted">Mỗi em một lời nhắn cho phụ huynh, viết sẵn từ bài luyện trên app: bài đã làm, tỉ lệ đúng, so với kỳ trước, điểm mạnh, dạng còn sai và gợi ý ở nhà. Thầy cô đọc, sửa, đánh dấu <strong>Đã duyệt</strong>, rồi sao chép để gửi qua Zalo, in hoặc tải Excel. App không tự gửi tin cho phụ huynh.</p>
         </div>
       </header>

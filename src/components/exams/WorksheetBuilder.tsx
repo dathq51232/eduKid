@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { FileDown, FileText, Library, RefreshCw, Shuffle } from 'lucide-react';
+import { FileDown, Library, RefreshCw, Shuffle } from 'lucide-react';
 import MyBankPanel from './MyBankPanel';
 import { useMyBank } from './useMyBank';
 import AssignPaperForm from '@/components/classroom/AssignPaperForm';
@@ -9,6 +9,7 @@ import type { ExamItem } from '@/lib/classroom/assignments';
 import { bookLessons, buildPaper, defaultMatrix, replaceSlot, totals, type Matrix, type Paper } from '@/lib/exams/matrix';
 import { answerText, downloadDoc, examDocument } from '@/lib/exams/word';
 import type { SubjectCode } from '@/lib/types';
+import { ToolIcon } from '@/components/classroom/tool-icons';
 
 const SUBJECT_NAME: Record<SubjectCode, string> = { toan: 'Toán', 'tieng-viet': 'Tiếng Việt', 'tieng-anh': 'Tiếng Anh' };
 const MIX = {
@@ -89,7 +90,7 @@ export default function WorksheetBuilder({ classId, className, grade, presetLess
       <header className="dash-head">
         <div>
           <p className="dash-kicker">Lớp {className} · Khối {grade}</p>
-          <h1><FileText aria-hidden="true" /> Phiếu bài tập</h1>
+          <h1><ToolIcon k="phieu-bai-tap" /> Phiếu bài tập</h1>
           <p className="dash-muted">Chọn bài đang học, số câu và độ khó — máy chọn câu từ ngân hàng câu hỏi tự soạn của EduChain Kids, đáp án in ở trang riêng. Dùng cho giờ luyện tập trên lớp hoặc lớp chưa đủ máy; cũng có thể giao làm trên app.</p>
         </div>
       </header>

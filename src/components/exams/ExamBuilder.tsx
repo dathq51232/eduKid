@@ -16,6 +16,7 @@ import {
 import { answerText, downloadDoc, examDocument, printDoc } from '@/lib/exams/word';
 import { findOutcomeAny } from '@/lib/curriculum';
 import type { SubjectCode } from '@/lib/types';
+import { ToolIcon } from '@/components/classroom/tool-icons';
 
 type Saved = { id: string; title: string; subject: SubjectCode; exam_code: string; updated_at: string };
 type ExamKind = ExamCode | 'khac';
@@ -196,7 +197,7 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
       <header className="dash-head">
         <div>
           <p className="dash-kicker">Lớp {className} · Khối {grade}</p>
-          <h1><Table2 aria-hidden="true" /> Ma trận và đề kiểm tra</h1>
+          <h1><ToolIcon k="de-kiem-tra" /> Ma trận và đề kiểm tra</h1>
           <p className="dash-muted">
             Chọn môn, phạm vi bài, lập ma trận theo 3 mức (Mức 1 nhận biết · Mức 2 kết nối · Mức 3 vận dụng), máy chọn câu từ ngân hàng câu hỏi tự soạn của EduChain Kids.
             Thầy cô đổi từng câu nếu cần, rồi tải file Word gồm ma trận, bản đặc tả, đề và đáp án — hoặc giao đề cho cả lớp làm trực tiếp trên app, máy chấm và thống kê từng câu. Câu có tranh vẽ không đưa vào đề.

@@ -6938,3 +6938,11 @@ img.logo-word { display: block; flex: none; width: auto; max-width: 100%; object
 .theme-switch.is-dark .theme-switch-knob { left: 26px; background: #f3f6ff; }
 .theme-switch-knob img { width: 20px; height: 20px; }
 @media (max-width: 899px) { .theme-switch-label { display: none; } }
+
+/* Biểu tượng 3D cho công cụ giáo viên (11/2026) */
+img.ic3d { display: block; width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0 1px 1px rgb(30 40 80 / .2)); }
+.tsh-ic:has(> img.ic3d) { background: color-mix(in srgb, var(--surface-2) 70%, transparent); }
+.tsh-gtab .tsh-ic img.ic3d, .tsh-fly-i .tsh-ic img.ic3d { width: 22px; height: 22px; }
+.tdy-tool .tsh-ic img.ic3d { width: 28px; height: 28px; }
+.tsh-tabs img.ic3d { width: 24px; height: 24px; margin-inline: auto; }
+h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vertical-align: -0.16em; margin-right: .08em; }

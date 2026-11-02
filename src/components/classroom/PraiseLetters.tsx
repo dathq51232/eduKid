@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client';
 import { isCustomized, readDesigns, writeDesigns, type PraiseDesign } from '@/lib/praise/design';
 import { DEFAULT_SLOT, PHOTO_SHAPES, PHOTO_SPOTS, deletePhoto, loadPhotos, matchFiles, prepPhoto, readSlots, saveCrop, savePhoto, slotBox, writeSlot, type PhotoSlot, type StudentPhoto } from '@/lib/praise/photos';
 import { LETTER_H, LETTER_W, PRAISE_REASONS, PRAISE_TEMPLATES, defaultTemplateFor, fillReason, templateById, type PraiseTemplateId } from '@/lib/praise/templates';
+import { ToolIcon } from '@/components/classroom/tool-icons';
 
 const PraiseEditor = dynamic(() => import('./PraiseEditor'), { ssr: false });
 
@@ -401,7 +402,7 @@ export default function PraiseLetters({ classId, className, grade, students, awa
       <header className="dash-head no-print">
         <div>
           <p className="dash-kicker">Lớp {className} · Khối {grade}</p>
-          <h1><AwardIcon aria-hidden="true" /> Thư khen</h1>
+          <h1><ToolIcon k="thu-khen" /> Thư khen</h1>
           <p className="dash-muted">Làm lần lượt 4 bước bên trái, thư xem trước bên phải cập nhật ngay. Thư và ảnh được xử lý trên máy của thầy cô, không gửi đi đâu.</p>
         </div>
       </header>

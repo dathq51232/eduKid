@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ClipboardCheck, Printer, Save, Sparkles, Wand2 } from 'lucide-react';
+import { Printer, Save, Sparkles, Wand2 } from 'lucide-react';
+import { ToolIcon } from '@/components/classroom/tool-icons';
 import CsvButton from '@/components/classroom/CsvButton';
 import VneduExportButton from '@/components/classroom/VneduExportButton';
 import { createClient } from '@/lib/supabase/client';
@@ -208,7 +209,7 @@ export default function CommentsBoard({ classId, className, grade, students }: {
       <header className="dash-head">
         <div>
           <p className="dash-kicker">Lớp {className} · Khối {grade}</p>
-          <h1><ClipboardCheck aria-hidden="true" /> Nhận xét học sinh</h1>
+          <h1><ToolIcon k="nhan-xet" /> Nhận xét học sinh</h1>
           <p className="dash-muted">
             Gợi ý được viết từ <strong>mức đạt và điểm kiểm tra</strong>, <strong>phẩm chất – năng lực</strong> và <strong>khen thưởng</strong> thầy cô đã nhập ở mục Kết quả học tập trên trường,
             cùng bài luyện tập trên EduChain Kids. Mỗi em một lời nhận xét khác nhau trong lớp. Thầy cô đọc, sửa rồi lưu và tải về.

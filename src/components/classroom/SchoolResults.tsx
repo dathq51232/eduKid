@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Award as AwardIcon, BookOpenCheck, GraduationCap, HeartHandshake, Plus, Save, Trash2, Wand2 } from 'lucide-react';
+import { Award as AwardIcon, BookOpenCheck, HeartHandshake, Plus, Save, Trash2, Wand2 } from 'lucide-react';
+import { ToolIcon } from '@/components/classroom/tool-icons';
 import CsvButton from '@/components/classroom/CsvButton';
 import VneduExportButton from '@/components/classroom/VneduExportButton';
 import { createClient } from '@/lib/supabase/client';
@@ -35,7 +36,7 @@ export default function SchoolResults({ classId, className, grade, students }: {
       <header className="dash-head">
         <div>
           <p className="dash-kicker">Lớp {className} · Khối {grade} · {students.length}/{MAX_STUDENTS} học sinh</p>
-          <h1><GraduationCap aria-hidden="true" /> Kết quả học tập trên trường</h1>
+          <h1><ToolIcon k="ket-qua-truong" /> Kết quả học tập trên trường</h1>
           <p className="dash-muted">Sổ theo dõi theo kỳ: mức đạt và điểm kiểm tra của <strong>tất cả các môn</strong>, phẩm chất – năng lực, khen thưởng. Đây là số liệu để hệ thống tự viết nhận xét cho từng em. Chỉ thầy cô dạy lớp xem được.</p>
         </div>
       </header>

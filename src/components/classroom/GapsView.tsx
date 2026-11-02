@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import { AlertTriangle, ArrowLeft, FileText, Radar, Send, Users } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, FileText, Send, Users } from 'lucide-react';
 import { SUBJECT_NAME } from '@/lib/classroom/assignments';
 import type { computeGaps } from '@/lib/classroom/gaps';
 import { compareViName } from '@/lib/classroom/names';
+import { ToolIcon } from '@/components/classroom/tool-icons';
 
 export const GAP_PERIODS = [{ d: 7, label: '7 ngày' }, { d: 30, label: '30 ngày' }, { d: 120, label: 'Học kỳ (120 ngày)' }];
 const pct = (r: number | null) => (r === null ? '—' : `${Math.round(r * 100)}%`);
@@ -23,7 +24,7 @@ export default function GapsView({ id, c, students, days, g, failed }: {
         <header className="dash-head">
           <div>
             <p className="dash-kicker">Lớp {c.name} · Khối {c.grade} · {students.length} học sinh</p>
-            <h1><Radar aria-hidden="true" /> Lớp đang hổng chỗ nào?</h1>
+            <h1><ToolIcon k="lo-hong" /> Lớp đang hổng chỗ nào?</h1>
             <p className="dash-muted">Tổng hợp từ từng câu các em đã làm trên app: dạng bài nhiều em sai nhất, em nào cần kèm thêm. Bấm “Giao bài ôn” để giao ngay cho đúng những em đó.</p>
           </div>
         </header>

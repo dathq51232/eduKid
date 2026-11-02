@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Lock, RefreshCw, SpellCheck } from 'lucide-react';
+import { Lock, RefreshCw } from 'lucide-react';
 import DocPreview from './DocPreview';
 import { ALL_PAIRS, makeSheet, sheetHtml } from '@/lib/spelling/worksheet';
 import type { PairId } from '@/lib/spelling/bank';
 import { currentWeek, HK2_WEEK, lessonForWeek, WEEKS, weekLabel } from '@/lib/spelling/curriculum';
+import { ToolIcon } from '@/components/classroom/tool-icons';
 
 const KEY = 'edukid:phieu-chinh-ta';
 type Saved = { school: string; className: string; teacher: string; pairs: PairId[]; picCount: number; wordCount: number; copy: boolean; withKey: boolean;
@@ -88,7 +89,7 @@ export default function SpellingSheets({ defaultClass, defaultSchool, defaultTea
       <header className="dash-head">
         <div>
           <p className="dash-kicker">Lớp {defaultClass}</p>
-          <h1><SpellCheck aria-hidden="true" /> Phiếu chính tả</h1>
+          <h1><ToolIcon k="phieu-chinh-ta" /> Phiếu chính tả</h1>
           <p className="dash-muted">Chọn tuần lớp đã học và cặp âm, vần cần luyện, app tạo phiếu có tranh, bài điền chữ, tập chép và trang đáp án. Mỗi lần bấm “Phiếu khác” ra một phiếu mới. Từ ngữ do app tự soạn; tranh 3D Fluent Emoji (giấy phép MIT).</p>
         </div>
       </header>

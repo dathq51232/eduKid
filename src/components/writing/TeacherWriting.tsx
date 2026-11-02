@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { MonitorSmartphone, NotebookPen } from 'lucide-react';
 import HandwritingPractice from './HandwritingPractice';
 import WritingSheetBuilder from './WritingSheetBuilder';
+import { ToolIcon } from '@/components/classroom/tool-icons';
 
 export default function TeacherWriting({ classId, className, grade }: { classId: string; className: string; grade: number }) {
   const [tab, setTab] = useState<'vo' | 'man-hinh'>('vo');
@@ -16,7 +17,7 @@ export default function TeacherWriting({ classId, className, grade }: { classId:
       </nav>
       {tab === 'vo' ? (
         <>
-          <header className="tw-head"><h1><NotebookPen aria-hidden="true" /> Trang vở luyện chữ — lớp {className}</h1>
+          <header className="tw-head"><h1><ToolIcon k="luyen-chu" /> Trang vở luyện chữ — lớp {className}</h1>
             <p className="dash-muted">Nhập câu thơ, ca dao hoặc chọn trong kho câu mẫu; chọn font tập viết, vở 4 hay 5 ô li, màu đường kẻ, hoạ tiết góc vở rồi in cho các em viết.</p></header>
           <WritingSheetBuilder classId={classId} className={className} grade={grade} />
         </>

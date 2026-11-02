@@ -6,11 +6,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  MailOpen, GalleryHorizontalEnd, PenLine, PanelLeftClose, PanelLeftOpen,
-  Award, BookCheck, ChevronDown, ClipboardCheck, Dices, FileText, GraduationCap, Home, LayoutGrid, LogOut, Menu, MessageSquareHeart,
-  NotebookPen, Radar, Search, Send, SpellCheck, Table2, Users, X, UsersRound, Trophy, Timer, Contact, Box, type LucideIcon,
+  PanelLeftClose, PanelLeftOpen, BookCheck, ChevronDown, Home, LayoutGrid, LogOut, Menu, MessageSquareHeart, Search, Users, X,
 } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
+import { icon3d, type IconComp } from '@/components/classroom/tool-icons';
 import ThemeToggle from '@/components/brand/ThemeToggle';
 import { createClient } from '@/lib/supabase/client';
 import { MiniTimer } from '@/components/classroom/ClassTimer';
@@ -18,13 +17,13 @@ import AiAssistant from '@/components/classroom/AiAssistant';
 import { FEATURES } from '@/lib/features';
 import { GROUPS, TOOLS, classIdOfPath, fold, groupOfTool, lastToolOf, rememberTool, toolHref, toolOfPath, toolsOfGroup, type Tool, type ToolKey } from '@/lib/classroom/teacher-nav';
 
-export const TOOL_ICON: Record<ToolKey, LucideIcon> = {
-  'so-lop': BookCheck, 'goi-ten': Dices, 'ke-hoach': NotebookPen, 'giao-bai': Send, 'phieu-bai-tap': FileText, 'phieu-chinh-ta': SpellCheck,
-  'lo-hong': Radar, 'de-kiem-tra': Table2, 'nhan-xet': ClipboardCheck, 'ket-qua-truong': GraduationCap, 'phieu-tien-bo': MessageSquareHeart,
-  'thu-khen': Award, lop: Users, nhom: UsersRound, 'thi-dua': Trophy, 'hen-gio': Timer, 'danh-ba': Contact, 'bai-giang-3d': Box, 'tin-nhan': MailOpen, 'trien-lam': GalleryHorizontalEnd, 'luyen-chu': PenLine,
-};
+/** Biểu tượng 3D của từng công cụ (public/emoji/tool/<khoá>.webp) */
+export const TOOL_ICON: Record<ToolKey, IconComp> = Object.fromEntries(
+  (['so-lop', 'goi-ten', 'ke-hoach', 'giao-bai', 'phieu-bai-tap', 'phieu-chinh-ta', 'lo-hong', 'de-kiem-tra', 'nhan-xet', 'ket-qua-truong', 'phieu-tien-bo',
+    'thu-khen', 'lop', 'nhom', 'thi-dua', 'hen-gio', 'danh-ba', 'bai-giang-3d', 'tin-nhan', 'trien-lam', 'luyen-chu'] as ToolKey[]).map((k) => [k, icon3d(k)]),
+) as Record<ToolKey, IconComp>;
 /** Biểu tượng của nhóm công cụ (cột trái gọn) */
-export const GROUP_ICON: Record<string, LucideIcon> = { 'Trên lớp': BookCheck, 'Dạy học': NotebookPen, 'Đánh giá': Radar, 'Phụ huynh': MessageSquareHeart, Lớp: Users };
+export const GROUP_ICON: Record<string, IconComp> = { 'Trên lớp': icon3d('g-tren-lop'), 'Dạy học': icon3d('g-day-hoc'), 'Đánh giá': icon3d('g-danh-gia'), 'Phụ huynh': icon3d('g-phu-huynh'), Lớp: icon3d('lop') };
 const MINI_KEY = 'gv-cot-trai-gon';
 export const USAGE_KEY = 'gv-dung-nhanh';
 
@@ -250,7 +249,7 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
 }
 
 /* ====================================================================== ô tìm nhanh Ctrl+K */
-type Item = { id: string; group: string; label: string; hint: string; href: string; Icon: LucideIcon };
+type Item = { id: string; group: string; label: string; hint: string; href: string; Icon: IconComp };
 
 function CommandPalette({ classId, onClose }: { classId: string | null; onClose: () => void }) {
   const router = useRouter();
