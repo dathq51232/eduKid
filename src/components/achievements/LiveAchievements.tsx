@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Medal, RefreshCw } from 'lucide-react';
 import MiloMascot from '@/components/mascot/MiloMascot';
+import GiftShelf from './GiftShelf';
 import type { AchievementsPayload, BoardRow } from '@/lib/achievements';
 
 const REFRESH_MS = 30_000;
@@ -128,6 +129,8 @@ export default function LiveAchievements() {
           <div><dt>Lượt chơi game</dt><dd>{me?.games_played ?? '…'}</dd></div>
         </dl>
       </section>
+
+      <GiftShelf stats={me ?? null} />
 
       <section aria-labelledby="lb-title" className="ach-section lb-section">
         <h2 id="lb-title">Bạn điểm cao nhất lớp {me?.class_name ?? ''}</h2>

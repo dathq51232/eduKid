@@ -6873,3 +6873,47 @@ img.logo-word { display: block; flex: none; width: auto; max-width: 100%; object
 .brand-logo { gap: 6px; flex: none; }
 .learn-top .brand, .ph-top .brand, .tsh-brand > a, .tsh-mtop > a { flex: none; }
 .brand-logo img.logo-word { max-width: none; }
+
+/* Tủ quà EDKC (trang Thành tích) */
+.gift-shelf { padding: 22px; border: 2px solid var(--line-strong); border-radius: 20px; background: linear-gradient(180deg, color-mix(in srgb, #FFC107 10%, var(--surface)), var(--surface)); box-shadow: var(--shadow-md); }
+.gift-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.gift-head h2 { display: flex; align-items: center; gap: 10px; margin: 0; }
+.gift-head h2 svg { width: 28px; height: 28px; color: #E91663; }
+.gift-head h2 span { padding: 2px 12px; border-radius: 999px; background: #0056B5; color: #fff; font-size: 16px; }
+.gift-head p { margin: 6px 0 0; }
+.gift-meter { flex: 0 1 260px; height: 14px; overflow: hidden; border-radius: 99px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.gift-meter > span, .gift-bar > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #0056B5, #9C2780 40%, #E91663 70%, #FFC107); }
+.gift-next { display: flex; align-items: center; gap: 16px; margin-top: 16px; padding: 12px 16px; border: 2px dashed color-mix(in srgb, #9C2780 45%, var(--line)); border-radius: 16px; background: var(--surface); }
+.gift-next > div { flex: 1; min-width: 0; }
+.gift-next p { margin: 0; }
+.gift-next-tag { display: flex; align-items: center; gap: 6px; color: #9C2780; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.gift-next-tag svg { width: 16px; height: 16px; }
+.gift-next-name { font-size: 19px; font-weight: 800; }
+.gift-next-left { color: var(--muted); font-size: 14px; }
+.gift-bar { display: block; height: 12px; margin: 6px 0; overflow: hidden; border-radius: 99px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.gift-bar.is-sm { width: 80%; height: 7px; margin: 2px auto 0; }
+.gift-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 16px 0 0; padding: 0; list-style: none; }
+.gift-card { position: relative; display: grid; justify-items: center; gap: 4px; width: 100%; height: 100%; padding: 12px 8px 14px; border: 2px solid var(--line); border-radius: 18px; background: var(--surface); color: var(--ink); font: inherit; text-align: center; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
+.gift-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.gift-card.is-open { border-color: color-mix(in srgb, #FFC107 70%, var(--line)); background: radial-gradient(circle at 50% 35%, color-mix(in srgb, #FFC107 18%, var(--surface)), var(--surface) 70%); }
+.gift-card b { font-size: 14.5px; line-height: 1.25; }
+.gift-card small { color: var(--muted); font-size: 12.5px; font-weight: 700; }
+.gift-card .gift-ok { color: #2e9f53; }
+.gift-pic { position: relative; display: grid; place-items: center; }
+.gift-art.is-locked { filter: grayscale(1) brightness(1.15) contrast(.55); opacity: .5; }
+.gift-lock { position: absolute; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 75%, transparent); color: #fff; }
+.gift-lock svg { width: 20px; height: 20px; }
+.gift-new { position: absolute; top: -8px; right: -6px; z-index: 1; padding: 3px 10px; border-radius: 999px; background: #E91663; color: #fff; font-size: 12px; font-weight: 900; box-shadow: 0 3px 0 #a5104a; animation: giftPop 1.2s ease-in-out infinite alternate; }
+@keyframes giftPop { from { transform: scale(1) rotate(-4deg); } to { transform: scale(1.08) rotate(4deg); } }
+@media (prefers-reduced-motion: reduce) { .gift-new { animation: none; } .gift-card:hover { transform: none; } }
+.gift-note { margin-top: 12px; }
+.gift-dialog { position: relative; max-width: 420px; text-align: center; }
+.gift-dialog h2 { margin: 8px 0 6px; }
+.gift-stage { display: grid; place-items: center; margin: 4px auto 0; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, var(--surface-2), transparent 70%); }
+.gift-stage.is-open { background: radial-gradient(circle, color-mix(in srgb, #FFC107 35%, transparent), transparent 70%); }
+.gift-close { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--surface-2); color: var(--ink); cursor: pointer; }
+.gift-close svg { width: 20px; height: 20px; }
+.gift-ok-line { color: #2e9f53; font-weight: 800; }
+.gift-need-line { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 700; }
+.gift-need-line svg { width: 16px; height: 16px; }
+@media (max-width: 560px) { .gift-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .gift-next { flex-direction: column; text-align: center; } .gift-shelf { padding: 16px; } }

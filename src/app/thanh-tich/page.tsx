@@ -8,6 +8,7 @@ import { DEMO_BADGES, DEMO_PLAYER, DEMO_PRAISE, DEMO_PROGRESS, totalChallenges, 
 import LiveAchievements from '@/components/achievements/LiveAchievements';
 import { getViewer } from '@/lib/auth/viewer';
 import StickerAlbum from '@/components/learn/StickerAlbum';
+import GiftShelf from '@/components/achievements/GiftShelf';
 
 export const metadata: Metadata = { title: 'Thành tích · EduChain Kids' };
 
@@ -57,6 +58,8 @@ function DemoAchievements() {
             </p>
           </div>
         </header>
+
+        <GiftShelf demo stats={{ total_points: 860, lessons_done: 14, perfect_lessons: 4, games_played: 12 }} />
 
         <StickerAlbum />
 
