@@ -1,6 +1,5 @@
 'use client';
 
-import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark';
@@ -42,12 +41,20 @@ export default function ThemeToggle({ className = '' }: { className?: string }) 
   return (
     <button
       type="button"
-      className={`theme-toggle ${className}`.trim()}
+      className={`theme-toggle theme-switch${dark ? ' is-dark' : ''} ${className}`.trim()}
+      role="switch"
+      aria-checked={dark}
       onClick={toggle}
       aria-label={dark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
       title={dark ? 'Chế độ sáng' : 'Chế độ tối'}
     >
-      {dark ? <Sun aria-hidden="true" strokeWidth={2.3} /> : <Moon aria-hidden="true" strokeWidth={2.3} />}
+      <span className="theme-switch-track" aria-hidden="true">
+        <span className="theme-switch-knob">
+          {/* eslint-disable-next-line @next/next/no-img-element -- biểu tượng 3D nhỏ */}
+          <img src={dark ? '/emoji/nav/sun.webp' : '/emoji/nav/moon.webp'} width={22} height={22} alt="" />
+        </span>
+      </span>
+      <span className="theme-switch-label">{dark ? 'Chế độ sáng' : 'Chế độ tối'}</span>
     </button>
   );
 }

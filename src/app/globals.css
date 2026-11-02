@@ -6917,3 +6917,24 @@ img.logo-word { display: block; flex: none; width: auto; max-width: 100%; object
 .gift-need-line { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 700; }
 .gift-need-line svg { width: 16px; height: 16px; }
 @media (max-width: 560px) { .gift-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .gift-next { flex-direction: column; text-align: center; } .gift-shelf { padding: 16px; } }
+
+/* Thanh điều hướng chính: biểu tượng 3D nhiều màu trên chữ (11/2026) */
+.main-nav-3d.main-nav-icon { width: 34px; height: 34px; object-fit: contain; filter: drop-shadow(0 2px 2px rgb(30 40 80 / .18)); transition: transform .18s ease; }
+.main-nav-home .main-nav-icon.main-nav-3d { display: block; }
+@media (min-width: 900px) {
+  .main-nav-link { flex-direction: column; gap: 2px; padding: 4px 12px 6px; min-height: 58px; line-height: 1.1; font-size: 14px; }
+  .main-nav-home .main-nav-link { padding: 4px 12px 6px; font-size: 14.5px; }
+  .main-nav-link[aria-current="page"]::after { bottom: 0; }
+}
+.main-nav-link:hover .main-nav-3d { transform: translateY(-2px) scale(1.08) rotate(-4deg); }
+@media (max-width: 899px) { .main-nav-3d.main-nav-icon { width: 28px; height: 28px; } }
+@media (prefers-reduced-motion: reduce) { .main-nav-link:hover .main-nav-3d { transform: none; } }
+/* nút chế độ tối dạng công tắc */
+.theme-toggle.theme-switch { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; width: auto; height: auto; min-height: 44px; padding: 4px 6px; border-radius: 14px; background: transparent; box-shadow: none; color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 700; }
+.theme-toggle.theme-switch:hover { transform: none; background: var(--surface-2); }
+.theme-switch-track { position: relative; display: block; width: 52px; height: 28px; border-radius: 999px; background: linear-gradient(180deg, #b9d8ff, #dfeeff); box-shadow: inset 0 2px 4px rgb(20 40 90 / .25), 0 1px 0 #fff; transition: background .2s ease; }
+.theme-switch.is-dark .theme-switch-track { background: linear-gradient(180deg, #1d2a52, #34477e); }
+.theme-switch-knob { position: absolute; top: 2px; left: 2px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgb(0 0 0 / .3); transition: left .2s ease; }
+.theme-switch.is-dark .theme-switch-knob { left: 26px; background: #f3f6ff; }
+.theme-switch-knob img { width: 20px; height: 20px; }
+@media (max-width: 899px) { .theme-switch-label { display: none; } }
