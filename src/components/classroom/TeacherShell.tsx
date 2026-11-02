@@ -143,7 +143,7 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
     <div className={`tsh${mini ? ' is-mini' : ''}`}>
       <aside className={`tsh-side${drawer ? ' is-open' : ''}`} aria-label="Công cụ giáo viên">
         <div className="tsh-brand">
-          <Link href="/" aria-label="EduChain Kids - Trang chủ"><BrandLogo size={30} /></Link>
+          <Link href="/" aria-label="EduChain Kids - Trang chủ"><BrandLogo size={36} /></Link>
           <button type="button" className="tsh-close" aria-label="Đóng menu" onClick={() => setDrawer(false)}><X aria-hidden="true" /></button>
         </div>
         {active ? (

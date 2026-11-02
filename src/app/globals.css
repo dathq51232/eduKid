@@ -4970,7 +4970,7 @@ button.diary-pill { cursor: pointer; }
 /* ==========================================================================
    BỘ NHẬN DIỆN 10/2026 — logo Milo trong vòng xanh, chữ "EduChain" xanh + "Kids" nhiều màu
    ========================================================================== */
-.logo-mark { flex: none; border-radius: 50%; box-shadow: 0 2px 6px rgb(36 99 235 / .25); }
+.logo-mark { flex: none; object-fit: contain; filter: drop-shadow(0 2px 3px rgb(30 40 80 / .18)); }
 .brand-word { font-family: var(--font-display, 'Quicksand'), sans-serif; font-weight: 700; letter-spacing: -.02em; }
 .bw-edu { background: linear-gradient(90deg, #1d5fe0, #2f7cf6); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .bw-kids i { font-style: normal; }
@@ -4987,6 +4987,7 @@ button.diary-pill { cursor: pointer; }
 .auth-hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
 .auth-hero-img { width: min(520px, 100%); height: auto; filter: drop-shadow(0 18px 30px rgb(36 99 235 / .12)); }
 .auth-hero-word { font-size: clamp(40px, 5vw, 64px); line-height: 1; margin-top: -6px; }
+img.auth-hero-word { height: clamp(46px, 6vw, 76px); width: auto; max-width: 100%; }
 .auth-hero-tag { font-size: clamp(19px, 2vw, 26px); font-weight: 700; color: #1d47a8; }
 .auth-hero-sub { display: flex; align-items: center; gap: 10px; color: var(--blue); font-weight: 600; font-size: 17px; }
 .auth-hero-sub::before, .auth-hero-sub::after { content: ''; width: 56px; height: 2px; border-radius: 2px; background: currentColor; opacity: .6; }
@@ -5006,6 +5007,7 @@ button.diary-pill { cursor: pointer; }
   .auth-split { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .auth-hero-img { width: min(320px, 80%); }
   .auth-hero-word { font-size: 38px; }
+  img.auth-hero-word { height: 44px; }
   .auth-hero-sub { font-size: 15px; }
   .auth-role { min-height: 54px; padding: 6px 16px 6px 12px; }
   .auth-role svg { width: 26px; height: 26px; }
@@ -6780,9 +6782,9 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .qz .quiz-bar { top: 0; padding-top: 10px; border: 0; background: transparent; }
 .qz .quiz-bar-inner { width: min(1240px, calc(100% - 24px)); gap: 10px; padding-block: 0 8px; }
 .qz-brand { display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 8px; border-radius: 16px; background: linear-gradient(180deg, #c98d55, #a8693a); box-shadow: inset 0 0 0 3px #e2b07c, 0 6px 0 #7a4a22, 0 10px 18px rgb(60 30 0 / .25); flex: none; }
-.qz-brand .logo-mark { border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px #fff3dc; }
+.qz-brand .logo-mark { filter: drop-shadow(0 2px 2px rgb(60 30 0 / .3)); }
 .qz-brand > span { display: grid; line-height: 1.05; }
-.qz-brand .brand-word { font-size: 22px; padding: 2px 8px; border-radius: 10px; background: #fffaf0; }
+.qz-brand .brand-word { height: 30px; width: auto; padding: 3px 8px; border-radius: 10px; background: #fffaf0; box-sizing: content-box; }
 .qz-brand small { margin-top: 4px; padding: 2px 8px; border-radius: 8px; background: #f7e3bd; color: #6b3f16; font-size: 11.5px; font-weight: 800; text-align: center; }
 .qz-pill { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 16px; border: 3px solid #f6d58f; border-radius: 999px; background: var(--qz-cream); color: var(--qz-navy); box-shadow: 0 4px 0 #e6c071, 0 8px 18px rgb(60 40 0 / .18); }
 .qz-progress { flex: 1 1 260px; max-width: 420px; }
@@ -6865,3 +6867,9 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
   .qz-student { display: none; }
   .qz .feedback-actions { flex: 1 1 100%; justify-content: flex-end; }
 }
+
+/* Logo 11/2026: chữ thương hiệu là ảnh (EduChainKids nhiều màu) */
+img.logo-word { display: block; flex: none; width: auto; max-width: 100%; object-fit: contain; }
+.brand-logo { gap: 6px; flex: none; }
+.learn-top .brand, .ph-top .brand, .tsh-brand > a, .tsh-mtop > a { flex: none; }
+.brand-logo img.logo-word { max-width: none; }
