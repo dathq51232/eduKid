@@ -482,16 +482,15 @@ export default function CallOn({ classId, className, grade, students, absentToda
         </nav>
       </header>
 
-      {/* ------------------------------------------------ chọn bài để dò */}
-      <div className="callon-lesson">
-        <span>Câu dò bài:</span>
-        {SUBJECTS.map((x) => (
-          <button key={x.code} type="button" className={`callon-subj${s.subject === x.code ? ' is-on' : ''}`} onClick={() => setS((v) => ({ ...v, subject: x.code, lessonId: '' }))}>{x.name}</button>
-        ))}
-        <select aria-label="Bài để dò" value={s.lessonId} onChange={(e) => { usedQ.current.clear(); setS((v) => ({ ...v, lessonId: e.target.value })); }}>
-          <option value="">Không hỏi — chỉ gọi phát biểu</option>
-          {lessons.map((l) => <option key={l.id} value={l.id}>{l.title}</option>)}
-        </select>
+      {/* ------------------------------------------------ hàng điều khiển (góc trên trái, luôn thấy không cần cuộn) */}
+      <div className="callon-ctrl">
+        <button type="button" className="callon-go is-top" onClick={go} disabled={phase === 'running'}>
+          {phase === 'done' ? 'Gọi em tiếp theo' : s.mode === 'eggs' && taps > 0 ? `Gõ tiếp (${taps}/3)` : mode.action} <kbd>phím cách</kbd>
+        </button>
+        <p className="callon-mini" title={`Đã gọi ${calledCount}/${present.length} em có mặt`}>
+          <span className="callon-progress"><span style={{ width: `${present.length ? (calledCount / present.length) * 100 : 0}%` }} /></span>
+          <small>Đã gọi {calledCount}/{present.length}</small>
+        </p>
         <div className="callon-toggles">
           <label className="callon-chip callon-time" title="Thời gian quay / bốc / đua">
             <Timer aria-hidden="true" />
@@ -504,6 +503,16 @@ export default function CallOn({ classId, className, grade, students, absentToda
           <button type="button" className={`callon-chip${s.sound ? ' is-on' : ''}`} aria-pressed={s.sound} aria-label={s.sound ? 'Tắt âm thanh' : 'Bật âm thanh'} onClick={() => setS((x) => ({ ...x, sound: !x.sound }))}>{s.sound ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}</button>
           <button type="button" className="callon-chip" onClick={() => setDrawer(true)}><Users aria-hidden="true" /> Danh sách</button>
           <button type="button" className="callon-chip" aria-label={full ? 'Thoát toàn màn hình' : 'Toàn màn hình'} onClick={toggleFull}>{full ? <Minimize2 aria-hidden="true" /> : <Maximize2 aria-hidden="true" />}</button>
+        </div>
+        <div className="callon-lesson">
+          <span>Câu dò bài:</span>
+          {SUBJECTS.map((x) => (
+            <button key={x.code} type="button" className={`callon-subj${s.subject === x.code ? ' is-on' : ''}`} onClick={() => setS((v) => ({ ...v, subject: x.code, lessonId: '' }))}>{x.name}</button>
+          ))}
+          <select aria-label="Bài để dò" value={s.lessonId} onChange={(e) => { usedQ.current.clear(); setS((v) => ({ ...v, lessonId: e.target.value })); }}>
+            <option value="">Không hỏi — chỉ gọi phát biểu</option>
+            {lessons.map((l) => <option key={l.id} value={l.id}>{l.title}</option>)}
+          </select>
         </div>
         {notice && <p className="callon-notice" role="status">{notice}</p>}
       </div>
@@ -677,6 +686,7 @@ export default function CallOn({ classId, className, grade, students, absentToda
         )}
       </section>
 
+      {/* nút lớn ghim dưới đáy: chỉ trên điện thoại / máy tính bảng */}
       <div className="callon-bottom">
         <p className="callon-progress"><span style={{ width: `${present.length ? (calledCount / present.length) * 100 : 0}%` }} /></p>
         <button type="button" className="callon-go" onClick={go} disabled={phase === 'running'}>

@@ -6946,3 +6946,22 @@ img.ic3d { display: block; width: 22px; height: 22px; object-fit: contain; filte
 .tdy-tool .tsh-ic img.ic3d { width: 28px; height: 28px; }
 .tsh-tabs img.ic3d { width: 24px; height: 24px; margin-inline: auto; }
 h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vertical-align: -0.16em; margin-right: .08em; }
+
+/* Gọi tên: hàng điều khiển ở góc trên trái (nút Bắt vịt / Quay / Bốc… + tuỳ chọn), không phải cuộn chuột (11/2026) */
+.callon-ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; min-width: 0; }
+.callon-ctrl .callon-toggles { margin-left: 0; flex-wrap: wrap; }
+.callon-ctrl .callon-lesson { flex: 1 1 auto; justify-content: flex-start; }
+.callon-go.is-top { min-height: 52px; padding: 0 24px; font-size: 20px; box-shadow: 0 4px 0 #d39b12; }
+.callon-mini { display: grid; gap: 3px; width: 130px; margin: 0; }
+.callon-mini .callon-progress { height: 10px; }
+.callon-mini small { color: var(--muted); font-size: 12.5px; font-weight: 700; text-align: center; }
+.callon .callon-stage { height: max(420px, calc(100vh - 365px)); }
+.callon.is-full .callon-stage { height: calc(100vh - 170px); }
+@media (min-width: 901px) {
+  .callon-bottom { display: none !important; }
+  .callon:not(.is-full) { padding-bottom: 0; }
+  .callon { grid-template-rows: auto auto 1fr; }
+}
+@media (max-width: 900px) {
+  .callon-go.is-top, .callon-mini { display: none; }
+}
