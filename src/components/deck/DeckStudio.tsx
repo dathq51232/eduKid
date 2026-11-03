@@ -11,12 +11,13 @@ import { assetError, listAssets, uploadAsset, type TeacherAsset } from '@/lib/as
 import { baseName, IMAGE_ACCEPT, prepareBoard } from '@/lib/assets/image';
 import {
   BGS, FONTS, FX, FX_BY_ID, MAX_ELS, MAX_SLIDES, SH, START_LABEL, SW, TRANS_LABEL, darkBg, elLabel, newSlide, uid,
-  type Anim, type Deck, type El, type FontKey, type Fx, type ShapeKind, type Slide, type Start, type Trans,
+  type Anim, type Deck, type El, type FontKey, type Fx, type SceneKind, type ShapeKind, type Slide, type Start, type Trans,
 } from '@/lib/deck/types';
 import { loadPraiseFonts } from '@/lib/praise/render';
 import { playSound, soundLabel, SOUNDS } from '@/lib/deck/sounds';
 import { SLIDE_TEMPLATES, STICKER_SETS } from '@/lib/deck/templates';
-import { SCENES } from '@/lib/deck/scenes';
+import { SCENES, accentOf } from '@/lib/deck/scenes';
+import { WORK_MODES, applyTheme, badgeEl, cardEl, dividerSlide, modeEl, type WorkMode } from '@/lib/deck/fromLesson';
 import SlideView, { ShapeSvg, SlideFrame, type PlayApi } from './SlideView';
 
 type Ribbon = 'page' | 'insert' | 'fx' | 'sound' | 'show';
@@ -246,7 +247,15 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
             <div className="dk-rg"><div className="dk-row dk-scenes">
               <button type="button" className={!slide.scene ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: undefined }))}>Không</button>
               {SCENES.map((c) => <button key={c.id} type="button" title={c.label} className={slide.scene === c.id ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: c.id }))}><span aria-hidden="true">{c.icon}</span>{c.label}</button>)}
-            </div><label>CẢNH MINH HOẠ</label></div>
+            </div><label>CẢNH MINH HOẠ (TRANG NÀY)</label></div>
+            <div className="dk-rg"><div className="dk-row">
+              <select aria-label="Chủ đề cả bài" value="" onChange={(e) => { const v = e.target.value as SceneKind; if (v) commit({ ...deckRef.current, slides: applyTheme(deckRef.current.slides, v) }); }}>
+                <option value="">🎨 Đổi chủ đề cả bài…</option>{SCENES.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
+              </select>
+              <select aria-label="Thêm trang chia hoạt động" value="" onChange={(e) => { const v = e.target.value; if (v) addSlides([dividerSlide(v, slide.scene)]); }}>
+                <option value="">＋ Trang chia hoạt động…</option>{['Khởi động', 'Khám phá', 'Luyện tập', 'Thực hành', 'Vận dụng', 'Trò chơi', 'Củng cố', 'Dặn dò', 'Thảo luận nhóm', 'Cùng chia sẻ'].map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div><label>CHỦ ĐỀ · TRANG CHIA</label></div>
             <div className="dk-rg"><div className="dk-row">
               <select value={slide.trans} onChange={(e) => setSlide((s) => ({ ...s, trans: e.target.value as Trans }))} aria-label="Chuyển trang">{(Object.keys(TRANS_LABEL) as Trans[]).map((t) => <option key={t} value={t}>{TRANS_LABEL[t]}</option>)}</select>
               <button type="button" className="btn btn-outline btn-sm" title="Áp dụng cho mọi trang" onClick={() => commit({ ...deckRef.current, slides: deckRef.current.slides.map((x) => ({ ...x, trans: slide.trans })) })}>Áp dụng mọi trang</button>
@@ -275,6 +284,13 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
               <button type="button" className="dk-tool" onClick={addSort}><span className="dk-emo">🔢</span>Sắp xếp</button>
               <button type="button" className="dk-tool" onClick={addScene}><span className="dk-emo">🧊</span>Cảnh 3D</button>
             </div><label>TƯƠNG TÁC</label></div>
+            <div className="dk-rg"><div className="dk-row">
+              <button type="button" className="dk-tool" onClick={() => { const n = slide.els.filter((e) => e.role === 'badge').length; addEl({ ...badgeEl(n + 1, 'Số ?', accentOf(slide.scene)) }); }}><span className="dk-emo">①</span>Nhãn bài</button>
+              <select aria-label="Hình thức làm bài" value="" onChange={(e) => { const v = e.target.value as WorkMode; if (v) addEl({ ...modeEl(v, accentOf(slide.scene)) }); }}>
+                <option value="">👥 Hình thức…</option>{WORK_MODES.map((w) => <option key={w.id} value={w.id}>{w.label}</option>)}
+              </select>
+              <button type="button" className="dk-tool" onClick={() => setSlide((s) => (s.els.some((e) => e.role === 'card') ? s : { ...s, els: [cardEl(accentOf(s.scene)), ...s.els] }))}><span className="dk-emo">🔲</span>Khung nội dung</button>
+            </div><label>BỐ CỤC</label></div>
           </>}
           {rib === 'fx' && <>
             {(['in', 'em', 'out'] as const).map((g) => (
@@ -420,6 +436,7 @@ function Props({ e, slide, deck, patch, patchSoft, commitSoft, textRef, lessons,
         <label className="dk-f">Cỡ chữ: {e.size}<input type="range" min={18} max={200} value={e.size} onChange={(v) => patchSoft({ size: Number(v.target.value) })} onPointerUp={commitSoft} /></label>
         <div className="dk-f">Căn chữ<div className="dk-seg">{(['left', 'center', 'right'] as const).map((a) => <button key={a} type="button" className={e.align === a ? 'is-on' : ''} onClick={() => patch({ align: a })}>{a === 'left' ? 'Trái' : a === 'center' ? 'Giữa' : 'Phải'}</button>)}</div></div>
         <div className="dk-f">Màu chữ<Swatches colors={COLORS} value={e.color} set={(c) => patch({ color: c })} label="Màu chữ" /></div>
+        <label className="dk-chk dk-f"><input type="checkbox" checked={!!e.stroke} onChange={(v) => patch({ stroke: v.target.checked ? '#ffffff' : undefined, strokeW: 12, shadow: v.target.checked })} /> Chữ trang trí (viền trắng, đổ bóng)</label>
         <div className="dk-f">Nền ô chữ<Swatches colors={['transparent', '#ffffffcc', '#fef3c7', '#dbeafe', '#dcfce7', '#fce7f3', '#1e293b']} value={e.bg || 'transparent'} set={(c) => patch({ bg: c === 'transparent' ? '' : c })} label="Nền ô chữ" /></div>
       </>}
       {e.kind === 'shape' && <>

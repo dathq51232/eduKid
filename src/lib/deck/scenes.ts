@@ -39,13 +39,21 @@ export const SCENES: Scene[] = [
     { src: E('crescent-moon'), x: 1380, y: 50, w: 150 }, { src: E('glowing-star'), x: 120, y: 80, w: 70 }, { src: E('glowing-star'), x: 520, y: 40, w: 46 },
     { src: E('glowing-star'), x: 1150, y: 120, w: 50 }, { src: E('sparkles'), x: 60, y: 720, w: 110 }, { src: E('glowing-star'), x: 1480, y: 760, w: 60 },
     { x: -200, y: 800, w: 700, h: 300, css: 'background:radial-gradient(circle at 50% 30%,#a78bfa,#6d28d9);border-radius:50%' } ] },
+  { id: 'tet', label: 'Ngày Tết', icon: '🧧', bg: 'radial-gradient(circle at 50% 40%,#e2463a 0%,#b91c1c 60%,#7f1d1d 100%)', parts: [
+    { src: E('red-paper-lantern'), x: 40, y: -10, w: 150 }, { src: E('red-paper-lantern'), x: 1420, y: -10, w: 150 }, { src: E('red-paper-lantern'), x: 250, y: -30, w: 100 },
+    { src: E('blossom'), x: 20, y: 700, w: 170 }, { src: E('blossom'), x: 1420, y: 720, w: 150 }, { src: E('sparkles'), x: 1250, y: 120, w: 90 },
+    { x: 0, y: 860, w: 1600, h: 40, css: 'background:repeating-linear-gradient(90deg,#fbbf24 0 40px,#f59e0b 40px 80px)' } ] },
 ];
+/** màu nhấn của mỗi chủ đề (khung nội dung, nhãn bài, chữ trang chia) */
+export const ACCENT: Record<string, string> = { garden: '#16a34a', pond: '#0284c7', kitchen: '#ea580c', class: '#b45309', yard: '#d97706', farm: '#65a30d', sea: '#0891b2', space: '#7c3aed', tet: '#dc2626' };
+export const accentOf = (id?: string) => (id && ACCENT[id]) || '#2563eb';
 export const SCENE_BY_ID: Record<string, Scene> = Object.fromEntries(SCENES.map((s) => [s.id, s]));
 export const sceneDark = (id?: string) => !!(id && SCENE_BY_ID[id]?.dark);
 
 const KEYS: [SceneKind, string][] = [
   ['pond', 'cá|ao|vịt|ếch|nước|sông|hồ|thuyền'],
   ['sea', 'biển|sóng|tàu|đảo|cua|sea|beach|fish'],
+  ['tet', 'tết|lì xì|bánh chưng|năm mới|hoa đào|hoa mai|đón tết'],
   ['space', 'ngôi sao|trăng|vũ trụ|tên lửa|hành tinh|đêm|space|moon|star'],
   ['farm', 'gà|lợn|heo|bò|trâu|ngô|lúa|trang trại|nông|farm|animal|chicken'],
   ['kitchen', 'bếp|nấu|cơm|bánh|đĩa|bát|cam|chuối|kg|lít|ăn|food|fruit|lunch|breakfast|kitchen'],

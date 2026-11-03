@@ -11,14 +11,14 @@ import { createClient } from '@/lib/supabase/client';
 import type { ContentLesson } from '@/lib/content/types';
 import { emptyDeck, type Deck, type SceneKind } from '@/lib/deck/types';
 import { SCENES, pickScene } from '@/lib/deck/scenes';
-import { MASCOTS, PHASES, WARMUPS, buildPlan, buildPlanFromGiaoAn, planSlides, type Knowledge, type LessonPlan, type MascotId, type PhaseId, type Warmup } from '@/lib/deck/fromLesson';
+import { MASCOTS, PHASES, WARMUPS, buildPlan, buildPlanFromGiaoAn, planSlides, tietOf, type BuildOpts, type Knowledge, type LessonPlan, type MascotId, type PhaseId, type Warmup } from '@/lib/deck/fromLesson';
 import { SUBJECT_NAMES, isAppSubject, isPlan, mondayOf, addDays, viDate, weekdayVi, type LessonPlan as GiaoAn } from '@/lib/plans/generate';
 import SlideView, { SlideFrame } from './SlideView';
 
 type Bank = { lessons: ContentLesson[]; byId: Map<string, ContentLesson>; know: (id: string) => Knowledge };
 type PlanRow = { id: string; subject: string; grade: number; title: string; teach_date: string | null; period: number | null };
 /** chỉnh sửa riêng của từng nguồn (bài trong kho / tiết trong lịch) */
-type Ed = { counts: Record<PhaseId, number> | null; removed: string[]; scene: SceneKind; autoScene: SceneKind; seed: number; title: string };
+type Ed = { counts: Record<PhaseId, number> | null; removed: string[]; scene: SceneKind; autoScene: SceneKind; seed: number; title: string; tiet?: number };
 
 const SUBJECTS = [{ id: 'toan', label: 'Toán' }, { id: 'tieng-viet', label: 'Tiếng Việt' }, { id: 'tieng-anh', label: 'Tiếng Anh' }];
 const MIN_TOTAL = 8, MAX_TOTAL = 20;
@@ -43,6 +43,7 @@ export default function DeckFromLesson({ classId, grade, busy, made, onCreate, o
   const [mode, setMode] = useState<'lich' | 'kho'>('lich');
   const [mascot, setMascot] = useState<MascotId>('professor');
   const [warmup, setWarmup] = useState<Warmup>('gift');
+  const [dividers, setDividers] = useState(true);
   const [eds, setEds] = useState<Record<string, Ed>>({});
   /* kho bài học */
   const [subject, setSubject] = useState('toan');
@@ -116,12 +117,12 @@ export default function DeckFromLesson({ classId, grade, busy, made, onCreate, o
     const ga = plans[key.slice(2)]; if (!ga) return null;
     const l = appLesson(ga);
     const sc = pickScene(`${ga.title} ${l ? l.questions.map((x) => x.prompt).join(' ') : ga.goals.knowledge}`, SUBJ_SCENE[ga.subject] ?? 'yard');
-    return { counts: null, removed: [], scene: sc, autoScene: sc, seed: 1, title: `${subjOf(ga)} ${ga.grade} – ${ga.title}` };
+    return { counts: null, removed: [], scene: sc, autoScene: sc, seed: 1, title: `${subjOf(ga)} ${ga.grade} – ${ga.title}`, tiet: tietOf(ga.title) };
   }, [bank, plans, appLesson]);
   const edOf = useCallback((key: string) => eds[key] ?? defaultEd(key), [eds, defaultEd]);
   const planOf = useCallback((key: string, ed: Ed): LessonPlan | null => {
     if (!bank) return null;
-    const o = { mascot, warmup, scene: ed.scene, seed: ed.seed };
+    const o = { mascot, warmup, scene: ed.scene, seed: ed.seed, tiet: ed.tiet };
     if (key.startsWith('L:')) { const l = bank.byId.get(key.slice(2)); return l ? buildPlan(l, bank.know(l.id), o) : null; }
     const ga = plans[key.slice(2)]; if (!ga) return null;
     const l = appLesson(ga);
@@ -133,6 +134,7 @@ export default function DeckFromLesson({ classId, grade, busy, made, onCreate, o
   const plan = useMemo(() => (curKey && ed ? planOf(curKey, ed) : null), [curKey, ed, planOf]);
   const setEd = (patch: Partial<Ed>) => { if (curKey && ed) setEds((m) => ({ ...m, [curKey]: { ...ed, ...patch } })); };
 
+  const bopts = (subject: string) => ({ dividers, mascot: MASCOTS.find((m) => m.id === mascot)?.src, math: subject === 'toan' });
   const deckFor = (key: string): Deck | null => {
     const e = edOf(key); if (!e) return null;
     const p = planOf(key, e); if (!p) return null;
@@ -140,11 +142,11 @@ export default function DeckFromLesson({ classId, grade, busy, made, onCreate, o
     if (key.startsWith('L:')) {
       const l = bank!.byId.get(key.slice(2))!;
       const D = emptyDeck((e.title.trim() || l.title).slice(0, 120), l.grade);
-      return { ...D, slides: planSlides(p, on, {}), src: { lesson: l.id } };
+      return { ...D, slides: planSlides(p, on, {}, bopts(l.subject)), src: { lesson: l.id } };
     }
     const ga = plans[key.slice(2)];
     const D = emptyDeck((e.title.trim() || ga.title).slice(0, 120), ga.grade);
-    return { ...D, slides: planSlides(p, on, {}), src: { plan: key.slice(2), lesson: ga.lessonId || undefined, date: ga.date || undefined, period: ga.period || undefined } };
+    return { ...D, slides: planSlides(p, on, {}, bopts(ga.subject)), src: { plan: key.slice(2), lesson: ga.lessonId || undefined, date: ga.date || undefined, period: ga.period || undefined } };
   };
   const createNow = () => {
     const keys = mode === 'kho' ? (curKey ? [curKey] : []) : weekRows.filter((r) => picked.has(r.id)).map((r) => `P:${r.id}`);
@@ -256,14 +258,14 @@ export default function DeckFromLesson({ classId, grade, busy, made, onCreate, o
 
         <div className="dfl-plan">
           {!plan || !ed ? (mode === 'kho' || rows?.length ? <div className="dfl-empty"><img src="/brand/milo-professor-sm.webp" alt="" /><p>{mode === 'kho' ? <>Chọn một bài ở cột bên trái,<br />Cú Milo sẽ dựng sẵn kịch bản tiết dạy.</> : <>Bấm vào một tiết trong lịch để xem và chỉnh các trang.</>}</p></div> : null)
-            : <PlanEditor key={curKey!} plan={plan} ed={ed} setEd={setEd} mascot={mascot} setMascot={setMascot} warmup={warmup} setWarmup={setWarmup} />}
+            : <PlanEditor key={curKey!} plan={plan} ed={ed} setEd={setEd} mascot={mascot} setMascot={setMascot} warmup={warmup} setWarmup={setWarmup} dividers={dividers} setDividers={setDividers} bo={bopts(curKey!.startsWith('L:') ? lesson?.subject ?? '' : (focus && plans[focus]?.subject) || '')} />}
           {(mode === 'kho' ? !!plan : rows?.length) ? (
             <div className="dfl-foot">
               {mode === 'kho' || nPicked <= 1
                 ? <label className="dh-name"><span>Tên bài thao giảng</span><input value={ed?.title ?? ''} maxLength={120} disabled={!ed} onChange={(e) => setEd({ title: e.target.value })} /></label>
                 : <small className="dk-hint">Đã chọn {nPicked} tiết · mỗi tiết thành một bài thao giảng riêng (tiết đang xem dùng các trang cô vừa chỉnh, tiết khác dùng trang gợi ý).</small>}
               <button type="button" className="btn btn-primary" disabled={busy || (mode === 'kho' ? !plan : !nPicked)} onClick={createNow}>
-                <Sparkles aria-hidden="true" /> {busy ? 'Đang tạo…' : mode === 'lich' && nPicked > 1 ? `Tạo ${nPicked} bài thao giảng` : `Tạo bài thao giảng${plan ? ` (${onKeysOf(plan, ed!).size} trang)` : ''}`}
+                <Sparkles aria-hidden="true" /> {busy ? 'Đang tạo…' : mode === 'lich' && nPicked > 1 ? `Tạo ${nPicked} bài thao giảng` : `Tạo bài thao giảng${plan ? ` (${onKeysOf(plan, ed!).size + (dividers ? divCount(plan, ed!) : 0)} trang)` : ''}`}
               </button>
             </div>
           ) : null}
@@ -291,12 +293,21 @@ function onKeysOf(plan: LessonPlan, ed: Ed) {
   return s;
 }
 
-function PlanEditor({ plan, ed, setEd, mascot, setMascot, warmup, setWarmup }: {
+/** số trang chia hoạt động sẽ chèn (mỗi hoạt động có trang) */
+function divCount(plan: LessonPlan, ed: Ed) {
+  const on = onKeysOf(plan, ed);
+  return new Set(plan.cands.filter((c) => on.has(c.key) && c.phase !== 'bia').map((c) => c.phase)).size;
+}
+
+function PlanEditor({ plan, ed, setEd, mascot, setMascot, warmup, setWarmup, dividers, setDividers, bo }: {
   plan: LessonPlan; ed: Ed; setEd: (p: Partial<Ed>) => void;
   mascot: MascotId; setMascot: (m: MascotId) => void; warmup: Warmup; setWarmup: (w: Warmup) => void;
+  dividers: boolean; setDividers: (v: boolean) => void; bo: BuildOpts;
 }) {
   const { avail, cnt, removed } = countsOf(plan, ed);
   const onKeys = onKeysOf(plan, ed);
+  // xem trước đúng bố cục sẽ tạo (khung nội dung, nhãn ①②③, hình thức làm bài)
+  const look = new Map(planSlides(plan, onKeys, {}, { ...bo, dividers: false }).map((s) => [s.id, s]));
   const total = onKeys.size;
   const rmIn = (p: PhaseId) => plan.cands.filter((c) => c.phase === p && removed.has(c.key)).length;
   const room = (p: PhaseId) => cnt[p] + rmIn(p) < avail[p];
@@ -314,6 +325,10 @@ function PlanEditor({ plan, ed, setEd, mascot, setMascot, warmup, setWarmup }: {
       <div className="dfl-opt"><b>Linh vật</b><span className="dfl-mascots">{MASCOTS.map((m) => <button key={m.id} type="button" title={m.name} aria-label={m.name} className={mascot === m.id ? 'is-on' : ''} onClick={() => setMascot(m.id)}><img src={m.src} alt="" /></button>)}</span></div>
       <div className="dfl-opt"><b>Khởi động</b><span className="dk-seg">{WARMUPS.map((w) => <button key={w.id} type="button" className={warmup === w.id ? 'is-on' : ''} onClick={() => setWarmup(w.id)}>{w.icon} {w.label}</button>)}</span></div>
       <div className="dfl-opt"><b>Cảnh nền</b><span className="dfl-scenes">{SCENES.map((s) => <button key={s.id} type="button" className={ed.scene === s.id ? 'is-on' : ''} onClick={() => setEd({ scene: s.id })}><i>{s.icon}</i>{s.label}{ed.autoScene === s.id ? ' ✨' : ''}</button>)}</span></div>
+      <div className="dfl-opt"><b>Bố cục</b>
+        <label className="dk-chk"><input type="checkbox" checked={dividers} onChange={(e) => setDividers(e.target.checked)} /> Trang chia hoạt động (chữ to “KHỞI ĐỘNG”, “KHÁM PHÁ”…)</label>
+        <label className="dfl-tiet">Tiết <select value={ed.tiet ?? ''} onChange={(e) => setEd({ tiet: e.target.value ? Number(e.target.value) : undefined })}><option value="">—</option>{[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
+      </div>
       <div className="dfl-opt dfl-row">
         <button type="button" className="btn btn-outline btn-sm" onClick={() => setEd({ seed: ed.seed + 1, removed: [] })}>🎲 Tình huống khác</button>
         <span className="dfl-step" aria-label="Tổng số trang"><button type="button" aria-label="Bớt một trang" disabled={total <= MIN_TOTAL} onClick={() => grow(-1)}><Minus aria-hidden="true" /></button><b>{total} trang</b><button type="button" aria-label="Thêm một trang" disabled={total >= MAX_TOTAL || !GROW.some(room)} onClick={() => grow(1)}><Plus aria-hidden="true" /></button></span>
@@ -325,7 +340,7 @@ function PlanEditor({ plan, ed, setEd, mascot, setMascot, warmup, setWarmup }: {
       return (
         <div key={p.id} className="dfl-ph">
           <div className="dfl-ph-h">
-            <span className="dfl-tag" style={{ background: p.color }}>{p.label}{p.time && <small>{p.time}</small>}</span>
+            <span className="dfl-tag" style={{ background: p.color }}>{p.label}{p.time && <small>{p.time}{dividers && cnt[p.id] > 0 ? ' · + trang chia' : ''}</small>}</span>
             {p.id !== 'bia' && <span className="dfl-step is-sm"><button type="button" aria-label={`Bớt trang ${p.label}`} disabled={cnt[p.id] <= 0} onClick={() => setCount(p.id, cnt[p.id] - 1)}><Minus aria-hidden="true" /></button><b>{cnt[p.id]} trang</b><button type="button" aria-label={`Thêm trang ${p.label}`} disabled={!room(p.id) || total >= MAX_TOTAL} onClick={() => setCount(p.id, cnt[p.id] + 1)}><Plus aria-hidden="true" /></button></span>}
           </div>
           <div className="dfl-thumbs">
@@ -333,7 +348,7 @@ function PlanEditor({ plan, ed, setEd, mascot, setMascot, warmup, setWarmup }: {
               const off = removed.has(c.key);
               return (
                 <figure key={c.key} className={`dfl-th${off ? ' is-off' : ''}`}>
-                  <SlideFrame>{(k) => <SlideView slide={c.slide} mode="thumb" scale={k} />}</SlideFrame>
+                  <SlideFrame>{(k) => <SlideView slide={look.get(c.slide.id) ?? c.slide} mode="thumb" scale={k} />}</SlideFrame>
                   <figcaption title={c.title}>{c.title}</figcaption>
                   {p.id !== 'bia' && <button type="button" className="dfl-tg" aria-label={off ? 'Lấy lại trang' : 'Bỏ trang'} onClick={() => toggle(c.key, p.id)}>{off ? <RotateCcw aria-hidden="true" /> : <X aria-hidden="true" />}</button>}
                 </figure>

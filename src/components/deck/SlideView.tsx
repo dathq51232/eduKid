@@ -90,7 +90,8 @@ function ElBody({ e, mode, assetUrl, pick, onPick, sort, onTile }: { e: El; mode
       const f = FONTS[e.font] ?? FONTS.baloo;
       return (
         <div className="dk-text" style={{ fontFamily: f.css, fontWeight: f.weight, fontSize: e.size, color: e.color, textAlign: e.align, fontStyle: e.italic ? 'italic' : undefined,
-          background: e.bg || undefined, padding: e.bg ? '10px 22px' : undefined, borderRadius: e.bg ? 24 : undefined, justifyContent: e.align === 'center' ? 'center' : e.align === 'right' ? 'flex-end' : 'flex-start' }}>
+          background: e.bg || undefined, padding: e.bg ? '10px 22px' : undefined, borderRadius: e.bg ? 24 : undefined,
+          WebkitTextStroke: e.stroke ? `${e.strokeW ?? 10}px ${e.stroke}` : undefined, paintOrder: e.stroke ? 'stroke fill' : undefined, textShadow: e.shadow ? '0 8px 0 rgba(0,0,0,.18), 0 2px 14px rgba(0,0,0,.12)' : undefined, justifyContent: e.align === 'center' ? 'center' : e.align === 'right' ? 'flex-end' : 'flex-start' }}>
           <span>{e.text}</span>
         </div>
       );

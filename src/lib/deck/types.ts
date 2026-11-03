@@ -20,8 +20,12 @@ export type ElBase = {
   link?: number;
   /** khoá vị trí khi soạn */
   lock?: boolean;
+  /** vai trò trong bố cục chủ đề (đổi chủ đề cả bài thì đổi màu theo): khung nội dung, nhãn bài, hình thức làm bài, chữ trang chia */
+  role?: 'card' | 'badge' | 'mode' | 'title' | 'divider';
 };
-export type TextEl = ElBase & { kind: 'text'; text: string; size: number; color: string; font: FontKey; align: 'left' | 'center' | 'right'; bg: string; italic?: boolean };
+export type TextEl = ElBase & { kind: 'text'; text: string; size: number; color: string; font: FontKey; align: 'left' | 'center' | 'right'; bg: string; italic?: boolean;
+  /** viền chữ (chữ tiêu đề kiểu trang trí) và đổ bóng */
+  stroke?: string; strokeW?: number; shadow?: boolean };
 export type ImgEl = ElBase & { kind: 'img'; src: string; /** ảnh trong Kho của tôi (đường dẫn kho, cần ký khi hiện) */ asset?: boolean; name?: string };
 export type ShapeEl = ElBase & { kind: 'shape'; shape: ShapeKind; fill: string; stroke: string; sw: number; text?: string; color?: string; size?: number };
 export type QuizEl = ElBase & { kind: 'quiz'; q: string; opts: string[]; a: number; cols: 1 | 2 };
@@ -64,7 +68,7 @@ export type Anim = {
 export type Trans = 'none' | 'fade' | 'slide' | 'zoom' | 'flip';
 export const TRANS_LABEL: Record<Trans, string> = { none: 'Không', fade: 'Mờ dần', slide: 'Trượt sang', zoom: 'Phóng to', flip: 'Lật trang' };
 
-export type SceneKind = 'garden' | 'pond' | 'kitchen' | 'class' | 'yard' | 'sea' | 'space' | 'farm';
+export type SceneKind = 'garden' | 'pond' | 'kitchen' | 'class' | 'yard' | 'sea' | 'space' | 'farm' | 'tet';
 export type Slide = { id: string; bg: string; els: El[]; anims: Anim[]; trans: Trans; notes: string; sound?: string;
   /** cảnh nền minh hoạ ghép từ hình có sẵn (vẽ phía sau các vật) */
   scene?: SceneKind;
