@@ -6,6 +6,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trophy } from 'lucide-react';
+import TeamAvatar from './TeamAvatar';
 import { createClient } from '@/lib/supabase/client';
 import {
   DEFAULT_HW_RULE, SOURCE, TEAM_COLORS, hwTeamResults, normalizeTeams, vnDay,
@@ -82,7 +83,7 @@ export default function TeamHw({ classId, a, rows, students }: { classId: string
             const got = given.filter((g) => g.team === r.team + 1).reduce((s, g) => s + g.delta, 0);
             return (
               <div key={r.team} className="thw-row">
-                <b>{t.emoji} {t.name}</b>
+                <b className="td-tn"><TeamAvatar emoji={t.emoji} size={24} /> {t.name}</b>
                 <span className="thw-bar"><i style={{ width: `${r.members ? (r.done / r.members) * 100 : 0}%`, background: c }} /></span>
                 <span>{r.done}/{r.members} em{r.onTime < r.done ? ` (${r.done - r.onTime} muộn)` : ''}{r.avg !== null ? ` · TB ${String(r.avg).replace('.', ',')}` : ''}</span>
                 <span className={r.pts ? 'thw-pts' : 'thw-zero'}>{got ? `Đã cộng +${got}` : r.pts ? `+${r.pts}` : '—'}</span>

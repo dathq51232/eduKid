@@ -7533,3 +7533,24 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .pv-opts select { font: inherit; font-weight: 500; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; }
 .pv-opts .pv-chk { font-weight: 500; }
 .pv-opts .pv-fit { white-space: normal; }
+
+/* Hình đại diện tổ thi đua (hình 3D Fluent Emoji) */
+.team-av { display: inline-grid; place-items: center; flex: none; vertical-align: middle; border-radius: 50%; line-height: 1; box-sizing: border-box; }
+.team-av img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 2px rgb(0 0 0 / .18)); }
+.team-av.has-bg { background: radial-gradient(circle at 35% 28%, #fff 0, color-mix(in srgb, var(--c) 20%, #fff) 70%); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 60%, #fff), 0 5px 12px rgb(0 0 0 / .14); }
+.team-av-in { background: #fff; padding: 3px; box-shadow: 0 1px 4px rgb(0 0 0 / .25); }
+.td-team .td-av { margin: 2px 0 2px; transition: transform .25s; }
+.td-team:hover .td-av { transform: translateY(-3px) rotate(-4deg); }
+.td-team.is-top .td-av { animation: team-av-bob 2.4s ease-in-out infinite; }
+@keyframes team-av-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.td-board:fullscreen .td-av { width: 11vh !important; height: 11vh !important; padding: 1.3vh !important; }
+.td-tn { display: inline-flex; align-items: center; gap: 6px; }
+.td-pick { position: relative; }
+.td-pick > summary { list-style: none; cursor: pointer; display: grid; place-items: center; border-radius: 50%; }
+.td-pick > summary::-webkit-details-marker { display: none; }
+.td-pick > summary:focus-visible { outline: 3px solid var(--brand-blue, #2457c5); outline-offset: 2px; }
+.td-pick-grid { position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; display: grid; grid-template-columns: repeat(6, 46px); gap: 4px; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 30px rgb(0 0 0 / .18); }
+.td-pick-grid button { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px; border: 2px solid transparent; background: var(--surface-2); cursor: pointer; transition: transform .15s; }
+.td-pick-grid button:hover { transform: scale(1.1); }
+.td-pick-grid button.is-on { border-color: #2457c5; background: #e8f0ff; }
+.dk-board-n, .dp-tstrip b, .dp-ask button { display: inline-flex; align-items: center; gap: .35em; }

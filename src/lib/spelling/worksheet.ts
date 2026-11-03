@@ -135,22 +135,31 @@ export const DEFAULT_LOOK: SheetLook = { iconL: 'logo', iconR: 'rainbow', iconSi
 export const PAGE_PAD = [12, 12, 12, 14] as const;
 const PAD = PAGE_PAD.map((v) => `${v}mm`).join(' ');
 
-/** Dòng kẻ ô li (4 hoặc 5 li mỗi dòng, ô vuông lớn) cho bài tập chép; đo bằng pt để co giãn cùng phiếu */
+/**
+ * Lưới ô li cho bài tập chép — đúng kiểu giấy của trang Luyện chữ (vở ô li vuông): ô li nhỏ vuông, đường đậm mỗi 4 (hoặc 5) li
+ * theo cả hai chiều, lề đỏ sau ô lớn đầu tiên. Kích thước tính bằng mm (không co theo cỡ phiếu) và trải kín bề ngang vùng viết
+ * (thẳng hàng hai bên với các bảng khác của phiếu).
+ */
 function oliRows(paper: CopyPaper, rows: number): string {
-  const W = (210 - PAGE_PAD[1] - PAGE_PAD[3]) * 72 / 25.4; // bề rộng vùng viết (pt)
+  const W = 210 - PAGE_PAD[1] - PAGE_PAD[3]; // bề rộng vùng viết (mm)
   if (paper === 'line') {
-    return `<table width="100%" cellspacing="0" cellpadding="0" class="ws-oli" style="width:100%;margin-top:4pt">${Array.from({ length: rows }, () => '<tr style="height:24pt"><td style="border-bottom:1px solid #90caf9">&nbsp;</td></tr>').join('')}</table>`;
+    return `<table width="100%" cellspacing="0" cellpadding="0" class="ws-oli" style="width:100%;margin-top:4pt">${Array.from({ length: rows }, () => '<tr style="height:9mm"><td style="border-bottom:0.3mm solid #8b5cf6;font-size:1pt;line-height:1pt">&nbsp;</td></tr>').join('')}</table>`;
   }
-  const n = paper === 'oli5' ? 5 : 4, li = n === 5 ? 5.4 : 6.2, cell = n * li, cols = Math.floor(W / cell);
+  const n = paper === 'oli5' ? 5 : 4;
+  const big = Math.floor(W / (2 * n)); // số ô lớn (ô li ~2 mm như vở)
+  const cols = big * n, li = Math.round((W / cols) * 1000) / 1000, pct = (100 / cols).toFixed(3);
+  const thin = '0.15mm solid #c4b5fd', bold = '0.3mm solid #8b5cf6', red = '0.3mm solid #ef4444';
   const tr: string[] = [];
-  for (let l = 0; l < rows; l++) {
-    for (let r = 0; r < n; r++) {
-      const top = r === 0 ? '1pt solid #9575cd' : '0.5pt solid #d1c4e9';
-      const bottom = l === rows - 1 && r === n - 1 ? 'border-bottom:1pt solid #9575cd;' : '';
-      tr.push(`<tr style="height:${li}pt">${Array.from({ length: cols }, (_, c) => `<td style="width:${cell}pt;height:${li}pt;padding:0;border-top:${top};${bottom}border-left:${c ? '0.5pt solid #d1c4e9' : '1pt solid #9575cd'};${c === cols - 1 ? 'border-right:1pt solid #9575cd;' : ''}font-size:1pt;line-height:1pt">&nbsp;</td>`).join('')}</tr>`);
-    }
+  for (let i = 0; i < rows * n; i++) {
+    const top = i % n === 0 ? bold : thin;
+    const bottom = i === rows * n - 1 ? `border-bottom:${bold};` : '';
+    const tds = Array.from({ length: cols }, (_, c) => {
+      const left = c === n ? red : c % n === 0 ? bold : thin;
+      return `<td width="${pct}%" style="padding:0;border-top:${top};${bottom}border-left:${left};${c === cols - 1 ? `border-right:${bold};` : ''}font-size:1pt;line-height:1pt">&nbsp;</td>`;
+    }).join('');
+    tr.push(`<tr style="height:${li}mm">${tds}</tr>`);
   }
-  return `<table cellspacing="0" cellpadding="0" class="ws-oli" style="border-collapse:collapse;table-layout:fixed;width:${Math.round(cols * cell * 10) / 10}pt;margin:6pt 0 0">${tr.join('')}</table>`;
+  return `<table width="100%" cellspacing="0" cellpadding="0" class="ws-oli" style="width:100%;border-collapse:collapse;table-layout:fixed;margin:6pt 0 0">${tr.join('')}</table>`;
 }
 /** Số cột lưới tranh sao cho hàng cuối ít ô trống nhất (ưu tiên 4 cột) */
 function picCols(n: number): number {

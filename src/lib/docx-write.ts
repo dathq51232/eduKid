@@ -244,14 +244,18 @@ function blocks(nodes: Node[], r: RP, p: PP, ctx: Ctx): string[] {
       out.push(paragraph(el.kids, rr, pp, ctx));
       continue;
     }
-    const sec = el.tag === 'div' ? (/\bLand\b/.test(el.attrs.class ?? '') ? 'land' : /\bLich\b/.test(el.attrs.class ?? '') ? 'lich' : null) : null;
+    // phần trang riêng: trang ngang (.Land), lịch báo giảng mẫu trường (.Lich), trang phiếu có lề riêng (.ws-page, lề lấy từ padding mm)
+    const cls = el.tag === 'div' ? el.attrs.class ?? '' : '';
+    const pad = /\bws-page\b/.test(cls) ? padMm(s.padding) : null;
+    const sec = /\bLand\b/.test(cls) ? { xml: sect('land'), w: LAND_W } : /\bLich\b/.test(cls) ? { xml: sect('lich'), w: LICH_W } : pad ? { xml: sectMm(pad), w: 11906 - mmTw(pad[1]) - mmTw(pad[3]) } : null;
     if (sec) {
-      const w = ctx.width; ctx.width = sec === 'land' ? LAND_W : LICH_W;
+      // phần mới đã sang trang mới: bỏ ngắt trang đứng ngay trước (tránh trang trắng)
+      if (out.length && out[out.length - 1].includes('<w:sectPr>')) ctx.pendingBreak = false;
+      const w = ctx.width; ctx.width = sec.w;
       out.push(...blocks(el.kids, runFrom(el, r), { ...p, ...paraFrom(el) }, ctx));
       ctx.width = w;
-      // kết thúc phần trang ngang
-      // dấu kết thúc phần trang ngang: đoạn rất nhỏ để không đẩy sang trang mới khi bảng vừa kín trang
-      out.push(secEnd(sec));
+      // dấu kết thúc phần: đoạn rất nhỏ để không đẩy sang trang mới khi bảng vừa kín trang
+      out.push(secEnd(sec.xml));
       continue;
     }
     // div, section, ul, ol, body, html…
@@ -261,7 +265,17 @@ function blocks(nodes: Node[], r: RP, p: PP, ctx: Ctx): string[] {
   return out;
 }
 
+function edgeXml(side: string, v?: string): string {
+  const m = /^(?:([\d.]+(?:pt|px|mm)?)\s+)?(solid|dashed|dotted|double)(?:\s+(#[0-9a-f]{3,6}|[a-z]+))?/i.exec((v ?? '').trim());
+  if (!m) return '';
+  const w = pt(m[1] ?? '1px') ?? 0.75;
+  const val = m[2] === 'dashed' ? 'dashed' : m[2] === 'dotted' ? 'dotted' : m[2] === 'double' ? 'double' : 'single';
+  return `<w:${side} w:val="${val}" w:sz="${Math.max(2, Math.round(w * 8))}" w:space="0" w:color="${hex(m[3]) ?? '000000'}"/>`;
+}
+
 function table(el: El, r: RP, ctx: Ctx): string[] {
+  // lưới ô li (class ws-oli): ô sát nhau, hàng cao đúng bằng 1 li
+  const tight = /\bws-oli\b/.test(el.attrs.class ?? '');
   const s = css(el.attrs.style);
   const bordered = (el.attrs.border && el.attrs.border !== '0') || /solid/.test(s.border ?? '');
   const rows: El[] = [];
@@ -302,7 +316,7 @@ function table(el: El, r: RP, ctx: Ctx): string[] {
     const trs = css(tr.attrs.style);
     const h = pt(trs.height);
     const isHead = tr.kids.some((k) => isEl(k) && k.tag === 'th') && ri === 0;
-    const trPr = h || isHead ? `<w:trPr>${h ? `<w:trHeight w:val="${tw(h)}"/>` : ''}${isHead ? '<w:tblHeader/>' : ''}</w:trPr>` : '';
+    const trPr = h || isHead ? `<w:trPr>${h ? `<w:trHeight w:val="${tw(h)}"${tight ? ' w:hRule="exact"' : ''}/>` : ''}${isHead ? '<w:tblHeader/>' : ''}</w:trPr>` : '';
     let cells = '';
     // cỡ chữ của hàng (theo ô thật đầu tiên): dùng cho dấu đoạn của ô gộp / ô thiếu để hàng không cao hơn chữ
     const firstCell = grid[ri]?.find((g): g is C => !!g && g !== 'cont');
@@ -316,8 +330,9 @@ function table(el: El, r: RP, ctx: Ctx): string[] {
         const cs = css(c.el.attrs.style);
         const fill = hex(c.el.attrs.bgcolor) ?? hex(cs.background ?? cs['background-color']);
         const va = cs['vertical-align'] ?? c.el.attrs.valign;
-        const top = /solid/.test(cs['border-top'] ?? '') && !bordered;
-        const tcPr = `<w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${c.span > 1 ? `<w:gridSpan w:val="${c.span}"/>` : ''}${c.rows > 1 ? '<w:vMerge w:val="restart"/>' : ''}${top ? '<w:tcBorders><w:top w:val="single" w:sz="6" w:space="0" w:color="000000"/></w:tcBorders>' : ''}${fill ? `<w:shd w:val="clear" w:color="auto" w:fill="${fill}"/>` : ''}${va === 'middle' || va === 'center' ? '<w:vAlign w:val="center"/>' : va === 'bottom' ? '<w:vAlign w:val="bottom"/>' : ''}</w:tcPr>`;
+        // đường kẻ từng cạnh của ô (khi bảng không kẻ khung chung): "1px solid #000", "0.3mm solid #8b5cf6"
+        const edges = bordered ? '' : (['top', 'left', 'bottom', 'right'] as const).map((k) => edgeXml(k, cs[`border-${k}`])).join('');
+        const tcPr = `<w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${c.span > 1 ? `<w:gridSpan w:val="${c.span}"/>` : ''}${c.rows > 1 ? '<w:vMerge w:val="restart"/>' : ''}${edges ? `<w:tcBorders>${edges}</w:tcBorders>` : ''}${fill ? `<w:shd w:val="clear" w:color="auto" w:fill="${fill}"/>` : ''}${va === 'middle' || va === 'center' ? '<w:vAlign w:val="center"/>' : va === 'bottom' ? '<w:vAlign w:val="bottom"/>' : ''}</w:tcPr>`;
         ctx.width = Math.max(600, w - 216);
         const cr = runFrom(c.el, r);
         const inner = blocks(c.el.kids, cr, { ...paraFrom(c.el), after: 0 }, ctx);
@@ -344,13 +359,22 @@ function table(el: El, r: RP, ctx: Ctx): string[] {
   const pbb = ctx.pendingBreak;
   ctx.pendingBreak = false;
   const pre = pbb ? `<w:p><w:pPr><w:pageBreakBefore/><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/></w:pPr></w:p>` : '';
-  return [`${pre}<w:tbl><w:tblPr><w:tblW w:w="${tblW}" w:type="dxa"/>${jc}${border}<w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="28" w:type="dxa"/><w:left w:w="85" w:type="dxa"/><w:bottom w:w="28" w:type="dxa"/><w:right w:w="85" w:type="dxa"/></w:tblCellMar><w:tblLook w:val="0000"/></w:tblPr><w:tblGrid>${colW.map((w) => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>${trs}</w:tbl>`, ctx.width === LAND_W || ctx.width === LICH_W
+  return [`${pre}<w:tbl><w:tblPr><w:tblW w:w="${tblW}" w:type="dxa"/>${jc}${border}<w:tblLayout w:type="fixed"/>${tight ? '<w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="0" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/></w:tblCellMar>' : '<w:tblCellMar><w:top w:w="28" w:type="dxa"/><w:left w:w="85" w:type="dxa"/><w:bottom w:w="28" w:type="dxa"/><w:right w:w="85" w:type="dxa"/></w:tblCellMar>'}<w:tblLook w:val="0000"/></w:tblPr><w:tblGrid>${colW.map((w) => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>${trs}</w:tbl>`, ctx.width === LAND_W || ctx.width === LICH_W
     ? '<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr></w:pPr></w:p>'
     : `<w:p>${pPrXml({ after: 0, line: 1 }, false)}</w:p>`];
 }
 
 /** đoạn kết thúc một phần (section): rất nhỏ để không đẩy sang trang mới khi bảng vừa kín trang */
-const secEnd = (kind: 'land' | 'lich') => `<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr><w:sectPr>${sect(kind)}</w:sectPr></w:pPr></w:p>`;
+const secEnd = (sx: string) => `<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr><w:sectPr>${sx}</w:sectPr></w:pPr></w:p>`;
+const mmTw = (mm: number) => Math.round(mm * 56.693);
+/** padding "12mm 12mm 12mm 14mm" → [trên, phải, dưới, trái] (mm) */
+function padMm(v?: string): [number, number, number, number] | null {
+  const a = (v ?? '').trim().split(/\s+/).map((x) => /^([\d.]+)mm$/.exec(x)).map((m) => (m ? Number(m[1]) : NaN));
+  if (!a.length || a.some(Number.isNaN)) return null;
+  const [t, r = t, b = t, l = r] = a;
+  return [t, r, b, l];
+}
+const sectMm = ([t, r, b, l]: number[]) => `<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="${mmTw(t)}" w:right="${mmTw(r)}" w:bottom="${mmTw(b)}" w:left="${mmTw(l)}" w:header="284" w:footer="284" w:gutter="0"/>`;
 
 /** land: trang ngang; lich: lịch báo giảng mẫu trường (A4 dọc, lề trên/dưới/phải 1 cm, trái 1,5 cm); null: A4 dọc lề NĐ30 */
 const sect = (kind: 'land' | 'lich' | null) => kind === 'land'
@@ -371,11 +395,12 @@ export function htmlToDocx(html: string, images: Map<string, DocImage> = new Map
   const ctx: Ctx = { images, rels: [], media: [], imgIds: new Map(), pid: 0, width: PORTRAIT_W, pendingBreak: false };
   let xml = blocks(body.kids, {}, {}, ctx).join('');
   // văn bản kết thúc bằng phần trang ngang / lịch báo giảng: phần đó là phần cuối (không thêm phần trống → không có trang trắng)
-  let last: 'land' | 'lich' | null = null;
-  for (const k of ['land', 'lich'] as const) if (xml.endsWith(secEnd(k))) { xml = `${xml.slice(0, -secEnd(k).length)}<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr></w:pPr></w:p>`; last = k; }
+  let last = sect(null);
+  const m = /<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"\/><w:rPr><w:sz w:val="2"\/><w:szCs w:val="2"\/><\/w:rPr><w:sectPr>((?:(?!<w:p>).)*?)<\/w:sectPr><\/w:pPr><\/w:p>$/.exec(xml);
+  if (m) { xml = `${xml.slice(0, m.index)}<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr></w:pPr></w:p>`; last = m[1]; }
   const sz = Math.round((opts.fontSize ?? 14) * 2);
   const W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
-  const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document ${W}><w:body>${xml}<w:sectPr>${sect(last)}</w:sectPr></w:body></w:document>`;
+  const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document ${W}><w:body>${xml}<w:sectPr>${last}</w:sectPr></w:body></w:document>`;
   const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/><w:lang w:val="vi-VN" w:eastAsia="en-US" w:bidi="ar-SA"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:tblPr><w:tblInd w:w="0" w:type="dxa"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="108" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style></w:styles>`;
   const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>${ctx.rels.map((r) => `<Relationship Id="${r.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${r.target}"/>`).join('')}</Relationships>`;
   const types = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpg" ContentType="image/jpeg"/><Default Extension="png" ContentType="image/png"/><Default Extension="gif" ContentType="image/gif"/><Default Extension="bmp" ContentType="image/bmp"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>`;

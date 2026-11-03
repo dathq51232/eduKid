@@ -4,6 +4,7 @@
 //  - edit: chọn, kéo, đổi cỡ vật (trình soạn)
 //  - play: chạy hiệu ứng, kích hoạt khi bấm, câu hỏi, kéo thả, cảnh 3D (trình chiếu)
 //  - thumb: ảnh thu nhỏ tĩnh
+import TeamAvatar from '@/components/classroom/TeamAvatar';
 import dynamic from 'next/dynamic';
 import SceneBg from './SceneBg';
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -152,7 +153,7 @@ function TeamsBoard({ title, teams, live }: { title: string; teams: BoardTeam[];
           <div className="dk-board-bar" style={{ height: `${Math.max(12, (Math.max(0, t.score) / max) * 100)}%`, background: t.color, animationDelay: `${i * 0.15}s` }}>
             {t.score === top && top > 0 && <span className="dk-board-cup">🏆</span>}<b>{t.score}</b>
           </div>
-          <span className="dk-board-n">{t.emoji} {t.name}</span>
+          <span className="dk-board-n"><TeamAvatar emoji={t.emoji} size={54} className="team-av-in" /> {t.name}</span>
         </div>
       ))}</div>
     </div>

@@ -256,7 +256,18 @@ export type Team = { name: string; emoji: string; members: string[]; leader: str
 export type HwRule = { full: number; avg: number; avgMin: number; best: number };
 export const DEFAULT_HW_RULE: HwRule = { full: 2, avg: 1, avgMin: 8, best: 1 };
 export type TeamsState = { teams: Team[]; hw?: Record<string, HwRule> };
-export const TEAM_EMOJI = ['🚀', '🌻', '⚡', '🌈', '🐳', '🍀', '🎈', '⭐'];
+/** Hình đại diện tổ: bộ hình 3D nhiều màu (Fluent Emoji 3D – MIT, public/emoji/team). Tổ vẫn lưu ký tự emoji để tương thích. */
+export const TEAM_ICONS: { e: string; f: string; name: string }[] = [
+  { e: '🦁', f: 'lion', name: 'Sư tử' }, { e: '🐬', f: 'dolphin', name: 'Cá heo' }, { e: '🦊', f: 'fox', name: 'Cáo' }, { e: '🐼', f: 'panda', name: 'Gấu trúc' },
+  { e: '🦉', f: 'owl', name: 'Cú mèo' }, { e: '🐢', f: 'turtle', name: 'Rùa' }, { e: '🐝', f: 'honeybee', name: 'Ong' }, { e: '🐧', f: 'penguin', name: 'Chim cánh cụt' },
+  { e: '🦒', f: 'giraffe', name: 'Hươu cao cổ' }, { e: '🐸', f: 'frog', name: 'Ếch' }, { e: '🐳', f: 'spouting-whale', name: 'Cá voi' }, { e: '🦋', f: 'butterfly', name: 'Bướm' },
+  { e: '🐯', f: 'tiger-face', name: 'Hổ' }, { e: '🐰', f: 'rabbit-face', name: 'Thỏ' }, { e: '🐨', f: 'koala', name: 'Gấu koala' }, { e: '🦜', f: 'parrot', name: 'Vẹt' },
+  { e: '🦄', f: 'unicorn', name: 'Kì lân' }, { e: '🚀', f: 'rocket', name: 'Tên lửa' }, { e: '🌻', f: 'sunflower', name: 'Hướng dương' }, { e: '⚡', f: 'high-voltage', name: 'Tia chớp' },
+  { e: '🌈', f: 'rainbow', name: 'Cầu vồng' }, { e: '🍀', f: 'four-leaf-clover', name: 'Cỏ bốn lá' }, { e: '🎈', f: 'balloon', name: 'Bóng bay' }, { e: '⭐', f: 'glowing-star', name: 'Ngôi sao' },
+];
+/** đường dẫn hình 3D của biểu tượng tổ (null: emoji tự nhập, hiện bằng chữ) */
+export const teamIconSrc = (emoji: string) => { const k = TEAM_ICONS.find((x) => x.e === emoji.replace(/\uFE0F/g, '')); return k ? `/emoji/team/${k.f}.webp` : null; };
+export const TEAM_EMOJI = ['🦁', '🐬', '🦊', '🐼', '🦉', '🐝', '🐧', '🦒'];
 export const TEAM_COLORS = ['#2457c5', '#15803d', '#c2410c', '#6d3fe0', '#0e7490', '#be185d', '#a16207', '#334155'];
 export const REASONS = [
   { icon: '🙋', label: 'Phát biểu' }, { icon: '🤫', label: 'Trật tự' }, { icon: '🧹', label: 'Vệ sinh' },

@@ -5,6 +5,7 @@
 //    che màn, gọi tên, đếm ngược, cộng sao).
 //  - Màn hình chiếu (?man=chieu): cửa sổ riêng để kéo sang tivi / máy chiếu, đồng bộ với máy cô qua BroadcastChannel.
 /* eslint-disable @next/next/no-img-element -- biểu tượng công cụ nhỏ có sẵn trong dự án */
+import TeamAvatar from '@/components/classroom/TeamAvatar';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
@@ -231,10 +232,10 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
           {show.name && <button type="button" className="dp-name" onClick={() => { if (!audience) publish({ ...showRef.current, name: null }); }}><small>Mời bạn</small><b>{show.name.replace('★ ', '')}</b>{show.name.startsWith('★') && <span>🎉</span>}</button>}
           {show.timer && <div className={`dp-timer${timerLeft <= 10 ? ' is-low' : ''}`}>⏱ {fmt(timerLeft)}</div>}
           {show.stars > 0 && <div className="dp-stars">⭐ × {show.stars}</div>}
-          {show.teams && !slide.els.some((e) => e.kind === 'teams') && <div className="dp-tstrip">{show.teams.map((t, i) => <b key={i} className={show.bump === i ? 'is-bump' : ''} style={{ background: t.color }}>{t.emoji} {t.name} · {t.score}</b>)}</div>}
+          {show.teams && !slide.els.some((e) => e.kind === 'teams') && <div className="dp-tstrip">{show.teams.map((t, i) => <b key={i} className={show.bump === i ? 'is-bump' : ''} style={{ background: t.color }}><TeamAvatar emoji={t.emoji} size={30} className="team-av-in" /> {t.name} · {t.score}</b>)}</div>}
           {show.teams && show.ask && (
             <div className="dp-ask"><p>🎉 {show.ask}! Cộng điểm cho tổ nào?</p>
-              <div>{show.teams.map((t, i) => <button key={i} type="button" disabled={audience} style={{ background: t.color }} onClick={() => void award(i, 1, `Trang ${show.slide + 1}: ${show.ask}`)}>{t.emoji} {t.name}</button>)}
+              <div>{show.teams.map((t, i) => <button key={i} type="button" disabled={audience} style={{ background: t.color }} onClick={() => void award(i, 1, `Trang ${show.slide + 1}: ${show.ask}`)}><TeamAvatar emoji={t.emoji} size={30} className="team-av-in" /> {t.name}</button>)}
                 <button type="button" className="is-skip" disabled={audience} onClick={() => publish({ ...showRef.current, ask: null })}>Bỏ qua</button></div>
             </div>
           )}
@@ -279,7 +280,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
             <section className="dp-card"><h4>Thi đua tổ <small>· lưu vào Thi đua tổ của lớp</small></h4>
               <div className="dp-teams">{show.teams.map((t, i) => (
                 <div key={i} style={{ background: t.color }}>
-                  <span>{t.emoji} {t.name}</span><b>{t.score}</b>
+                  <span className="td-tn"><TeamAvatar emoji={t.emoji} size={24} className="team-av-in" /> {t.name}</span><b>{t.score}</b>
                   <button type="button" aria-label={`Trừ 1 điểm ${t.name}`} onClick={() => void award(i, -1, `Trang ${show.slide + 1}`)}>−</button>
                   <button type="button" aria-label={`Cộng 1 điểm ${t.name}`} onClick={() => void award(i, 1, `Trang ${show.slide + 1}`)}>+1</button>
                 </div>

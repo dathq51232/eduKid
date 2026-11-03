@@ -3,13 +3,14 @@
 // Thi đua tổ: bấm +1 / −1 cho từng tổ kèm lý do, tự cộng dồn theo tuần (sang tuần mới tự về 0), xem lại / hoàn tác,
 // bảng điểm cả tuần (tải Excel), tổng kết tuần cho giờ sinh hoạt lớp, chiếu lên bảng.
 // Lưu trên database (migration 0028): danh sách tổ = teacher_tool_*('teams'), điểm = teacher_team_*.
+import TeamAvatar from './TeamAvatar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Copy, Download, Maximize, Settings2, Trophy, Undo2, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { downloadXlsx, range, XS, type XSheet } from '@/lib/xlsx';
 import { playPop } from '@/components/classroom/ClassTimer';
 import {
-  DOW_LABEL, MINUS_REASONS, REASONS, TEAM_COLORS, TEAM_EMOJI, ddmm, defaultTeams, dowOf, normalizeSeating, normalizeTeams, ranking, shortName,
+  DOW_LABEL, MINUS_REASONS, REASONS, TEAM_COLORS, TEAM_EMOJI, TEAM_ICONS, ddmm, defaultTeams, dowOf, normalizeSeating, normalizeTeams, ranking, shortName,
   SOURCE, sourceOf, sourceTotals, stripSource, teamTotals, teamsFromSeating, vnDay, weekOf, type Point, type PointSource, type TeamsState, type ToolStudent,
 } from '@/lib/classroom/class-tools';
 
@@ -166,7 +167,8 @@ export default function TeamContest({ classId, className, students }: Props) {
             return (
               <section key={i} className={`td-team${top ? ' is-top' : ''}`} style={{ '--c': c } as React.CSSProperties}>
                 {top && <span className="td-crown" aria-label="Đang dẫn đầu">👑</span>}
-                <h2><span aria-hidden="true">{t.emoji}</span> {t.name}</h2>
+                <TeamAvatar emoji={t.emoji} size={64} color={c} className="td-av" />
+                <h2>{t.name}</h2>
                 <p className="td-score"><b>{total[i]}</b> điểm</p>
                 <p className="td-src">{SRC.map((k) => <span key={k} title={SOURCE[k].label}>{SOURCE[k].icon} {bySrc[k][i]}</span>)}</p>
                 <p className="td-flags" aria-label={`${flags[i]} ngày đứng nhất`}>{'🚩'.repeat(flags[i]) || <span>&nbsp;</span>}</p>
@@ -191,7 +193,7 @@ export default function TeamContest({ classId, className, students }: Props) {
             <table className="td-week">
               <thead><tr><th>Tổ</th>{week.days.map((d) => <th key={d} className={d === today ? 'is-today' : ''}>{DOW_LABEL[new Date(`${d}T00:00:00Z`).getUTCDay()]}<small>{ddmm(d)}</small></th>)}<th>Tổng</th></tr></thead>
               <tbody>{teams.teams.map((t, i) => (
-                <tr key={i}><td>{t.emoji} {t.name}</td>{week.days.map((d) => <td key={d} className={d === today ? 'is-today' : ''}>{byDay[d]?.[i] ?? '—'}</td>)}<td className="td-tot">{total[i]}</td></tr>
+                <tr key={i}><td><span className="td-tn"><TeamAvatar emoji={t.emoji} size={24} /> {t.name}</span></td>{week.days.map((d) => <td key={d} className={d === today ? 'is-today' : ''}>{byDay[d]?.[i] ?? '—'}</td>)}<td className="td-tot">{total[i]}</td></tr>
               ))}</tbody>
             </table>
           </div>
@@ -245,7 +247,17 @@ function TeamEditor({ teams, students, onCancel, onSave, fromSeating }: {
         <div className="td-edit-teams">
           {t.teams.map((tm, i) => (
             <div key={i} className="td-edit-team" style={{ '--c': TEAM_COLORS[i % TEAM_COLORS.length] } as React.CSSProperties}>
-              <select value={tm.emoji} onChange={(e) => patch(i, { emoji: e.target.value })} aria-label="Biểu tượng">{TEAM_EMOJI.map((e) => <option key={e} value={e}>{e}</option>)}</select>
+              <details className="td-pick">
+                <summary aria-label={`Đổi hình đại diện ${tm.name}`}><TeamAvatar emoji={tm.emoji} size={40} color={TEAM_COLORS[i % TEAM_COLORS.length]} /></summary>
+                <div className="td-pick-grid" role="listbox" aria-label="Hình đại diện tổ">
+                  {TEAM_ICONS.map((k) => (
+                    <button key={k.e} type="button" role="option" aria-selected={tm.emoji === k.e} title={k.name} className={tm.emoji === k.e ? 'is-on' : ''}
+                      onClick={(e) => { patch(i, { emoji: k.e }); (e.currentTarget.closest('details') as HTMLDetailsElement | null)?.removeAttribute('open'); }}>
+                      <TeamAvatar emoji={k.e} size={36} />
+                    </button>
+                  ))}
+                </div>
+              </details>
               <input value={tm.name} maxLength={30} onChange={(e) => patch(i, { name: e.target.value })} aria-label={`Tên tổ ${i + 1}`} />
               <select value={tm.leader ?? ''} onChange={(e) => patch(i, { leader: e.target.value || null })} aria-label="Tổ trưởng">
                 <option value="">Tổ trưởng…</option>{tm.members.map((m) => <option key={m} value={m}>{students.find((s) => s.id === m)?.name}</option>)}
@@ -298,7 +310,7 @@ function WeekSummary({ className, week, teams, total, points, onClose }: {
           {rank.map((r) => (
             <li key={r.team} className={`is-r${Math.min(r.rank, 4)}`} style={{ '--c': TEAM_COLORS[r.team % TEAM_COLORS.length] } as React.CSSProperties}>
               <span className="td-medal">{medal[r.rank - 1] ?? r.rank}</span>
-              <b>{teams.teams[r.team]?.emoji} {teams.teams[r.team]?.name}</b>
+              <b className="td-tn"><TeamAvatar emoji={teams.teams[r.team]?.emoji ?? ''} size={22} /> {teams.teams[r.team]?.name}</b>
               <span>{r.score} điểm</span>
               {why(r.team).length > 0 && <small>Nổi bật: {why(r.team).join(', ')}</small>}
             </li>
