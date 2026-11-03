@@ -1,0 +1,314 @@
+'use client';
+
+// Vẽ một trang thao giảng (khổ chuẩn 1600 × 900, co giãn theo khung). Ba chế độ:
+//  - edit: chọn, kéo, đổi cỡ vật (trình soạn)
+//  - play: chạy hiệu ứng, kích hoạt khi bấm, câu hỏi, kéo thả, cảnh 3D (trình chiếu)
+//  - thumb: ảnh thu nhỏ tĩnh
+import dynamic from 'next/dynamic';
+import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import type React from 'react';
+import { FONTS, FX_BY_ID, SH, SW, bgCss, type El, type ShapeEl, type Slide } from '@/lib/deck/types';
+import { fxEasing, fxFrames, planSlide, type Step } from '@/lib/deck/player';
+import { playSound } from '@/lib/deck/sounds';
+
+const Scene3DBox = dynamic(() => import('./Scene3DBox'), { ssr: false });
+
+/** Khung giữ tỉ lệ 16:9, trả về tỉ lệ thu phóng cho nội dung 1600 × 900 */
+export function SlideFrame({ children, className, style }: { children: (scale: number) => React.ReactNode; className?: string; style?: React.CSSProperties }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
+  useLayoutEffect(() => {
+    const el = ref.current; if (!el) return;
+    const ro = new ResizeObserver(() => setScale(el.clientWidth / SW));
+    ro.observe(el); setScale(el.clientWidth / SW);
+    return () => ro.disconnect();
+  }, []);
+  return <div ref={ref} className={`dk-frame ${className ?? ''}`} style={style}>{scale > 0 && children(scale)}</div>;
+}
+
+export function ShapeSvg({ e }: { e: ShapeEl }) {
+  const p = { fill: e.fill, stroke: e.stroke, strokeWidth: e.sw, vectorEffect: 'non-scaling-stroke' as const, strokeLinejoin: 'round' as const };
+  const body = (() => {
+    switch (e.shape) {
+      case 'rect': return <rect x="0.5" y="0.5" width="99" height="99" {...p} />;
+      case 'round': return <rect x="0.5" y="0.5" width="99" height="99" rx="12" ry="18" {...p} />;
+      case 'circle': return <ellipse cx="50" cy="50" rx="49.5" ry="49.5" {...p} />;
+      case 'star': return <polygon points="50,2 61.8,36 98,36.5 69,58 79.5,96 50,74 20.5,96 31,58 2,36.5 38.2,36" {...p} />;
+      case 'heart': return <path d="M50 92 C 18 70 2 52 2 32 C 2 14 16 4 30 4 C 40 4 47 10 50 18 C 53 10 60 4 70 4 C 84 4 98 14 98 32 C 98 52 82 70 50 92 Z" {...p} />;
+      case 'arrow': return <polygon points="1,32 62,32 62,6 99,50 62,94 62,68 1,68" {...p} />;
+      case 'cloud': return <path d="M24 86 C 8 86 2 74 6 64 C 0 52 10 38 24 42 C 24 22 44 12 58 22 C 66 10 88 14 88 32 C 100 36 100 56 90 62 C 98 74 88 88 74 86 Z" {...p} />;
+      case 'bubble': return <path d="M10 4 H90 Q98 4 98 12 V64 Q98 72 90 72 H40 L18 96 L24 72 H10 Q2 72 2 64 V12 Q2 4 10 4 Z" {...p} />;
+    }
+  })();
+  return <svg className="dk-shape" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">{body}</svg>;
+}
+
+type Pick = { i: number; ok: boolean };
+function ElBody({ e, mode, assetUrl, pick, onPick }: { e: El; mode: 'edit' | 'play' | 'thumb'; assetUrl?: (p: string) => string | undefined; pick?: Pick; onPick?: (i: number) => void }) {
+  switch (e.kind) {
+    case 'text': {
+      const f = FONTS[e.font] ?? FONTS.baloo;
+      return (
+        <div className="dk-text" style={{ fontFamily: f.css, fontWeight: f.weight, fontSize: e.size, color: e.color, textAlign: e.align, fontStyle: e.italic ? 'italic' : undefined,
+          background: e.bg || undefined, padding: e.bg ? '10px 22px' : undefined, borderRadius: e.bg ? 24 : undefined, justifyContent: e.align === 'center' ? 'center' : e.align === 'right' ? 'flex-end' : 'flex-start' }}>
+          <span>{e.text}</span>
+        </div>
+      );
+    }
+    case 'img': {
+      const src = e.asset ? assetUrl?.(e.src) : e.src;
+      // eslint-disable-next-line @next/next/no-img-element -- hình dán / ảnh của cô, kích thước tự do
+      return src ? <img className="dk-img" src={src} alt={e.name ?? ''} draggable={false} /> : <div className="dk-img-wait">🖼</div>;
+    }
+    case 'shape': return (
+      <>
+        <ShapeSvg e={e} />
+        {e.text && <div className="dk-shape-text" style={{ color: e.color ?? '#1f2937', fontSize: e.size ?? 40, fontFamily: FONTS.baloo.css, fontWeight: 800 }}>{e.text}</div>}
+      </>
+    );
+    case 'quiz': {
+      const qs = Math.max(26, Math.min(64, e.w / 16)), os = Math.max(22, Math.min(54, e.w / (e.cols === 2 ? 22 : 18)));
+      const COL = ['#ef4444', '#2563eb', '#f59e0b', '#16a34a', '#9333ea', '#0891b2'];
+      return (
+        <div className="dk-quiz">
+          <div className="dk-quiz-q" style={{ fontSize: qs }}>{e.q}</div>
+          <div className="dk-quiz-opts" style={{ gridTemplateColumns: e.cols === 2 ? '1fr 1fr' : '1fr' }}>
+            {e.opts.map((o, i) => {
+              const st = pick && pick.i === i ? (pick.ok ? ' is-ok' : ' is-bad') : pick?.ok && i === e.a ? '' : '';
+              return (
+                <button key={i} type="button" className={`dk-opt${st}${mode === 'edit' && i === e.a ? ' is-key' : ''}`} style={{ fontSize: os }}
+                  disabled={mode !== 'play' || !!pick?.ok}
+                  onPointerDown={(ev) => { if (mode === 'play') ev.stopPropagation(); }}
+                  onClick={(ev) => { if (mode !== 'play') return; ev.stopPropagation(); onPick?.(i); }}>
+                  <b style={{ background: COL[i % COL.length] }}>{String.fromCharCode(65 + i)}</b><span>{o}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+    case 'drop': return <div className="dk-drop" style={{ borderColor: e.color, color: e.color }}><span>{e.label}</span></div>;
+    case 'scene3d':
+      return mode === 'play' && e.lesson ? <Scene3DBox lessonId={e.lesson} title={e.title} />
+        : <div className="dk-scene-ph"><span>🧊</span><b>{e.title || 'Cảnh 3D'}</b><small>{mode === 'edit' ? 'Xoay, phóng to được khi trình chiếu' : ''}</small></div>;
+  }
+}
+
+export type PlayAction = { t: 'step' } | { t: 'back' } | { t: 'trigger'; el: string } | { t: 'quiz'; el: string; i: number } | { t: 'drop'; el: string; x: number; y: number };
+export type PlayApi = { apply: (a: PlayAction) => boolean; stepsLeft: () => number; stepIndex: () => number };
+
+type Props = {
+  slide: Slide; mode: 'edit' | 'play' | 'thumb'; scale: number;
+  assetUrl?: (path: string) => string | undefined;
+  /* soạn */
+  sel?: string | null; onSelect?: (id: string | null) => void;
+  onChange?: (id: string, patch: Partial<El>, record: boolean) => void;
+  onEditText?: (id: string) => void;
+  /* chiếu */
+  onAction?: (a: PlayAction) => void;
+  onLink?: (n: number) => void;
+  /** chạy sẵn đến bước số mấy (khi mở lại trang / cửa sổ chiếu mới mở) */
+  startStep?: number;
+};
+
+const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, scale, assetUrl, sel, onSelect, onChange, onEditText, onAction, onLink, startStep = 0 }, ref) {
+  const plan = useMemo(() => planSlide(slide), [slide]);
+  const play = mode === 'play';
+  const [hidden, setHidden] = useState<Set<string>>(() => (play ? new Set(plan.hidden) : new Set()));
+  const [picks, setPicks] = useState<Record<string, Pick>>({});
+  const [pos, setPos] = useState<Record<string, { x: number; y: number }>>({});
+  const [done, setDone] = useState<Set<string>>(new Set()); // vật đã kéo đúng ô
+  const nodes = useRef(new Map<string, HTMLDivElement>());
+  const step = useRef(0);
+  const fired = useRef(new Set<string>());
+  const timers = useRef<number[]>([]);
+  const hiddenRef = useRef(hidden); hiddenRef.current = hidden;
+
+  const show = useCallback((id: string, v: boolean) => {
+    const n = nodes.current.get(id); if (n) n.style.visibility = v ? '' : 'hidden';
+    setHidden((h) => { if (v ? !h.has(id) : h.has(id)) return h; const s = new Set(h); if (v) s.delete(id); else s.add(id); return s; });
+  }, []);
+
+  const run = useCallback((cues: Step, instant = false) => {
+    for (const c of cues) {
+      const go = () => {
+        const n = nodes.current.get(c.anim.el)?.querySelector<HTMLElement>('.dk-a');
+        const g = FX_BY_ID[c.anim.fx].group;
+        if (g === 'in') show(c.anim.el, true);
+        if (instant) { if (g === 'out') show(c.anim.el, false); return; }
+        playSound(c.anim.sound);
+        const a = n?.animate(fxFrames(c.anim.fx), { duration: c.anim.dur * 1000, easing: fxEasing(c.anim.fx), iterations: c.anim.fx === 'spin' ? 1 : 1 });
+        if (g === 'out') { if (a) a.onfinish = () => show(c.anim.el, false); else show(c.anim.el, false); }
+      };
+      if (instant || c.at <= 0) go(); else timers.current.push(window.setTimeout(go, c.at * 1000));
+    }
+  }, [show]);
+
+  // vào trang: chạy nhóm tự chạy + âm thanh của trang, rồi chạy nhanh đến bước đã đi (khi đồng bộ)
+  useEffect(() => {
+    if (!play) return;
+    playSound(slide.sound);
+    run(plan.auto, startStep > 0);
+    for (let i = 0; i < startStep && i < plan.steps.length; i++) run(plan.steps[i], true);
+    step.current = Math.min(startStep, plan.steps.length);
+    const t = timers.current;
+    return () => { t.forEach((x) => clearTimeout(x)); t.length = 0; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const zoneAt = (x: number, y: number) => slide.els.find((z) => z.kind === 'drop' && x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h) as Extract<El, { kind: 'drop' }> | undefined;
+  const apply = useCallback((a: PlayAction): boolean => {
+    switch (a.t) {
+      case 'step': {
+        if (step.current >= plan.steps.length) return false;
+        run(plan.steps[step.current]); step.current++; return true;
+      }
+      case 'back': return false;
+      case 'trigger': {
+        const cues = plan.triggers[a.el]; if (!cues) return false;
+        fired.current.add(a.el); run(cues); return true;
+      }
+      case 'quiz': {
+        const q = slide.els.find((x) => x.id === a.el); if (!q || q.kind !== 'quiz') return false;
+        const ok = a.i === q.a;
+        setPicks((p) => ({ ...p, [a.el]: { i: a.i, ok } }));
+        playSound(ok ? 'tada' : 'wrong');
+        if (ok) { const n = nodes.current.get(a.el); n?.querySelector<HTMLElement>('.dk-a')?.animate(fxFrames('pulse'), { duration: 700 }); burst(n); }
+        return true;
+      }
+      case 'drop': {
+        const e = slide.els.find((x) => x.id === a.el); if (!e) return false;
+        const cx = a.x + e.w / 2, cy = a.y + e.h / 2, z = zoneAt(cx, cy);
+        if (z && z.accept.includes(e.id)) {
+          setPos((p) => ({ ...p, [e.id]: { x: Math.round(Math.min(Math.max(cx, z.x + e.w / 2), z.x + z.w - e.w / 2) - e.w / 2), y: Math.round(Math.min(Math.max(cy, z.y + e.h / 2), z.y + z.h - e.h / 2) - e.h / 2) } }));
+          setDone((d) => new Set(d).add(e.id)); playSound('ding'); burst(nodes.current.get(e.id));
+        } else if (z) {
+          setPos((p) => { const n = { ...p }; delete n[e.id]; return n; }); playSound('wrong');
+          nodes.current.get(e.id)?.querySelector<HTMLElement>('.dk-a')?.animate(fxFrames('shake'), { duration: 500 });
+        } else setPos((p) => ({ ...p, [e.id]: { x: a.x, y: a.y } }));
+        return true;
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan, run, slide.els]);
+  useImperativeHandle(ref, () => ({ apply, stepsLeft: () => plan.steps.length - step.current, stepIndex: () => step.current }), [apply, plan]);
+
+  /* ---------- kéo khi trình chiếu ---------- */
+  const playDrag = useRef<{ id: string; ox: number; oy: number; sx: number; sy: number; moved: boolean } | null>(null);
+  const toSlide = (ev: { clientX: number; clientY: number }, root: HTMLElement) => { const r = root.getBoundingClientRect(); return [(ev.clientX - r.left) / scale, (ev.clientY - r.top) / scale]; };
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  /* ---------- soạn: kéo / đổi cỡ ---------- */
+  const edit = useRef<{ id: string; kind: 'move' | 'size'; sx: number; sy: number; x0: number; y0: number; w0: number; h0: number; ratio: boolean; moved: boolean } | null>(null);
+
+  const onElDown = (e: El, ev: React.PointerEvent, kind: 'move' | 'size' = 'move') => {
+    if (mode === 'thumb') return;
+    if (mode === 'edit') {
+      ev.stopPropagation();
+      onSelect?.(e.id);
+      if (e.lock && kind === 'move') return;
+      (ev.currentTarget as Element).setPointerCapture?.(ev.pointerId);
+      edit.current = { id: e.id, kind, sx: ev.clientX, sy: ev.clientY, x0: e.x, y0: e.y, w0: e.w, h0: e.h, ratio: e.kind === 'img' || (e.kind === 'shape' && (e.shape === 'circle' || e.shape === 'star' || e.shape === 'heart')), moved: false };
+      return;
+    }
+    // chiếu
+    if (e.drag && !done.has(e.id)) {
+      ev.stopPropagation();
+      (ev.currentTarget as Element).setPointerCapture?.(ev.pointerId);
+      const p = pos[e.id] ?? { x: e.x, y: e.y };
+      const [x, y] = toSlide(ev, rootRef.current!);
+      playDrag.current = { id: e.id, ox: x - p.x, oy: y - p.y, sx: ev.clientX, sy: ev.clientY, moved: false };
+    }
+  };
+  const onElMove = (ev: React.PointerEvent) => {
+    const d = edit.current;
+    if (d) {
+      const dx = (ev.clientX - d.sx) / scale, dy = (ev.clientY - d.sy) / scale;
+      if (!d.moved && Math.hypot(dx, dy) < 2) return;
+      d.moved = true;
+      if (d.kind === 'move') onChange?.(d.id, { x: Math.round(d.x0 + dx), y: Math.round(d.y0 + dy) }, false);
+      else {
+        let w = Math.max(30, d.w0 + dx), h = Math.max(24, d.h0 + dy);
+        if (d.ratio || ev.shiftKey) { const k = Math.max(w / d.w0, h / d.h0); w = d.w0 * k; h = d.h0 * k; }
+        onChange?.(d.id, { w: Math.round(w), h: Math.round(h) }, false);
+      }
+      return;
+    }
+    const p = playDrag.current;
+    if (p && rootRef.current) {
+      const [x, y] = toSlide(ev, rootRef.current);
+      if (!p.moved && Math.hypot(ev.clientX - p.sx, ev.clientY - p.sy) < 4) return;
+      p.moved = true;
+      setPos((s) => ({ ...s, [p.id]: { x: Math.round(x - p.ox), y: Math.round(y - p.oy) } }));
+    }
+  };
+  const onElUp = (e: El) => {
+    const d = edit.current; edit.current = null;
+    if (d) { if (d.moved) onChange?.(d.id, {}, true); return; }
+    const p = playDrag.current; playDrag.current = null;
+    if (p) {
+      if (p.moved) { const q = pos[p.id] ?? { x: e.x, y: e.y }; const a: PlayAction = { t: 'drop', el: p.id, x: q.x, y: q.y }; apply(a); onAction?.(a); return; }
+      click(e);
+    }
+  };
+  // bấm vào vật khi chiếu: kích hoạt / chuyển trang
+  const click = (e: El) => {
+    if (!play) return;
+    if (plan.triggers[e.id]) { const a: PlayAction = { t: 'trigger', el: e.id }; apply(a); onAction?.(a); return; }
+    if (e.link) onLink?.(e.link);
+  };
+
+  return (
+    <div ref={rootRef} className={`dk-slide is-${mode}`} style={{ width: SW, height: SH, transform: `scale(${scale})`, background: bgCss(slide.bg) }}
+      onPointerDown={() => { if (mode === 'edit') onSelect?.(null); }}>
+      {slide.els.map((e) => {
+        const p = play ? pos[e.id] : undefined;
+        const clickable = play && (!!plan.triggers[e.id] || !!e.link || (!!e.drag && !done.has(e.id)));
+        return (
+          <div key={e.id} data-id={e.id} ref={(n) => { if (n) nodes.current.set(e.id, n); else nodes.current.delete(e.id); }}
+            className={`dk-el k-${e.kind}${sel === e.id ? ' is-sel' : ''}${clickable ? ' is-click' : ''}${play && e.drag && !done.has(e.id) ? ' is-drag' : ''}${done.has(e.id) ? ' is-done' : ''}`}
+            style={{ left: p?.x ?? e.x, top: p?.y ?? e.y, width: e.w, height: e.h, transform: e.rot ? `rotate(${e.rot}deg)` : undefined, visibility: play && hidden.has(e.id) ? 'hidden' : undefined, zIndex: play && playDrag.current?.id === e.id ? 50 : undefined }}
+            onPointerDown={(ev) => onElDown(e, ev)} onPointerMove={onElMove} onPointerUp={() => onElUp(e)}
+            onClick={(ev) => { if (play && !e.drag) { ev.stopPropagation(); click(e); } }}
+            onDoubleClick={() => { if (mode === 'edit' && (e.kind === 'text' || e.kind === 'shape' || e.kind === 'quiz')) onEditText?.(e.id); }}>
+            <div className="dk-a"><ElBody e={e} mode={mode} assetUrl={assetUrl} pick={picks[e.id]} onPick={(i) => { const a: PlayAction = { t: 'quiz', el: e.id, i }; apply(a); onAction?.(a); }} /></div>
+            {mode === 'edit' && sel === e.id && !e.lock && <span className="dk-size" onPointerDown={(ev) => onElDown(e, ev, 'size')} onPointerMove={onElMove} onPointerUp={() => onElUp(e)} />}
+            {mode === 'edit' && <AnimBadges slide={slide} id={e.id} />}
+          </div>
+        );
+      })}
+    </div>
+  );
+});
+export default memo(SlideView);
+
+/** Số thứ tự hiệu ứng / dấu kích hoạt hiện trên vật khi soạn */
+function AnimBadges({ slide, id }: { slide: Slide; id: string }) {
+  const idx: string[] = [];
+  slide.anims.forEach((a, i) => { if (a.el === id) idx.push(a.trigger ? `🎯${i + 1}` : String(i + 1)); });
+  const isTrig = slide.anims.some((a) => a.trigger === id);
+  if (!idx.length && !isTrig) return null;
+  return (
+    <span className="dk-badges">
+      {isTrig && <i className="is-trg" title="Bấm vào vật này để chạy hiệu ứng">🎯</i>}
+      {idx.slice(0, 4).map((t, i) => <i key={i} className={t.startsWith('🎯') ? 'is-trg2' : ''}>{t.replace('🎯', '')}</i>)}
+    </span>
+  );
+}
+
+/** Pháo giấy nhỏ quanh vật (khi trả lời đúng / kéo đúng) */
+function burst(n?: HTMLElement | null) {
+  if (!n) return;
+  const host = n.parentElement; if (!host) return;
+  const colors = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'];
+  const cx = n.offsetLeft + n.offsetWidth / 2, cy = n.offsetTop + n.offsetHeight / 2;
+  for (let i = 0; i < 26; i++) {
+    const d = document.createElement('i');
+    d.className = 'dk-confetti';
+    d.style.cssText = `left:${cx}px;top:${cy}px;background:${colors[i % colors.length]}`;
+    host.appendChild(d);
+    const a = Math.random() * Math.PI * 2, r = 120 + Math.random() * 220;
+    d.animate([{ transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }, { transform: `translate(${Math.cos(a) * r}px, ${Math.sin(a) * r + 120}px) rotate(${Math.random() * 720}deg) scale(.6)`, opacity: 0 }], { duration: 1100 + Math.random() * 500, easing: 'cubic-bezier(.2,.7,.4,1)' }).onfinish = () => d.remove();
+  }
+}

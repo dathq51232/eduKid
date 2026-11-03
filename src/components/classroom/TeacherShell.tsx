@@ -138,6 +138,8 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
   );
   const groupTools = active && curGroup ? toolsOfGroup(curGroup) : [];
 
+  // trình chiếu bài thao giảng: chiếm trọn màn hình, không có thanh công cụ
+  if (/\/trinh-chieu(\/|$)/.test(pathname)) return <>{children}</>;
   return (
     <div className={`tsh${mini ? ' is-mini' : ''}`}>
       <aside className={`tsh-side${drawer ? ' is-open' : ''}`} aria-label="Công cụ giáo viên">

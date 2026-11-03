@@ -1,6 +1,7 @@
 'use client';
 
-// Trang "Bài giảng 3D": bài của tôi · bài mẫu dựng sẵn · 76 bài STEM lớp 1–5 (tạo bài 3D từ khung STEM 5 bước).
+// Trang "Bài giảng 3D & thao giảng": bài 3D của tôi · bài thao giảng (trình chiếu kiểu PowerPoint) · bài mẫu dựng sẵn ·
+// 76 bài STEM lớp 1–5 (tạo bài 3D từ khung STEM 5 bước).
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -10,17 +11,18 @@ import { STEM_LESSONS, FIT_LABEL, stemKey, type StemLesson } from '@/lib/lesson3
 import { TEMPLATES, lessonFromStem } from '@/lib/lesson3d/templates';
 import { emptyLesson, type Lesson3D } from '@/lib/lesson3d/types';
 import { fold } from '@/lib/classroom/teacher-nav';
+import DeckHome, { type DeckRow } from '@/components/deck/DeckHome';
 
 export type Lesson3DRow = { id: string; title: string; grade: number; stem_ref: string | null; updated_at: string };
-type Tab = 'mine' | 'tpl' | 'stem';
+type Tab = 'mine' | 'tg' | 'tpl' | 'stem';
 const BOOK_KEY = 'gv-bo-sach';
 const BOOKS = { KNTT: 'Kết nối tri thức', CTST: 'Chân trời sáng tạo', CD: 'Cánh diều' } as const;
 type Book = keyof typeof BOOKS;
 
-export default function Lesson3DHome({ classId, className, grade, lessons, missing }: { classId: string; className: string; grade: number; lessons: Lesson3DRow[]; missing: boolean }) {
+export default function Lesson3DHome({ classId, className, grade, lessons, missing, decks, decksMissing, initialTab }: { classId: string; className: string; grade: number; lessons: Lesson3DRow[]; missing: boolean; decks: DeckRow[]; decksMissing: boolean; initialTab?: string }) {
   const router = useRouter();
   const supabase = useMemo(() => { try { return createClient(); } catch { return null; } }, []);
-  const [tab, setTab] = useState<Tab>(lessons.length ? 'mine' : 'stem');
+  const [tab, setTab] = useState<Tab>(initialTab === 'tg' ? 'tg' : lessons.length ? 'mine' : 'stem');
   const [list, setList] = useState(lessons);
   const [g, setG] = useState(grade);
   const [fit, setFit] = useState<'all' | 'cao'>('all');
@@ -60,17 +62,20 @@ export default function Lesson3DHome({ classId, className, grade, lessons, missi
   return (
     <div className="ct s3h">
       <div className="ct-head">
-        <div><p className="ct-sub">Lớp {className} · Dạy học</p><h1>Bài giảng 3D</h1></div>
+        <div><p className="ct-sub">Lớp {className} · Dạy học</p><h1>Bài giảng 3D & thao giảng</h1></div>
         <div className="ct-actions">
-          <button type="button" className="btn btn-primary" disabled={missing || !!busy} onClick={() => void create(emptyLesson(grade), 'new')}><Plus aria-hidden="true" /> Bài trống</button>
+          {tab !== 'tg' && <button type="button" className="btn btn-primary" disabled={missing || !!busy} onClick={() => void create(emptyLesson(grade), 'new')}><Plus aria-hidden="true" /> Bài 3D trống</button>}
         </div>
       </div>
-      <p className="s3h-lead">Soạn bài giảng trực quan bằng mô hình 3D: kéo đồ vật vào sa bàn, gắn điểm chạm, hiệu ứng, chia cảnh như slide và thêm thử thách cuối bài. Trình chiếu lên máy chiếu hoặc bảng tương tác.</p>
-      {missing && <p className="adm-alert is-warn">Chưa chạy migration <code>0034_lessons3d.sql</code> trên Supabase nên chưa lưu được bài 3D.</p>}
+      <p className="s3h-lead">{tab === 'tg'
+        ? 'Soạn bài trình chiếu như PowerPoint ngay trên web: chữ, hình dán, cảnh 3D, câu hỏi, kéo thả, âm thanh, hiệu ứng và kích hoạt khi bấm. Trình chiếu lên tivi, máy chiếu; máy cô có màn hình riêng với ghi chú và công cụ lớp học.'
+        : 'Soạn bài giảng trực quan bằng mô hình 3D: kéo đồ vật vào sa bàn, gắn điểm chạm, hiệu ứng, chia cảnh như slide và thêm thử thách cuối bài. Trình chiếu lên máy chiếu hoặc bảng tương tác.'}</p>
+      {missing && tab !== 'tg' && <p className="adm-alert is-warn">Chưa chạy migration <code>0034_lessons3d.sql</code> trên Supabase nên chưa lưu được bài 3D.</p>}
       {err && <p className="adm-alert is-error" role="alert">{err}</p>}
 
       <div className="s3h-tabs" role="tablist">
-        <button type="button" role="tab" aria-selected={tab === 'mine'} onClick={() => setTab('mine')}>Bài của tôi <span>{list.length}</span></button>
+        <button type="button" role="tab" aria-selected={tab === 'mine'} onClick={() => setTab('mine')}>Bài 3D của tôi <span>{list.length}</span></button>
+        <button type="button" role="tab" aria-selected={tab === 'tg'} onClick={() => setTab('tg')}>Bài thao giảng <span>{decks.length}</span></button>
         <button type="button" role="tab" aria-selected={tab === 'tpl'} onClick={() => setTab('tpl')}>Bài mẫu <span>{TEMPLATES.length}</span></button>
         <button type="button" role="tab" aria-selected={tab === 'stem'} onClick={() => setTab('stem')}>Bài STEM lớp 1–5 <span>{STEM_LESSONS.length}</span></button>
       </div>
@@ -94,6 +99,8 @@ export default function Lesson3DHome({ classId, className, grade, lessons, missi
           </li>
         ))}</ul>
       ))}
+
+      {tab === 'tg' && <DeckHome classId={classId} grade={grade} decks={decks} missing={decksMissing} />}
 
       {tab === 'tpl' && (
         <ul className="s3h-cards">{TEMPLATES.map((t) => (

@@ -2,7 +2,7 @@
 // File đã chuẩn hoá trên trình duyệt (xem image.ts, lesson3d/user-model.ts) rồi mới tải lên bucket riêng tư teacher-assets.
 import { createClient } from '@/lib/supabase/client';
 
-export type AssetKind = 'deco' | 'model' | 'image';
+export type AssetKind = 'deco' | 'model' | 'image' | 'audio';
 export type TeacherAsset = {
   id: string; kind: AssetKind; name: string; path: string; thumb_path: string | null; bytes: number;
   meta: Record<string, unknown>; created_at: string;
@@ -48,7 +48,8 @@ export async function assetUsage(): Promise<{ files: number; bytes: number; limi
 }
 
 const rnd = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`);
-const extOf = (type: string) => (type === 'image/webp' ? 'webp' : type === 'image/png' ? 'png' : type === 'image/jpeg' ? 'jpg' : 'glb');
+const AUDIO_EXT: Record<string, string> = { 'audio/mpeg': 'mp3', 'audio/mp4': 'm4a', 'audio/webm': 'webm', 'audio/ogg': 'ogg', 'audio/wav': 'wav', 'audio/x-wav': 'wav' };
+const extOf = (type: string) => (type === 'image/webp' ? 'webp' : type === 'image/png' ? 'png' : type === 'image/jpeg' ? 'jpg' : AUDIO_EXT[type.split(';')[0]] ?? 'glb');
 
 /** Tải file đã chuẩn hoá lên kho + ghi vào danh sách. Lỗi ghi danh sách thì xoá file vừa tải. */
 export async function uploadAsset(kind: AssetKind, name: string, file: Blob, opts: { thumb?: Blob | null; meta?: Record<string, unknown> } = {}): Promise<TeacherAsset> {
@@ -58,7 +59,7 @@ export async function uploadAsset(kind: AssetKind, name: string, file: Blob, opt
   const uid = ses.session?.user.id;
   if (!uid) throw new Error('Cô cần đăng nhập lại.');
   const id = rnd();
-  const type = file.type || 'application/octet-stream';
+  const type = (file.type || 'application/octet-stream').split(';')[0]; // "audio/webm;codecs=opus" → "audio/webm"
   const path = `${uid}/${kind}-${id}.${extOf(type)}`;
   const thumbPath = opts.thumb ? `${uid}/${kind}-${id}-thumb.${extOf(opts.thumb.type)}` : null;
   const st = sb.storage.from(BUCKET);
