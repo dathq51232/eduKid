@@ -77,18 +77,20 @@ export default function ScheduleImport({ classId, className, grade, school, weak
   };
 
   const chosen = items.filter((_, i) => pick[i]);
+  // tiết đã lưu trước đó không lưu lại (tránh trùng); vẫn đưa vào file Word
+  const toSave = chosen.filter((r) => !exists(r));
   const counts = useMemo(() => ({
     kho: items.filter((r) => r.kind === 'kho').length,
     app: items.filter((r) => r.kind === 'app').length, review: items.filter((r) => r.kind === 'review').length, khung: items.filter((r) => r.kind === 'khung').length,
   }), [items]);
 
   const saveAll = async () => {
-    if (!chosen.length) return;
+    if (!toSave.length) return;
     setBusy(true); setMsg(null);
     const sb = createClient();
     let ok = 0, fail = 0, notMigrated = false;
-    for (const r of chosen) {
-      setProgress(`Đang lưu ${ok + fail + 1}/${chosen.length}…`);
+    for (const r of toSave) {
+      setProgress(`Đang lưu ${ok + fail + 1}/${toSave.length}…`);
       const p = r.plan;
       const { error } = await sb.rpc('teacher_save_plan', {
         p_plan: null, p_class: classId, p_title: p.title.trim().slice(0, 200), p_subject: p.subject, p_grade: p.grade,
@@ -97,9 +99,9 @@ export default function ScheduleImport({ classId, className, grade, school, weak
       if (error) { fail++; if (/subject_check|check constraint/i.test(error.message)) notMigrated = true; } else ok++;
     }
     setBusy(false); setProgress('');
-    if (ok) { setPick(items.map(() => false)); onSaved(sch?.monday || mondayOf(chosen[0].plan.date)); }
+    if (ok) { setPick(items.map(() => false)); onSaved(sch?.monday || mondayOf(toSave[0].plan.date)); }
     setMsg(fail
-      ? { kind: 'error', text: `Đã lưu ${ok}/${chosen.length} giáo án. ${notMigrated ? 'Các môn ngoài Toán, Tiếng Việt, Tiếng Anh cần chạy supabase/migrations/0022_lesson_plans_subjects.sql trên Supabase.' : 'Một số giáo án chưa lưu được, thử lại sau.'}` }
+      ? { kind: 'error', text: `Đã lưu ${ok}/${toSave.length} giáo án. ${notMigrated ? 'Các môn ngoài Toán, Tiếng Việt, Tiếng Anh cần chạy supabase/migrations/0022_lesson_plans_subjects.sql trên Supabase.' : 'Một số giáo án chưa lưu được, thử lại sau.'}` }
       : { kind: 'ok', text: `Đã lưu ${ok} giáo án vào tuần ${sch?.week || ''}. Xem ở mục “Giáo án đã lưu”, mở từng tiết để sửa.` });
   };
 
@@ -141,10 +143,11 @@ export default function ScheduleImport({ classId, className, grade, school, weak
           {sch.warnings.map((w) => <p key={w} className="dash-muted">⚠ {w}</p>)}
           <p className="dash-muted">Giáo án xếp theo thứ tự soạn của nhà trường: Tiếng Việt → Toán → Đạo đức → Tự nhiên và Xã hội → Hoạt động trải nghiệm → Tiếng Việt (tăng cường) → Toán (tăng cường); trong mỗi môn theo thứ tự dạy trong tuần.</p>
           <div className="planner-week">
-            <button type="button" className="mini-btn" onClick={() => setPick(items.map((r) => !exists(r)))}>Chọn tất cả</button>
+            <button type="button" className="mini-btn" onClick={() => setPick(items.map(() => true))}>Chọn tất cả ({items.length})</button>
+            {items.some(exists) && items.some((r) => !exists(r)) && <button type="button" className="mini-btn" onClick={() => setPick(items.map((r) => !exists(r)))}>Chọn tiết chưa lưu</button>}
             <button type="button" className="mini-btn" onClick={() => setPick(items.map(() => false))}>Bỏ chọn</button>
             <span className="planner-spacer" />
-            <button type="button" className="btn btn-primary btn-sm" disabled={busy || !chosen.length || !canSave} onClick={() => void saveAll()}><Save aria-hidden="true" /> {progress || `Lưu ${chosen.length} giáo án`}</button>
+            <button type="button" className="btn btn-primary btn-sm" disabled={busy || !toSave.length || !canSave} onClick={() => void saveAll()} title={chosen.length > toSave.length ? `${chosen.length - toSave.length} tiết đã lưu trước đó sẽ không lưu lại` : undefined}><Save aria-hidden="true" /> {progress || (chosen.length && !toSave.length ? 'Các tiết đã chọn đều đã lưu' : `Lưu ${toSave.length} giáo án`)}</button>
             <button type="button" className="btn btn-outline btn-sm" disabled={!chosen.length} onClick={exportWord}><FileDown aria-hidden="true" /> Xem trước &amp; tải Word: lịch + {chosen.length} giáo án</button>
           </div>
           <div className="table-scroll">
@@ -171,7 +174,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
               </tbody>
             </table>
           </div>
-          <p className="dash-muted">“Xem, sửa” mở giáo án vào khung soạn phía dưới để chỉnh rồi lưu riêng từng tiết. Tiết đã lưu trước đó (cùng ngày, tiết, tên bài) được bỏ chọn sẵn để không lưu trùng.</p>
+          <p className="dash-muted">“Xem, sửa” mở giáo án vào khung soạn phía dưới để chỉnh rồi lưu riêng từng tiết. Tiết đã lưu trước đó (cùng ngày, tiết, tên bài) được bỏ chọn sẵn; nếu chọn lại thì vẫn có trong file Word nhưng không lưu trùng.</p>
         </>
       )}
     </section>
