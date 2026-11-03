@@ -13,7 +13,7 @@ import { SLIDE_TEMPLATES, deckFromTemplate } from '@/lib/deck/templates';
 
 const DeckFromLesson = dynamic(() => import('./DeckFromLesson'), { ssr: false, loading: () => <p className="dk-hint">Đang mở…</p> });
 
-export type DeckRow = { id: string; title: string; grade: number; updated_at: string; slides?: number };
+export type DeckRow = { id: string; title: string; grade: number; updated_at: string; slides?: number; plan?: string };
 
 export default function DeckHome({ classId, grade, decks, missing }: { classId: string; grade: number; decks: DeckRow[]; missing: boolean }) {
   const router = useRouter();
@@ -24,6 +24,7 @@ export default function DeckHome({ classId, grade, decks, missing }: { classId: 
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [wiz, setWiz] = useState(false);
+  const [ok, setOk] = useState('');
 
   const create = async (D: Deck, key: string) => {
     if (!supabase) return;
@@ -36,6 +37,19 @@ export default function DeckHome({ classId, grade, decks, missing }: { classId: 
     }
     router.push(`/giao-vien/lop/${classId}/bai-giang-3d/thao-giang/${(data as { id: string }).id}`);
   };
+  /** tạo nhiều bài cùng lúc (theo lịch báo giảng); một bài thì mở luôn trình soạn */
+  const createMany = async (Ds: Deck[]) => {
+    if (Ds.length === 1) { await create(Ds[0], 'lesson'); return; }
+    if (!supabase) return;
+    setBusy('lesson'); setErr(''); setOk('');
+    const { data, error } = await supabase.from('slide_decks').insert(Ds.map((D) => ({ title: D.title.slice(0, 120), grade: D.grade, class_id: classId, data: D }))).select('id, title, grade, updated_at');
+    setBusy('');
+    if (error || !data) { setErr(/too_many/.test(error?.message ?? '') ? 'Mỗi thầy cô lưu tối đa 200 bài thao giảng.' : 'Chưa tạo được bài. Thử lại nhé.'); return; }
+    const rows = (data as DeckRow[]).map((r, i) => ({ ...r, slides: Ds[i]?.slides.length, plan: Ds[i]?.src?.plan }));
+    setList((l) => [...rows, ...l]); setWiz(false);
+    setOk(`Đã tạo ${rows.length} bài thao giảng. Bấm vào từng bài để sửa hoặc trình chiếu.`);
+  };
+  const made = useMemo(() => new Set(list.map((r) => r.plan).filter((x): x is string => !!x)), [list]);
   const name = () => title.trim() || 'Bài thao giảng mới';
   const fromTpl = (id: string) => { const D = emptyDeck(name(), grade); D.slides = deckFromTemplate(id, name()); void create(D, id); };
   const duplicate = async (r: DeckRow) => {
@@ -55,16 +69,17 @@ export default function DeckHome({ classId, grade, decks, missing }: { classId: 
     <div className="dh">
       {missing && <p className="adm-alert is-warn">Chưa chạy migration <code>0046_slide_decks.sql</code> trên Supabase nên chưa lưu được bài thao giảng.</p>}
       {err && <p className="adm-alert is-error" role="alert">{err}</p>}
+      {ok && <p className="adm-alert is-ok" role="status">{ok}</p>}
       <div className="dh-new">
         <label className="dh-name"><span>Tên bài</span><input value={title} maxLength={120} placeholder="vd: Toán 1 – Bài 7: Các số 0, 1, 2, 3, 4, 5" onChange={(e) => setTitle(e.target.value)} /></label>
         <button type="button" className="dh-blank" disabled={missing || !!busy} onClick={() => void create(emptyDeck(name(), grade), 'blank')}>
           <img src="/emoji/tool/bai-giang-3d.webp" alt="" /><span><b><Plus aria-hidden="true" /> {busy === 'blank' ? 'Đang tạo…' : 'Bài thao giảng trống'}</b><small>Trang 16:9 có sẵn trang tiêu đề</small></span>
         </button>
         <button type="button" className="dh-blank is-lesson" disabled={missing || !!busy} aria-expanded={wiz} onClick={() => setWiz(!wiz)}>
-          <img src="/brand/milo-professor-sm.webp" alt="" /><span><b><Sparkles aria-hidden="true" /> Tạo từ bài học</b><small>Chọn bài, app dựng sẵn tình huống, trò chơi</small></span>
+          <img src="/brand/milo-professor-sm.webp" alt="" /><span><b><Sparkles aria-hidden="true" /> Tạo từ bài học</b><small>Theo lịch báo giảng hoặc kho bài học</small></span>
         </button>
       </div>
-      {wiz && <DeckFromLesson grade={grade} busy={busy === 'lesson'} onClose={() => setWiz(false)} onCreate={(D) => void create(D, 'lesson')} />}
+      {wiz && <DeckFromLesson classId={classId} grade={grade} busy={busy === 'lesson'} made={made} onClose={() => setWiz(false)} onCreate={(Ds) => void createMany(Ds)} />}
 
       {list.length > 0 && <>
         <h2 className="dh-h">Bài thao giảng của tôi <span>{list.length}</span></h2>

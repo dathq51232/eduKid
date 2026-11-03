@@ -15,10 +15,10 @@ export default async function Lessons3DPage({ params, searchParams }: { params: 
   if (p.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Bài giảng 3D" /></main></>);
   const [{ data, error }, decks] = await Promise.all([
     p.supabase.from('lessons3d').select('id, title, grade, stem_ref, updated_at').order('updated_at', { ascending: false }).limit(200),
-    p.supabase.from('slide_decks').select('id, title, grade, updated_at, slides:data->slides').order('updated_at', { ascending: false }).limit(200),
+    p.supabase.from('slide_decks').select('id, title, grade, updated_at, slides:data->slides, plan:data->src->>plan').order('updated_at', { ascending: false }).limit(200),
   ]);
-  const deckRows: DeckRow[] = ((decks.data ?? []) as { id: string; title: string; grade: number; updated_at: string; slides: unknown }[])
-    .map((d) => ({ id: d.id, title: d.title, grade: d.grade, updated_at: d.updated_at, slides: Array.isArray(d.slides) ? d.slides.length : undefined }));
+  const deckRows: DeckRow[] = ((decks.data ?? []) as { id: string; title: string; grade: number; updated_at: string; slides: unknown; plan: string | null }[])
+    .map((d) => ({ id: d.id, title: d.title, grade: d.grade, updated_at: d.updated_at, slides: Array.isArray(d.slides) ? d.slides.length : undefined, plan: d.plan ?? undefined }));
   return (
     <>
       <LearnHeader />

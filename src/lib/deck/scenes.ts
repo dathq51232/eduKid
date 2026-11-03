@@ -46,7 +46,7 @@ export const sceneDark = (id?: string) => !!(id && SCENE_BY_ID[id]?.dark);
 const KEYS: [SceneKind, string][] = [
   ['pond', 'cá|ao|vịt|ếch|nước|sông|hồ|thuyền'],
   ['sea', 'biển|sóng|tàu|đảo|cua|sea|beach|fish'],
-  ['space', 'sao|trăng|vũ trụ|tên lửa|hành tinh|đêm|space|moon|star'],
+  ['space', 'ngôi sao|trăng|vũ trụ|tên lửa|hành tinh|đêm|space|moon|star'],
   ['farm', 'gà|lợn|heo|bò|trâu|ngô|lúa|trang trại|nông|farm|animal|chicken'],
   ['kitchen', 'bếp|nấu|cơm|bánh|đĩa|bát|cam|chuối|kg|lít|ăn|food|fruit|lunch|breakfast|kitchen'],
   ['garden', 'táo|hoa|cây|vườn|lá|bướm|ong|garden|flower|tree'],
@@ -54,9 +54,9 @@ const KEYS: [SceneKind, string][] = [
   ['yard', 'nhà|sân|chó|mèo|bóng|đồ chơi|gia đình|bố|mẹ|home|family|toy|pet'],
 ];
 /** Chọn cảnh theo nội dung bài (đếm từ khoá), mặc định: Sân nhà */
-export function pickScene(text: string): SceneKind {
-  const t = ` ${text.toLowerCase()} `;
-  let best: SceneKind = 'yard', n = 0;
+export function pickScene(text: string, fallback: SceneKind = 'yard'): SceneKind {
+  const t = ` ${text.toLowerCase().replace(/cá nhân|cá thể|nước ta|đất nước/g, ' ')} `;
+  let best: SceneKind = fallback, n = 0;
   for (const [k, re] of KEYS) {
     const m = t.match(new RegExp(`(?<!\\p{L})(${re})(?!\\p{L})`, 'giu'))?.length ?? 0;
     if (m > n) { n = m; best = k; }

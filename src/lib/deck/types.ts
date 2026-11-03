@@ -70,7 +70,9 @@ export type Slide = { id: string; bg: string; els: El[]; anims: Anim[]; trans: T
   scene?: SceneKind;
   /** hoạt động của tiết dạy: Khởi động / Khám phá / Luyện tập / Vận dụng / Củng cố */
   phase?: string };
-export type Deck = { v: 1; title: string; grade: number; slides: Slide[] };
+/** nguồn của bài: tiết trong lịch báo giảng (giáo án) / bài trong ngân hàng nội dung */
+export type DeckSrc = { plan?: string; lesson?: string; date?: string; period?: number };
+export type Deck = { v: 1; title: string; grade: number; slides: Slide[]; src?: DeckSrc };
 
 export const BGS: { id: string; label: string; css: string }[] = [
   { id: 'white', label: 'Trắng', css: '#ffffff' },
@@ -123,6 +125,7 @@ export function normalizeDeck(raw: unknown, fallbackTitle = 'Bài thao giảng')
     title: typeof r.title === 'string' && r.title.trim() ? r.title : fallbackTitle,
     grade: Number(r.grade) >= 1 && Number(r.grade) <= 5 ? Number(r.grade) : 1,
     slides: slides.length ? slides : emptyDeck(fallbackTitle).slides,
+    ...(r.src && typeof r.src === 'object' ? { src: { plan: typeof r.src.plan === 'string' ? r.src.plan : undefined, lesson: typeof r.src.lesson === 'string' ? r.src.lesson : undefined, date: typeof r.src.date === 'string' ? r.src.date : undefined, period: typeof r.src.period === 'number' ? r.src.period : undefined } } : {}),
   };
 }
 

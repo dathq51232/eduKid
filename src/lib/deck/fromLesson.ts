@@ -2,6 +2,8 @@
 // (Khởi động · Khám phá · Luyện tập · Vận dụng · Củng cố) với tình huống, trò chơi và câu hỏi của bài.
 // Hàm thuần: không gọi mạng, dùng hình có sẵn trong dự án; mỗi trang là Slide bình thường nên sửa được trong trình soạn.
 import type { ContentLesson, ContentQuestion } from '@/lib/content/types';
+import type { LessonPlan as GiaoAn } from '@/lib/plans/generate';
+import { SUBJECT_NAMES } from '@/lib/plans/generate';
 import { uid, type Anim, type El, type SceneKind, type Slide, type TextEl } from './types';
 
 export type PhaseId = 'bia' | 'kd' | 'kp' | 'lt' | 'vd' | 'cc';
@@ -170,7 +172,7 @@ const fill = (s: string, M: string, Tp: string) => s.replace(/\{M\}/g, M).replac
 export const topicOf = (l: ContentLesson) => l.title.replace(/^(Bài|Tuần|Unit|Tiết|Review)\s*[\dIVX]*[.:]?\s*/i, '').trim() || l.title;
 
 /* ---------- dựng kế hoạch ---------- */
-export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts): LessonPlan {
+export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga?: GiaoAn | null): LessonPlan {
   const r = rng(o.seed + lesson.id.length * 31);
   const M = MASCOTS.find((x) => x.id === o.mascot) ?? MASCOTS[0];
   const Tp = topicOf(lesson), sc = o.scene;
@@ -339,6 +341,126 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts): L
     I(m, M.src, 1240, 560, 300, { lock: true });
     add('cc', 'home', 'Nhiệm vụ về nhà', page(m, 'cc', sc, 'Dặn dò, chuẩn bị bài sau.')); }
 
+  if (ga) addPlanNotes(cands, ga);
+  return finish(cands);
+}
+
+/** Ghép hoạt động của giáo án (GV / HS) vào ghi chú của cô ở các trang cùng hoạt động */
+const ACT_PHASE: Record<string, PhaseId> = { 'khoi-dong': 'kd', 'kham-pha': 'kp', 'luyen-tap': 'lt', 'van-dung': 'vd' };
+function addPlanNotes(cands: Cand[], ga: GiaoAn) {
+  const seen = new Set<PhaseId>();
+  for (const c of cands) {
+    const a = ga.activities.find((x) => ACT_PHASE[x.key] === c.phase);
+    if (!a || seen.has(c.phase)) continue;
+    seen.add(c.phase); // chỉ trang đầu mỗi hoạt động, tránh lặp
+    const txt = [`📄 Giáo án – ${a.title}${a.minutes ? ` (${a.minutes} phút)` : ''}`, a.goal && `Mục tiêu: ${a.goal}`, a.teacher && `GV:\n${a.teacher}`, a.student && `HS:\n${a.student}`].filter(Boolean).join('\n');
+    c.slide = { ...c.slide, notes: [c.slide.notes, txt].filter(Boolean).join('\n\n') };
+  }
+}
+
+/** Các dòng gạch đầu dòng của giáo án (bỏ dòng hướng dẫn trong ngoặc) */
+function lines(text: string | undefined, max = 6): string[] {
+  return (text ?? '').split(/\n+/).map((l) => l.replace(/^\s*[-•+*–]\s*/, '').trim()).filter((l) => l && !l.startsWith('(')).slice(0, max);
+}
+const LIENHE_OTHER = ['Ở nhà hoặc ở lớp, em đã làm được điều gì giống như trong bài “{T}”? Kể cho bạn nghe nhé!', 'Từ hôm nay, em sẽ làm gì để thực hiện điều vừa học trong bài “{T}”?'];
+
+/** Dựng kịch bản từ giáo án (môn chưa có ngân hàng câu hỏi, hoặc tiết chưa khớp bài trong ngân hàng) */
+export function buildPlanFromGiaoAn(ga: GiaoAn, o: GenOpts): LessonPlan {
+  const r = rng(o.seed + ga.title.length * 17);
+  const M = MASCOTS.find((x) => x.id === o.mascot) ?? MASCOTS[0];
+  const sc = o.scene, Tp = ga.title.replace(/^(Bài|Tiết|Chủ đề)\s*\d*[.:]?\s*/i, '').trim() || ga.title;
+  const subj = ga.subjectLabel?.trim() || SUBJECT_NAMES[ga.subject] || 'Môn học';
+  const cands: Cand[] = [];
+  const add = (phase: PhaseId, k: string, t: string, s: Slide) => cands.push({ key: `${phase}:${k}`, phase, title: t, slide: s });
+
+  { const m = mk();
+    const t = T(m, ga.title, 220, 250, 1160, 220, fit(ga.title, 1120, 200, 96, 44), '#c2410c', { bg: '#ffffffd9' });
+    T(m, `${subj} · Lớp ${ga.grade}${ga.className ? ' ' + ga.className : ''}`, 360, 500, 880, 90, 40, '#334155', { font: 'quick', bg: '#ffffffcc' });
+    const p = I(m, M.src, 1240, 560, 300);
+    A(m, t, 'zoom', 'with', { dur: 0.8 }); A(m, p, 'pop', 'after', { sound: 'magic' });
+    add('bia', 'cover', 'Trang bìa', page(m, 'bia', sc)); }
+
+  // tình huống mở đầu
+  shuffle(SITU[sc], r).forEach((tpl, i) => {
+    const line = fill(tpl, M.name, Tp); const m = mk();
+    const p = I(m, M.src, 60, 380, 420);
+    const b = S(m, 'bubble', 500, 90, 980, 430, '#ffffff', line, { stroke: '#f59e0b', sw: 6, size: fit(line, 900, 330, 54, 28), color: '#0f172a' } as Partial<El>);
+    A(m, p, 'fly-left', 'with', { sound: 'whoosh' }); A(m, b, 'pop', 'after', { sound: 'pop' });
+    add('kd', `situ${i}`, `Tình huống: ${line.slice(0, 60)}…`, page(m, 'kd', sc, 'Đọc tình huống, hỏi lớp: “Các em đoán hôm nay chúng ta học gì?”'));
+  });
+
+  // mục tiêu (yêu cầu cần đạt)
+  const goals = lines(ga.goals.knowledge, 4);
+  if (goals.length) {
+    const m = mk(); title(m, 'Hôm nay em sẽ', '#0369a1');
+    const h = Math.min(150, 560 / goals.length);
+    goals.forEach((t, i) => { const id = T(m, `🎯 ${t}`, 260, 170 + i * (h + 20), 1080, h, fit(t, 1040, h - 10, 46, 24), '#0f172a', { align: 'left', font: 'quick', bg: '#ffffffe6' }); A(m, id, 'fly-left', 'click', { sound: 'pop' }); });
+    I(m, M.src, 1350, 650, 220, { lock: true });
+    add('kp', 'goals', 'Mục tiêu bài học (hiện từng ý)', page(m, 'kp', sc, 'Bấm “Tiếp” để hiện từng mục tiêu.'));
+  }
+
+  // mỗi hoạt động của giáo án → trang nhiệm vụ của học sinh (hiện lần lượt)
+  for (const a of ga.activities) {
+    const ph = ACT_PHASE[a.key] ?? 'kp';
+    const tasks = lines(a.student, 5).length ? lines(a.student, 5) : lines(a.teacher, 5);
+    if (!tasks.length) continue;
+    const m = mk(); title(m, a.title || PHASE_LABEL[ph], PHASES.find((p) => p.id === ph)?.color ?? '#0369a1');
+    if (a.goal && short(a.goal, 140)) T(m, a.goal, 300, 150, 1000, 80, fit(a.goal, 980, 70, 36, 22), '#475569', { font: 'quick', italic: true, bg: '#ffffffcc' });
+    const top = a.goal ? 250 : 170, h = Math.min(120, (720 - top) / tasks.length - 14);
+    tasks.forEach((t, i) => { const id = T(m, `${i + 1}. ${t}`, 300, top + i * (h + 14), 1000, h, fit(t, 960, h - 8, 44, 22), '#0f172a', { align: 'left', font: 'quick', bg: '#ffffffe6' }); A(m, id, 'fade', 'click', { sound: 'pop' }); });
+    I(m, M.src, 40, 640, 220, { lock: true });
+    add(ph, `act-${a.key}`, `${a.title}: nhiệm vụ của học sinh`, page(m, ph, sc, [a.goal && `Mục tiêu: ${a.goal}`, a.teacher && `GV:\n${a.teacher}`].filter(Boolean).join('\n')));
+    // các bước làm (3–6 bước ngắn) → trò Sắp xếp các bước (trang gợi ý, mặc định chưa chọn)
+    const steps = lines(a.teacher, 6).filter((x) => short(x, 26));
+    if (ph !== 'kd' && steps.length >= 3) {
+      const m2 = mk(); const se = { id: uid(), kind: 'sort', x: 160, y: 120, w: 1280, h: 640, rot: 0, prompt: `Sắp xếp các bước: ${a.title}`, items: steps } as El;
+      m2.els.push(se); A(m2, se.id, 'fade', 'with'); I(m2, M.src, 24, 700, 180, { lock: true });
+      add(ph, `sort-${a.key}`, `Sắp xếp các bước: ${a.title}`, page(m2, ph, sc, `Thứ tự đúng: ${steps.join(' → ')}`));
+    }
+  }
+  // thảo luận nhóm (Luyện tập)
+  { const m = mk(); title(m, 'Thảo luận nhóm', '#15803d');
+    const q = `Cùng bạn trong nhóm trao đổi: điều em học được trong bài “${Tp}” là gì?`;
+    I(m, M.src, 80, 300, 360);
+    const b = S(m, 'bubble', 480, 170, 980, 400, '#ffffff', q, { stroke: '#22c55e', sw: 6, size: fit(q, 900, 300, 52, 28), color: '#0f172a' } as Partial<El>);
+    A(m, b, 'pop', 'with', { sound: 'pop' });
+    T(m, '👥 Nhóm 4 · 3 phút', 640, 630, 680, 90, 42, '#166534', { bg: '#dcfce7' });
+    add('lt', 'group', 'Thảo luận nhóm', page(m, 'lt', sc, 'Mời 2–3 nhóm trình bày, các nhóm khác nhận xét.')); }
+  // liên hệ (Vận dụng)
+  LIENHE_OTHER.forEach((t, i) => {
+    const line = fill(t, M.name, Tp); const m = mk();
+    title(m, 'Liên hệ thực tế', '#be185d');
+    I(m, M.src, 80, 300, 380);
+    const b = S(m, 'bubble', 500, 170, 960, 420, '#ffffff', line, { stroke: '#ec4899', sw: 6, size: fit(line, 880, 320, 54, 28), color: '#0f172a' } as Partial<El>);
+    A(m, b, 'pop', 'with', { sound: 'pop' });
+    add('vd', `lh${i}`, `Liên hệ: ${line.slice(0, 56)}…`, page(m, 'vd', sc, 'Mời HS chia sẻ, cô nhận xét và khen.'));
+  });
+  // củng cố
+  { const m = mk();
+    const t = T(m, 'Cả lớp giỏi lắm!', 300, 40, 1000, 130, 88, '#b45309', { bg: '#ffffffd9' });
+    T(m, `Hôm nay em đã học: ${Tp}`, 260, 190, 1080, 100, fit(Tp, 900, 90, 52, 28), '#1e3a8a', { bg: '#ffffffe6' });
+    const c = I(m, ST('trophy'), 640, 300, 320);
+    A(m, t, 'zoom', 'with'); A(m, c, 'drop', 'after', { sound: 'tada', dur: 1.2 });
+    [0, 1, 2, 3, 4].forEach((i) => { const s2 = I(m, ST('star'), 220 + i * 240, 660, 160); A(m, s2, 'pop', 'click', { sound: 'star', dur: 0.4 }); });
+    I(m, M.src, 1300, 330, 260, { lock: true });
+    add('cc', 'stars', 'Sao thưởng · tổng kết', page(m, 'cc', sc, ga.assessment || 'Khen ngợi, nhận xét tiết học.', 'clap')); }
+  { const m = mk(); title(m, 'Dặn dò', '#6d28d9');
+    const va = ga.activities.find((a) => a.key === 'van-dung');
+    const hw = lines(va?.teacher, 6).filter((l) => /dặn|về nhà|chuẩn bị|nhận xét/i.test(l));
+    const txt = (hw.length ? hw : ['Thực hiện điều đã học ở nhà', 'Chuẩn bị bài sau']).map((l) => `• ${l}`).join('\n');
+    T(m, txt, 300, 200, 1000, 420, fit(txt, 960, 400, 50, 26), '#1f2937', { align: 'left', font: 'quick', bg: '#ffffffe6' });
+    I(m, M.src, 1240, 560, 300, { lock: true });
+    add('cc', 'home', 'Dặn dò', page(m, 'cc', sc)); }
+  addPlanNotes(cands.filter((c) => c.key.startsWith('kd:situ')), ga);
+  const P = finish(cands);
+  // trang Sắp xếp các bước là gợi ý thêm: xếp cuối hoạt động, mặc định không chọn
+  P.cands = [...P.cands.filter((c) => !c.key.includes(':sort-') && c.key !== 'kd:situ1'), ...P.cands.filter((c) => c.key.includes(':sort-') || c.key === 'kd:situ1')];
+  P.cands = PHASES.flatMap((p) => P.cands.filter((c) => c.phase === p.id));
+  for (const p of PHASES) P.defaults[p.id] = Math.min(P.defaults[p.id], P.cands.filter((c) => c.phase === p.id && !c.key.includes(':sort-')).length);
+  return P;
+}
+
+function finish(cands: Cand[]): LessonPlan {
   const has = (p: PhaseId) => cands.filter((c) => c.phase === p).length;
   const defaults: Record<PhaseId, number> = { bia: 1, kd: Math.min(2, has('kd')), kp: Math.min(3, has('kp')), lt: Math.min(4, has('lt')), vd: Math.min(2, has('vd')), cc: Math.min(1, has('cc')) };
   // tình huống luôn là trang thứ 2 của Khởi động: đưa trang tình huống đầu lên vị trí số 2
