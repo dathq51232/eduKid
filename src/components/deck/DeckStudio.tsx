@@ -283,6 +283,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
               <button type="button" className="dk-tool" onClick={addDrop}><span className="dk-emo">🎯</span>Ô thả</button>
               <button type="button" className="dk-tool" onClick={addSort}><span className="dk-emo">🔢</span>Sắp xếp</button>
               <button type="button" className="dk-tool" onClick={addScene}><span className="dk-emo">🧊</span>Cảnh 3D</button>
+              <button type="button" className="dk-tool" onClick={() => addEl({ id: uid(), kind: 'teams', x: 200, y: 160, w: 1200, h: 680, rot: 0, title: '' }, 'fade')}><span className="dk-emo">🏆</span>Bảng thi đua tổ</button>
             </div><label>TƯƠNG TÁC</label></div>
             <div className="dk-rg"><div className="dk-row">
               <button type="button" className="dk-tool" onClick={() => { const n = slide.els.filter((e) => e.role === 'badge').length; addEl({ ...badgeEl(n + 1, 'Số ?', accentOf(slide.scene)) }); }}><span className="dk-emo">①</span>Nhãn bài</button>
@@ -464,6 +465,10 @@ function Props({ e, slide, deck, patch, patchSoft, commitSoft, textRef, lessons,
         </div>
         <div className="dk-f">Xếp đáp án<div className="dk-seg"><button type="button" className={e.cols === 2 ? 'is-on' : ''} onClick={() => patch({ cols: 2 })}>2 cột</button><button type="button" className={e.cols === 1 ? 'is-on' : ''} onClick={() => patch({ cols: 1 })}>1 cột</button></div></div>
       </>}
+      {e.kind === 'teams' && <>
+        <label className="dk-f">Tiêu đề trên bảng (để trống nếu trang đã có tiêu đề)<input value={e.title} maxLength={60} onChange={(v) => patchSoft({ title: v.target.value })} onBlur={commitSoft} /></label>
+        <small className="dk-hint">Khi trình chiếu, bảng lấy điểm tuần này của các tổ ở trang Thi đua tổ (gồm cả điểm cô cộng trong bài thao giảng). Khi soạn bảng hiện điểm mẫu.</small>
+      </>}
       {e.kind === 'sort' && <>
         <label className="dk-f">Đề bài<textarea ref={textRef} rows={2} value={e.prompt} maxLength={200} onChange={(v) => patchSoft({ prompt: v.target.value })} onBlur={commitSoft} /></label>
         <div className="dk-f">Các thẻ theo THỨ TỰ ĐÚNG (khi chiếu sẽ tự xáo)
@@ -497,7 +502,7 @@ function Props({ e, slide, deck, patch, patchSoft, commitSoft, textRef, lessons,
           {lessons && !lessons.length && <small className="dk-hint">Cô chưa có bài 3D nào. Tạo ở tab “Bài 3D của tôi” hoặc “Bài STEM lớp 1–5”.</small>}
         </label>
       )}
-      {e.kind !== 'quiz' && e.kind !== 'drop' && e.kind !== 'scene3d' && e.kind !== 'sort' && <label className="dk-chk dk-f"><input type="checkbox" checked={!!e.drag} onChange={(v) => patch({ drag: v.target.checked })} /> Kéo được khi trình chiếu (bài kéo thả)</label>}
+      {e.kind !== 'quiz' && e.kind !== 'drop' && e.kind !== 'scene3d' && e.kind !== 'sort' && e.kind !== 'teams' && <label className="dk-chk dk-f"><input type="checkbox" checked={!!e.drag} onChange={(v) => patch({ drag: v.target.checked })} /> Kéo được khi trình chiếu (bài kéo thả)</label>}
       <label className="dk-f">Bấm vào thì sang trang
         <select value={e.link ?? 0} onChange={(v) => patch({ link: Number(v.target.value) || undefined })}>
           <option value={0}>Không</option>{deck.slides.map((s, i) => <option key={s.id} value={i + 1}>Trang {i + 1}</option>)}

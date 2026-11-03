@@ -33,7 +33,9 @@ export type DropEl = ElBase & { kind: 'drop'; label: string; /** id các vật k
 export type SceneEl = ElBase & { kind: 'scene3d'; lesson: string; title: string };
 /** Trò chơi Sắp xếp: items là thứ tự ĐÚNG; khi chiếu các thẻ bị xáo, học sinh bấm / kéo thẻ vào ô theo thứ tự */
 export type SortEl = ElBase & { kind: 'sort'; prompt: string; items: string[] };
-export type El = TextEl | ImgEl | ShapeEl | QuizEl | DropEl | SceneEl | SortEl;
+/** Bảng thi đua tổ: khi trình chiếu lấy điểm tuần này của các tổ trong lớp (Thi đua tổ) */
+export type TeamsEl = ElBase & { kind: 'teams'; title: string };
+export type El = TextEl | ImgEl | ShapeEl | QuizEl | DropEl | SceneEl | SortEl | TeamsEl;
 
 export type FxGroup = 'in' | 'em' | 'out';
 export type Fx =
@@ -143,5 +145,6 @@ export function elLabel(e: El): string {
     case 'drop': return `Ô thả “${e.label.slice(0, 16)}”`;
     case 'scene3d': return `Cảnh 3D “${e.title.slice(0, 18)}”`;
     case 'sort': return `Sắp xếp “${e.prompt.slice(0, 18)}”`;
+    case 'teams': return 'Bảng thi đua tổ';
   }
 }

@@ -10,7 +10,7 @@ import { downloadXlsx, range, XS, type XSheet } from '@/lib/xlsx';
 import { playPop } from '@/components/classroom/ClassTimer';
 import {
   DOW_LABEL, MINUS_REASONS, REASONS, TEAM_COLORS, TEAM_EMOJI, ddmm, defaultTeams, dowOf, normalizeSeating, normalizeTeams, ranking, shortName,
-  teamTotals, teamsFromSeating, vnDay, weekOf, type Point, type TeamsState, type ToolStudent,
+  SOURCE, sourceOf, sourceTotals, stripSource, teamTotals, teamsFromSeating, vnDay, weekOf, type Point, type PointSource, type TeamsState, type ToolStudent,
 } from '@/lib/classroom/class-tools';
 
 type Props = { classId: string; className: string; students: ToolStudent[] };
@@ -56,6 +56,8 @@ export default function TeamContest({ classId, className, students }: Props) {
   const n = teams.teams.length;
   const { total, byDay } = teamTotals(points, n);
   const rank = ranking(total);
+  const bySrc = sourceTotals(points, n);
+  const SRC = Object.keys(SOURCE) as PointSource[];
   const leaderScore = Math.max(...total);
   // cờ: số ngày tổ đứng nhất trong ngày (có điểm dương)
   const flags = teams.teams.map((_, i) => week.days.filter((d) => { const row = byDay[d]; return row && row[i] > 0 && row[i] === Math.max(...row); }).length);
@@ -82,7 +84,8 @@ export default function TeamContest({ classId, className, students }: Props) {
       if (error) { setErr('Chưa hoàn tác được.'); loadPoints(); }
     }
   };
-  const saveTeams = async (next: TeamsState) => {
+  const saveTeams = async (edited: TeamsState) => {
+    const next: TeamsState = { ...teams, ...edited }; // giữ cài đặt bài tập theo tổ (hw)
     setTeams(next); setEdit(false);
     if (supabase && !missing) {
       const { error } = await supabase.rpc('teacher_tool_save', { p_class: classId, p_tool: 'teams', p_data: next });
@@ -97,16 +100,16 @@ export default function TeamContest({ classId, className, students }: Props) {
   };
 
   const exportXlsx = () => {
-    const head = ['Tổ', ...week.days.map((d) => `${dowOf(d)} ${ddmm(d)}`), 'Tổng', 'Hạng'];
+    const head = ['Tổ', ...week.days.map((d) => `${dowOf(d)} ${ddmm(d)}`), ...SRC.map((k) => SOURCE[k].label), 'Tổng', 'Hạng'];
     const sheet: XSheet = {
       name: 'Thi đua tổ',
-      cols: [16, ...week.days.map(() => 10), 8, 7],
+      cols: [16, ...week.days.map(() => 10), 11, 11, 11, 8, 7],
       rows: [
         [{ v: `THI ĐUA TỔ — LỚP ${className.toUpperCase()} — TUẦN ${ddmm(week.from)} – ${ddmm(week.to)}`, s: XS.title }],
         [],
         head.map((v) => ({ v, s: XS.header })),
         ...teams.teams.map((t, i) => [
-          { v: `${t.name}`, s: XS.text }, ...week.days.map((d) => ({ v: byDay[d]?.[i] ?? '', s: XS.center })),
+          { v: `${t.name}`, s: XS.text }, ...week.days.map((d) => ({ v: byDay[d]?.[i] ?? '', s: XS.center })), ...SRC.map((k) => ({ v: bySrc[k][i], s: XS.center })),
           { v: total[i], s: XS.center }, { v: rank.find((r) => r.team === i)?.rank ?? '', s: XS.center },
         ]),
       ],
@@ -114,10 +117,10 @@ export default function TeamContest({ classId, className, students }: Props) {
     };
     const log: XSheet = {
       name: 'Chi tiết',
-      cols: [12, 8, 16, 8, 28],
+      cols: [12, 8, 16, 8, 12, 28],
       rows: [
-        ['Ngày', 'Giờ', 'Tổ', 'Điểm', 'Lý do'].map((v) => ({ v, s: XS.header })),
-        ...points.map((p) => [{ v: ddmm(vnDay(p.at)), s: XS.center }, { v: timeOf(p.at), s: XS.center }, { v: teams.teams[p.team - 1]?.name ?? `Tổ ${p.team}`, s: XS.text }, { v: p.delta, s: XS.center }, { v: p.reason ?? '', s: XS.text }]),
+        ['Ngày', 'Giờ', 'Tổ', 'Điểm', 'Nguồn', 'Lý do'].map((v) => ({ v, s: XS.header })),
+        ...points.map((p) => [{ v: ddmm(vnDay(p.at)), s: XS.center }, { v: timeOf(p.at), s: XS.center }, { v: teams.teams[p.team - 1]?.name ?? `Tổ ${p.team}`, s: XS.text }, { v: p.delta, s: XS.center }, { v: SOURCE[sourceOf(p.reason)].label, s: XS.text }, { v: stripSource(p.reason), s: XS.text }]),
       ],
     };
     downloadXlsx(`thi-dua-lop-${className}-tuan-${week.from}.xlsx`, [sheet, log]);
@@ -165,6 +168,7 @@ export default function TeamContest({ classId, className, students }: Props) {
                 {top && <span className="td-crown" aria-label="Đang dẫn đầu">👑</span>}
                 <h2><span aria-hidden="true">{t.emoji}</span> {t.name}</h2>
                 <p className="td-score"><b>{total[i]}</b> điểm</p>
+                <p className="td-src">{SRC.map((k) => <span key={k} title={SOURCE[k].label}>{SOURCE[k].icon} {bySrc[k][i]}</span>)}</p>
                 <p className="td-flags" aria-label={`${flags[i]} ngày đứng nhất`}>{'🚩'.repeat(flags[i]) || <span>&nbsp;</span>}</p>
                 {isNow && (
                   <div className="td-bt">
@@ -198,7 +202,8 @@ export default function TeamContest({ classId, className, students }: Props) {
             <p key={p.id}>
               <span>{isNow ? timeOf(p.at) : `${dowOf(vnDay(p.at))} ${timeOf(p.at)}`}</span>
               <b className={p.delta > 0 ? 'is-plus' : 'is-minus'}>{p.delta > 0 ? `+${p.delta}` : `−${-p.delta}`}</b>
-              {teams.teams[p.team - 1]?.name ?? `Tổ ${p.team}`}{p.reason ? ` · ${p.reason}` : ''}
+              {sourceOf(p.reason) !== 'lop' && <i className={`td-srct is-${sourceOf(p.reason)}`}>{SOURCE[sourceOf(p.reason)].icon} {SOURCE[sourceOf(p.reason)].label}</i>}
+              {teams.teams[p.team - 1]?.name ?? `Tổ ${p.team}`}{p.reason ? ` · ${stripSource(p.reason)}` : ''}
               {isNow && <button type="button" className="ct-x" onClick={() => void undo(p.id)} aria-label="Xóa lần này"><X aria-hidden="true" /></button>}
             </p>
           ))}

@@ -3,6 +3,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, ChevronDown, ChevronUp, ClipboardCopy, Clock, Lock, LockOpen, Send, Trash2 } from 'lucide-react';
 import CsvButton from '@/components/classroom/CsvButton';
+import TeamHw from '@/components/classroom/TeamHw';
 import { createClient } from '@/lib/supabase/client';
 import {
   MUC_NAME, SUBJECT_NAME, assignError, defaultDueInput, dueInfo, itemStats,
@@ -141,14 +142,14 @@ export default function AssignmentsBoard({ classId, className, students, lessons
         <h2>Bài đang mở ({open.length})</h2>
         {open.length === 0 ? <p className="dash-muted">Chưa có bài nào đang mở.</p> : (
           <ul className="assign-list">
-            {open.map((a) => <AssignmentItem key={a.id} a={a} className={className} expanded={openId === a.id} onToggle={() => setOpenId(openId === a.id ? null : a.id)} onStatus={setStatus} onRemove={remove} />)}
+            {open.map((a) => <AssignmentItem key={a.id} a={a} classId={classId} students={students} className={className} expanded={openId === a.id} onToggle={() => setOpenId(openId === a.id ? null : a.id)} onStatus={setStatus} onRemove={remove} />)}
           </ul>
         )}
         {closed.length > 0 && (
           <>
             <h2>Đã đóng ({closed.length})</h2>
             <ul className="assign-list is-closed">
-              {closed.map((a) => <AssignmentItem key={a.id} a={a} className={className} expanded={openId === a.id} onToggle={() => setOpenId(openId === a.id ? null : a.id)} onStatus={setStatus} onRemove={remove} />)}
+              {closed.map((a) => <AssignmentItem key={a.id} a={a} classId={classId} students={students} className={className} expanded={openId === a.id} onToggle={() => setOpenId(openId === a.id ? null : a.id)} onStatus={setStatus} onRemove={remove} />)}
             </ul>
           </>
         )}
@@ -157,7 +158,8 @@ export default function AssignmentsBoard({ classId, className, students, lessons
   );
 }
 
-function AssignmentItem({ a, className, expanded, onToggle, onStatus, onRemove }: {
+function AssignmentItem({ a, classId, students, className, expanded, onToggle, onStatus, onRemove }: {
+  classId: string; students: Student[];
   a: AssignmentRow; className: string; expanded: boolean; onToggle: () => void;
   onStatus: (a: AssignmentRow, open: boolean) => void; onRemove: (a: AssignmentRow) => void;
 }) {
@@ -187,12 +189,12 @@ function AssignmentItem({ a, className, expanded, onToggle, onStatus, onRemove }
           <button type="button" className="mini-btn" onClick={() => onRemove(a)} aria-label={`Xoá ${a.title}`}><Trash2 aria-hidden="true" /></button>
         </div>
       </div>
-      {expanded && <AssignmentDetail a={a} className={className} />}
+      {expanded && <AssignmentDetail a={a} classId={classId} students={students} className={className} />}
     </li>
   );
 }
 
-function AssignmentDetail({ a, className }: { a: AssignmentRow; className: string }) {
+function AssignmentDetail({ a, classId, students, className }: { a: AssignmentRow; classId: string; students: Student[]; className: string }) {
   const [rows, setRows] = useState<DetailRow[] | null>(null);
   const [items, setItems] = useState<ExamItem[]>([]);
   const [err, setErr] = useState('');
@@ -236,6 +238,7 @@ function AssignmentDetail({ a, className }: { a: AssignmentRow; className: strin
         <CheckCircle2 aria-hidden="true" /> {doneRows.length}/{rows.length} em đã {a.kind === 'exam' ? 'nộp' : 'làm'}
         {avg10 !== null && <> · điểm trung bình <strong>{fmtNum(avg10)}</strong>/10</>}
       </p>
+      <TeamHw classId={classId} a={a} rows={rows} students={students} />
       <div className="comments-actions">
         {notDone.length > 0 && <button type="button" className="btn btn-outline btn-sm" onClick={() => void copy()}><ClipboardCopy aria-hidden="true" /> {copied ? 'Đã chép!' : `Chép tên ${notDone.length} em chưa làm`}</button>}
         <CsvButton filename={`giao-bai-${className}-${a.title}.csv`} header={csvHeader} rows={csvRows} />

@@ -14,11 +14,15 @@ import { SH, SW, type Deck } from '@/lib/deck/types';
 import { loadPraiseFonts } from '@/lib/praise/render';
 import { transFrames } from '@/lib/deck/player';
 import { getVolume, playSound, setVolume, stopSounds } from '@/lib/deck/sounds';
-import SlideView, { SlideFrame, type PlayAction, type PlayApi } from './SlideView';
+import { createClient } from '@/lib/supabase/client';
+import { SOURCE, TEAM_COLORS, normalizeTeams, teamTotals, vnDay, weekOf, type Point, type TeamsState } from '@/lib/classroom/class-tools';
+import SlideView, { SlideFrame, type BoardTeam, type PlayAction, type PlayApi } from './SlideView';
 
 type Tool = '' | 'pen' | 'spot';
 type Stroke = { c: string; p: number[] };
-type Show = { slide: number; step: number; nonce: number; black: '' | 'black' | 'white'; spot: [number, number] | null; ink: Record<number, Stroke[]>; name: string | null; timer: number | null; stars: number };
+type Show = { slide: number; step: number; nonce: number; black: '' | 'black' | 'white'; spot: [number, number] | null; ink: Record<number, Stroke[]>; name: string | null; timer: number | null; stars: number;
+  /** thi đua tổ: điểm tuần này của các tổ (null = lớp chưa có tổ) và câu hỏi "cộng cho tổ nào?" đang hiện */
+  teams: BoardTeam[] | null; ask: string | null; bump: number | null };
 type Msg =
   | { type: 'hello' }
   | { type: 'state'; s: Show }
@@ -32,7 +36,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
   classId: string; deckId: string; deck: Deck; students: { id: string; name: string }[]; start?: number; audience?: boolean;
 }) {
   const n = deck.slides.length;
-  const [show, setShow] = useState<Show>({ slide: Math.min(Math.max(0, start), n - 1), step: 0, nonce: 0, black: '', spot: null, ink: {}, name: null, timer: null, stars: 0 });
+  const [show, setShow] = useState<Show>({ slide: Math.min(Math.max(0, start), n - 1), step: 0, nonce: 0, black: '', spot: null, ink: {}, name: null, timer: null, stars: 0, teams: null, ask: null, bump: null });
   const [tool, setTool] = useState<Tool>('');
   const [color, setColor] = useState(INK[0]);
   const [mine, setMine] = useState<TeacherAsset[]>([]);
@@ -173,6 +177,35 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
   const timerLeft = show.timer ? Math.max(0, Math.ceil((show.timer - now) / 1000)) : 0;
   const rang = useRef<number | null>(null);
   useEffect(() => { if (!audience && show.timer && timerLeft === 0 && rang.current !== show.timer) { rang.current = show.timer; playSound('bell'); } }, [timerLeft, show.timer, audience]);
+  /* ---------- thi đua tổ (điểm lưu vào Thi đua tổ của lớp, lý do ghi nguồn "📽 Thao giảng") ---------- */
+  const [tErr, setTErr] = useState('');
+  useEffect(() => {
+    if (audience) return;
+    let off = false;
+    void (async () => {
+      try {
+        const sb = createClient();
+        const wk = weekOf(vnDay());
+        const [t, p] = await Promise.all([sb.rpc('teacher_tool_get', { p_class: classId, p_tool: 'teams' }), sb.rpc('teacher_team_points', { p_class: classId, p_from: wk.from, p_to: wk.to })]);
+        if (off || t.error || !t.data) return;
+        const ts = normalizeTeams(t.data as Partial<TeamsState>, students);
+        const { total } = teamTotals((p.data ?? []) as Point[], ts.teams.length);
+        publish({ ...showRef.current, teams: ts.teams.map((x, i) => ({ name: x.name, emoji: x.emoji, color: TEAM_COLORS[i % TEAM_COLORS.length], score: total[i] ?? 0 })) });
+      } catch { /* chưa có tổ: dùng Cộng sao như cũ */ }
+    })();
+    return () => { off = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audience, classId]);
+  const award = async (i: number, delta: 1 | -1, why: string) => {
+    const cur = showRef.current; if (!cur.teams) return;
+    playSound(delta > 0 ? 'star' : 'wrong');
+    publish({ ...cur, ask: null, bump: delta > 0 ? i : null, teams: cur.teams.map((t, k) => (k === i ? { ...t, score: t.score + delta } : t)) });
+    window.setTimeout(() => { if (showRef.current.bump === i) publish({ ...showRef.current, bump: null }); }, 1200);
+    const reason = `${SOURCE.tg.prefix}${why} · ${deck.title}`.slice(0, 80);
+    const { error } = await createClient().rpc('teacher_team_point', { p_class: classId, p_team: i + 1, p_delta: delta, p_reason: reason });
+    if (error) { setTErr('Chưa lưu được điểm tổ (kiểm tra mạng).'); publish({ ...showRef.current, teams: (showRef.current.teams ?? []).map((t, k) => (k === i ? { ...t, score: t.score - delta } : t)) }); }
+  };
+  const onWin = (what: string) => { if (!audience && showRef.current.teams) publish({ ...showRef.current, ask: what }); };
   const addStar = () => { playSound('star'); publish({ ...showRef.current, stars: showRef.current.stars + 1 }); };
 
   const openAudience = () => {
@@ -188,7 +221,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
       <SlideFrame className="dp-frame">{(k) => (
         <div className="dp-stage" ref={(el) => { stageRef.current = el; frameRef.current = el; }} style={{ width: SW * k, height: SH * k }}>
           <SlideView key={`${slide.id}-${show.nonce}`} ref={api} slide={slide} mode="play" scale={k} assetUrl={assetUrl} startStep={show.step}
-            onAction={onAction} onLink={(i) => { if (!audience) go(i - 1); }} />
+            onAction={onAction} onLink={(i) => { if (!audience) go(i - 1); }} onWin={onWin} board={show.teams ?? undefined} />
           <svg className={`dp-ink${tool === 'pen' || tool === 'spot' ? ' is-on' : ''}`} viewBox={`0 0 ${SW} ${SH}`} style={{ cursor: tool === 'pen' ? 'crosshair' : tool === 'spot' ? 'none' : undefined }}
             onPointerDown={onOvDown} onPointerMove={onOvMove} onPointerUp={onOvUp} onPointerLeave={() => { if (tool === 'spot') publish({ ...showRef.current, spot: null }); }}>
             {[...strokes, ...(drawing.current ? [drawing.current] : [])].map((s, i) => <path key={i} d={pathOf(s.p)} fill="none" stroke={s.c} strokeWidth={9} strokeLinecap="round" strokeLinejoin="round" />)}
@@ -198,6 +231,13 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
           {show.name && <button type="button" className="dp-name" onClick={() => { if (!audience) publish({ ...showRef.current, name: null }); }}><small>Mời bạn</small><b>{show.name.replace('★ ', '')}</b>{show.name.startsWith('★') && <span>🎉</span>}</button>}
           {show.timer && <div className={`dp-timer${timerLeft <= 10 ? ' is-low' : ''}`}>⏱ {fmt(timerLeft)}</div>}
           {show.stars > 0 && <div className="dp-stars">⭐ × {show.stars}</div>}
+          {show.teams && !slide.els.some((e) => e.kind === 'teams') && <div className="dp-tstrip">{show.teams.map((t, i) => <b key={i} className={show.bump === i ? 'is-bump' : ''} style={{ background: t.color }}>{t.emoji} {t.name} · {t.score}</b>)}</div>}
+          {show.teams && show.ask && (
+            <div className="dp-ask"><p>🎉 {show.ask}! Cộng điểm cho tổ nào?</p>
+              <div>{show.teams.map((t, i) => <button key={i} type="button" disabled={audience} style={{ background: t.color }} onClick={() => void award(i, 1, `Trang ${show.slide + 1}: ${show.ask}`)}>{t.emoji} {t.name}</button>)}
+                <button type="button" className="is-skip" disabled={audience} onClick={() => publish({ ...showRef.current, ask: null })}>Bỏ qua</button></div>
+            </div>
+          )}
         </div>
       )}</SlideFrame>
       {!audience && <div className="dp-float"><button type="button" onClick={prev} aria-label="Lùi">◀</button><span>{show.slide + 1}/{n}</span><button type="button" onClick={next} aria-label="Tiếp">▶</button></div>}
@@ -235,6 +275,18 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
             <p className="dp-notes">{slide.notes || <span className="dp-muted">Trang này chưa có ghi chú.</span>}</p>
             {slide.anims.some((a) => a.trigger) && <p className="dp-trg">🎯 Trang có hiệu ứng chờ bấm vào vật (vật có viền vàng nhấp nháy).</p>}
           </section>
+          {show.teams && (
+            <section className="dp-card"><h4>Thi đua tổ <small>· lưu vào Thi đua tổ của lớp</small></h4>
+              <div className="dp-teams">{show.teams.map((t, i) => (
+                <div key={i} style={{ background: t.color }}>
+                  <span>{t.emoji} {t.name}</span><b>{t.score}</b>
+                  <button type="button" aria-label={`Trừ 1 điểm ${t.name}`} onClick={() => void award(i, -1, `Trang ${show.slide + 1}`)}>−</button>
+                  <button type="button" aria-label={`Cộng 1 điểm ${t.name}`} onClick={() => void award(i, 1, `Trang ${show.slide + 1}`)}>+1</button>
+                </div>
+              ))}</div>
+              {tErr && <p className="dp-trg">{tErr}</p>}
+            </section>
+          )}
           <section className="dp-card"><h4>Công cụ trên lớp</h4>
             <div className="dp-tools">
               <button type="button" className={tool === 'pen' ? 'is-on' : ''} onClick={() => setTool(tool === 'pen' ? '' : 'pen')}><span>✏️</span>Bút vẽ</button>
@@ -243,7 +295,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
               <button type="button" onClick={() => publish({ ...show, ink: { ...show.ink, [show.slide]: [] } })} disabled={!strokes.length}><span>🧽</span>Xoá nét vẽ</button>
               <button type="button" onClick={callName}><img src="/emoji/tool/goi-ten.webp" alt="" />Gọi tên</button>
               <button type="button" onClick={() => publish({ ...show, timer: show.timer ? null : Date.now() + 60_000 })} className={show.timer ? 'is-on' : ''}><img src="/emoji/tool/hen-gio.webp" alt="" />{show.timer ? 'Tắt giờ' : 'Đếm 1 phút'}</button>
-              <button type="button" onClick={addStar}><img src="/emoji/tool/thi-dua.webp" alt="" />Cộng sao</button>
+              {!show.teams && <button type="button" onClick={addStar}><img src="/emoji/tool/thi-dua.webp" alt="" />Cộng sao</button>}
               <button type="button" onClick={() => publish({ ...show, stars: 0, name: null })} disabled={!show.stars && !show.name}><span>↺</span>Đặt lại</button>
             </div>
             {tool === 'pen' && <div className="dp-inks">{INK.map((c) => <button key={c} type="button" aria-label={`Mực ${c}`} className={color === c ? 'is-on' : ''} style={{ background: c }} onClick={() => setColor(c)} />)}</div>}

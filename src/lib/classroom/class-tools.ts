@@ -252,7 +252,10 @@ export const unseat = (s: Seating, i: number): Seating => ({ ...s, seats: s.seat
 
 /* ====================================================================== THI ĐUA TỔ */
 export type Team = { name: string; emoji: string; members: string[]; leader: string | null };
-export type TeamsState = { teams: Team[] };
+/** Bài tập giao theo tổ: id bài giao → quy tắc cộng điểm (lưu chung trong tool 'teams', không cần bảng mới) */
+export type HwRule = { full: number; avg: number; avgMin: number; best: number };
+export const DEFAULT_HW_RULE: HwRule = { full: 2, avg: 1, avgMin: 8, best: 1 };
+export type TeamsState = { teams: Team[]; hw?: Record<string, HwRule> };
 export const TEAM_EMOJI = ['🚀', '🌻', '⚡', '🌈', '🐳', '🍀', '🎈', '⭐'];
 export const TEAM_COLORS = ['#2457c5', '#15803d', '#c2410c', '#6d3fe0', '#0e7490', '#be185d', '#a16207', '#334155'];
 export const REASONS = [
@@ -279,9 +282,16 @@ export function teamsFromSeating(s: Seating, prev?: TeamsState): TeamsState {
 export function normalizeTeams(raw: Partial<TeamsState> | null | undefined, students: ToolStudent[]): TeamsState {
   const valid = new Set(students.map((s) => s.id));
   const list = Array.isArray(raw?.teams) ? raw.teams.slice(0, 8) : [];
-  if (list.length < 2) return defaultTeams();
+  const hw: Record<string, HwRule> = {};
+  if (raw?.hw && typeof raw.hw === 'object') for (const [k, v] of Object.entries(raw.hw).slice(-200)) {
+    if (!/^[0-9a-f-]{36}$/i.test(k) || !v) continue;
+    const n = (x: unknown, d: number, lo: number, hi: number) => (typeof x === 'number' && x >= lo && x <= hi ? Math.round(x) : d);
+    hw[k] = { full: n(v.full, 2, 0, 5), avg: n(v.avg, 1, 0, 5), avgMin: n(v.avgMin, 8, 5, 10), best: n(v.best, 1, 0, 5) };
+  }
+  if (list.length < 2) return { ...defaultTeams(), ...(Object.keys(hw).length ? { hw } : {}) };
   const seen = new Set<string>();
   return {
+    ...(Object.keys(hw).length ? { hw } : {}),
     teams: list.map((t, i) => {
       const members = (Array.isArray(t?.members) ? t.members : []).filter((id): id is string => typeof id === 'string' && valid.has(id) && !seen.has(id) && !!seen.add(id));
       return {
@@ -304,6 +314,45 @@ export function weekOf(iso: string) {
 export const DOW_LABEL = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 export const dowOf = (iso: string) => DOW_LABEL[new Date(`${iso}T00:00:00Z`).getUTCDay()];
 export const ddmm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+
+/* ---------- nguồn điểm thi đua: ghi trong lý do bằng tiền tố (không cần cột mới) ---------- */
+export type PointSource = 'lop' | 'tg' | 'bt';
+export const SOURCE: Record<PointSource, { icon: string; label: string; prefix: string }> = {
+  lop: { icon: '🏫', label: 'Trên lớp', prefix: '' },
+  tg: { icon: '📽', label: 'Thao giảng', prefix: '📽 ' },
+  bt: { icon: '📝', label: 'Bài tập', prefix: '📝 ' },
+};
+export const sourceOf = (reason: string | null | undefined): PointSource => (reason?.startsWith('📽') ? 'tg' : reason?.startsWith('📝') ? 'bt' : 'lop');
+export const stripSource = (reason: string | null | undefined) => (reason ?? '').replace(/^(📽|📝)\s*/u, '').replace(/\s#[0-9a-f]{6}\b/, '');
+/** Tổng điểm từng tổ tách theo nguồn */
+export function sourceTotals(points: Point[], teams: number): Record<PointSource, number[]> {
+  const r: Record<PointSource, number[]> = { lop: Array(teams).fill(0), tg: Array(teams).fill(0), bt: Array(teams).fill(0) };
+  for (const p of points) if (p.team >= 1 && p.team <= teams) r[sourceOf(p.reason)][p.team - 1] += p.delta;
+  return r;
+}
+
+/** Kết quả bài tập theo tổ: số em đã làm (đúng hạn), điểm trung bình /10 và điểm thi đua đề xuất */
+export type HwTeamResult = { team: number; members: number; done: number; onTime: number; avg: number | null; pts: number; why: string[] };
+export function hwTeamResults(
+  rows: { student_id: string; done: boolean; score: number | null; max_score: number | null; correct: number | null; total: number | null; finished_at: string | null }[],
+  teams: Team[], rule: HwRule, dueAt: string, kind: 'lesson' | 'exam',
+): HwTeamResult[] {
+  const due = Date.parse(dueAt);
+  const res = teams.map((t, i) => {
+    const mine = rows.filter((r) => t.members.includes(r.student_id));
+    const done = mine.filter((r) => r.done);
+    const onTime = done.filter((r) => !r.finished_at || Date.parse(r.finished_at) <= due);
+    const tens = done.map((r) => (kind === 'exam' ? (r.max_score ? (Number(r.score) * 10) / Number(r.max_score) : 0) : (r.total ? ((r.correct ?? 0) * 10) / r.total : 0)));
+    const avg = tens.length ? Math.round((tens.reduce((a, b) => a + b, 0) / tens.length) * 10) / 10 : null;
+    const why: string[] = []; let pts = 0;
+    if (mine.length && rule.full && onTime.length === mine.length) { pts += rule.full; why.push(`nộp đủ ${onTime.length}/${mine.length}`); }
+    if (avg !== null && rule.avg && avg >= rule.avgMin) { pts += rule.avg; why.push(`TB ${String(avg).replace('.', ',')}`); }
+    return { team: i, members: mine.length, done: done.length, onTime: onTime.length, avg, pts, why };
+  });
+  const top = Math.max(...res.map((r) => r.avg ?? -1));
+  if (rule.best && top >= 0) for (const r of res) if (r.avg === top && r.members) { r.pts += rule.best; r.why.push('TB cao nhất lớp'); }
+  return res;
+}
 
 /** Tổng điểm từng tổ (chỉ số 0) và theo từng ngày */
 export function teamTotals(points: Point[], teams: number) {

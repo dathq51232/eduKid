@@ -161,6 +161,14 @@ function coverPage(name: string, sub: string, tiet: number | undefined, sc: Scen
   return page(m, 'bia', sc);
 }
 
+/** Trang "Bảng thi đua tổ": khi chiếu hiện điểm tuần này của các tổ (cột mọc lên, tổ nhất có cúp) */
+export function boardPage(sc: SceneKind | undefined): Slide {
+  const m = mk(); title(m, 'Thi đua tổ', accentOf(sc));
+  const b = { id: uid(), kind: 'teams', x: 200, y: 160, w: 1200, h: 680, rot: 0, title: '' } as El;
+  m.els.push(b); A(m, b.id, 'fade', 'with', { sound: 'drum' });
+  return { id: uid(), bg: 'white', els: m.els, anims: m.anims, trans: 'zoom', notes: 'Điểm thi đua tổ tuần này (cộng cả điểm trên lớp, bài thao giảng, bài tập). Khen tổ dẫn đầu.', sound: 'clap', scene: sc, phase: PHASE_LABEL.cc };
+}
+
 /* ---------- tình huống theo cảnh ---------- */
 const SITU: Record<SceneKind, string[]> = {
   garden: ['{M} đang dạo chơi trong vườn. Khu vườn giấu nhiều câu đố về “{T}”. Các bạn giúp {M} giải đố nhé!', 'Sáng nay {M} ra vườn tưới cây và gặp một thử thách: “{T}”. Cả lớp cùng {M} tìm hiểu nào!'],
@@ -378,6 +386,7 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
     T(m, hw, 300, 200, 1000, 420, 50, '#1f2937', { align: 'left', font: 'quick', bg: '#ffffffe6' });
     I(m, M.src, 1240, 560, 300, { lock: true });
     add('cc', 'home', 'Nhiệm vụ về nhà', page(m, 'cc', sc, 'Dặn dò, chuẩn bị bài sau.')); }
+  add('cc', 'board', 'Bảng thi đua tổ (điểm tuần của các tổ)', boardPage(sc));
 
   if (ga) addPlanNotes(cands, ga);
   return finish(cands);
@@ -484,6 +493,7 @@ export function buildPlanFromGiaoAn(ga: GiaoAn, o: GenOpts): LessonPlan {
     T(m, txt, 300, 200, 1000, 420, fit(txt, 960, 400, 50, 26), '#1f2937', { align: 'left', font: 'quick', bg: '#ffffffe6' });
     I(m, M.src, 1240, 560, 300, { lock: true });
     add('cc', 'home', 'Dặn dò', page(m, 'cc', sc)); }
+  add('cc', 'board', 'Bảng thi đua tổ (điểm tuần của các tổ)', boardPage(sc));
   addPlanNotes(cands.filter((c) => c.key.startsWith('kd:situ')), ga);
   const P = finish(cands);
   // trang Sắp xếp các bước là gợi ý thêm: xếp cuối hoạt động, mặc định không chọn
@@ -495,7 +505,7 @@ export function buildPlanFromGiaoAn(ga: GiaoAn, o: GenOpts): LessonPlan {
 
 function finish(cands: Cand[]): LessonPlan {
   const has = (p: PhaseId) => cands.filter((c) => c.phase === p).length;
-  const defaults: Record<PhaseId, number> = { bia: 1, kd: Math.min(2, has('kd')), kp: Math.min(3, has('kp')), lt: Math.min(4, has('lt')), vd: Math.min(2, has('vd')), cc: Math.min(1, has('cc')) };
+  const defaults: Record<PhaseId, number> = { bia: 1, kd: Math.min(2, has('kd')), kp: Math.min(3, has('kp')), lt: Math.min(4, has('lt')), vd: Math.min(2, has('vd')), cc: Math.min(3, has('cc')) };
   // tình huống luôn là trang thứ 2 của Khởi động: đưa trang tình huống đầu lên vị trí số 2
   const kd = cands.filter((c) => c.phase === 'kd'); const si = kd.findIndex((c) => c.key.startsWith('kd:situ'));
   if (si > 1) { const [s] = kd.splice(si, 1); kd.splice(1, 0, s); }

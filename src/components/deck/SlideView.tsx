@@ -84,7 +84,7 @@ function SortBody({ e, mode, st, onTile }: { e: SortEl; mode: 'edit' | 'play' | 
     </div>
   );
 }
-function ElBody({ e, mode, assetUrl, pick, onPick, sort, onTile }: { e: El; mode: 'edit' | 'play' | 'thumb'; assetUrl?: (p: string) => string | undefined; pick?: Pick; onPick?: (i: number) => void; sort?: SortSt; onTile?: (t: number) => void }) {
+function ElBody({ e, mode, assetUrl, pick, onPick, sort, onTile, board }: { e: El; mode: 'edit' | 'play' | 'thumb'; assetUrl?: (p: string) => string | undefined; pick?: Pick; onPick?: (i: number) => void; sort?: SortSt; onTile?: (t: number) => void; board?: BoardTeam[] }) {
   switch (e.kind) {
     case 'text': {
       const f = FONTS[e.font] ?? FONTS.baloo;
@@ -130,6 +130,7 @@ function ElBody({ e, mode, assetUrl, pick, onPick, sort, onTile }: { e: El; mode
       );
     }
     case 'sort': return <SortBody e={e} mode={mode} st={sort} onTile={onTile} />;
+    case 'teams': return <TeamsBoard title={e.title} teams={board?.length ? board : SAMPLE_BOARD} live={mode === 'play'} />;
     case 'drop': return <div className="dk-drop" style={{ borderColor: e.color, color: e.color }}><span>{e.label}</span></div>;
     case 'scene3d':
       return mode === 'play' && e.lesson ? <Scene3DBox lessonId={e.lesson} title={e.title} />
@@ -138,6 +139,25 @@ function ElBody({ e, mode, assetUrl, pick, onPick, sort, onTile }: { e: El; mode
 }
 
 export type PlayAction = { t: 'step' } | { t: 'back' } | { t: 'trigger'; el: string } | { t: 'quiz'; el: string; i: number } | { t: 'drop'; el: string; x: number; y: number } | { t: 'sort'; el: string; tile: number };
+/** điểm một tổ cho Bảng thi đua tổ */
+export type BoardTeam = { name: string; emoji: string; color: string; score: number };
+const SAMPLE_BOARD: BoardTeam[] = [['Tổ 1', '🚀', '#2457c5', 7], ['Tổ 2', '🌻', '#15803d', 9], ['Tổ 3', '⚡', '#c2410c', 6], ['Tổ 4', '🌈', '#6d3fe0', 8]].map(([name, emoji, color, score]) => ({ name, emoji, color, score } as BoardTeam));
+function TeamsBoard({ title, teams, live }: { title: string; teams: BoardTeam[]; live: boolean }) {
+  const max = Math.max(1, ...teams.map((t) => t.score)), top = Math.max(...teams.map((t) => t.score));
+  return (
+    <div className={`dk-board${live ? ' is-live' : ''}`}>
+      {title && <div className="dk-board-t">{title}</div>}
+      <div className="dk-board-cols">{teams.map((t, i) => (
+        <div key={i} className="dk-board-c">
+          <div className="dk-board-bar" style={{ height: `${Math.max(12, (Math.max(0, t.score) / max) * 100)}%`, background: t.color, animationDelay: `${i * 0.15}s` }}>
+            {t.score === top && top > 0 && <span className="dk-board-cup">🏆</span>}<b>{t.score}</b>
+          </div>
+          <span className="dk-board-n">{t.emoji} {t.name}</span>
+        </div>
+      ))}</div>
+    </div>
+  );
+}
 export type PlayApi = { apply: (a: PlayAction) => boolean; stepsLeft: () => number; stepIndex: () => number };
 
 type Props = {
@@ -152,9 +172,14 @@ type Props = {
   onLink?: (n: number) => void;
   /** chạy sẵn đến bước số mấy (khi mở lại trang / cửa sổ chiếu mới mở) */
   startStep?: number;
+  /** lớp trả lời đúng / làm xong trò chơi (để cô cộng điểm thi đua tổ) */
+  onWin?: (what: string) => void;
+  /** điểm các tổ cho Bảng thi đua tổ */
+  board?: BoardTeam[];
 };
 
-const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, scale, assetUrl, sel, onSelect, onChange, onEditText, onAction, onLink, startStep = 0 }, ref) {
+const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, scale, assetUrl, sel, onSelect, onChange, onEditText, onAction, onLink, startStep = 0, onWin, board }, ref) {
+  const winRef = useRef(onWin); winRef.current = onWin;
   const plan = useMemo(() => planSlide(slide), [slide]);
   const play = mode === 'play';
   const [hidden, setHidden] = useState<Set<string>>(() => (play ? new Set(plan.hidden) : new Set()));
@@ -211,14 +236,17 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
       case 'back': return false;
       case 'trigger': {
         const cues = plan.triggers[a.el]; if (!cues) return false;
-        fired.current.add(a.el); run(cues); return true;
+        fired.current.add(a.el); run(cues);
+        // mở miếng che đáp án (âm "đúng rồi") → hỏi cô cộng điểm cho tổ nào
+        if (cues.some((c) => c.anim.sound === 'ding')) window.setTimeout(() => winRef.current?.('Mở đáp án'), 800);
+        return true;
       }
       case 'quiz': {
         const q = slide.els.find((x) => x.id === a.el); if (!q || q.kind !== 'quiz') return false;
         const ok = a.i === q.a;
         setPicks((p) => ({ ...p, [a.el]: { i: a.i, ok } }));
         playSound(ok ? 'tada' : 'wrong');
-        if (ok) { const n = nodes.current.get(a.el); n?.querySelector<HTMLElement>('.dk-a')?.animate(fxFrames('pulse'), { duration: 700 }); burst(n); }
+        if (ok) { const n = nodes.current.get(a.el); n?.querySelector<HTMLElement>('.dk-a')?.animate(fxFrames('pulse'), { duration: 700 }); burst(n); window.setTimeout(() => winRef.current?.('Trả lời đúng'), 900); }
         return true;
       }
       case 'drop': {
@@ -226,7 +254,7 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
         const cx = a.x + e.w / 2, cy = a.y + e.h / 2, z = zoneAt(cx, cy);
         if (z && z.accept.includes(e.id)) {
           setPos((p) => ({ ...p, [e.id]: { x: Math.round(Math.min(Math.max(cx, z.x + e.w / 2), z.x + z.w - e.w / 2) - e.w / 2), y: Math.round(Math.min(Math.max(cy, z.y + e.h / 2), z.y + z.h - e.h / 2) - e.h / 2) } }));
-          setDone((d) => new Set(d).add(e.id)); playSound('ding'); burst(nodes.current.get(e.id));
+          setDone((d) => { const nd = new Set(d).add(e.id); if (slide.els.filter((x) => x.drag).every((x) => nd.has(x.id))) window.setTimeout(() => winRef.current?.('Kéo thả đúng hết'), 900); return nd; }); playSound('ding'); burst(nodes.current.get(e.id));
         } else if (z) {
           setPos((p) => { const n = { ...p }; delete n[e.id]; return n; }); playSound('wrong');
           nodes.current.get(e.id)?.querySelector<HTMLElement>('.dk-a')?.animate(fxFrames('shake'), { duration: 500 });
@@ -245,7 +273,7 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
         if (!slots.includes(null)) {
           const bad = slots.map((v, k) => (e.items[v!] === e.items[k] ? -1 : k)).filter((k) => k >= 0);
           if (!bad.length) {
-            next = { slots, bad: [], ok: true }; playSound('tada');
+            next = { slots, bad: [], ok: true }; playSound('tada'); window.setTimeout(() => winRef.current?.('Sắp xếp đúng'), 1100);
             const n = nodes.current.get(e.id); window.setTimeout(() => burst(n), 50);
           } else {
             next = { slots, bad, ok: false }; playSound('wrong');
@@ -344,7 +372,7 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
             onClick={(ev) => { if (play && !e.drag) { ev.stopPropagation(); click(e); } }}
             onDoubleClick={() => { if (mode === 'edit' && (e.kind === 'text' || e.kind === 'shape' || e.kind === 'quiz' || e.kind === 'sort')) onEditText?.(e.id); }}>
             <div className="dk-a"><ElBody e={e} mode={mode} assetUrl={assetUrl} pick={picks[e.id]} onPick={(i) => { const a: PlayAction = { t: 'quiz', el: e.id, i }; apply(a); onAction?.(a); }}
-              sort={sorts[e.id]} onTile={(tile) => { const a: PlayAction = { t: 'sort', el: e.id, tile }; if (apply(a)) onAction?.(a); }} /></div>
+              board={board} sort={sorts[e.id]} onTile={(tile) => { const a: PlayAction = { t: 'sort', el: e.id, tile }; if (apply(a)) onAction?.(a); }} /></div>
             {mode === 'edit' && sel === e.id && !e.lock && <span className="dk-size" onPointerDown={(ev) => onElDown(e, ev, 'size')} onPointerMove={onElMove} onPointerUp={() => onElUp(e)} />}
             {mode === 'edit' && <AnimBadges slide={slide} id={e.id} />}
           </div>
