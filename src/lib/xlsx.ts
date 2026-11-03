@@ -14,6 +14,8 @@ export const XS = {
   boldLeft: 7, // đậm, căn trái, không khung
   note: 8, // nghiêng, căn trái, không khung
   red: 9, // chữ đỏ, khung, căn trái, xuống dòng (vd tiết trống trong lịch báo giảng)
+  boldText: 10, // đậm, khung, căn trái, xuống dòng
+  redBold: 11, // đậm đỏ, khung, căn trái, xuống dòng
 } as const;
 export type XStyle = (typeof XS)[keyof typeof XS];
 export type XValue = string | number | null | undefined;
@@ -30,6 +32,12 @@ export type XSheet = {
   /** cố định đến dòng/cột này khi cuộn (0-based, số dòng/cột được giữ) */
   freeze?: { rows: number; cols: number };
   landscape?: boolean;
+  /** in vừa đúng 1 trang (mặc định: vừa bề ngang, dài tuỳ ý) */
+  onePage?: boolean;
+  /** lề trang (inch): trên, phải, dưới, trái */
+  margins?: [number, number, number, number];
+  /** căn giữa trang theo chiều ngang khi in */
+  center?: boolean;
 };
 
 export function colName(i: number): string {
@@ -85,26 +93,29 @@ function sheetXml(sh: XSheet): string {
   });
   out.push('</sheetData>');
   if (sh.merges?.length) out.push(`<mergeCells count="${sh.merges.length}">${sh.merges.map((m) => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>`);
-  out.push('<pageMargins left="0.3" right="0.3" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>');
-  out.push(`<pageSetup paperSize="9" orientation="${sh.landscape ? 'landscape' : 'portrait'}" fitToWidth="1" fitToHeight="0"/>`);
+  if (sh.center) out.push('<printOptions horizontalCentered="1"/>');
+  const [mt, mr, mb, ml] = sh.margins ?? [0.5, 0.3, 0.5, 0.3];
+  out.push(`<pageMargins left="${ml}" right="${mr}" top="${mt}" bottom="${mb}" header="0.2" footer="0.2"/>`);
+  out.push(`<pageSetup paperSize="9" orientation="${sh.landscape ? 'landscape' : 'portrait'}" fitToWidth="1" fitToHeight="${sh.onePage ? 1 : 0}"/>`);
   out.push('</worksheet>');
   return out.join('');
 }
 
 const STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
   + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-  + '<fonts count="5">'
+  + '<fonts count="6">'
   + '<font><sz val="11"/><name val="Times New Roman"/><family val="1"/></font>'
   + '<font><b/><sz val="11"/><name val="Times New Roman"/><family val="1"/></font>'
   + '<font><i/><sz val="11"/><name val="Times New Roman"/><family val="1"/></font>'
   + '<font><b/><sz val="13"/><name val="Times New Roman"/><family val="1"/></font>'
   + '<font><sz val="11"/><color rgb="FFFF0000"/><name val="Times New Roman"/><family val="1"/></font>'
+  + '<font><b/><sz val="11"/><color rgb="FFFF0000"/><name val="Times New Roman"/><family val="1"/></font>'
   + '</fonts>'
   + '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>'
   + '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'
   + '<border><left style="thin"><color auto="1"/></left><right style="thin"><color auto="1"/></right><top style="thin"><color auto="1"/></top><bottom style="thin"><color auto="1"/></bottom><diagonal/></border></borders>'
   + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
-  + '<cellXfs count="10">'
+  + '<cellXfs count="12">'
   + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
   + '<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'
   + '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
@@ -115,6 +126,8 @@ const STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
   + '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>'
   + '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>'
   + '<xf numFmtId="0" fontId="4" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
+  + '<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
+  + '<xf numFmtId="0" fontId="5" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
   + '</cellXfs>'
   + '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
   + '</styleSheet>';

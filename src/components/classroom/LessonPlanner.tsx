@@ -2,14 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, Copy, FileDown, FilePlus2, MonitorPlay, Save, Sparkles, Trash2, Undo2, Maximize2, Minimize2 } from 'lucide-react';
+import { CalendarDays, Copy, FileDown, FileSpreadsheet, FilePlus2, MonitorPlay, Save, Sparkles, Trash2, Undo2, Maximize2, Minimize2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
   SUBJECT_NAMES, addDays, blankPlan, generatePlan, isPlan, mondayOf, subjectNameOf, viDate, weekdayVi,
   type LessonInfo, type LessonPlan, type PlanSubject,
 } from '@/lib/plans/generate';
-import { plansDocument, weekDocument } from '@/lib/plans/word';
-import { fitWeekFont } from '@/lib/plans/fit';
+import { plansDocument } from '@/lib/plans/word';
+import { weekExport, weekSheet, loadWeekOpts, saveWeekOpts, DEFAULT_WEEK_OPTS, type WeekArgs, type WeekOpts } from '@/lib/plans/week-export';
+import { downloadXlsx } from '@/lib/xlsx';
 import type { SubjectCode } from '@/lib/types';
 import ScheduleImport from './ScheduleImport';
 import PlanLibrary from './PlanLibrary';
@@ -54,7 +55,12 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
   const [scope, setScope] = useState<'week' | 'all'>('week');
   const editorRef = useRef<HTMLElement>(null);
   const [library, setLibrary] = useState<LibraryMeta[]>([]);
-  const [preview, setPreview] = useState<{ title: string; filename: string; html: string; single?: boolean; note?: string } | null>(null);
+  const [preview, setPreview] = useState<{ title: string; filename: string; html?: string; single?: boolean; week?: WeekArgs } | null>(null);
+  // lịch báo giảng: mẫu trường A4 dọc / trang ngang, rút gọn ND tích hợp, giãn hàng — nhớ lựa chọn trên máy
+  const [wopts, setWopts] = useState<WeekOpts>(DEFAULT_WEEK_OPTS);
+  useEffect(() => { setWopts(loadWeekOpts()); }, []);
+  const setWo = (p: Partial<WeekOpts>) => setWopts((o) => { const n = { ...o, ...p }; saveWeekOpts(n); return n; });
+  const weekBuilt = useMemo(() => (preview?.week ? weekExport(preview.week, wopts) : null), [preview, wopts]);
 
   useEffect(() => { setLessonId((cur) => (lessons.some((l) => l.id === cur) ? cur : lessons[0]?.id ?? '')); }, [lessons]);
 
@@ -186,8 +192,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
     const got = await Promise.all(inWeek.map((s) => sb.rpc('teacher_get_plan', { p_plan: s.id })));
     setBusy(false);
     const plans = got.map((g) => ((g.data ?? []) as { data: unknown }[])[0]?.data).filter(isPlan);
-    const fit = fitWeekFont((f) => weekDocument(week, plans, school, className, false, [], { font: f }));
-    setPreview({ title: `Kế hoạch dạy học tuần ${viDate(week)}${withPlans ? ` + ${plans.length} giáo án` : ''}`, filename: `ke-hoach-day-hoc-tuan-${week}`, html: weekDocument(week, plans, school, className, withPlans, [], { font: fit?.font }), note: fit ? (fit.fits ? `Lịch tuần vừa 1 trang (cỡ chữ bảng ${String(fit.font).replace('.', ',')})` : 'Lịch tuần quá dài: ở cỡ chữ 8 vẫn tràn sang trang 2 — rút gọn cột ND tích hợp / tên bài') : undefined });
+    setPreview({ title: `Kế hoạch dạy học tuần ${viDate(week)}${withPlans ? ` + ${plans.length} giáo án` : ''}`, filename: `ke-hoach-day-hoc-tuan-${week}`, week: { monday: week, plans, school, className, withPlans } });
   };
 
   return (
@@ -303,8 +308,17 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
         <p className="dash-muted">Giáo án thuộc về thầy cô: lớp cũ đã lưu trữ vẫn mở lại được để dùng cho lớp mới (Mở → Nhân bản → Lưu).</p>
       </section>
       {preview && (
-        <DocPreview title={preview.title} filename={preview.filename} html={preview.html} onClose={() => setPreview(null)}
-          extra={preview.note ? <span className={`pv-fit${/tràn/.test(preview.note) ? ' is-bad' : ''}`}>{/tràn/.test(preview.note) ? '⚠️' : '✅'} {preview.note}</span> : undefined}
+        <DocPreview title={preview.title} filename={preview.filename} html={weekBuilt?.html ?? preview.html ?? ''} onClose={() => setPreview(null)}
+          below={preview.week && weekBuilt ? (
+            <div className="pv-opts">
+              <label>Mẫu <select value={wopts.layout} onChange={(e) => setWo({ layout: e.target.value as WeekOpts['layout'] })}><option value="school">Mẫu trường (A4 dọc)</option><option value="land">Trang ngang có quốc hiệu</option></select></label>
+              <label>ND tích hợp <select value={wopts.short} onChange={(e) => setWo({ short: e.target.value as WeekOpts['short'] })}><option value="auto">Rút gọn khi cần</option><option value="full">Đầy đủ</option></select></label>
+              <label className="pv-chk"><input type="checkbox" checked={wopts.stretch} onChange={(e) => setWo({ stretch: e.target.checked })} /> Giãn hàng cho đầy trang</label>
+              <span className={`pv-fit${weekBuilt.bad ? ' is-bad' : ''}`}>{weekBuilt.bad ? '⚠️' : '✅'} {weekBuilt.note}</span>
+              <span className="planner-spacer" />
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => preview.week && downloadXlsx(`${preview.filename}.xlsx`, [weekSheet(preview.week, wopts)])}><FileSpreadsheet aria-hidden="true" /> Tải Excel lịch báo giảng</button>
+            </div>
+          ) : undefined}
           onSaveOrig={preview.single && plan?.orig ? (h) => { edit((p) => ({ ...p, orig: { html: h } })); setPreview(null); setMsg({ kind: 'info', text: 'Đã cập nhật bản gốc của giáo án theo phần sửa trên bản xem trước. Bấm Lưu để lưu lại.' }); } : undefined} />
       )}
     </div>

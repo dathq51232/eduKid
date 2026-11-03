@@ -164,6 +164,7 @@ type Ctx = {
 };
 const PORTRAIT_W = 9355; // 21 cm − 3 cm − 1,5 cm
 const LAND_W = 14287; // 29,7 cm − 2,5 cm − 2 cm
+const LICH_W = 10488; // lịch báo giảng mẫu trường, A4 dọc: 21 cm − 1,5 cm − 1 cm
 const EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/bmp': 'bmp' };
 
 function imageRun(el: El, ctx: Ctx): string {
@@ -243,13 +244,14 @@ function blocks(nodes: Node[], r: RP, p: PP, ctx: Ctx): string[] {
       out.push(paragraph(el.kids, rr, pp, ctx));
       continue;
     }
-    if (el.tag === 'div' && /\bLand\b/.test(el.attrs.class ?? '')) {
-      const w = ctx.width; ctx.width = LAND_W;
+    const sec = el.tag === 'div' ? (/\bLand\b/.test(el.attrs.class ?? '') ? 'land' : /\bLich\b/.test(el.attrs.class ?? '') ? 'lich' : null) : null;
+    if (sec) {
+      const w = ctx.width; ctx.width = sec === 'land' ? LAND_W : LICH_W;
       out.push(...blocks(el.kids, runFrom(el, r), { ...p, ...paraFrom(el) }, ctx));
       ctx.width = w;
       // kết thúc phần trang ngang
       // dấu kết thúc phần trang ngang: đoạn rất nhỏ để không đẩy sang trang mới khi bảng vừa kín trang
-      out.push(`<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr><w:sectPr>${sect(true)}</w:sectPr></w:pPr></w:p>`);
+      out.push(secEnd(sec));
       continue;
     }
     // div, section, ul, ol, body, html…
@@ -342,13 +344,19 @@ function table(el: El, r: RP, ctx: Ctx): string[] {
   const pbb = ctx.pendingBreak;
   ctx.pendingBreak = false;
   const pre = pbb ? `<w:p><w:pPr><w:pageBreakBefore/><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/></w:pPr></w:p>` : '';
-  return [`${pre}<w:tbl><w:tblPr><w:tblW w:w="${tblW}" w:type="dxa"/>${jc}${border}<w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="28" w:type="dxa"/><w:left w:w="85" w:type="dxa"/><w:bottom w:w="28" w:type="dxa"/><w:right w:w="85" w:type="dxa"/></w:tblCellMar><w:tblLook w:val="0000"/></w:tblPr><w:tblGrid>${colW.map((w) => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>${trs}</w:tbl>`, ctx.width === LAND_W
+  return [`${pre}<w:tbl><w:tblPr><w:tblW w:w="${tblW}" w:type="dxa"/>${jc}${border}<w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="28" w:type="dxa"/><w:left w:w="85" w:type="dxa"/><w:bottom w:w="28" w:type="dxa"/><w:right w:w="85" w:type="dxa"/></w:tblCellMar><w:tblLook w:val="0000"/></w:tblPr><w:tblGrid>${colW.map((w) => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>${trs}</w:tbl>`, ctx.width === LAND_W || ctx.width === LICH_W
     ? '<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr></w:pPr></w:p>'
     : `<w:p>${pPrXml({ after: 0, line: 1 }, false)}</w:p>`];
 }
 
-const sect = (land: boolean) => land
+/** đoạn kết thúc một phần (section): rất nhỏ để không đẩy sang trang mới khi bảng vừa kín trang */
+const secEnd = (kind: 'land' | 'lich') => `<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr><w:sectPr>${sect(kind)}</w:sectPr></w:pPr></w:p>`;
+
+/** land: trang ngang; lich: lịch báo giảng mẫu trường (A4 dọc, lề trên/dưới/phải 1 cm, trái 1,5 cm); null: A4 dọc lề NĐ30 */
+const sect = (kind: 'land' | 'lich' | null) => kind === 'land'
   ? '<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="851" w:right="1134" w:bottom="851" w:left="1417" w:header="567" w:footer="567" w:gutter="0"/>'
+  : kind === 'lich'
+  ? '<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="567" w:right="567" w:bottom="567" w:left="851" w:header="284" w:footer="284" w:gutter="0"/>'
   : '<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="851" w:bottom="1134" w:left="1701" w:header="567" w:footer="567" w:gutter="0"/>';
 
 const enc = (s: string) => new TextEncoder().encode(s);
@@ -361,10 +369,13 @@ export function htmlToDocx(html: string, images: Map<string, DocImage> = new Map
   const root = parseHtml(html);
   const body = root.kids.find((k): k is El => isEl(k) && k.tag === 'html')?.kids.find((k): k is El => isEl(k) && k.tag === 'body') ?? root;
   const ctx: Ctx = { images, rels: [], media: [], imgIds: new Map(), pid: 0, width: PORTRAIT_W, pendingBreak: false };
-  const xml = blocks(body.kids, {}, {}, ctx).join('');
+  let xml = blocks(body.kids, {}, {}, ctx).join('');
+  // văn bản kết thúc bằng phần trang ngang / lịch báo giảng: phần đó là phần cuối (không thêm phần trống → không có trang trắng)
+  let last: 'land' | 'lich' | null = null;
+  for (const k of ['land', 'lich'] as const) if (xml.endsWith(secEnd(k))) { xml = `${xml.slice(0, -secEnd(k).length)}<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr></w:pPr></w:p>`; last = k; }
   const sz = Math.round((opts.fontSize ?? 14) * 2);
   const W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
-  const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document ${W}><w:body>${xml}<w:sectPr>${sect(false)}</w:sectPr></w:body></w:document>`;
+  const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document ${W}><w:body>${xml}<w:sectPr>${sect(last)}</w:sectPr></w:body></w:document>`;
   const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/><w:lang w:val="vi-VN" w:eastAsia="en-US" w:bidi="ar-SA"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:tblPr><w:tblInd w:w="0" w:type="dxa"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="108" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style></w:styles>`;
   const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>${ctx.rels.map((r) => `<Relationship Id="${r.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${r.target}"/>`).join('')}</Relationships>`;
   const types = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpg" ContentType="image/jpeg"/><Default Extension="png" ContentType="image/png"/><Default Extension="gif" ContentType="image/gif"/><Default Extension="bmp" ContentType="image/bmp"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>`;

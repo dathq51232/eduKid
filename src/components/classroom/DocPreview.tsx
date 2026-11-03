@@ -14,6 +14,8 @@ const SCREEN = `<style id="pv-screen">
   body { background: #fff; max-width: 21cm; margin: 16px auto 40px; padding: 2cm 1.5cm 2cm 3cm; box-sizing: border-box; box-shadow: 0 2px 14px rgba(15,23,42,.18); overflow-wrap: anywhere; }
   .Land { position: relative; width: 29.7cm; min-height: 21cm; box-sizing: border-box; padding: 1.5cm 2cm 1.5cm 2.5cm; margin: -2cm 0 36px -3cm; background: #fff; box-shadow: 0 2px 14px rgba(15,23,42,.18); }
   ${WORD_LAND_CSS}
+  .Lich { position: relative; width: 21cm; min-height: 29.7cm; box-sizing: border-box; padding: 1cm 1cm 1cm 1.5cm; margin: -2cm 0 36px -3cm; background: #fff; box-shadow: 0 2px 14px rgba(15,23,42,.18); }
+  .Lich::after { content: 'hết trang 1'; position: absolute; left: 0; right: 0; top: calc(29.7cm - 1cm); border-top: 2px dashed #ef4444; color: #ef4444; font: 600 11px system-ui, sans-serif; text-align: right; padding: 2px 8px 0 0; }
   .Land::after { content: 'hết trang 1 (trang ngang)'; position: absolute; left: 0; right: 0; top: calc(21cm - 1.5cm); border-top: 2px dashed #ef4444; color: #ef4444; font: 600 11px system-ui, sans-serif; text-align: right; padding: 2px 8px 0 0; }
   p[style*="page-break-before"] { border-top: 2px dashed #9aa7b8; margin: 28px -1.5cm 18px -3cm !important; height: 0; overflow: hidden; }
   [contenteditable="true"] :focus, body[contenteditable="true"] { outline: none; }
@@ -28,7 +30,7 @@ const stripSrc = (html: string) => html.replace(/\s+src="blob:[^"]*"/g, '');
  * Bản xem trước văn bản trước khi xuất Word: hiện đúng nội dung (cả hình, bảng tô màu của giáo án gốc),
  * cho sửa trực tiếp, in / lưu PDF, tải file .docx.
  */
-export default function DocPreview({ title, filename, html, onClose, onSaveOrig, inline, screenCss, fontSize, extra }: {
+export default function DocPreview({ title, filename, html, onClose, onSaveOrig, inline, screenCss, fontSize, extra, below }: {
   title: string; filename: string; html: string; onClose?: () => void;
   /** hiện ngay trong trang thay vì cửa sổ nổi */
   inline?: boolean;
@@ -38,6 +40,8 @@ export default function DocPreview({ title, filename, html, onClose, onSaveOrig,
   fontSize?: number;
   /** nút thêm trên thanh công cụ */
   extra?: React.ReactNode;
+  /** dòng tuỳ chọn ngay dưới thanh công cụ */
+  below?: React.ReactNode;
   /** có = cho lưu phần bản gốc (khối data-orig) đã sửa vào giáo án */
   onSaveOrig?: (html: string) => void;
 }) {
@@ -121,6 +125,7 @@ export default function DocPreview({ title, filename, html, onClose, onSaveOrig,
           {extra}
           {onClose && <button type="button" className="mini-btn" aria-label="Đóng" onClick={onClose}><X aria-hidden="true" /></button>}
         </div>
+        {below}
         {imgs ? <iframe ref={frame} className="pv-frame" title="Bản xem trước" sandbox="allow-same-origin allow-modals" srcDoc={srcDoc} /> : <div className="pv-frame pv-loading">Đang chuẩn bị bản xem trước…</div>}
       </div>
     </div>
