@@ -33,8 +33,10 @@ const SUBJ_CLS: Record<string, string> = { toan: 'toan', 'tieng-viet': 'tv', 'ti
 const SUBJ_SCENE: Record<string, SceneKind> = { 'dao-duc': 'class', tnxh: 'garden', 'khoa-hoc': 'garden', hdtn: 'yard', 'ls-dl': 'yard', 'tin-hoc': 'class', 'cong-nghe': 'class' };
 const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
-export default function DeckFromLesson({ classId, grade, busy, made, onCreate, onClose }: {
+export default function DeckFromLesson({ classId, grade, busy, made, onCreate, onClose, openPlan }: {
   classId: string; grade: number; busy: boolean;
+  /** mở sẵn tiết (giáo án) này: chuyển tới tuần của tiết, chỉ chọn tiết đó */
+  openPlan?: string;
   /** id giáo án (tiết) đã có bài thao giảng */
   made: Set<string>;
   onCreate: (d: Deck[]) => void; onClose: () => void;
@@ -74,11 +76,12 @@ export default function DeckFromLesson({ classId, grade, busy, made, onCreate, o
         if (!list.length) { setMode('kho'); return; }
         const weeks = [...new Set(list.map((r) => mondayOf(r.teach_date!)))].sort();
         const now = mondayOf(todayIso());
-        setWeek(weeks.includes(now) ? now : weeks.filter((w) => w <= now).at(-1) ?? weeks[0]);
+        const want = openPlan ? list.find((r) => r.id === openPlan) : undefined;
+        setWeek(want ? mondayOf(want.teach_date!) : weeks.includes(now) ? now : weeks.filter((w) => w <= now).at(-1) ?? weeks[0]);
       } catch { if (!off) { setRows([]); setMode('kho'); } }
     })();
     return () => { off = true; };
-  }, [classId]);
+  }, [classId, openPlan]);
 
   const weeks = useMemo(() => [...new Set((rows ?? []).map((r) => mondayOf(r.teach_date!)))].sort(), [rows]);
   const weekRows = useMemo(() => (rows ?? []).filter((r) => r.teach_date! >= week && r.teach_date! <= addDays(week, 6)), [rows, week]);
@@ -90,6 +93,7 @@ export default function DeckFromLesson({ classId, grade, busy, made, onCreate, o
     let off = false;
     const pick = (all: Record<string, GiaoAn>) => {
       const demo = weekRows.filter((r) => all[r.id] && isDemo(all[r.id])).map((r) => r.id);
+      if (openPlan && all[openPlan] && weekRows.some((r) => r.id === openPlan)) { setPicked(new Set([openPlan])); setFocus(openPlan); return; }
       setPicked(new Set(demo)); setFocus(demo[0] ?? null);
     };
     if (!need.length) { pick(plans); return; }

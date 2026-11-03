@@ -15,7 +15,7 @@ const DeckFromLesson = dynamic(() => import('./DeckFromLesson'), { ssr: false, l
 
 export type DeckRow = { id: string; title: string; grade: number; updated_at: string; slides?: number; plan?: string };
 
-export default function DeckHome({ classId, grade, decks, missing }: { classId: string; grade: number; decks: DeckRow[]; missing: boolean }) {
+export default function DeckHome({ classId, grade, decks, missing, openPlan }: { classId: string; grade: number; decks: DeckRow[]; missing: boolean; /** mở sẵn bảng tạo bài cho tiết (giáo án) này — từ trang Kế hoạch bài dạy */ openPlan?: string }) {
   const router = useRouter();
   const supabase = useMemo(() => { try { return createClient(); } catch { return null; } }, []);
   const [list, setList] = useState(decks);
@@ -23,7 +23,7 @@ export default function DeckHome({ classId, grade, decks, missing }: { classId: 
   const [err, setErr] = useState('');
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
   const [title, setTitle] = useState('');
-  const [wiz, setWiz] = useState(false);
+  const [wiz, setWiz] = useState(!!openPlan);
   const [ok, setOk] = useState('');
 
   const create = async (D: Deck, key: string) => {
@@ -79,7 +79,7 @@ export default function DeckHome({ classId, grade, decks, missing }: { classId: 
           <img src="/brand/milo-professor-sm.webp" alt="" /><span><b><Sparkles aria-hidden="true" /> Tạo từ bài học</b><small>Theo lịch báo giảng hoặc kho bài học</small></span>
         </button>
       </div>
-      {wiz && <DeckFromLesson classId={classId} grade={grade} busy={busy === 'lesson'} made={made} onClose={() => setWiz(false)} onCreate={(Ds) => void createMany(Ds)} />}
+      {wiz && <DeckFromLesson classId={classId} grade={grade} busy={busy === 'lesson'} made={made} openPlan={openPlan} onClose={() => setWiz(false)} onCreate={(Ds) => void createMany(Ds)} />}
 
       {list.length > 0 && <>
         <h2 className="dh-h">Bài thao giảng của tôi <span>{list.length}</span></h2>

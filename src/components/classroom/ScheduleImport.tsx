@@ -10,6 +10,7 @@ import { parseSchedule, plansFromSchedule, scheduleTemplate, schoolGroupLabel, s
 import { pickFromLibrary, type LibraryMeta } from '@/lib/plans/library';
 import { isPlan } from '@/lib/plans/generate';
 import { weekDocument } from '@/lib/plans/word';
+import { fitWeekFont } from '@/lib/plans/fit';
 import type { SubjectCode } from '@/lib/types';
 
 type SavedLite = { teach_date: string | null; period: number | null; title: string };
@@ -29,7 +30,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
   /** danh mục kho giáo án của trường (không kèm nội dung) */
   library: LibraryMeta[];
   onOpen: (plan: LessonPlan) => void; onSaved: (monday: string) => void;
-  onPreview: (p: { title: string; filename: string; html: string }) => void;
+  onPreview: (p: { title: string; filename: string; html: string; note?: string }) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState('');
@@ -105,7 +106,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
   const exportWord = () => {
     if (!sch || !chosen.length) return;
     const monday = sch.monday || mondayOf(chosen[0].plan.date || new Date().toISOString().slice(0, 10));
-    onPreview({ title: `Kế hoạch dạy học tuần ${sch.week || viDate(monday)} + ${chosen.length} giáo án`, filename: `ke-hoach-day-hoc-tuan-${sch.week || monday}`, html: weekDocument(monday, chosen.map((r) => r.plan), school, className, true, sch.skipped) });
+    onPreview({ title: `Kế hoạch dạy học tuần ${sch.week || viDate(monday)} + ${chosen.length} giáo án`, filename: `ke-hoach-day-hoc-tuan-${sch.week || monday}`, ...(() => { const ps = chosen.map((r) => r.plan); const fit = fitWeekFont((f) => weekDocument(monday, ps, school, className, false, sch.skipped, { font: f })); return { html: weekDocument(monday, ps, school, className, true, sch.skipped, { font: fit?.font }), note: fit ? (fit.fits ? `Lịch tuần vừa 1 trang (cỡ chữ bảng ${String(fit.font).replace('.', ',')})` : 'Lịch tuần quá dài: ở cỡ chữ 8 vẫn tràn sang trang 2 — rút gọn cột ND tích hợp / tên bài') : undefined }; })() });
   };
 
   const template = () => {

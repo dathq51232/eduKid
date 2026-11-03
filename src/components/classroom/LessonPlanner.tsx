@@ -2,17 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, Copy, FileDown, FilePlus2, Save, Sparkles, Trash2 } from 'lucide-react';
+import { CalendarDays, Copy, FileDown, FilePlus2, MonitorPlay, Save, Sparkles, Trash2, Undo2, Maximize2, Minimize2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
   SUBJECT_NAMES, addDays, blankPlan, generatePlan, isPlan, mondayOf, subjectNameOf, viDate, weekdayVi,
-  type LessonInfo, type LessonPlan, type PlanActivity, type PlanSubject,
+  type LessonInfo, type LessonPlan, type PlanSubject,
 } from '@/lib/plans/generate';
 import { plansDocument, weekDocument } from '@/lib/plans/word';
+import { fitWeekFont } from '@/lib/plans/fit';
 import type { SubjectCode } from '@/lib/types';
 import ScheduleImport from './ScheduleImport';
 import PlanLibrary from './PlanLibrary';
 import DocPreview from './DocPreview';
+import PlanWorkspace from './PlanWorkspace';
 import type { LibraryMeta } from '@/lib/plans/library';
 import { ToolIcon } from '@/components/classroom/tool-icons';
 
@@ -52,7 +54,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
   const [scope, setScope] = useState<'week' | 'all'>('week');
   const editorRef = useRef<HTMLElement>(null);
   const [library, setLibrary] = useState<LibraryMeta[]>([]);
-  const [preview, setPreview] = useState<{ title: string; filename: string; html: string; single?: boolean } | null>(null);
+  const [preview, setPreview] = useState<{ title: string; filename: string; html: string; single?: boolean; note?: string } | null>(null);
 
   useEffect(() => { setLessonId((cur) => (lessons.some((l) => l.id === cur) ? cur : lessons[0]?.id ?? '')); }, [lessons]);
 
@@ -63,8 +65,31 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
   }, []);
   useEffect(() => { void refresh(); }, [refresh]);
 
-  const edit = (fn: (p: LessonPlan) => LessonPlan) => { setPlan((p) => (p ? fn(p) : p)); setDirty(true); };
-  const setAct = (i: number, patch: Partial<PlanActivity>) => edit((p) => ({ ...p, activities: p.activities.map((a, k) => (k === i ? { ...a, ...patch } : a)) }));
+  // hoàn tác: lưu trạng thái trước mỗi đợt sửa (gộp các lần gõ liên tiếp trong 1 giây)
+  const history = useRef<LessonPlan[]>([]);
+  const lastPush = useRef(0);
+  const [, bump] = useState(0);
+  const edit = useCallback((fn: (p: LessonPlan) => LessonPlan) => {
+    setPlan((p) => {
+      if (!p) return p;
+      if (Date.now() - lastPush.current > 1000) { history.current = [...history.current.slice(-49), p]; lastPush.current = Date.now(); bump((x) => x + 1); }
+      return fn(p);
+    });
+    setDirty(true);
+  }, []);
+  const undo = () => { const prev = history.current.pop(); if (prev) { setPlan(prev); setDirty(true); lastPush.current = 0; bump((x) => x + 1); } };
+  const [view, setView] = useState<'split' | 'form'>(() => { try { return localStorage.getItem('edukid:plan-view') === 'form' ? 'form' : 'split'; } catch { return 'split'; } });
+  const pickView = (v: 'split' | 'form') => { setView(v); try { localStorage.setItem('edukid:plan-view', v); } catch { /* bỏ qua */ } };
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  // soạn toàn màn hình (3 cột rộng rãi); Esc để thu nhỏ
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    if (!full) return;
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setFull(false); };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', k);
+    return () => { window.removeEventListener('keydown', k); document.body.style.overflow = ''; };
+  }, [full]);
 
   const confirmDiscard = () => !dirty || window.confirm('Giáo án đang soạn chưa lưu. Bỏ thay đổi?');
 
@@ -75,6 +100,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
     setPlan({ ...base, date, period });
     setPlanId(null);
     setDirty(true);
+    history.current = []; setFull(true);
     setMsg({ kind: 'info', text: blank ? 'Đã tạo giáo án trống. Nhập tên bài và nội dung rồi bấm Lưu.' : 'Đã soạn sẵn giáo án gợi ý. Thầy cô đọc, sửa theo lớp mình rồi bấm Lưu.' });
   };
 
@@ -89,13 +115,14 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
     setPlanId(id);
     setDirty(false);
     setMsg(null);
+    history.current = []; setFull(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const save = async (asNew = false) => {
+  const save = async (asNew = false, silent = false) => {
     if (!plan) return;
-    if (plan.title.trim().length < 2) return setMsg({ kind: 'error', text: 'Nhập tên bài trước khi lưu.' });
-    setBusy(true);
+    if (plan.title.trim().length < 2) { if (!silent) setMsg({ kind: 'error', text: 'Nhập tên bài trước khi lưu.' }); return; }
+    if (!silent) setBusy(true);
     const { data, error } = await createClient().rpc('teacher_save_plan', {
       p_plan: asNew ? null : planId, p_class: classId, p_title: plan.title.trim().slice(0, 200), p_subject: plan.subject, p_grade: plan.grade,
       p_date: plan.date || null, p_period: plan.period || null, p_data: plan,
@@ -104,6 +131,8 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
     if (error) return setMsg({ kind: 'error', text: notReady(error.message) ? MIGRATION_HINT : /subject_check/i.test(error.message) ? SUBJECT_HINT : 'Chưa lưu được. Thử lại sau.' });
     setPlanId(data as string);
     setDirty(false);
+    setSavedAt(new Date());
+    if (silent) return;
     setMsg({ kind: 'ok', text: asNew ? 'Đã lưu thành giáo án mới.' : 'Đã lưu giáo án.' });
     void refresh();
   };
@@ -133,8 +162,17 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
     setPlanId(null);
     setDirty(true);
     setMsg({ kind: 'info', text: `Giáo án “${p.title}” (từ lịch báo giảng). Sửa rồi bấm Lưu.` });
+    history.current = []; setFull(true);
     setTimeout(() => editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
+
+  // tự lưu: giáo án đã lưu một lần thì 4 giây sau lần sửa cuối tự lưu lại
+  const saveRef = useRef(save); saveRef.current = save;
+  useEffect(() => {
+    if (!dirty || !planId || !canSave || busy) return;
+    const t = setTimeout(() => void saveRef.current(false, true), 4000);
+    return () => clearTimeout(t);
+  }, [plan, dirty, planId, canSave, busy]);
 
   const exportPlan = () => plan && setPreview({ title: plan.title || 'Giáo án', filename: `giao-an-${plan.title || 'bai-hoc'}`, html: plansDocument([plan], school), single: true });
 
@@ -148,7 +186,8 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
     const got = await Promise.all(inWeek.map((s) => sb.rpc('teacher_get_plan', { p_plan: s.id })));
     setBusy(false);
     const plans = got.map((g) => ((g.data ?? []) as { data: unknown }[])[0]?.data).filter(isPlan);
-    setPreview({ title: `Kế hoạch dạy học tuần ${viDate(week)}${withPlans ? ` + ${plans.length} giáo án` : ''}`, filename: `ke-hoach-day-hoc-tuan-${week}`, html: weekDocument(week, plans, school, className, withPlans) });
+    const fit = fitWeekFont((f) => weekDocument(week, plans, school, className, false, [], { font: f }));
+    setPreview({ title: `Kế hoạch dạy học tuần ${viDate(week)}${withPlans ? ` + ${plans.length} giáo án` : ''}`, filename: `ke-hoach-day-hoc-tuan-${week}`, html: weekDocument(week, plans, school, className, withPlans, [], { font: fit?.font }), note: fit ? (fit.fits ? `Lịch tuần vừa 1 trang (cỡ chữ bảng ${String(fit.font).replace('.', ',')})` : 'Lịch tuần quá dài: ở cỡ chữ 8 vẫn tràn sang trang 2 — rút gọn cột ND tích hợp / tên bài') : undefined });
   };
 
   return (
@@ -194,10 +233,19 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
       {msg && <p className={`adm-alert is-${msg.kind}`} role={msg.kind === 'error' ? 'alert' : 'status'}>{msg.text}</p>}
 
       {plan && (
-        <section ref={editorRef} className="dash-section planner-card planner-editor" aria-labelledby="pl-edit">
+        <section ref={editorRef} className={`dash-section planner-card planner-editor${full ? ' is-full' : ''}`} aria-labelledby="pl-edit">
           <div className="planner-edit-head">
-            <h2 id="pl-edit">{planId ? 'Sửa giáo án' : 'Giáo án mới'} · {subjectNameOf(plan)}{dirty && <span className="planner-dirty"> · chưa lưu</span>}</h2>
+            <h2 id="pl-edit">{planId ? 'Sửa giáo án' : 'Giáo án mới'} · {subjectNameOf(plan)}{dirty ? <span className="planner-dirty"> · {planId ? 'đang lưu tự động…' : 'chưa lưu'}</span> : savedAt ? <span className="pw-saved"> · ✓ đã lưu {savedAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span> : null}</h2>
             <div className="planner-actions">
+              <div className="praise-seg" role="radiogroup" aria-label="Cách hiển thị">
+                <button type="button" role="radio" aria-checked={view === 'split'} className={view === 'split' ? 'is-on' : ''} onClick={() => pickView('split')}>◫ Cạnh nhau</button>
+                <button type="button" role="radio" aria-checked={view === 'form'} className={view === 'form' ? 'is-on' : ''} onClick={() => pickView('form')}>Chỉ khung soạn</button>
+              </div>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => setFull(!full)}>{full ? <><Minimize2 aria-hidden="true" /> Thu nhỏ</> : <><Maximize2 aria-hidden="true" /> Toàn màn hình</>}</button>
+              <button type="button" className="btn btn-outline btn-sm" onClick={undo} disabled={!history.current.length} title="Hoàn tác"><Undo2 aria-hidden="true" /> Hoàn tác</button>
+              {planId && plan.date
+                ? <Link className="btn btn-outline btn-sm" href={`/giao-vien/lop/${classId}/bai-giang-3d?tab=tg&plan=${planId}`}><MonitorPlay aria-hidden="true" /> Tạo bài thao giảng</Link>
+                : <button type="button" className="btn btn-outline btn-sm" disabled title="Lưu giáo án (có ngày dạy) trước"><MonitorPlay aria-hidden="true" /> Tạo bài thao giảng</button>}
               <button type="button" className="btn btn-primary btn-sm" disabled={busy || !canSave} onClick={() => void save(false)}><Save aria-hidden="true" /> Lưu</button>
               {planId && <button type="button" className="btn btn-outline btn-sm" disabled={busy || !canSave} onClick={() => void save(true)}>Lưu thành bản mới</button>}
               <button type="button" className="btn btn-outline btn-sm" onClick={duplicate}><Copy aria-hidden="true" /> Nhân bản cho tiết khác</button>
@@ -205,52 +253,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
             </div>
           </div>
 
-          <div className="planner-grid">
-            <label className="adm-field planner-wide"><span>Tên bài</span><input value={plan.title} maxLength={200} onChange={(e) => edit((p) => ({ ...p, title: e.target.value }))} /></label>
-            <label className="adm-field"><span>Ngày dạy</span><input type="date" value={plan.date} onChange={(e) => edit((p) => ({ ...p, date: e.target.value }))} /></label>
-            <label className="adm-field"><span>Tiết</span><input type="number" min={1} max={10} value={plan.period || ''} onChange={(e) => edit((p) => ({ ...p, period: Math.max(0, Math.min(10, Number(e.target.value) || 0)) }))} /></label>
-            <label className="adm-field"><span>Tuần</span><input value={plan.week} maxLength={10} placeholder="vd: 7" onChange={(e) => edit((p) => ({ ...p, week: e.target.value }))} /></label>
-            <label className="adm-field"><span>Thời lượng (phút)</span><input type="number" min={20} max={90} value={plan.minutes} onChange={(e) => edit((p) => ({ ...p, minutes: Number(e.target.value) || 35 }))} /></label>
-            <label className="adm-field"><span>Buổi</span><select value={plan.session ?? ''} onChange={(e) => edit((p) => ({ ...p, session: e.target.value }))}><option value="">—</option><option>Sáng</option><option>Chiều</option></select></label>
-            <label className="adm-field"><span>Tiết PPCT</span><input value={plan.ppct ?? ''} maxLength={10} onChange={(e) => edit((p) => ({ ...p, ppct: e.target.value }))} /></label>
-          </div>
-
-          <h3>I. Yêu cầu cần đạt</h3>
-          {plan.source && <p className="dash-muted">Từ kho giáo án của trường: {plan.source}</p>}
-          {plan.orig && (
-            <div className="planner-orig" role="group" aria-label="Bản xuất Word">
-              <p>Giáo án có <b>bản gốc của trường</b>: giữ nguyên chữ, bảng tô màu, hình ảnh như file Word đã nạp. Bản xem trước và file Word xuất ra dùng:</p>
-              <label><input type="radio" name="pl-orig" checked={plan.useOrig !== false} onChange={() => edit((p) => ({ ...p, useOrig: true }))} /> Bản gốc của trường (sửa trực tiếp trên bản xem trước)</label>
-              <label><input type="radio" name="pl-orig" checked={plan.useOrig === false} onChange={() => edit((p) => ({ ...p, useOrig: false }))} /> Khung soạn bên dưới</label>
-              <button type="button" className="mini-btn" onClick={exportPlan}><FileDown aria-hidden="true" /> Xem bản gốc</button>
-            </div>
-          )}
-          <label className="adm-field"><span>1. {plan.goalLabels?.[0] ?? 'Kiến thức, kĩ năng'}</span><textarea rows={4} value={plan.goals.knowledge} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, knowledge: e.target.value } }))} /></label>
-          <label className="adm-field"><span>2. {plan.goalLabels?.[1] ?? 'Năng lực'}</span><textarea rows={2} value={plan.goals.competence} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, competence: e.target.value } }))} /></label>
-          <label className="adm-field"><span>3. {plan.goalLabels?.[2] ?? 'Phẩm chất'}</span><textarea rows={2} value={plan.goals.quality} onChange={(e) => edit((p) => ({ ...p, goals: { ...p.goals, quality: e.target.value } }))} /></label>
-          <label className="adm-field"><span>4. Nội dung tích hợp (nếu có)</span><textarea rows={2} value={plan.integration ?? ''} placeholder="vd: GDĐP, Quyền con người, Bảo vệ môi trường…" onChange={(e) => edit((p) => ({ ...p, integration: e.target.value }))} /></label>
-
-          <h3>II. Đồ dùng dạy học</h3>
-          <div className="planner-two">
-            <label className="adm-field"><span>Giáo viên</span><textarea rows={2} value={plan.materials.teacher} onChange={(e) => edit((p) => ({ ...p, materials: { ...p.materials, teacher: e.target.value } }))} /></label>
-            <label className="adm-field"><span>Học sinh</span><textarea rows={2} value={plan.materials.student} onChange={(e) => edit((p) => ({ ...p, materials: { ...p.materials, student: e.target.value } }))} /></label>
-          </div>
-
-          <h3>III. Các hoạt động dạy học chủ yếu</h3>
-          {plan.activities.map((a, i) => (
-            <fieldset key={i} className="planner-act">
-              <legend><input className="planner-act-title" value={a.title} aria-label="Tên hoạt động" onChange={(e) => setAct(i, { title: e.target.value })} /> <input className="planner-min" type="number" min={0} max={60} value={a.minutes} aria-label={`Số phút: ${a.title}`} onChange={(e) => setAct(i, { minutes: Number(e.target.value) || 0 })} /> phút</legend>
-              <label className="adm-field"><span>Mục tiêu</span><textarea rows={a.goal.length > 120 ? 3 : 1} value={a.goal} onChange={(e) => setAct(i, { goal: e.target.value })} /></label>
-              <div className="planner-two">
-                <label className="adm-field"><span>Hoạt động của giáo viên</span><textarea rows={Math.min(16, Math.max(6, a.teacher.split('\n').length + 1))} value={a.teacher} onChange={(e) => setAct(i, { teacher: e.target.value })} /></label>
-                <label className="adm-field"><span>Hoạt động của học sinh</span><textarea rows={Math.min(16, Math.max(6, a.student.split('\n').length + 1))} value={a.student} onChange={(e) => setAct(i, { student: e.target.value })} /></label>
-              </div>
-            </fieldset>
-          ))}
-          <p className="dash-muted">Tổng thời gian: {plan.activities.reduce((n, a) => n + (a.minutes || 0), 0)}/{plan.minutes} phút.</p>
-          <label className="adm-field"><span>Đánh giá</span><textarea rows={2} value={plan.assessment} onChange={(e) => edit((p) => ({ ...p, assessment: e.target.value }))} /></label>
-          <h3>IV. Điều chỉnh sau bài dạy</h3>
-          <label className="adm-field"><span>Ghi lại sau khi dạy (để lần sau dùng lại giáo án tốt hơn)</span><textarea rows={3} value={plan.adjust} onChange={(e) => edit((p) => ({ ...p, adjust: e.target.value }))} /></label>
+          <PlanWorkspace plan={plan} edit={edit} school={school} weak={(weakForms as Record<string, string[]>)[plan.subject] ?? []} view={view} />
           {plan.lessonId && (plan.subject === 'toan' || plan.subject === 'tieng-viet' || plan.subject === 'tieng-anh') && <p className="dash-muted">Bài luyện của học sinh: <Link href={`/lam-bai?lessonId=${plan.lessonId}&subject=${plan.subject}&grade=${plan.grade}`}>mở “{plan.title}” trên app</Link>.</p>}
         </section>
       )}
@@ -301,6 +304,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
       </section>
       {preview && (
         <DocPreview title={preview.title} filename={preview.filename} html={preview.html} onClose={() => setPreview(null)}
+          extra={preview.note ? <span className={`pv-fit${/tràn/.test(preview.note) ? ' is-bad' : ''}`}>{/tràn/.test(preview.note) ? '⚠️' : '✅'} {preview.note}</span> : undefined}
           onSaveOrig={preview.single && plan?.orig ? (h) => { edit((p) => ({ ...p, orig: { html: h } })); setPreview(null); setMsg({ kind: 'info', text: 'Đã cập nhật bản gốc của giáo án theo phần sửa trên bản xem trước. Bấm Lưu để lưu lại.' }); } : undefined} />
       )}
     </div>

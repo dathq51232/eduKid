@@ -8,7 +8,7 @@ export const DOC_FONT = "'Times New Roman', Times, serif";
 /** Lề trang A4 đứng theo NĐ30 (trên, phải, dưới, trái) */
 export const PAGE_MARGIN = '20mm 15mm 20mm 30mm';
 /** Lề trang A4 ngang (bảng lịch, ma trận lớn) */
-export const PAGE_MARGIN_LAND = '20mm 20mm 20mm 25mm';
+export const PAGE_MARGIN_LAND = '15mm 20mm 15mm 25mm';
 
 /** CSS cho file Word dạng HTML: ép Times New Roman ở mọi phần tử (Word không luôn kế thừa phông vào bảng) */
 export const WORD_BASE_STYLE = `

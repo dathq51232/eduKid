@@ -19,7 +19,7 @@ const BOOK_KEY = 'gv-bo-sach';
 const BOOKS = { KNTT: 'Kết nối tri thức', CTST: 'Chân trời sáng tạo', CD: 'Cánh diều' } as const;
 type Book = keyof typeof BOOKS;
 
-export default function Lesson3DHome({ classId, className, grade, lessons, missing, decks, decksMissing, initialTab }: { classId: string; className: string; grade: number; lessons: Lesson3DRow[]; missing: boolean; decks: DeckRow[]; decksMissing: boolean; initialTab?: string }) {
+export default function Lesson3DHome({ classId, className, grade, lessons, missing, decks, decksMissing, initialTab, openPlan }: { classId: string; className: string; grade: number; lessons: Lesson3DRow[]; missing: boolean; decks: DeckRow[]; decksMissing: boolean; initialTab?: string; openPlan?: string }) {
   const router = useRouter();
   const supabase = useMemo(() => { try { return createClient(); } catch { return null; } }, []);
   const [tab, setTab] = useState<Tab>(initialTab === 'tg' ? 'tg' : lessons.length ? 'mine' : 'stem');
@@ -100,7 +100,7 @@ export default function Lesson3DHome({ classId, className, grade, lessons, missi
         ))}</ul>
       ))}
 
-      {tab === 'tg' && <DeckHome classId={classId} grade={grade} decks={decks} missing={decksMissing} />}
+      {tab === 'tg' && <DeckHome classId={classId} grade={grade} decks={decks} missing={decksMissing} openPlan={openPlan} />}
 
       {tab === 'tpl' && (
         <ul className="s3h-cards">{TEMPLATES.map((t) => (

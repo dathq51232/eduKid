@@ -5,13 +5,16 @@ import { FileDown, PencilLine, Printer, Save, X } from 'lucide-react';
 import { downloadDocx } from '@/lib/doc-download';
 import { htmlToDocx, type DocImage } from '@/lib/docx-write';
 import { imageKeys, loadImages, type LoadedImage } from '@/lib/plans/images';
+import { WORD_LAND_CSS } from '@/lib/plans/fit';
 
 /** CSS chỉ dùng khi xem trên màn hình: giả lập trang A4, vạch ngắt trang */
 const SCREEN = `<style id="pv-screen">
 @media screen {
   html { background: #e6eaf0; }
   body { background: #fff; max-width: 21cm; margin: 16px auto 40px; padding: 2cm 1.5cm 2cm 3cm; box-sizing: border-box; box-shadow: 0 2px 14px rgba(15,23,42,.18); overflow-wrap: anywhere; }
-  .Land { max-width: none; }
+  .Land { position: relative; width: 29.7cm; min-height: 21cm; box-sizing: border-box; padding: 1.5cm 2cm 1.5cm 2.5cm; margin: -2cm 0 36px -3cm; background: #fff; box-shadow: 0 2px 14px rgba(15,23,42,.18); }
+  ${WORD_LAND_CSS}
+  .Land::after { content: 'hết trang 1 (trang ngang)'; position: absolute; left: 0; right: 0; top: calc(21cm - 1.5cm); border-top: 2px dashed #ef4444; color: #ef4444; font: 600 11px system-ui, sans-serif; text-align: right; padding: 2px 8px 0 0; }
   p[style*="page-break-before"] { border-top: 2px dashed #9aa7b8; margin: 28px -1.5cm 18px -3cm !important; height: 0; overflow: hidden; }
   [contenteditable="true"] :focus, body[contenteditable="true"] { outline: none; }
 }

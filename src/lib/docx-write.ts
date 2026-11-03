@@ -248,7 +248,8 @@ function blocks(nodes: Node[], r: RP, p: PP, ctx: Ctx): string[] {
       out.push(...blocks(el.kids, runFrom(el, r), { ...p, ...paraFrom(el) }, ctx));
       ctx.width = w;
       // kết thúc phần trang ngang
-      out.push(`<w:p><w:pPr><w:sectPr>${sect(true)}</w:sectPr></w:pPr></w:p>`);
+      // dấu kết thúc phần trang ngang: đoạn rất nhỏ để không đẩy sang trang mới khi bảng vừa kín trang
+      out.push(`<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr><w:sectPr>${sect(true)}</w:sectPr></w:pPr></w:p>`);
       continue;
     }
     // div, section, ul, ol, body, html…
@@ -301,6 +302,10 @@ function table(el: El, r: RP, ctx: Ctx): string[] {
     const isHead = tr.kids.some((k) => isEl(k) && k.tag === 'th') && ri === 0;
     const trPr = h || isHead ? `<w:trPr>${h ? `<w:trHeight w:val="${tw(h)}"/>` : ''}${isHead ? '<w:tblHeader/>' : ''}</w:trPr>` : '';
     let cells = '';
+    // cỡ chữ của hàng (theo ô thật đầu tiên): dùng cho dấu đoạn của ô gộp / ô thiếu để hàng không cao hơn chữ
+    const firstCell = grid[ri]?.find((g): g is C => !!g && g !== 'cont');
+    const markR = rPrXml(firstCell ? runFrom(firstCell.el, r) : {});
+    const markLine = firstCell ? paraFrom(firstCell.el).line : undefined;
     for (let col = 0; col < ncol;) {
       const g = grid[ri]?.[col];
       if (g && g !== 'cont') {
@@ -315,7 +320,7 @@ function table(el: El, r: RP, ctx: Ctx): string[] {
         const cr = runFrom(c.el, r);
         const inner = blocks(c.el.kids, cr, { ...paraFrom(c.el), after: 0 }, ctx);
         ctx.width = outerW;
-        if (!inner.length || !inner[inner.length - 1].startsWith('<w:p>')) inner.push(`<w:p>${pPrXml({ after: 0 }, false)}</w:p>`);
+        if (!inner.length || !inner[inner.length - 1].startsWith('<w:p>')) inner.push(`<w:p>${pPrXml({ after: 0 }, false, rPrXml(cr))}</w:p>`);
         cells += `<w:tc>${tcPr}${inner.join('')}</w:tc>`;
         col += c.span;
       } else if (g === 'cont') {
@@ -324,11 +329,11 @@ function table(el: El, r: RP, ctx: Ctx): string[] {
         while (k >= 0 && !origin) { const gg = grid[k][col]; if (gg && gg !== 'cont') origin = gg; k--; }
         const span = origin?.span ?? 1;
         const w = colW.slice(col, col + span).reduce((a, b) => a + b, 0);
-        cells += `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${span > 1 ? `<w:gridSpan w:val="${span}"/>` : ''}<w:vMerge/></w:tcPr><w:p>${pPrXml({ after: 0 }, false)}</w:p></w:tc>`;
+        cells += `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${span > 1 ? `<w:gridSpan w:val="${span}"/>` : ''}<w:vMerge/></w:tcPr><w:p>${pPrXml({ after: 0, line: markLine }, false, markR)}</w:p></w:tc>`;
         col += span;
       } else {
         // thiếu ô (hàng ngắn hơn lưới): thêm ô trống để bảng hợp lệ
-        cells += `<w:tc><w:tcPr><w:tcW w:w="${colW[col]}" w:type="dxa"/></w:tcPr><w:p>${pPrXml({ after: 0 }, false)}</w:p></w:tc>`;
+        cells += `<w:tc><w:tcPr><w:tcW w:w="${colW[col]}" w:type="dxa"/></w:tcPr><w:p>${pPrXml({ after: 0 }, false, markR)}</w:p></w:tc>`;
         col++;
       }
     }
@@ -337,11 +342,13 @@ function table(el: El, r: RP, ctx: Ctx): string[] {
   const pbb = ctx.pendingBreak;
   ctx.pendingBreak = false;
   const pre = pbb ? `<w:p><w:pPr><w:pageBreakBefore/><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/></w:pPr></w:p>` : '';
-  return [`${pre}<w:tbl><w:tblPr><w:tblW w:w="${tblW}" w:type="dxa"/>${jc}${border}<w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="28" w:type="dxa"/><w:left w:w="85" w:type="dxa"/><w:bottom w:w="28" w:type="dxa"/><w:right w:w="85" w:type="dxa"/></w:tblCellMar><w:tblLook w:val="0000"/></w:tblPr><w:tblGrid>${colW.map((w) => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>${trs}</w:tbl>`, `<w:p>${pPrXml({ after: 0, line: 1 }, false)}</w:p>`];
+  return [`${pre}<w:tbl><w:tblPr><w:tblW w:w="${tblW}" w:type="dxa"/>${jc}${border}<w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="28" w:type="dxa"/><w:left w:w="85" w:type="dxa"/><w:bottom w:w="28" w:type="dxa"/><w:right w:w="85" w:type="dxa"/></w:tblCellMar><w:tblLook w:val="0000"/></w:tblPr><w:tblGrid>${colW.map((w) => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>${trs}</w:tbl>`, ctx.width === LAND_W
+    ? '<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr></w:pPr></w:p>'
+    : `<w:p>${pPrXml({ after: 0, line: 1 }, false)}</w:p>`];
 }
 
 const sect = (land: boolean) => land
-  ? '<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1417" w:header="567" w:footer="567" w:gutter="0"/>'
+  ? '<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="851" w:right="1134" w:bottom="851" w:left="1417" w:header="567" w:footer="567" w:gutter="0"/>'
   : '<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="851" w:bottom="1134" w:left="1701" w:header="567" w:footer="567" w:gutter="0"/>';
 
 const enc = (s: string) => new TextEncoder().encode(s);

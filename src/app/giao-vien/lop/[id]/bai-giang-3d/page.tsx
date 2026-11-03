@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: 'Bài giảng 3D & thao giảng · Ed
 export const dynamic = 'force-dynamic';
 
 // Xưởng bài giảng 3D (migration 0034) + bài thao giảng (migration 0046): danh sách bài của giáo viên, bài mẫu, bài STEM lớp 1–5.
-export default async function Lessons3DPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
+export default async function Lessons3DPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; plan?: string }> }) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   const p = await loadClassPage(id, 'bai-giang-3d');
   if (p.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Bài giảng 3D" /></main></>);
@@ -24,7 +24,7 @@ export default async function Lessons3DPage({ params, searchParams }: { params: 
       <LearnHeader />
       <main className="dash wrap ct-page">
         <Lesson3DHome classId={p.cls.id} className={p.cls.name} grade={p.cls.grade} lessons={(data ?? []) as Lesson3DRow[]} missing={!!error}
-          decks={deckRows} decksMissing={!!decks.error} initialTab={sp.tab} />
+          decks={deckRows} decksMissing={!!decks.error} initialTab={sp.tab} openPlan={/^[0-9a-f-]{36}$/i.test(sp.plan ?? '') ? sp.plan : undefined} />
       </main>
     </>
   );
