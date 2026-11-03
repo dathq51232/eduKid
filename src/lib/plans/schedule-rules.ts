@@ -13,9 +13,9 @@ export const HEADER_RULES: [RegExp, 'ppct' | 'day' | 'session' | 'title' | 'subj
   [/ppct|phan phoi/, 'ppct'],
   [/^(thu|ngay)\b|thu\s*,?\s*ngay|ngay\s*thang/, 'day'],
   [/buoi/, 'session'],
-  [/ten bai|bai day|noi dung bai|ten chu de|bai hoc/, 'title'],
-  [/^mon|mon hoc|phan mon/, 'subject'],
   [/tich hop|dddh|do dung|thiet bi/, 'integration'],
+  [/ten bai|bai day|dau bai|noi dung|ten chu de|chu de|bai hoc|cong viec/, 'title'],
+  [/^mon|mon hoc|phan mon/, 'subject'],
   [/dieu chinh|ghi chu/, 'adjust'],
   [/tiet/, 'period'],
 ];
@@ -35,7 +35,7 @@ export const SUBJECT_ALIASES: [RegExp, string][] = [
   [/^shdc|^chao co|sinh hoat duoi co/, 'Hoạt động trải nghiệm'],
   [/^shl\b|sinh hoat lop/, 'Hoạt động trải nghiệm'],
   [/^tn\s*&?\s*xh|^tn-xh/, 'Tự nhiên và Xã hội'],
-  [/^gd\s*tc|^td\b|^the duc/, 'Giáo dục thể chất'],
+  [/^gd\s*tc|^gd\s*t\.?\s*chat|^td\b|^the duc/, 'Giáo dục thể chất'],
   [/^a\.?\s*nhac/, 'Âm nhạc'],
   [/^m\.?\s*thuat/, 'Mĩ thuật'],
 ];
