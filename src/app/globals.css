@@ -7554,3 +7554,7 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .td-pick-grid button:hover { transform: scale(1.1); }
 .td-pick-grid button.is-on { border-color: #2457c5; background: #e8f0ff; }
 .dk-board-n, .dp-tstrip b, .dp-ask button { display: inline-flex; align-items: center; gap: .35em; }
+
+.planner-norm { margin: 8px 0; padding: 10px 14px; border-radius: 12px; background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+.planner-norm p { margin: 0 0 4px; }
+.planner-norm ul { margin: 0 0 8px; padding-left: 20px; font-size: 14px; }

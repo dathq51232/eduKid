@@ -4,8 +4,9 @@
 // Cột được nhận theo tên tiêu đề nên thứ tự cột có thể khác; ô gộp (thứ, buổi) được điền xuống các dòng.
 
 import type { Sheet } from '../xlsx-read';
+import { END_ROW, ERROR_CELL, EXCEL_SERIAL, EXTRA_ONLY, HEADER_RULES, INTEGRATION_EXPAND, INTEGRATION_HEAD, MORNING_SLOTS, SESSION_ROW, SHEET_NAME_HINT, SHEET_NAME_SKIP, SUBJECT_ALIASES } from './schedule-rules';
 import { XS, range, type XCell, type XSheet } from '../xlsx';
-import { addDays, generatePlan, genericPlan, isAppSubject, mondayOf, type LessonInfo, type LessonPlan, type PlanSubject } from './generate';
+import { SUBJECT_NAMES, addDays, generatePlan, genericPlan, isAppSubject, mondayOf, type LessonInfo, type LessonPlan, type PlanSubject } from './generate';
 import type { SubjectCode } from '../types';
 
 export type ScheduleRow = {
@@ -33,6 +34,8 @@ export type Schedule = {
   /** tiết chữ đỏ trong lịch = tiết trống (giáo viên khác dạy / không soạn): bỏ qua khi soạn giáo án */
   skipped: ScheduleRow[];
   warnings: string[];
+  /** đã đọc từ trang nào, nhận ra mẫu gì, đã chuẩn hoá những gì (để báo cho thầy cô) */
+  source?: { sheet: string; form: string; notes: string[] };
 };
 
 /** chữ đỏ: đỏ rõ (R cao, G và B thấp) — vd FF0000, C00000, E53935 */
@@ -97,8 +100,12 @@ export function parseViDate(s: string): string {
 }
 
 /** Tên môn trong lịch → mã môn; "(BS)", "bổ sung", "tăng cường" → tiết bổ sung */
-export function subjectOf(label: string): { subject: PlanSubject; extra: boolean } {
-  const f = fold(label);
+export function subjectOf(label: string, title = ''): { subject: PlanSubject; extra: boolean } {
+  const f0 = fold(label);
+  // "TĂNG CƯỜNG" / "Ôn tập" không ghi môn chính: lấy môn từ tên bài ("Ôn toán", "Ôn Tiếng Việt")
+  if (EXTRA_ONLY.test(f0) && title) { const t = subjectOf(fold(title).replace(/^on\s+(tap\s+|luyen\s+)?/, '')); return { subject: t.subject, extra: true }; }
+  const alias = SUBJECT_ALIASES.find(([re]) => re.test(f0))?.[1];
+  const f = alias ? `${fold(alias)}${/\(\s*bs\s*\)|\bbs\b|bo sung|tang cuong/.test(f0) ? ' (bs)' : ''}` : f0;
   const extra = /\(\s*bs\s*\)|\bbs\b|bo sung|tang cuong|on luyen\b/.test(f);
   const g = f.replace(/\(.*?\)/g, ' ').replace(/\bbs\b/g, ' ').trim();
   const has = (...k: string[]) => k.some((x) => g.includes(x));
@@ -127,15 +134,8 @@ function mapColumns(header: string[]): Partial<Record<Col, number>> {
   header.forEach((h, i) => {
     const f = fold(h);
     if (!f) return;
-    const set = (k: Col) => { if (cols[k] === undefined) cols[k] = i; };
-    if (f.includes('ppct') || f.includes('phan phoi')) set('ppct');
-    else if (f.startsWith('thu') || f.includes('ngay')) set('day');
-    else if (f.includes('buoi')) set('session');
-    else if (f.includes('ten bai') || f.includes('bai day') || f.includes('noi dung bai')) set('title');
-    else if (f.includes('mon')) set('subject');
-    else if (f.includes('tich hop') || f.includes('dddh') || f.includes('do dung')) set('integration');
-    else if (f.includes('dieu chinh') || f.includes('ghi chu')) set('adjust');
-    else if (f.includes('tiet')) set('period');
+    const hit = HEADER_RULES.find(([re]) => re.test(f));
+    if (hit && cols[hit[1]] === undefined) cols[hit[1]] = i;
   });
   return cols;
 }
@@ -151,29 +151,68 @@ function fillMerges(sheet: Sheet): { rows: string[][]; colors: string[][] } {
   return { rows, colors };
 }
 
-const END = /^(to truong|hieu truong|pho hieu truong|nguoi lap|giao vien|duyet|ky duyet|xac nhan)/;
+/** "16/11/2026" hoặc ngày Excel dạng số seri (46342) → yyyy-mm-dd */
+export function dateOf(s: string): string {
+  const v = parseViDate(s);
+  if (v) return v;
+  const t = s.trim();
+  if (/^\d{5}(\.\d+)?$/.test(t)) {
+    const n = Math.floor(Number(t));
+    if (n >= EXCEL_SERIAL.min && n <= EXCEL_SERIAL.max) return new Date(Date.UTC(1899, 11, 30) + n * 86400000).toISOString().slice(0, 10);
+  }
+  return '';
+}
+const weekdayOf = (iso: string) => (new Date(`${iso}T12:00:00`).getDay() + 6) % 7;
 
-/** Đọc lịch báo giảng từ trang tính */
+/** Tách nội dung tích hợp viết ở cuối tên bài: "Bài 46: ac ăc âc -Tiết 1 - Quốc phòng và an ninh" */
+export function splitIntegration(title: string): { title: string; integration: string } {
+  const parts = title.split(/\s+[-–—]\s+/);
+  const tail: string[] = [];
+  while (parts.length > 1 && INTEGRATION_HEAD.test(fold(parts[parts.length - 1]))) tail.unshift(parts.pop()!.trim());
+  if (!tail.length) return { title, integration: '' };
+  const expand = (x: string) => INTEGRATION_EXPAND.find(([re]) => re.test(x.trim()))?.[1] ?? x;
+  return { title: parts.join(' - ').trim(), integration: tail.map(expand).join('\n') };
+}
+
+/** Tên môn theo mẫu chuẩn (như KHDH của trường): "TIẾNG VIỆT" → "Tiếng Việt", "HĐ T.NGHIỆM" → "HĐTN", "TĂNG CƯỜNG" + "Ôn toán" → "Toán (BS)".
+ *  Tên môn đã viết thường / có số thứ tự riêng (vd "HĐTN2", "Toán (BS)") giữ nguyên. */
+const SHORT: Partial<Record<PlanSubject, string>> = { tnxh: 'TNXH', hdtn: 'HĐTN', gdtc: 'GDTC', 'ls-dl': 'Lịch sử và Địa lí' };
+export function canonicalSubjectLabel(label: string, subject: PlanSubject, extra: boolean): string {
+  const f = fold(label);
+  const upper = /\p{Lu}/u.test(label) && label === label.toUpperCase();
+  if (subject === 'khac' || !(upper || EXTRA_ONLY.test(f) || SUBJECT_ALIASES.some(([re]) => re.test(f)))) return label;
+  return `${SHORT[subject] ?? SUBJECT_NAMES[subject]}${extra ? ' (BS)' : ''}`;
+}
+/** Tên bài gọn theo mẫu chuẩn: "ac ăc âc -Tiết 1" → "ac ăc âc - Tiết 1", "( Tiết 1)" → "(Tiết 1)" */
+const tidyTitle = (t: string) => t.replace(/\s*[-–]\s*(Tiết\s*\d)/g, ' - $1').replace(/\(\s+/g, '(').replace(/\s+\)/g, ')').replace(/\s{2,}/g, ' ').trim();
+
+/** Một lịch báo giảng đã quy về mẫu chuẩn + thông tin nhận dạng (đọc từ trang nào, mẫu gì, đã chuẩn hoá những gì) */
+export type ScheduleSource = { sheet: string; form: string; notes: string[] };
+
+/** Đọc lịch báo giảng từ trang tính, quy về mẫu chuẩn của app */
 export function parseSchedule(sheet: Sheet): Schedule {
   const raw = sheet.rows;
   const warnings: string[] = [];
-  const hi = raw.findIndex((r) => { const f = r.map(fold); return f.some((x) => x.includes('mon')) && f.some((x) => x.includes('bai')); });
+  const notes: string[] = [];
+  const hi = raw.findIndex((r) => { const c = mapColumns(r); return c.subject !== undefined && c.title !== undefined; });
   if (hi < 0) throw new Error('Không tìm thấy dòng tiêu đề bảng (cần có cột “Môn học” và “Tên bài dạy”).');
   const cols = mapColumns(raw[hi]);
-  if (cols.subject === undefined || cols.title === undefined) throw new Error('Thiếu cột “Môn học” hoặc “Tên bài dạy”.');
 
-  // thông tin đầu trang
+  // thông tin đầu trang; nhãn và giá trị có thể nằm ở 2 ô liền nhau ("KHỐI :" │ 1, "Từ ngày:" │ 16/11/2026)
   let grade: number | null = null, week = '', from = '';
   for (const r of raw.slice(0, hi)) {
+    const next = (i: number) => r.slice(i + 1).find((x) => x.trim()) ?? '';
     r.forEach((cell, i) => {
       const f = fold(cell);
-      const g = /\b(khoi|lop)\s*(\d)/.exec(f);
+      if (!f) return;
+      const g = /\b(khoi|lop)\s*:?\s*(\d)/.exec(f);
       if (g && grade === null) grade = Number(g[2]);
-      if (/^tuan\b/.test(f)) {
+      else if (/\b(khoi|lop)\s*:?$/.test(f) && grade === null && /^\d$/.test(next(i).trim())) grade = Number(next(i));
+      if (/^tuan\b/.test(f) && !week) {
         const n = /(\d+)/.exec(f)?.[1] ?? r.slice(i + 1).find((x) => /^\d+$/.test(x.trim()));
         if (n) week = String(Number(n));
       }
-      if (f.includes('tu ngay') && !from) from = parseViDate(cell);
+      if (f.includes('tu ngay') && !from) from = parseViDate(cell) || dateOf(next(i));
     });
   }
   if (!week) { const t = raw.slice(0, hi).flat().map(fold).find((x) => /tuan\s*\d+/.test(x)); if (t) week = /tuan\s*(\d+)/.exec(t)![1]; }
@@ -182,38 +221,85 @@ export function parseSchedule(sheet: Sheet): Schedule {
   const cell = (r: string[], k: Col) => (cols[k] === undefined ? '' : (r[cols[k]!] ?? '').trim());
   /** tiết chữ đỏ: ô Môn học hoặc ô Tên bài dạy tô chữ đỏ */
   const red = (i: number) => (['subject', 'title'] as const).some((k) => cols[k] !== undefined && rows[i][cols[k]!]?.trim() && isRedColor(colors[i]?.[cols[k]!]));
-  const hasLabels = rows.slice(hi + 1).some((r) => dayOfLabel(cell(r, 'day')) !== null);
+  const sepOf = (r: string[]) => (cell(r, 'subject') ? null : r.map((x) => SESSION_ROW.exec(fold(x))).find(Boolean)?.[1] ?? null);
+  const body = rows.slice(hi + 1);
+  const endAt = body.findIndex((r) => r.some((x) => END_ROW.test(fold(x))));
+  const table = endAt < 0 ? body : body.slice(0, endAt);
+  // mẫu không có cột Buổi mà chia buổi bằng dòng "BUỔI SÁNG / BUỔI CHIỀU": mỗi dòng "buổi sáng" mở đầu một ngày
+  const sepMode = cols.session === undefined && table.some((r) => sepOf(r));
+  const hasLabels = table.some((r) => dayOfLabel(cell(r, 'day')) !== null);
 
-  const out: ScheduleRow[] = [];
-  const skipped: ScheduleRow[] = [];
-  let day = -1, session = '', firstDate = '';
-  let lastSessionDay = -1;
-  for (let i = hi + 1; i < rows.length; i++) {
-    const r = rows[i];
-    if (r.some((x) => END.test(fold(x)))) break;
-    const dcell = cell(r, 'day');
-    if (dcell) {
-      const lab = dayOfLabel(dcell);
-      const dt = parseViDate(dcell);
-      if (lab !== null) day = lab;
-      else if (!hasLabels && dt) { const wd = (new Date(`${dt}T12:00:00`).getDay() + 6) % 7; if (wd <= 5) day = wd; }
-      if (dt && !firstDate) firstDate = dt;
+  type Entry = { row: ScheduleRow; red: boolean; block: number; odd: boolean };
+  const entries: Entry[] = [];
+  const blocks: { lab: number | null; dt: string }[] = [];
+  let day = -1, session = '', firstDate = '', lastSessionDay = -1, block = -1, junk = 0, splitN = 0;
+  for (let k = 0; k < table.length; k++) {
+    const r = table[k], i = hi + 1 + k;
+    const sep = sepOf(r);
+    if (sep) {
+      session = sep === 'chieu' ? 'Chiều' : sep === 'toi' ? 'Tối' : 'Sáng';
+      if (sepMode && (sep === 'sang' || block < 0)) { block++; blocks.push({ lab: null, dt: '' }); }
+      continue;
     }
-    const s = cell(r, 'session');
-    if (s) session = s; else if (lastSessionDay !== day) session = '';
-    lastSessionDay = day;
+    const dcell = cell(r, 'day');
+    const lab = dcell ? dayOfLabel(dcell) : null;
+    const dt = dcell ? dateOf(dcell) : '';
+    if (dt && !firstDate) firstDate = dt;
+    if (sepMode) {
+      if (block >= 0) { blocks[block].lab ??= lab; if (!blocks[block].dt) blocks[block].dt = dt; }
+    } else {
+      if (lab !== null) day = lab;
+      else if (!hasLabels && dt) { const wd = weekdayOf(dt); if (wd <= 5) day = wd; }
+      const s = cell(r, 'session');
+      if (s) session = s[0].toUpperCase() + s.slice(1).toLowerCase(); else if (lastSessionDay !== day) session = '';
+      lastSessionDay = day;
+    }
     const subjectLabel = cell(r, 'subject');
-    const title = cell(r, 'title');
+    let title = cell(r, 'title');
     if (!subjectLabel && !title) continue;
-    if (day < 0) day = 0;
-    const { subject, extra } = subjectOf(subjectLabel);
-    (red(i) ? skipped : out).push({
-      day, date: '', session: session ? session[0].toUpperCase() + session.slice(1).toLowerCase() : '',
-      period: Number(/\d+/.exec(cell(r, 'period'))?.[0] ?? 0) || 0,
-      subjectLabel, subject, extra, ppct: cell(r, 'ppct'), title: title || subjectLabel,
-      integration: cell(r, 'integration'), adjust: cell(r, 'adjust'),
+    // dòng rác: ô lỗi công thức (#N/A…), ô Môn chỉ có số (vd "Tuần: 11" lọt vào cột Môn)
+    if (ERROR_CELL.test(subjectLabel) || ERROR_CELL.test(title) || (/^\d+$/.test(subjectLabel) && (!title || ERROR_CELL.test(title)))) { junk++; continue; }
+    if (sepMode && block < 0) continue;
+    let integration = cell(r, 'integration');
+    if (!integration && title) { const sp = splitIntegration(title); if (sp.integration) { title = sp.title; integration = sp.integration; splitN++; } }
+    const { subject, extra } = subjectOf(subjectLabel, title);
+    title = tidyTitle(title);
+    const period = Number(/\d+/.exec(cell(r, 'period'))?.[0] ?? 0) || 0;
+    entries.push({
+      red: red(i), block, odd: session === 'Sáng' && period > MORNING_SLOTS,
+      row: { day: sepMode ? -1 : Math.max(0, day), date: '', session, period, subjectLabel: canonicalSubjectLabel(subjectLabel, subject, extra), subject, extra, ppct: cell(r, 'ppct'), title: title || subjectLabel, integration, adjust: cell(r, 'adjust') },
     });
   }
+  if (junk) notes.push(`bỏ ${junk} dòng không phải tiết dạy (ô lỗi #N/A, số tuần…)`);
+  if (sepMode) {
+    // ngày của từng khối: theo nhãn "Thứ 2…", không có thì theo ngày ghi trong cột, không có nữa thì nối tiếp khối trước
+    let prev = -1;
+    const dayOfBlock = blocks.map((b) => { const d = b.lab ?? (b.dt ? weekdayOf(b.dt) : prev + 1); prev = d; return Math.min(5, Math.max(0, d)); });
+    for (const e of entries) e.row.day = dayOfBlock[e.block] ?? 0;
+    notes.push('buổi lấy theo dòng “Buổi sáng / Buổi chiều” trong bảng');
+  }
+  // buổi chiều đánh số tiếp 5, 6, 7… → 1, 2, 3…
+  let renum = 0;
+  for (const d of new Set(entries.map((e) => e.row.day))) {
+    const pm = entries.filter((e) => e.row.day === d && /chi/i.test(e.row.session) && e.row.period);
+    if (pm.length && pm.every((e) => e.row.period > MORNING_SLOTS)) { pm.forEach((e) => { e.row.period -= MORNING_SLOTS; }); renum++; }
+  }
+  if (renum) notes.push(`tiết buổi chiều đánh số tiếp (${MORNING_SLOTS + 1}, ${MORNING_SLOTS + 2}…) đổi về 1, 2…`);
+  // tiết ghi trùng trong cùng ngày (cùng môn, PPCT, tên bài): giữ tiết hợp lệ, bỏ tiết lạc (vd tiết 5 buổi sáng)
+  const seen = new Map<string, Entry>();
+  const drop = new Set<Entry>();
+  for (const e of entries) {
+    const key = `${e.row.day}|${fold(e.row.subjectLabel)}|${e.row.ppct}|${fold(e.row.title)}`;
+    const o = seen.get(key);
+    if (!o || !e.row.ppct) { seen.set(key, e); continue; }
+    const lose = o.odd && !e.odd ? o : e;
+    drop.add(lose); if (lose === o) seen.set(key, e);
+    warnings.push(`${['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'][e.row.day]}: “${e.row.title}” ghi 2 lần — giữ tiết ${lose === o ? e.row.period : o.row.period} buổi ${(lose === o ? e.row.session : o.row.session).toLowerCase()}.`);
+  }
+  const kept = entries.filter((e) => !drop.has(e));
+  if (splitN) notes.push(`tách nội dung tích hợp ở cuối tên bài sang cột ND tích hợp (${splitN} tiết)`);
+  const out = kept.filter((e) => !e.red).map((e) => e.row);
+  const skipped = kept.filter((e) => e.red).map((e) => e.row);
   if (!out.length) throw new Error(skipped.length ? 'Mọi tiết trong bảng đều tô chữ đỏ (tiết trống) — không có tiết nào cần soạn.' : 'Không có tiết dạy nào trong bảng.');
 
   // Thứ Hai của tuần: ưu tiên "Từ ngày", rồi ngày ghi trong cột Thứ/ngày
@@ -222,7 +308,30 @@ export function parseSchedule(sheet: Sheet): Schedule {
   if (!monday) warnings.push('Không đọc được ngày của tuần — giáo án sẽ để trống ngày dạy.');
   if (grade === null) warnings.push('Không thấy khối lớp trong tiêu đề (vd “KHỐI 1”) — dùng khối của lớp đang chọn.');
   for (const r of [...out, ...skipped]) r.date = monday ? addDays(monday, r.day) : '';
-  return { grade, week, monday, rows: out, skipped, warnings };
+  const form = sepMode ? 'mẫu chia buổi bằng dòng “Buổi sáng / Buổi chiều”' : cols.session !== undefined ? 'mẫu có cột Buổi' : 'mẫu không ghi buổi';
+  return { grade, week, monday, rows: out, skipped, warnings, source: { sheet: sheet.name, form, notes } };
+}
+
+/** File có nhiều trang tính (hướng dẫn, TKB, PPCT, lịch báo giảng…): tự tìm trang lịch báo giảng, quy về mẫu chuẩn */
+export function parseScheduleBook(sheets: (Sheet & { hidden?: boolean })[]): Schedule {
+  if (sheets.length === 1) return parseSchedule(sheets[0]);
+  const ranked = sheets.map((sh, i) => {
+    const n = fold(sh.name);
+    return { sh, i, prio: (sh.hidden ? -2 : 0) + (SHEET_NAME_HINT.test(n) ? 2 : 0) - (SHEET_NAME_SKIP.test(n) && !SHEET_NAME_HINT.test(n) ? 1 : 0) };
+  }).sort((a, b) => b.prio - a.prio || a.i - b.i);
+  let best: { s: Schedule; score: number } | null = null;
+  let err: Error | null = null;
+  for (const { sh, prio } of ranked) {
+    try {
+      const s = parseSchedule(sh);
+      // một tuần chỉ có vài chục tiết: bảng hàng trăm dòng (PPCT cả năm) không phải lịch tuần
+      const n = s.rows.length + s.skipped.length;
+      const score = prio * 10000 + (n > 80 ? -5000 : 0) + (s.monday ? 200 : 0) + (s.week ? 100 : 0) + n;
+      if (!best || score > best.score) best = { s, score };
+    } catch (e) { err ??= e as Error; }
+  }
+  if (!best) throw err ?? new Error('Không tìm thấy lịch báo giảng trong file.');
+  return best.s;
 }
 
 // ------------------------------------------------------------------ ghép với bài trong app

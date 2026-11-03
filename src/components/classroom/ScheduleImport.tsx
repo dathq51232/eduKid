@@ -4,12 +4,12 @@ import { Fragment, useMemo, useRef, useState } from 'react';
 import { FileDown, FileSpreadsheet, Save, Upload } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { downloadXlsx } from '@/lib/xlsx';
-import { readXlsx } from '@/lib/xlsx-read';
+import { readXlsxAll } from '@/lib/xlsx-read';
 import { addDays, mondayOf, viDate, weekdayVi, type LessonInfo, type LessonPlan } from '@/lib/plans/generate';
-import { parseSchedule, plansFromSchedule, scheduleTemplate, schoolGroupLabel, sortSchoolOrder, withLibraryPlan, type RowPlan, type Schedule } from '@/lib/plans/schedule';
+import { parseScheduleBook, plansFromSchedule, scheduleTemplate, schoolGroupLabel, sortSchoolOrder, withLibraryPlan, type RowPlan, type Schedule } from '@/lib/plans/schedule';
 import { pickFromLibrary, type LibraryMeta } from '@/lib/plans/library';
 import { isPlan } from '@/lib/plans/generate';
-import type { WeekArgs } from '@/lib/plans/week-export';
+import { weekSheet, loadWeekOpts, type WeekArgs } from '@/lib/plans/week-export';
 import type { SubjectCode } from '@/lib/types';
 
 type SavedLite = { teach_date: string | null; period: number | null; title: string };
@@ -48,7 +48,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
     if (!/\.xlsx$/i.test(file.name)) return setMsg({ kind: 'error', text: 'Chỉ đọc được file .xlsx. Nếu là .xls, mở bằng Excel rồi “Lưu thành” Excel Workbook (.xlsx).' });
     if (file.size > 5_000_000) return setMsg({ kind: 'error', text: 'File quá lớn (tối đa 5 MB).' });
     try {
-      const s = parseSchedule(await readXlsx(await file.arrayBuffer()));
+      const s = parseScheduleBook(await readXlsxAll(await file.arrayBuffer()));
       let list = plansFromSchedule(s, { grade, className, lessonsBySubject, weakForms });
       // ưu tiên giáo án trong kho của trường (đúng môn, khối, bài, tiết)
       if (library.length) {
@@ -119,7 +119,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
   return (
     <section className="dash-section planner-card" aria-labelledby="pl-import">
       <h2 id="pl-import"><FileSpreadsheet aria-hidden="true" /> Tạo giáo án từ lịch báo giảng (Excel)</h2>
-      <p className="dash-muted">Tải lên lịch báo giảng tuần theo mẫu của trường (cột Thứ/ngày · Buổi · Tiết TKB · Môn học · Tiết PPCT · Tên bài dạy · ND tích hợp/ĐDDH · Điều chỉnh). App tự soạn giáo án cho từng tiết: ưu tiên giáo án trong kho của trường (mục dưới) đúng môn, bài, tiết; còn lại bài Toán, Tiếng Việt, Tiếng Anh có trong app được soạn theo yêu cầu cần đạt và dạng bài của bài; tiết ôn tập, bổ sung (BS) theo bài trọng tâm của tuần; các môn khác theo khung chung của môn.</p>
+      <p className="dash-muted">Tải lên lịch báo giảng / kế hoạch dạy học tuần theo mẫu bất kì của trường (file nhiều trang tính, chia buổi bằng cột hay bằng dòng “Buổi sáng / chiều”, tích hợp ghi cột riêng hay cuối tên bài…). App tự tìm trang lịch báo giảng và quy về mẫu chuẩn (Thứ/ngày · Buổi · Tiết TKB · Môn học · Tiết PPCT · Tên bài dạy · ND tích hợp/ĐDDH · Điều chỉnh) rồi mới sinh giáo án. App tự soạn giáo án cho từng tiết: ưu tiên giáo án trong kho của trường (mục dưới) đúng môn, bài, tiết; còn lại bài Toán, Tiếng Việt, Tiếng Anh có trong app được soạn theo yêu cầu cần đạt và dạng bài của bài; tiết ôn tập, bổ sung (BS) theo bài trọng tâm của tuần; các môn khác theo khung chung của môn.</p>
       <div className="planner-actions">
         <input ref={fileRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden
           onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void load(f); }} />
@@ -136,6 +136,15 @@ export default function ScheduleImport({ classId, className, grade, school, weak
             {sch.monday && <> · {viDate(sch.monday)} – {viDate(addDays(sch.monday, 4))}</>}
             {sch.grade !== null && <> · Khối {sch.grade}</>} · {items.length} tiết: {counts.kho > 0 && <>{counts.kho} giáo án của trường, </>}{counts.app} theo bài trong app, {counts.review} ôn tập/bổ sung, {counts.khung} khung chung
           </p>
+          {sch.source && (
+            <div className="planner-norm" role="status">
+              <p><b>✅ Đã quy về mẫu chuẩn</b> · đọc trang “{sch.source.sheet}” · {sch.source.form}</p>
+              {sch.source.notes.length > 0 && <ul>{sch.source.notes.map((n) => <li key={n}>{n[0].toUpperCase() + n.slice(1)}</li>)}</ul>}
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => downloadXlsx(`lich-bao-giang-mau-chuan-tuan-${sch.week || sch.monday}.xlsx`, [weekSheet({ monday: sch.monday || mondayOf(items[0].plan.date || new Date().toISOString().slice(0, 10)), plans: items.map((r) => r.plan), school, className, withPlans: false, skipped: sch.skipped }, { ...loadWeekOpts(), short: 'full' })])}>
+                <FileSpreadsheet aria-hidden="true" /> Tải lịch theo mẫu chuẩn (Excel)
+              </button>
+            </div>
+          )}
           {sch.skipped.length > 0 && (
             <p className="dash-muted planner-skipped">Bỏ qua {sch.skipped.length} tiết chữ đỏ (tiết trống, không soạn): {sch.skipped.map((r) => `${r.date ? weekdayVi(r.date).replace('Thứ ', '') : ''} tiết ${r.period || '?'} ${r.subjectLabel}`).join(' · ')}. Các tiết này vẫn ghi chữ đỏ trong bảng kế hoạch tuần khi xuất Word.</p>
           )}

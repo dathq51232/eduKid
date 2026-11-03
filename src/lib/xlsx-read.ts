@@ -77,23 +77,37 @@ const cellPos = (ref: string): [number, number] => [Number(/\d+/.exec(ref)?.[0] 
 
 /** Đọc trang tính đầu tiên của file .xlsx */
 export async function readXlsx(buf: ArrayBuffer | Uint8Array): Promise<Sheet> {
+  return (await readXlsxAll(buf, 1))[0];
+}
+
+/** Đọc mọi trang tính (theo thứ tự trong file; tối đa `limit` trang). hidden: trang bị ẩn */
+export async function readXlsxAll(buf: ArrayBuffer | Uint8Array, limit = 30): Promise<(Sheet & { hidden?: boolean })[]> {
   const files = await unzip(buf, (n) => n === 'xl/workbook.xml' || n === 'xl/sharedStrings.xml' || n === 'xl/styles.xml' || n === 'xl/_rels/workbook.xml.rels' || /^xl\/worksheets\/sheet\d+\.xml$/.test(n));
   const dec = new TextDecoder();
   const get = (n: string) => (files.has(n) ? dec.decode(files.get(n)) : '');
   const wb = get('xl/workbook.xml');
   if (!wb) throw new Error('File không phải bảng tính Excel .xlsx (nếu là .xls, hãy mở bằng Excel và “Lưu thành” .xlsx).');
-  const first = /<sheet\b[^>]*>/.exec(wb)?.[0] ?? '';
-  const name = unxml(/name="([^"]*)"/.exec(first)?.[1] ?? 'Sheet1');
-  const rid = /r:id="([^"]*)"/.exec(first)?.[1];
-  let path = '';
-  if (rid) {
-    const rel = new RegExp(`<Relationship\\b[^>]*Id="${rid}"[^>]*>`).exec(get('xl/_rels/workbook.xml.rels'))?.[0] ?? '';
-    const target = /Target="([^"]*)"/.exec(rel)?.[1];
-    if (target) path = target.startsWith('/') ? target.slice(1) : `xl/${target.replace(/^\.\//, '')}`;
+  const tags = [...wb.matchAll(/<sheet\b[^>]*>/g)].map((m) => m[0]).slice(0, limit);
+  const out: (Sheet & { hidden?: boolean })[] = [];
+  for (const [k, tag] of (tags.length ? tags : ['']).entries()) {
+    const name = unxml(/name="([^"]*)"/.exec(tag)?.[1] ?? `Sheet${k + 1}`);
+    const rid = /r:id="([^"]*)"/.exec(tag)?.[1];
+    let path = '';
+    if (rid) {
+      const rel = new RegExp(`<Relationship\\b[^>]*Id="${rid}"[^>]*>`).exec(get('xl/_rels/workbook.xml.rels'))?.[0] ?? '';
+      const target = /Target="([^"]*)"/.exec(rel)?.[1];
+      if (target) path = target.startsWith('/') ? target.slice(1) : `xl/${target.replace(/^\.\//, '')}`;
+    }
+    if (!files.has(path) && k === 0) path = [...files.keys()].filter((x) => x.startsWith('xl/worksheets/')).sort()[0] ?? '';
+    const xml = get(path);
+    if (!xml) continue;
+    out.push({ ...sheetOf(xml, name, get), hidden: /state="(hidden|veryHidden)"/.test(tag) || undefined });
   }
-  if (!files.has(path)) path = [...files.keys()].filter((k) => k.startsWith('xl/worksheets/')).sort()[0] ?? '';
-  const xml = get(path);
-  if (!xml) throw new Error('Không tìm thấy trang tính trong file.');
+  if (!out.length) throw new Error('Không tìm thấy trang tính trong file.');
+  return out;
+}
+
+function sheetOf(xml: string, name: string, get: (n: string) => string): Sheet {
 
   const sis = [...get('xl/sharedStrings.xml').matchAll(/<si>([\s\S]*?)<\/si>/g)].map((m) => m[1]);
   const shared = sis.map(texts);
