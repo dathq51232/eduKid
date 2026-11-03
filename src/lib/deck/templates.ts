@@ -84,6 +84,16 @@ export const SLIDE_TEMPLATES: Tpl[] = [
       return [slide('mint', m, 'Mời từng em lên kéo thẻ số vào ô dưới nhóm hình tương ứng.')]; },
   },
   {
+    id: 'sort', title: 'Sắp xếp theo thứ tự', desc: 'Xếp chữ thành câu, số bé → lớn, các bước, tranh theo truyện', bg: 'sky', preview: [EM('baby-chick'), ST('star')],
+    make: () => { const m: Mk = { els: [], anims: [] };
+      I(m, EM('baby-chick'), 60, 40, 140);
+      const a = { id: uid(), kind: 'sort', x: 180, y: 150, w: 1240, h: 600, rot: 0, prompt: 'Xếp các từ thành câu đúng', items: ['Em', 'yêu', 'trường', 'em'] } as El;
+      const b = { id: uid(), kind: 'sort', x: 180, y: 150, w: 1240, h: 600, rot: 0, prompt: 'Xếp các số từ bé đến lớn', items: ['2', '5', '7', '9'] } as El;
+      m.els.push(a); A(m, a.id, 'fade', 'with');
+      const m2: Mk = { els: [b], anims: [] }; A(m2, b.id, 'fade', 'with');
+      return [slide('sky', m, 'Mời học sinh bấm lần lượt các thẻ theo thứ tự đúng. Bấm thẻ đã đặt để trả lại.'), slide('mint', m2)]; },
+  },
+  {
     id: 'scene', title: 'Khám phá 3D', desc: 'Chèn cảnh từ Bài 3D của tôi, xoay khi chiếu', bg: 'sky', preview: [ST('house')],
     make: () => { const m: Mk = { els: [], anims: [] };
       T(m, 'Cùng khám phá', 200, 30, 1200, 110, 72, '#1e3a8a');

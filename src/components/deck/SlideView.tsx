@@ -5,9 +5,10 @@
 //  - play: chạy hiệu ứng, kích hoạt khi bấm, câu hỏi, kéo thả, cảnh 3D (trình chiếu)
 //  - thumb: ảnh thu nhỏ tĩnh
 import dynamic from 'next/dynamic';
+import SceneBg from './SceneBg';
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
-import { FONTS, FX_BY_ID, SH, SW, bgCss, type El, type ShapeEl, type Slide } from '@/lib/deck/types';
+import { FONTS, FX_BY_ID, SH, SW, bgCss, type El, type ShapeEl, type Slide, type SortEl } from '@/lib/deck/types';
 import { fxEasing, fxFrames, planSlide, type Step } from '@/lib/deck/player';
 import { playSound } from '@/lib/deck/sounds';
 
@@ -44,7 +45,46 @@ export function ShapeSvg({ e }: { e: ShapeEl }) {
 }
 
 type Pick = { i: number; ok: boolean };
-function ElBody({ e, mode, assetUrl, pick, onPick }: { e: El; mode: 'edit' | 'play' | 'thumb'; assetUrl?: (p: string) => string | undefined; pick?: Pick; onPick?: (i: number) => void }) {
+/** Trạng thái trò Sắp xếp: slots[i] = chỉ số thẻ (trong items) đặt ở ô i; bad = các ô vừa đặt sai (nháy đỏ) */
+type SortSt = { slots: (number | null)[]; bad: number[]; ok: boolean };
+const sortInit = (e: SortEl): SortSt => ({ slots: e.items.map(() => null), bad: [], ok: false });
+function hashStr(s: string) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+/** Xáo thẻ theo id vật (hai cửa sổ chiếu xáo giống nhau), bảo đảm không trùng thứ tự đúng */
+export function sortShuffle(e: SortEl): number[] {
+  const idx = e.items.map((_, i) => i); let h = hashStr(e.id) || 1;
+  const rnd = () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 10000) / 10000; };
+  for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  if (idx.length > 1 && idx.every((v, i) => e.items[v] === e.items[i])) idx.push(idx.shift()!);
+  return idx;
+}
+function SortBody({ e, mode, st, onTile }: { e: SortEl; mode: 'edit' | 'play' | 'thumb'; st?: SortSt; onTile?: (tile: number) => void }) {
+  const n = e.items.length, long = Math.max(...e.items.map((t) => t.length), 1);
+  const fs = Math.max(24, Math.min(60, e.w / Math.max(n * Math.max(long, 3) * 0.62, 10), (e.h - 120) / 4.2));
+  const s = st ?? sortInit(e);
+  const order = sortShuffle(e);
+  const used = new Set(s.slots.filter((x): x is number => x !== null));
+  const shown = mode === 'edit' ? e.items.map((_, i) => i) : null; // khi soạn: hiện thứ tự đúng ở ô
+  const tile = (i: number, cls: string, key: string | number) => (
+    <button key={key} type="button" className={`dk-tile${cls}`} style={{ fontSize: fs }} disabled={mode !== 'play' || s.ok}
+      onPointerDown={(ev) => { if (mode === 'play') ev.stopPropagation(); }}
+      onClick={(ev) => { if (mode !== 'play') return; ev.stopPropagation(); onTile?.(i); }}>{e.items[i]}</button>
+  );
+  return (
+    <div className={`dk-sort${s.ok ? ' is-ok' : ''}`}>
+      {e.prompt && <div className="dk-sort-q" style={{ fontSize: Math.min(54, fs * 1.05) }}>{e.prompt}</div>}
+      <div className="dk-sort-slots">
+        {e.items.map((_, k) => {
+          const v = shown ? shown[k] : s.slots[k];
+          return <div key={k} className={`dk-slot${s.bad.includes(k) ? ' is-bad' : ''}`} style={{ minHeight: fs * 1.9, minWidth: fs * 2.2 }}>
+            <i>{k + 1}</i>{v !== null && v !== undefined ? tile(v, s.ok ? ' is-ok' : s.bad.includes(k) ? ' is-bad' : '', 'p' + k) : null}
+          </div>;
+        })}
+      </div>
+      {mode !== 'edit' && <div className="dk-sort-pool">{order.filter((i) => !used.has(i)).map((i) => tile(i, '', i))}</div>}
+    </div>
+  );
+}
+function ElBody({ e, mode, assetUrl, pick, onPick, sort, onTile }: { e: El; mode: 'edit' | 'play' | 'thumb'; assetUrl?: (p: string) => string | undefined; pick?: Pick; onPick?: (i: number) => void; sort?: SortSt; onTile?: (t: number) => void }) {
   switch (e.kind) {
     case 'text': {
       const f = FONTS[e.font] ?? FONTS.baloo;
@@ -88,6 +128,7 @@ function ElBody({ e, mode, assetUrl, pick, onPick }: { e: El; mode: 'edit' | 'pl
         </div>
       );
     }
+    case 'sort': return <SortBody e={e} mode={mode} st={sort} onTile={onTile} />;
     case 'drop': return <div className="dk-drop" style={{ borderColor: e.color, color: e.color }}><span>{e.label}</span></div>;
     case 'scene3d':
       return mode === 'play' && e.lesson ? <Scene3DBox lessonId={e.lesson} title={e.title} />
@@ -95,7 +136,7 @@ function ElBody({ e, mode, assetUrl, pick, onPick }: { e: El; mode: 'edit' | 'pl
   }
 }
 
-export type PlayAction = { t: 'step' } | { t: 'back' } | { t: 'trigger'; el: string } | { t: 'quiz'; el: string; i: number } | { t: 'drop'; el: string; x: number; y: number };
+export type PlayAction = { t: 'step' } | { t: 'back' } | { t: 'trigger'; el: string } | { t: 'quiz'; el: string; i: number } | { t: 'drop'; el: string; x: number; y: number } | { t: 'sort'; el: string; tile: number };
 export type PlayApi = { apply: (a: PlayAction) => boolean; stepsLeft: () => number; stepIndex: () => number };
 
 type Props = {
@@ -119,6 +160,8 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
   const [picks, setPicks] = useState<Record<string, Pick>>({});
   const [pos, setPos] = useState<Record<string, { x: number; y: number }>>({});
   const [done, setDone] = useState<Set<string>>(new Set()); // vật đã kéo đúng ô
+  const [sorts, setSorts] = useState<Record<string, SortSt>>({});
+  const sortsRef = useRef(sorts); sortsRef.current = sorts;
   const nodes = useRef(new Map<string, HTMLDivElement>());
   const step = useRef(0);
   const fired = useRef(new Set<string>());
@@ -187,6 +230,32 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
           setPos((p) => { const n = { ...p }; delete n[e.id]; return n; }); playSound('wrong');
           nodes.current.get(e.id)?.querySelector<HTMLElement>('.dk-a')?.animate(fxFrames('shake'), { duration: 500 });
         } else setPos((p) => ({ ...p, [e.id]: { x: a.x, y: a.y } }));
+        return true;
+      }
+      case 'sort': {
+        const e = slide.els.find((x) => x.id === a.el); if (!e || e.kind !== 'sort') return false;
+        const cur = sortsRef.current[e.id] ?? sortInit(e);
+        if (cur.ok) return false;
+        const slots = [...cur.slots];
+        const at = slots.indexOf(a.tile);
+        if (at >= 0) { slots[at] = null; playSound('whoosh'); }
+        else { const k = slots.indexOf(null); if (k < 0) return false; slots[k] = a.tile; playSound('pop'); }
+        let next: SortSt = { slots, bad: [], ok: false };
+        if (!slots.includes(null)) {
+          const bad = slots.map((v, k) => (e.items[v!] === e.items[k] ? -1 : k)).filter((k) => k >= 0);
+          if (!bad.length) {
+            next = { slots, bad: [], ok: true }; playSound('tada');
+            const n = nodes.current.get(e.id); window.setTimeout(() => burst(n), 50);
+          } else {
+            next = { slots, bad, ok: false }; playSound('wrong');
+            timers.current.push(window.setTimeout(() => setSorts((m) => {
+              const c = m[e.id]; if (!c) return m;
+              return { ...m, [e.id]: { slots: c.slots.map((v, k) => (bad.includes(k) ? null : v)), bad: [], ok: false } };
+            }), 900));
+          }
+        }
+        sortsRef.current = { ...sortsRef.current, [e.id]: next };
+        setSorts(sortsRef.current);
         return true;
       }
     }
@@ -262,6 +331,7 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
   return (
     <div ref={rootRef} className={`dk-slide is-${mode}`} style={{ width: SW, height: SH, transform: `scale(${scale})`, background: bgCss(slide.bg) }}
       onPointerDown={() => { if (mode === 'edit') onSelect?.(null); }}>
+      {slide.scene && <SceneBg id={slide.scene} />}
       {slide.els.map((e) => {
         const p = play ? pos[e.id] : undefined;
         const clickable = play && (!!plan.triggers[e.id] || !!e.link || (!!e.drag && !done.has(e.id)));
@@ -271,8 +341,9 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
             style={{ left: p?.x ?? e.x, top: p?.y ?? e.y, width: e.w, height: e.h, transform: e.rot ? `rotate(${e.rot}deg)` : undefined, visibility: play && hidden.has(e.id) ? 'hidden' : undefined, zIndex: play && playDrag.current?.id === e.id ? 50 : undefined }}
             onPointerDown={(ev) => onElDown(e, ev)} onPointerMove={onElMove} onPointerUp={() => onElUp(e)}
             onClick={(ev) => { if (play && !e.drag) { ev.stopPropagation(); click(e); } }}
-            onDoubleClick={() => { if (mode === 'edit' && (e.kind === 'text' || e.kind === 'shape' || e.kind === 'quiz')) onEditText?.(e.id); }}>
-            <div className="dk-a"><ElBody e={e} mode={mode} assetUrl={assetUrl} pick={picks[e.id]} onPick={(i) => { const a: PlayAction = { t: 'quiz', el: e.id, i }; apply(a); onAction?.(a); }} /></div>
+            onDoubleClick={() => { if (mode === 'edit' && (e.kind === 'text' || e.kind === 'shape' || e.kind === 'quiz' || e.kind === 'sort')) onEditText?.(e.id); }}>
+            <div className="dk-a"><ElBody e={e} mode={mode} assetUrl={assetUrl} pick={picks[e.id]} onPick={(i) => { const a: PlayAction = { t: 'quiz', el: e.id, i }; apply(a); onAction?.(a); }}
+              sort={sorts[e.id]} onTile={(tile) => { const a: PlayAction = { t: 'sort', el: e.id, tile }; if (apply(a)) onAction?.(a); }} /></div>
             {mode === 'edit' && sel === e.id && !e.lock && <span className="dk-size" onPointerDown={(ev) => onElDown(e, ev, 'size')} onPointerMove={onElMove} onPointerUp={() => onElUp(e)} />}
             {mode === 'edit' && <AnimBadges slide={slide} id={e.id} />}
           </div>

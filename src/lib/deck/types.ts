@@ -27,7 +27,9 @@ export type ShapeEl = ElBase & { kind: 'shape'; shape: ShapeKind; fill: string; 
 export type QuizEl = ElBase & { kind: 'quiz'; q: string; opts: string[]; a: number; cols: 1 | 2 };
 export type DropEl = ElBase & { kind: 'drop'; label: string; /** id các vật kéo đúng vào ô này */ accept: string[]; color: string };
 export type SceneEl = ElBase & { kind: 'scene3d'; lesson: string; title: string };
-export type El = TextEl | ImgEl | ShapeEl | QuizEl | DropEl | SceneEl;
+/** Trò chơi Sắp xếp: items là thứ tự ĐÚNG; khi chiếu các thẻ bị xáo, học sinh bấm / kéo thẻ vào ô theo thứ tự */
+export type SortEl = ElBase & { kind: 'sort'; prompt: string; items: string[] };
+export type El = TextEl | ImgEl | ShapeEl | QuizEl | DropEl | SceneEl | SortEl;
 
 export type FxGroup = 'in' | 'em' | 'out';
 export type Fx =
@@ -62,7 +64,12 @@ export type Anim = {
 export type Trans = 'none' | 'fade' | 'slide' | 'zoom' | 'flip';
 export const TRANS_LABEL: Record<Trans, string> = { none: 'Không', fade: 'Mờ dần', slide: 'Trượt sang', zoom: 'Phóng to', flip: 'Lật trang' };
 
-export type Slide = { id: string; bg: string; els: El[]; anims: Anim[]; trans: Trans; notes: string; sound?: string };
+export type SceneKind = 'garden' | 'pond' | 'kitchen' | 'class' | 'yard' | 'sea' | 'space' | 'farm';
+export type Slide = { id: string; bg: string; els: El[]; anims: Anim[]; trans: Trans; notes: string; sound?: string;
+  /** cảnh nền minh hoạ ghép từ hình có sẵn (vẽ phía sau các vật) */
+  scene?: SceneKind;
+  /** hoạt động của tiết dạy: Khởi động / Khám phá / Luyện tập / Vận dụng / Củng cố */
+  phase?: string };
 export type Deck = { v: 1; title: string; grade: number; slides: Slide[] };
 
 export const BGS: { id: string; label: string; css: string }[] = [
@@ -108,6 +115,7 @@ export function normalizeDeck(raw: unknown, fallbackTitle = 'Bài thao giảng')
         .map((a) => ({ ...a, delay: num(a.delay, 0), dur: Math.min(5, Math.max(0.2, num(a.dur, 0.6))), start: (['click', 'with', 'after'] as const).includes(a.start) ? a.start : 'click', trigger: a.trigger && ids.has(a.trigger) ? a.trigger : undefined })),
       trans: (Object.keys(TRANS_LABEL) as Trans[]).includes(s?.trans as Trans) ? (s.trans as Trans) : 'fade',
       notes: typeof s?.notes === 'string' ? s.notes : '', sound: typeof s?.sound === 'string' ? s.sound : undefined,
+      scene: typeof s?.scene === 'string' ? s.scene : undefined, phase: typeof s?.phase === 'string' ? s.phase : undefined,
     };
   });
   return {
@@ -127,5 +135,6 @@ export function elLabel(e: El): string {
     case 'quiz': return `Câu hỏi “${e.q.slice(0, 20)}”`;
     case 'drop': return `Ô thả “${e.label.slice(0, 16)}”`;
     case 'scene3d': return `Cảnh 3D “${e.title.slice(0, 18)}”`;
+    case 'sort': return `Sắp xếp “${e.prompt.slice(0, 18)}”`;
   }
 }

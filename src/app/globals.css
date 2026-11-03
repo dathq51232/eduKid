@@ -7257,7 +7257,7 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 
 /* tab Bài thao giảng */
 .dh { display: grid; gap: 14px; }
-.dh-new { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+.dh-new { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
 .dh-name { display: grid; gap: 4px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .dh-name input { font: inherit; font-size: 16px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); }
 .dh-blank { display: flex; align-items: center; gap: 12px; padding: 10px 18px; border-radius: 16px; border: 1.5px solid #c4b5fd; background: linear-gradient(135deg, #faf5ff, var(--surface)); color: var(--ink); cursor: pointer; text-align: left; font: inherit; }
@@ -7332,3 +7332,75 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .dp-aud .dp-frame { max-width: calc(100vh * 16 / 9); box-shadow: none; }
 .dp-aud-hint { position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); margin: 0; color: #ffffff55; font-size: 12px; pointer-events: none; }
 @media (max-width: 1000px) { .dp { height: auto; overflow: visible; } .dp-main { grid-template-columns: 1fr; } }
+
+/* ---------- Bài thao giảng: cảnh nền, trò Sắp xếp, tạo từ bài học (11/2026) ---------- */
+.dk-scene { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.dk-scene > * { position: absolute; }
+.dk-scene img { height: auto; user-select: none; }
+.dk-quiz-q, .dk-sort-q { white-space: pre-line; }
+.dk-sort { width: 100%; height: 100%; display: flex; flex-direction: column; gap: 4%; align-items: center; justify-content: center; }
+.dk-sort-q { background: #ffffffe6; border-radius: 28px; padding: 14px 28px; text-align: center; font-family: PraiseBaloo, var(--font-display), sans-serif; font-weight: 800; color: #1e293b; box-shadow: 0 6px 0 #0000001a; }
+.dk-sort-slots, .dk-sort-pool { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; }
+.dk-sort-pool { min-height: 40px; }
+.dk-slot { position: relative; display: flex; align-items: center; justify-content: center; padding: 8px; border: 4px dashed #93c5fd; border-radius: 22px; background: #eff6ffcc; }
+.dk-slot > i { position: absolute; left: 8px; top: 2px; font: 800 20px/1 var(--font-display), sans-serif; color: #60a5fa; font-style: normal; }
+.dk-slot.is-bad { border-color: #ef4444; animation: dk-shake .45s; }
+.dk-tile { border: 0; border-radius: 18px; padding: .25em .7em; background: #fde68a; color: #78350f; font-family: PraiseBaloo, var(--font-display), sans-serif; font-weight: 800; box-shadow: 0 6px 0 #d97706; cursor: pointer; line-height: 1.2; }
+.dk-tile:disabled { cursor: default; }
+.dk-sort-slots .dk-tile { background: #bfdbfe; color: #1e3a8a; box-shadow: 0 6px 0 #3b82f6; }
+.dk-tile.is-bad { background: #fecaca !important; color: #991b1b !important; box-shadow: 0 6px 0 #ef4444 !important; }
+.dk-sort.is-ok .dk-slot { border-color: #22c55e; background: #dcfce7cc; }
+.dk-tile.is-ok { background: #bbf7d0 !important; color: #14532d !important; box-shadow: 0 6px 0 #16a34a !important; }
+@keyframes dk-shake { 25% { transform: translateX(-10px); } 50% { transform: translateX(10px); } 75% { transform: translateX(-6px); } }
+.dk-scenes { flex-wrap: wrap; max-width: 520px; gap: 4px; }
+.dk-scenes button { font: inherit; font-size: 12px; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; display: inline-flex; gap: 3px; align-items: center; }
+.dk-scenes button.is-on { border-color: #7c3aed; background: #ede9fe; color: #4c1d95; }
+
+.dh-blank.is-lesson { border-color: #fcd34d; background: linear-gradient(135deg, #fffbeb, var(--surface)); }
+:root[data-theme="dark"] .dh-blank { background: linear-gradient(135deg, #2e1f4d, var(--surface)); border-color: #7c3aed; color: var(--ink); }
+:root[data-theme="dark"] .dh-blank.is-lesson { background: linear-gradient(135deg, #3d2e0c, var(--surface)); border-color: #b45309; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .dh-blank { background: linear-gradient(135deg, #2e1f4d, var(--surface)); border-color: #7c3aed; color: var(--ink); }
+  :root:not([data-theme]) .dh-blank.is-lesson { background: linear-gradient(135deg, #3d2e0c, var(--surface)); border-color: #b45309; }
+}
+:root[data-theme="dark"] .dk-scenes button.is-on { background: #3b2a6b; color: #ede9fe; }
+
+.dfl { position: relative; display: grid; gap: 12px; padding: 16px; border: 1.5px solid #fcd34d; border-radius: 20px; background: var(--surface); }
+.dfl-top h2 { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 18px; } .dfl-top h2 svg { width: 20px; height: 20px; color: #f59e0b; }
+.dfl-top small { color: var(--muted); font-size: 13px; }
+.dfl-x { position: absolute; right: 12px; top: 12px; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 6px; } .dfl-x svg { width: 20px; height: 20px; }
+.dfl-body { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 16px; align-items: start; }
+.dfl-pick { display: grid; gap: 8px; position: sticky; top: 8px; }
+.dfl-pick .dk-seg { display: flex; flex-wrap: wrap; }
+.dfl-search { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); }
+.dfl-search svg { width: 16px; height: 16px; color: var(--muted); } .dfl-search input { flex: 1; border: 0; outline: 0; background: none; font: inherit; color: var(--ink); min-width: 0; }
+.dfl-list { max-height: 560px; overflow: auto; display: grid; gap: 8px; padding-right: 4px; }
+.dfl-list h3 { margin: 4px 0 2px; font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .02em; }
+.dfl-list button { display: flex; justify-content: space-between; gap: 6px; width: 100%; text-align: left; font: inherit; font-size: 13.5px; padding: 7px 10px; border-radius: 10px; border: 1px solid transparent; background: none; color: var(--ink); cursor: pointer; }
+.dfl-list button small { color: var(--muted); font-size: 11px; white-space: nowrap; }
+.dfl-list button:hover { background: var(--line); } .dfl-list button.is-on { border-color: #f59e0b; background: #fef3c7; color: #78350f; }
+:root[data-theme="dark"] .dfl-list button.is-on { background: #3d2e0c; color: #fde68a; }
+.dfl-plan { display: grid; gap: 12px; min-width: 0; }
+.dfl-empty { display: grid; justify-items: center; gap: 6px; padding: 40px 10px; color: var(--muted); text-align: center; } .dfl-empty img { width: 120px; }
+.dfl-opts { display: grid; gap: 8px; padding: 10px 12px; border-radius: 14px; background: var(--line); }
+.dfl-opt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; } .dfl-opt > b { width: 76px; font-size: 13px; }
+.dfl-mascots { display: flex; gap: 6px; } .dfl-mascots button { width: 46px; height: 46px; padding: 2px; border-radius: 12px; border: 2px solid transparent; background: var(--surface); cursor: pointer; } .dfl-mascots button.is-on { border-color: #f59e0b; } .dfl-mascots img { width: 100%; height: 100%; object-fit: contain; }
+.dfl-scenes { display: flex; flex-wrap: wrap; gap: 4px; } .dfl-scenes button { font: inherit; font-size: 12.5px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); cursor: pointer; } .dfl-scenes button.is-on { border-color: #0ea5e9; background: #e0f2fe; color: #075985; } .dfl-scenes i { font-style: normal; margin-right: 3px; }
+:root[data-theme="dark"] .dfl-scenes button.is-on { background: #0c3a52; color: #bae6fd; }
+.dfl-row { gap: 12px; }
+.dfl-step { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line-strong); border-radius: 999px; padding: 2px; background: var(--surface); }
+.dfl-step b { font-size: 14px; min-width: 64px; text-align: center; } .dfl-step.is-sm b { font-size: 12.5px; min-width: 54px; }
+.dfl-step button { width: 28px; height: 28px; border-radius: 999px; border: 0; background: var(--line); color: var(--ink); cursor: pointer; display: grid; place-items: center; } .dfl-step button:disabled { opacity: .35; cursor: default; } .dfl-step svg { width: 14px; height: 14px; }
+.dfl-ph { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 10px; padding-top: 10px; border-top: 1px dashed var(--line-strong); }
+.dfl-ph-h { display: grid; gap: 6px; align-content: start; justify-items: start; }
+.dfl-tag { color: #fff; font-weight: 800; font-size: 13.5px; padding: 4px 10px; border-radius: 10px; display: grid; } .dfl-tag small { font-weight: 600; font-size: 11px; opacity: .9; }
+.dfl-thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 10px; }
+.dfl-th { position: relative; margin: 0; display: grid; gap: 4px; }
+.dfl-th .dk-frame { border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+.dfl-th figcaption { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dfl-th.is-off .dk-frame { opacity: .35; filter: grayscale(1); } .dfl-th.is-off figcaption { text-decoration: line-through; }
+.dfl-tg { position: absolute; right: 4px; top: 4px; width: 26px; height: 26px; border-radius: 999px; border: 0; background: #0f172acc; color: #fff; display: grid; place-items: center; cursor: pointer; } .dfl-tg svg { width: 14px; height: 14px; }
+.dfl-th.is-off .dfl-tg { background: #16a34a; }
+.dfl-add { aspect-ratio: 16 / 9; border: 2px dashed var(--line-strong); border-radius: 10px; background: none; color: var(--muted); font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; display: grid; place-content: center; justify-items: center; gap: 2px; } .dfl-add small { font-weight: 500; font-size: 11px; } .dfl-add svg { width: 18px; height: 18px; } .dfl-add:hover { border-color: #f59e0b; color: #b45309; }
+.dfl-foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; padding-top: 10px; border-top: 1px solid var(--line); }
+@media (max-width: 900px) { .dfl-body { grid-template-columns: 1fr; } .dfl-pick { position: static; } .dfl-list { max-height: 260px; } .dfl-ph { grid-template-columns: 1fr; } .dh-new { grid-template-columns: 1fr; } .dfl-foot { grid-template-columns: 1fr; } }

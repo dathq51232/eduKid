@@ -16,6 +16,7 @@ import {
 import { loadPraiseFonts } from '@/lib/praise/render';
 import { playSound, soundLabel, SOUNDS } from '@/lib/deck/sounds';
 import { SLIDE_TEMPLATES, STICKER_SETS } from '@/lib/deck/templates';
+import { SCENES } from '@/lib/deck/scenes';
 import SlideView, { ShapeSvg, SlideFrame, type PlayApi } from './SlideView';
 
 type Ribbon = 'page' | 'insert' | 'fx' | 'sound' | 'show';
@@ -112,6 +113,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   const addSticker = (src: string) => addEl({ id: uid(), kind: 'img', ...center(220, 220), w: 220, h: 220, rot: 0, src, name: src.split('/').pop()?.replace(/\.(webp|png)$/, '').replace(/-/g, ' ') });
   const addShape = (shape: ShapeKind) => addEl({ id: uid(), kind: 'shape', ...center(320, 220), w: shape === 'circle' || shape === 'star' || shape === 'heart' ? 260 : 360, h: shape === 'circle' || shape === 'star' || shape === 'heart' ? 260 : 200, rot: 0, shape, fill: '#fde68a', stroke: '#f59e0b', sw: 4, text: '', color: '#1f2937', size: 54 });
   const addQuiz = () => addEl({ id: uid(), kind: 'quiz', x: 220, y: 170, w: 1160, h: 620, rot: 0, q: 'Câu hỏi?', opts: ['Đáp án A', 'Đáp án B', 'Đáp án C', 'Đáp án D'], a: 0, cols: 2 }, 'pop');
+  const addSort = () => addEl({ id: uid(), kind: 'sort', x: 180, y: 160, w: 1240, h: 600, rot: 0, prompt: 'Sắp xếp theo thứ tự đúng', items: ['1', '2', '3', '4'] }, 'fade');
   const addDrop = () => addEl({ id: uid(), kind: 'drop', ...center(300, 220), w: 300, h: 220, rot: 0, label: 'Thả vào đây', accept: [], color: '#2563eb' });
   const addScene = () => { addEl({ id: uid(), kind: 'scene3d', x: 200, y: 150, w: 1200, h: 680, rot: 0, lesson: '', title: 'Chọn bài 3D' }); void loadLessons(); };
   const loadLessons = async () => {
@@ -241,6 +243,10 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
               <button type="button" className="dk-tool is-danger" onClick={delSlide}><Trash2 aria-hidden="true" />Xoá trang</button>
             </div><label>TRANG</label></div>
             <div className="dk-rg"><div className="dk-row dk-bgs">{BGS.map((b) => <button key={b.id} type="button" title={b.label} aria-label={`Nền ${b.label}`} className={slide.bg === b.id ? 'is-on' : ''} style={{ background: b.css }} onClick={() => setSlide((s) => ({ ...s, bg: b.id }))} />)}</div><label>NỀN TRANG</label></div>
+            <div className="dk-rg"><div className="dk-row dk-scenes">
+              <button type="button" className={!slide.scene ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: undefined }))}>Không</button>
+              {SCENES.map((c) => <button key={c.id} type="button" title={c.label} className={slide.scene === c.id ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: c.id }))}><span aria-hidden="true">{c.icon}</span>{c.label}</button>)}
+            </div><label>CẢNH MINH HOẠ</label></div>
             <div className="dk-rg"><div className="dk-row">
               <select value={slide.trans} onChange={(e) => setSlide((s) => ({ ...s, trans: e.target.value as Trans }))} aria-label="Chuyển trang">{(Object.keys(TRANS_LABEL) as Trans[]).map((t) => <option key={t} value={t}>{TRANS_LABEL[t]}</option>)}</select>
               <button type="button" className="btn btn-outline btn-sm" title="Áp dụng cho mọi trang" onClick={() => commit({ ...deckRef.current, slides: deckRef.current.slides.map((x) => ({ ...x, trans: slide.trans })) })}>Áp dụng mọi trang</button>
@@ -266,6 +272,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
             <div className="dk-rg"><div className="dk-row">
               <button type="button" className="dk-tool" onClick={addQuiz}><span className="dk-emo">❓</span>Câu hỏi</button>
               <button type="button" className="dk-tool" onClick={addDrop}><span className="dk-emo">🎯</span>Ô thả</button>
+              <button type="button" className="dk-tool" onClick={addSort}><span className="dk-emo">🔢</span>Sắp xếp</button>
               <button type="button" className="dk-tool" onClick={addScene}><span className="dk-emo">🧊</span>Cảnh 3D</button>
             </div><label>TƯƠNG TÁC</label></div>
           </>}
@@ -440,6 +447,21 @@ function Props({ e, slide, deck, patch, patchSoft, commitSoft, textRef, lessons,
         </div>
         <div className="dk-f">Xếp đáp án<div className="dk-seg"><button type="button" className={e.cols === 2 ? 'is-on' : ''} onClick={() => patch({ cols: 2 })}>2 cột</button><button type="button" className={e.cols === 1 ? 'is-on' : ''} onClick={() => patch({ cols: 1 })}>1 cột</button></div></div>
       </>}
+      {e.kind === 'sort' && <>
+        <label className="dk-f">Đề bài<textarea ref={textRef} rows={2} value={e.prompt} maxLength={200} onChange={(v) => patchSoft({ prompt: v.target.value })} onBlur={commitSoft} /></label>
+        <div className="dk-f">Các thẻ theo THỨ TỰ ĐÚNG (khi chiếu sẽ tự xáo)
+          {e.items.map((o, i) => (
+            <div key={i} className="dk-opt-row">
+              <b>{i + 1}</b>
+              <input value={o} maxLength={40} onChange={(v) => patchSoft({ items: e.items.map((x, k) => (k === i ? v.target.value : x)) })} onBlur={commitSoft} />
+              <button type="button" aria-label="Lên" disabled={i === 0} onClick={() => { const a = [...e.items]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; patch({ items: a }); }}><ArrowUp aria-hidden="true" /></button>
+              <button type="button" aria-label="Bỏ thẻ" disabled={e.items.length <= 2} onClick={() => patch({ items: e.items.filter((_, k) => k !== i) })}><X aria-hidden="true" /></button>
+            </div>
+          ))}
+          {e.items.length < 10 && <button type="button" className="btn btn-outline btn-sm" onClick={() => patch({ items: [...e.items, `Thẻ ${e.items.length + 1}`] })}><Plus aria-hidden="true" /> Thêm thẻ</button>}
+          <small className="dk-hint">Mẹo: chữ → câu (“Em / đi / học”), số bé → lớn, các bước làm, tranh theo truyện (dùng biểu tượng 🐣🐥🐔).</small>
+        </div>
+      </>}
       {e.kind === 'drop' && <>
         <label className="dk-f">Chữ trong ô<input value={e.label} maxLength={40} onChange={(v) => patchSoft({ label: v.target.value })} onBlur={commitSoft} /></label>
         <div className="dk-f">Vật kéo vào đúng ô này
@@ -458,7 +480,7 @@ function Props({ e, slide, deck, patch, patchSoft, commitSoft, textRef, lessons,
           {lessons && !lessons.length && <small className="dk-hint">Cô chưa có bài 3D nào. Tạo ở tab “Bài 3D của tôi” hoặc “Bài STEM lớp 1–5”.</small>}
         </label>
       )}
-      {e.kind !== 'quiz' && e.kind !== 'drop' && e.kind !== 'scene3d' && <label className="dk-chk dk-f"><input type="checkbox" checked={!!e.drag} onChange={(v) => patch({ drag: v.target.checked })} /> Kéo được khi trình chiếu (bài kéo thả)</label>}
+      {e.kind !== 'quiz' && e.kind !== 'drop' && e.kind !== 'scene3d' && e.kind !== 'sort' && <label className="dk-chk dk-f"><input type="checkbox" checked={!!e.drag} onChange={(v) => patch({ drag: v.target.checked })} /> Kéo được khi trình chiếu (bài kéo thả)</label>}
       <label className="dk-f">Bấm vào thì sang trang
         <select value={e.link ?? 0} onChange={(v) => patch({ link: Number(v.target.value) || undefined })}>
           <option value={0}>Không</option>{deck.slides.map((s, i) => <option key={s.id} value={i + 1}>Trang {i + 1}</option>)}

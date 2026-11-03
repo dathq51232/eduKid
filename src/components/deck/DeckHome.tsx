@@ -4,11 +4,14 @@
 // Tab "Bài thao giảng" trong trang Bài giảng 3D: bài của tôi + tạo bài trống / từ mẫu hoạt động.
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
-import { Copy, MonitorPlay, Plus, Trash2 } from 'lucide-react';
+import { Copy, MonitorPlay, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { BGS, emptyDeck, type Deck } from '@/lib/deck/types';
 import { SLIDE_TEMPLATES, deckFromTemplate } from '@/lib/deck/templates';
+
+const DeckFromLesson = dynamic(() => import('./DeckFromLesson'), { ssr: false, loading: () => <p className="dk-hint">Đang mở…</p> });
 
 export type DeckRow = { id: string; title: string; grade: number; updated_at: string; slides?: number };
 
@@ -20,6 +23,7 @@ export default function DeckHome({ classId, grade, decks, missing }: { classId: 
   const [err, setErr] = useState('');
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
   const [title, setTitle] = useState('');
+  const [wiz, setWiz] = useState(false);
 
   const create = async (D: Deck, key: string) => {
     if (!supabase) return;
@@ -56,7 +60,11 @@ export default function DeckHome({ classId, grade, decks, missing }: { classId: 
         <button type="button" className="dh-blank" disabled={missing || !!busy} onClick={() => void create(emptyDeck(name(), grade), 'blank')}>
           <img src="/emoji/tool/bai-giang-3d.webp" alt="" /><span><b><Plus aria-hidden="true" /> {busy === 'blank' ? 'Đang tạo…' : 'Bài thao giảng trống'}</b><small>Trang 16:9 có sẵn trang tiêu đề</small></span>
         </button>
+        <button type="button" className="dh-blank is-lesson" disabled={missing || !!busy} aria-expanded={wiz} onClick={() => setWiz(!wiz)}>
+          <img src="/brand/milo-professor-sm.webp" alt="" /><span><b><Sparkles aria-hidden="true" /> Tạo từ bài học</b><small>Chọn bài, app dựng sẵn tình huống, trò chơi</small></span>
+        </button>
       </div>
+      {wiz && <DeckFromLesson grade={grade} busy={busy === 'lesson'} onClose={() => setWiz(false)} onCreate={(D) => void create(D, 'lesson')} />}
 
       {list.length > 0 && <>
         <h2 className="dh-h">Bài thao giảng của tôi <span>{list.length}</span></h2>
