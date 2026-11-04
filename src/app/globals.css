@@ -7939,3 +7939,14 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .dp-used.is-over { color: #dc2626; }
 .dk.cv:fullscreen { height: 100vh !important; }
 @media (max-width: 700px) { .dk.cv { height: auto !important; } }
+.cv-panel { overflow-x: hidden; }
+.cv-panel > * { min-width: 0; max-width: 100%; }
+.cv-grid4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+.cv-grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+.cv-panel .dk-sgrid button { min-width: 0; overflow: hidden; }
+.cv-search.is-sticky { position: sticky; top: -14px; z-index: 3; box-shadow: 0 0 0 8px var(--surface); }
+.cv-cats { margin-right: 0; gap: 5px; }
+.cv-cats button { padding: 5px 10px; font-size: 12px; }
+.cv-panel .dk-stabs { flex-wrap: wrap; }
+.cv-main { position: relative; }
+@media (max-width: 1100px) { .cv-panel { top: 0; } }

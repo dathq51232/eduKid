@@ -22,6 +22,7 @@ import { WORK_MODES, applyTheme, badgeEl, cardEl, dividerSlide, modeEl, type Wor
 import SlideView, { ShapeSvg, SlideFrame, type PlayApi } from './SlideView';
 import AnimTimeline from './AnimTimeline';
 import { TEXT_STYLES, stickerName } from '@/lib/deck/sticker-names';
+import { F3D_CATS, F3D_VI, f3dSrc } from '@/lib/deck/f3d-catalog';
 import { STEP_COLOR, THEME_SETS, applySet, isBlankDeck, makeSet, type SetId } from '@/lib/deck/theme-sets';
 import { fold } from '@/lib/classroom/teacher-nav';
 
@@ -43,6 +44,8 @@ const SHAPES: { k: ShapeKind; label: string }[] = [
   { k: 'heart', label: 'Trái tim' }, { k: 'arrow', label: 'Mũi tên' }, { k: 'cloud', label: 'Đám mây' }, { k: 'bubble', label: 'Bong bóng lời' },
 ];
 type Lesson3DRow = { id: string; title: string };
+/** hình chưa có trên máy chủ (thiếu file): ẩn ô thay vì hiện ảnh lỗi */
+const hideBroken = (e: React.SyntheticEvent<HTMLImageElement>) => { const b = e.currentTarget.closest('button'); if (b) b.style.display = 'none'; };
 
 export default function DeckStudio({ classId, deckId, initial }: { classId: string; deckId: string; initial: Deck }) {
   const supabase = useMemo(() => { try { return createClient(); } catch { return null; } }, []);
@@ -62,6 +65,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   const [grid, setGrid] = useState(false);
   const [tplTab, setTplTab] = useState<'set' | 'page'>('set');
   const [replace, setReplace] = useState(false);
+  const [cat3d, setCat3d] = useState(-1);
   const [drag, setDrag] = useState<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   // trình soạn nằm trong khung trang giáo viên: cao vừa phần còn lại của màn hình
@@ -462,18 +466,19 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
               </>}
             </>}
             {panel === 'el' && <>
-              <input className="cv-search" type="search" value={q} placeholder="🔎 Tìm hình, cảnh, âm thanh… (táo, thỏ, vỗ tay)" onChange={(e) => setQ(e.target.value)} aria-label="Tìm thành phần" />
+              <input className="cv-search is-sticky" type="search" value={q} placeholder="🔎 Tìm hình, cảnh, âm thanh… (táo, thỏ, vỗ tay)" onChange={(e) => setQ(e.target.value)} aria-label="Tìm thành phần" />
               {replace && <p className="dk-msg is-info">Bấm một hình bên dưới để <b>thay</b> hình đang chọn. <button type="button" onClick={() => setReplace(false)}>Huỷ</button></p>}
               {q.trim().length > 0 ? (() => {
                 const f = fold(q.trim());
-                const imgs = [...F3D, ...STICKER_SETS.flatMap((x) => x.items)].filter((src) => fold(`${stickerName(src)} ${src}`).includes(f)).slice(0, 48);
+                const imgs = [...Object.keys(F3D_VI).map(f3dSrc), ...STICKER_SETS.flatMap((x) => x.items)].filter((src) => fold(stickerName(src)).includes(f) || (src.split('/').pop() ?? '').replace(/\.(webp|png)$/, '').split('-').some((w) => w.startsWith(f))).slice(0, 80);
                 const scenes = SCENES.filter((c) => fold(c.label).includes(f));
                 const sounds = SOUNDS.filter((x) => fold(x.label).includes(f));
                 return <>
                   {!imgs.length && !scenes.length && !sounds.length && <p className="dk-hint">Không thấy “{q}”. Thử từ khác (thỏ, cây, sách, vỗ tay…).</p>}
+                  {imgs.length > 0 && <p className="cv-ph">Hình <small>{imgs.length}{imgs.length >= 80 ? '+' : ''} kết quả</small></p>}
                   {imgs.length > 0 && <div className="dk-sgrid cv-grid4">{imgs.map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
                     {/* eslint-disable-next-line @next/next/no-img-element -- hình có sẵn */}
-                    <img src={src} alt={stickerName(src)} loading="lazy" /></button>)}</div>}
+                    <img src={src} alt={stickerName(src)} loading="lazy" onError={hideBroken} /></button>)}</div>}
                   {scenes.length > 0 && <div className="dk-row dk-scenes"><b>Cảnh:</b>{scenes.map((c) => <button key={c.id} type="button" onClick={() => setSlide((x) => ({ ...x, scene: c.id }))}>{c.icon} {c.label}</button>)}</div>}
                   {sounds.length > 0 && <div className="dk-row dk-snds"><b>Âm thanh:</b>{sounds.map((x) => <span key={x.id} className="dk-snd"><button type="button" onClick={() => playSound(x.id)}>{x.icon}</button><button type="button" onClick={() => { playSound(x.id); attachSound(x.id); }}>{x.label}</button></span>)}</div>}
                 </>;
@@ -481,11 +486,15 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
                 <p className="cv-ph">Bạn cú Milo <small>6 tư thế</small></p>
                 <div className="cv-milo">{MILO.map((src) => <button key={src} type="button" onClick={() => (replace && selEl?.kind === 'img' ? addSticker(src) : addEl({ id: uid(), kind: 'img', ...center(300, 400), w: 300, h: 400, rot: 0, src, name: 'Bạn cú Milo', role: 'mascot' }, 'pop'))}>
                   {/* eslint-disable-next-line @next/next/no-img-element -- linh vật */}
-                  <img src={src} alt="Bạn cú Milo" loading="lazy" /></button>)}</div>
-                <p className="cv-ph">Hình 3D</p>
-                <div className="dk-sgrid cv-grid4">{F3D.map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
+                  <img src={src} alt="Bạn cú Milo" loading="lazy" onError={hideBroken} /></button>)}</div>
+                <p className="cv-ph">Hình 3D <small>{Object.keys(F3D_VI).length} hình</small></p>
+                <div className="cv-chips cv-cats">
+                  <button type="button" className={cat3d < 0 ? 'is-on' : ''} onClick={() => setCat3d(-1)}>Gợi ý</button>
+                  {F3D_CATS.map((c, i) => <button key={c.label} type="button" className={cat3d === i ? 'is-on' : ''} onClick={() => setCat3d(i)}>{c.label}</button>)}
+                </div>
+                <div className="dk-sgrid cv-grid4">{(cat3d < 0 ? F3D : F3D_CATS[cat3d].items.map(f3dSrc)).map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
                   {/* eslint-disable-next-line @next/next/no-img-element -- hình 3D */}
-                  <img src={src} alt={stickerName(src)} loading="lazy" /></button>)}</div>
+                  <img src={src} alt={stickerName(src)} loading="lazy" onError={hideBroken} /></button>)}</div>
                 <p className="cv-ph">Hình khối</p>
                 <div className="cv-shapes">{SHAPES.map((s) => (
                   <button key={s.k} type="button" title={s.label} aria-label={s.label} onClick={() => addShape(s.k)}><span className="dk-shape-ic"><ShapeSvg e={{ id: '', kind: 'shape', shape: s.k, x: 0, y: 0, w: 1, h: 1, rot: 0, fill: '#fde68a', stroke: '#d97706', sw: 1.5 }} /></span></button>))}</div>
@@ -493,7 +502,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
                 <div className="dk-stabs">{STICKER_SETS.map((st, i) => <button key={st.label} type="button" className={stickerSet === i ? 'is-on' : ''} onClick={() => setStickerSet(i)}>{st.label}</button>)}</div>
                 <div className="dk-sgrid cv-grid4">{STICKER_SETS[stickerSet]?.items.map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
                   {/* eslint-disable-next-line @next/next/no-img-element -- hình dán có sẵn */}
-                  <img src={src} alt="" loading="lazy" /></button>)}</div>
+                  <img src={src} alt="" loading="lazy" onError={hideBroken} /></button>)}</div>
               </>}
             </>}
             {panel === 'text' && <>
