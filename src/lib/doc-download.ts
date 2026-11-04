@@ -27,3 +27,10 @@ export function downloadDocx(filename: string, bytes: Uint8Array) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/** Tải phiếu / đề (HTML) thành .docx, kèm hình 3D trong câu hỏi (hình được tải từ app rồi nhúng vào file) */
+export async function downloadHtmlAsDocx(filename: string, html: string, title?: string) {
+  const [{ htmlToDocx }, { imageKeys, loadImages }] = await Promise.all([import('./docx-write'), import('./plans/images')]);
+  const imgs = await loadImages(imageKeys(html));
+  downloadDocx(filename, htmlToDocx(html, imgs, { title, fontSize: 13 }));
+}

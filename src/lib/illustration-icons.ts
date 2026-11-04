@@ -1,3 +1,4 @@
+import { EMOJI_3D } from './emoji-3d';
 const EMOJI_ICONS: Record<string, string> = {
   '🍎': 'apple',
   '🍊': 'orange',
@@ -102,5 +103,8 @@ const NAME_ICONS: Record<string, string> = {
 
 export function illustrationIconSrc(value: string): string | null {
   const name = EMOJI_ICONS[value] ?? NAME_ICONS[value];
-  return name ? `/edu-icons/${name}.webp` : null;
+  if (name) return `/edu-icons/${name}.webp`;
+  // các emoji khác: hình 3D nhiều màu (public/emoji/f3d)
+  const f = EMOJI_3D[value.replace(/\uFE0F/g, '')];
+  return f ? `/emoji/f3d/${f}.webp` : null;
 }

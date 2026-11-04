@@ -24,6 +24,18 @@ export function mySchool(): Promise<string | null> {
 
 const cache = new Map<string, Promise<LoadedImage | null>>();
 
+/** WebP → PNG bằng canvas (chỉ trên trình duyệt) */
+async function toPng(bytes: Uint8Array): Promise<Uint8Array | null> {
+  if (typeof createImageBitmap === 'undefined' || typeof document === 'undefined') return null;
+  try {
+    const bmp = await createImageBitmap(new Blob([bytes as BlobPart], { type: 'image/webp' }));
+    const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+    c.getContext('2d')!.drawImage(bmp, 0, 0);
+    const blob = await new Promise<Blob | null>((r) => c.toBlob(r, 'image/png'));
+    return blob ? new Uint8Array(await blob.arrayBuffer()) : null;
+  } catch { return null; }
+}
+
 /** Tải hình (có bộ nhớ đệm) — trả về map khoá → nội dung + đường dẫn blob để hiển thị */
 export async function loadImages(keys: string[]): Promise<Map<string, LoadedImage>> {
   const out = new Map<string, LoadedImage>();
@@ -35,8 +47,10 @@ export async function loadImages(keys: string[]): Promise<Map<string, LoadedImag
       if (/^\/[a-z0-9/_-]+\.(png|jpg|gif|webp)$/.test(k)) {
         const r = await fetch(k);
         if (!r.ok) return null;
-        const bytes = new Uint8Array(await r.arrayBuffer());
-        const mime = mimeOf(k) ?? 'image/png';
+        let bytes: Uint8Array = new Uint8Array(await r.arrayBuffer());
+        let mime = mimeOf(k) ?? 'image/png';
+        // Word không đọc được WebP: đổi sang PNG (giữ nền trong suốt)
+        if (mime === 'image/webp') { const png = await toPng(bytes); if (png) { bytes = png; mime = 'image/png'; } }
         return { bytes, mime, url: URL.createObjectURL(new Blob([bytes as BlobPart], { type: mime })) };
       }
       if (!sc || !/^[0-9a-f]{40}\.[a-z]+$/.test(k)) return null;

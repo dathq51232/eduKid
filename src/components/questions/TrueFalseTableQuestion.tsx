@@ -2,6 +2,7 @@
 
 // Bảng Đúng/Sai: mỗi nhận định chọn Đ hoặc S. Đáp án gửi đi là mảng 'Đúng'/'Sai' theo thứ tự nhận định.
 
+import EmojiText from '@/components/EmojiText';
 import type { AnswerValue, Question } from '@/lib/types';
 
 type Props = {
@@ -40,7 +41,7 @@ export default function TrueFalseTableQuestion({ question, answer, onAnswerChang
       <tbody>
         {rows.map((text, i) => (
           <tr key={i}>
-            <td>{String.fromCharCode(97 + i)}) {text}</td>
+            <td>{String.fromCharCode(97 + i)}) <EmojiText text={text} /></td>
             {CHOICES.map((c) => (
               <td key={c.value} className="tf-cell">
                 <button

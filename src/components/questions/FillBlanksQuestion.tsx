@@ -2,6 +2,7 @@
 
 // Điền nhiều ô trong câu, ví dụ: "Có {} hình tròn." — "{}" là ô trống. Đáp án gửi đi là mảng theo thứ tự các ô.
 
+import EmojiText from '@/components/EmojiText';
 import { useMemo } from 'react';
 import type { AnswerValue, Question } from '@/lib/types';
 
@@ -38,7 +39,7 @@ export default function FillBlanksQuestion({ question, answer, onAnswerChange, i
             const myIndex = isLast ? -1 : idx++;
             return (
               <span key={pi}>
-                {text}
+                <EmojiText text={text} />
                 {!isLast && (
                   <input
                     className={`blank-input${state}`}

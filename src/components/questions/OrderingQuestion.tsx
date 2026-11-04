@@ -1,5 +1,6 @@
 'use client';
 
+import EmojiText from '@/components/EmojiText';
 import { useEffect } from 'react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { shuffle } from '@/lib/shuffle';
@@ -38,7 +39,7 @@ export default function OrderingQuestion({ question, answer, onAnswerChange, isS
         {items.map((item, index) => (
           <li key={item} className="order-item">
             <span className="order-no" aria-hidden="true">{index + 1}</span>
-            <span className="order-text">{item}</span>
+            <span className="order-text"><EmojiText text={item} /></span>
             <span className="order-actions">
               <button type="button" className="icon-button" disabled={isSubmitted || index === 0} onClick={() => move(index, index - 1)} aria-label={`Đưa "${item}" lên`}>
                 <ArrowUp size={20} aria-hidden="true" />

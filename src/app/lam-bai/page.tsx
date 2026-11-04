@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { AlarmClock, ArrowLeft, ArrowRight, Check, Clock, Dices, Flag, House, Lightbulb, Play, RefreshCw, SkipForward, Sparkles, Star, Volume2, VolumeX, X } from 'lucide-react';
 import { LogoMark, BrandWord } from '@/components/brand/BrandLogo';
 import { QuizBackdrop, QuizSideProps, StudentPill } from '@/components/learn/QuizScene';
+import EmojiText from '@/components/EmojiText';
 import Figure from '@/components/Figure';
 import KnowledgeCard from '@/components/KnowledgeCard';
 import LearnHeader from '@/components/LearnHeader';
@@ -720,14 +721,14 @@ function LamBaiContent() {
           {(() => {
             // Câu đọc hiểu (Tiếng Việt 2+): "Đọc bài "…":\n<bài đọc>\n\n<câu hỏi>" → khung bài đọc căn trái, câu hỏi bên dưới
             const m = /^Đọc bài "([^"]+)":\n([\s\S]+?)\n\n([\s\S]+)$/.exec(q.prompt);
-            if (!m) return <h1 className="question-prompt">{q.prompt}</h1>;
+            if (!m) return <h1 className="question-prompt"><EmojiText text={q.prompt} /></h1>;
             return (
               <>
                 <section className="reading-box" aria-label={`Bài đọc: ${m[1]}`}>
                   <p className="reading-title">{m[1]}</p>
-                  <p className="reading-text">{m[2]}</p>
+                  <p className="reading-text"><EmojiText text={m[2]} /></p>
                 </section>
-                <h1 className="question-prompt">{m[3]}</h1>
+                <h1 className="question-prompt"><EmojiText text={m[3]} /></h1>
               </>
             );
           })()}
@@ -800,7 +801,7 @@ function LamBaiContent() {
                     {item.status === 'correct' ? 'Đúng rồi, em giỏi quá!' : item.status === 'timeout' ? 'Hết giờ rồi!' : 'Chưa đúng, cố lên nào!'}
                     {item.points > 0 && <span className="points-pop">+{item.points} điểm{item.speedBonus > 0 ? ' (nhanh!)' : ''}</span>}
                   </h2>
-                  {item.explanation && <p>{item.explanation}</p>}
+                  {item.explanation && <p><EmojiText text={item.explanation} /></p>}
                   {fb && !holdAdvance && !dialog && (
                     <p className="advance-note">{lastOne ? 'Xem kết quả' : 'Sang câu tiếp'} sau {advanceLeft} giây…</p>
                   )}

@@ -1,5 +1,6 @@
 'use client';
 
+import EmojiText from '@/components/EmojiText';
 import Figure from '@/components/Figure';
 import type { AnswerValue, Question } from '@/lib/types';
 
@@ -36,7 +37,7 @@ export default function MultipleChoiceQuestion({ question, answer, onAnswerChang
                     <span className="choice-caption">{option}</span>
                   </span>
                 ) : (
-                  option
+                  <EmojiText text={option} />
                 )}
               </button>
             </li>

@@ -1,5 +1,6 @@
 'use client';
 
+import EmojiText from '@/components/EmojiText';
 import { useMemo, useState } from 'react';
 import { shuffle } from '@/lib/shuffle';
 import type { AnswerValue, Question } from '@/lib/types';
@@ -85,7 +86,7 @@ export default function MatchingQuestion({ question, answer, onAnswerChange, isS
                   disabled={isSubmitted || !activeLeft}
                   onClick={() => pickRight(right)}
                 >
-                  {right}
+                  <EmojiText text={right} />
                 </button>
               </li>
             );

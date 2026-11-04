@@ -1,6 +1,7 @@
 // Xuất đề kiểm tra ra file Word (.doc dạng HTML — Word mở trực tiếp, "Lưu thành" .docx nếu cần).
 // Không dùng thư viện ngoài; tạo ngay trên trình duyệt, không gửi dữ liệu đi đâu.
 
+import { emojiHtml } from '../emoji-img';
 import { PAGE_MARGIN, WORD_BASE_STYLE, nd30HeaderHtml } from '../doc-style';
 import { MUCS, MUC_DESC, MUC_NAME, partOf, totals, type ExamQuestion, type Matrix, type Muc, type Paper } from './matrix';
 
@@ -22,7 +23,11 @@ const lower = 'abcdefgh';
 const fmt = (n: number) => (Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100).replace('.', ','));
 const BLANK = '……………';
 
+/** câu hỏi trên phiếu / đề: emoji in thành hình 3D (giống thật, in màu đẹp) */
 function questionHtml(q: ExamQuestion, no: number, pts: number | null): string {
+  return emojiHtml(questionHtmlRaw(q, no, pts), 30);
+}
+function questionHtmlRaw(q: ExamQuestion, no: number, pts: number | null): string {
   const head = `<p class="q"><b>Câu ${no}.</b> ${pts == null ? '' : `<i>(${fmt(pts)} điểm)</i> `}`;
   switch (q.type) {
     case 'single_choice':

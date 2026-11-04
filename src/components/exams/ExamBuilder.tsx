@@ -1,5 +1,7 @@
 'use client';
 
+import { downloadHtmlAsDocx } from '@/lib/doc-download';
+import EmojiText from '@/components/EmojiText';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FileDown, FilePlus2, FolderOpen, Library, Printer, RefreshCw, Save, Shuffle, Table2, Trash2 } from 'lucide-react';
 import MyBankPanel from './MyBankPanel';
@@ -13,7 +15,7 @@ import {
   MUCS, MUC_DESC, MUC_NAME, available, bookLessons, buildPaper, defaultMatrix, outcomesIn, replaceSlot, shufflePaper, totals,
   type BookLesson, type Matrix, type Muc, type Paper,
 } from '@/lib/exams/matrix';
-import { answerText, downloadDoc, examDocument, printDoc } from '@/lib/exams/word';
+import { answerText, examDocument, printDoc } from '@/lib/exams/word';
 import { findOutcomeAny } from '@/lib/curriculum';
 import type { SubjectCode } from '@/lib/types';
 import { ToolIcon } from '@/components/classroom/tool-icons';
@@ -189,7 +191,7 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
     const meta = { school, title: title || autoTitle, subjectName: SUBJECT_NAME[subject], grade, className, yearLabel: `${year}–${year + 1}`, minutes, outcomes: outcomeText };
     const html = examDocument(meta, matrix, papers, new Map(lessons.map((l) => [l.id, l.title])), parts);
     if (suffix === 'pdf') return printDoc(html);
-    downloadDoc(`${SUBJECT_NAME[subject]}-lop${grade}-${kind}-${suffix}`.replace(/\s+/g, '-'), html);
+    void downloadHtmlAsDocx(`${SUBJECT_NAME[subject]}-lop${grade}-${kind}-${suffix}`.replace(/\s+/g, '-'), html, title);
   };
 
   return (
@@ -370,8 +372,8 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
                         <span className="exam-q-lesson">{s.q.lessonTitle}</span>
                         <button type="button" className="mini-btn" onClick={() => swap(pi, si)} aria-label={`Đổi câu ${si + 1}`}><RefreshCw aria-hidden="true" /> Đổi câu</button>
                       </div>
-                      <p className="exam-q-prompt">{s.q.prompt}</p>
-                      {s.q.options.length > 0 && <p className="exam-q-opts">{s.q.options.map((o, i) => `${'ABCDEFGH'[i]}. ${o}`).join('   ')}</p>}
+                      <p className="exam-q-prompt"><EmojiText text={s.q.prompt} /></p>
+                      {s.q.options.length > 0 && <p className="exam-q-opts"><EmojiText text={s.q.options.map((o, i) => `${'ABCDEFGH'[i]}. ${o}`).join('   ')} /></p>}
                       {(s.q.blanks ?? s.q.statements)?.map((l, i) => <p key={i} className="exam-q-opts">{l.replace(/\{\}/g, '……')}</p>)}
                       <p className="exam-q-ans">Đáp án: {answerText(s.q)}</p>
                     </li>
