@@ -342,3 +342,27 @@ export function pickFromLibrary<T extends LibraryMeta>(items: T[], rows: { subje
     return best;
   });
 }
+
+export type LibraryQuery = { subject: PlanSubject; extra: boolean; grade: number; week: number | null; title: string; ppct: number | null; integration?: string };
+export type LibraryMatch<T extends LibraryMeta> = { e: T; score: number; pct: number; why: { ok: boolean; label: string }[] };
+
+/** Các giáo án trong kho khớp nhất với một tiết (mặc định 3), kèm % khớp và lí do (để thầy cô chọn) */
+export function rankLibrary<T extends LibraryMeta>(items: T[], q: LibraryQuery, n = 3): LibraryMatch<T>[] {
+  const ft = fold(q.title);
+  const bai = Number(/\bbai\s*(\d+)/.exec(ft)?.[1] ?? 0) || null;
+  const tiet = Number(/\btiet\s*(\d+)/.exec(ft)?.[1] ?? 0) || null;
+  return items
+    .map((e) => ({ e, score: scoreEntry(e, q) }))
+    .filter((x) => x.score > 2)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, n)
+    .map(({ e, score }) => {
+      const why: { ok: boolean; label: string }[] = [{ ok: true, label: 'cùng môn, khối' }];
+      if (bai) why.push({ ok: e.lessonNo === bai, label: e.lessonNo === bai ? `cùng bài ${bai}` : `khác bài (bài ${e.lessonNo ?? '?'})` });
+      else if (overlap(q.title, e.title) >= 0.6) why.push({ ok: true, label: 'gần giống tên bài' });
+      if (tiet && e.periods.length) why.push({ ok: e.periods.includes(tiet), label: e.periods.includes(tiet) ? `cùng tiết ${tiet}` : `khác tiết (tiết ${e.periods.join(', ')})` });
+      if (q.ppct && e.ppct) why.push({ ok: q.ppct === e.ppct, label: `PPCT ${e.ppct}` });
+      if (q.week && e.week) why.push({ ok: Math.abs(q.week - e.week) <= 1, label: q.week === e.week ? 'cùng tuần' : `tuần ${e.week}` });
+      return { e, score, pct: Math.max(5, Math.min(99, Math.round((score / 14) * 100))), why };
+    });
+}

@@ -6,14 +6,16 @@ import { createClient } from '@/lib/supabase/client';
 import { downloadXlsx } from '@/lib/xlsx';
 import { readXlsxAll } from '@/lib/xlsx-read';
 import { addDays, mondayOf, viDate, weekdayVi, type LessonInfo, type LessonPlan } from '@/lib/plans/generate';
-import { parseScheduleBook, plansFromSchedule, scheduleTemplate, schoolGroupLabel, sortSchoolOrder, withLibraryPlan, type RowPlan, type Schedule } from '@/lib/plans/schedule';
-import { pickFromLibrary, type LibraryMeta } from '@/lib/plans/library';
+import { parseScheduleBook, plansFromSchedule, scheduleTemplate, schoolGroupLabel, sortSchoolOrder, adaptLibraryPlan, type RowPlan, type Schedule } from '@/lib/plans/schedule';
+import { pickFromLibrary, rankLibrary, type LibraryMeta } from '@/lib/plans/library';
 import { isPlan } from '@/lib/plans/generate';
 import { weekSheet, loadWeekOpts, type WeekArgs } from '@/lib/plans/week-export';
 import type { SubjectCode } from '@/lib/types';
 
 type SavedLite = { teach_date: string | null; period: number | null; title: string };
 type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;
+/** một tiết: giáo án đang dùng + giáo án app soạn (để quay lại) + giáo án kho đang dùng và những gì đã tự thay */
+type Item = RowPlan & { base: RowPlan; libId?: string; changes?: string[] };
 const KIND_LABEL: Record<RowPlan['kind'], string> = { kho: 'Giáo án của trường', app: 'Theo bài trong app', review: 'Ôn tập / bổ sung', khung: 'Khung chung' };
 const keyOf = (date: string, period: number, title: string) => `${date}|${period}|${title.trim().toLowerCase()}`;
 
@@ -34,7 +36,10 @@ export default function ScheduleImport({ classId, className, grade, school, weak
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState('');
   const [sch, setSch] = useState<Schedule | null>(null);
-  const [items, setItems] = useState<RowPlan[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
+  // gợi ý kho trường cho từng tiết: tiết đang mở, nội dung giáo án kho đã tải
+  const [kho, setKho] = useState<number | null>(null);
+  const [libPlans, setLibPlans] = useState<Map<string, LessonPlan>>(new Map());
   const [pick, setPick] = useState<boolean[]>([]);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState('');
@@ -43,13 +48,30 @@ export default function ScheduleImport({ classId, className, grade, school, weak
   const savedKeys = useMemo(() => new Set(saved.filter((s) => s.teach_date).map((s) => keyOf(s.teach_date!, s.period ?? 0, s.title))), [saved]);
   const exists = (r: RowPlan) => !!r.plan.date && savedKeys.has(keyOf(r.plan.date, r.plan.period, r.plan.title));
 
+  const qOf = (r: Item) => ({ subject: r.row.subject, extra: r.row.extra, grade: sch?.grade ?? grade, week: Number(sch?.week) || null, title: r.row.title, ppct: Number(r.row.ppct) || null, integration: r.row.integration });
+  /** mở gợi ý kho cho tiết i: tải nội dung các giáo án gợi ý (nếu chưa có) */
+  const openKho = async (i: number) => {
+    if (kho === i) return setKho(null);
+    setKho(i);
+    const need = rankLibrary(library, qOf(items[i])).map((m) => m.e.id).filter((id) => !libPlans.has(id));
+    if (!need.length) return;
+    const { data } = await createClient().rpc('library_get', { p_ids: need });
+    setLibPlans((old) => { const m = new Map(old); for (const row of (data ?? []) as { id: string; data: unknown }[]) if (isPlan(row.data)) m.set(row.id, row.data); return m; });
+  };
+  const chooseLib = (i: number, id: string) => {
+    const lib = libPlans.get(id);
+    if (!lib) return;
+    setItems((list) => list.map((r, k) => (k === i ? { ...adaptLibraryPlan(r.base, lib, className), base: r.base, libId: id } : r)));
+  };
+  const chooseBase = (i: number) => setItems((list) => list.map((r, k) => (k === i ? { ...r.base, base: r.base } : r)));
+
   const load = async (file: File) => {
     setMsg(null); setSch(null); setItems([]); setFileName(file.name);
     if (!/\.xlsx$/i.test(file.name)) return setMsg({ kind: 'error', text: 'Chỉ đọc được file .xlsx. Nếu là .xls, mở bằng Excel rồi “Lưu thành” Excel Workbook (.xlsx).' });
     if (file.size > 5_000_000) return setMsg({ kind: 'error', text: 'File quá lớn (tối đa 5 MB).' });
     try {
       const s = parseScheduleBook(await readXlsxAll(await file.arrayBuffer()));
-      let list = plansFromSchedule(s, { grade, className, lessonsBySubject, weakForms });
+      let list: Item[] = plansFromSchedule(s, { grade, className, lessonsBySubject, weakForms }).map((rp) => ({ ...rp, base: rp }));
       // ưu tiên giáo án trong kho của trường (đúng môn, khối, bài, tiết)
       if (library.length) {
         const g = s.grade ?? grade;
@@ -62,12 +84,13 @@ export default function ScheduleImport({ classId, className, grade, school, weak
             const { data } = await sb.rpc('library_get', { p_ids: ids.slice(i, i + 25) });
             for (const row of (data ?? []) as { id: string; data: unknown }[]) got.set(row.id, row.data);
           }
-          list = list.map((rp, i) => { const m = picks[i]; const d = m ? got.get(m.id) : null; return m && isPlan(d) ? withLibraryPlan(rp, d, className) : rp; });
+          setLibPlans(new Map([...got].filter((x): x is [string, LessonPlan] => isPlan(x[1]))));
+          list = list.map((rp, i) => { const m = picks[i]; const d = m ? got.get(m.id) : null; return m && isPlan(d) ? { ...adaptLibraryPlan(rp, d, className), base: rp.base, libId: m.id } : rp; });
         }
       }
       // thứ tự soạn theo mẫu nhà trường: TV → Toán → Đạo đức → TN&XH → HĐTN → TV tăng cường → Toán tăng cường → môn khác
       list = sortSchoolOrder(list, (r) => ({ subject: r.row.subject, extra: r.row.extra, label: r.row.subjectLabel, date: r.plan.date, session: r.row.session, period: r.row.period }));
-      setSch(s); setItems(list);
+      setSch(s); setItems(list); setKho(null);
       setPick(list.map((r) => !(!!r.plan.date && savedKeys.has(keyOf(r.plan.date, r.plan.period, r.plan.title)))));
       if (s.grade !== null && s.grade !== grade) setMsg({ kind: 'info', text: `Lịch báo giảng là của khối ${s.grade}, lớp ${className} là khối ${grade}: giáo án dùng khung chung, không ghép bài của app. Kiểm tra lại file nếu nhầm.` });
     } catch (e) {
@@ -175,8 +198,17 @@ export default function ScheduleImport({ classId, className, grade, school, weak
                     <td>{r.row.subjectLabel}</td>
                     <td className="planner-title">{r.plan.title}{r.row.integration && <span className="planner-int"> · Tích hợp: {r.row.integration.split('\n')[0]}</span>}</td>
                     <td><span className={`planner-kind is-${r.kind}`} title={r.lessonTitle || undefined}>{KIND_LABEL[r.kind]}</span>{r.lessonTitle && <span className="planner-int"> {r.lessonTitle}</span>}{exists(r) && <span className="planner-int"> · đã lưu</span>}</td>
-                    <td><button type="button" className="mini-btn" onClick={() => onOpen(r.plan)}>Xem, sửa</button></td>
+                    <td className="planner-kho-cell">
+                      <button type="button" className="mini-btn" onClick={() => onOpen(r.plan)}>Xem, sửa</button>
+                      {library.length > 0 && <button type="button" className={`mini-btn planner-kho-btn${kho === i ? ' is-on' : ''}`} aria-expanded={kho === i} onClick={() => void openKho(i)}>📚 Kho trường</button>}
+                    </td>
                   </tr>
+                  {kho === i && (
+                    <tr className="planner-kho-row"><td colSpan={8}>
+                      <KhoPanel r={r} matches={rankLibrary(library, qOf(r))} libPlans={libPlans} className={className}
+                        onUse={(id) => chooseLib(i, id)} onBase={() => chooseBase(i)} onOpen={(pl) => onOpen(pl)} />
+                    </td></tr>
+                  )}
                   </Fragment>);
                 })}
               </tbody>
@@ -186,5 +218,43 @@ export default function ScheduleImport({ classId, className, grade, school, weak
         </>
       )}
     </section>
+  );
+}
+
+/** Gợi ý giáo án gần nhất trong kho cho một tiết: % khớp, lí do, những gì sẽ tự thay; dùng / quay về khung của app */
+function KhoPanel({ r, matches, libPlans, className, onUse, onBase, onOpen }: {
+  r: Item; matches: ReturnType<typeof rankLibrary<LibraryMeta>>; libPlans: Map<string, LessonPlan>; className: string;
+  onUse: (id: string) => void; onBase: () => void; onOpen: (plan: LessonPlan) => void;
+}) {
+  if (!matches.length) return <p className="dash-muted">Kho trường chưa có giáo án khớp tiết này (cùng môn, khối, bài). App soạn theo khung của app.</p>;
+  return (
+    <div className="kho">
+      <p className="kho-h">Giáo án gần nhất trong kho cho <b>{r.row.title}</b>{r.row.ppct ? ` · PPCT ${r.row.ppct}` : ''}{r.row.integration ? ` · tích hợp: ${r.row.integration.split('\n')[0]}` : ''}</p>
+      <div className="kho-list">
+        {matches.map((m) => {
+          const lib = libPlans.get(m.e.id);
+          const on = r.libId === m.e.id && r.kind === 'kho';
+          const preview = lib ? adaptLibraryPlan(r.base, lib, className) : null;
+          return (
+            <div key={m.e.id} className={`kho-card${on ? ' is-on' : ''}`}>
+              <div className="kho-t"><b>{m.e.title}</b><span className={`kho-pct ${m.pct >= 80 ? 'is-hi' : m.pct >= 55 ? 'is-mid' : ''}`}>Khớp {m.pct}%</span></div>
+              <small>{m.e.source}{m.e.week ? ` · tuần ${m.e.week}` : ''}</small>
+              <div className="kho-why">{m.why.map((w) => <span key={w.label} className={w.ok ? 'is-ok' : 'is-no'}>{w.ok ? '✓' : '✗'} {w.label}</span>)}</div>
+              {preview ? <ul className="kho-swap">{preview.changes.map((c) => <li key={c}>{c}</li>)}</ul> : <p className="dash-muted">Đang tải giáo án…</p>}
+              <div className="kho-btns">
+                {on ? <span className="tag-ok">Đang dùng</span> : <button type="button" className="btn btn-primary btn-sm" disabled={!lib} onClick={() => onUse(m.e.id)}>Dùng giáo án này{preview ? ` (tự thay ${preview.changes.length} mục)` : ''}</button>}
+                <button type="button" className="btn btn-outline btn-sm" disabled={!preview} onClick={() => preview && onOpen(preview.plan)}>Xem, sửa</button>
+              </div>
+            </div>
+          );
+        })}
+        <div className={`kho-card is-base${r.kind !== 'kho' ? ' is-on' : ''}`}>
+          <div className="kho-t"><b>Không dùng kho — soạn theo khung của app</b></div>
+          <small>{KIND_LABEL[r.base.kind]}{r.base.lessonTitle ? ` · ${r.base.lessonTitle}` : ''}</small>
+          <div className="kho-btns">{r.kind !== 'kho' ? <span className="tag-ok">Đang dùng</span> : <button type="button" className="btn btn-outline btn-sm" onClick={onBase}>Dùng khung của app</button>}</div>
+        </div>
+      </div>
+      <p className="dash-muted kho-note">Giáo án gốc giữ nguyên chữ, bảng, màu; app chỉ thay ngày, lớp, tiết và chèn nội dung tích hợp của tuần này.</p>
+    </div>
   );
 }

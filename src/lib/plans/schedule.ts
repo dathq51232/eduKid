@@ -6,7 +6,8 @@
 import type { Sheet } from '../xlsx-read';
 import { END_ROW, ERROR_CELL, EXCEL_SERIAL, EXTRA_ONLY, HEADER_RULES, INTEGRATION_EXPAND, INTEGRATION_HEAD, MORNING_SLOTS, SESSION_ROW, SHEET_NAME_HINT, SHEET_NAME_SKIP, SUBJECT_ALIASES } from './schedule-rules';
 import { XS, range, type XCell, type XSheet } from '../xlsx';
-import { SUBJECT_NAMES, addDays, generatePlan, genericPlan, isAppSubject, mondayOf, type LessonInfo, type LessonPlan, type PlanSubject } from './generate';
+import { integrationKinds, suggest, applySuggestion } from './assistant';
+import { SUBJECT_NAMES, addDays, viDate, generatePlan, genericPlan, isAppSubject, mondayOf, type LessonInfo, type LessonPlan, type PlanSubject } from './generate';
 import type { SubjectCode } from '../types';
 
 export type ScheduleRow = {
@@ -380,6 +381,45 @@ export function withLibraryPlan(rp: RowPlan, lib: LessonPlan, className: string)
       adjust: r.adjust || '', grade: rp.plan.grade,
     },
   };
+}
+
+/**
+ * Dùng giáo án trong kho cho một tiết và tự thay các ô thông tin: ngày dạy, lớp, tiết (cả trong bản gốc của trường),
+ * nội dung tích hợp theo lịch tuần này (chèn thêm dòng vào hoạt động vận dụng nếu giáo án cũ chưa có).
+ * changes: những gì đã thay (để báo cho thầy cô).
+ */
+export function adaptLibraryPlan(rp: RowPlan, lib: LessonPlan, className: string): RowPlan & { changes: string[] } {
+  const out = withLibraryPlan(rp, lib, className);
+  const changes: string[] = [];
+  const p = { ...out.plan };
+  if (lib.date && p.date && lib.date !== p.date) changes.push(`Ngày dạy: ${viDate(lib.date)} → ${viDate(p.date)}`);
+  else if (p.date) changes.push(`Ngày dạy: ${viDate(p.date)}`);
+  if (lib.className && className && lib.className !== className) changes.push(`Lớp: ${lib.className} → ${className}`);
+  if (p.period) changes.push(`Tiết: ${lib.period && lib.period !== p.period ? `${lib.period} → ` : ''}${p.period}${p.session ? ` buổi ${p.session.toLowerCase()}` : ''}`);
+  // bản gốc của trường: thay tên lớp, ngày cũ trong chữ
+  if (p.orig?.html) {
+    let html = p.orig.html, n = 0;
+    const swap = (from: string, to: string) => { if (!from || !to || from === to) return; const re = new RegExp(from.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&'), 'g'); html = html.replace(re, () => { n++; return to; }); };
+    if (lib.className && lib.className.length >= 2) swap(lib.className, className);
+    if (lib.date && p.date) {
+      const [y, m, d] = lib.date.split('-'); const [y2, m2, d2] = p.date.split('-');
+      swap(`${d}/${m}/${y}`, `${d2}/${m2}/${y2}`); swap(`${Number(d)}/${Number(m)}/${y}`, `${Number(d2)}/${Number(m2)}/${y2}`);
+    }
+    if (n) { p.orig = { html }; changes.push(`Bản gốc của trường: thay ${n} chỗ (lớp, ngày)`); }
+  }
+  // tích hợp của tuần này chưa có trong giáo án cũ → chèn vào hoạt động vận dụng
+  const ri = rp.row.integration?.trim() ?? '';
+  if (ri && !fold(lib.integration ?? '').includes(fold(ri).slice(0, 20))) {
+    const kinds = integrationKinds(ri);
+    let q: LessonPlan = p;
+    if (kinds.length) for (const k of kinds) q = applySuggestion(q, suggest(k, q, { weak: [], active: -1, v: 0 }));
+    else if (q.activities.length) { const i = q.activities.length - 1; q = { ...q, activities: q.activities.map((a, k) => (k === i ? { ...a, teacher: `${a.teacher.trim()}\n- Tích hợp ${ri.split('\n')[0]}: liên hệ nội dung bài học.`.trim() } : a)) }; }
+    Object.assign(p, q);
+    // tích hợp của tuần này thay cho tích hợp cũ của giáo án trong kho
+    p.integration = ri;
+    changes.push(`Tích hợp: ${lib.integration?.trim() ? `${lib.integration.split('\n')[0].slice(0, 40)} → ` : ''}${ri.split('\n')[0]} (chèn vào hoạt động vận dụng)`);
+  }
+  return { ...out, plan: p, changes };
 }
 
 /** Sinh giáo án cho từng tiết của lịch báo giảng */

@@ -7,6 +7,7 @@ import type React from 'react';
 import { GripVertical, Minus, Plus, X } from 'lucide-react';
 import type { ActivityKey, LessonPlan, PlanActivity } from '@/lib/plans/generate';
 import { plansDocument } from '@/lib/plans/word';
+import PlanAssistant from './PlanAssistant';
 
 type Sec = 'info' | 'goals' | 'mat' | 'act-0' | 'act-1' | 'act-2' | 'act-3' | 'act-4' | 'act-5' | 'assess' | 'adjust';
 const ACT_COLOR: Record<string, string> = { 'khoi-dong': '#f59e0b', 'kham-pha': '#0ea5e9', 'luyen-tap': '#22c55e', 'van-dung': '#ec4899' };
@@ -174,6 +175,11 @@ export default function PlanWorkspace({ plan, edit, school, weak, view }: {
   view: 'split' | 'form';
 }) {
   const [active, setActive] = useState<Sec>('info');
+  // cột phải: bản xem trước A4 hoặc Trợ lý soạn bài (nhớ lựa chọn trên máy)
+  const [side, setSide] = useState<'pv' | 'ai'>('pv');
+  useEffect(() => { try { if (localStorage.getItem('edukid:plan-side') === 'ai') setSide('ai'); } catch { /* bỏ qua */ } }, []);
+  const pickSide = (x: 'pv' | 'ai') => { setSide(x); try { localStorage.setItem('edukid:plan-side', x); } catch { /* bỏ qua */ } };
+  const actIdx = active.startsWith('act-') ? Number(active.slice(4)) : -1;
   const midRef = useRef<HTMLDivElement>(null);
   const html = useMemo(() => plansDocument([plan], school), [plan, school]);
   const setAct = (i: number, patch: Partial<PlanActivity>) => edit((p) => ({ ...p, activities: p.activities.map((a, k) => (k === i ? { ...a, ...patch } : a)) }));
@@ -294,13 +300,17 @@ export default function PlanWorkspace({ plan, edit, school, weak, view }: {
         </section>
       </div>
 
-      {view === 'split' && (
-        <div className="pw-pv">
+      <div className="pw-pv">
+        <div className="pw-tabs" role="tablist" aria-label="Cột bên phải">
+          {view === 'split' && <button type="button" role="tab" aria-selected={side === 'pv'} className={side === 'pv' ? 'is-on' : ''} onClick={() => pickSide('pv')}>📄 Xem trước A4</button>}
+          <button type="button" role="tab" aria-selected={side === 'ai' || view !== 'split'} className={side === 'ai' || view !== 'split' ? 'is-on' : ''} onClick={() => pickSide('ai')}>🧑‍🏫 Trợ lý soạn bài</button>
+        </div>
+        {side === 'pv' && view === 'split' ? <>
           {plan.orig && plan.useOrig !== false && <p className="pw-pv-note">Đang xem bản gốc của trường. Sửa khung soạn sẽ không đổi bản này — chọn “Khung soạn bên dưới” ở mục Thông tin để dùng khung soạn.</p>}
           <LivePreview html={html} active={active} onPick={go} />
           <p className="pw-pv-hint">Bấm vào một mục trên trang để sửa mục đó · trang giống file Word tải về</p>
-        </div>
-      )}
+        </> : <PlanAssistant plan={plan} edit={edit} weak={weak} active={actIdx} onGo={(t) => go(t < 0 ? 'adjust' : (`act-${t}` as Sec))} />}
+      </div>
     </div>
   );
 }
