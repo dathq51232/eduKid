@@ -24,7 +24,9 @@ export type Obj3D = {
 
 export type Link3D = { id: string; from: string; to: string; kind: 'arrow' | 'measure' | 'wire'; label: string };
 export type Control3D = { id: string; label: string; kind: 'switch' | 'slider'; action: 'on' | 'speed' | 'split' | 'show'; targets: string[] };
-export type Scene3D = { caption: string; cam: number[]; tgt: number[]; focus: string };
+export type Scene3D = { caption: string; cam: number[]; tgt: number[]; focus: string;
+  /** tự trình diễn: ở cảnh này bao nhiêu giây rồi tự sang cảnh sau (không có = 6 giây) */ sec?: number;
+  /** đọc lời dẫn khi tự trình diễn */ say?: boolean };
 export type Quiz3D =
   | { type: 'spot'; q: string; target: string }
   | { type: 'choice'; q: string; opts: string[]; a: number };

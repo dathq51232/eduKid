@@ -93,7 +93,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
   /* ---------- chuyển bước / trang ---------- */
   const animateIn = useCallback((i: number) => {
     const f = transFrames(deck.slides[i]?.trans ?? 'none');
-    if (f) frameRef.current?.animate(f, { duration: 550, easing: 'cubic-bezier(.2,.8,.3,1)' });
+    if (f) frameRef.current?.animate(f, { duration: (deck.slides[i]?.transDur ?? 0.55) * 1000, easing: 'cubic-bezier(.2,.8,.3,1)' });
   }, [deck.slides]);
   const go = useCallback((i: number, step = 0) => {
     if (i < 0 || i >= n) return;
@@ -117,6 +117,13 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
     if (showRef.current.slide > 0) go(showRef.current.slide - 1, 999);
   }, [audience, send, go]);
   nextRef.current = next; prevRef.current = prev;
+  // tự sang bước / trang sau X giây (đặt ở từng trang)
+  const autoNext = deck.slides[show.slide]?.autoNext ?? 0;
+  useEffect(() => {
+    if (audience || !autoNext) return;
+    const t = setTimeout(() => nextRef.current(), autoNext * 1000);
+    return () => clearTimeout(t);
+  }, [audience, autoNext, show.slide, show.step, show.nonce]);
   useEffect(() => { const t = setTimeout(() => setLeft(api.current?.stepsLeft() ?? 0), 50); return () => clearTimeout(t); }, [show.slide, show.nonce]);
 
   const onAction = (a: PlayAction) => { send({ type: 'act', slide: showRef.current.slide, a }); setLeft(api.current?.stepsLeft() ?? 0); };

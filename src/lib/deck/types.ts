@@ -20,6 +20,8 @@ export type ElBase = {
   link?: number;
   /** khoá vị trí khi soạn */
   lock?: boolean;
+  /** nhóm vật (chọn một vật trong nhóm là chọn cả nhóm) */
+  group?: string;
   /** vai trò trong bố cục chủ đề (đổi chủ đề cả bài thì đổi màu theo): khung nội dung, nhãn bài, hình thức làm bài, chữ trang chia */
   role?: 'card' | 'badge' | 'mode' | 'title' | 'divider';
 };
@@ -59,8 +61,14 @@ export const FX_BY_ID = Object.fromEntries(FX.map((f) => [f.id, f])) as Record<F
 
 export type Start = 'click' | 'with' | 'after';
 export const START_LABEL: Record<Start, string> = { click: 'Khi bấm', with: 'Cùng lúc với trước', after: 'Sau hiệu ứng trước' };
+/** kiểu chuyển động của hiệu ứng (auto: theo từng hiệu ứng) */
+export type Ease = 'auto' | 'linear' | 'smooth' | 'bounce' | 'elastic';
+export const EASE_LABEL: Record<Ease, string> = { auto: 'Tự nhiên', linear: 'Đều', smooth: 'Êm', bounce: 'Nảy', elastic: 'Đàn hồi' };
 export type Anim = {
   id: string; el: string; fx: Fx; start: Start; delay: number; dur: number;
+  ease?: Ease;
+  /** số lần chạy (1–5); 0 = lặp mãi (chỉ hiệu ứng nhấn mạnh) */
+  rep?: number;
   /** âm thanh đi kèm: tên âm có sẵn hoặc "asset:<đường dẫn kho>" */
   sound?: string;
   /** chỉ chạy khi bấm vào vật này (kích hoạt — trigger) */
@@ -72,6 +80,8 @@ export const TRANS_LABEL: Record<Trans, string> = { none: 'Không', fade: 'Mờ 
 
 export type SceneKind = 'garden' | 'pond' | 'kitchen' | 'class' | 'yard' | 'sea' | 'space' | 'farm' | 'tet';
 export type Slide = { id: string; bg: string; els: El[]; anims: Anim[]; trans: Trans; notes: string; sound?: string;
+  /** thời gian chuyển trang (giây) */ transDur?: number;
+  /** tự sang bước / trang sau ... giây khi trình chiếu (0 = không) */ autoNext?: number;
   /** cảnh nền minh hoạ ghép từ hình có sẵn (vẽ phía sau các vật) */
   scene?: SceneKind;
   /** hoạt động của tiết dạy: Khởi động / Khám phá / Luyện tập / Vận dụng / Củng cố */
@@ -120,9 +130,11 @@ export function normalizeDeck(raw: unknown, fallbackTitle = 'Bài thao giảng')
     return {
       id: typeof s?.id === 'string' ? s.id : uid(), bg: typeof s?.bg === 'string' ? s.bg : 'white', els,
       anims: (Array.isArray(s?.anims) ? s.anims : []).filter((a) => a && ids.has(a.el) && FX_BY_ID[a.fx as Fx])
-        .map((a) => ({ ...a, delay: num(a.delay, 0), dur: Math.min(5, Math.max(0.2, num(a.dur, 0.6))), start: (['click', 'with', 'after'] as const).includes(a.start) ? a.start : 'click', trigger: a.trigger && ids.has(a.trigger) ? a.trigger : undefined })),
+        .map((a) => ({ ...a, delay: Math.min(30, Math.max(0, num(a.delay, 0))), dur: Math.min(10, Math.max(0.2, num(a.dur, 0.6))), ease: (Object.keys(EASE_LABEL) as Ease[]).includes(a.ease as Ease) ? a.ease : undefined, rep: typeof a.rep === 'number' ? Math.min(5, Math.max(0, Math.round(a.rep))) : undefined, start: (['click', 'with', 'after'] as const).includes(a.start) ? a.start : 'click', trigger: a.trigger && ids.has(a.trigger) ? a.trigger : undefined })),
       trans: (Object.keys(TRANS_LABEL) as Trans[]).includes(s?.trans as Trans) ? (s.trans as Trans) : 'fade',
       notes: typeof s?.notes === 'string' ? s.notes : '', sound: typeof s?.sound === 'string' ? s.sound : undefined,
+      ...(typeof s?.transDur === 'number' ? { transDur: Math.min(3, Math.max(0.1, s.transDur)) } : {}),
+      ...(typeof s?.autoNext === 'number' && s.autoNext > 0 ? { autoNext: Math.min(120, Math.max(1, s.autoNext)) } : {}),
       scene: typeof s?.scene === 'string' ? s.scene : undefined, phase: typeof s?.phase === 'string' ? s.phase : undefined,
     };
   });

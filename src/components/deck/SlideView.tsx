@@ -10,7 +10,7 @@ import SceneBg from './SceneBg';
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
 import { FONTS, FX_BY_ID, SH, SW, bgCss, type El, type ShapeEl, type Slide, type SortEl } from '@/lib/deck/types';
-import { fxEasing, fxFrames, planSlide, type Step } from '@/lib/deck/player';
+import { animIterations, fxEasing, fxFrames, planSlide, type Step } from '@/lib/deck/player';
 import { playSound } from '@/lib/deck/sounds';
 
 const Scene3DBox = dynamic(() => import('./Scene3DBox'), { ssr: false });
@@ -165,7 +165,9 @@ type Props = {
   slide: Slide; mode: 'edit' | 'play' | 'thumb'; scale: number;
   assetUrl?: (path: string) => string | undefined;
   /* soạn */
-  sel?: string | null; onSelect?: (id: string | null) => void;
+  sel?: string | null; onSelect?: (id: string | null, add?: boolean) => void;
+  /** các vật đang chọn (chọn nhiều / nhóm) */ multi?: string[];
+  /** kéo khung chọn trên nền trang */ onSelectMany?: (ids: string[]) => void;
   onChange?: (id: string, patch: Partial<El>, record: boolean) => void;
   onEditText?: (id: string) => void;
   /* chiếu */
@@ -179,7 +181,7 @@ type Props = {
   board?: BoardTeam[];
 };
 
-const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, scale, assetUrl, sel, onSelect, onChange, onEditText, onAction, onLink, startStep = 0, onWin, board }, ref) {
+const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, scale, assetUrl, sel, onSelect, multi, onSelectMany, onChange, onEditText, onAction, onLink, startStep = 0, onWin, board }, ref) {
   const winRef = useRef(onWin); winRef.current = onWin;
   const plan = useMemo(() => planSlide(slide), [slide]);
   const play = mode === 'play';
@@ -208,7 +210,7 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
         if (g === 'in') show(c.anim.el, true);
         if (instant) { if (g === 'out') show(c.anim.el, false); return; }
         playSound(c.anim.sound);
-        const a = n?.animate(fxFrames(c.anim.fx), { duration: c.anim.dur * 1000, easing: fxEasing(c.anim.fx), iterations: c.anim.fx === 'spin' ? 1 : 1 });
+        const a = n?.animate(fxFrames(c.anim.fx), { duration: c.anim.dur * 1000, easing: fxEasing(c.anim.fx, c.anim.ease), iterations: animIterations(c.anim) });
         if (g === 'out') { if (a) a.onfinish = () => show(c.anim.el, false); else show(c.anim.el, false); }
       };
       if (instant || c.at <= 0) go(); else timers.current.push(window.setTimeout(go, c.at * 1000));
@@ -299,16 +301,25 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
   const rootRef = useRef<HTMLDivElement>(null);
 
   /* ---------- soạn: kéo / đổi cỡ ---------- */
-  const edit = useRef<{ id: string; kind: 'move' | 'size'; sx: number; sy: number; x0: number; y0: number; w0: number; h0: number; ratio: boolean; moved: boolean } | null>(null);
+  const edit = useRef<{ id: string; kind: 'move' | 'size'; sx: number; sy: number; x0: number; y0: number; w0: number; h0: number; ratio: boolean; moved: boolean;
+    /** kéo cả nhóm / nhiều vật: vị trí ban đầu của từng vật */ many: { id: string; x: number; y: number; w: number; h: number }[] } | null>(null);
+  // đường gióng khi kéo (canh giữa trang, mép / giữa vật khác)
+  const [guides, setGuides] = useState<{ v: number[]; h: number[] }>({ v: [], h: [] });
+  const marquee = useRef<{ x0: number; y0: number; moved: boolean } | null>(null);
+  const [box, setBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
 
   const onElDown = (e: El, ev: React.PointerEvent, kind: 'move' | 'size' = 'move') => {
     if (mode === 'thumb') return;
     if (mode === 'edit') {
       ev.stopPropagation();
-      onSelect?.(e.id);
+      if (ev.shiftKey && kind === 'move') { onSelect?.(e.id, true); return; }
+      // vật thuộc vùng đang chọn nhiều / thuộc nhóm → kéo cả vùng
+      const ids = multi && multi.length > 1 && multi.includes(e.id) ? multi : e.group ? slide.els.filter((x) => x.group === e.group).map((x) => x.id) : [e.id];
+      if (!(multi && multi.length > 1 && multi.includes(e.id))) onSelect?.(e.id);
       if (e.lock && kind === 'move') return;
       (ev.currentTarget as Element).setPointerCapture?.(ev.pointerId);
-      edit.current = { id: e.id, kind, sx: ev.clientX, sy: ev.clientY, x0: e.x, y0: e.y, w0: e.w, h0: e.h, ratio: e.kind === 'img' || (e.kind === 'shape' && (e.shape === 'circle' || e.shape === 'star' || e.shape === 'heart')), moved: false };
+      const many = kind === 'move' ? slide.els.filter((x) => ids.includes(x.id) && !x.lock).map((x) => ({ id: x.id, x: x.x, y: x.y, w: x.w, h: x.h })) : [];
+      edit.current = { id: e.id, kind, sx: ev.clientX, sy: ev.clientY, x0: e.x, y0: e.y, w0: e.w, h0: e.h, ratio: e.kind === 'img' || (e.kind === 'shape' && (e.shape === 'circle' || e.shape === 'star' || e.shape === 'heart')), moved: false, many };
       return;
     }
     // chiếu
@@ -326,8 +337,28 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
       const dx = (ev.clientX - d.sx) / scale, dy = (ev.clientY - d.sy) / scale;
       if (!d.moved && Math.hypot(dx, dy) < 2) return;
       d.moved = true;
-      if (d.kind === 'move') onChange?.(d.id, { x: Math.round(d.x0 + dx), y: Math.round(d.y0 + dy) }, false);
-      else {
+      if (d.kind === 'move') {
+        // khung bao của các vật đang kéo → gióng theo mép / giữa trang và vật khác (giữ Alt để tắt)
+        const L = Math.min(...d.many.map((m) => m.x)), T = Math.min(...d.many.map((m) => m.y));
+        const Rr = Math.max(...d.many.map((m) => m.x + m.w)), B = Math.max(...d.many.map((m) => m.y + m.h));
+        let sx = dx, sy = dy;
+        const gv: number[] = [], gh: number[] = [];
+        if (!ev.altKey) {
+          const others = slide.els.filter((o) => !d.many.some((m) => m.id === o.id));
+          const tx = [0, SW / 2, SW, ...others.flatMap((o) => [o.x, o.x + o.w / 2, o.x + o.w])];
+          const ty = [0, SH / 2, SH, ...others.flatMap((o) => [o.y, o.y + o.h / 2, o.y + o.h])];
+          const snap = (vals: number[], targets: number[], out: number[]) => {
+            let best: { d: number; t: number } | null = null;
+            for (const v of vals) for (const t of targets) { const k = t - v; if (Math.abs(k) <= 6 / Math.max(scale, 0.2) && (!best || Math.abs(k) < Math.abs(best.d))) best = { d: k, t }; }
+            if (best) out.push(best.t);
+            return best?.d ?? 0;
+          };
+          sx += snap([L + dx, (L + Rr) / 2 + dx, Rr + dx], tx, gv);
+          sy += snap([T + dy, (T + B) / 2 + dy, B + dy], ty, gh);
+        }
+        setGuides({ v: gv, h: gh });
+        for (const m of d.many) onChange?.(m.id, { x: Math.round(m.x + sx), y: Math.round(m.y + sy) }, false);
+      } else {
         let w = Math.max(30, d.w0 + dx), h = Math.max(24, d.h0 + dy);
         if (d.ratio || ev.shiftKey) { const k = Math.max(w / d.w0, h / d.h0); w = d.w0 * k; h = d.h0 * k; }
         onChange?.(d.id, { w: Math.round(w), h: Math.round(h) }, false);
@@ -344,7 +375,7 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
   };
   const onElUp = (e: El) => {
     const d = edit.current; edit.current = null;
-    if (d) { if (d.moved) onChange?.(d.id, {}, true); return; }
+    if (d) { setGuides({ v: [], h: [] }); if (d.moved) onChange?.(d.id, {}, true); return; }
     const p = playDrag.current; playDrag.current = null;
     if (p) {
       if (p.moved) { const q = pos[p.id] ?? { x: e.x, y: e.y }; const a: PlayAction = { t: 'drop', el: p.id, x: q.x, y: q.y }; apply(a); onAction?.(a); return; }
@@ -360,25 +391,46 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
 
   return (
     <div ref={rootRef} className={`dk-slide is-${mode}`} style={{ width: SW, height: SH, transform: `scale(${scale})`, background: bgCss(slide.bg) }}
-      onPointerDown={() => { if (mode === 'edit') onSelect?.(null); }}>
+      onPointerDown={(ev) => {
+        if (mode !== 'edit') return;
+        const [x, y] = toSlide(ev, rootRef.current!);
+        marquee.current = { x0: x, y0: y, moved: false };
+        (ev.currentTarget as Element).setPointerCapture?.(ev.pointerId);
+      }}
+      onPointerMove={(ev) => {
+        const m = marquee.current; if (!m || !rootRef.current) return;
+        const [x, y] = toSlide(ev, rootRef.current);
+        if (!m.moved && Math.hypot(x - m.x0, y - m.y0) < 6) return;
+        m.moved = true;
+        setBox({ x: Math.min(x, m.x0), y: Math.min(y, m.y0), w: Math.abs(x - m.x0), h: Math.abs(y - m.y0) });
+      }}
+      onPointerUp={() => {
+        const m = marquee.current; marquee.current = null; if (!m) return;
+        if (!m.moved || !box) { onSelect?.(null); setBox(null); return; }
+        const b = box; setBox(null);
+        onSelectMany?.(slide.els.filter((e) => e.x < b.x + b.w && e.x + e.w > b.x && e.y < b.y + b.h && e.y + e.h > b.y).map((e) => e.id));
+      }}>
       {slide.scene && <SceneBg id={slide.scene} />}
       {slide.els.map((e) => {
         const p = play ? pos[e.id] : undefined;
         const clickable = play && (!!plan.triggers[e.id] || !!e.link || (!!e.drag && !done.has(e.id)));
         return (
           <div key={e.id} data-id={e.id} ref={(n) => { if (n) nodes.current.set(e.id, n); else nodes.current.delete(e.id); }}
-            className={`dk-el k-${e.kind}${sel === e.id ? ' is-sel' : ''}${clickable ? ' is-click' : ''}${play && e.drag && !done.has(e.id) ? ' is-drag' : ''}${done.has(e.id) ? ' is-done' : ''}`}
+            className={`dk-el k-${e.kind}${sel === e.id || multi?.includes(e.id) ? ' is-sel' : ''}${multi && multi.length > 1 && multi.includes(e.id) && sel !== e.id ? ' is-sel2' : ''}${clickable ? ' is-click' : ''}${play && e.drag && !done.has(e.id) ? ' is-drag' : ''}${done.has(e.id) ? ' is-done' : ''}`}
             style={{ left: p?.x ?? e.x, top: p?.y ?? e.y, width: e.w, height: e.h, transform: e.rot ? `rotate(${e.rot}deg)` : undefined, visibility: play && hidden.has(e.id) ? 'hidden' : undefined, zIndex: play && playDrag.current?.id === e.id ? 50 : undefined }}
             onPointerDown={(ev) => onElDown(e, ev)} onPointerMove={onElMove} onPointerUp={() => onElUp(e)}
             onClick={(ev) => { if (play && !e.drag) { ev.stopPropagation(); click(e); } }}
             onDoubleClick={() => { if (mode === 'edit' && (e.kind === 'text' || e.kind === 'shape' || e.kind === 'quiz' || e.kind === 'sort')) onEditText?.(e.id); }}>
             <div className="dk-a"><ElBody e={e} mode={mode} assetUrl={assetUrl} pick={picks[e.id]} onPick={(i) => { const a: PlayAction = { t: 'quiz', el: e.id, i }; apply(a); onAction?.(a); }}
               board={board} sort={sorts[e.id]} onTile={(tile) => { const a: PlayAction = { t: 'sort', el: e.id, tile }; if (apply(a)) onAction?.(a); }} /></div>
-            {mode === 'edit' && sel === e.id && !e.lock && <span className="dk-size" onPointerDown={(ev) => onElDown(e, ev, 'size')} onPointerMove={onElMove} onPointerUp={() => onElUp(e)} />}
+            {mode === 'edit' && sel === e.id && !e.lock && (!multi || multi.length <= 1) && <span className="dk-size" onPointerDown={(ev) => onElDown(e, ev, 'size')} onPointerMove={onElMove} onPointerUp={() => onElUp(e)} />}
             {mode === 'edit' && <AnimBadges slide={slide} id={e.id} />}
           </div>
         );
       })}
+      {mode === 'edit' && guides.v.map((x, i) => <i key={`v${i}`} className="dk-guide is-v" style={{ left: x }} />)}
+      {mode === 'edit' && guides.h.map((y, i) => <i key={`h${i}`} className="dk-guide is-h" style={{ top: y }} />)}
+      {mode === 'edit' && box && <i className="dk-marquee" style={{ left: box.x, top: box.y, width: box.w, height: box.h }} />}
     </div>
   );
 });

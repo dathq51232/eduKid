@@ -286,6 +286,10 @@ export default function Lesson3DStudio({ classId, lessonId, initial }: { classId
                       <textarea value={s.caption} maxLength={240} placeholder="Lời dẫn của cô cho cảnh này" aria-label={`Lời dẫn cảnh ${i + 1}`} onChange={(e) => { const v = e.target.value; update((d) => { d.scenes[i].caption = v; return d; }); }} />
                       <label className="s3d-fld"><span>Làm nổi bật</span><select value={s.focus} onChange={(e) => { const v = e.target.value; update((d) => { d.scenes[i].focus = v; return d; }); }}>{objOptions(s.focus, '— Không —')}</select></label>
                       <div className="s3d-row">
+                        <label className="s3d-fld s3d-sec"><span>⏱ Tự trình diễn: ở cảnh</span><input type="number" min={2} max={120} value={s.sec ?? 6} onChange={(e) => { const v = Math.min(120, Math.max(2, Number(e.target.value) || 6)); update((d) => { d.scenes[i].sec = v; return d; }); }} aria-label={`Số giây ở cảnh ${i + 1}`} /><span>giây</span></label>
+                        <label className="s3d-chk"><input type="checkbox" checked={!!s.say} onChange={(e) => { const v = e.target.checked; update((d) => { d.scenes[i].say = v || undefined; return d; }); }} /> Đọc lời dẫn</label>
+                      </div>
+                      <div className="s3d-row">
                         <button type="button" className="s3d-btn sm" onClick={() => { setSceneOn(i); engRef.current?.flyTo(s.cam, s.tgt); if (s.focus) setSel(s.focus); }}><Eye aria-hidden="true" /> Xem</button>
                         <button type="button" className="s3d-btn sm" onClick={() => { const c = engRef.current?.camNow(); if (c) update((d) => { Object.assign(d.scenes[i], c); return d; }); }}>📷 Lưu góc nhìn</button>
                         <button type="button" className="s3d-btn sm" disabled={!i} onClick={() => update((d) => { [d.scenes[i - 1], d.scenes[i]] = [d.scenes[i], d.scenes[i - 1]]; return d; })} aria-label="Đưa lên">↑</button>
@@ -399,6 +403,20 @@ function PlayLayer({ L, play, setPlay, speak, stopPlay, ctlVal, setCtl, restart 
   const card = play.card ? L.objects.find((o) => o.id === play.card) : null;
   const Z = play.quiz;
   const total = L.quiz.length;
+  // tự trình diễn: mỗi cảnh dừng theo số giây đã đặt (đọc lời dẫn nếu bật), hết cảnh thì dừng
+  const [auto, setAuto] = useState(false);
+  const [left, setLeft] = useState(0);
+  useEffect(() => {
+    if (!auto || Z) return;
+    const s = L.scenes[play.i]; if (!s) return;
+    if (s.say && s.caption) speak(s.caption);
+    const sec = s.sec ?? 6; setLeft(sec);
+    const t0 = Date.now();
+    const iv = window.setInterval(() => setLeft(Math.max(0, Math.ceil(sec - (Date.now() - t0) / 1000))), 250);
+    const to = window.setTimeout(() => { if (play.i + 1 < L.scenes.length) setPlay({ ...play, i: play.i + 1, card: null }); else setAuto(false); }, sec * 1000);
+    return () => { clearInterval(iv); clearTimeout(to); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto, play.i, Z]);
   return (
     <>
       {L.controls.length > 0 && !Z && <div className="s3d-ctls" aria-label="Điều khiển">{L.controls.map((c) => (
@@ -414,6 +432,7 @@ function PlayLayer({ L, play, setPlay, speak, stopPlay, ctlVal, setCtl, restart 
             <div className="s3d-play-h"><span>Cảnh {play.i + 1}/{L.scenes.length}</span><span>Bấm ghim số để xem lời giảng</span></div>
             <p>{s?.caption || '…'}</p>
             <div className="s3d-row is-end">
+              <button type="button" className={`s3d-btn${auto ? ' is-pri' : ''}`} aria-pressed={auto} onClick={() => setAuto(!auto)}>{auto ? `⏸ Dừng tự chạy (${left}s)` : '▶ Tự trình diễn'}</button>
               <button type="button" className="s3d-btn" disabled={!play.i} onClick={() => setPlay({ ...play, i: play.i - 1, card: null })}>← Trước</button>
               <button type="button" className="s3d-btn is-pri" onClick={() => (play.i + 1 < L.scenes.length ? setPlay({ ...play, i: play.i + 1, card: null }) : total ? setPlay({ ...play, quiz: { i: 0, score: 0, fb: null }, card: null }) : stopPlay())}>{play.i + 1 < L.scenes.length ? 'Tiếp →' : total ? 'Làm thử thách →' : 'Kết thúc'}</button>
             </div>

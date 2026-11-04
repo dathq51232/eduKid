@@ -1,18 +1,23 @@
 // Chạy hiệu ứng của một trang khi trình chiếu: chia hiệu ứng thành các "bước" (mỗi lần bấm Tiếp chạy 1 bước),
 // nhóm kích hoạt (bấm vào vật nào thì chạy nhóm của vật đó) và vật ẩn lúc đầu (có hiệu ứng xuất hiện).
-import { FX_BY_ID, type Anim, type Fx, type Slide } from './types';
+import { FX_BY_ID, type Anim, type Ease, type Fx, type Slide } from './types';
 
 export type Cue = { anim: Anim; at: number };
 export type Step = Cue[];
 export type Plan = { auto: Step; steps: Step[]; triggers: Record<string, Step>; hidden: Set<string> };
 
-function timeline(list: Anim[]): Step {
+/** thời gian một hiệu ứng chiếm trên dòng thời gian (tính cả số lần lặp; lặp mãi tính 1 lần) */
+export const animSpan = (a: Anim) => a.dur * Math.max(1, a.rep ?? 1);
+/** số lần chạy khi trình chiếu */
+export const animIterations = (a: Anim) => (a.rep === 0 && FX_BY_ID[a.fx].group === 'em' ? Infinity : Math.max(1, a.rep ?? 1));
+
+export function timeline(list: Anim[]): Step {
   const out: Cue[] = [];
   let prevStart = 0, prevEnd = 0;
   list.forEach((a, i) => {
     const at = i === 0 ? a.delay : a.start === 'with' ? prevStart + a.delay : prevEnd + a.delay;
     out.push({ anim: a, at });
-    prevStart = at; prevEnd = Math.max(prevEnd, at + a.dur);
+    prevStart = at; prevEnd = Math.max(prevEnd, at + animSpan(a));
   });
   return out;
 }
@@ -63,7 +68,8 @@ export function fxFrames(fx: Fx): Keyframe[] {
     case 'zoom-out': return [{ transform: 'none', opacity: 1 }, { transform: 'scale(0)', opacity: 0 }];
   }
 }
-export const fxEasing = (fx: Fx) => (['fly-left', 'fly-right', 'fly-up', 'fly-down', 'drop', 'pop'].includes(fx) ? 'cubic-bezier(.2,.8,.3,1)' : 'ease-in-out');
+const EASING: Record<Exclude<Ease, 'auto'>, string> = { linear: 'linear', smooth: 'cubic-bezier(.45,0,.2,1)', bounce: 'cubic-bezier(.34,1.56,.64,1)', elastic: 'cubic-bezier(.68,-.6,.32,1.6)' };
+export const fxEasing = (fx: Fx, ease?: Ease) => (ease && ease !== 'auto' ? EASING[ease] : ['fly-left', 'fly-right', 'fly-up', 'fly-down', 'drop', 'pop'].includes(fx) ? 'cubic-bezier(.2,.8,.3,1)' : 'ease-in-out');
 
 /** Hiệu ứng chuyển trang (áp lên khung trang mới) */
 export function transFrames(t: string): Keyframe[] | null {
