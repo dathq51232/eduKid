@@ -1,11 +1,12 @@
 'use client';
 
-// Soạn bài thao giảng (11/2026): danh sách trang | trang đang soạn | thuộc tính & hiệu ứng.
-// Thanh công cụ kiểu PowerPoint: Trang · Chèn · Hiệu ứng · Âm thanh · Trình chiếu. Bài tự lưu vào bảng slide_decks (0046).
+// Soạn bài giảng / thao giảng (11/2026) — giao diện kiểu Canva: cột biểu tượng + bảng công cụ bên trái (Mẫu, Thành phần, Chữ,
+// Tương tác, Nền, Âm thanh, Tải lên, Hiệu ứng, Lớp), thanh công cụ theo vật đang chọn, thanh nổi trên vật (khoá · nhân bản · xoá · ẩn),
+// dải trang + Thời lượng · Ghi chú · Hẹn giờ · thu phóng · xem lưới ở đáy. Bài tự lưu vào bảng slide_decks (0046).
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
-import { ArrowDown, ArrowDownToLine, ArrowLeft, ArrowUp, ArrowUpToLine, Copy, Lock, Mic, MonitorPlay, Play, Plus, Redo2, Square, Trash2, Undo2, Unlock, Upload, X } from 'lucide-react';
+import { ArrowDown, ArrowDownToLine, ArrowLeft, ArrowUp, ArrowUpToLine, Blend, Clock, Copy, Eye, EyeOff, FlipHorizontal, Grid2x2, Italic, Layers as LayersIcon, LayoutTemplate, Lock, Maximize, Mic, Minus, MonitorPlay, MoreHorizontal, MousePointerClick, Music, Paintbrush, Palette, Play, Plus, Redo2, Shapes, Sparkles, Square, StickyNote, Timer, Trash2, Type, Undo2, Unlock, Upload, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { assetError, listAssets, uploadAsset, type TeacherAsset } from '@/lib/assets/client';
 import { baseName, IMAGE_ACCEPT, prepareBoard } from '@/lib/assets/image';
@@ -21,10 +22,20 @@ import { WORK_MODES, applyTheme, badgeEl, cardEl, dividerSlide, modeEl, type Wor
 import SlideView, { ShapeSvg, SlideFrame, type PlayApi } from './SlideView';
 import AnimTimeline from './AnimTimeline';
 import { TEXT_STYLES, stickerName } from '@/lib/deck/sticker-names';
+import { STEP_COLOR, THEME_SETS, applySet, isBlankDeck, makeSet, type SetId } from '@/lib/deck/theme-sets';
 import { fold } from '@/lib/classroom/teacher-nav';
 
-type Ribbon = 'page' | 'insert' | 'fx' | 'sound' | 'show';
-const RIBBON: [Ribbon, string][] = [['page', 'Trang'], ['insert', 'Chèn'], ['fx', 'Hiệu ứng'], ['sound', 'Âm thanh'], ['show', 'Trình chiếu']];
+/** bảng bên trái (kiểu Canva): mở từ cột biểu tượng hoặc từ thanh công cụ ngữ cảnh */
+type Panel = 'tpl' | 'el' | 'text' | 'act' | 'bg' | 'sound' | 'up' | 'anim' | 'pos' | 'edit';
+const RAIL: [Panel, string, React.ComponentType<{ 'aria-hidden'?: boolean }>][] = [
+  ['tpl', 'Mẫu', LayoutTemplate], ['el', 'Thành phần', Shapes], ['text', 'Chữ', Type], ['act', 'Tương tác', MousePointerClick],
+  ['bg', 'Nền', Palette], ['sound', 'Âm thanh', Music], ['up', 'Tải lên', Upload], ['anim', 'Hiệu ứng', Sparkles], ['pos', 'Lớp', LayersIcon],
+];
+/** hình 3D hay dùng (bộ Fluent 3D trong public/emoji/f3d) */
+const F3D = ['red-apple', 'banana', 'strawberry', 'cherries', 'grapes', 'watermelon', 'carrot', 'pencil', 'books', 'open-book', 'notebook', 'backpack', 'scissors', 'straight-ruler', 'abacus', 'star',
+  'balloon', 'wrapped-gift', 'party-popper', 'sports-medal', 'light-bulb', 'microscope', 'alarm-clock', 'game-die', 'puzzle-piece', 'soccer-ball', 'kite', 'teddy-bear', 'cat', 'dog', 'rabbit', 'bird',
+  'butterfly', 'fish', 'turtle', 'frog', 'sunflower', 'tulip', 'seedling', 'deciduous-tree', 'sun', 'rainbow', 'cloud', 'crescent-moon', 'house', 'school', 'bus', 'bicycle'].map((n) => `/emoji/f3d/${n}.webp`);
+const MILO = ['professor', 'artist', 'doctor', 'astronaut', 'robot', ''].map((n) => `/brand/milo${n ? `-${n}` : ''}.webp`);
 const COLORS = ['#1d4ed8', '#111827', '#ffffff', '#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#0891b2', '#7c3aed', '#db2777', '#7c2d12', '#065f46'];
 const FILLS = ['#fde68a', '#bfdbfe', '#bbf7d0', '#fbcfe8', '#ddd6fe', '#fed7aa', '#ffffff', '#f87171', '#60a5fa', '#34d399', '#fbbf24', 'transparent'];
 const SHAPES: { k: ShapeKind; label: string }[] = [
@@ -45,16 +56,33 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   const [styleCopy, setStyleCopy] = useState<Partial<El> | null>(null);
   const [q, setQ] = useState('');
   const clip = useRef<El[]>([]);
-  const [rib, setRib] = useState<Ribbon>('insert');
-  const [pane, setPane] = useState<'props' | 'anim' | 'layers'>('props');
+  const [panel, setPanel] = useState<Panel | null>(() => (isBlankDeck(initial.slides) ? 'tpl' : 'el'));
+  const setPane = (p: 'props' | 'anim' | 'layers') => { if (p === 'anim') setPanel('anim'); else if (p === 'layers') setPanel('pos'); };
+  const [foot, setFoot] = useState<'dur' | 'note' | 'timer' | null>(null);
+  const [grid, setGrid] = useState(false);
+  const [tplTab, setTplTab] = useState<'set' | 'page'>('set');
+  const [replace, setReplace] = useState(false);
+  const [drag, setDrag] = useState<number | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  // trình soạn nằm trong khung trang giáo viên: cao vừa phần còn lại của màn hình
+  useEffect(() => {
+    const fit = () => { const el = rootRef.current; if (!el || document.fullscreenElement) return; const top = el.getBoundingClientRect().top + window.scrollY; el.style.height = `${Math.max(560, window.innerHeight - top)}px`; };
+    fit(); window.addEventListener('resize', fit); document.addEventListener('fullscreenchange', fit);
+    return () => { window.removeEventListener('resize', fit); document.removeEventListener('fullscreenchange', fit); };
+  }, []);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ w: 1000, h: 560 });
+  useEffect(() => {
+    const el = canvasRef.current; if (!el) return;
+    const ro = new ResizeObserver(() => setBox({ w: el.clientWidth, h: el.clientHeight }));
+    ro.observe(el); return () => ro.disconnect();
+  }, [grid]);
   const [past, setPast] = useState<Deck[]>([]);
   const [future, setFuture] = useState<Deck[]>([]);
   const [saved, setSaved] = useState<'saved' | 'saving' | 'error'>('saved');
   const [startMode, setStartMode] = useState<Start>('click');
   const [trigMode, setTrigMode] = useState<string>('');
   const [stickerSet, setStickerSet] = useState(0);
-  const [showStickers, setShowStickers] = useState(false);
-  const [showTpl, setShowTpl] = useState(false);
   const [mine, setMine] = useState<TeacherAsset[] | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error' | 'info'; text: string } | null>(null);
   const [busy, setBusy] = useState('');
@@ -138,7 +166,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   const dark = darkBg(slide.bg);
   const center = (w: number, h: number) => ({ x: Math.round((SW - w) / 2 + (Math.random() - 0.5) * 120), y: Math.round((SH - h) / 2 + (Math.random() - 0.5) * 80) });
   const addText = (title: boolean) => addEl({ id: uid(), kind: 'text', ...center(title ? 1100 : 760, title ? 140 : 120), w: title ? 1100 : 760, h: title ? 140 : 120, rot: 0, text: title ? 'Tiêu đề' : 'Chữ của cô', size: title ? 84 : 48, color: dark ? '#ffffff' : title ? '#1d4ed8' : '#1f2937', font: title ? 'baloo' : 'quick', align: 'center', bg: '' });
-  const addSticker = (src: string) => addEl({ id: uid(), kind: 'img', ...center(220, 220), w: 220, h: 220, rot: 0, src, name: src.split('/').pop()?.replace(/\.(webp|png)$/, '').replace(/-/g, ' ') });
+  const addSticker = (src: string) => (replace && selEl?.kind === 'img' ? (patchEl(selEl.id, { src, asset: false, name: stickerName(src) || selEl.name }), setReplace(false), setMsg({ kind: 'ok', text: 'Đã thay hình.' })) : addEl({ id: uid(), kind: 'img', ...center(220, 220), w: 220, h: 220, rot: 0, src, name: src.split('/').pop()?.replace(/\.(webp|png)$/, '').replace(/-/g, ' ') }));
   const addShape = (shape: ShapeKind) => addEl({ id: uid(), kind: 'shape', ...center(320, 220), w: shape === 'circle' || shape === 'star' || shape === 'heart' ? 260 : 360, h: shape === 'circle' || shape === 'star' || shape === 'heart' ? 260 : 200, rot: 0, shape, fill: '#fde68a', stroke: '#f59e0b', sw: 4, text: '', color: '#1f2937', size: 54 });
   const addQuiz = () => addEl({ id: uid(), kind: 'quiz', x: 220, y: 170, w: 1160, h: 620, rot: 0, q: 'Câu hỏi?', opts: ['Đáp án A', 'Đáp án B', 'Đáp án C', 'Đáp án D'], a: 0, cols: 2 }, 'pop');
   const addSort = () => addEl({ id: uid(), kind: 'sort', x: 180, y: 160, w: 1240, h: 600, rot: 0, prompt: 'Sắp xếp theo thứ tự đúng', items: ['1', '2', '3', '4'] }, 'fade');
@@ -289,260 +317,398 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const editText = (id: string) => { setSel(id); setPane('props'); setTimeout(() => { textRef.current?.focus(); textRef.current?.select(); }, 30); };
+  const editText = (id: string) => { setSel(id); setPanel('edit'); setTimeout(() => { textRef.current?.focus(); textRef.current?.select(); }, 30); };
   const showHref = (from: number) => `/giao-vien/lop/${classId}/bai-giang-3d/thao-giang/${deckId}/trinh-chieu?trang=${from + 1}`;
   const flush = async () => { if (supabase) await supabase.from('slide_decks').update({ title: deck.title.slice(0, 120) || 'Bài thao giảng', grade: deck.grade, data: deckRef.current }).eq('id', deckId); };
 
+  /* ---------- giao diện kiểu Canva ---------- */
+  const info = { title: deck.title, sub: `Lớp ${deck.grade} · Tiết …` };
+  const setPreviews = useMemo(() => Object.fromEntries(THEME_SETS.map((t) => [t.id, makeSet(t.id, { title: deck.title, sub: `Lớp ${deck.grade} · Tiết …` })])) as Record<SetId, Slide[]>, [deck.title, deck.grade]);
+  const chooseSet = (id: SetId) => {
+    const list = makeSet(id, info);
+    if (isBlankDeck(deckRef.current.slides)) { commit({ ...deckRef.current, slides: list }); setCur(0); setSel(null); setMsg({ kind: 'ok', text: 'Đã dùng bộ mẫu 7 trang. Bấm đúp vào chữ để sửa.' }); }
+    else { addSlides(list); setMsg({ kind: 'ok', text: 'Đã thêm 7 trang của bộ mẫu sau trang đang soạn.' }); }
+  };
+  const restyle = (id: SetId) => { commit({ ...deckRef.current, slides: applySet(deckRef.current.slides, id) }); setMsg({ kind: 'ok', text: `Đã đổi cả bài sang chủ đề “${THEME_SETS.find((t) => t.id === id)?.name}”.` }); };
+  const toggle = (p: Panel) => setPanel(panel === p ? null : p);
+  const W = Math.max(320, Math.min(box.w - 56, ((box.h - 40) * 16) / 9) * zoom);
+  // thanh nổi trên vật đang chọn
+  const bb = selEls.length ? { l: Math.min(...selEls.map((e) => e.x)), r: Math.max(...selEls.map((e) => e.x + e.w)), t: Math.min(...selEls.map((e) => e.y)), b: Math.max(...selEls.map((e) => e.y + e.h)) } : null;
+  const allLock = selEls.length > 0 && selEls.every((e) => e.lock);
+  const setMany = (p: Partial<El>) => setSlide((s) => ({ ...s, els: s.els.map((e) => (selIds.includes(e.id) ? ({ ...e, ...p } as El) : e)) }));
+  const totalMins = deck.slides.reduce((n, s) => n + (s.mins ?? 0), 0);
+  const fullscreen = () => { const el = rootRef.current; if (!el) return; if (document.fullscreenElement) void document.exitFullscreen(); else void el.requestFullscreen?.(); };
+  const pageTitle = (s: Slide) => { const t = s.els.find((e) => e.kind === 'text' && (e.role === 'title' || e.role === 'divider')) ?? s.els.find((e) => e.kind === 'text'); return t && t.kind === 'text' ? t.text.split('\n')[0].slice(0, 40) : 'Trang trống'; };
+  const reorder = (from: number, to: number) => {
+    const d = deckRef.current; if (from === to || from < 0 || to < 0 || to >= d.slides.length) return;
+    const l = [...d.slides]; const [m] = l.splice(from, 1); l.splice(to, 0, m); commit({ ...d, slides: l }); setCur(to);
+  };
+  const ctxTools = (() => {
+    const e = selEls.length === 1 ? selEls[0] : null;
+    const common = <>
+      <span className="cv-d" />
+      <button type="button" className={`cv-c${panel === 'anim' ? ' is-on' : ''}`} onClick={() => toggle('anim')}><Sparkles aria-hidden="true" /> Hiệu ứng</button>
+      <button type="button" className={`cv-c${panel === 'pos' ? ' is-on' : ''}`} onClick={() => toggle('pos')}>Vị trí</button>
+      {e && <button type="button" className={`cv-c${panel === 'edit' ? ' is-on' : ''}`} onClick={() => toggle('edit')}>Sửa thêm</button>}
+      {e && (e.kind === 'text' || e.kind === 'shape') && <button type="button" className={`cv-c${styleCopy ? ' is-on' : ''}`} title="Chép kiểu: bấm rồi bấm vào vật khác" aria-label="Chép kiểu" onClick={() => { setStyleCopy(styleCopy ? null : e); setMsg(styleCopy ? null : { kind: 'info', text: '🖌 Bấm vào vật khác để dán kiểu (Esc để huỷ).' }); }}><Paintbrush aria-hidden="true" /></button>}
+    </>;
+    const opacity = (v: number | undefined) => (
+      <label className="cv-c cv-op" title="Độ trong suốt"><Blend aria-hidden="true" /><input type="range" min={10} max={100} value={Math.round((v ?? 1) * 100)} onChange={(x) => { const o = Number(x.target.value) / 100; setSlide((s) => ({ ...s, els: s.els.map((y) => (selIds.includes(y.id) ? { ...y, op: o >= 1 ? undefined : o } : y)) }), false); }} onPointerUp={() => commit(deckRef.current)} aria-label="Độ trong suốt" /></label>
+    );
+    if (!selEls.length) return <>
+      <button type="button" className="cv-c" onClick={() => toggle('bg')}>Nền: <i className="cv-sw" style={{ background: BGS.find((b) => b.id === slide.bg)?.css ?? slide.bg }} /> {BGS.find((b) => b.id === slide.bg)?.label ?? 'Màu'}</button>
+      <span className="cv-d" />
+      <label className="cv-c">Chuyển trang <select value={slide.trans} onChange={(e) => setSlide((s) => ({ ...s, trans: e.target.value as Trans }))} aria-label="Chuyển trang">{(Object.keys(TRANS_LABEL) as Trans[]).map((t) => <option key={t} value={t}>{TRANS_LABEL[t]}</option>)}</select></label>
+      <span className="cv-d" />
+      <button type="button" className="cv-c" onClick={() => setPanel('anim')}><Sparkles aria-hidden="true" /> Hiệu ứng cả trang</button>
+      <button type="button" className="cv-c is-hl" onClick={() => { setPanel('tpl'); setTplTab('set'); }}>✨ Đổi chủ đề cả bộ</button>
+    </>;
+    if (!e) return <>
+      <span className="cv-c is-txt">Đang chọn {selEls.length} vật</span>
+      <button type="button" className="cv-c" onClick={() => (selEls.every((x) => x.group && x.group === selEls[0].group) ? ungroupSel() : groupSel())}>{selEls.every((x) => x.group && x.group === selEls[0].group) ? 'Bỏ nhóm' : 'Nhóm'}</button>
+      {opacity(selEls[0].op)}{common}
+    </>;
+    if (e.kind === 'text') return <>
+      <select className="cv-font" value={e.font} onChange={(v) => patchEl(e.id, { font: v.target.value as FontKey })} aria-label="Phông chữ">{(Object.keys(FONTS) as FontKey[]).map((k) => <option key={k} value={k}>{FONTS[k].label.replace(/ \(.*\)/, '')}</option>)}</select>
+      <span className="cv-num"><button type="button" aria-label="Giảm cỡ chữ" onClick={() => patchEl(e.id, { size: Math.max(18, e.size - 4) })}><Minus aria-hidden="true" /></button>
+        <input type="number" min={18} max={200} value={e.size} onChange={(v) => patchEl(e.id, { size: Math.min(200, Math.max(18, Number(v.target.value) || e.size)) })} aria-label="Cỡ chữ" />
+        <button type="button" aria-label="Tăng cỡ chữ" onClick={() => patchEl(e.id, { size: Math.min(200, e.size + 4) })}><Plus aria-hidden="true" /></button></span>
+      <label className="cv-c cv-color" title="Màu chữ"><b style={{ borderColor: e.color }}>A</b><input type="color" value={/^#[0-9a-f]{6}$/i.test(e.color) ? e.color : '#1d4ed8'} onChange={(v) => patchEl(e.id, { color: v.target.value })} aria-label="Màu chữ" /></label>
+      <button type="button" className={`cv-c${e.italic ? ' is-on' : ''}`} aria-label="Chữ nghiêng" aria-pressed={!!e.italic} onClick={() => patchEl(e.id, { italic: !e.italic })}><Italic aria-hidden="true" /></button>
+      <button type="button" className="cv-c" title="Căn chữ" onClick={() => patchEl(e.id, { align: e.align === 'left' ? 'center' : e.align === 'center' ? 'right' : 'left' })}>{e.align === 'left' ? '⇤ Trái' : e.align === 'center' ? '↔ Giữa' : '⇥ Phải'}</button>
+      <label className="cv-c cv-color" title="Nền ô chữ"><i className="cv-sw" style={{ background: e.bg || 'linear-gradient(135deg,#fff 45%,#ef4444 45% 55%,#fff 55%)' }} /><input type="color" value={/^#[0-9a-f]{6}$/i.test(e.bg) ? e.bg : '#fef3c7'} onChange={(v) => patchEl(e.id, { bg: v.target.value })} aria-label="Nền ô chữ" /></label>
+      <button type="button" className={`cv-c${e.stroke ? ' is-on' : ''}`} title="Chữ trang trí (viền trắng, đổ bóng)" onClick={() => patchEl(e.id, { stroke: e.stroke ? undefined : '#ffffff', strokeW: 12, shadow: !e.stroke })}>Viền</button>
+      {opacity(e.op)}{common}
+    </>;
+    if (e.kind === 'img') return <>
+      <button type="button" className={`cv-c${replace ? ' is-on' : ''}`} onClick={() => { setReplace(!replace); setPanel('el'); }}>Thay hình</button>
+      <button type="button" className={`cv-c${e.flip ? ' is-on' : ''}`} onClick={() => patchEl(e.id, { flip: !e.flip })}><FlipHorizontal aria-hidden="true" /> Lật</button>
+      {opacity(e.op)}
+      <button type="button" className={`cv-c${e.drag ? ' is-on' : ''}`} title="Học sinh kéo được khi trình chiếu" onClick={() => patchEl(e.id, { drag: !e.drag })}>✋ Kéo được</button>
+      {common}
+    </>;
+    if (e.kind === 'shape') return <>
+      <label className="cv-c cv-color" title="Màu nền"><i className="cv-sw" style={{ background: e.fill }} /><input type="color" value={/^#[0-9a-f]{6}$/i.test(e.fill) ? e.fill : '#fde68a'} onChange={(v) => patchEl(e.id, { fill: v.target.value })} aria-label="Màu nền hình" /></label>
+      <label className="cv-c cv-color" title="Màu viền"><i className="cv-sw is-ring" style={{ borderColor: e.stroke }} /><input type="color" value={/^#[0-9a-f]{6}$/i.test(e.stroke) ? e.stroke : '#f59e0b'} onChange={(v) => patchEl(e.id, { stroke: v.target.value })} aria-label="Màu viền hình" /></label>
+      <label className="cv-c" title="Độ dày viền">Viền <input className="cv-mini" type="number" min={0} max={16} value={e.sw} onChange={(v) => patchEl(e.id, { sw: Math.min(16, Math.max(0, Number(v.target.value) || 0)) })} aria-label="Độ dày viền" /></label>
+      {opacity(e.op)}{common}
+    </>;
+    return <><button type="button" className="cv-c is-hl" onClick={() => setPanel('edit')}>✏️ Sửa nội dung</button>{common}</>;
+  })();
+
   return (
-    <div className="dk">
-      <header className="dk-head">
-        <Link href={`/giao-vien/lop/${classId}/ke-hoach?tab=bai-giang&sub=tg`} className="dk-back" aria-label="Về danh sách bài"><ArrowLeft aria-hidden="true" /></Link>
-        <div className="dk-titlebox">
-          <small>Bài thao giảng · Lớp {deck.grade}</small>
+    <div className="dk cv" ref={rootRef}>
+      <header className="cv-top">
+        <Link href={`/giao-vien/lop/${classId}/ke-hoach?tab=bai-giang&sub=tg`} className="cv-tb" aria-label="Về danh sách bài"><ArrowLeft aria-hidden="true" /></Link>
+        <div className="cv-title">
           <input value={deck.title} maxLength={120} onChange={(e) => commit({ ...deckRef.current, title: e.target.value })} aria-label="Tên bài" />
+          <select value={deck.grade} onChange={(e) => commit({ ...deckRef.current, grade: Number(e.target.value) })} aria-label="Lớp">{[1, 2, 3, 4, 5].map((g) => <option key={g} value={g}>Lớp {g}</option>)}</select>
         </div>
-        <select value={deck.grade} onChange={(e) => commit({ ...deckRef.current, grade: Number(e.target.value) })} aria-label="Lớp">{[1, 2, 3, 4, 5].map((g) => <option key={g} value={g}>Lớp {g}</option>)}</select>
-        <span className={`dk-saved is-${saved}`}>{saved === 'saved' ? '✓ Đã lưu' : saved === 'saving' ? 'Đang lưu…' : 'Chưa lưu được — kiểm tra mạng'}</span>
-        <button type="button" className="btn btn-outline btn-sm" onClick={undo} disabled={!past.length} title="Hoàn tác (Ctrl+Z)"><Undo2 aria-hidden="true" /></button>
-        <button type="button" className="btn btn-outline btn-sm" onClick={redo} disabled={!future.length} title="Làm lại (Ctrl+Y)"><Redo2 aria-hidden="true" /></button>
-        <button type="button" className="btn btn-outline btn-sm" onClick={() => setPreview(true)}><Play aria-hidden="true" /> Xem thử trang</button>
-        <a className="btn btn-primary btn-sm dk-show" href={showHref(0)} onClick={() => { void flush(); }}><MonitorPlay aria-hidden="true" /> Trình chiếu</a>
+        <span className="cv-sep" />
+        <button type="button" className="cv-tb" onClick={undo} disabled={!past.length} title="Hoàn tác (Ctrl+Z)" aria-label="Hoàn tác"><Undo2 aria-hidden="true" /></button>
+        <button type="button" className="cv-tb" onClick={redo} disabled={!future.length} title="Làm lại (Ctrl+Y)" aria-label="Làm lại"><Redo2 aria-hidden="true" /></button>
+        <span className="cv-sep" />
+        <span className={`cv-saved is-${saved}`}>{saved === 'saved' ? '✓ Đã lưu' : saved === 'saving' ? 'Đang lưu…' : '⚠ Chưa lưu được'}</span>
+        <span className="cv-grow" />
+        <button type="button" className="cv-btn" onClick={() => setPreview(true)}><Play aria-hidden="true" /> Xem thử trang</button>
+        <a className="cv-btn" href={showHref(cur)} onClick={() => { void flush(); }}><Play aria-hidden="true" /> Chiếu từ trang này</a>
+        <a className="cv-btn is-w" href={showHref(0)} onClick={() => { void flush(); }}><MonitorPlay aria-hidden="true" /> Trình chiếu</a>
       </header>
 
-      <nav className="dk-ribbon" aria-label="Thanh công cụ">
-        <div className="dk-rtabs" role="tablist">{RIBBON.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={rib === k} className={rib === k ? 'is-on' : ''} onClick={() => setRib(k)}>{l}</button>)}</div>
-        <div className="dk-rbody">
-          {rib === 'page' && <>
-            <div className="dk-rg"><div className="dk-row">
-              <button type="button" className="dk-tool" onClick={() => addSlides([newSlide(slide.bg)])}><Plus aria-hidden="true" />Trang mới</button>
-              <button type="button" className={`dk-tool${showTpl ? ' is-on' : ''}`} onClick={() => setShowTpl(!showTpl)}><span className="dk-emo">🧩</span>Trang mẫu</button>
-              <button type="button" className="dk-tool" onClick={dupSlide}><Copy aria-hidden="true" />Nhân bản</button>
-              <button type="button" className="dk-tool" onClick={() => moveSlide(-1)} disabled={cur === 0}><ArrowUp aria-hidden="true" />Lên</button>
-              <button type="button" className="dk-tool" onClick={() => moveSlide(1)} disabled={cur >= deck.slides.length - 1}><ArrowDown aria-hidden="true" />Xuống</button>
-              <button type="button" className="dk-tool is-danger" onClick={delSlide}><Trash2 aria-hidden="true" />Xoá trang</button>
-            </div><label>TRANG</label></div>
-            <div className="dk-rg"><div className="dk-row dk-bgs">{BGS.map((b) => <button key={b.id} type="button" title={b.label} aria-label={`Nền ${b.label}`} className={slide.bg === b.id ? 'is-on' : ''} style={{ background: b.css }} onClick={() => setSlide((s) => ({ ...s, bg: b.id }))} />)}</div><label>NỀN TRANG</label></div>
-            <div className="dk-rg"><div className="dk-row dk-scenes">
-              <button type="button" className={!slide.scene ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: undefined }))}>Không</button>
-              {SCENES.map((c) => <button key={c.id} type="button" title={c.label} className={slide.scene === c.id ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: c.id }))}><span aria-hidden="true">{c.icon}</span>{c.label}</button>)}
-            </div><label>CẢNH MINH HOẠ (TRANG NÀY)</label></div>
-            <div className="dk-rg"><div className="dk-row">
-              <select aria-label="Chủ đề cả bài" value="" onChange={(e) => { const v = e.target.value as SceneKind; if (v) commit({ ...deckRef.current, slides: applyTheme(deckRef.current.slides, v) }); }}>
-                <option value="">🎨 Đổi chủ đề cả bài…</option>{SCENES.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
+      <div className="cv-main">
+        <nav className="cv-rail" aria-label="Công cụ">
+          {RAIL.map(([k, l, Ic]) => <button key={k} type="button" className={panel === k ? 'is-on' : ''} aria-pressed={panel === k} onClick={() => toggle(k)}><Ic aria-hidden={true} />{l}</button>)}
+        </nav>
+
+        {panel && (
+          <aside className="cv-panel" aria-label="Bảng công cụ">
+            <button type="button" className="cv-pclose" aria-label="Đóng bảng" onClick={() => setPanel(null)}><X aria-hidden="true" /></button>
+            {panel === 'tpl' && <>
+              <div className="cv-chips"><button type="button" className={tplTab === 'set' ? 'is-on' : ''} onClick={() => setTplTab('set')}>Bộ bài giảng 5 bước</button><button type="button" className={tplTab === 'page' ? 'is-on' : ''} onClick={() => setTplTab('page')}>Một trang</button></div>
+              {tplTab === 'set' ? <>
+                <p className="cv-ph">Bộ mẫu theo khung bài dạy <small>7 trang · {isBlankDeck(deck.slides) ? 'thay trang trống' : 'thêm sau trang này'}</small></p>
+                {THEME_SETS.map((t) => (
+                  <div key={t.id} className="cv-set">
+                    <button type="button" className="cv-set-pv" onClick={() => chooseSet(t.id)} aria-label={`Dùng bộ ${t.name}`}>
+                      {[0, 1, 3].map((i) => <SlideFrame key={i} className={`cv-set-t${i === 0 ? ' is-big' : ''}`}>{(k) => <SlideView slide={setPreviews[t.id][i]} mode="thumb" scale={k} />}</SlideFrame>)}
+                    </button>
+                    <div className="cv-set-nm"><b>{t.name}</b><small>{t.sub}</small></div>
+                    <div className="cv-set-act"><button type="button" className="is-pri" onClick={() => chooseSet(t.id)}>{isBlankDeck(deck.slides) ? 'Dùng bộ này' : 'Thêm cả bộ'}</button>
+                      <button type="button" onClick={() => restyle(t.id)} title="Giữ nội dung, đổi nền / khung / màu / Milo">Đổi chủ đề cả bài</button></div>
+                  </div>
+                ))}
+                <p className="cv-ph">Chủ đề cảnh minh hoạ</p>
+                <select className="cv-sel" aria-label="Chủ đề cảnh cả bài" value="" onChange={(e) => { const v = e.target.value as SceneKind; if (v) commit({ ...deckRef.current, slides: applyTheme(deckRef.current.slides, v) }); }}>
+                  <option value="">🎨 Đổi cảnh minh hoạ cả bài…</option>{SCENES.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
+                </select>
+              </> : <>
+                <p className="cv-ph">Trang của bộ mẫu <small>bấm để thêm một trang</small></p>
+                {THEME_SETS.map((t) => (
+                  <div key={t.id} className="cv-pages"><small>{t.name}</small><div>{setPreviews[t.id].map((s, i) => (
+                    <button key={s.id} type="button" title={s.phase ?? (i ? 'Trang cuối' : 'Trang bìa')} onClick={() => addSlides([makeSet(t.id, info)[i]])}>
+                      <SlideFrame>{(k) => <SlideView slide={s} mode="thumb" scale={k} />}</SlideFrame></button>))}</div></div>
+                ))}
+                <p className="cv-ph">Trang mẫu theo hoạt động</p>
+                <div className="dk-tpls cv-tpls">{SLIDE_TEMPLATES.map((t) => (
+                  <button key={t.id} type="button" onClick={() => addSlides(t.make())}>
+                    <span className="dk-tpl-pv" style={{ background: BGS.find((b) => b.id === t.bg)?.css }}>{t.preview.map((p) => (
+                      // eslint-disable-next-line @next/next/no-img-element -- xem trước mẫu
+                      <img key={p} src={p} alt="" />))}</span>
+                    <b>{t.title}</b><small>{t.desc}</small>
+                  </button>))}</div>
+                <select className="cv-sel" aria-label="Thêm trang chia hoạt động" value="" onChange={(e) => { const v = e.target.value; if (v) addSlides([dividerSlide(v, slide.scene)]); }}>
+                  <option value="">＋ Trang chia hoạt động…</option>{['Khởi động', 'Khám phá', 'Luyện tập', 'Thực hành', 'Vận dụng', 'Trò chơi', 'Củng cố', 'Dặn dò', 'Thảo luận nhóm', 'Cùng chia sẻ'].map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </>}
+            </>}
+            {panel === 'el' && <>
+              <input className="cv-search" type="search" value={q} placeholder="🔎 Tìm hình, cảnh, âm thanh… (táo, thỏ, vỗ tay)" onChange={(e) => setQ(e.target.value)} aria-label="Tìm thành phần" />
+              {replace && <p className="dk-msg is-info">Bấm một hình bên dưới để <b>thay</b> hình đang chọn. <button type="button" onClick={() => setReplace(false)}>Huỷ</button></p>}
+              {q.trim().length > 0 ? (() => {
+                const f = fold(q.trim());
+                const imgs = [...F3D, ...STICKER_SETS.flatMap((x) => x.items)].filter((src) => fold(`${stickerName(src)} ${src}`).includes(f)).slice(0, 48);
+                const scenes = SCENES.filter((c) => fold(c.label).includes(f));
+                const sounds = SOUNDS.filter((x) => fold(x.label).includes(f));
+                return <>
+                  {!imgs.length && !scenes.length && !sounds.length && <p className="dk-hint">Không thấy “{q}”. Thử từ khác (thỏ, cây, sách, vỗ tay…).</p>}
+                  {imgs.length > 0 && <div className="dk-sgrid cv-grid4">{imgs.map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- hình có sẵn */}
+                    <img src={src} alt={stickerName(src)} loading="lazy" /></button>)}</div>}
+                  {scenes.length > 0 && <div className="dk-row dk-scenes"><b>Cảnh:</b>{scenes.map((c) => <button key={c.id} type="button" onClick={() => setSlide((x) => ({ ...x, scene: c.id }))}>{c.icon} {c.label}</button>)}</div>}
+                  {sounds.length > 0 && <div className="dk-row dk-snds"><b>Âm thanh:</b>{sounds.map((x) => <span key={x.id} className="dk-snd"><button type="button" onClick={() => playSound(x.id)}>{x.icon}</button><button type="button" onClick={() => { playSound(x.id); attachSound(x.id); }}>{x.label}</button></span>)}</div>}
+                </>;
+              })() : <>
+                <p className="cv-ph">Bạn cú Milo <small>6 tư thế</small></p>
+                <div className="cv-milo">{MILO.map((src) => <button key={src} type="button" onClick={() => (replace && selEl?.kind === 'img' ? addSticker(src) : addEl({ id: uid(), kind: 'img', ...center(300, 400), w: 300, h: 400, rot: 0, src, name: 'Bạn cú Milo', role: 'mascot' }, 'pop'))}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- linh vật */}
+                  <img src={src} alt="Bạn cú Milo" loading="lazy" /></button>)}</div>
+                <p className="cv-ph">Hình 3D</p>
+                <div className="dk-sgrid cv-grid4">{F3D.map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- hình 3D */}
+                  <img src={src} alt={stickerName(src)} loading="lazy" /></button>)}</div>
+                <p className="cv-ph">Hình khối</p>
+                <div className="cv-shapes">{SHAPES.map((s) => (
+                  <button key={s.k} type="button" title={s.label} aria-label={s.label} onClick={() => addShape(s.k)}><span className="dk-shape-ic"><ShapeSvg e={{ id: '', kind: 'shape', shape: s.k, x: 0, y: 0, w: 1, h: 1, rot: 0, fill: '#fde68a', stroke: '#d97706', sw: 1.5 }} /></span></button>))}</div>
+                <p className="cv-ph">Hình dán khác</p>
+                <div className="dk-stabs">{STICKER_SETS.map((st, i) => <button key={st.label} type="button" className={stickerSet === i ? 'is-on' : ''} onClick={() => setStickerSet(i)}>{st.label}</button>)}</div>
+                <div className="dk-sgrid cv-grid4">{STICKER_SETS[stickerSet]?.items.map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- hình dán có sẵn */}
+                  <img src={src} alt="" loading="lazy" /></button>)}</div>
+              </>}
+            </>}
+            {panel === 'text' && <>
+              <button type="button" className="cv-big is-h" onClick={() => addText(true)}>Thêm tiêu đề</button>
+              <button type="button" className="cv-big" onClick={() => addText(false)}>Thêm đoạn chữ</button>
+              <p className="cv-ph">Kiểu chữ có sẵn</p>
+              <div className="cv-tstyles">{TEXT_STYLES.map((t) => (
+                <button key={t.id} type="button" style={{ fontFamily: FONTS[t.font].css, color: t.stroke ? t.color : t.color, background: t.bg || undefined, WebkitTextStroke: t.stroke ? '1px #fff' : undefined }}
+                  onClick={() => addEl({ id: uid(), kind: 'text', ...center(t.w, t.h), w: t.w, h: t.h, rot: 0, text: t.label, size: t.size, color: dark && !t.bg ? '#ffffff' : t.color, font: t.font, align: 'center', bg: t.bg, ...(t.stroke ? { stroke: '#ffffff', strokeW: 12, shadow: true } : {}) })}>{t.label}</button>))}</div>
+            </>}
+            {panel === 'act' && <>
+              <p className="cv-ph">Hoạt động cho học sinh</p>
+              <div className="cv-acts">
+                <button type="button" onClick={addQuiz}><span>❓</span>Câu hỏi trắc nghiệm</button>
+                <button type="button" onClick={addDrop}><span>🎯</span>Ô thả (kéo thả)</button>
+                <button type="button" onClick={addSort}><span>🔢</span>Sắp xếp thứ tự</button>
+                <button type="button" onClick={addScene}><span>🧊</span>Cảnh 3D</button>
+                <button type="button" onClick={() => addEl({ id: uid(), kind: 'teams', x: 200, y: 160, w: 1200, h: 680, rot: 0, title: '' }, 'fade')}><span>🏆</span>Bảng thi đua tổ</button>
+              </div>
+              <p className="cv-ph">Bố cục</p>
+              <div className="cv-acts">
+                <button type="button" onClick={() => { const n = slide.els.filter((e) => e.role === 'badge').length; addEl({ ...badgeEl(n + 1, 'Số ?', accentOf(slide.scene)) }); }}><span>①</span>Nhãn bài</button>
+                <button type="button" onClick={() => setSlide((s) => (s.els.some((e) => e.role === 'card') ? s : { ...s, els: [cardEl(accentOf(s.scene)), ...s.els] }))}><span>🔲</span>Khung nội dung</button>
+                {Object.entries(STEP_COLOR).slice(0, 5).map(([l, c]) => <button key={l} type="button" onClick={() => addEl({ id: uid(), kind: 'text', x: 64, y: 46, w: 40 + l.length * 26, h: 78, rot: 0, text: l, size: 40, color: '#ffffff', font: 'baloo', align: 'center', bg: c, role: 'step' })}><span style={{ color: c }}>●</span>Nhãn “{l}”</button>)}
+              </div>
+              <select className="cv-sel" aria-label="Hình thức làm bài" value="" onChange={(e) => { const v = e.target.value as WorkMode; if (v) addEl({ ...modeEl(v, accentOf(slide.scene)) }); }}>
+                <option value="">👥 Hình thức làm bài…</option>{WORK_MODES.map((w) => <option key={w.id} value={w.id}>{w.label}</option>)}
               </select>
-              <select aria-label="Thêm trang chia hoạt động" value="" onChange={(e) => { const v = e.target.value; if (v) addSlides([dividerSlide(v, slide.scene)]); }}>
-                <option value="">＋ Trang chia hoạt động…</option>{['Khởi động', 'Khám phá', 'Luyện tập', 'Thực hành', 'Vận dụng', 'Trò chơi', 'Củng cố', 'Dặn dò', 'Thảo luận nhóm', 'Cùng chia sẻ'].map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div><label>CHỦ ĐỀ · TRANG CHIA</label></div>
-            <div className="dk-rg"><div className="dk-row">
-              <select value={slide.trans} onChange={(e) => setSlide((s) => ({ ...s, trans: e.target.value as Trans }))} aria-label="Chuyển trang">{(Object.keys(TRANS_LABEL) as Trans[]).map((t) => <option key={t} value={t}>{TRANS_LABEL[t]}</option>)}</select>
-              <label className="dk-num-in" title="Thời gian chuyển trang">⏱<input type="number" min={0.1} max={3} step={0.1} value={slide.transDur ?? 0.55} onChange={(e) => setSlide((s) => ({ ...s, transDur: Math.min(3, Math.max(0.1, Number(e.target.value) || 0.55)) }))} aria-label="Thời gian chuyển trang (giây)" />s</label>
-              <button type="button" className="btn btn-outline btn-sm" title="Áp dụng cho mọi trang" onClick={() => commit({ ...deckRef.current, slides: deckRef.current.slides.map((x) => ({ ...x, trans: slide.trans, transDur: slide.transDur })) })}>Áp dụng mọi trang</button>
-            </div><label>CHUYỂN TRANG</label></div>
-            <div className="dk-rg"><div className="dk-row">
-              <label className="dk-num-in"><input type="checkbox" checked={!!slide.autoNext} onChange={(e) => setSlide((s) => ({ ...s, autoNext: e.target.checked ? 5 : undefined }))} /> Tự sang sau</label>
-              <label className="dk-num-in"><input type="number" min={1} max={120} value={slide.autoNext ?? 5} disabled={!slide.autoNext} onChange={(e) => setSlide((s) => ({ ...s, autoNext: Math.min(120, Math.max(1, Number(e.target.value) || 5)) }))} aria-label="Số giây tự sang" />giây</label>
-            </div><label>TỰ CHẠY (mỗi bước / trang)</label></div>
-            <div className="dk-rg"><div className="dk-row">
-              <select value={slide.sound ?? ''} onChange={(e) => setSlide((s) => ({ ...s, sound: e.target.value || undefined }))} aria-label="Âm thanh khi vào trang">
+            </>}
+            {panel === 'bg' && <>
+              <p className="cv-ph">Nền trang</p>
+              <div className="dk-bgs cv-bgs">{BGS.map((b) => <button key={b.id} type="button" title={b.label} aria-label={`Nền ${b.label}`} className={slide.bg === b.id ? 'is-on' : ''} style={{ background: b.css }} onClick={() => setSlide((s) => ({ ...s, bg: b.id }))} />)}
+                <label className="cv-bgc" title="Màu khác"><input type="color" value={/^#[0-9a-f]{6}$/i.test(slide.bg) ? slide.bg : '#ffffff'} onChange={(e) => setSlide((s) => ({ ...s, bg: e.target.value }))} aria-label="Màu nền khác" /></label></div>
+              <button type="button" className="cv-link" onClick={() => commit({ ...deckRef.current, slides: deckRef.current.slides.map((x) => ({ ...x, bg: slide.bg })) })}>Áp dụng nền này cho mọi trang</button>
+              <p className="cv-ph">Cảnh minh hoạ (trang này)</p>
+              <div className="dk-row dk-scenes cv-wrap">
+                <button type="button" className={!slide.scene ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: undefined }))}>Không</button>
+                {SCENES.map((c) => <button key={c.id} type="button" title={c.label} className={slide.scene === c.id ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: c.id }))}><span aria-hidden="true">{c.icon}</span>{c.label}</button>)}
+              </div>
+              <p className="cv-ph">Âm thanh khi vào trang</p>
+              <select className="cv-sel" value={slide.sound ?? ''} onChange={(e) => setSlide((s) => ({ ...s, sound: e.target.value || undefined }))} aria-label="Âm thanh khi vào trang">
                 <option value="">Không có</option>{SOUNDS.map((s) => <option key={s.id} value={s.id}>{s.icon} {s.label}</option>)}
                 {myAudio.map((a) => <option key={a.id} value={`asset:${a.path}`}>🎙 {a.name}</option>)}
               </select>
-            </div><label>ÂM THANH KHI VÀO TRANG</label></div>
-          </>}
-          {rib === 'insert' && <>
-            <div className="dk-rg"><div className="dk-col">
-              <input className="dk-search" type="search" value={q} placeholder="🔎 Tìm hình, cảnh, âm thanh… (vd: thỏ, vườn, vỗ tay)" onChange={(e) => setQ(e.target.value)} aria-label="Tìm nhanh" />
-              <select aria-label="Thêm chữ theo kiểu" value="" onChange={(e) => { const t = TEXT_STYLES.find((x) => x.id === e.target.value); if (t) addEl({ id: uid(), kind: 'text', ...center(t.w, t.h), w: t.w, h: t.h, rot: 0, text: t.label, size: t.size, color: dark && !t.bg ? '#ffffff' : t.color, font: t.font, align: 'center', bg: t.bg, ...(t.stroke ? { stroke: '#ffffff', strokeW: 12, shadow: true } : {}) }); }}>
-                <option value="">🅰 Chữ theo kiểu…</option>{TEXT_STYLES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-              </select>
-            </div><label>TÌM NHANH · KIỂU CHỮ</label></div>
-            <div className="dk-rg"><div className="dk-row">
-              <button type="button" className="dk-tool" onClick={() => addText(true)}><span className="dk-emo" style={{ fontWeight: 800 }}>T</span>Tiêu đề</button>
-              <button type="button" className="dk-tool" onClick={() => addText(false)}><span className="dk-emo">¶</span>Chữ</button>
-              <button type="button" className={`dk-tool${showStickers ? ' is-on' : ''}`} onClick={() => setShowStickers(!showStickers)}><span className="dk-emo">🐰</span>Hình dán</button>
-              <button type="button" className="dk-tool" onClick={() => imgInput.current?.click()} disabled={!!busy}><Upload aria-hidden="true" />Ảnh của tôi</button>
-            </div><label>CHỮ · HÌNH</label></div>
-            <div className="dk-rg"><div className="dk-row dk-shapes">{SHAPES.map((s) => (
-              <button key={s.k} type="button" className="dk-tool is-sm" title={s.label} onClick={() => addShape(s.k)}>
-                <span className="dk-shape-ic"><ShapeSvg e={{ id: '', kind: 'shape', shape: s.k, x: 0, y: 0, w: 1, h: 1, rot: 0, fill: '#fde68a', stroke: '#d97706', sw: 1.5 }} /></span>{s.label}
-              </button>))}</div><label>HÌNH KHỐI</label></div>
-            <div className="dk-rg"><div className="dk-row">
-              <button type="button" className="dk-tool" onClick={addQuiz}><span className="dk-emo">❓</span>Câu hỏi</button>
-              <button type="button" className="dk-tool" onClick={addDrop}><span className="dk-emo">🎯</span>Ô thả</button>
-              <button type="button" className="dk-tool" onClick={addSort}><span className="dk-emo">🔢</span>Sắp xếp</button>
-              <button type="button" className="dk-tool" onClick={addScene}><span className="dk-emo">🧊</span>Cảnh 3D</button>
-              <button type="button" className="dk-tool" onClick={() => addEl({ id: uid(), kind: 'teams', x: 200, y: 160, w: 1200, h: 680, rot: 0, title: '' }, 'fade')}><span className="dk-emo">🏆</span>Bảng thi đua tổ</button>
-            </div><label>TƯƠNG TÁC</label></div>
-            <div className="dk-rg"><div className="dk-row">
-              <button type="button" className="dk-tool" onClick={() => { const n = slide.els.filter((e) => e.role === 'badge').length; addEl({ ...badgeEl(n + 1, 'Số ?', accentOf(slide.scene)) }); }}><span className="dk-emo">①</span>Nhãn bài</button>
-              <select aria-label="Hình thức làm bài" value="" onChange={(e) => { const v = e.target.value as WorkMode; if (v) addEl({ ...modeEl(v, accentOf(slide.scene)) }); }}>
-                <option value="">👥 Hình thức…</option>{WORK_MODES.map((w) => <option key={w.id} value={w.id}>{w.label}</option>)}
-              </select>
-              <button type="button" className="dk-tool" onClick={() => setSlide((s) => (s.els.some((e) => e.role === 'card') ? s : { ...s, els: [cardEl(accentOf(s.scene)), ...s.els] }))}><span className="dk-emo">🔲</span>Khung nội dung</button>
-            </div><label>BỐ CỤC</label></div>
-          </>}
-          {rib === 'fx' && <>
-            {(['in', 'em', 'out'] as const).map((g) => (
-              <div className="dk-rg" key={g}><div className="dk-row">{FX.filter((f) => f.group === g).map((f) => (
-                <button key={f.id} type="button" className="dk-tool is-fx" onClick={() => addAnim(f.id)} disabled={!selEl}><span className="dk-emo">{f.icon}</span>{f.label}</button>
-              ))}</div><label>{g === 'in' ? 'XUẤT HIỆN' : g === 'em' ? 'NHẤN MẠNH' : 'BIẾN MẤT'}</label></div>
-            ))}
-            <div className="dk-rg"><div className="dk-col">
-              <select aria-label="Hiệu ứng cả trang" value="" onChange={(e) => { const v = e.target.value as Fx; if (v) animateAll(v); }}>
-                <option value="">✨ Hiệu ứng cả trang…</option>{FX.filter((f) => f.group === 'in').map((f) => <option key={f.id} value={f.id}>{f.icon} {f.label}</option>)}
-              </select>
-              <small className="dk-hint-s">Mọi vật tự hiện lần lượt khi vào trang</small>
-            </div><label>CẢ TRANG</label></div>
-            <div className="dk-rg"><div className="dk-col">
-              <select value={startMode} onChange={(e) => setStartMode(e.target.value as Start)} disabled={!!trigMode} aria-label="Bắt đầu">{(Object.keys(START_LABEL) as Start[]).map((s) => <option key={s} value={s}>{START_LABEL[s]}</option>)}</select>
-              <select value={trigMode} onChange={(e) => setTrigMode(e.target.value)} aria-label="Kích hoạt" className={trigMode ? 'is-trg' : ''}>
-                <option value="">Chạy theo thứ tự (bấm Tiếp)</option>
-                {slide.els.map((e) => <option key={e.id} value={e.id}>🎯 Khi bấm vào: {elLabel(e)}</option>)}
-              </select>
-            </div><label>BẮT ĐẦU</label></div>
-          </>}
-          {rib === 'sound' && <>
-            <div className="dk-rg"><div className="dk-row dk-snds">{SOUNDS.map((s) => (
-              <span key={s.id} className="dk-snd">
-                <button type="button" title="Nghe thử" onClick={() => playSound(s.id)}>{s.icon}</button>
-                <button type="button" onClick={() => { playSound(s.id); attachSound(s.id); }}>{s.label}</button>
-              </span>))}</div><label>THƯ VIỆN ÂM THANH · bấm tên để gắn vào {animSel && slide.anims.some((a) => a.id === animSel) ? 'hiệu ứng đang chọn' : 'trang (khi vào trang)'}</label></div>
-            <div className="dk-rg"><div className="dk-row">
-              <button type="button" className={`dk-tool${rec ? ' is-rec' : ''}`} onClick={() => void toggleRec()} disabled={!!busy && !rec}>{rec ? <Square aria-hidden="true" /> : <Mic aria-hidden="true" />}{rec ? 'Dừng ghi' : 'Ghi âm giọng cô'}</button>
-              <button type="button" className="dk-tool" onClick={() => audInput.current?.click()} disabled={!!busy}><Upload aria-hidden="true" />Tải lên .mp3</button>
-              {myAudio.slice(0, 6).map((a) => <span key={a.id} className="dk-snd"><button type="button" onClick={() => playSound(`asset:${a.path}`)}>🎙</button><button type="button" onClick={() => attachSound(`asset:${a.path}`)}>{a.name}</button></span>)}
-            </div><label>ÂM THANH CỦA CÔ (lưu trong Kho của tôi)</label></div>
-          </>}
-          {rib === 'show' && <>
-            <div className="dk-rg"><div className="dk-row">
-              <a className="dk-tool" href={showHref(0)} onClick={() => { void flush(); }}><MonitorPlay aria-hidden="true" />Từ trang đầu</a>
-              <a className="dk-tool" href={showHref(cur)} onClick={() => { void flush(); }}><Play aria-hidden="true" />Từ trang này</a>
-              <button type="button" className="dk-tool" onClick={() => setPreview(true)}><span className="dk-emo">👀</span>Xem thử trang</button>
-            </div><label>TRÌNH CHIẾU</label></div>
-            <p className="dk-hint">Khi trình chiếu, máy cô thấy ghi chú, trang tiếp theo, đồng hồ và công cụ lớp. Bấm “Mở màn hình chiếu” để mở cửa sổ riêng, kéo cửa sổ đó sang tivi / máy chiếu rồi bấm toàn màn hình.</p>
-          </>}
-        </div>
-        {busy && <p className="dk-busy" role="status">{busy}</p>}
-        {msg && <p className={`dk-msg is-${msg.kind}`} role="status">{msg.text} <button type="button" onClick={() => setMsg(null)} aria-label="Đóng">×</button></p>}
-        {rib === 'insert' && q.trim().length > 0 && (() => {
-          const f = fold(q.trim());
-          const imgs = STICKER_SETS.flatMap((x) => x.items).filter((src) => fold(`${stickerName(src)} ${src}`).includes(f)).slice(0, 40);
-          const mineImg = myImages.filter((a) => fold(a.name).includes(f)).slice(0, 12);
-          const scenes = SCENES.filter((c) => fold(c.label).includes(f));
-          const sounds = SOUNDS.filter((x) => fold(x.label).includes(f));
-          return (
-            <div className="dk-found">
-              {!imgs.length && !mineImg.length && !scenes.length && !sounds.length && <p className="dk-hint">Không thấy “{q}”. Thử từ khác (thỏ, cây, sách, vỗ tay…).</p>}
-              {(imgs.length > 0 || mineImg.length > 0) && <div className="dk-sgrid">
-                {imgs.map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- hình dán có sẵn */}
-                  <img src={src} alt={stickerName(src)} loading="lazy" /></button>)}
-                {mineImg.map((a) => <button key={a.id} type="button" title={a.name} onClick={() => addEl({ id: uid(), kind: 'img', ...center(360, 260), w: 360, h: Math.round(360 * ((a.meta.h as number) || 3) / ((a.meta.w as number) || 4)), rot: 0, src: a.path, asset: true, name: a.name })}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- ảnh trong kho */}
-                  <img src={a.thumb ?? a.url ?? ''} alt={a.name} /></button>)}
-              </div>}
-              {scenes.length > 0 && <div className="dk-row dk-scenes"><b>Cảnh:</b>{scenes.map((c) => <button key={c.id} type="button" onClick={() => setSlide((x) => ({ ...x, scene: c.id }))}>{c.icon} {c.label}</button>)}</div>}
-              {sounds.length > 0 && <div className="dk-row dk-snds"><b>Âm thanh:</b>{sounds.map((x) => <span key={x.id} className="dk-snd"><button type="button" onClick={() => playSound(x.id)}>{x.icon}</button><button type="button" onClick={() => { playSound(x.id); attachSound(x.id); }}>{x.label}</button></span>)}</div>}
-            </div>
-          );
-        })()}
-        {rib === 'insert' && showStickers && (
-          <div className="dk-stickers">
-            <div className="dk-stabs">{STICKER_SETS.map((s, i) => <button key={s.label} type="button" className={stickerSet === i ? 'is-on' : ''} onClick={() => setStickerSet(i)}>{s.label}</button>)}
-              {myImages.length > 0 && <button type="button" className={stickerSet === 99 ? 'is-on' : ''} onClick={() => setStickerSet(99)}>Ảnh của tôi</button>}</div>
-            <div className="dk-sgrid">
-              {stickerSet === 99
-                ? myImages.map((a) => <button key={a.id} type="button" title={a.name} onClick={() => addEl({ id: uid(), kind: 'img', ...center(360, 260), w: 360, h: Math.round(360 * ((a.meta.h as number) || 3) / ((a.meta.w as number) || 4)), rot: 0, src: a.path, asset: true, name: a.name })}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- ảnh trong kho */}
-                  <img src={a.thumb ?? a.url ?? ''} alt={a.name} /></button>)
-                : STICKER_SETS[stickerSet]?.items.map((s) => <button key={s} type="button" onClick={() => addSticker(s)}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- hình dán có sẵn */}
-                  <img src={s} alt="" loading="lazy" /></button>)}
-            </div>
-          </div>
-        )}
-        {rib === 'page' && showTpl && (
-          <div className="dk-tpls">{SLIDE_TEMPLATES.map((t) => (
-            <button key={t.id} type="button" onClick={() => { addSlides(t.make()); setShowTpl(false); }}>
-              <span className="dk-tpl-pv" style={{ background: BGS.find((b) => b.id === t.bg)?.css }}>{t.preview.map((p) => (
-                // eslint-disable-next-line @next/next/no-img-element -- xem trước mẫu
-                <img key={p} src={p} alt="" />))}</span>
-              <b>{t.title}</b><small>{t.desc}</small>
-            </button>))}</div>
-        )}
-      </nav>
-      <input ref={imgInput} type="file" accept={IMAGE_ACCEPT} hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void onImage(f); }} />
-      <input ref={audInput} type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm,.mp3,.m4a,.wav,.ogg" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void onAudio(f, f.name.replace(/\.[a-z0-9]+$/i, '').slice(0, 60)); }} />
-
-      <div className="dk-work">
-        <aside className="dk-thumbs" aria-label="Các trang">
-          {deck.slides.map((s, i) => (
-            <button key={s.id} type="button" className={`dk-th${i === cur ? ' is-on' : ''}`} onClick={() => { setCur(i); setSel(null); setAnimSel(null); }} aria-label={`Trang ${i + 1}`} aria-current={i === cur}>
-              <span className="dk-th-n">{i + 1}</span>
-              <SlideFrame className="dk-th-s">{(k) => <SlideView slide={s} mode="thumb" scale={k} assetUrl={assetUrl} />}</SlideFrame>
-              <span className="dk-th-ic">{s.anims.length > 0 && '✨'}{s.anims.some((a) => a.trigger) && '🎯'}{(s.sound || s.anims.some((a) => a.sound)) && '🔊'}</span>
-            </button>
-          ))}
-          <button type="button" className="btn btn-outline btn-sm" onClick={() => addSlides([newSlide(slide.bg)])}><Plus aria-hidden="true" /> Trang mới</button>
-        </aside>
-
-        <section className={`dk-stage${styleCopy ? ' is-paint' : ''}`} onContextMenu={(ev) => {
-          const id = (ev.target as HTMLElement).closest<HTMLElement>('.dk-el')?.dataset.id;
-          if (!id) return;
-          ev.preventDefault(); if (!selIds.includes(id)) pick(id);
-          setCtx({ x: ev.clientX, y: ev.clientY });
-        }} onClick={() => setCtx(null)}>
-          <div className="dk-zoom">
-            {styleCopy && <span className="dk-paint">🖌 Bấm vào vật để dán kiểu · Esc để huỷ</span>}
-            <label>🔍 <select value={zoom} onChange={(e) => setZoom(Number(e.target.value))} aria-label="Thu phóng trang soạn">{[0.6, 0.8, 1, 1.25, 1.5, 2].map((z) => <option key={z} value={z}>{z === 1 ? 'Vừa khung' : `${Math.round(z * 100)}%`}</option>)}</select></label>
-          </div>
-          <SlideFrame className="dk-main" style={{ maxWidth: `calc((100vh - 400px) * 16 / 9 * ${zoom})`, width: zoom > 1 ? `${zoom * 100}%` : undefined }}>{(k) => (
-            <SlideView key={slide.id} slide={slide} mode="edit" scale={k} assetUrl={assetUrl} sel={sel} multi={selIds} onSelect={pick}
-              onSelectMany={(ids) => { setMulti(ids); setSel(ids[0] ?? null); setPane('props'); }} onChange={onChange} onEditText={editText} />
-          )}</SlideFrame>
-          <AnimTimeline slide={slide} sel={animSel} onSelect={(a) => { setAnimSel(a.id); setSel(a.el); setPane('anim'); }}
-            onPatch={patchAnimSoft} onCommit={commitSoft} stage={() => document.querySelector('.dk-main')} />
-          <label className="dk-notes"><b>Ghi chú của cô</b> (chỉ cô thấy khi trình chiếu)
-            <textarea rows={2} value={slide.notes} placeholder="vd: Hỏi lớp “Có mấy bạn thỏ?”, rồi bấm vào cà rốt để hiện đáp án." onChange={(e) => setSlide((s) => ({ ...s, notes: e.target.value }), false)} onBlur={() => commit(deckRef.current)} />
-          </label>
-        </section>
-
-        <aside className="dk-pane">
-          <div className="dk-ptabs" role="tablist">
-            <button type="button" role="tab" aria-selected={pane === 'props'} className={pane === 'props' ? 'is-on' : ''} onClick={() => setPane('props')}>Thuộc tính</button>
-            <button type="button" role="tab" aria-selected={pane === 'anim'} className={pane === 'anim' ? 'is-on' : ''} onClick={() => setPane('anim')}>Hiệu ứng <i>{slide.anims.length}</i></button>
-            <button type="button" role="tab" aria-selected={pane === 'layers'} className={pane === 'layers' ? 'is-on' : ''} onClick={() => setPane('layers')}>Lớp <i>{slide.els.length}</i></button>
-          </div>
-          {pane !== 'anim' && selEls.length > 0 && <AlignBar n={selEls.length} grouped={selEls.length > 1 && selEls.every((e) => e.group && e.group === selEls[0].group)} align={alignSel} onGroup={groupSel} onUngroup={ungroupSel} />}
-          {pane === 'layers' ? (
-            <Layers slide={slide} selIds={selIds} pick={pick} move={moveLayer} lock={(id) => setSlide((s) => ({ ...s, els: s.els.map((e) => (e.id === id ? { ...e, lock: !e.lock } : e)) }))} />
-          ) : pane === 'props' ? (selEls.length > 1 ? (
-            <div className="dk-props"><h3>Đang chọn {selEls.length} vật</h3>
-              <div className="dk-acts">
-                <button type="button" onClick={dupEl}><Copy aria-hidden="true" /> Nhân bản</button>
-                <button type="button" onClick={copyEls}>Sao chép</button>
-                <button type="button" onClick={() => order(true)}><ArrowUpToLine aria-hidden="true" /> Lên trên</button>
-                <button type="button" onClick={() => order(false)}><ArrowDownToLine aria-hidden="true" /> Xuống dưới</button>
-                <button type="button" className="is-danger" onClick={delEl}><Trash2 aria-hidden="true" /> Xoá</button>
+            </>}
+            {panel === 'sound' && <>
+              <p className="cv-ph">Thư viện âm thanh <small>bấm tên để gắn vào {animSel && slide.anims.some((a) => a.id === animSel) ? 'hiệu ứng đang chọn' : 'trang'}</small></p>
+              <div className="dk-row dk-snds cv-wrap">{SOUNDS.map((s) => (
+                <span key={s.id} className="dk-snd"><button type="button" title="Nghe thử" onClick={() => playSound(s.id)}>{s.icon}</button><button type="button" onClick={() => { playSound(s.id); attachSound(s.id); }}>{s.label}</button></span>))}</div>
+              <p className="cv-ph">Âm thanh của cô</p>
+              <div className="cv-acts">
+                <button type="button" className={rec ? 'is-rec' : ''} onClick={() => void toggleRec()} disabled={!!busy && !rec}><span>{rec ? <Square aria-hidden="true" /> : <Mic aria-hidden="true" />}</span>{rec ? 'Dừng ghi' : 'Ghi âm giọng cô'}</button>
+                <button type="button" onClick={() => audInput.current?.click()} disabled={!!busy}><span><Upload aria-hidden="true" /></span>Tải lên .mp3</button>
               </div>
-              <p className="dk-kbd">Kéo một vật để kéo cả vùng · Ctrl+G nhóm · Ctrl+Shift+G bỏ nhóm · Shift+bấm để thêm / bớt vật.</p>
+              <div className="dk-row dk-snds cv-wrap">{myAudio.map((a) => <span key={a.id} className="dk-snd"><button type="button" onClick={() => playSound(`asset:${a.path}`)}>🎙</button><button type="button" onClick={() => attachSound(`asset:${a.path}`)}>{a.name}</button></span>)}</div>
+            </>}
+            {panel === 'up' && <>
+              <button type="button" className="cv-big is-h" onClick={() => imgInput.current?.click()} disabled={!!busy}><Upload aria-hidden="true" /> Tải ảnh lên</button>
+              <p className="cv-ph">Ảnh của tôi <small>{myImages.length} ảnh</small></p>
+              {mine === null ? <p className="dk-hint">Đang tải…</p> : !myImages.length ? <p className="dk-hint">Chưa có ảnh. Ảnh tải lên được lưu trong Kho của tôi.</p> : (
+                <div className="dk-sgrid cv-grid3">{myImages.map((a) => <button key={a.id} type="button" title={a.name} onClick={() => (replace && selEl?.kind === 'img' ? (patchEl(selEl.id, { src: a.path, asset: true, name: a.name }), setReplace(false)) : addEl({ id: uid(), kind: 'img', ...center(360, 260), w: 360, h: Math.round(360 * ((a.meta.h as number) || 3) / ((a.meta.w as number) || 4)), rot: 0, src: a.path, asset: true, name: a.name }))}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- ảnh trong kho */}
+                  <img src={a.thumb ?? a.url ?? ''} alt={a.name} /></button>)}</div>
+              )}
+            </>}
+            {panel === 'anim' && <>
+              <p className="cv-ph">{selEl ? <>Hiệu ứng cho <b>{elLabel(selEl)}</b></> : 'Chọn một vật trên trang rồi bấm hiệu ứng'}</p>
+              {(['in', 'em', 'out'] as const).map((g) => (
+                <div key={g}><small className="cv-sub">{g === 'in' ? 'Xuất hiện' : g === 'em' ? 'Nhấn mạnh' : 'Biến mất'}</small>
+                  <div className="cv-fx">{FX.filter((f) => f.group === g).map((f) => <button key={f.id} type="button" onClick={() => addAnim(f.id)} disabled={!selEl}><span>{f.icon}</span>{f.label}</button>)}</div></div>
+              ))}
+              <div className="cv-row2">
+                <select value={startMode} onChange={(e) => setStartMode(e.target.value as Start)} disabled={!!trigMode} aria-label="Bắt đầu">{(Object.keys(START_LABEL) as Start[]).map((s) => <option key={s} value={s}>{START_LABEL[s]}</option>)}</select>
+                <select value={trigMode} onChange={(e) => setTrigMode(e.target.value)} aria-label="Kích hoạt" className={trigMode ? 'is-trg' : ''}>
+                  <option value="">Theo thứ tự (bấm Tiếp)</option>{slide.els.map((e) => <option key={e.id} value={e.id}>🎯 Khi bấm vào: {elLabel(e)}</option>)}
+                </select>
+              </div>
+              <select className="cv-sel" aria-label="Hiệu ứng cả trang" value="" onChange={(e) => { const v = e.target.value as Fx; if (v) animateAll(v); }}>
+                <option value="">✨ Hiệu ứng cả trang (tự hiện lần lượt)…</option>{FX.filter((f) => f.group === 'in').map((f) => <option key={f.id} value={f.id}>{f.icon} {f.label}</option>)}
+              </select>
+              <p className="cv-ph">Hiệu ứng trên trang <small>{slide.anims.length}</small></p>
+              <AnimList slide={slide} sel={animSel} setSel={(id) => { setAnimSel(id); const a = slide.anims.find((x) => x.id === id); if (a) setSel(a.el); }}
+                patch={patchAnim} move={moveAnim} del={(id) => setSlide((s) => ({ ...s, anims: s.anims.filter((a) => a.id !== id) }))} myAudio={myAudio} />
+            </>}
+            {panel === 'pos' && <>
+              {selEls.length > 0 && <>
+                <p className="cv-ph">Sắp xếp</p>
+                <div className="cv-grid2">
+                  <button type="button" onClick={() => selEl && moveLayer(selEl.id, 1)} disabled={!selEl}>Đưa lên trên</button>
+                  <button type="button" onClick={() => selEl && moveLayer(selEl.id, -1)} disabled={!selEl}>Đưa xuống dưới</button>
+                  <button type="button" onClick={() => order(true)}>Lên trên cùng</button>
+                  <button type="button" onClick={() => order(false)}>Xuống dưới cùng</button>
+                </div>
+                <AlignBar n={selEls.length} grouped={selEls.length > 1 && selEls.every((e) => e.group && e.group === selEls[0].group)} align={alignSel} onGroup={groupSel} onUngroup={ungroupSel} />
+                {selEl && <div className="dk-xy">
+                  <label>X<input type="number" value={Math.round(selEl.x)} onChange={(v) => patchEl(selEl.id, { x: Number(v.target.value) })} /></label>
+                  <label>Y<input type="number" value={Math.round(selEl.y)} onChange={(v) => patchEl(selEl.id, { y: Number(v.target.value) })} /></label>
+                  <label>Rộng<input type="number" value={Math.round(selEl.w)} onChange={(v) => patchEl(selEl.id, { w: Math.max(20, Number(v.target.value)) })} /></label>
+                  <label>Cao<input type="number" value={Math.round(selEl.h)} onChange={(v) => patchEl(selEl.id, { h: Math.max(20, Number(v.target.value)) })} /></label>
+                  <label>Xoay<input type="number" value={selEl.rot} onChange={(v) => patchEl(selEl.id, { rot: Number(v.target.value) % 360 })} /></label>
+                </div>}
+              </>}
+              <p className="cv-ph">Lớp trên trang <small>kéo thứ tự bằng mũi tên</small></p>
+              <Layers slide={slide} selIds={selIds} pick={pick} move={moveLayer}
+                lock={(id) => setSlide((s) => ({ ...s, els: s.els.map((e) => (e.id === id ? { ...e, lock: !e.lock } : e)) }))}
+                hide={(id) => setSlide((s) => ({ ...s, els: s.els.map((e) => (e.id === id ? { ...e, hide: !e.hide } : e)) }))} />
+            </>}
+            {panel === 'edit' && (selEl ? (
+              <Props e={selEl} slide={slide} deck={deck} patch={(p) => patchEl(selEl.id, p)} patchSoft={(p) => patchEl(selEl.id, p, false)} commitSoft={() => commit(deckRef.current)}
+                textRef={textRef} lessons={lessons} onDup={dupEl} onDel={delEl} onOrder={order} onAnimate={() => setPanel('anim')}
+                onCopyStyle={() => { setStyleCopy(selEl); setMsg({ kind: 'info', text: '🖌 Bấm vào vật khác để dán kiểu (Esc để huỷ).' }); }} />
+            ) : <div className="dk-empty"><p>Bấm vào một vật trên trang để sửa. Bấm đúp vào chữ để gõ.</p>
+              <p className="dk-kbd">Phím tắt: Delete xoá · Ctrl+C / Ctrl+V sao chép, dán (cả sang trang khác) · Ctrl+D nhân bản · Ctrl+A chọn hết · Shift+bấm chọn thêm · kéo trên nền để chọn vùng · Ctrl+G nhóm · mũi tên dịch chuyển · Ctrl+Z hoàn tác · chuột phải: menu nhanh · giữ Alt khi kéo để tắt đường gióng.</p></div>)}
+          </aside>
+        )}
+        <input ref={imgInput} type="file" accept={IMAGE_ACCEPT} hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void onImage(f); }} />
+        <input ref={audInput} type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm,.mp3,.m4a,.wav,.ogg" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void onAudio(f, f.name.replace(/\.[a-z0-9]+$/i, '').slice(0, 60)); }} />
+
+        <section className={`cv-work${styleCopy ? ' is-paint' : ''}`}>
+          {grid ? (
+            <div className="cv-gridv" aria-label="Tất cả các trang">
+              {deck.slides.map((s, i) => (
+                <div key={s.id} className={`cv-g${i === cur ? ' is-on' : ''}${drag === i ? ' is-drag' : ''}`} draggable
+                  onDragStart={(ev) => { setDrag(i); ev.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => setDrag(null)}
+                  onDragOver={(ev) => { ev.preventDefault(); }} onDrop={(ev) => { ev.preventDefault(); if (drag != null) reorder(drag, i); setDrag(null); }}>
+                  <button type="button" className="cv-g-t" onClick={() => setCur(i)} onDoubleClick={() => { setCur(i); setGrid(false); }} aria-label={`Trang ${i + 1}`}>
+                    <SlideFrame>{(k) => <SlideView slide={s} mode="thumb" scale={k} assetUrl={assetUrl} />}</SlideFrame>
+                    {s.phase && !s.els.some((e) => e.role === 'step') && <i className="cv-tag" style={{ background: STEP_COLOR[s.phase] ?? '#7c3aed' }}>{s.phase}</i>}
+                  </button>
+                  <div className="cv-g-cap"><b>{i + 1}. {pageTitle(s)}</b><span>{s.mins ? `${s.mins} phút` : ''}</span></div>
+                </div>
+              ))}
+              <div><button type="button" className="cv-g-add" onClick={() => addSlides([newSlide(slide.bg)])}><Plus aria-hidden="true" /> Thêm trang</button>
+                <p className="cv-g-hint">Kéo thả để đổi thứ tự · bấm đúp để mở trang{totalMins ? ` · Tổng ${totalMins} phút` : ''}</p></div>
             </div>
-          ) : selEl ? (
-            <Props e={selEl} slide={slide} deck={deck} patch={(p) => patchEl(selEl.id, p)} patchSoft={(p) => patchEl(selEl.id, p, false)} commitSoft={() => commit(deckRef.current)}
-              textRef={textRef} lessons={lessons} onDup={dupEl} onDel={delEl} onOrder={order} onAnimate={() => { setRib('fx'); }}
-              onCopyStyle={() => { setStyleCopy(selEl); setMsg({ kind: 'info', text: '🖌 Bấm vào vật khác để dán kiểu (Esc để huỷ).' }); }} />
-          ) : (
-            <div className="dk-empty">
-              <p>Bấm vào một vật trên trang để sửa. Bấm đúp vào chữ để gõ.</p>
-              <p>Thêm chữ, hình dán, câu hỏi, cảnh 3D ở thẻ <b>Chèn</b>; hiệu ứng ở thẻ <b>Hiệu ứng</b>.</p>
-              <p className="dk-kbd">Phím tắt: Delete xoá · Ctrl+C / Ctrl+V sao chép, dán (cả sang trang khác) · Ctrl+D nhân bản · Ctrl+A chọn hết · Shift+bấm chọn thêm · kéo trên nền để chọn vùng · Ctrl+G nhóm · mũi tên dịch chuyển · Ctrl+Z hoàn tác · chuột phải: menu nhanh · giữ Alt khi kéo để tắt đường gióng.</p>
+          ) : <>
+            <div className="cv-ctx" role="toolbar" aria-label="Công cụ cho vật đang chọn">{ctxTools}</div>
+            {(busy || msg) && <div className="cv-toast">{busy && <p className="dk-busy" role="status">{busy}</p>}{msg && <p className={`dk-msg is-${msg.kind}`} role="status">{msg.text} <button type="button" onClick={() => setMsg(null)} aria-label="Đóng">×</button></p>}</div>}
+            <div className="cv-canvas" ref={canvasRef} onContextMenu={(ev) => {
+              const id = (ev.target as HTMLElement).closest<HTMLElement>('.dk-el')?.dataset.id;
+              if (!id) return;
+              ev.preventDefault(); if (!selIds.includes(id)) pick(id);
+              setCtx({ x: ev.clientX, y: ev.clientY });
+            }} onClick={() => setCtx(null)}>
+              <SlideFrame className="dk-main cv-slide" style={{ width: W, maxWidth: 'none' }}>{(k) => <>
+                <SlideView key={slide.id} slide={slide} mode="edit" scale={k} assetUrl={assetUrl} sel={sel} multi={selIds} onSelect={pick}
+                  onSelectMany={(ids) => { setMulti(ids); setSel(ids[0] ?? null); }} onChange={onChange} onEditText={editText} />
+                {bb && (
+                  <div className={`cv-quick${bb.t * k < 56 ? ' is-below' : ''}`} style={{ left: ((bb.l + bb.r) / 2) * k, top: (bb.t * k < 56 ? bb.b : bb.t) * k }} onPointerDown={(ev) => ev.stopPropagation()}>
+                    <button type="button" className={allLock ? 'is-on' : ''} title={allLock ? 'Mở khoá' : 'Khoá (không kéo nhầm)'} aria-label={allLock ? 'Mở khoá' : 'Khoá'} onClick={() => setMany({ lock: !allLock })}>{allLock ? <Lock aria-hidden="true" /> : <Unlock aria-hidden="true" />}</button>
+                    <button type="button" title="Nhân bản (Ctrl+D)" aria-label="Nhân bản" onClick={dupEl}><Copy aria-hidden="true" /></button>
+                    <button type="button" title="Xoá (Delete)" aria-label="Xoá" onClick={delEl}><Trash2 aria-hidden="true" /></button>
+                    <button type="button" title="Ẩn khi trình chiếu" aria-label="Ẩn hoặc hiện" onClick={() => setMany({ hide: !selEls.every((e) => e.hide) })}>{selEls.every((e) => e.hide) ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}</button>
+                    <button type="button" title="Thêm" aria-label="Thêm lựa chọn" onClick={(ev) => { const r = (ev.currentTarget as HTMLElement).getBoundingClientRect(); setCtx({ x: r.left, y: r.bottom + 6 }); }}><MoreHorizontal aria-hidden="true" /></button>
+                  </div>
+                )}
+              </>}</SlideFrame>
+              {styleCopy && <span className="dk-paint cv-paint">🖌 Bấm vào vật để dán kiểu · Esc để huỷ</span>}
             </div>
-          )) : (
-            <AnimList slide={slide} sel={animSel} setSel={(id) => { setAnimSel(id); const a = slide.anims.find((x) => x.id === id); if (a) setSel(a.el); }}
-              patch={patchAnim} move={moveAnim} del={(id) => setSlide((s) => ({ ...s, anims: s.anims.filter((a) => a.id !== id) }))} myAudio={myAudio} />
+            {panel === 'anim' && <AnimTimeline slide={slide} sel={animSel} onSelect={(a) => { setAnimSel(a.id); setSel(a.el); }}
+              onPatch={patchAnimSoft} onCommit={commitSoft} stage={() => document.querySelector('.cv-slide')} />}
+            <div className="cv-strip" aria-label="Các trang">
+              {deck.slides.map((s, i) => (
+                <button key={s.id} type="button" className={`cv-th${i === cur ? ' is-on' : ''}${drag === i ? ' is-drag' : ''}`} draggable
+                  onDragStart={() => setDrag(i)} onDragEnd={() => setDrag(null)} onDragOver={(ev) => ev.preventDefault()} onDrop={(ev) => { ev.preventDefault(); if (drag != null) reorder(drag, i); setDrag(null); }}
+                  onClick={() => { setCur(i); setSel(null); setMulti([]); setAnimSel(null); }} aria-label={`Trang ${i + 1}`} aria-current={i === cur}>
+                  <SlideFrame>{(k) => <SlideView slide={s} mode="thumb" scale={k} assetUrl={assetUrl} />}</SlideFrame>
+                  <span className="cv-th-n">{i + 1}</span>
+                  {s.phase && !s.els.some((e) => e.role === 'step') && <i className="cv-tag" style={{ background: STEP_COLOR[s.phase] ?? '#7c3aed' }}>{s.phase}</i>}
+                  <span className="cv-th-ic">{s.anims.length > 0 && '✨'}{s.anims.some((a) => a.trigger) && '🎯'}{(s.sound || s.anims.some((a) => a.sound)) && '🔊'}</span>
+                </button>
+              ))}
+              <button type="button" className="cv-th-add" onClick={() => addSlides([newSlide(slide.bg)])} aria-label="Thêm trang"><Plus aria-hidden="true" /></button>
+              <span className="cv-th-tools">
+                <button type="button" onClick={dupSlide} title="Nhân bản trang" aria-label="Nhân bản trang"><Copy aria-hidden="true" /></button>
+                <button type="button" onClick={() => moveSlide(-1)} disabled={cur === 0} title="Đưa trang lên trước" aria-label="Đưa trang lên trước"><ArrowLeft aria-hidden="true" /></button>
+                <button type="button" onClick={delSlide} title="Xoá trang" aria-label="Xoá trang" className="is-danger"><Trash2 aria-hidden="true" /></button>
+              </span>
+            </div>
+          </>}
+          {foot && (
+            <div className="cv-pop" role="dialog" aria-label={foot === 'dur' ? 'Thời lượng' : foot === 'note' ? 'Ghi chú' : 'Hẹn giờ'}>
+              <button type="button" className="cv-pclose" aria-label="Đóng" onClick={() => setFoot(null)}><X aria-hidden="true" /></button>
+              {foot === 'dur' && <>
+                <b>Thời lượng trang {cur + 1}</b>
+                <label className="cv-pl">Dự kiến dạy <input type="number" min={0} max={90} step={0.5} value={slide.mins ?? ''} placeholder="—" onChange={(e) => setSlide((s) => ({ ...s, mins: Number(e.target.value) > 0 ? Math.min(90, Number(e.target.value)) : undefined }))} aria-label="Số phút dự kiến" /> phút</label>
+                <label className="cv-pl"><input type="checkbox" checked={!!slide.autoNext} onChange={(e) => setSlide((s) => ({ ...s, autoNext: e.target.checked ? 5 : undefined }))} /> Tự sang bước / trang sau</label>
+                {!!slide.autoNext && <label className="cv-pl"><input type="range" min={1} max={60} value={slide.autoNext} onChange={(e) => setSlide((s) => ({ ...s, autoNext: Number(e.target.value) }), false)} onPointerUp={() => commit(deckRef.current)} aria-label="Số giây tự sang" /> <b>{slide.autoNext} giây</b></label>}
+                <label className="cv-pl">Chuyển trang <select value={slide.trans} onChange={(e) => setSlide((s) => ({ ...s, trans: e.target.value as Trans }))}>{(Object.keys(TRANS_LABEL) as Trans[]).map((t) => <option key={t} value={t}>{TRANS_LABEL[t]}</option>)}</select>
+                  <input type="number" min={0.1} max={3} step={0.1} value={slide.transDur ?? 0.55} onChange={(e) => setSlide((s) => ({ ...s, transDur: Math.min(3, Math.max(0.1, Number(e.target.value) || 0.55)) }))} aria-label="Thời gian chuyển trang (giây)" /> s</label>
+                <button type="button" className="cv-link" onClick={() => commit({ ...deckRef.current, slides: deckRef.current.slides.map((x) => ({ ...x, trans: slide.trans, transDur: slide.transDur, autoNext: slide.autoNext })) })}>Áp dụng chuyển trang &amp; tự sang cho mọi trang</button>
+              </>}
+              {foot === 'note' && <>
+                <b>Ghi chú cho cô · trang {cur + 1} <small>— chỉ hiện ở màn hình của cô khi trình chiếu</small></b>
+                <textarea rows={4} value={slide.notes} placeholder="vd: Hỏi lớp “Có mấy bạn thỏ?”, rồi bấm vào cà rốt để hiện đáp án." onChange={(e) => setSlide((s) => ({ ...s, notes: e.target.value }), false)} onBlur={() => commit(deckRef.current)} autoFocus />
+              </>}
+              {foot === 'timer' && <>
+                <b>Hẹn giờ cả tiết</b>
+                <label className="cv-pl">Thời gian tiết học <input type="number" min={0} max={180} value={deck.mins ?? ''} placeholder="35" onChange={(e) => commit({ ...deckRef.current, mins: Number(e.target.value) > 0 ? Math.min(180, Math.round(Number(e.target.value))) : undefined })} aria-label="Số phút cả tiết" /> phút</label>
+                <div className="cv-row2">{[35, 40, 45].map((m) => <button key={m} type="button" className={deck.mins === m ? 'is-on' : ''} onClick={() => commit({ ...deckRef.current, mins: m })}>{m} phút</button>)}</div>
+                <small className="dk-hint">Khi trình chiếu, màn hình của cô đếm ngược thời gian còn lại của tiết và thời gian đã dùng ở từng trang. Các trang đã đặt dự kiến: {totalMins} phút.</small>
+              </>}
+            </div>
           )}
-        </aside>
+          <footer className="cv-foot">
+            <button type="button" className={foot === 'dur' ? 'is-on' : ''} onClick={() => setFoot(foot === 'dur' ? null : 'dur')}><Clock aria-hidden="true" /> Thời lượng{slide.mins ? ` · ${slide.mins}′` : ''}</button>
+            <button type="button" className={foot === 'note' ? 'is-on' : ''} onClick={() => setFoot(foot === 'note' ? null : 'note')}><StickyNote aria-hidden="true" /> Ghi chú{slide.notes ? ' ●' : ''}</button>
+            <button type="button" className={foot === 'timer' ? 'is-on' : ''} onClick={() => setFoot(foot === 'timer' ? null : 'timer')}><Timer aria-hidden="true" /> Hẹn giờ{deck.mins ? ` · ${deck.mins}′` : ''}</button>
+            <span className="cv-grow" />
+            <label className="cv-zoom"><input type="range" min={50} max={200} step={10} value={Math.round(zoom * 100)} onChange={(e) => setZoom(Number(e.target.value) / 100)} aria-label="Thu phóng" disabled={grid} /><b>{Math.round(zoom * 100)}%</b></label>
+            <span className="cv-pg">{cur + 1} / {deck.slides.length}</span>
+            <button type="button" className={grid ? 'is-on' : ''} onClick={() => setGrid(!grid)} title="Xem lưới tất cả trang" aria-label="Xem lưới" aria-pressed={grid}><Grid2x2 aria-hidden="true" /></button>
+            <button type="button" onClick={fullscreen} title="Toàn màn hình" aria-label="Toàn màn hình"><Maximize aria-hidden="true" /></button>
+          </footer>
+        </section>
       </div>
 
       {ctx && selEls.length > 0 && (
@@ -555,7 +721,9 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
           <button type="button" role="menuitem" onClick={() => order(true)}>Lên trên cùng</button>
           <button type="button" role="menuitem" onClick={() => order(false)}>Xuống dưới cùng</button>
           {selIds.length > 1 && (selEls.every((e) => e.group && e.group === selEls[0].group) ? <button type="button" role="menuitem" onClick={ungroupSel}>Bỏ nhóm <kbd>Ctrl⇧G</kbd></button> : <button type="button" role="menuitem" onClick={groupSel}>Nhóm <kbd>Ctrl G</kbd></button>)}
-          <button type="button" role="menuitem" onClick={() => { const lk = !selEls.every((e) => e.lock); setSlide((s) => ({ ...s, els: s.els.map((e) => (selIds.includes(e.id) ? { ...e, lock: lk } : e)) })); }}>{selEls.every((e) => e.lock) ? 'Mở khoá' : 'Khoá'}</button>
+          <button type="button" role="menuitem" onClick={() => setMany({ lock: !allLock })}>{allLock ? 'Mở khoá' : 'Khoá'}</button>
+          <button type="button" role="menuitem" onClick={() => setMany({ hide: !selEls.every((e) => e.hide) })}>{selEls.every((e) => e.hide) ? 'Hiện khi trình chiếu' : 'Ẩn khi trình chiếu'}</button>
+          <button type="button" role="menuitem" onClick={() => setPanel('anim')}>✨ Thêm hiệu ứng</button>
           <hr />
           <button type="button" role="menuitem" className="is-danger" onClick={delEl}>Xoá <kbd>Del</kbd></button>
         </div>
@@ -790,18 +958,19 @@ function AlignBar({ n, grouped, align, onGroup, onUngroup }: {
 }
 
 /* ---------- lớp (thứ tự trên / dưới) ---------- */
-function Layers({ slide, selIds, pick, move, lock }: { slide: Slide; selIds: string[]; pick: (id: string, add?: boolean) => void; move: (id: string, d: -1 | 1) => void; lock: (id: string) => void }) {
+function Layers({ slide, selIds, pick, move, lock, hide }: { slide: Slide; selIds: string[]; pick: (id: string, add?: boolean) => void; move: (id: string, d: -1 | 1) => void; lock: (id: string) => void; hide: (id: string) => void }) {
   const list = [...slide.els].reverse();
   if (!list.length) return <div className="dk-empty"><p>Trang chưa có vật nào.</p></div>;
   return (
     <div className="dk-layers">
       <p className="dk-an-g">Trên cùng</p>
       {list.map((e) => (
-        <div key={e.id} className={`dk-layer${selIds.includes(e.id) ? ' is-on' : ''}`}>
+        <div key={e.id} className={`dk-layer${selIds.includes(e.id) ? ' is-on' : ''}${e.hide ? ' is-hide' : ''}`}>
           <button type="button" className="dk-layer-n" onClick={(ev) => pick(e.id, ev.shiftKey)} title="Bấm để chọn · Shift+bấm chọn thêm">{e.group ? '🔗 ' : ''}{elLabel(e)}</button>
           <button type="button" aria-label="Lên một lớp" onClick={() => move(e.id, 1)}><ArrowUp aria-hidden="true" /></button>
           <button type="button" aria-label="Xuống một lớp" onClick={() => move(e.id, -1)}><ArrowDown aria-hidden="true" /></button>
-          <button type="button" aria-label={e.lock ? 'Mở khoá' : 'Khoá'} onClick={() => lock(e.id)}>{e.lock ? <Lock aria-hidden="true" /> : <Unlock aria-hidden="true" />}</button>
+          <button type="button" aria-label={e.hide ? 'Hiện' : 'Ẩn khi trình chiếu'} title={e.hide ? 'Đang ẩn — bấm để hiện' : 'Ẩn khi trình chiếu'} onClick={() => hide(e.id)}>{e.hide ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}</button>
+          <button type="button" aria-label={e.lock ? 'Mở khoá' : 'Khoá'} className={e.lock ? 'is-lock' : ''} onClick={() => lock(e.id)}>{e.lock ? <Lock aria-hidden="true" /> : <Unlock aria-hidden="true" />}</button>
         </div>
       ))}
       <p className="dk-an-g">Dưới cùng</p>

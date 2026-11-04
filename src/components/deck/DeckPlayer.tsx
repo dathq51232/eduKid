@@ -43,6 +43,8 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
   const [mine, setMine] = useState<TeacherAsset[]>([]);
   const [now, setNow] = useState(() => Date.now());
   const [t0, setT0] = useState(() => Date.now());
+  // giờ bắt đầu trang đang chiếu (để báo đã dùng bao lâu so với dự kiến)
+  const [pageAt, setPageAt] = useState(() => ({ slide: -1, at: Date.now() }));
   const [vol, setVol] = useState(getVolume());
   const [left, setLeft] = useState(0);
   const api = useRef<PlayApi>(null);
@@ -59,6 +61,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
   const urls = useMemo(() => new Map(mine.filter((a) => a.url).map((a) => [a.path, a.url!])), [mine]);
   const assetUrl = useCallback((p: string) => urls.get(p), [urls]);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 500); return () => clearInterval(t); }, []);
+  useEffect(() => { setPageAt((p) => (p.slide === show.slide ? p : { slide: show.slide, at: Date.now() })); }, [show.slide]);
   useEffect(() => () => stopSounds(), []);
 
   /* ---------- đồng bộ hai cửa sổ ---------- */
@@ -272,6 +275,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
         <button type="button" className="dp-btn" onClick={fullStage}><Expand aria-hidden="true" /> Toàn màn hình trang</button>
         <label className="dp-vol"><Volume2 aria-hidden="true" /><input type="range" min={0} max={1} step={0.05} value={vol} onChange={(e) => { setVol(Number(e.target.value)); setVolume(Number(e.target.value)); }} aria-label="Âm lượng" /></label>
         <button type="button" className="dp-clock" onClick={() => setT0(Date.now())} title="Bấm để đặt lại đồng hồ">{fmt((now - t0) / 1000)}</button>
+        {deck.mins && (() => { const left = deck.mins * 60 - (now - t0) / 1000; return <span className={`dp-left${left < 300 ? ' is-low' : ''}`} title="Hẹn giờ cả tiết">{left >= 0 ? `còn ${fmt(left)}` : `quá ${fmt(-left)}`}</span>; })()}
       </header>
       <div className="dp-main">
         {stage}
@@ -281,6 +285,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
           </section>
           <section className="dp-card"><h4>Ghi chú của cô</h4>
             <p className="dp-notes">{slide.notes || <span className="dp-muted">Trang này chưa có ghi chú.</span>}</p>
+            {(() => { const used = (now - (pageAt.slide === show.slide ? pageAt.at : now)) / 1000; const over = !!slide.mins && used > slide.mins * 60; return <p className={`dp-used${over ? ' is-over' : ''}`}>{slide.mins ? `Dự kiến ${slide.mins} phút · ` : ''}trang này đã dùng {fmt(used)}</p>; })()}
             {slide.anims.some((a) => a.trigger) && <p className="dp-trg">🎯 Trang có hiệu ứng chờ bấm vào vật (vật có viền vàng nhấp nháy).</p>}
           </section>
           {show.teams && (

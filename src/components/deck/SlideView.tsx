@@ -416,12 +416,12 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
         const clickable = play && (!!plan.triggers[e.id] || !!e.link || (!!e.drag && !done.has(e.id)));
         return (
           <div key={e.id} data-id={e.id} ref={(n) => { if (n) nodes.current.set(e.id, n); else nodes.current.delete(e.id); }}
-            className={`dk-el k-${e.kind}${sel === e.id || multi?.includes(e.id) ? ' is-sel' : ''}${multi && multi.length > 1 && multi.includes(e.id) && sel !== e.id ? ' is-sel2' : ''}${clickable ? ' is-click' : ''}${play && e.drag && !done.has(e.id) ? ' is-drag' : ''}${done.has(e.id) ? ' is-done' : ''}`}
-            style={{ left: p?.x ?? e.x, top: p?.y ?? e.y, width: e.w, height: e.h, transform: e.rot ? `rotate(${e.rot}deg)` : undefined, visibility: play && hidden.has(e.id) ? 'hidden' : undefined, zIndex: play && playDrag.current?.id === e.id ? 50 : undefined }}
+            className={`dk-el k-${e.kind}${e.hide ? ' is-hide' : ''}${e.flip ? ' is-flip' : ''}${sel === e.id || multi?.includes(e.id) ? ' is-sel' : ''}${multi && multi.length > 1 && multi.includes(e.id) && sel !== e.id ? ' is-sel2' : ''}${clickable ? ' is-click' : ''}${play && e.drag && !done.has(e.id) ? ' is-drag' : ''}${done.has(e.id) ? ' is-done' : ''}`}
+            style={{ left: p?.x ?? e.x, top: p?.y ?? e.y, width: e.w, height: e.h, transform: e.rot ? `rotate(${e.rot}deg)` : undefined, visibility: (play && hidden.has(e.id)) || (e.hide && mode !== 'edit') ? 'hidden' : undefined, zIndex: play && playDrag.current?.id === e.id ? 50 : undefined }}
             onPointerDown={(ev) => onElDown(e, ev)} onPointerMove={onElMove} onPointerUp={() => onElUp(e)}
             onClick={(ev) => { if (play && !e.drag) { ev.stopPropagation(); click(e); } }}
             onDoubleClick={() => { if (mode === 'edit' && (e.kind === 'text' || e.kind === 'shape' || e.kind === 'quiz' || e.kind === 'sort')) onEditText?.(e.id); }}>
-            <div className="dk-a"><ElBody e={e} mode={mode} assetUrl={assetUrl} pick={picks[e.id]} onPick={(i) => { const a: PlayAction = { t: 'quiz', el: e.id, i }; apply(a); onAction?.(a); }}
+            <div className="dk-a" style={e.op != null && e.op < 1 ? { opacity: e.op } : undefined}><ElBody e={e} mode={mode} assetUrl={assetUrl} pick={picks[e.id]} onPick={(i) => { const a: PlayAction = { t: 'quiz', el: e.id, i }; apply(a); onAction?.(a); }}
               board={board} sort={sorts[e.id]} onTile={(tile) => { const a: PlayAction = { t: 'sort', el: e.id, tile }; if (apply(a)) onAction?.(a); }} /></div>
             {mode === 'edit' && sel === e.id && !e.lock && (!multi || multi.length <= 1) && <span className="dk-size" onPointerDown={(ev) => onElDown(e, ev, 'size')} onPointerMove={onElMove} onPointerUp={() => onElUp(e)} />}
             {mode === 'edit' && <AnimBadges slide={slide} id={e.id} />}

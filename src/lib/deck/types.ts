@@ -23,7 +23,13 @@ export type ElBase = {
   /** nhóm vật (chọn một vật trong nhóm là chọn cả nhóm) */
   group?: string;
   /** vai trò trong bố cục chủ đề (đổi chủ đề cả bài thì đổi màu theo): khung nội dung, nhãn bài, hình thức làm bài, chữ trang chia */
-  role?: 'card' | 'badge' | 'mode' | 'title' | 'divider';
+  role?: 'card' | 'badge' | 'mode' | 'title' | 'divider' | 'cardback' | 'step' | 'body' | 'mascot' | 'deco';
+  /** độ trong suốt 0.1–1 (mặc định 1) */
+  op?: number;
+  /** lật ngang */
+  flip?: boolean;
+  /** ẩn (không hiện khi trình chiếu; khi soạn hiện mờ) */
+  hide?: boolean;
 };
 export type TextEl = ElBase & { kind: 'text'; text: string; size: number; color: string; font: FontKey; align: 'left' | 'center' | 'right'; bg: string; italic?: boolean;
   /** viền chữ (chữ tiêu đề kiểu trang trí) và đổ bóng */
@@ -85,10 +91,13 @@ export type Slide = { id: string; bg: string; els: El[]; anims: Anim[]; trans: T
   /** cảnh nền minh hoạ ghép từ hình có sẵn (vẽ phía sau các vật) */
   scene?: SceneKind;
   /** hoạt động của tiết dạy: Khởi động / Khám phá / Luyện tập / Vận dụng / Củng cố */
-  phase?: string };
+  phase?: string;
+  /** thời gian dự kiến cho trang (phút) — hiện ở xem lưới và màn hình của cô */
+  mins?: number };
 /** nguồn của bài: tiết trong lịch báo giảng (giáo án) / bài trong ngân hàng nội dung */
 export type DeckSrc = { plan?: string; lesson?: string; date?: string; period?: number };
-export type Deck = { v: 1; title: string; grade: number; slides: Slide[]; src?: DeckSrc };
+export type Deck = { v: 1; title: string; grade: number; slides: Slide[]; src?: DeckSrc;
+  /** hẹn giờ cả tiết (phút); màn hình của cô đếm ngược */ mins?: number };
 
 export const BGS: { id: string; label: string; css: string }[] = [
   { id: 'white', label: 'Trắng', css: '#ffffff' },
@@ -101,10 +110,14 @@ export const BGS: { id: string; label: string; css: string }[] = [
   { id: 'sea', label: 'Biển', css: 'linear-gradient(180deg,#a5f3fc 0%,#38bdf8 70%,#0ea5e9)' },
   { id: 'board', label: 'Bảng xanh', css: 'linear-gradient(180deg,#1f4d3a,#163a2c)' },
   { id: 'night', label: 'Trời đêm', css: 'radial-gradient(circle at 30% 20%,#26346a,#0b1026 70%)' },
+  { id: 'oli', label: 'Ô li kem', css: 'linear-gradient(90deg,#ffffff 7px,transparent 7px) 0 0/104px 104px, linear-gradient(#ffffff 7px,transparent 7px) 0 0/104px 104px, #f6e3c9' },
+  { id: 'cosmos', label: 'Vũ trụ', css: 'radial-gradient(circle,#ffffffd9 0 3px,transparent 4px) 0 0/190px 170px, radial-gradient(circle,#ffffff80 0 2px,transparent 3px) 70px 90px/130px 150px, radial-gradient(circle at 20% 15%,#3b3f99,#151a46 60%,#0b0f2e)' },
+  { id: 'leaf', label: 'Lá non', css: 'linear-gradient(160deg,#dcfce7,#bbf7d0 55%,#a7f3d0)' },
+  { id: 'dots', label: 'Chấm bi', css: 'radial-gradient(circle,#bae6fd 0 6px,transparent 7px) 0 0/56px 56px, #e0f2fe' },
   { id: 'paper', label: 'Giấy kẻ ô', css: '#fffef7 url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2740%27 height=%2740%27%3E%3Cpath d=%27M40 0H0V40%27 fill=%27none%27 stroke=%27%23c7d2fe%27/%3E%3C/svg%3E")' },
 ];
 export const bgCss = (bg: string) => BGS.find((b) => b.id === bg)?.css ?? (/^#[0-9a-f]{3,8}$/i.test(bg) ? bg : '#ffffff');
-export const darkBg = (bg: string) => bg === 'board' || bg === 'night';
+export const darkBg = (bg: string) => bg === 'board' || bg === 'night' || bg === 'cosmos';
 
 export const uid = () => Math.random().toString(36).slice(2, 9);
 export const MAX_SLIDES = 80, MAX_ELS = 60;
@@ -136,6 +149,7 @@ export function normalizeDeck(raw: unknown, fallbackTitle = 'Bài thao giảng')
       ...(typeof s?.transDur === 'number' ? { transDur: Math.min(3, Math.max(0.1, s.transDur)) } : {}),
       ...(typeof s?.autoNext === 'number' && s.autoNext > 0 ? { autoNext: Math.min(120, Math.max(1, s.autoNext)) } : {}),
       scene: typeof s?.scene === 'string' ? s.scene : undefined, phase: typeof s?.phase === 'string' ? s.phase : undefined,
+      ...(typeof s?.mins === 'number' && s.mins > 0 ? { mins: Math.min(90, Math.max(0.5, s.mins)) } : {}),
     };
   });
   return {
@@ -143,6 +157,7 @@ export function normalizeDeck(raw: unknown, fallbackTitle = 'Bài thao giảng')
     title: typeof r.title === 'string' && r.title.trim() ? r.title : fallbackTitle,
     grade: Number(r.grade) >= 1 && Number(r.grade) <= 5 ? Number(r.grade) : 1,
     slides: slides.length ? slides : emptyDeck(fallbackTitle).slides,
+    ...(typeof r.mins === 'number' && r.mins > 0 ? { mins: Math.min(180, Math.max(1, Math.round(r.mins))) } : {}),
     ...(r.src && typeof r.src === 'object' ? { src: { plan: typeof r.src.plan === 'string' ? r.src.plan : undefined, lesson: typeof r.src.lesson === 'string' ? r.src.lesson : undefined, date: typeof r.src.date === 'string' ? r.src.date : undefined, period: typeof r.src.period === 'number' ? r.src.period : undefined } } : {}),
   };
 }
