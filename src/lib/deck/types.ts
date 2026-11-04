@@ -34,8 +34,10 @@ export type ElBase = {
 export type TextEl = ElBase & { kind: 'text'; text: string; size: number; color: string; font: FontKey; align: 'left' | 'center' | 'right'; bg: string; italic?: boolean;
   /** viền chữ (chữ tiêu đề kiểu trang trí) và đổ bóng */
   stroke?: string; strokeW?: number; shadow?: boolean };
-export type ImgEl = ElBase & { kind: 'img'; src: string; /** ảnh trong Kho của tôi (đường dẫn kho, cần ký khi hiện) */ asset?: boolean; name?: string };
-export type ShapeEl = ElBase & { kind: 'shape'; shape: ShapeKind; fill: string; stroke: string; sw: number; text?: string; color?: string; size?: number };
+export type ImgEl = ElBase & { kind: 'img'; src: string; /** ảnh trong Kho của tôi (đường dẫn kho, cần ký khi hiện) */ asset?: boolean; name?: string;
+  /** bo góc 0–100 (% bán kính tối đa) · đổ bóng mềm */ rad?: number; shadow?: boolean };
+export type ShapeEl = ElBase & { kind: 'shape'; shape: ShapeKind; fill: string; stroke: string; sw: number; text?: string; color?: string; size?: number;
+  /** bo góc 0–100 (% bán kính tối đa, hình chữ nhật / thẻ) · đổ bóng mềm · kiểu nét viền */ rad?: number; shadow?: boolean; dash?: 'solid' | 'dash' | 'dot' };
 export type QuizEl = ElBase & { kind: 'quiz'; q: string; opts: string[]; a: number; cols: 1 | 2 };
 export type DropEl = ElBase & { kind: 'drop'; label: string; /** id các vật kéo đúng vào ô này */ accept: string[]; color: string };
 export type SceneEl = ElBase & { kind: 'scene3d'; lesson: string; title: string };

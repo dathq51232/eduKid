@@ -66,6 +66,9 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   const [tplTab, setTplTab] = useState<'set' | 'page'>('set');
   const [replace, setReplace] = useState(false);
   const [cat3d, setCat3d] = useState(-1);
+  // chữ đang sửa trực tiếp trên trang
+  const [inline, setInline] = useState<string | null>(null);
+  useEffect(() => { if (inline && inline !== sel) setInline(null); }, [sel, inline]);
   const [drag, setDrag] = useState<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   // trình soạn nằm trong khung trang giáo viên: cao vừa phần còn lại của màn hình
@@ -321,7 +324,11 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const editText = (id: string) => { setSel(id); setPanel('edit'); setTimeout(() => { textRef.current?.focus(); textRef.current?.select(); }, 30); };
+  const editText = (id: string) => {
+    if (!id) { setInline(null); return; }
+    const k = slide.els.find((e) => e.id === id)?.kind;
+    if (k === 'text' || k === 'shape') { setSel(id); setMulti([id]); setInline(id); return; }
+    setSel(id); setPanel('edit'); setTimeout(() => { textRef.current?.focus(); textRef.current?.select(); }, 30); };
   const showHref = (from: number) => `/giao-vien/lop/${classId}/bai-giang-3d/thao-giang/${deckId}/trinh-chieu?trang=${from + 1}`;
   const flush = async () => { if (supabase) await supabase.from('slide_decks').update({ title: deck.title.slice(0, 120) || 'Bài thao giảng', grade: deck.grade, data: deckRef.current }).eq('id', deckId); };
 
@@ -349,7 +356,15 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   };
   const ctxTools = (() => {
     const e = selEls.length === 1 ? selEls[0] : null;
+    const rotate = e && !e.lock ? <span className="cv-num cv-rotg" title="Xoay (hoặc kéo nút ⟳ trên vật)">
+      <button type="button" aria-label="Xoay trái 15 độ" onClick={() => patchEl(e.id, { rot: ((e.rot - 15 + 540) % 360) - 180 })}>↺</button>
+      <input type="number" min={-180} max={180} value={Math.round(e.rot)} onChange={(v) => patchEl(e.id, { rot: ((Number(v.target.value) || 0) + 540) % 360 - 180 })} aria-label="Góc xoay (độ)" /><i>°</i>
+      <button type="button" aria-label="Xoay phải 15 độ" onClick={() => patchEl(e.id, { rot: ((e.rot + 15 + 540) % 360) - 180 })}>↻</button></span> : null;
+    const radius = (v: number | undefined, id: string) => (
+      <label className="cv-c cv-op" title="Bo góc">◜<input type="range" min={0} max={100} value={v ?? 0} onChange={(x) => patchEl(id, { rad: Number(x.target.value) || undefined }, false)} onPointerUp={() => commit(deckRef.current)} aria-label="Bo góc" /></label>
+    );
     const common = <>
+      {rotate}
       <span className="cv-d" />
       <button type="button" className={`cv-c${panel === 'anim' ? ' is-on' : ''}`} onClick={() => toggle('anim')}><Sparkles aria-hidden="true" /> Hiệu ứng</button>
       <button type="button" className={`cv-c${panel === 'pos' ? ' is-on' : ''}`} onClick={() => toggle('pos')}>Vị trí</button>
@@ -375,9 +390,10 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
     if (e.kind === 'text') return <>
       <select className="cv-font" value={e.font} onChange={(v) => patchEl(e.id, { font: v.target.value as FontKey })} aria-label="Phông chữ">{(Object.keys(FONTS) as FontKey[]).map((k) => <option key={k} value={k}>{FONTS[k].label.replace(/ \(.*\)/, '')}</option>)}</select>
       <span className="cv-num"><button type="button" aria-label="Giảm cỡ chữ" onClick={() => patchEl(e.id, { size: Math.max(18, e.size - 4) })}><Minus aria-hidden="true" /></button>
-        <input type="number" min={18} max={200} value={e.size} onChange={(v) => patchEl(e.id, { size: Math.min(200, Math.max(18, Number(v.target.value) || e.size)) })} aria-label="Cỡ chữ" />
+        <input type="number" list="cv-sizes" min={10} max={300} value={e.size} onChange={(v) => { const n = Number(v.target.value); if (n >= 10) patchEl(e.id, { size: Math.min(300, n) }); }} aria-label="Cỡ chữ" />
         <button type="button" aria-label="Tăng cỡ chữ" onClick={() => patchEl(e.id, { size: Math.min(200, e.size + 4) })}><Plus aria-hidden="true" /></button></span>
       <label className="cv-c cv-color" title="Màu chữ"><b style={{ borderColor: e.color }}>A</b><input type="color" value={/^#[0-9a-f]{6}$/i.test(e.color) ? e.color : '#1d4ed8'} onChange={(v) => patchEl(e.id, { color: v.target.value })} aria-label="Màu chữ" /></label>
+      <button type="button" className={`cv-c${inline === e.id ? ' is-on' : ''}`} title="Sửa chữ ngay trên trang (hoặc bấm đúp / bấm lần hai vào chữ)" onClick={() => setInline(inline === e.id ? null : e.id)}>✏️ Sửa chữ</button>
       <button type="button" className={`cv-c${e.italic ? ' is-on' : ''}`} aria-label="Chữ nghiêng" aria-pressed={!!e.italic} onClick={() => patchEl(e.id, { italic: !e.italic })}><Italic aria-hidden="true" /></button>
       <button type="button" className="cv-c" title="Căn chữ" onClick={() => patchEl(e.id, { align: e.align === 'left' ? 'center' : e.align === 'center' ? 'right' : 'left' })}>{e.align === 'left' ? '⇤ Trái' : e.align === 'center' ? '↔ Giữa' : '⇥ Phải'}</button>
       <label className="cv-c cv-color" title="Nền ô chữ"><i className="cv-sw" style={{ background: e.bg || 'linear-gradient(135deg,#fff 45%,#ef4444 45% 55%,#fff 55%)' }} /><input type="color" value={/^#[0-9a-f]{6}$/i.test(e.bg) ? e.bg : '#fef3c7'} onChange={(v) => patchEl(e.id, { bg: v.target.value })} aria-label="Nền ô chữ" /></label>
@@ -387,6 +403,8 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
     if (e.kind === 'img') return <>
       <button type="button" className={`cv-c${replace ? ' is-on' : ''}`} onClick={() => { setReplace(!replace); setPanel('el'); }}>Thay hình</button>
       <button type="button" className={`cv-c${e.flip ? ' is-on' : ''}`} onClick={() => patchEl(e.id, { flip: !e.flip })}><FlipHorizontal aria-hidden="true" /> Lật</button>
+      {radius(e.rad, e.id)}
+      <button type="button" className={`cv-c${e.shadow ? ' is-on' : ''}`} title="Đổ bóng mềm" onClick={() => patchEl(e.id, { shadow: !e.shadow })}>Bóng</button>
       {opacity(e.op)}
       <button type="button" className={`cv-c${e.drag ? ' is-on' : ''}`} title="Học sinh kéo được khi trình chiếu" onClick={() => patchEl(e.id, { drag: !e.drag })}>✋ Kéo được</button>
       {common}
@@ -394,7 +412,14 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
     if (e.kind === 'shape') return <>
       <label className="cv-c cv-color" title="Màu nền"><i className="cv-sw" style={{ background: e.fill }} /><input type="color" value={/^#[0-9a-f]{6}$/i.test(e.fill) ? e.fill : '#fde68a'} onChange={(v) => patchEl(e.id, { fill: v.target.value })} aria-label="Màu nền hình" /></label>
       <label className="cv-c cv-color" title="Màu viền"><i className="cv-sw is-ring" style={{ borderColor: e.stroke }} /><input type="color" value={/^#[0-9a-f]{6}$/i.test(e.stroke) ? e.stroke : '#f59e0b'} onChange={(v) => patchEl(e.id, { stroke: v.target.value })} aria-label="Màu viền hình" /></label>
-      <label className="cv-c" title="Độ dày viền">Viền <input className="cv-mini" type="number" min={0} max={16} value={e.sw} onChange={(v) => patchEl(e.id, { sw: Math.min(16, Math.max(0, Number(v.target.value) || 0)) })} aria-label="Độ dày viền" /></label>
+      <label className="cv-c" title="Độ dày viền">Viền <input className="cv-mini" type="number" min={0} max={30} value={e.sw} onChange={(v) => patchEl(e.id, { sw: Math.min(30, Math.max(0, Number(v.target.value) || 0)) })} aria-label="Độ dày viền" /></label>
+      <select className="cv-c cv-dash" value={e.dash ?? 'solid'} onChange={(v) => patchEl(e.id, { dash: v.target.value === 'solid' ? undefined : v.target.value as 'dash' | 'dot' })} aria-label="Kiểu nét viền"><option value="solid">━ Liền</option><option value="dash">╍ Nét đứt</option><option value="dot">┈ Chấm</option></select>
+      {(e.shape === 'rect' || e.shape === 'round') && radius(e.rad ?? (e.shape === 'round' ? 30 : 0), e.id)}
+      <button type="button" className={`cv-c${e.shadow ? ' is-on' : ''}`} title="Đổ bóng mềm" onClick={() => patchEl(e.id, { shadow: !e.shadow })}>Bóng</button>
+      <button type="button" className={`cv-c${inline === e.id ? ' is-on' : ''}`} title="Gõ chữ trên hình" onClick={() => setInline(inline === e.id ? null : e.id)}>✏️ Chữ</button>
+      {e.text && <span className="cv-num"><button type="button" aria-label="Giảm cỡ chữ" onClick={() => patchEl(e.id, { size: Math.max(12, (e.size ?? 40) - 4) })}><Minus aria-hidden="true" /></button>
+        <input type="number" list="cv-sizes" min={10} max={300} value={e.size ?? 40} onChange={(v) => { const n = Number(v.target.value); if (n >= 10) patchEl(e.id, { size: Math.min(300, n) }); }} aria-label="Cỡ chữ trên hình" />
+        <button type="button" aria-label="Tăng cỡ chữ" onClick={() => patchEl(e.id, { size: Math.min(300, (e.size ?? 40) + 4) })}><Plus aria-hidden="true" /></button></span>}
       {opacity(e.op)}{common}
     </>;
     return <><button type="button" className="cv-c is-hl" onClick={() => setPanel('edit')}>✏️ Sửa nội dung</button>{common}</>;
@@ -640,6 +665,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
             </div>
           ) : <>
             <div className="cv-ctx" role="toolbar" aria-label="Công cụ cho vật đang chọn">{ctxTools}</div>
+            <datalist id="cv-sizes">{[12, 16, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 80, 96, 120, 144, 180, 220].map((n) => <option key={n} value={n} />)}</datalist>
             {(busy || msg) && <div className="cv-toast">{busy && <p className="dk-busy" role="status">{busy}</p>}{msg && <p className={`dk-msg is-${msg.kind}`} role="status">{msg.text} <button type="button" onClick={() => setMsg(null)} aria-label="Đóng">×</button></p>}</div>}
             <div className="cv-canvas" ref={canvasRef} onContextMenu={(ev) => {
               const id = (ev.target as HTMLElement).closest<HTMLElement>('.dk-el')?.dataset.id;
@@ -649,7 +675,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
             }} onClick={() => setCtx(null)}>
               <SlideFrame className="dk-main cv-slide" style={{ width: W, maxWidth: 'none' }}>{(k) => <>
                 <SlideView key={slide.id} slide={slide} mode="edit" scale={k} assetUrl={assetUrl} sel={sel} multi={selIds} onSelect={pick}
-                  onSelectMany={(ids) => { setMulti(ids); setSel(ids[0] ?? null); }} onChange={onChange} onEditText={editText} />
+                  onSelectMany={(ids) => { setMulti(ids); setSel(ids[0] ?? null); }} onChange={onChange} onEditText={editText} editing={inline} />
                 {bb && (
                   <div className={`cv-quick${bb.t * k < 56 ? ' is-below' : ''}`} style={{ left: ((bb.l + bb.r) / 2) * k, top: (bb.t * k < 56 ? bb.b : bb.t) * k }} onPointerDown={(ev) => ev.stopPropagation()}>
                     <button type="button" className={allLock ? 'is-on' : ''} title={allLock ? 'Mở khoá' : 'Khoá (không kéo nhầm)'} aria-label={allLock ? 'Mở khoá' : 'Khoá'} onClick={() => setMany({ lock: !allLock })}>{allLock ? <Lock aria-hidden="true" /> : <Unlock aria-hidden="true" />}</button>

@@ -29,11 +29,15 @@ export function SlideFrame({ children, className, style }: { children: (scale: n
 }
 
 export function ShapeSvg({ e }: { e: ShapeEl }) {
-  const p = { fill: e.fill, stroke: e.stroke, strokeWidth: e.sw, vectorEffect: 'non-scaling-stroke' as const, strokeLinejoin: 'round' as const };
+  const dash = e.dash === 'dash' ? `${Math.max(8, e.sw * 3)} ${Math.max(6, e.sw * 2)}` : e.dash === 'dot' ? `0.1 ${Math.max(6, e.sw * 2.2)}` : undefined;
+  const p = { fill: e.fill, stroke: e.stroke, strokeWidth: e.sw, vectorEffect: 'non-scaling-stroke' as const, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const, strokeDasharray: dash };
+  // bo góc theo điểm ảnh thật (khung 100×100 bị kéo giãn theo w × h)
+  const r = e.rad != null && e.w > 1 ? (Math.min(e.w, e.h) / 2) * (e.rad / 100) : null;
+  const rx = r != null ? Math.min(49.5, (r * 100) / e.w) : 12, ry = r != null ? Math.min(49.5, (r * 100) / e.h) : 18;
   const body = (() => {
     switch (e.shape) {
-      case 'rect': return <rect x="0.5" y="0.5" width="99" height="99" {...p} />;
-      case 'round': return <rect x="0.5" y="0.5" width="99" height="99" rx="12" ry="18" {...p} />;
+      case 'rect': return r != null ? <rect x="0.5" y="0.5" width="99" height="99" rx={rx} ry={ry} {...p} /> : <rect x="0.5" y="0.5" width="99" height="99" {...p} />;
+      case 'round': return <rect x="0.5" y="0.5" width="99" height="99" rx={rx} ry={ry} {...p} />;
       case 'circle': return <ellipse cx="50" cy="50" rx="49.5" ry="49.5" {...p} />;
       case 'star': return <polygon points="50,2 61.8,36 98,36.5 69,58 79.5,96 50,74 20.5,96 31,58 2,36.5 38.2,36" {...p} />;
       case 'heart': return <path d="M50 92 C 18 70 2 52 2 32 C 2 14 16 4 30 4 C 40 4 47 10 50 18 C 53 10 60 4 70 4 C 84 4 98 14 98 32 C 98 52 82 70 50 92 Z" {...p} />;
@@ -42,7 +46,7 @@ export function ShapeSvg({ e }: { e: ShapeEl }) {
       case 'bubble': return <path d="M10 4 H90 Q98 4 98 12 V64 Q98 72 90 72 H40 L18 96 L24 72 H10 Q2 72 2 64 V12 Q2 4 10 4 Z" {...p} />;
     }
   })();
-  return <svg className="dk-shape" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">{body}</svg>;
+  return <svg className="dk-shape" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" style={e.shadow ? { filter: 'drop-shadow(0 12px 18px rgba(15,23,42,.22))' } : undefined}>{body}</svg>;
 }
 
 type Pick = { i: number; ok: boolean };
@@ -99,8 +103,9 @@ function ElBody({ e, mode, assetUrl, pick, onPick, sort, onTile, board }: { e: E
     }
     case 'img': {
       const src = e.asset ? assetUrl?.(e.src) : e.src;
+      const st: React.CSSProperties | undefined = e.rad || e.shadow ? { ...(e.rad ? { borderRadius: `${e.rad / 2}%`, objectFit: 'cover' } : {}), ...(e.shadow ? { filter: 'drop-shadow(0 12px 18px rgba(15,23,42,.25))' } : {}) } : undefined;
       // eslint-disable-next-line @next/next/no-img-element -- hình dán / ảnh của cô, kích thước tự do
-      return src ? <img className="dk-img" src={src} alt={e.name ?? ''} draggable={false} /> : <div className="dk-img-wait">🖼</div>;
+      return src ? <img className="dk-img" src={src} alt={e.name ?? ''} draggable={false} style={st} /> : <div className="dk-img-wait">🖼</div>;
     }
     case 'shape': return (
       <>
@@ -170,6 +175,8 @@ type Props = {
   /** kéo khung chọn trên nền trang */ onSelectMany?: (ids: string[]) => void;
   onChange?: (id: string, patch: Partial<El>, record: boolean) => void;
   onEditText?: (id: string) => void;
+  /** vật đang sửa chữ trực tiếp trên trang (ô gõ đè lên vật) */
+  editing?: string | null;
   /* chiếu */
   onAction?: (a: PlayAction) => void;
   onLink?: (n: number) => void;
@@ -181,7 +188,7 @@ type Props = {
   board?: BoardTeam[];
 };
 
-const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, scale, assetUrl, sel, onSelect, multi, onSelectMany, onChange, onEditText, onAction, onLink, startStep = 0, onWin, board }, ref) {
+const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, scale, assetUrl, sel, onSelect, multi, onSelectMany, onChange, onEditText, editing, onAction, onLink, startStep = 0, onWin, board }, ref) {
   const winRef = useRef(onWin); winRef.current = onWin;
   const plan = useMemo(() => planSlide(slide), [slide]);
   const play = mode === 'play';
@@ -301,25 +308,28 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
   const rootRef = useRef<HTMLDivElement>(null);
 
   /* ---------- soạn: kéo / đổi cỡ ---------- */
-  const edit = useRef<{ id: string; kind: 'move' | 'size'; sx: number; sy: number; x0: number; y0: number; w0: number; h0: number; ratio: boolean; moved: boolean;
+  const edit = useRef<{ id: string; kind: 'move' | 'size' | 'rot'; sx: number; sy: number; x0: number; y0: number; w0: number; h0: number; ratio: boolean; moved: boolean;
+    /** đã chọn sẵn trước khi bấm (bấm lần hai vào chữ = sửa trực tiếp) */ was?: boolean;
     /** kéo cả nhóm / nhiều vật: vị trí ban đầu của từng vật */ many: { id: string; x: number; y: number; w: number; h: number }[] } | null>(null);
   // đường gióng khi kéo (canh giữa trang, mép / giữa vật khác)
   const [guides, setGuides] = useState<{ v: number[]; h: number[] }>({ v: [], h: [] });
   const marquee = useRef<{ x0: number; y0: number; moved: boolean } | null>(null);
   const [box, setBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
 
-  const onElDown = (e: El, ev: React.PointerEvent, kind: 'move' | 'size' = 'move') => {
+  const onElDown = (e: El, ev: React.PointerEvent, kind: 'move' | 'size' | 'rot' = 'move') => {
     if (mode === 'thumb') return;
     if (mode === 'edit') {
       ev.stopPropagation();
+      if (editing === e.id) return;
       if (ev.shiftKey && kind === 'move') { onSelect?.(e.id, true); return; }
+      const was = sel === e.id && (!multi || multi.length <= 1);
       // vật thuộc vùng đang chọn nhiều / thuộc nhóm → kéo cả vùng
       const ids = multi && multi.length > 1 && multi.includes(e.id) ? multi : e.group ? slide.els.filter((x) => x.group === e.group).map((x) => x.id) : [e.id];
       if (!(multi && multi.length > 1 && multi.includes(e.id))) onSelect?.(e.id);
       if (e.lock && kind === 'move') return;
       (ev.currentTarget as Element).setPointerCapture?.(ev.pointerId);
       const many = kind === 'move' ? slide.els.filter((x) => ids.includes(x.id) && !x.lock).map((x) => ({ id: x.id, x: x.x, y: x.y, w: x.w, h: x.h })) : [];
-      edit.current = { id: e.id, kind, sx: ev.clientX, sy: ev.clientY, x0: e.x, y0: e.y, w0: e.w, h0: e.h, ratio: e.kind === 'img' || (e.kind === 'shape' && (e.shape === 'circle' || e.shape === 'star' || e.shape === 'heart')), moved: false, many };
+      edit.current = { id: e.id, kind, sx: ev.clientX, sy: ev.clientY, x0: e.x, y0: e.y, w0: e.w, h0: e.h, ratio: e.kind === 'img' || (e.kind === 'shape' && (e.shape === 'circle' || e.shape === 'star' || e.shape === 'heart')), moved: false, many, was };
       return;
     }
     // chiếu
@@ -337,6 +347,16 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
       const dx = (ev.clientX - d.sx) / scale, dy = (ev.clientY - d.sy) / scale;
       if (!d.moved && Math.hypot(dx, dy) < 2) return;
       d.moved = true;
+      if (d.kind === 'rot' && rootRef.current) {
+        // xoay quanh tâm vật; Shift: bước 15°, gần 0/90/180/270 thì hút vào
+        const [px, py] = toSlide(ev, rootRef.current);
+        let a = (Math.atan2(py - (d.y0 + d.h0 / 2), px - (d.x0 + d.w0 / 2)) * 180) / Math.PI + 90;
+        a = ((Math.round(a) % 360) + 360) % 360;
+        if (ev.shiftKey) a = Math.round(a / 15) * 15 % 360;
+        else for (const k of [0, 90, 180, 270, 360]) if (Math.abs(a - k) <= 4) a = k % 360;
+        onChange?.(d.id, { rot: a > 180 ? a - 360 : a }, false);
+        return;
+      }
       if (d.kind === 'move') {
         // khung bao của các vật đang kéo → gióng theo mép / giữa trang và vật khác (giữ Alt để tắt)
         const L = Math.min(...d.many.map((m) => m.x)), T = Math.min(...d.many.map((m) => m.y));
@@ -375,7 +395,12 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
   };
   const onElUp = (e: El) => {
     const d = edit.current; edit.current = null;
-    if (d) { setGuides({ v: [], h: [] }); if (d.moved) onChange?.(d.id, {}, true); return; }
+    if (d) {
+      setGuides({ v: [], h: [] });
+      if (d.moved) onChange?.(d.id, {}, true);
+      else if (d.kind === 'move' && d.was && (e.kind === 'text' || e.kind === 'shape')) onEditText?.(e.id); // bấm lần hai vào chữ: sửa trực tiếp
+      return;
+    }
     const p = playDrag.current; playDrag.current = null;
     if (p) {
       if (p.moved) { const q = pos[p.id] ?? { x: e.x, y: e.y }; const a: PlayAction = { t: 'drop', el: p.id, x: q.x, y: q.y }; apply(a); onAction?.(a); return; }
@@ -416,13 +441,15 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
         const clickable = play && (!!plan.triggers[e.id] || !!e.link || (!!e.drag && !done.has(e.id)));
         return (
           <div key={e.id} data-id={e.id} ref={(n) => { if (n) nodes.current.set(e.id, n); else nodes.current.delete(e.id); }}
-            className={`dk-el k-${e.kind}${e.hide ? ' is-hide' : ''}${e.flip ? ' is-flip' : ''}${sel === e.id || multi?.includes(e.id) ? ' is-sel' : ''}${multi && multi.length > 1 && multi.includes(e.id) && sel !== e.id ? ' is-sel2' : ''}${clickable ? ' is-click' : ''}${play && e.drag && !done.has(e.id) ? ' is-drag' : ''}${done.has(e.id) ? ' is-done' : ''}`}
+            className={`dk-el k-${e.kind}${e.hide ? ' is-hide' : ''}${mode === 'edit' && editing === e.id ? ' is-editing' : ''}${e.flip ? ' is-flip' : ''}${sel === e.id || multi?.includes(e.id) ? ' is-sel' : ''}${multi && multi.length > 1 && multi.includes(e.id) && sel !== e.id ? ' is-sel2' : ''}${clickable ? ' is-click' : ''}${play && e.drag && !done.has(e.id) ? ' is-drag' : ''}${done.has(e.id) ? ' is-done' : ''}`}
             style={{ left: p?.x ?? e.x, top: p?.y ?? e.y, width: e.w, height: e.h, transform: e.rot ? `rotate(${e.rot}deg)` : undefined, visibility: (play && hidden.has(e.id)) || (e.hide && mode !== 'edit') ? 'hidden' : undefined, zIndex: play && playDrag.current?.id === e.id ? 50 : undefined }}
             onPointerDown={(ev) => onElDown(e, ev)} onPointerMove={onElMove} onPointerUp={() => onElUp(e)}
             onClick={(ev) => { if (play && !e.drag) { ev.stopPropagation(); click(e); } }}
             onDoubleClick={() => { if (mode === 'edit' && (e.kind === 'text' || e.kind === 'shape' || e.kind === 'quiz' || e.kind === 'sort')) onEditText?.(e.id); }}>
             <div className="dk-a" style={e.op != null && e.op < 1 ? { opacity: e.op } : undefined}><ElBody e={e} mode={mode} assetUrl={assetUrl} pick={picks[e.id]} onPick={(i) => { const a: PlayAction = { t: 'quiz', el: e.id, i }; apply(a); onAction?.(a); }}
               board={board} sort={sorts[e.id]} onTile={(tile) => { const a: PlayAction = { t: 'sort', el: e.id, tile }; if (apply(a)) onAction?.(a); }} /></div>
+            {mode === 'edit' && editing === e.id && (e.kind === 'text' || e.kind === 'shape') && <InlineText e={e} onText={(t, done) => onChange?.(e.id, done ? {} : { text: t }, done)} onDone={() => onEditText?.('')} />}
+            {mode === 'edit' && sel === e.id && !e.lock && editing !== e.id && (!multi || multi.length <= 1) && <span className="dk-rot" title="Kéo để xoay (giữ Shift: bước 15°)" onPointerDown={(ev) => onElDown(e, ev, 'rot')} onPointerMove={onElMove} onPointerUp={() => onElUp(e)}>⟳</span>}
             {mode === 'edit' && sel === e.id && !e.lock && (!multi || multi.length <= 1) && <span className="dk-size" onPointerDown={(ev) => onElDown(e, ev, 'size')} onPointerMove={onElMove} onPointerUp={() => onElUp(e)} />}
             {mode === 'edit' && <AnimBadges slide={slide} id={e.id} />}
           </div>
@@ -435,6 +462,23 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
   );
 });
 export default memo(SlideView);
+
+/** Ô gõ chữ đè lên vật (sửa trực tiếp trên trang): gõ là thấy ngay; bấm ra ngoài / Esc để xong */
+function InlineText({ e, onText, onDone }: { e: El; onText: (t: string, done: boolean) => void; onDone: () => void }) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => { const t = ref.current; if (t) { t.focus(); t.select(); } }, []);
+  const tx = e.kind === 'text' ? e : null, sh = e.kind === 'shape' ? e : null;
+  const f = FONTS[tx?.font ?? 'baloo'] ?? FONTS.baloo;
+  const val = tx ? tx.text : sh?.text ?? '';
+  return (
+    <textarea ref={ref} className={`dk-inline${sh ? ' is-shape' : ''}`} defaultValue={val} aria-label="Sửa chữ trên trang" spellCheck={false}
+      style={{ fontFamily: f.css, fontWeight: f.weight, fontSize: tx ? tx.size : sh?.size ?? 40, color: tx ? tx.color : sh?.color ?? '#1f2937', textAlign: tx ? tx.align : 'center', fontStyle: tx?.italic ? 'italic' : undefined }}
+      onPointerDown={(ev) => ev.stopPropagation()} onDoubleClick={(ev) => ev.stopPropagation()}
+      onChange={(ev) => onText(ev.target.value, false)}
+      onBlur={() => { onText('', true); onDone(); }}
+      onKeyDown={(ev) => { ev.stopPropagation(); if (ev.key === 'Escape') (ev.target as HTMLTextAreaElement).blur(); }} />
+  );
+}
 
 /** Số thứ tự hiệu ứng / dấu kích hoạt hiện trên vật khi soạn */
 function AnimBadges({ slide, id }: { slide: Slide; id: string }) {
