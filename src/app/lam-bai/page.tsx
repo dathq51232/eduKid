@@ -374,26 +374,41 @@ function LamBaiContent() {
     if (!running || !q) return;
     const id = q.id;
     let last = performance.now();
+    // Thời gian trôi được cộng dồn và chỉ ghi vào state khi số giây hiển thị đổi (≈1 lần/giây thay vì 5 lần/giây):
+    // cả trang làm bài không phải vẽ lại liên tục → mượt hơn trên máy yếu.
+    let pend = 0;
+    const flush = (remaining: number) => {
+      const it = itemsRef.current[id];
+      if (!it) return;
+      patch(id, { remainingMs: remaining, spentMs: it.spentMs + (it.remainingMs - remaining) });
+      pend = 0;
+    };
     const timer = window.setInterval(() => {
       const now = performance.now();
       const dt = Math.min(1000, now - last);
       last = now;
       const it = itemsRef.current[id];
       if (!it || isDone(it.status)) return;
-      const remaining = Math.max(0, it.remainingMs - dt);
+      pend += dt;
+      const remaining = Math.max(0, it.remainingMs - pend);
       const before = Math.ceil(it.remainingMs / 1000);
       const after = Math.ceil(remaining / 1000);
       if (after < before) {
         const snd = timerSoundFor(after, timerSoundRef.current);
         if (snd) playIf(snd);
+        flush(remaining);
       }
-      patch(id, { remainingMs: remaining, spentMs: it.spentMs + (it.remainingMs - remaining) });
       if (remaining <= 0) {
         window.clearInterval(timer);
         handleTimeUp(id);
       }
     }, 200);
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearInterval(timer);
+      // dừng / sang câu khác: ghi nốt phần thời gian chưa ghi
+      const it = itemsRef.current[id];
+      if (pend > 0 && it && !isDone(it.status)) flush(Math.max(0, it.remainingMs - pend));
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running, q?.id, patch, handleTimeUp]);
 

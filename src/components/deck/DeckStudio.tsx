@@ -4,7 +4,7 @@
 // Tương tác, Nền, Âm thanh, Tải lên, Hiệu ứng, Lớp), thanh công cụ theo vật đang chọn, thanh nổi trên vật (khoá · nhân bản · xoá · ẩn),
 // dải trang + Thời lượng · Ghi chú · Hẹn giờ · thu phóng · xem lưới ở đáy. Bài tự lưu vào bảng slide_decks (0046).
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
 import { ArrowDown, ArrowDownToLine, ArrowLeft, ArrowUp, ArrowUpToLine, Blend, Clock, Copy, Eye, EyeOff, FlipHorizontal, Grid2x2, Italic, Layers as LayersIcon, LayoutTemplate, Lock, Maximize, Mic, Minus, MonitorPlay, MoreHorizontal, MousePointerClick, Music, Paintbrush, Palette, Play, Plus, Redo2, Shapes, Sparkles, Square, StickyNote, Timer, Trash2, Type, Undo2, Unlock, Upload, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -334,7 +334,10 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
 
   /* ---------- giao diện kiểu Canva ---------- */
   const info = { title: deck.title, sub: `Lớp ${deck.grade} · Tiết …` };
-  const setPreviews = useMemo(() => Object.fromEntries(THEME_SETS.map((t) => [t.id, makeSet(t.id, { title: deck.title, sub: `Lớp ${deck.grade} · Tiết …` })])) as Record<SetId, Slide[]>, [deck.title, deck.grade]);
+  // xem trước bộ mẫu: chỉ dựng khi mở bảng Mẫu; tên bài cập nhật trễ để gõ tên không bị giật
+  const lazyTitle = useDeferredValue(deck.title);
+  const tplOpen = panel === 'tpl';
+  const setPreviews = useMemo(() => (tplOpen ? Object.fromEntries(THEME_SETS.map((t) => [t.id, makeSet(t.id, { title: lazyTitle, sub: `Lớp ${deck.grade} · Tiết …` })])) : {}) as Record<SetId, Slide[]>, [tplOpen, lazyTitle, deck.grade]);
   const chooseSet = (id: SetId) => {
     const list = makeSet(id, info);
     if (isBlankDeck(deckRef.current.slides)) { commit({ ...deckRef.current, slides: list }); setCur(0); setSel(null); setMsg({ kind: 'ok', text: 'Đã dùng bộ mẫu 7 trang. Bấm đúp vào chữ để sửa.' }); }
@@ -430,7 +433,8 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
       <header className="cv-top">
         <Link href={`/giao-vien/lop/${classId}/ke-hoach?tab=bai-giang&sub=tg`} className="cv-tb" aria-label="Về danh sách bài"><ArrowLeft aria-hidden="true" /></Link>
         <div className="cv-title">
-          <input value={deck.title} maxLength={120} onChange={(e) => commit({ ...deckRef.current, title: e.target.value })} aria-label="Tên bài" />
+          <input value={deck.title} maxLength={120} onFocus={() => { editStart.current = deckRef.current; }} onChange={(e) => { const n = { ...deckRef.current, title: e.target.value }; deckRef.current = n; setDeck(n); }}
+            onBlur={() => { const st = editStart.current; editStart.current = null; if (st && st.title !== deckRef.current.title) { setPast((h) => [...h.slice(-60), st]); setFuture([]); } }} aria-label="Tên bài" />
           <select value={deck.grade} onChange={(e) => commit({ ...deckRef.current, grade: Number(e.target.value) })} aria-label="Lớp">{[1, 2, 3, 4, 5].map((g) => <option key={g} value={g}>Lớp {g}</option>)}</select>
         </div>
         <span className="cv-sep" />
@@ -511,7 +515,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
                 <p className="cv-ph">Bạn cú Milo <small>6 tư thế</small></p>
                 <div className="cv-milo">{MILO.map((src) => <button key={src} type="button" onClick={() => (replace && selEl?.kind === 'img' ? addSticker(src) : addEl({ id: uid(), kind: 'img', ...center(300, 400), w: 300, h: 400, rot: 0, src, name: 'Bạn cú Milo', role: 'mascot' }, 'pop'))}>
                   {/* eslint-disable-next-line @next/next/no-img-element -- linh vật */}
-                  <img src={src} alt="Bạn cú Milo" loading="lazy" onError={hideBroken} /></button>)}</div>
+                  <img src={src.replace('.webp', '-sm.webp')} alt="Bạn cú Milo" loading="lazy" onError={hideBroken} /></button>)}</div>
                 <p className="cv-ph">Hình 3D <small>{Object.keys(F3D_VI).length} hình</small></p>
                 <div className="cv-chips cv-cats">
                   <button type="button" className={cat3d < 0 ? 'is-on' : ''} onClick={() => setCat3d(-1)}>Gợi ý</button>

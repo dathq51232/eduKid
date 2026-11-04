@@ -1,0 +1,15 @@
+# graphify: bỏ qua dữ liệu lớn / file sinh ra (chỉ dựng đồ thị từ mã nguồn)
+node_modules/
+.next/
+public/
+data/
+supabase/seed*.sql
+*.xlsx
+*.docx
+*.pdf
+*.webp
+*.png
+graphify-out/
+src/lib/content/*.ts
+src/lib/emoji-3d.ts
+src/lib/deck/f3d-catalog.ts

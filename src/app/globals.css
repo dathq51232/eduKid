@@ -2276,7 +2276,7 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--brand-blue); ou
 .theme-toggle svg { width: 22px; height: 22px; }
 
 /* Thanh trên: trang chủ + trang học */
-.site-header, .learn-top { position: sticky; top: 0; z-index: 30; color: var(--ink); background: color-mix(in srgb, var(--surface) 92%, transparent); border-bottom: 1px solid var(--line); box-shadow: var(--shadow-sm); backdrop-filter: saturate(1.4) blur(8px); }
+.site-header, .learn-top { position: sticky; top: 0; z-index: 30; color: var(--ink); background: var(--surface); border-bottom: 1px solid var(--line); box-shadow: var(--shadow-sm); }
 .site-header-inner { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .site-header-tools { display: flex; align-items: center; gap: 10px; }
 .learn-top { border-bottom: 1px solid var(--line); }
@@ -4499,7 +4499,7 @@ button.diary-pill { cursor: pointer; }
   .tsh-close { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 10px; background: var(--surface-2); color: var(--ink); }
   .tsh-close svg { width: 20px; height: 20px; }
   .tsh-scrim { display: block; position: fixed; inset: 0; z-index: 75; background: rgb(15 23 42 / .4); }
-  .tsh-mtop { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: color-mix(in srgb, var(--surface) 94%, transparent); border-bottom: 1px solid var(--line); backdrop-filter: blur(8px); }
+  .tsh-mtop { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
   .tsh-mtop a { display: inline-flex; min-height: 44px; align-items: center; }
   .tsh-mtop-class { margin-left: auto; padding: 6px 12px; border-radius: 99px; background: var(--blue-soft); color: var(--brand-blue); font-size: 14px; font-weight: 700; }
   .tsh-main { padding-bottom: 76px; }
@@ -6300,7 +6300,7 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .tsh-mini-btn { width: 100%; margin-top: 10px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; cursor: pointer; text-align: left; }
 .tsh-mini-btn .tsh-ic { background: var(--surface-2); color: var(--muted); }
 .tsh-mtop-class { white-space: nowrap; }
-.tsh-gtabs { position: sticky; top: 0; z-index: 20; display: flex; gap: 6px; overflow-x: auto; padding: 10px 24px; background: color-mix(in srgb, var(--surface) 94%, transparent); border-bottom: 1px solid var(--line); backdrop-filter: blur(8px); scrollbar-width: thin; }
+.tsh-gtabs { position: sticky; top: 0; z-index: 20; display: flex; gap: 6px; overflow-x: auto; padding: 10px 24px; background: var(--surface); border-bottom: 1px solid var(--line); scrollbar-width: thin; }
 .tsh-gtab { position: relative; display: inline-flex; flex: none; align-items: center; gap: 8px; min-height: 42px; padding: 5px 14px 5px 7px; border-radius: 12px; color: var(--ink); font-size: 14.5px; font-weight: 700; text-decoration: none; white-space: nowrap; }
 .tsh-gtab:hover { background: var(--surface-2); }
 .tsh-gtab.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 -3px 0 var(--brand-blue); }
@@ -6506,7 +6506,7 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .footer-contact a:hover { background: rgb(255 255 255 / .3); }
 .footer-contact svg { width: 16px; height: 16px; }
 .cfab { position: fixed; right: 18px; bottom: 18px; z-index: 60; display: grid; justify-items: end; gap: 10px; }
-.cfab-btn { display: inline-flex; align-items: center; gap: 8px; height: 54px; min-width: 54px; padding: 0 18px 0 16px; border: 0; border-radius: 99px; background: #0068ff; color: #fff; font: inherit; font-weight: 800; font-size: 15px; box-shadow: 0 10px 26px rgb(0 104 255 / .4); cursor: pointer; animation: cfab-pulse 2.6s ease-in-out infinite; }
+.cfab-btn { display: inline-flex; align-items: center; gap: 8px; height: 54px; min-width: 54px; padding: 0 18px 0 16px; border: 0; border-radius: 99px; background: #0068ff; color: #fff; font: inherit; font-weight: 800; font-size: 15px; box-shadow: 0 10px 26px rgb(0 104 255 / .4); cursor: pointer; position: relative; }
 .cfab-btn svg { width: 24px; height: 24px; }
 .cfab.is-open .cfab-btn { padding: 0; justify-content: center; width: 54px; animation: none; background: #334155; box-shadow: 0 8px 20px rgb(15 23 42 / .3); }
 .cfab-menu { width: min(290px, calc(100vw - 36px)); display: grid; gap: 6px; padding: 12px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 18px 44px rgb(15 23 42 / .22); animation: cfab-in .16s ease-out; }
@@ -6521,7 +6521,10 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .cfab-it.is-zalo .cfab-ic { background: #0068ff; }
 .cfab-it.is-phone .cfab-ic { background: #16a34a; }
 .cfab-it.is-mail .cfab-ic { background: #ea4335; }
-@keyframes cfab-pulse { 0%, 100% { box-shadow: 0 10px 26px rgb(0 104 255 / .4), 0 0 0 0 rgb(0 104 255 / .35); } 50% { box-shadow: 0 10px 26px rgb(0 104 255 / .4), 0 0 0 10px rgb(0 104 255 / 0); } }
+/* vòng toả sáng chỉ dùng transform + opacity (không vẽ lại bóng mỗi khung hình) */
+.cfab-btn::after { content: ''; position: absolute; inset: 0; border-radius: inherit; border: 2px solid rgb(0 104 255 / .45); pointer-events: none; animation: cfab-pulse 2.6s ease-out infinite; }
+.cfab.is-open .cfab-btn::after { display: none; }
+@keyframes cfab-pulse { 0% { transform: scale(1); opacity: .9; } 70%, 100% { transform: scale(1.22, 1.45); opacity: 0; } }
 @keyframes cfab-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .cfab-btn, .cfab-menu { animation: none; } }
 @media (max-width: 640px) { .cfab { right: 12px; bottom: 12px; } .cfab-lbl { display: none; } .cfab-btn { padding: 0; width: 52px; height: 52px; justify-content: center; } }
@@ -6772,11 +6775,12 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .qz-scene { position: fixed; inset: 0; z-index: -1; background: #a9dcfb; pointer-events: none; }
 .qz-scene svg { display: block; width: 100%; height: 100%; }
 .qz-cloud { fill: #ffffff; opacity: .92; }
-.qz-scene.is-live .qz-cloud.c1 { animation: qzDrift 38s ease-in-out infinite alternate; }
-.qz-scene.is-live .qz-cloud.c2 { animation: qzDrift 46s ease-in-out infinite alternate-reverse; }
-.qz-scene.is-live .qz-cloud.c3 { animation: qzDrift 52s ease-in-out infinite alternate; }
-@keyframes qzDrift { from { translate: -40px 0; } to { translate: 40px 0; } }
-@media (prefers-reduced-motion: reduce) { .qz-scene .qz-cloud { animation: none !important; } }
+.qz-cloud-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; will-change: transform; }
+.qz-scene.is-live .qz-cloud-layer.c1 { animation: qzDrift 38s ease-in-out infinite alternate; }
+.qz-scene.is-live .qz-cloud-layer.c2 { animation: qzDrift 46s ease-in-out infinite alternate-reverse; }
+.qz-scene.is-live .qz-cloud-layer.c3 { animation: qzDrift 52s ease-in-out infinite alternate; }
+@keyframes qzDrift { from { transform: translate3d(-40px, 0, 0); } to { transform: translate3d(40px, 0, 0); } }
+@media (prefers-reduced-motion: reduce) { .qz-scene .qz-cloud-layer { animation: none !important; } }
 
 /* thanh trên: biển gỗ thương hiệu, tiến độ, đồng hồ, nút tròn */
 .qz .quiz-bar { top: 0; padding-top: 10px; border: 0; background: transparent; }
@@ -7963,3 +7967,16 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .cv-dash { border: 1px solid var(--line); background: var(--surface); }
 .cv-toast { top: auto; bottom: 128px; }
 .cv-op input { width: 64px; }
+
+/* ===== Tối ưu độ mượt (11/2026) ===== */
+/* khung trang / ảnh thu nhỏ: cô lập vẽ lại; thu nhỏ ngoài màn hình thì bỏ qua không vẽ */
+.dk-frame:not(.dk-main) { contain: layout paint; }
+.cv-th, .dk-th, .cv-pages button, .cv-set-pv, .dp-next { content-visibility: auto; contain-intrinsic-size: auto 140px auto 80px; }
+.cv-g { content-visibility: auto; contain-intrinsic-size: auto 260px auto 180px; }
+.cv-panel .dk-sgrid button, .cv-milo button { content-visibility: auto; contain-intrinsic-size: auto 72px; }
+.lesson-row { content-visibility: auto; contain-intrinsic-size: auto 72px; }
+.dk-slide.is-thumb * { animation: none !important; transition: none !important; }
+/* người dùng chọn giảm chuyển động trong hệ điều hành: tắt các hiệu ứng trang trí lặp */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+}

@@ -11,3 +11,6 @@ build/
 
 # gói hình tạm (giải nén vào public/emoji/f3d)
 public/emoji/emoji-f3d.zip
+
+# graphify: đồ thị mã nguồn dựng lại tại máy (graphify update .), không đưa lên kho
+graphify-out/

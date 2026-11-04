@@ -86,10 +86,6 @@ export function QuizBackdrop({ motion }: { motion: boolean }) {
         </defs>
         <rect width="1600" height="900" fill="url(#qzSky)" />
         <circle cx="1180" cy="120" r="210" fill="url(#qzSun)" />
-        <Cloud x={260} y={130} s={1.1} cls="c1" />
-        <Cloud x={760} y={90} s={0.8} cls="c2" />
-        <Cloud x={1320} y={200} s={1} cls="c3" />
-        <Cloud x={1050} y={330} s={0.6} cls="c1" />
         {/* đồi xa + lâu đài */}
         <path d="M0 600 Q200 470 420 560 T860 540 T1260 520 T1600 560 L1600 900 L0 900 Z" fill="#b5e39a" />
         <Castle x={1360} y={585} />
@@ -108,6 +104,11 @@ export function QuizBackdrop({ motion }: { motion: boolean }) {
           </g>
         ))}
       </svg>
+      {/* Mây: mỗi đám là một lớp HTML riêng → trình duyệt dịch chuyển bằng card đồ hoạ (compositor),
+          không vẽ lại cả cảnh SVG toàn màn hình mỗi khung hình (trước đây gây giật trên máy yếu) */}
+      {([[260, 130, 1.1, 'c1'], [760, 90, 0.8, 'c2'], [1320, 200, 1, 'c3'], [1050, 330, 0.6, 'c1']] as const).map(([x, y, sc, c], i) => (
+        <svg key={i} className={`qz-cloud-layer ${c}`} viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice"><Cloud x={x} y={y} s={sc} /></svg>
+      ))}
     </div>
   );
 }
