@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { FileDown, FileSpreadsheet, Save, Upload } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { downloadXlsx } from '@/lib/xlsx';
@@ -16,7 +16,7 @@ type SavedLite = { teach_date: string | null; period: number | null; title: stri
 type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;
 /** một tiết: giáo án đang dùng + giáo án app soạn (để quay lại) + giáo án kho đang dùng và những gì đã tự thay */
 type Item = RowPlan & { base: RowPlan; libId?: string; changes?: string[] };
-const KIND_LABEL: Record<RowPlan['kind'], string> = { kho: 'Giáo án của trường', app: 'Theo bài trong app', review: 'Ôn tập / bổ sung', khung: 'Khung chung' };
+const KIND_LABEL: Record<RowPlan['kind'], string> = { kho: 'Từ Kho giáo án', app: 'Theo bài trong app', review: 'Ôn tập / bổ sung', khung: 'Khung chung' };
 const keyOf = (date: string, period: number, title: string) => `${date}|${period}|${title.trim().toLowerCase()}`;
 
 /**
@@ -24,7 +24,7 @@ const keyOf = (date: string, period: number, title: string) => `${date}|${period
  * bài Toán / Tiếng Việt / Tiếng Anh có trong app dùng yêu cầu cần đạt, dạng bài, kiến thức của bài;
  * tiết ôn tập / bổ sung (BS) dùng khung ôn luyện theo bài trọng tâm của tuần; môn khác dùng khung chung của môn.
  */
-export default function ScheduleImport({ classId, className, grade, school, weakForms, lessonsBySubject, saved, canSave, library, onOpen, onSaved, onPreview }: {
+export default function ScheduleImport({ classId, className, grade, school, weakForms, lessonsBySubject, saved, canSave, library, onOpen, onSaved, onPreview, onItems }: {
   classId: string; className: string; grade: number; school: string;
   weakForms: Record<SubjectCode, string[]>; lessonsBySubject: Record<SubjectCode, LessonInfo[]>;
   saved: SavedLite[]; canSave: boolean;
@@ -32,6 +32,8 @@ export default function ScheduleImport({ classId, className, grade, school, weak
   library: LibraryMeta[];
   onOpen: (plan: LessonPlan) => void; onSaved: (monday: string) => void;
   onPreview: (p: { title: string; filename: string; week: WeekArgs }) => void;
+  /** giáo án đang có trong bảng (để lịch tuần hiện các tiết chưa lưu) */
+  onItems?: (plans: LessonPlan[]) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState('');
@@ -39,6 +41,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
   const [items, setItems] = useState<Item[]>([]);
   // gợi ý kho trường cho từng tiết: tiết đang mở, nội dung giáo án kho đã tải
   const [kho, setKho] = useState<number | null>(null);
+  useEffect(() => { onItems?.(items.map((r) => r.plan)); }, [items, onItems]);
   const [libPlans, setLibPlans] = useState<Map<string, LessonPlan>>(new Map());
   const [pick, setPick] = useState<boolean[]>([]);
   const [busy, setBusy] = useState(false);
@@ -142,7 +145,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
   return (
     <section className="dash-section planner-card" aria-labelledby="pl-import">
       <h2 id="pl-import"><FileSpreadsheet aria-hidden="true" /> Tạo giáo án từ lịch báo giảng (Excel)</h2>
-      <p className="dash-muted">Tải lên lịch báo giảng / kế hoạch dạy học tuần theo mẫu bất kì của trường (file nhiều trang tính, chia buổi bằng cột hay bằng dòng “Buổi sáng / chiều”, tích hợp ghi cột riêng hay cuối tên bài…). App tự tìm trang lịch báo giảng và quy về mẫu chuẩn (Thứ/ngày · Buổi · Tiết TKB · Môn học · Tiết PPCT · Tên bài dạy · ND tích hợp/ĐDDH · Điều chỉnh) rồi mới sinh giáo án. App tự soạn giáo án cho từng tiết: ưu tiên giáo án trong kho của trường (mục dưới) đúng môn, bài, tiết; còn lại bài Toán, Tiếng Việt, Tiếng Anh có trong app được soạn theo yêu cầu cần đạt và dạng bài của bài; tiết ôn tập, bổ sung (BS) theo bài trọng tâm của tuần; các môn khác theo khung chung của môn.</p>
+      <p className="dash-muted">Tải lên lịch báo giảng / kế hoạch dạy học tuần theo mẫu bất kì của trường (file nhiều trang tính, chia buổi bằng cột hay bằng dòng “Buổi sáng / chiều”, tích hợp ghi cột riêng hay cuối tên bài…). App tự tìm trang lịch báo giảng và quy về mẫu chuẩn (Thứ/ngày · Buổi · Tiết TKB · Môn học · Tiết PPCT · Tên bài dạy · ND tích hợp/ĐDDH · Điều chỉnh) rồi mới sinh giáo án. App tự soạn giáo án cho từng tiết: ưu tiên giáo án trong Kho giáo án đúng môn, bài, tiết; còn lại bài Toán, Tiếng Việt, Tiếng Anh có trong app được soạn theo yêu cầu cần đạt và dạng bài của bài; tiết ôn tập, bổ sung (BS) theo bài trọng tâm của tuần; các môn khác theo khung chung của môn.</p>
       <div className="planner-actions">
         <input ref={fileRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden
           onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void load(f); }} />
@@ -157,7 +160,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
           <p className="planner-import-sum">
             <strong>{sch.week ? `Tuần ${sch.week}` : 'Lịch tuần'}</strong>
             {sch.monday && <> · {viDate(sch.monday)} – {viDate(addDays(sch.monday, 4))}</>}
-            {sch.grade !== null && <> · Khối {sch.grade}</>} · {items.length} tiết: {counts.kho > 0 && <>{counts.kho} giáo án của trường, </>}{counts.app} theo bài trong app, {counts.review} ôn tập/bổ sung, {counts.khung} khung chung
+            {sch.grade !== null && <> · Khối {sch.grade}</>} · {items.length} tiết: {counts.kho > 0 && <>{counts.kho} từ Kho giáo án, </>}{counts.app} theo bài trong app, {counts.review} ôn tập/bổ sung, {counts.khung} khung chung
           </p>
           {sch.source && (
             <div className="planner-norm" role="status">
@@ -200,7 +203,7 @@ export default function ScheduleImport({ classId, className, grade, school, weak
                     <td><span className={`planner-kind is-${r.kind}`} title={r.lessonTitle || undefined}>{KIND_LABEL[r.kind]}</span>{r.lessonTitle && <span className="planner-int"> {r.lessonTitle}</span>}{exists(r) && <span className="planner-int"> · đã lưu</span>}</td>
                     <td className="planner-kho-cell">
                       <button type="button" className="mini-btn" onClick={() => onOpen(r.plan)}>Xem, sửa</button>
-                      {library.length > 0 && <button type="button" className={`mini-btn planner-kho-btn${kho === i ? ' is-on' : ''}`} aria-expanded={kho === i} onClick={() => void openKho(i)}>📚 Kho trường</button>}
+                      {library.length > 0 && <button type="button" className={`mini-btn planner-kho-btn${kho === i ? ' is-on' : ''}`} aria-expanded={kho === i} onClick={() => void openKho(i)}>📚 Kho giáo án</button>}
                     </td>
                   </tr>
                   {kho === i && (
@@ -226,7 +229,7 @@ function KhoPanel({ r, matches, libPlans, className, onUse, onBase, onOpen }: {
   r: Item; matches: ReturnType<typeof rankLibrary<LibraryMeta>>; libPlans: Map<string, LessonPlan>; className: string;
   onUse: (id: string) => void; onBase: () => void; onOpen: (plan: LessonPlan) => void;
 }) {
-  if (!matches.length) return <p className="dash-muted">Kho trường chưa có giáo án khớp tiết này (cùng môn, khối, bài). App soạn theo khung của app.</p>;
+  if (!matches.length) return <p className="dash-muted">Kho giáo án chưa có giáo án khớp tiết này (cùng môn, khối, bài). App soạn theo khung của app.</p>;
   return (
     <div className="kho">
       <p className="kho-h">Giáo án gần nhất trong kho cho <b>{r.row.title}</b>{r.row.ppct ? ` · PPCT ${r.row.ppct}` : ''}{r.row.integration ? ` · tích hợp: ${r.row.integration.split('\n')[0]}` : ''}</p>

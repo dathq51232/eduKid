@@ -104,13 +104,13 @@ export default function PlanLibrary({ grade, className, onOpen, onChange }: {
       }
     }
     setBusy(false); setProgress(''); setFails(bad);
-    if (ok) setMsg({ kind: 'ok', text: `Đã nạp ${plans} giáo án (${pics} hình) từ ${ok} file vào kho của trường${skipped ? ` (bỏ qua ${skipped} file không phải .docx)` : ''}${bad.length ? `; ${bad.length} file chưa nạp được (xem bên dưới)` : ''}.` });
+    if (ok) setMsg({ kind: 'ok', text: `Đã nạp ${plans} giáo án (${pics} hình) từ ${ok} file vào Kho giáo án${skipped ? ` (bỏ qua ${skipped} file không phải .docx)` : ''}${bad.length ? `; ${bad.length} file chưa nạp được (xem bên dưới)` : ''}.` });
     else if (bad.length) setMsg({ kind: 'error', text: 'Chưa nạp được file nào — xem lí do bên dưới.' });
     void refresh();
   };
 
   const removeSource = async (source: string | null) => {
-    if (!window.confirm(source ? `Xoá các giáo án của file “${source}” khỏi kho?` : 'Xoá TOÀN BỘ kho giáo án của trường? Giáo viên khác cũng không dùng được nữa.')) return;
+    if (!window.confirm(source ? `Xoá các giáo án của file “${source}” khỏi kho?` : 'Xoá TOÀN BỘ Kho giáo án? Giáo viên khác cũng không dùng được nữa.')) return;
     const { error } = await createClient().rpc('library_delete', { p_source: source });
     if (error) return setMsg({ kind: 'error', text: 'Chưa xoá được.' });
     void refresh();
@@ -142,7 +142,7 @@ export default function PlanLibrary({ grade, className, onOpen, onChange }: {
 
   return (
     <section className="dash-section planner-card" aria-labelledby="pl-lib">
-      <h2 id="pl-lib"><BookOpenCheck aria-hidden="true" /> Kho giáo án của trường</h2>
+      <h2 id="pl-lib"><BookOpenCheck aria-hidden="true" /> Kho giáo án</h2>
       <p className="dash-muted">Tải thư mục giáo án Word (.docx) của trường lên một lần: app tách từng bài, từng tiết (I. Yêu cầu cần đạt · II. Đồ dùng · III. Hoạt động · IV. Điều chỉnh) ngay trên máy này, giữ nguyên bản gốc (chữ, bảng tô màu, hình ảnh) để xem trước và xuất Word đúng như file của trường; dùng chung cho giáo viên cùng trường. Khi tải lịch báo giảng, tiết nào có giáo án trong kho sẽ được soạn sẵn theo đúng giáo án đó. Nạp lại cùng một file thì giáo án cũ của file đó được thay mới.</p>
       <div className="planner-actions">
         <input ref={dirRef} type="file" multiple hidden {...{ webkitdirectory: '', directory: '' }}

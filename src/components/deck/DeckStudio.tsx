@@ -218,7 +218,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   return (
     <div className="dk">
       <header className="dk-head">
-        <Link href={`/giao-vien/lop/${classId}/bai-giang-3d?tab=tg`} className="dk-back" aria-label="Về danh sách bài"><ArrowLeft aria-hidden="true" /></Link>
+        <Link href={`/giao-vien/lop/${classId}/ke-hoach?tab=bai-giang&sub=tg`} className="dk-back" aria-label="Về danh sách bài"><ArrowLeft aria-hidden="true" /></Link>
         <div className="dk-titlebox">
           <small>Bài thao giảng · Lớp {deck.grade}</small>
           <input value={deck.title} maxLength={120} onChange={(e) => commit({ ...deckRef.current, title: e.target.value })} aria-label="Tên bài" />

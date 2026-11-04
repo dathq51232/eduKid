@@ -11,14 +11,16 @@ import { computeGaps, type ResultRow } from '@/lib/classroom/gaps';
 import { createClient } from '@/lib/supabase/server';
 import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
 import { lessonInfos } from '@/lib/plans/lessons';
+import type { Lesson3DRow } from '@/components/lesson3d/Lesson3DHome';
+import type { DeckRow } from '@/components/deck/DeckHome';
 import type { SubjectCode } from '@/lib/types';
 
 export const metadata: Metadata = { title: 'Kế hoạch bài dạy · EduChain Kids' };
 export const dynamic = 'force-dynamic';
 
 // Kế hoạch bài dạy. Quyền: giáo viên (ở đây) + database (giáo án chỉ người soạn đọc/ghi, chỉ gắn được lớp mình dạy).
-export default async function PlanPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function PlanPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; sub?: string; plan?: string }> }) {
+  const [{ id }, sp] = await Promise.all([params, searchParams]);
   warmClass(id);
   const viewer = await getViewer();
   if (viewer.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Kế hoạch bài dạy" /></main></>);
@@ -43,13 +45,23 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
   const weakForms: Record<SubjectCode, string[]> = { toan: [], 'tieng-viet': [], 'tieng-anh': [] };
   for (const g of gaps) weakForms[g.subject].push(`${g.formName} (${g.lessonTitle}, lớp đúng ${Math.round(g.rate * 100)}%)`);
 
+  // Bài giảng & 3D (đã gộp vào Kế hoạch bài dạy): bài 3D (migration 0034), bài thao giảng / trình chiếu (0046)
+  const [l3d, dks] = await Promise.all([
+    supabase.from('lessons3d').select('id, title, grade, stem_ref, updated_at').order('updated_at', { ascending: false }).limit(200),
+    supabase.from('slide_decks').select('id, title, grade, updated_at, slides:data->slides, plan:data->src->>plan').order('updated_at', { ascending: false }).limit(200),
+  ]);
+  const decks: DeckRow[] = ((dks.data ?? []) as { id: string; title: string; grade: number; updated_at: string; slides: unknown; plan: string | null }[])
+    .map((d) => ({ id: d.id, title: d.title, grade: d.grade, updated_at: d.updated_at, slides: Array.isArray(d.slides) ? d.slides.length : undefined, plan: d.plan ?? undefined }));
+
   return (
     <>
       <LearnHeader />
       <main className="dash wrap">
         <Link href={`/giao-vien/lop/${id}`} className="dash-back no-print"><ArrowLeft aria-hidden="true" /> Lớp {c.name}</Link>
         <LessonPlanner classId={c.id} className={c.name} grade={c.grade} school={viewer.schoolNameHint ?? ''} weakForms={weakForms}
-          lessonsBySubject={{ toan: lessonInfos('toan', c.grade), 'tieng-viet': lessonInfos('tieng-viet', c.grade), 'tieng-anh': lessonInfos('tieng-anh', c.grade) }} />
+          lessonsBySubject={{ toan: lessonInfos('toan', c.grade), 'tieng-viet': lessonInfos('tieng-viet', c.grade), 'tieng-anh': lessonInfos('tieng-anh', c.grade) }}
+          lessons3d={(l3d.data ?? []) as Lesson3DRow[]} lessons3dMissing={!!l3d.error} decks={decks} decksMissing={!!dks.error}
+          initialTab={sp.tab} initialSub={sp.sub} initialPlan={/^[0-9a-f-]{36}$/i.test(sp.plan ?? '') ? sp.plan : undefined} />
       </main>
     </>
   );

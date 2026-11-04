@@ -19,7 +19,7 @@ const BOOK_KEY = 'gv-bo-sach';
 const BOOKS = { KNTT: 'Kết nối tri thức', CTST: 'Chân trời sáng tạo', CD: 'Cánh diều' } as const;
 type Book = keyof typeof BOOKS;
 
-export default function Lesson3DHome({ classId, className, grade, lessons, missing, decks, decksMissing, initialTab, openPlan }: { classId: string; className: string; grade: number; lessons: Lesson3DRow[]; missing: boolean; decks: DeckRow[]; decksMissing: boolean; initialTab?: string; openPlan?: string }) {
+export default function Lesson3DHome({ classId, className, grade, lessons, missing, decks, decksMissing, initialTab, openPlan, embedded }: { classId: string; className: string; grade: number; lessons: Lesson3DRow[]; missing: boolean; decks: DeckRow[]; decksMissing: boolean; initialTab?: string; openPlan?: string; /** nằm trong trang Kế hoạch bài dạy (không cần tiêu đề trang) */ embedded?: boolean }) {
   const router = useRouter();
   const supabase = useMemo(() => { try { return createClient(); } catch { return null; } }, []);
   const [tab, setTab] = useState<Tab>(initialTab === 'tg' ? 'tg' : lessons.length ? 'mine' : 'stem');
@@ -60,9 +60,9 @@ export default function Lesson3DHome({ classId, className, grade, lessons, missi
   const mineByStem = new Map(list.filter((r) => r.stem_ref).map((r) => [r.stem_ref as string, r]));
 
   return (
-    <div className="ct s3h">
+    <div className={`ct s3h${embedded ? ' is-embedded' : ''}`}>
       <div className="ct-head">
-        <div><p className="ct-sub">Lớp {className} · Dạy học</p><h1>Bài giảng 3D & thao giảng</h1></div>
+        <div>{embedded ? <h2 className="s3h-h2">Bài giảng & 3D</h2> : <><p className="ct-sub">Lớp {className} · Dạy học</p><h1>Bài giảng 3D & thao giảng</h1></>}</div>
         <div className="ct-actions">
           {tab !== 'tg' && <button type="button" className="btn btn-primary" disabled={missing || !!busy} onClick={() => void create(emptyLesson(grade), 'new')}><Plus aria-hidden="true" /> Bài 3D trống</button>}
         </div>

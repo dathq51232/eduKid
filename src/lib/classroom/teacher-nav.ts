@@ -14,8 +14,7 @@ const ALL: Tool[] = [
   { key: 'nhom', label: 'Nhóm & chỗ ngồi', desc: 'Chia nhóm, sơ đồ lớp', group: 'Trên lớp', tone: 'blue', path: 'nhom', keywords: 'chia nhom ngau nhien can bang so do cho ngoi xep cho ban doi day' },
   { key: 'thi-dua', label: 'Thi đua tổ', desc: 'Cộng điểm tổ, tổng kết tuần', group: 'Trên lớp', tone: 'coral', path: 'thi-dua', keywords: 'thi dua to diem cong tru co tong ket tuan sinh hoat lop' },
   { key: 'hen-gio', label: 'Hẹn giờ', desc: 'Đồng hồ đếm ngược chiếu bảng', group: 'Trên lớp', tone: 'violet', path: 'hen-gio', keywords: 'hen gio dem nguoc dong ho bam gio thao luan' },
-  { key: 'ke-hoach', label: 'Kế hoạch bài dạy', desc: 'Giáo án, lịch báo giảng', group: 'Dạy học', tone: 'green', path: 'ke-hoach', keywords: 'giao an ke hoach lich bao giang soan bai word' },
-  { key: 'bai-giang-3d', label: 'Bài giảng 3D', desc: 'Xưởng mô hình 3D, bài STEM lớp 1–5', group: 'Dạy học', tone: 'blue', path: 'bai-giang-3d', keywords: 'bai giang 3d mo hinh stem truc quan trinh chieu xuong sa ban' },
+  { key: 'ke-hoach', label: 'Kế hoạch bài dạy', desc: 'Giáo án, lịch báo giảng, bài giảng 3D', group: 'Dạy học', tone: 'green', path: 'ke-hoach', keywords: 'giao an ke hoach lich bao giang soan bai word bai giang 3d mo hinh stem thao giang trinh chieu slide' },
   { key: 'luyen-chu', label: 'Luyện chữ', desc: 'Tô chữ mẫu ô li, chấm điểm', group: 'Dạy học', tone: 'violet', path: 'luyen-chu', keywords: 'luyen chu viet chu dep o li to chu mau tap viet chu hoa' },
   { key: 'giao-bai', label: 'Giao bài về nhà', desc: 'Hạn nộp, em nào chưa làm', group: 'Dạy học', tone: 'violet', path: 'giao-bai', keywords: 'giao bai ve nha han nop' },
   { key: 'phieu-bai-tap', label: 'Phiếu bài tập', desc: 'In kèm đáp án', group: 'Dạy học', tone: 'yellow', path: 'phieu-bai-tap', keywords: 'phieu bai tap in dap an' },
@@ -68,6 +67,8 @@ export function toolOfPath(pathname: string): ToolKey | null {
   if (!m) return null;
   const seg = m[1] ?? '';
   if (seg === 'hoc-sinh' || seg === '') return 'lop';
+  // Bài giảng 3D đã gộp vào Kế hoạch bài dạy
+  if (seg === 'bai-giang-3d') return 'ke-hoach';
   return TOOLS.find((t) => t.path === seg)?.key ?? null;
 }
 export const classIdOfPath = (pathname: string) => pathname.match(/^\/giao-vien\/lop\/([0-9a-f-]{36})/i)?.[1] ?? null;
