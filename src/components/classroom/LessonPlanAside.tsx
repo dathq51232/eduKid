@@ -38,7 +38,7 @@ export default function LessonPlanAside({ classId, grade }: { classId: string; g
   async function makeDeck() {
     if (!supabase || !cur || !pick) return;
     setBusy(true); setErr('');
-    const D = deckFromIdeas(cur.subject, cur.title, pick, grade);
+    const D = await deckFromIdeas(cur.subject, cur.title, pick, grade);
     const { data, error } = await supabase.from('slide_decks').insert({ title: D.title.slice(0, 120), grade: D.grade, class_id: classId, data: D }).select('id').single();
     setBusy(false);
     if (error || !data) { setErr(/too_many/.test(error?.message ?? '') ? 'Mỗi thầy cô lưu tối đa 200 bài thao giảng.' : 'Chưa tạo được bài trình chiếu. Thử lại nhé.'); return; }

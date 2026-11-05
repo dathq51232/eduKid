@@ -95,7 +95,9 @@ export type Slide = { id: string; bg: string; els: El[]; anims: Anim[]; trans: T
   /** hoạt động của tiết dạy: Khởi động / Khám phá / Luyện tập / Vận dụng / Củng cố */
   phase?: string;
   /** thời gian dự kiến cho trang (phút) — hiện ở xem lưới và màn hình của cô */
-  mins?: number };
+  mins?: number;
+  /** công cụ gợi ý cho trang (màn hình của cô hiện nút bấm nhanh): hẹn giờ thảo luận / gọi tên / thi đua tổ */
+  tool?: { timer?: number; name?: boolean; teams?: boolean; label?: string } };
 /** nguồn của bài: tiết trong lịch báo giảng (giáo án) / bài trong ngân hàng nội dung */
 export type DeckSrc = { plan?: string; lesson?: string; date?: string; period?: number };
 export type Deck = { v: 1; title: string; grade: number; slides: Slide[]; src?: DeckSrc;
@@ -152,6 +154,10 @@ export function normalizeDeck(raw: unknown, fallbackTitle = 'Bài thao giảng')
       ...(typeof s?.autoNext === 'number' && s.autoNext > 0 ? { autoNext: Math.min(120, Math.max(1, s.autoNext)) } : {}),
       scene: typeof s?.scene === 'string' ? s.scene : undefined, phase: typeof s?.phase === 'string' ? s.phase : undefined,
       ...(typeof s?.mins === 'number' && s.mins > 0 ? { mins: Math.min(90, Math.max(0.5, s.mins)) } : {}),
+      ...(s?.tool && typeof s.tool === 'object' ? { tool: {
+        timer: typeof s.tool.timer === 'number' && s.tool.timer > 0 ? Math.min(30, s.tool.timer) : undefined,
+        name: s.tool.name === true || undefined, teams: s.tool.teams === true || undefined,
+        label: typeof s.tool.label === 'string' ? s.tool.label.slice(0, 80) : undefined } } : {}),
     };
   });
   return {

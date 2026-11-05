@@ -8122,3 +8122,5 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .li-aside-m{margin:2px 0 6px;font-size:12.5px;opacity:.7}
 .li-aside-btn{margin-top:12px}
 .li-aside-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.dp-hint{align-items:center;flex-wrap:wrap}
+.dp-hint small{width:100%;opacity:.8;font-size:12px}

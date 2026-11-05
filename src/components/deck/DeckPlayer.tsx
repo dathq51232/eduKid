@@ -301,6 +301,13 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
             </section>
           )}
           <section className="dp-card"><h4>Công cụ trên lớp</h4>
+            {slide.tool && (
+              <div className="dp-inks dp-hint">
+                {slide.tool.label && <small>💡 {slide.tool.label}</small>}
+                {slide.tool.timer ? <button type="button" className="dp-min" onClick={() => publish({ ...show, timer: Date.now() + slide.tool!.timer! * 60_000 })}>⏱ Bắt đầu {slide.tool.timer} phút</button> : null}
+                {slide.tool.name && <button type="button" className="dp-min" onClick={callName}>🎯 Gọi tên</button>}
+              </div>
+            )}
             <div className="dp-tools">
               <button type="button" className={tool === 'pen' ? 'is-on' : ''} onClick={() => setTool(tool === 'pen' ? '' : 'pen')}><span>✏️</span>Bút vẽ</button>
               <button type="button" className={tool === 'spot' ? 'is-on' : ''} onClick={() => { setTool(tool === 'spot' ? '' : 'spot'); if (tool === 'spot') publish({ ...showRef.current, spot: null }); }}><span>🔦</span>Đèn chiếu</button>
