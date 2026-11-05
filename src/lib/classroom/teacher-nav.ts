@@ -4,7 +4,7 @@ import { FEATURES } from '@/lib/features';
 export type ToolKey =
   | 'so-lop' | 'goi-ten' | 'ke-hoach' | 'giao-bai' | 'phieu-bai-tap' | 'phieu-chinh-ta'
   | 'lo-hong' | 'de-kiem-tra' | 'nhan-xet' | 'ket-qua-truong' | 'phieu-tien-bo' | 'thu-khen' | 'lop'
-  | 'nhom' | 'thi-dua' | 'hen-gio' | 'danh-ba' | 'bai-giang-3d' | 'tin-nhan' | 'trien-lam' | 'luyen-chu';
+  | 'nhom' | 'thi-dua' | 'hen-gio' | 'danh-ba' | 'bai-giang-3d' | 'tin-nhan' | 'trien-lam' | 'luyen-chu' | 'bang-trang';
 export type ToolTone = 'green' | 'yellow' | 'blue' | 'violet' | 'red' | 'coral';
 export type Tool = { key: ToolKey; label: string; desc: string; group: string; tone: ToolTone; path: string; keywords: string };
 
@@ -16,6 +16,7 @@ const ALL: Tool[] = [
   { key: 'hen-gio', label: 'Hẹn giờ', desc: 'Đồng hồ đếm ngược chiếu bảng', group: 'Trên lớp', tone: 'violet', path: 'hen-gio', keywords: 'hen gio dem nguoc dong ho bam gio thao luan' },
   { key: 'ke-hoach', label: 'Kế hoạch bài dạy', desc: 'Giáo án, lịch báo giảng, bài giảng 3D', group: 'Dạy học', tone: 'green', path: 'ke-hoach', keywords: 'giao an ke hoach lich bao giang soan bai word bai giang 3d mo hinh stem thao giang trinh chieu slide' },
   { key: 'luyen-chu', label: 'Luyện chữ', desc: 'Tô chữ mẫu ô li, chấm điểm', group: 'Dạy học', tone: 'violet', path: 'luyen-chu', keywords: 'luyen chu viet chu dep o li to chu mau tap viet chu hoa' },
+  { key: 'bang-trang', label: 'Bảng trắng', desc: 'Bút, hình, thước, êke, compa', group: 'Dạy học', tone: 'blue', path: 'bang-trang', keywords: 'bang trang bang den ve hinh but thuoc ke eke compa thuoc do goc hinh khoi chieu bang tuong tac' },
   { key: 'giao-bai', label: 'Giao bài về nhà', desc: 'Hạn nộp, em nào chưa làm', group: 'Dạy học', tone: 'violet', path: 'giao-bai', keywords: 'giao bai ve nha han nop' },
   { key: 'phieu-bai-tap', label: 'Phiếu bài tập', desc: 'In kèm đáp án', group: 'Dạy học', tone: 'yellow', path: 'phieu-bai-tap', keywords: 'phieu bai tap in dap an' },
   { key: 'phieu-chinh-ta', label: 'Phiếu chính tả', desc: 'Tranh, tập chép, đáp án', group: 'Dạy học', tone: 'blue', path: 'phieu-chinh-ta', keywords: 'chinh ta tap chep' },
