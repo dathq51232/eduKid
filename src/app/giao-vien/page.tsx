@@ -243,7 +243,7 @@ export default async function TeacherHome() {
             </section>
 
             <div className="tdy-stack">
-              <LessonPlanAside />
+              {active && <LessonPlanAside classId={active.id} grade={active.grade} />}
 
               {watch.length > 0 && (
                 <section className="tdy-card tdy-watch" aria-labelledby="tdy-watch">
