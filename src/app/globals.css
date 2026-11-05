@@ -4466,6 +4466,8 @@ button.diary-pill { cursor: pointer; }
 .tdy-slot-s span { display: block; color: var(--muted); font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tdy-chip { padding: 4px 10px; border-radius: 99px; font-size: 12.5px; font-weight: 700; white-space: nowrap; text-decoration: none; }
 .tdy-chip.is-blue { background: var(--blue-soft); color: var(--brand-blue); }
+.tdy-chip.is-amber { background: #fff3d1; color: #8a5a00; }
+:root[data-theme="dark"] .tdy-chip.is-amber { background: rgb(245 195 48 / .16); color: #f5c330; }
 .tdy-kid { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 6px; margin: 0 -6px; border-radius: 12px; color: var(--ink); text-decoration: none; }
 .tdy-kid:hover { background: var(--surface-2); }
 .tdy-kid-av { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; font-size: 13px; font-weight: 700; }

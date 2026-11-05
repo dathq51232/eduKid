@@ -11,6 +11,7 @@ import { pickFromLibrary, rankLibrary, type LibraryMeta } from '@/lib/plans/libr
 import { isPlan } from '@/lib/plans/generate';
 import { weekSheet, loadWeekOpts, type WeekArgs } from '@/lib/plans/week-export';
 import type { SubjectCode } from '@/lib/types';
+import { saveSched } from '@/lib/plans/sched-store';
 
 type SavedLite = { teach_date: string | null; period: number | null; title: string };
 type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;
@@ -94,6 +95,8 @@ export default function ScheduleImport({ classId, className, grade, school, weak
       // thứ tự soạn theo mẫu nhà trường: TV → Toán → Đạo đức → TN&XH → HĐTN → TV tăng cường → Toán tăng cường → môn khác
       list = sortSchoolOrder(list, (r) => ({ subject: r.row.subject, extra: r.row.extra, label: r.row.subjectLabel, date: r.plan.date, session: r.row.session, period: r.row.period }));
       setSch(s); setItems(list); setKho(null);
+      // nhớ lịch tuần trên máy → trang Hôm nay hiện tiết của ngày kể cả khi chưa lưu giáo án
+      saveSched(classId, list.filter((r) => r.plan.date).map((r) => ({ date: r.plan.date, period: r.plan.period || 0, session: r.row.session, subject: r.plan.subject, label: r.row.subjectLabel || '', title: r.plan.title })));
       setPick(list.map((r) => !(!!r.plan.date && savedKeys.has(keyOf(r.plan.date, r.plan.period, r.plan.title)))));
       if (s.grade !== null && s.grade !== grade) setMsg({ kind: 'info', text: `Lịch báo giảng là của khối ${s.grade}, lớp ${className} là khối ${grade}: giáo án dùng khung chung, không ghép bài của app. Kiểm tra lại file nếu nhầm.` });
     } catch (e) {

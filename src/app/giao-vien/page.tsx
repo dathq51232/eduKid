@@ -4,8 +4,8 @@ import { KIND_ICON, ago, leaveRange, senderLabel, type Inbox } from '@/lib/class
 import { redirect } from 'next/navigation';
 import { BookCheck, BookOpen, CalendarDays, ChevronRight, Dices, Eye, ListTodo, MailOpen, School, Send, Target } from 'lucide-react';
 import { TodoList } from '@/components/classroom/TeacherToday';
+import TodaySchedule from '@/components/classroom/TodaySchedule';
 import { alertsOf, summarize, type RangeData } from '@/lib/classroom/diary';
-import { SUBJECT_NAMES } from '@/lib/plans/generate';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import SignOutButton from '@/components/classroom/SignOutButton';
@@ -235,19 +235,7 @@ export default async function TeacherHome() {
           <div className="tdy-cols">
             <section className="tdy-card tdy-sched" aria-labelledby="tdy-sched">
               <h2 id="tdy-sched"><CalendarDays aria-hidden="true" /> Hôm nay dạy <Link href={`${base}/ke-hoach`}>Giáo án</Link></h2>
-              {todayPlans.length === 0 ? (
-                <p className="tdy-line">Chưa có tiết nào được soạn cho hôm nay. <Link href={`${base}/ke-hoach`}>Nạp lịch báo giảng</Link></p>
-              ) : (
-                <ul className="tdy-slots">
-                  {todayPlans.map((p) => (
-                    <li key={p.id} className="tdy-slot">
-                      <span className="tdy-slot-t">{p.period ? `Tiết ${p.period}` : '—'}</span>
-                      <span className="tdy-slot-s"><b>{SUBJECT_NAMES[p.subject as keyof typeof SUBJECT_NAMES] ?? p.subject}</b><span>{p.title}</span></span>
-                      <Link href={`${base}/goi-ten`} className="tdy-chip is-blue" title="Gọi tên dò bài cũ">🎡 Dò bài</Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              {active && <TodaySchedule classId={active.id} day={todayIso} base={base} saved={todayPlans} />}
             </section>
 
             <div className="tdy-stack">
