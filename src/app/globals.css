@@ -8108,3 +8108,11 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .li-bar{display:block;height:6px;background:#ffffff14;border-radius:4px;margin-top:5px;overflow:hidden}
 .li-bar i{display:block;height:100%;background:#3ecf8e;transition:width .2s}
 .li-bar i.over{background:#ff6b6b}
+.li-num{width:52px;background:#ffffff14;border:0;border-radius:7px;color:inherit;font:inherit;font-size:12.5px;padding:4px 6px;margin:0 4px 0 6px;text-align:center}
+.li-seg:has(.li-num){align-items:center;font-size:12px;padding-right:8px}
+.li-row{display:flex;gap:12px;align-items:flex-start;margin-top:10px;padding:10px 12px;border-left:4px solid;border-radius:10px;background:#ffffff08}
+.li-time{min-width:64px;font-weight:700;font-size:13px;padding-top:2px}
+.li-rowb{flex:1;font-size:13px}
+.li-rowb small{display:block;font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em}
+.li-rowb ol{margin:4px 0 0;padding-left:18px;line-height:1.5;opacity:.85}
+.li-rowb em{display:block;font-style:normal;font-size:12px;opacity:.7;margin-top:4px}
