@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { SUBJECT_NAMES } from '@/lib/plans/generate';
 import { loadSched, type SchedSlot } from '@/lib/plans/sched-store';
+import LessonIdeas from './LessonIdeas';
 
 export type SavedSlot = { id: string; subject: string; title: string; period: number | null };
 type Row = { key: string; period: number; pm: boolean; subject: string; title: string; saved: boolean };
@@ -14,6 +15,7 @@ const norm = (t: string) => t.trim().toLowerCase();
 
 export default function TodaySchedule({ classId, day, base, saved }: { classId: string; day: string; base: string; saved: SavedSlot[] }) {
   const [local, setLocal] = useState<SchedSlot[]>([]);
+  const [pick, setPick] = useState<Row | null>(null);
   useEffect(() => { setLocal(loadSched(classId).filter((s) => s.date === day)); }, [classId, day]);
 
   const have = new Set(saved.map((p) => `${p.period ?? 0}|${norm(p.title)}`));
@@ -32,13 +34,14 @@ export default function TodaySchedule({ classId, day, base, saved }: { classId: 
         {rows.map((r) => (
           <li key={r.key} className="tdy-slot">
             <span className="tdy-slot-t">{r.period ? `${r.pm ? 'Chiều ' : ''}Tiết ${r.period}` : '—'}</span>
-            <span className="tdy-slot-s"><b>{r.subject}</b><span>{r.title}</span></span>
+            <button type="button" className="tdy-slot-s is-btn" onClick={() => setPick(r)} title="Gợi ý ý tưởng dạy tiết này"><b>{r.subject} 💡</b><span>{r.title}</span></button>
             {r.saved
               ? <Link href={`${base}/goi-ten`} className="tdy-chip is-blue" title="Gọi tên dò bài cũ">🎡 Dò bài</Link>
               : <Link href={`${base}/ke-hoach`} className="tdy-chip is-amber" title="Tiết này chưa lưu giáo án">✏️ Soạn</Link>}
           </li>
         ))}
       </ul>
+      {pick && <LessonIdeas subject={pick.subject} title={pick.title} saved={pick.saved} onClose={() => setPick(null)} />}
       {todo > 0 && <p className="tdy-line">{todo} tiết chưa lưu giáo án. <Link href={`${base}/ke-hoach`}>Lưu ở Giáo án</Link></p>}
     </>
   );
