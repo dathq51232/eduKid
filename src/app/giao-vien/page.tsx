@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { KIND_ICON, ago, leaveRange, senderLabel, type Inbox } from '@/lib/classroom/messages';
+import type { Inbox } from '@/lib/classroom/messages';
 import { redirect } from 'next/navigation';
-import { BookCheck, BookOpen, CalendarDays, ChevronRight, Dices, Eye, ListTodo, MailOpen, School, Send, Target } from 'lucide-react';
+import { BookCheck, BookOpen, CalendarDays, ChevronRight, Dices, Eye, ListTodo, School, Send, Target } from 'lucide-react';
 import { TodoList } from '@/components/classroom/TeacherToday';
 import TodaySchedule from '@/components/classroom/TodaySchedule';
+import LessonPlanAside from '@/components/classroom/LessonPlanAside';
 import { alertsOf, summarize, type RangeData } from '@/lib/classroom/diary';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
@@ -136,6 +137,9 @@ export default async function TeacherHome() {
     }
     if (inbox?.unread) {
       todo.unshift({ tone: 'urgent', title: `${inbox.unread} tin nhắn phụ huynh chưa đọc`, detail: inbox.pending_leave ? `Có ${inbox.pending_leave} tin xin phép nghỉ đang chờ cô đồng ý.` : 'Phụ huynh hỏi han, nhắn cô.', href: `/giao-vien/lop/${active.id}/tin-nhan`, cta: 'Đọc tin' });
+    } else if (inbox?.items.length) {
+      // Tin nhắn phụ huynh gộp vào "Cần xử lý": không có tin mới thì chỉ nhắc nhẹ
+      todo.push({ tone: 'info', title: 'Tin nhắn phụ huynh', detail: `Không có tin mới · ${inbox.items.length} tin gần đây.`, href: `/giao-vien/lop/${active.id}/tin-nhan`, cta: 'Hộp thư' });
     }
     todayPlans = planErr ? [] : ((plans ?? []) as { id: string; subject: string; title: string; period: number | null; teach_date: string | null }[])
       .filter((p) => p.teach_date === todayIso).sort((a, b) => (a.period ?? 99) - (b.period ?? 99));
@@ -231,7 +235,7 @@ export default async function TeacherHome() {
             <TodoList items={todo} day={todayIso} />
           </section>
 
-          {/* 3 · Hôm nay dạy | Tin nhắn phụ huynh + Cần để ý */}
+          {/* 3 · Hôm nay dạy | Tiết dạy đã chọn gợi ý + Cần để ý */}
           <div className="tdy-cols">
             <section className="tdy-card tdy-sched" aria-labelledby="tdy-sched">
               <h2 id="tdy-sched"><CalendarDays aria-hidden="true" /> Hôm nay dạy <Link href={`${base}/ke-hoach`}>Giáo án</Link></h2>
@@ -239,26 +243,7 @@ export default async function TeacherHome() {
             </section>
 
             <div className="tdy-stack">
-              <section className={`tdy-card tdy-inbox${inbox?.unread ? ' has-new' : ''}`} aria-labelledby="tdy-inbox">
-                <h2 id="tdy-inbox"><MailOpen aria-hidden="true" /> Tin nhắn phụ huynh {inbox && inbox.unread > 0 && <span className="tdy-inbox-badge">{inbox.unread} mới</span>} <Link href={`${base}/tin-nhan`}>Hộp thư</Link></h2>
-                {!inbox ? <p className="tdy-line">Chưa bật: chạy migration 0037 trên Supabase.</p>
-                  : inbox.items.length === 0 ? <p className="tdy-line">Chưa có tin nhắn. Phụ huynh nhắn cô từ trang Phụ huynh.</p> : (
-                  <ul className="tdy-inbox-list">
-                    {inbox.items.slice(0, 3).map((m) => (
-                      <li key={m.id} className={m.status === 'new' ? 'is-new' : undefined}>
-                        <Link href={`${base}/tin-nhan`}>
-                          <span className="tdy-inbox-ic" aria-hidden="true">{KIND_ICON[m.kind]}</span>
-                          <span className="tdy-inbox-txt">
-                            <b>{senderLabel(m)} <small>Phụ huynh em {m.student_name}</small></b>
-                            <span>{m.kind === 'leave' ? <em>Xin nghỉ {leaveRange(m)}: </em> : null}{m.body}</span>
-                          </span>
-                          <small className="tdy-inbox-time">{ago(m.created_at)}</small>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
+              <LessonPlanAside />
 
               {watch.length > 0 && (
                 <section className="tdy-card tdy-watch" aria-labelledby="tdy-watch">

@@ -112,3 +112,36 @@ export function ideasFor(subject: string, title: string): { goal: string; ideas:
   }
   return { goal: '', ideas: out };
 }
+
+// ===== Lựa chọn của thầy cô (nhớ trên máy) và tiến trình tiết =====
+export const PHASE_INFO: { k: Phase; n: string; r: number; c: string }[] = [
+  { k: 'kd', n: 'Khởi động', r: 0.14, c: '#ff9f43' },
+  { k: 'kp', n: 'Khám phá', r: 0.34, c: '#5b8cff' },
+  { k: 'lt', n: 'Luyện tập', r: 0.34, c: '#3ecf8e' },
+  { k: 'vd', n: 'Vận dụng', r: 0.18, c: '#c56cf0' },
+];
+export type Pick = { dur: number; sel: Partial<Record<Phase, number>> };
+export const PICK_EVENT = 'li:pick'; // detail: { subject, title, open?: boolean }
+const pickKey = (subject: string, title: string) => `li-sel:${subject}|${title}`.toLowerCase();
+
+export function loadPick(subject: string, title: string): Pick | null {
+  try { const v = localStorage.getItem(pickKey(subject, title)); return v ? JSON.parse(v) as Pick : null; } catch { return null; }
+}
+export function savePick(subject: string, title: string, pick: Pick) {
+  try {
+    if (Object.values(pick.sel).some((v) => v != null)) localStorage.setItem(pickKey(subject, title), JSON.stringify(pick));
+    else localStorage.removeItem(pickKey(subject, title));
+  } catch { /* bỏ qua */ }
+}
+export function planOf(subject: string, title: string, pick: Pick) {
+  const ideas = ideasFor(subject, title).ideas;
+  let t = 0;
+  return PHASE_INFO.flatMap((p) => {
+    const i = pick.sel[p.k];
+    const idea = i != null ? ideas[p.k][i] : undefined;
+    if (!idea) return [];
+    const row = { phase: p, idea, start: t, end: t + idea.m };
+    t += idea.m;
+    return [row];
+  });
+}

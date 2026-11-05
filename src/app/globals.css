@@ -8116,3 +8116,8 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .li-rowb small{display:block;font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em}
 .li-rowb ol{margin:4px 0 0;padding-left:18px;line-height:1.5;opacity:.85}
 .li-rowb em{display:block;font-style:normal;font-size:12px;opacity:.7;margin-top:4px}
+.li-aside h2{display:flex;align-items:center;gap:8px}
+.li-aside h2 .li-x{width:30px;height:30px}
+.li-aside-t{margin:4px 0 0;font-size:14px}
+.li-aside-m{margin:2px 0 6px;font-size:12.5px;opacity:.7}
+.li-aside-btn{margin-top:12px}

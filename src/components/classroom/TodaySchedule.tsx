@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { SUBJECT_NAMES } from '@/lib/plans/generate';
 import { loadSched, type SchedSlot } from '@/lib/plans/sched-store';
 import LessonIdeas from './LessonIdeas';
+import { PICK_EVENT, loadPick } from '@/lib/plans/idea-bank';
 
 export type SavedSlot = { id: string; subject: string; title: string; period: number | null };
 type Row = { key: string; period: number; pm: boolean; subject: string; title: string; saved: boolean };
@@ -16,6 +17,21 @@ const norm = (t: string) => t.trim().toLowerCase();
 export default function TodaySchedule({ classId, day, base, saved }: { classId: string; day: string; base: string; saved: SavedSlot[] }) {
   const [local, setLocal] = useState<SchedSlot[]>([]);
   const [pick, setPick] = useState<Row | null>(null);
+  const [ver, setVer] = useState(0); // đổi khi lựa chọn gợi ý thay đổi → vẽ lại dấu ✓
+  useEffect(() => {
+    // ô bên cạnh bấm "Sửa" → mở lại bảng gợi ý của tiết đó
+    const f = (e: Event) => {
+      const d = (e as CustomEvent<{ subject: string; title: string; open?: boolean }>).detail;
+      if (d.open) setPick({ key: 'x', period: 0, pm: false, subject: d.subject, title: d.title, saved: false });
+      else setVer((v) => v + 1);
+    };
+    addEventListener(PICK_EVENT, f); return () => removeEventListener(PICK_EVENT, f);
+  }, []);
+  const hasPick = (r: Row) => ver >= 0 && !!loadPick(r.subject, r.title);
+  const onRow = (r: Row) => {
+    if (hasPick(r)) dispatchEvent(new CustomEvent(PICK_EVENT, { detail: { subject: r.subject, title: r.title, show: true } }));
+    else setPick(r);
+  };
   useEffect(() => { setLocal(loadSched(classId).filter((s) => s.date === day)); }, [classId, day]);
 
   const have = new Set(saved.map((p) => `${p.period ?? 0}|${norm(p.title)}`));
@@ -34,7 +50,7 @@ export default function TodaySchedule({ classId, day, base, saved }: { classId: 
         {rows.map((r) => (
           <li key={r.key} className="tdy-slot">
             <span className="tdy-slot-t">{r.period ? `${r.pm ? 'Chiều ' : ''}Tiết ${r.period}` : '—'}</span>
-            <button type="button" className="tdy-slot-s is-btn" onClick={() => setPick(r)} title="Gợi ý ý tưởng dạy tiết này"><b>{r.subject} 💡</b><span>{r.title}</span></button>
+            <button type="button" className="tdy-slot-s is-btn" onClick={() => onRow(r)} title="Gợi ý ý tưởng dạy tiết này"><b>{r.subject} {hasPick(r) ? '✅' : '💡'}</b><span>{r.title}</span></button>
             {r.saved
               ? <Link href={`${base}/goi-ten`} className="tdy-chip is-blue" title="Gọi tên dò bài cũ">🎡 Dò bài</Link>
               : <Link href={`${base}/ke-hoach`} className="tdy-chip is-amber" title="Tiết này chưa lưu giáo án">✏️ Soạn</Link>}

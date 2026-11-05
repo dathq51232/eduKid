@@ -4,7 +4,7 @@
 // Thời lượng, tình trạng lớp, bộ lọc chỉ sắp xếp / làm mờ trên máy.
 import { useEffect, useMemo, useState } from 'react';
 import { Sparkles, X } from 'lucide-react';
-import { ideasFor, type LessonIdea, type Phase } from '@/lib/plans/idea-bank';
+import { PICK_EVENT, ideasFor, loadPick, savePick, type LessonIdea, type Phase } from '@/lib/plans/idea-bank';
 
 const PHASES: { k: Phase; n: string; r: number; c: string }[] = [
   { k: 'kd', n: 'Khởi động', r: 0.14, c: '#ff9f43' },
@@ -20,10 +20,15 @@ function split(dur: number) {
 
 export default function LessonIdeas({ subject, title, saved, onClose }: { subject: string; title: string; saved: boolean; onClose: () => void }) {
   const data = useMemo(() => ideasFor(subject, title), [subject, title]);
-  const [dur, setDur] = useState(35);
+  const [dur, setDur] = useState(() => loadPick(subject, title)?.dur ?? 35);
   const [mood, setMood] = useState<'calm' | 'norm' | 'low'>('norm');
   const [noPrep, setNoPrep] = useState(false);
-  const [sel, setSel] = useState<Partial<Record<Phase, number>>>({});
+  const [sel, setSel] = useState<Partial<Record<Phase, number>>>(() => loadPick(subject, title)?.sel ?? {});
+  // lưu lựa chọn và báo ô "Tiết dạy đã chọn" bên cạnh cập nhật
+  useEffect(() => {
+    savePick(subject, title, { dur, sel });
+    dispatchEvent(new CustomEvent(PICK_EVENT, { detail: { subject, title } }));
+  }, [subject, title, dur, sel]);
   const [open, setOpen] = useState<string>('');
   const [edit, setEdit] = useState<Partial<Record<Phase, boolean>>>({}); // hoạt động đang mở lại để đổi ý tưởng
 
