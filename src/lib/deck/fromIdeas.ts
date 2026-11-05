@@ -3,7 +3,7 @@
 // → (hoạt động thi đua: bảng thi đua tổ) → các trang nội dung bài học của đúng hoạt động đó.
 // Trang hướng dẫn gắn công cụ cho màn hình của cô (Slide.tool): hẹn giờ thảo luận / gọi tên.
 import { emptyDeck, uid, type Deck, type El, type Slide } from './types';
-import { MASCOTS, badgeEl, boardPage, buildPlan, cardEl, dividerSlide, modeEl, planSlides, tietOf, type PhaseId } from './fromLesson';
+import { MASCOTS, badgeEl, boardPage, buildPlan, cardEl, dividerSlide, planSlides, tietOf, type PhaseId } from './fromLesson';
 import { planOf, type LessonIdea, type Pick } from '@/lib/plans/idea-bank';
 import type { ContentLesson } from '@/lib/content/types';
 
@@ -32,9 +32,9 @@ function specsOf(x: LessonIdea, topic: string, math: boolean, minus: boolean, r:
   const T = x.t.toLowerCase();
   const toks = topic.replace(/[“”"]/g, '').split(/[\s,]+/).filter((t) => t && t.length <= 6).slice(0, 6);
   const big = toks.length ? toks.join('   ') : topic;
-  const pair = () => { const a = 1 + Math.floor(r() * 6), b = 1 + Math.floor(r() * (minus ? a : 10 - a)); return minus ? [a + (a < b ? b : 0), Math.min(a, b)] as const : [a, Math.max(1, Math.min(b, 10 - a))] as const; };
+  const pair = () => { if (minus) { const a = 2 + Math.floor(r() * 9); return [a, 1 + Math.floor(r() * (a - 1))] as const; } const a = 1 + Math.floor(r() * 8); return [a, 1 + Math.floor(r() * (10 - a))] as const; };
   const op = minus ? '–' : '+', calc = (a: number, b: number) => (minus ? a - b : a + b);
-  const many = (n: number, f: () => Spec) => Array.from({ length: n }, f);
+  const many = <V>(n: number, f: () => V): V[] => Array.from({ length: n }, f);
   if (math) {
     if (/ngón tay/.test(T)) return many(3, () => { const [a, b] = pair(); return { q: 'Cô giơ mấy ngón tay? Nói phép tính!', big: `${'☝️'.repeat(a)}   ${op}   ${'☝️'.repeat(b)}`, reveal: `${a} ${op} ${b} = ${calc(a, b)}` }; });
     if (/xe buýt/.test(T)) return many(2, () => { const [a, b] = pair(); return { q: minus ? `Trên xe có ${a} bạn. Đến bến, ${b} bạn xuống xe. Trên xe còn mấy bạn?` : `Trên xe có ${a} bạn. Đến bến, lên thêm ${b} bạn. Có tất cả mấy bạn?`, big: `🚌  ${'🧒'.repeat(a)}`, reveal: `${a} ${op} ${b} = ${calc(a, b)}` }; });
