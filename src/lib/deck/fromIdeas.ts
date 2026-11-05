@@ -7,6 +7,7 @@ import { MASCOTS, badgeEl, boardPage, buildPlan, cardEl, dividerSlide, planSlide
 import { planOf, type LessonIdea, type Pick } from '@/lib/plans/idea-bank';
 import { F3D_VI, f3dSrc } from './f3d-catalog';
 import { pickScene } from './scenes';
+import { otherWords, vansIn, wordsOf } from '@/lib/plans/van-bank';
 import type { ContentLesson } from '@/lib/content/types';
 
 const PER_PHASE: Record<string, number> = { kd: 2, kp: 3, lt: 4, vd: 2 };
@@ -53,17 +54,15 @@ function picWords(v: string): { pic: string; word: string }[] {
 }
 const rnd = (seed: number) => () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
 
-function specsOf(x: LessonIdea, topic: string, math: boolean, minus: boolean, r: () => number): Spec[] {
+function specsOf(x: LessonIdea, topic: string, math: boolean, minus: boolean, r: () => number, max = 10, vans: string[] = []): Spec[] {
   const T = x.t.toLowerCase();
   const toks = topic.replace(/[“”"]/g, '').split(/[\s,]+/).filter((t) => t && t.length <= 6).slice(0, 6);
   const big = toks.length ? toks.join('   ') : topic;
-  const pair = () => { if (minus) { const a = 2 + Math.floor(r() * 9); return [a, 1 + Math.floor(r() * (a - 1))] as const; } const a = 1 + Math.floor(r() * 8); return [a, 1 + Math.floor(r() * (10 - a))] as const; };
+  const pair = () => { if (minus) { const a = 2 + Math.floor(r() * (max - 1)); return [a, 1 + Math.floor(r() * (a - 1))] as const; } const a = 1 + Math.floor(r() * (max - 2)); return [a, 1 + Math.floor(r() * (max - a))] as const; };
   const op = minus ? '–' : '+', calc = (a: number, b: number) => (minus ? a - b : a + b);
   const many = <V>(n: number, f: () => V): V[] => Array.from({ length: n }, f);
   const shuffle = <V>(a: V[]) => a.map((v) => [r(), v] as const).sort((p, q) => p[0] - q[0]).map((p) => p[1]);
   const opts4 = (ans: number) => { const o = shuffle([...new Set([ans, ans + 1, Math.max(0, ans - 1), ans + 2])].slice(0, 4)); return { opts: o.map(String), a: o.indexOf(ans) }; };
-  const names = Object.keys(F3D_VI);
-  const otherPics = (n: number, bad: string[]) => shuffle(names.filter((k) => !bad.some((v) => noTone(F3D_VI[k]).split(' ').some((w) => w.endsWith(noTone(v)))))).slice(0, n);
   if (math) {
     if (/ngón tay/.test(T)) return many(3, () => { const [a, b] = pair(); return { q: 'Cô giơ mấy ngón tay? Nói phép tính!', big: `${'☝️'.repeat(a)}   ${op}   ${'☝️'.repeat(b)}`, reveal: `${a} ${op} ${b} = ${calc(a, b)}` }; });
     if (/xe buýt/.test(T)) return many(2, () => { const [a, b] = pair(); const n = minus ? a : a + b; return { q: minus ? `Có ${a} bạn. ${b} bạn xuống xe. Kéo các bạn còn lại lên xe!` : `Có ${a} bạn, thêm ${b} bạn nữa. Kéo tất cả lên xe buýt!`, drop: { zones: [{ label: '🚌 Xe buýt', ok: Array.from({ length: minus ? a - b : n }, (_, i) => i) }], items: Array.from({ length: n }, (_, i) => ({ pic: i % 2 ? 'girl' : 'boy' })) }, reveal: `${a} ${op} ${b} = ${calc(a, b)}` }; });
@@ -78,18 +77,18 @@ function specsOf(x: LessonIdea, topic: string, math: boolean, minus: boolean, r:
     if (/đếm/.test(T)) return [{ q: 'Đếm theo nhịp vỗ tay 👏 — nhanh dần!', big: '1  2  3  4  5  6  7  8  9  10' }];
     if (/bắn tên|rung chuông|bảng con|tiếp sức|ai nhanh|truyền/.test(T)) return many(4, () => { const [a, b] = pair(); return { q: /rung/.test(T) ? 'Rung chuông vàng! Ghi đáp án lên bảng con' : 'Ai nhanh nhất?', big: `${a} ${op} ${b} = ?`, group: r() < 0.5 ? [a, b, COUNT_OBJ[Math.floor(r() * COUNT_OBJ.length)]] : undefined, reveal: `${calc(a, b)}` }; });
   }
-  const ws = toks.flatMap((v) => picWords(v).map((w) => ({ ...w, v })));
+  const ws = vans.length ? vans.flatMap((v) => wordsOf(v).slice(0, 3)) : toks.flatMap((v) => picWords(v).map((w) => ({ ...w, v })));
   if (/câu cá|thám tử|săn chữ/.test(T) && ws.length) {
-    const vs = [...new Set(ws.map((w) => w.v))].slice(0, 3), mine = ws.filter((w) => vs.includes(w.v)).slice(0, 5), other = otherPics(2, toks);
-    const items = shuffle([...mine.map((w) => ({ pic: w.pic, v: w.v })), ...other.map((p) => ({ pic: p, v: '' }))]);
-    return [{ q: `Kéo hình có vần ${vs.join(', ')} vào đúng giỏ!`, drop: { zones: vs.map((v) => ({ label: `🧺 ${v}`, ok: items.map((x, i) => (x.v === v ? i : -1)).filter((i) => i >= 0) })), items: items.map((x) => ({ pic: x.pic })) } }];
+    const vs = [...new Set(ws.map((w) => w.v))].slice(0, 3), mine = ws.filter((w) => vs.includes(w.v)).slice(0, 6);
+    const items = shuffle([...mine.map((w) => ({ pic: w.pic, text: w.pic ? undefined : w.word, v: w.v })), ...otherWords(vs, 2, r).map((t) => ({ pic: undefined, text: t, v: '' }))]);
+    return [{ q: `Kéo từ có vần ${vs.join(', ')} vào đúng giỏ!`, drop: { zones: vs.map((v) => ({ label: `🧺 ${v}`, ok: items.map((x, i) => (x.v === v ? i : -1)).filter((i) => i >= 0) })), items: items.map((x) => ({ pic: x.pic, text: x.text })) } }];
   }
-  if (/rung chuông|ai nhanh/.test(T) && ws.length) return ws.slice(0, 3).map((w) => { const o = shuffle([w.word, ...otherPics(3, toks).map((k) => F3D_VI[k].split(' ')[0])]); return { q: `🔔 Tiếng nào có vần “${w.v}”?`, quiz: { opts: o, a: o.indexOf(w.word) } }; });
+  if (/rung chuông|ai nhanh/.test(T) && ws.length) return ws.slice(0, 3).map((w) => { const o = shuffle([w.word, ...otherWords(toks, 3, r)]); return { q: `🔔 Tiếng nào có vần “${w.v}”?`, quiz: { opts: o, a: o.indexOf(w.word) } }; });
   if (/nên hay/.test(T)) return [['Bạn mới chuyển đến, con chào và rủ bạn chơi cùng.', 0], ['Giành đồ chơi của bạn.', 1], ['Bạn bị ngã, con đỡ bạn dậy.', 0], ['Trêu chọc khi bạn trả lời sai.', 1]].map(([q, a]) => ({ q: 'Nên hay không nên?', quiz: { opts: ['😊 Nên', '😢 Không nên'], a: a as number }, cards: [q as string] }));
   if (/sắp xếp tranh|kể nối tiếp/.test(T)) return [{ q: 'Sắp xếp các phần của câu chuyện cho đúng thứ tự!', sort: ['🌅 Mở đầu: giới thiệu nhân vật', '⚡ Diễn biến: chuyện gì xảy ra', '🏁 Kết thúc: câu chuyện kết thúc ra sao'] }];
-  if (/hộp|truyền|vòng quay/.test(T)) return [{ q: `Đọc một tiếng có: ${toks.join(', ') || topic}`, big: /vòng/.test(T) ? '🎡' : '🎁', cards: toks }, ...(toks.length ? [{ q: 'Hình gì đây? Tiếng nào có vần của bài?', words: true }] : [])];
+  if (/hộp|truyền|vòng quay/.test(T)) return [{ q: `Đọc một tiếng có: ${toks.join(', ') || topic}`, big: /vòng/.test(T) ? '🎡' : '🎁', cards: toks }, ...(ws.length ? [{ q: 'Đọc to các từ này!', cards: ws.slice(0, 5).map((w) => w.word) }] : []), ...(toks.length ? [{ q: 'Hình gì đây? Tiếng nào có vần của bài?', words: true }] : [])];
   if (/đọc to|đèn giao thông/.test(T)) return [{ q: /đèn/.test(T) ? '🟢 nhanh · 🟡 chậm · 🔴 im lặng' : 'Đọc theo tay cô: to – vừa – thì thầm', big }];
-  if (/viết/.test(T)) return [{ q: 'Viết theo cô trên không ✍️', big }];
+  if (/viết/.test(T)) return [{ q: 'Viết theo cô trên không ✍️', big }, ...(ws.length ? [{ q: 'Viết bảng con các từ:', big: ws.slice(0, 3).map((w) => w.word).join('   ') }] : [])];
   if (/thám tử|săn|câu cá|tìm/.test(T)) return [{ q: `Tìm ${toks.length ? `tiếng có ${toks.join(', ')}` : 'những đồ vật đúng với bài học'}!`, big: /câu cá/.test(T) ? '🎣' : '🔍', cards: toks, words: !!toks.length }];
   if (/bánh xe|ghép/.test(T)) return [{ q: 'Ghép âm đầu với vần — đọc tiếng mới!', big: '🎡', cards: toks }];
   if (/ô chữ/.test(T)) return [{ q: 'Giải ô chữ — tìm từ khoá!', cards: ['1', '2', '3', '4', '5'] }];
@@ -97,7 +96,7 @@ function specsOf(x: LessonIdea, topic: string, math: boolean, minus: boolean, r:
   if (/phóng viên/.test(T)) return [{ q: 'Ai? · Ở đâu? · Làm gì?', big: '🎤' }];
   if (/đóng vai|nói theo tranh/.test(T)) return [{ q: 'Đóng vai và nói 1–2 câu với bạn', big: '🎭' }];
   if (/tranh|kể|rối/.test(T)) return [{ q: 'Chuyện gì xảy ra tiếp theo?', big: '🖼️ ➜ ❓' }];
-  if (/đọc/.test(T)) return [{ q: 'Đọc nối tiếp theo dãy 📖', big }];
+  if (/đọc/.test(T)) return [{ q: 'Đọc nối tiếp theo dãy 📖', cards: ws.length ? ws.slice(0, 6).map((w) => w.word) : undefined, big: ws.length ? undefined : big }];
   if (/gõ cửa/.test(T)) return [{ q: 'Chào bạn! Bạn tên là gì? Bạn thích gì?', big: '🚪 ✊' }];
   if (/nên hay/.test(T)) return [{ q: 'Bạn làm vậy là nên hay không nên?', big: '😊   😢' }];
   if (/bàn tay/.test(T)) return [{ q: 'Mỗi ngón tay — một việc làm tốt', big: '🖐️' }];
@@ -113,6 +112,7 @@ function specsOf(x: LessonIdea, topic: string, math: boolean, minus: boolean, r:
   return [{ q: x.t, big: '⭐' }];
 }
 
+const img0 = (src: string, x: number, y: number, w: number): El => ({ id: uid(), kind: 'img', src, x, y, w, h: w, rot: 0 } as El);
 const img = (name: string, x: number, y: number, w: number): El => ({ id: uid(), kind: 'img', src: f3dSrc(name), x, y, w, h: w, rot: 0, name } as El);
 type Anims = Slide['anims'];
 const anim = (anims: Anims, el: El, fx: 'pop' | 'zoom' | 'fly-up' | 'drop', start: 'click' | 'with' | 'after', sound?: string) =>
@@ -130,7 +130,7 @@ function groupEls(n: number, obj: string, x: number, y: number, w: number, els: 
 function studentSlide(sp: Spec, phase: { n: string; c: string }, n: number, topicToks: string[], sc: SceneKind): Slide {
   const els: El[] = [cardEl(phase.c), badgeEl(n, phase.n, phase.c)];
   const anims: Anims = [];
-  const q = text(120, 130, 1360, 140, sp.q, sp.q.length > 50 ? 46 : 58, '#1f2937');
+  const q = text(120, 130, 1360, 140, sp.q, sp.q.length > 50 ? 50 : 64, '#1f2937');
   els.push(q); anim(anims, q, 'zoom', 'with', 'magic');
   if (sp.quiz) { // trắc nghiệm: bấm chọn, đúng/sai có âm thanh (phần tử quiz sẵn có)
     const qq = sp.cards?.[0] ?? sp.q;
@@ -170,7 +170,8 @@ function studentSlide(sp: Spec, phase: { n: string; c: string }, n: number, topi
     } else { const t = text(120, y, 1360, 240, sp.big, sp.big.length > 24 ? 80 : 140, phase.c, { font: 'hand' }); els.push(t); anim(anims, t, 'pop', 'after'); y += 260; }
   }
   if (sp.words) { // tiếng có vần của bài, kèm hình — bấm để hiện từng hình
-    const ws = topicToks.flatMap(picWords).slice(0, 4);
+    const vs = vansIn(topicToks.join(' '));
+    const ws = (vs.length ? vs.flatMap((v) => wordsOf(v).filter((w) => w.pic).map((w) => ({ pic: w.pic!, word: w.word }))) : topicToks.flatMap(picWords)).slice(0, 4);
     const w = 240, x0 = 800 - (ws.length * (w + 30)) / 2;
     ws.forEach((x, i) => {
       const e = img(x.pic, x0 + i * (w + 30) + 30, Math.min(y, 540), 180); const t = text(x0 + i * (w + 30), Math.min(y, 540) + 185, w, 70, x.word, 48, phase.c);
@@ -194,7 +195,13 @@ function studentSlide(sp: Spec, phase: { n: string; c: string }, n: number, topi
 function activitySlides(n: number, phase: { n: string; c: string }, x: LessonIdea, topic: string, math: boolean, minus: boolean, r: () => number, sc: SceneKind): Slide[] {
   const tl = toolsOf(x);
   const toks = topic.replace(/[“”"]/g, '').split(/[\s,]+/).filter((t) => t && t.length <= 6).slice(0, 6);
-  const slides = specsOf(x, topic, math, minus, r).map((sp) => studentSlide(sp, phase, n, toks, sc));
+  const max = Number(/ph[aạ]m vi\s*(\d+)/i.exec(topic)?.[1]) || 10;
+  const slides = specsOf(x, topic, math, minus, r, Math.min(100, Math.max(5, max)), vansIn(topic)).slice(0, Math.max(1, Math.ceil(x.m / 2))).map((sp) => studentSlide(sp, phase, n, toks, sc));
+  // linh vật dẫn dắt ở trang đầu hoạt động
+  const m = img0(MASCOTS[n % MASCOTS.length].src, 1330, 640, 200);
+  const b = { id: uid(), kind: 'shape', shape: 'bubble', x: 980, y: 560, w: 380, h: 120, rot: 0, fill: '#fffbeb', stroke: phase.c, sw: 4, text: `Cùng chơi: ${x.t}!`, color: '#1f2937', size: 26 } as El;
+  slides[0].els.push(m, b);
+  slides[0].anims.unshift({ id: uid(), el: m.id, fx: 'fly-right', start: 'with', delay: 0, dur: 0.6 }, { id: uid(), el: b.id, fx: 'pop', start: 'after', delay: 0.1, dur: 0.4 });
   slides[0] = {
     ...slides[0], mins: x.m,
     notes: [`${x.t} (${x.m} phút${x.p ? `, chuẩn bị trước ${x.p} phút` : ''})`, ...x.s.map((s, j) => `${j + 1}. ${s}`), x.w && `Mục tiêu: ${x.w}`].filter(Boolean).join('\n'),
@@ -242,6 +249,10 @@ export async function deckFromIdeas(subject: string, title: string, pick: Pick, 
     deck.slides.push(...activitySlides(k + 1, r.phase, r.idea, topic, code === 'toan', minus, rand, sc));
     if (toolsOf(r.idea).teams) deck.slides.push({ ...boardPage(sc), phase: r.phase.n });
     deck.slides.push(...contentOf(r.phase.k as PhaseId, PER_PHASE[r.phase.k] ?? 2).map((s) => ({ ...s, phase: r.phase.n })));
+    if (r.phase.k === 'kp' && pick.dur >= 30) { // giải lao vận động ~1 phút giữa tiết
+      const br = studentSlide({ q: 'Giải lao! Đứng dậy vỗ tay, vươn vai theo cô 👏', big: '🙋 🎵' }, r.phase, k + 1, [], sc);
+      deck.slides.push({ ...br, mins: 1, notes: 'Giải lao vận động 1 phút: hát + vỗ tay + vươn vai rồi chuyển sang Luyện tập.', tool: { timer: 1, label: 'Giải lao' } });
+    }
   });
   deck.slides.push(...contentOf('cc', 1));
   deck.slides.push(dividerSlide('Hẹn gặp lại', sc, undefined, 'Cả lớp giỏi lắm!'));
