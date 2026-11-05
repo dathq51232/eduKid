@@ -2,9 +2,11 @@
 // Mỗi hoạt động (Khởi động → Vận dụng): trang chia hoạt động (mốc phút) → trang hướng dẫn hoạt động đã chọn
 // → (hoạt động thi đua: bảng thi đua tổ) → các trang nội dung bài học của đúng hoạt động đó.
 // Trang hướng dẫn gắn công cụ cho màn hình của cô (Slide.tool): hẹn giờ thảo luận / gọi tên.
-import { emptyDeck, uid, type Deck, type El, type Slide } from './types';
+import { emptyDeck, uid, type Deck, type El, type SceneKind, type Slide } from './types';
 import { MASCOTS, badgeEl, boardPage, buildPlan, cardEl, dividerSlide, planSlides, tietOf, type PhaseId } from './fromLesson';
 import { planOf, type LessonIdea, type Pick } from '@/lib/plans/idea-bank';
+import { F3D_VI, f3dSrc } from './f3d-catalog';
+import { pickScene } from './scenes';
 import type { ContentLesson } from '@/lib/content/types';
 
 const PER_PHASE: Record<string, number> = { kd: 2, kp: 3, lt: 4, vd: 2 };
@@ -25,7 +27,30 @@ function toolsOf(x: LessonIdea) {
 }
 
 // ===== Trang cho HỌC SINH theo từng ý tưởng (hướng dẫn của cô nằm trong ghi chú) =====
-type Spec = { q: string; big?: string; cards?: string[]; reveal?: string };
+type Spec = { q: string; big?: string; cards?: string[]; reveal?: string; group?: [number, number, string]; words?: boolean;
+  /** trắc nghiệm bấm chọn */ quiz?: { opts: string[]; a: number };
+  /** sắp xếp (đúng thứ tự) */ sort?: string[];
+  /** kéo thả: ô nhận (chỉ số vật đúng) + vật kéo được (hình 3D hoặc chữ) */ drop?: { zones: { label: string; ok: number[] }[]; items: { pic?: string; text?: string }[] } };
+
+// emoji → hình 3D có sẵn (public/emoji/f3d)
+const EMO: Record<string, string> = { '🚌': 'bus', '🧒': 'boy', '🎁': 'wrapped-gift', '🎡': 'ferris-wheel', '🎣': 'fish', '🔍': 'eyes', '🎤': 'microphone', '🎭': 'performing-arts',
+  '🖼️': 'framed-picture', '🚪': 'door', '🪑': 'chair', '🔥': 'fire', '🌳': 'deciduous-tree', '🏠': 'house', '👀': 'eyes', '🙋': 'raised-hand', '🎵': 'musical-notes', '💬': 'speech-balloon',
+  '🗣️': 'speaking-head', '❓': 'red-question-mark', '😊': 'grinning-face-with-smiling-eyes', '😐': 'slightly-smiling-face', '😢': 'sleeping-face', '🖐️': 'raised-hand', '⭐': 'star', '🃏': 'books',
+  '✊': 'waving-hand', '➜': 'right-arrow', '🍎': 'red-apple', '🍌': 'banana', '🎈': 'balloon', '🧸': 'teddy-bear', '✏️': 'pencil' };
+const COUNT_OBJ = ['red-apple', 'duck', 'balloon', 'star', 'butterfly', 'tangerine', 'baby-chick', 'blossom'];
+
+// bỏ dấu thanh (giữ â ă ê ô ơ ư) để so vần: "chổi" → "chôi"
+const noTone = (t: string) => t.normalize('NFD').replace(/[\u0300\u0301\u0303\u0309\u0323]/g, '').normalize('NFC').toLowerCase();
+/** hình 3D có tên tiếng Việt chứa tiếng mang vần đó (VD "oi" → voi, "ôi" → chổi) */
+function picWords(v: string): { pic: string; word: string }[] {
+  const nv = noTone(v); const out: { pic: string; word: string }[] = [];
+  for (const [pic, vi] of Object.entries(F3D_VI)) {
+    const w = vi.split(' ').find((x) => noTone(x).endsWith(nv) && noTone(x) !== nv && /^[^aăâeêioôơuưy]+$/.test(noTone(x).slice(0, -nv.length)));
+    if (w) out.push({ pic, word: w });
+    if (out.length >= 3) break;
+  }
+  return out;
+}
 const rnd = (seed: number) => () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
 
 function specsOf(x: LessonIdea, topic: string, math: boolean, minus: boolean, r: () => number): Spec[] {
@@ -35,22 +60,37 @@ function specsOf(x: LessonIdea, topic: string, math: boolean, minus: boolean, r:
   const pair = () => { if (minus) { const a = 2 + Math.floor(r() * 9); return [a, 1 + Math.floor(r() * (a - 1))] as const; } const a = 1 + Math.floor(r() * 8); return [a, 1 + Math.floor(r() * (10 - a))] as const; };
   const op = minus ? '–' : '+', calc = (a: number, b: number) => (minus ? a - b : a + b);
   const many = <V>(n: number, f: () => V): V[] => Array.from({ length: n }, f);
+  const shuffle = <V>(a: V[]) => a.map((v) => [r(), v] as const).sort((p, q) => p[0] - q[0]).map((p) => p[1]);
+  const opts4 = (ans: number) => { const o = shuffle([...new Set([ans, ans + 1, Math.max(0, ans - 1), ans + 2])].slice(0, 4)); return { opts: o.map(String), a: o.indexOf(ans) }; };
+  const names = Object.keys(F3D_VI);
+  const otherPics = (n: number, bad: string[]) => shuffle(names.filter((k) => !bad.some((v) => noTone(F3D_VI[k]).split(' ').some((w) => w.endsWith(noTone(v)))))).slice(0, n);
   if (math) {
     if (/ngón tay/.test(T)) return many(3, () => { const [a, b] = pair(); return { q: 'Cô giơ mấy ngón tay? Nói phép tính!', big: `${'☝️'.repeat(a)}   ${op}   ${'☝️'.repeat(b)}`, reveal: `${a} ${op} ${b} = ${calc(a, b)}` }; });
-    if (/xe buýt/.test(T)) return many(2, () => { const [a, b] = pair(); return { q: minus ? `Trên xe có ${a} bạn. Đến bến, ${b} bạn xuống xe. Trên xe còn mấy bạn?` : `Trên xe có ${a} bạn. Đến bến, lên thêm ${b} bạn. Có tất cả mấy bạn?`, big: `🚌  ${'🧒'.repeat(a)}`, reveal: `${a} ${op} ${b} = ${calc(a, b)}` }; });
-    if (/domino/.test(T)) return many(2, () => { const [a, b] = pair(); return { q: 'Đếm chấm hai bên. Viết phép tính!', cards: ['●'.repeat(a), '●'.repeat(b)], reveal: `${a} ${op} ${b} = ${calc(a, b)}` }; });
+    if (/xe buýt/.test(T)) return many(2, () => { const [a, b] = pair(); const n = minus ? a : a + b; return { q: minus ? `Có ${a} bạn. ${b} bạn xuống xe. Kéo các bạn còn lại lên xe!` : `Có ${a} bạn, thêm ${b} bạn nữa. Kéo tất cả lên xe buýt!`, drop: { zones: [{ label: '🚌 Xe buýt', ok: Array.from({ length: minus ? a - b : n }, (_, i) => i) }], items: Array.from({ length: n }, (_, i) => ({ pic: i % 2 ? 'girl' : 'boy' })) }, reveal: `${a} ${op} ${b} = ${calc(a, b)}` }; });
+    if (/domino/.test(T)) return many(2, () => { const [a, b] = pair(); return { q: 'Đếm hai bên. Viết phép tính!', group: [a, b, 'red-circle'], reveal: `${a} ${op} ${b} = ${calc(a, b)}` }; });
     if (/tia số/.test(T)) return many(2, () => { const [a, b] = pair(); return { q: `Đứng ở số ${a}, nhảy ${minus ? 'lùi' : 'thêm'} ${b} bước. Đến số mấy?`, cards: Array.from({ length: 11 }, (_, i) => String(i)), reveal: `${a} ${op} ${b} = ${calc(a, b)}` }; });
     if (/tìm bạn/.test(T)) return [{ q: 'Tìm bạn để hai số cộng lại bằng 10!', cards: ['1', '9', '3', '7', '4', '6', '2', '8', '5'], reveal: '1 + 9 · 3 + 7 · 4 + 6 · 2 + 8 · 5 + 5' }];
-    if (/đi chợ/.test(T)) return [{ q: 'Chọn mua 2 món. Con phải trả bao nhiêu hạt?', cards: ['🍎 2 hạt', '🍌 3 hạt', '🎈 4 hạt', '🧸 5 hạt', '✏️ 1 hạt'], reveal: 'VD: 🍎 + 🎈 → 2 + 4 = 6 hạt' }];
+    if (/đi chợ/.test(T)) return [{ q: 'Kéo 2 món con muốn mua vào giỏ. Con phải trả bao nhiêu hạt?', drop: { zones: [{ label: '🧺 Giỏ của con', ok: [0, 1, 2, 3, 4] }], items: [{ text: '🍎 2 hạt' }, { text: '🍌 3 hạt' }, { text: '🎈 4 hạt' }, { text: '🧸 5 hạt' }, { text: '✏️ 1 hạt' }] }, reveal: 'VD: 🍎 + 🎈 → 2 + 4 = 6 hạt' }];
     if (/bingo/.test(T)) { const ps = many(6, () => { const [a, b] = pair(); return `${a} ${op} ${b}`; }); return [{ q: 'BINGO! Khoanh kết quả trên phiếu của con', cards: ps.map((p) => `${p} = ?`), reveal: ps.map((p) => { const [a, , b] = p.split(' '); return `${p} = ${calc(+a, +b)}`; }).join(' · ') }]; }
-    if (/vẽ tranh/.test(T)) { const [a, b] = pair(); return [{ q: 'Vẽ tranh cho phép tính này rồi đố bạn bên cạnh!', big: `${a} ${op} ${b} = ?`, reveal: `${calc(a, b)}` }]; }
+    if (/vẽ tranh/.test(T)) { const [a, b] = pair(); return [{ q: 'Vẽ tranh cho phép tính này rồi đố bạn bên cạnh!', big: `${a} ${op} ${b} = ?`, group: [a, b, 'blossom'], reveal: `${calc(a, b)}` }]; }
+    if (/xếp hàng|so sánh/.test(T)) return many(2, () => { const ns = shuffle([...Array(11).keys()]).slice(0, 5).sort((x, y) => x - y); return { q: 'Xếp các số từ bé đến lớn!', sort: ns.map(String) }; });
+    if (/rung chuông/.test(T)) return many(4, () => { const [a, b] = pair(); return { q: `🔔 ${a} ${op} ${b} = ?`, quiz: opts4(calc(a, b)) }; });
     if (/đếm/.test(T)) return [{ q: 'Đếm theo nhịp vỗ tay 👏 — nhanh dần!', big: '1  2  3  4  5  6  7  8  9  10' }];
-    if (/bắn tên|rung chuông|bảng con|tiếp sức|ai nhanh|truyền/.test(T)) return many(4, () => { const [a, b] = pair(); return { q: /rung/.test(T) ? 'Rung chuông vàng! Ghi đáp án lên bảng con' : 'Ai nhanh nhất?', big: `${a} ${op} ${b} = ?`, reveal: `${calc(a, b)}` }; });
+    if (/bắn tên|rung chuông|bảng con|tiếp sức|ai nhanh|truyền/.test(T)) return many(4, () => { const [a, b] = pair(); return { q: /rung/.test(T) ? 'Rung chuông vàng! Ghi đáp án lên bảng con' : 'Ai nhanh nhất?', big: `${a} ${op} ${b} = ?`, group: r() < 0.5 ? [a, b, COUNT_OBJ[Math.floor(r() * COUNT_OBJ.length)]] : undefined, reveal: `${calc(a, b)}` }; });
   }
-  if (/hộp|truyền|vòng quay/.test(T)) return [{ q: `Đọc một tiếng có: ${toks.join(', ') || topic}`, big: /vòng/.test(T) ? '🎡' : '🎁', cards: toks }];
+  const ws = toks.flatMap((v) => picWords(v).map((w) => ({ ...w, v })));
+  if (/câu cá|thám tử|săn chữ/.test(T) && ws.length) {
+    const vs = [...new Set(ws.map((w) => w.v))].slice(0, 3), mine = ws.filter((w) => vs.includes(w.v)).slice(0, 5), other = otherPics(2, toks);
+    const items = shuffle([...mine.map((w) => ({ pic: w.pic, v: w.v })), ...other.map((p) => ({ pic: p, v: '' }))]);
+    return [{ q: `Kéo hình có vần ${vs.join(', ')} vào đúng giỏ!`, drop: { zones: vs.map((v) => ({ label: `🧺 ${v}`, ok: items.map((x, i) => (x.v === v ? i : -1)).filter((i) => i >= 0) })), items: items.map((x) => ({ pic: x.pic })) } }];
+  }
+  if (/rung chuông|ai nhanh/.test(T) && ws.length) return ws.slice(0, 3).map((w) => { const o = shuffle([w.word, ...otherPics(3, toks).map((k) => F3D_VI[k].split(' ')[0])]); return { q: `🔔 Tiếng nào có vần “${w.v}”?`, quiz: { opts: o, a: o.indexOf(w.word) } }; });
+  if (/nên hay/.test(T)) return [['Bạn mới chuyển đến, con chào và rủ bạn chơi cùng.', 0], ['Giành đồ chơi của bạn.', 1], ['Bạn bị ngã, con đỡ bạn dậy.', 0], ['Trêu chọc khi bạn trả lời sai.', 1]].map(([q, a]) => ({ q: 'Nên hay không nên?', quiz: { opts: ['😊 Nên', '😢 Không nên'], a: a as number }, cards: [q as string] }));
+  if (/sắp xếp tranh|kể nối tiếp/.test(T)) return [{ q: 'Sắp xếp các phần của câu chuyện cho đúng thứ tự!', sort: ['🌅 Mở đầu: giới thiệu nhân vật', '⚡ Diễn biến: chuyện gì xảy ra', '🏁 Kết thúc: câu chuyện kết thúc ra sao'] }];
+  if (/hộp|truyền|vòng quay/.test(T)) return [{ q: `Đọc một tiếng có: ${toks.join(', ') || topic}`, big: /vòng/.test(T) ? '🎡' : '🎁', cards: toks }, ...(toks.length ? [{ q: 'Hình gì đây? Tiếng nào có vần của bài?', words: true }] : [])];
   if (/đọc to|đèn giao thông/.test(T)) return [{ q: /đèn/.test(T) ? '🟢 nhanh · 🟡 chậm · 🔴 im lặng' : 'Đọc theo tay cô: to – vừa – thì thầm', big }];
   if (/viết/.test(T)) return [{ q: 'Viết theo cô trên không ✍️', big }];
-  if (/thám tử|săn|câu cá|tìm/.test(T)) return [{ q: `Tìm ${toks.length ? `tiếng có ${toks.join(', ')}` : 'những đồ vật đúng với bài học'}!`, big: /câu cá/.test(T) ? '🎣' : '🔍', cards: toks }];
+  if (/thám tử|săn|câu cá|tìm/.test(T)) return [{ q: `Tìm ${toks.length ? `tiếng có ${toks.join(', ')}` : 'những đồ vật đúng với bài học'}!`, big: /câu cá/.test(T) ? '🎣' : '🔍', cards: toks, words: !!toks.length }];
   if (/bánh xe|ghép/.test(T)) return [{ q: 'Ghép âm đầu với vần — đọc tiếng mới!', big: '🎡', cards: toks }];
   if (/ô chữ/.test(T)) return [{ q: 'Giải ô chữ — tìm từ khoá!', cards: ['1', '2', '3', '4', '5'] }];
   if (/đoán nhân vật/.test(T)) return [{ q: 'Cô đang là nhân vật nào?', big: '🗣️ ❓' }];
@@ -73,27 +113,88 @@ function specsOf(x: LessonIdea, topic: string, math: boolean, minus: boolean, r:
   return [{ q: x.t, big: '⭐' }];
 }
 
-function studentSlide(sp: Spec, phase: { n: string; c: string }, n: number): Slide {
-  const els: El[] = [cardEl(phase.c), badgeEl(n, phase.n, phase.c), text(120, 140, 1360, 150, sp.q, sp.q.length > 50 ? 48 : 60, '#1f2937')];
-  if (sp.big) els.push(text(120, sp.cards?.length ? 300 : 330, 1360, 260, sp.big, sp.big.length > 24 ? 80 : 140, phase.c));
-  const cards = sp.cards ?? [];
+const img = (name: string, x: number, y: number, w: number): El => ({ id: uid(), kind: 'img', src: f3dSrc(name), x, y, w, h: w, rot: 0, name } as El);
+type Anims = Slide['anims'];
+const anim = (anims: Anims, el: El, fx: 'pop' | 'zoom' | 'fly-up' | 'drop', start: 'click' | 'with' | 'after', sound?: string) =>
+  anims.push({ id: uid(), el: el.id, fx, start, delay: start === 'after' ? 0.05 : 0, dur: 0.45, ...(sound ? { sound } : {}) });
+
+/** một nhóm đồ vật xếp lưới trong khung [x, x+w] */
+function groupEls(n: number, obj: string, x: number, y: number, w: number, els: El[], anims: Anims, first: boolean) {
+  const cols = Math.min(5, n), sz = Math.min(110, Math.floor(w / cols) - 8);
+  for (let i = 0; i < n; i++) {
+    const e = img(obj, x + (w - cols * (sz + 8)) / 2 + (i % cols) * (sz + 8), y + Math.floor(i / cols) * (sz + 8), sz);
+    els.push(e); anim(anims, e, 'pop', i === 0 && !first ? 'click' : 'after', i === 0 ? 'pop' : undefined);
+  }
+}
+
+function studentSlide(sp: Spec, phase: { n: string; c: string }, n: number, topicToks: string[], sc: SceneKind): Slide {
+  const els: El[] = [cardEl(phase.c), badgeEl(n, phase.n, phase.c)];
+  const anims: Anims = [];
+  const q = text(120, 130, 1360, 140, sp.q, sp.q.length > 50 ? 46 : 58, '#1f2937');
+  els.push(q); anim(anims, q, 'zoom', 'with', 'magic');
+  if (sp.quiz) { // trắc nghiệm: bấm chọn, đúng/sai có âm thanh (phần tử quiz sẵn có)
+    const qq = sp.cards?.[0] ?? sp.q;
+    els.push({ id: uid(), kind: 'quiz', x: 230, y: 150, w: 1140, h: 640, rot: 0, q: qq, opts: sp.quiz.opts, a: sp.quiz.a, cols: 2 } as El);
+    return { id: uid(), bg: 'white', trans: 'fade', anims, els, notes: '', phase: phase.n, scene: sc };
+  }
+  if (sp.sort) { // sắp xếp: học sinh lên bảng kéo đúng thứ tự
+    els.push({ id: uid(), kind: 'sort', x: 160, y: 270, w: 1280, h: 540, rot: 0, prompt: '', items: sp.sort } as El);
+    return { id: uid(), bg: 'white', trans: 'fade', anims, els, notes: '', phase: phase.n, scene: sc };
+  }
+  if (sp.drop) { // kéo thả: vật kéo được ở dưới, ô nhận ở trên
+    const items = sp.drop.items.map((it, i) => {
+      const n = sp.drop!.items.length, w = Math.min(150, Math.floor(1360 / n) - 12), x = 800 - (n * (w + 12)) / 2 + i * (w + 12);
+      const e = (it.pic ? { ...img(it.pic, x, 660, w), drag: true } : { id: uid(), kind: 'shape', shape: 'round', x, y: 680, w, h: 110, rot: 0, fill: '#ffffff', stroke: phase.c, sw: 5, text: it.text ?? '', color: '#1f2937', size: 30, drag: true }) as El;
+      anim(anims, e, 'fly-up', 'after'); return e;
+    });
+    const zs = sp.drop.zones, zw = Math.min(600, Math.floor(1360 / zs.length) - 20);
+    zs.forEach((z, i) => els.push({ id: uid(), kind: 'drop', x: 800 - (zs.length * (zw + 20)) / 2 + i * (zw + 20), y: 290, w: zw, h: 330, rot: 0, label: z.label, accept: z.ok.map((k) => items[k]?.id).filter(Boolean), color: phase.c } as El));
+    els.push(...items);
+    if (sp.reveal) { const r = text(200, 800, 1200, 70, sp.reveal, 44, '#ffffff', { bg: phase.c }); els.push(r); anim(anims, r, 'pop', 'click', 'tada'); }
+    return { id: uid(), bg: 'white', trans: 'fade', anims, els, notes: '', phase: phase.n, scene: sc };
+  }
+  let y = 300;
+  if (sp.group) { // phép tính bằng đồ vật: nhóm 1 hiện lần lượt, bấm → nhóm 2
+    const [a, b, obj] = sp.group;
+    groupEls(a, obj, 140, y, 600, els, anims, true);
+    els.push(text(740, y + 60, 120, 120, sp.big?.includes('–') ? '–' : '+', 110, phase.c));
+    groupEls(b, obj, 860, y, 600, els, anims, false);
+    y = 620;
+    if (sp.big) { const t = text(400, y, 800, 100, sp.big, 72, phase.c); els.push(t); anim(anims, t, 'fly-up', 'click'); y = 740; }
+  } else if (sp.big) {
+    const parts = sp.big.split(/\s+/).filter(Boolean);
+    if (parts.length && parts.every((p) => EMO[p])) { // emoji → hình 3D to, nảy vào
+      const w = Math.min(280, Math.floor(1100 / parts.length));
+      parts.forEach((p, i) => { const e = img(EMO[p], 800 - (parts.length * (w + 20)) / 2 + i * (w + 20), y, w); els.push(e); anim(anims, e, 'drop', 'after'); });
+      y += w + 20;
+    } else { const t = text(120, y, 1360, 240, sp.big, sp.big.length > 24 ? 80 : 140, phase.c, { font: 'hand' }); els.push(t); anim(anims, t, 'pop', 'after'); y += 260; }
+  }
+  if (sp.words) { // tiếng có vần của bài, kèm hình — bấm để hiện từng hình
+    const ws = topicToks.flatMap(picWords).slice(0, 4);
+    const w = 240, x0 = 800 - (ws.length * (w + 30)) / 2;
+    ws.forEach((x, i) => {
+      const e = img(x.pic, x0 + i * (w + 30) + 30, Math.min(y, 540), 180); const t = text(x0 + i * (w + 30), Math.min(y, 540) + 185, w, 70, x.word, 48, phase.c);
+      els.push(e, t); anim(anims, e, 'pop', 'click', 'pop'); anim(anims, t, 'fly-up', 'with');
+    });
+    y = Math.min(y, 540) + 270;
+  }
+  const cards = sp.words ? [] : sp.cards ?? [];
   if (cards.length) {
-    const w = Math.min(260, Math.floor(1300 / cards.length) - 16), y = sp.big ? 570 : 380, x0 = 800 - (cards.length * (w + 16) - 16) / 2;
-    cards.forEach((c, i) => els.push({ id: uid(), kind: 'shape', shape: 'round', x: x0 + i * (w + 16), y, w, h: 130, rot: 0, fill: '#ffffff', stroke: phase.c, sw: 6, text: c, color: '#1f2937', size: c.length > 6 ? 34 : 56 } as El));
+    const w = Math.min(260, Math.floor(1300 / cards.length) - 16), cy = Math.min(y, 610), x0 = 800 - (cards.length * (w + 16) - 16) / 2;
+    cards.forEach((c, i) => { const e = { id: uid(), kind: 'shape', shape: 'round', x: x0 + i * (w + 16), y: cy, w, h: 130, rot: 0, fill: '#ffffff', stroke: phase.c, sw: 6, text: c, color: '#1f2937', size: c.length > 6 ? 34 : 56 } as El; els.push(e); anim(anims, e, 'fly-up', 'after'); });
   }
-  const anims: Slide['anims'] = [];
   if (sp.reveal) {
-    const r = text(200, 740, 1200, 100, sp.reveal, sp.reveal.length > 40 ? 40 : 60, '#ffffff', { bg: phase.c });
-    els.push(r);
-    anims.push({ id: uid(), el: r.id, fx: 'pop', start: 'click', delay: 0, dur: 0.6, sound: 'tada' });
+    const r = text(200, 760, 1200, 90, sp.reveal, sp.reveal.length > 40 ? 38 : 58, '#ffffff', { bg: phase.c });
+    els.push(r); anim(anims, r, 'pop', 'click', 'tada');
   }
-  return { id: uid(), bg: 'white', trans: 'fade', anims, els, notes: '', phase: phase.n };
+  return { id: uid(), bg: 'white', trans: 'fade', anims, els, notes: '', phase: phase.n, scene: sc };
 }
 
 /** các trang học sinh của một hoạt động; trang đầu mang ghi chú hướng dẫn + công cụ cho cô */
-function activitySlides(n: number, phase: { n: string; c: string }, x: LessonIdea, topic: string, math: boolean, minus: boolean, r: () => number): Slide[] {
+function activitySlides(n: number, phase: { n: string; c: string }, x: LessonIdea, topic: string, math: boolean, minus: boolean, r: () => number, sc: SceneKind): Slide[] {
   const tl = toolsOf(x);
-  const slides = specsOf(x, topic, math, minus, r).map((sp) => studentSlide(sp, phase, n));
+  const toks = topic.replace(/[“”"]/g, '').split(/[\s,]+/).filter((t) => t && t.length <= 6).slice(0, 6);
+  const slides = specsOf(x, topic, math, minus, r).map((sp) => studentSlide(sp, phase, n, toks, sc));
   slides[0] = {
     ...slides[0], mins: x.m,
     notes: [`${x.t} (${x.m} phút${x.p ? `, chuẩn bị trước ${x.p} phút` : ''})`, ...x.s.map((s, j) => `${j + 1}. ${s}`), x.w && `Mục tiêu: ${x.w}`].filter(Boolean).join('\n'),
@@ -135,13 +236,14 @@ export async function deckFromIdeas(subject: string, title: string, pick: Pick, 
   const topic = title.replace(/^.*?:\s*/, '').replace(/\s*-\s*ti[eế]t\s*\d+.*$/i, '').trim();
   const minus = /tr[uừ]/i.test(title);
   const rand = rnd(title.length * 7 + pick.dur);
+  const sc = pickScene(`${title} ${subject}`, code === 'toan' ? 'garden' : 'class'); // cảnh nền theo bài
   planOf(subject, title, pick).forEach((r, k) => {
-    deck.slides.push(dividerSlide(r.phase.n, 'class', undefined, `${r.start}′ – ${r.end}′`));
-    deck.slides.push(...activitySlides(k + 1, r.phase, r.idea, topic, code === 'toan', minus, rand));
-    if (toolsOf(r.idea).teams) deck.slides.push({ ...boardPage('class'), phase: r.phase.n });
+    deck.slides.push(dividerSlide(r.phase.n, sc, undefined, `${r.start}′ – ${r.end}′`));
+    deck.slides.push(...activitySlides(k + 1, r.phase, r.idea, topic, code === 'toan', minus, rand, sc));
+    if (toolsOf(r.idea).teams) deck.slides.push({ ...boardPage(sc), phase: r.phase.n });
     deck.slides.push(...contentOf(r.phase.k as PhaseId, PER_PHASE[r.phase.k] ?? 2).map((s) => ({ ...s, phase: r.phase.n })));
   });
   deck.slides.push(...contentOf('cc', 1));
-  deck.slides.push(dividerSlide('Hẹn gặp lại', 'class', undefined, 'Cả lớp giỏi lắm!'));
+  deck.slides.push(dividerSlide('Hẹn gặp lại', sc, undefined, 'Cả lớp giỏi lắm!'));
   return deck;
 }
