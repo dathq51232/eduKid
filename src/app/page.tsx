@@ -304,22 +304,49 @@ export default function HomePage() {
           </div>
         </section>
 
-        <footer id="footer" className="brand-footer">
-          <div className="brand-footer-inner wrap">
-            <p className="brand-footer-name"><strong>EduChain Kids</strong> <Star aria-hidden="true" /> Học hôm nay, tỏa sáng ngày mai</p>
-            <nav className="footer-links" aria-label="Trên trang này">
-              <a href="#subjects">Môn học</a>
-              <a href="#how-it-works">Cách học</a>
-              <a href="#games">Trò chơi</a>
-              <a href="#safety">Thầy cô</a>
+        <footer id="footer" className="brand-footer ft">
+          <svg className="ft-wave" viewBox="0 0 1600 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40 C 280 0 560 4 850 22 S 1350 46 1600 8 V 40 Z" /></svg>
+          {/* eslint-disable-next-line @next/next/no-img-element -- linh vật trang trí */}
+          <img className="ft-milo" src="/brand/milo-sm.webp" alt="" width={120} height={165} loading="lazy" />
+          <div className="ft-grid wrap">
+            <div className="ft-brand">
+              <Link href="/" className="ft-logo" aria-label="EduChain Kids — về trang chủ">
+                {/* eslint-disable-next-line @next/next/no-img-element -- logo */}
+                <img src="/brand/logo-full.webp" alt="EduChain Kids" width={250} height={68} loading="lazy" />
+              </Link>
+              <p className="ft-slogan"><Star aria-hidden="true" />Học hôm nay, <b>tỏa sáng</b> ngày mai</p>
+              <p className="ft-about">Ứng dụng ôn luyện cho học sinh tiểu học lớp 1–5, đồng hành cùng thầy cô và phụ huynh.</p>
+            </div>
+            <nav className="ft-col" aria-label="Học tập">
+              <h2><i style={{ background: '#22a447' }} />Học tập</h2>
+              <ul>
+                <li><a href="#subjects">Toán · Tiếng Việt · Tiếng Anh</a></li>
+                <li><a href="#how-it-works">Cách học 10 phút mỗi ngày</a></li>
+                <li><Link href="/tro-choi">Trò chơi trí tuệ</Link></li>
+                <li><Link href="/thanh-tich">Thành tích &amp; huy hiệu</Link></li>
+              </ul>
             </nav>
-            <address className="footer-contact" aria-label="Liên hệ">
-              <span className="footer-contact-h">Liên hệ</span>
-              <a href={`mailto:${SITE_CONTACT.email}`}><Mail aria-hidden="true" /> {SITE_CONTACT.email}</a>
-              <a href={`tel:${SITE_CONTACT.phone}`}><Phone aria-hidden="true" /> {SITE_CONTACT.phoneDisplay}</a>
-              <a href={`https://zalo.me/${SITE_CONTACT.zalo}`} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" /> Zalo {SITE_CONTACT.zaloName}</a>
+            <nav className="ft-col" aria-label="Dành cho">
+              <h2><i style={{ background: '#f5c330' }} />Dành cho</h2>
+              <ul>
+                <li><Link href="/dang-nhap">Học sinh</Link></li>
+                <li><Link href="/dang-nhap?vai=phu-huynh&next=/phu-huynh">Phụ huynh</Link></li>
+                <li><Link href="/dang-nhap?vai=nguoi-lon">Thầy cô</Link></li>
+                <li><a href="#safety">Nhà trường</a></li>
+              </ul>
+            </nav>
+            <address className="ft-col ft-contact" aria-label="Liên hệ">
+              <h2><i style={{ background: '#f08a1c' }} />Liên hệ</h2>
+              <a href={`mailto:${SITE_CONTACT.email}`}><span style={{ background: '#2563eb' }}><Mail aria-hidden="true" /></span>{SITE_CONTACT.email}</a>
+              <a href={`tel:${SITE_CONTACT.phone}`}><span style={{ background: '#22a447' }}><Phone aria-hidden="true" /></span>{SITE_CONTACT.phoneDisplay}</a>
+              <a href={`https://zalo.me/${SITE_CONTACT.zalo}`} target="_blank" rel="noopener noreferrer"><span style={{ background: '#f08a1c' }}><MessageCircle aria-hidden="true" /></span>Zalo {SITE_CONTACT.zaloName}</a>
             </address>
           </div>
+          <div className="ft-bottom wrap">
+            <span>© {new Date().getFullYear()} EduChain Kids · Học vui – Tiến bộ mỗi ngày</span>
+            <span className="ft-dots" aria-hidden="true">{['#2563eb', '#22a447', '#f5c330', '#f08a1c', '#7c4dd6', '#e2437f'].map((c) => <i key={c} style={{ background: c }} />)}</span>
+          </div>
+          <span className="ft-stripe" aria-hidden="true" />
         </footer>
         <ContactFab />
       </main>

@@ -7980,3 +7980,38 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
 }
+
+/* ===== Footer trang chủ (11/2026): nền xanh đậm, logo trên thẻ trắng, màu mảnh ghép của logo ===== */
+.brand-footer.ft { position: relative; margin-top: 110px; padding: 0; color: #dbe5ff; background: #14307a; border-top: 0; }
+.ft-wave { position: absolute; left: 0; top: -39px; width: 100%; height: 40px; display: block; fill: #14307a; }
+.ft-milo { position: absolute; right: max(16px, calc(50% - 600px)); top: -136px; width: 110px; height: auto; filter: drop-shadow(0 8px 10px rgb(0 0 0 / .22)); pointer-events: none; }
+.ft-grid { display: grid; grid-template-columns: 1.25fr 1fr 1fr 1.3fr; gap: 32px; padding-top: 40px; }
+.ft-logo { display: inline-block; padding: 14px 18px; background: #fff; border-radius: 22px; box-shadow: 0 12px 30px rgb(0 0 0 / .25); }
+.ft-logo img { display: block; width: 230px; height: auto; }
+.ft-slogan { margin: 16px 0 0; font: 800 20px/1.35 var(--font-display), sans-serif; color: #fff; }
+.ft-slogan svg { display: inline-block; width: 19px; height: 19px; color: #f5c330; fill: #f5c330; vertical-align: -3px; margin-right: 6px; }
+.ft-slogan b { color: #f5c330; }
+.ft-about { margin: 8px 0 0; max-width: 320px; font-size: 14.5px; line-height: 1.6; color: #b9c8f0; }
+.ft-col h2 { display: flex; align-items: center; gap: 8px; margin: 6px 0 12px; font: 800 17px var(--font-display), sans-serif; color: #fff; }
+.ft-col h2 i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.ft-col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.ft-col li a { display: inline-flex; align-items: center; min-height: 36px; color: #dbe5ff; font-size: 15px; font-weight: 600; text-decoration: none; }
+.ft-col li a:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+.ft-contact { display: grid; align-content: start; gap: 9px; font-style: normal; }
+.ft-contact a { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 14px; background: rgb(255 255 255 / .09); border: 1px solid rgb(255 255 255 / .14); color: #fff; font-weight: 700; font-size: 14.5px; text-decoration: none; word-break: break-word; }
+.ft-contact a:hover { background: rgb(255 255 255 / .16); }
+.ft-contact a span { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; color: #fff; }
+.ft-contact a svg { width: 16px; height: 16px; }
+.ft-bottom { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 34px; padding-top: 16px; padding-bottom: 22px; border-top: 1px solid rgb(255 255 255 / .15); font-size: 13.5px; color: #9fb2e6; }
+.ft-dots { display: flex; gap: 7px; margin-right: 150px; }
+.ft-dots i { width: 11px; height: 11px; border-radius: 3px; transform: rotate(45deg); }
+.ft-stripe { display: block; height: 8px; background: linear-gradient(90deg, #2563eb 0 16.66%, #22a447 0 33.33%, #f5c330 0 50%, #f08a1c 0 66.66%, #7c4dd6 0 83.33%, #e2437f 0); }
+:root[data-theme="dark"] .brand-footer.ft { background: #0d1d4a; }
+:root[data-theme="dark"] .ft-wave { fill: #0d1d4a; }
+@media (max-width: 900px) { .ft-grid { grid-template-columns: 1fr 1fr; } .ft-brand { grid-column: 1 / -1; } }
+@media (max-width: 560px) {
+  .ft-grid { grid-template-columns: 1fr; gap: 24px; }
+  .ft-milo { width: 84px; top: -104px; }
+  .ft-bottom { flex-direction: column; align-items: flex-start; padding-bottom: 86px; }
+  .ft-dots { margin-right: 0; }
+}
