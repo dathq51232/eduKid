@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, UserPlus } from 'lucide-react';
@@ -22,6 +22,8 @@ export default function SignupPage() {
   const router = useRouter();
   const configured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   const [role, setRole] = useState<Role>('teacher');
+  // /dang-ky?vai=phu-huynh: mở sẵn tab phụ huynh (nút "Đăng ký cho con" ở trang chủ)
+  useEffect(() => { if (new URLSearchParams(window.location.search).get('vai') === 'phu-huynh') setRole('parent'); }, []);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -71,7 +73,7 @@ export default function SignupPage() {
       <div className="auth-card">
         <Link href="/" className="brand auth-brand" aria-label="EduChain Kids - Trang chủ"><BrandLogo size={40} /></Link>
         <h1>Đăng ký</h1>
-        <p className="auth-sub">Dành cho thầy cô và phụ huynh. Tài khoản học sinh do thầy cô tạo trong mục Quản lý lớp.</p>
+        <p className="auth-sub">Dành cho thầy cô và phụ huynh. Phụ huynh đăng ký rồi thêm con để con tự học tại nhà; học sinh ở trường do thầy cô tạo tài khoản.</p>
         {!configured && <p className="adm-alert is-warn">Chưa kết nối Supabase nên chưa đăng ký được. Xem docs/AUTH-SETUP.md.</p>}
         {done ? (
           <p className="adm-alert is-ok" role="status">{done}</p>
@@ -103,7 +105,7 @@ export default function SignupPage() {
             {role === 'teacher' ? (
               <p className="adm-alert is-info">Giáo viên đăng ký <strong>miễn phí</strong>, dùng được ngay: 1 lớp, <strong>dùng thử đủ lớp 40 học sinh trong {TEACHER_TRIAL_DAYS} ngày</strong>; sau đó gói miễn phí {FREE_STUDENT_LIMIT} học sinh. Cần thêm học sinh, liên hệ quản trị {ADMIN_CONTACT.phoneDisplay} (Zalo) — {ADMIN_CONTACT.email}.</p>
             ) : (
-              <p className="adm-alert is-info">Sau khi đăng ký, nhập mã mời do thầy cô gửi để xem tiến độ của con.</p>
+              <p className="adm-alert is-info">Sau khi đăng ký, bấm <strong>Thêm con</strong> (tên gọi, lớp) để nhận <strong>mã gia đình + PIN</strong> cho con đăng nhập học ngay — mỗi bé được học thử 7 ngày. Con học ở trường thì nhập mã mời của thầy cô.</p>
             )}
             <label className="check-line">
               <input type="checkbox" required checked={agree} onChange={(e) => setAgree(e.target.checked)} />

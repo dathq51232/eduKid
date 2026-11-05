@@ -8015,3 +8015,55 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
   .ft-bottom { flex-direction: column; align-items: flex-start; padding-bottom: 86px; }
   .ft-dots { margin-right: 0; }
 }
+
+/* ===== Học tại nhà: phụ huynh thêm con (11/2026) ===== */
+.fam { display: grid; gap: 16px; padding: 22px; border-radius: 24px; background: linear-gradient(135deg, #eef4ff, #f2fbf4); border: 1px solid #dbe6fb; }
+.fam-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.fam-kicker { margin: 0; font-size: 12px; font-weight: 800; letter-spacing: .08em; color: #2563eb; }
+.fam-head h2 { margin: 2px 0 4px; font-size: 24px; }
+.fam-sub { margin: 0; color: var(--muted); max-width: 560px; }
+.fam-code { display: grid; grid-template-columns: auto auto; align-items: center; gap: 0 10px; padding: 10px 14px; border-radius: 16px; background: #fff; border: 2px dashed #93b4f5; }
+.fam-code small { grid-column: 1 / -1; font-weight: 700; color: var(--muted); font-size: 12px; }
+.fam-code b { font: 800 28px var(--font-display), sans-serif; letter-spacing: .08em; color: #1e3a8a; }
+.fam-code button { border: 0; background: #eef4ff; border-radius: 10px; width: 36px; height: 36px; display: grid; place-items: center; color: #2563eb; cursor: pointer; }
+.fam-code svg { width: 18px; height: 18px; }
+.fam-how { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: #334155; }
+.fam-how li { line-height: 1.6; }
+.fam-how span { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 6px; border-radius: 50%; background: #2563eb; color: #fff; font-weight: 800; font-size: 12px; vertical-align: 1px; }
+.fam-kids { display: grid; gap: 10px; }
+.fam-kid { display: grid; grid-template-columns: auto 1fr auto auto auto; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.fam-av { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; color: #fff; font: 800 22px var(--font-display), sans-serif; }
+.fam-kid-main { display: grid; gap: 3px; min-width: 0; }
+.fam-kid-main h3 { margin: 0; font-size: 18px; }
+.fam-acc { justify-self: start; font-size: 12.5px; font-weight: 700; padding: 2px 10px; border-radius: 999px; }
+.fam-acc.is-trial { background: #fef3c7; color: #92400e; } .fam-acc.is-ok { background: #dcfce7; color: #166534; } .fam-acc.is-off { background: #fee2e2; color: #991b1b; }
+.fam-note { color: var(--muted); }
+.fam-grade { display: grid; gap: 2px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.fam-grade select { font: inherit; font-size: 14px; font-weight: 700; color: var(--ink); padding: 6px 8px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); }
+.fam-pin { display: grid; grid-template-columns: auto auto; align-items: center; gap: 0 6px; }
+.fam-pin small { grid-column: 1 / -1; font-size: 12px; font-weight: 700; color: var(--muted); }
+.fam-pin b { font: 800 20px var(--font-display), sans-serif; letter-spacing: .12em; min-width: 92px; }
+.fam-pin button { border: 0; background: none; color: var(--muted); cursor: pointer; display: grid; }
+.fam-pin svg { width: 18px; height: 18px; }
+.fam-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.fam-form { display: grid; gap: 12px; padding: 18px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.fam-form h3 { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 18px; }
+.fam-form h3 svg { width: 20px; height: 20px; color: #2563eb; }
+.fam-grades { display: flex; flex-wrap: wrap; gap: 6px; }
+.fam-grades button { padding: 8px 16px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font: 700 15px var(--font-display), sans-serif; cursor: pointer; }
+.fam-grades button.is-on { background: #2563eb; border-color: #2563eb; color: #fff; }
+.fam-form-acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.fam-free { margin: 0; font-size: 13px; color: var(--muted); }
+.fam-add { justify-self: start; display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 14px; border: 2px dashed #93b4f5; background: #fff; color: #2563eb; font: 800 15px var(--font-display), sans-serif; cursor: pointer; }
+.fam-add svg { width: 18px; height: 18px; }
+.fam-progress-h { margin: 8px 0 0; font-size: 20px; }
+.auth-family { display: grid; gap: 6px; margin-top: 14px; padding: 14px; border-radius: 16px; background: #f0f7ff; border: 1px solid #cfe0fb; font-size: 14px; }
+.auth-family b { font-size: 15px; }
+.auth-family div { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+:root[data-theme="dark"] .fam { background: linear-gradient(135deg, #12204a, #0f2a22); border-color: #233a6b; }
+:root[data-theme="dark"] .fam-code, :root[data-theme="dark"] .fam-add { background: var(--surface); }
+:root[data-theme="dark"] .auth-family { background: #12204a; border-color: #233a6b; }
+@media (max-width: 760px) {
+  .fam-kid { grid-template-columns: auto 1fr; }
+  .fam-grade, .fam-pin, .fam-acts { grid-column: 2; }
+}

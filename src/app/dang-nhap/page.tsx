@@ -199,7 +199,7 @@ function StudentLogin({ configured, initialCode, next = '', parentMode = false }
     return (
       <form className="auth-form" onSubmit={findClass}>
         <label className="adm-field">
-          <span>{parentMode ? 'Mã lớp (trên thẻ đăng nhập của con)' : 'Mã lớp (trên thẻ đăng nhập)'}</span>
+          <span>{parentMode ? 'Mã lớp / mã gia đình (trên thẻ đăng nhập của con)' : 'Mã lớp / mã gia đình (trên thẻ đăng nhập)'}</span>
           <input className="class-code-input" inputMode="text" autoCapitalize="characters" autoComplete="off" placeholder="ABC-123" maxLength={8} required value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} />
         </label>
         {error && <p className="adm-alert is-error" role="alert">{error}</p>}
@@ -344,6 +344,12 @@ function LoginScreen() {
             <>
               <p className="adm-alert is-info">Phụ huynh dùng chung <strong>mã lớp</strong> và <strong>mã PIN của con</strong> (trên thẻ đăng nhập) để xem tiến độ học, không cần tạo tài khoản riêng.</p>
               <StudentLogin configured={configured} initialCode={(params.get('lop') ?? '').toUpperCase().slice(0, 8)} next={next} parentMode />
+              <div className="auth-family">
+                <b>Cho con học tại nhà?</b>
+                <span>Tạo tài khoản phụ huynh, thêm con để nhận <strong>mã gia đình + PIN</strong> — học thử 7 ngày.</span>
+                <div><Link href="/dang-ky?vai=phu-huynh" className="btn btn-primary btn-sm">Đăng ký cho con</Link>
+                  <button type="button" className="btn btn-outline btn-sm" onClick={() => setTab('adult')}>Đăng nhập bằng email</button></div>
+              </div>
             </>
           )}
           {tab === 'adult' && <AdultLogin next={next} configured={configured} />}

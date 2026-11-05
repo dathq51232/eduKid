@@ -9,6 +9,8 @@ import GalleryTeaser from '@/components/gallery/GalleryTeaser';
 import type { ParentMsg } from '@/lib/classroom/messages';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import RedeemInviteForm from '@/components/classroom/RedeemInviteForm';
+import FamilyPanel, { type FamilyChild } from '@/components/parent/FamilyPanel';
+import { headers } from 'next/headers';
 import SignOutButton from '@/components/classroom/SignOutButton';
 import { STATUS_LABEL } from '@/lib/classroom/diary';
 import type { Contact } from '@/lib/classroom/class-tools';
@@ -240,6 +242,16 @@ export default async function ParentsPage() {
     : [{ data: [] }, { data: [] }];
   const children = (kids ?? []) as Child[];
   const all = (results ?? []) as Result[];
+  // Học tại nhà (migration 0047): danh sách con kèm PIN / học phí, mã gia đình
+  const { data: fam, error: famErr } = await supabase.rpc('parent_children');
+  const famKids = famErr ? [] : ((fam ?? []) as FamilyChild[]);
+  let famCode: string | null = null;
+  if (famKids.some((k) => k.own)) {
+    const { data: fc } = await supabase.rpc('parent_family_class');
+    famCode = ((fc ?? []) as { join_code: string }[])[0]?.join_code ?? null;
+  }
+  const h = await headers();
+  const origin = `${h.get('x-forwarded-proto') ?? 'https'}://${h.get('x-forwarded-host') ?? h.get('host') ?? 'educhainkids.vn'}`;
 
   return (
     <>
@@ -250,15 +262,17 @@ export default async function ParentsPage() {
           <SignOutButton />
         </div>
 
+        {famErr ? <p className="adm-alert is-warn">Chưa bật “Học tại nhà”: hãy chạy <code>supabase/migrations/0047_family_accounts.sql</code> trên Supabase.</p>
+          : <FamilyPanel kids={famKids} code={famCode} origin={origin} />}
+
         <section className="dash-card">
-          <h2>Liên kết với con</h2>
-          <p className="dash-muted">Mỗi học sinh có một mã mời riêng do thầy cô chủ nhiệm cấp. Bạn chỉ xem được tiến độ của con đã liên kết.</p>
+          <h2>Con học ở trường có dùng EduChain Kids?</h2>
+          <p className="dash-muted">Nhập mã mời do thầy cô chủ nhiệm cấp để xem tiến độ của con ở lớp. Bạn chỉ xem được tiến độ của con đã liên kết.</p>
           <RedeemInviteForm />
         </section>
 
-        {children.length === 0 ? (
-          <p className="dash-muted">Chưa liên kết với học sinh nào.</p>
-        ) : children.map((c) => {
+        {children.length > 0 && <h2 className="fam-progress-h">Tiến độ học tập</h2>}
+        {children.map((c) => {
           const mine = all.filter((r) => r.student_id === c.id);
           const best = new Map<string, number>();
           for (const r of mine) best.set(r.lesson_code, Math.max(best.get(r.lesson_code) ?? 0, r.points));

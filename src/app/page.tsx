@@ -300,7 +300,7 @@ export default function HomePage() {
           </div>
           <div className="home-final-cta-actions">
             <Link href="/chon-bai" className="btn btn-yellow">Bắt đầu học <ArrowRight aria-hidden="true" /></Link>
-            <Link href="/dang-nhap?vai=phu-huynh&next=/phu-huynh" className="btn home-final-cta-secondary"><Users aria-hidden="true" /> Trang phụ huynh</Link>
+            <Link href="/dang-ky?vai=phu-huynh" className="btn home-final-cta-secondary"><Users aria-hidden="true" /> Phụ huynh đăng ký cho con</Link>
           </div>
         </section>
 
@@ -330,7 +330,7 @@ export default function HomePage() {
               <h2><i style={{ background: '#f5c330' }} />Dành cho</h2>
               <ul>
                 <li><Link href="/dang-nhap">Học sinh</Link></li>
-                <li><Link href="/dang-nhap?vai=phu-huynh&next=/phu-huynh">Phụ huynh</Link></li>
+                <li><Link href="/dang-ky?vai=phu-huynh">Phụ huynh đăng ký cho con</Link></li>
                 <li><Link href="/dang-nhap?vai=nguoi-lon">Thầy cô</Link></li>
                 <li><a href="#safety">Nhà trường</a></li>
               </ul>
