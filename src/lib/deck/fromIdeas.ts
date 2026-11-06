@@ -215,13 +215,19 @@ export async function deckFromIdeas(subject: string, title: string, pick: Pick, 
   const code = subjCode(subject);
   let lessonPlan: ReturnType<typeof buildPlan> | null = null;
   let lessonId: string | undefined;
+  // tiết "Ôn luyện tuần N": lấy nội dung các bài của tuần N, KHÔNG lấy chữ trong tên tiết làm ngữ liệu
+  const wk = /tu[aầ]n\s*(\d+)/i.exec(title)?.[1];
+  const review = /[oô]n\s*(luy[eệ]n|t[aậ]p)|tu[aầ]n\s*\d+/i.test(title);
+  let srcTitle = review ? '' : title;
   if (code) {
     const [c, k] = await Promise.all([import('@/lib/content'), import('@/lib/content/knowledge')]);
     const want = norm(title);
     const list = (c.CONTENT as ContentLesson[]).filter((l) => l.subject === code);
     const l = list.find((x) => norm(x.title) === want && (x as { grade?: number }).grade === grade) ?? list.find((x) => norm(x.title) === want)
-      ?? list.find((x) => want.includes(norm(x.title).replace(/^bài\s*\d+[.:]?\s*/, '')) && norm(x.title).length > 6);
+      ?? list.find((x) => want.includes(norm(x.title).replace(/^bài\s*\d+[.:]?\s*/, '')) && norm(x.title).length > 6)
+      ?? (wk ? list.find((x) => x.grade === grade && new RegExp(`^Tu[aầ]n ${wk}\\b`, 'i').test(x.ref)) : undefined);
     if (l) {
+      srcTitle = l.title;
       lessonId = l.id;
       lessonPlan = buildPlan(l, k.knowledgeFor(l.id), { mascot: MASCOTS[0].id, warmup: 'quiz', scene: 'class', seed: 1, tiet: tietOf(title) });
     }
@@ -238,9 +244,11 @@ export async function deckFromIdeas(subject: string, title: string, pick: Pick, 
   if (cover.length) deck.slides = cover;
   else deck.slides[0].els.push(text(360, 600, 880, 70, `${subject} · ${pick.dur} phút`, 40, '#475569', { font: 'quick' }));
   deck.src = { lesson: lessonId ?? title };
+  const used = planOf(subject, title, pick).reduce((t, r) => t + r.idea.m, 0);
+  if (used < pick.dur) deck.slides[0].notes = `⚠ Mới chọn hoạt động cho ${used}/${pick.dur} phút — còn ${pick.dur - used} phút chưa có hoạt động.${review && !lessonId ? '\n⚠ Chưa tìm thấy nội dung của tuần này trong ngân hàng bài — cô thêm ngữ liệu vào các trang.' : ''}\n${deck.slides[0].notes ?? ''}`.trim();
   deck.mins = pick.dur;
 
-  const topic = title.replace(/^.*?:\s*/, '').replace(/\s*-\s*ti[eế]t\s*\d+.*$/i, '').trim();
+  const topic = srcTitle.replace(/^.*?:\s*/, '').replace(/\s*-\s*ti[eế]t\s*\d+.*$/i, '').trim();
   const minus = /tr[uừ]/i.test(title);
   const rand = rnd(title.length * 7 + pick.dur);
   const sc = pickScene(`${title} ${subject}`, code === 'toan' ? 'garden' : 'class'); // cảnh nền theo bài

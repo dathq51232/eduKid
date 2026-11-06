@@ -37,6 +37,7 @@ export default function LessonPlanAside({ classId, grade }: { classId: string; g
   // Tạo bài trình chiếu (bảng slide_decks, migration 0046) rồi mở trình soạn
   async function makeDeck() {
     if (!supabase || !cur || !pick) return;
+    if (total < pick.dur && !window.confirm(`Mới chọn hoạt động cho ${total}/${pick.dur} phút (còn ${pick.dur - total} phút trống).\nVẫn tạo slide? Bấm “Huỷ” rồi “Sửa gợi ý” để chọn thêm.`)) return;
     setBusy(true); setErr('');
     const D = await deckFromIdeas(cur.subject, cur.title, pick, grade);
     const { data, error } = await supabase.from('slide_decks').insert({ title: D.title.slice(0, 120), grade: D.grade, class_id: classId, data: D }).select('id').single();
@@ -69,6 +70,7 @@ export default function LessonPlanAside({ classId, grade }: { classId: string; g
           <MonitorPlay size={14} /> {busy ? 'Đang tạo…' : 'Tạo slide trình chiếu'}
         </button>
       </div>
+      {total < pick.dur && rows.length > 0 && <p className="li-msg is-err">Còn {pick.dur - total} phút chưa có hoạt động.</p>}
       {err && <p className="li-msg is-err">{err}</p>}
     </section>
   );
