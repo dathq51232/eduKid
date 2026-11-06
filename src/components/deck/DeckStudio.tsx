@@ -63,6 +63,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   const setPane = (p: 'props' | 'anim' | 'layers') => { if (p === 'anim') setPanel('anim'); else if (p === 'layers') setPanel('pos'); };
   const [foot, setFoot] = useState<'dur' | 'note' | 'timer' | null>(null);
   const [grid, setGrid] = useState(false);
+  const [snapGrid, setSnapGrid] = useState(false);
   const [tplTab, setTplTab] = useState<'set' | 'page'>('set');
   const [replace, setReplace] = useState(false);
   const [cat3d, setCat3d] = useState(-1);
@@ -640,7 +641,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
                 hide={(id) => setSlide((s) => ({ ...s, els: s.els.map((e) => (e.id === id ? { ...e, hide: !e.hide } : e)) }))} />
             </>}
             {panel === 'edit' && (selEl ? (
-              <Props e={selEl} slide={slide} deck={deck} patch={(p) => patchEl(selEl.id, p)} patchSoft={(p) => patchEl(selEl.id, p, false)} commitSoft={() => commit(deckRef.current)}
+              <Props e={selEl} slide={slide} deck={deck} images={myImages} patch={(p) => patchEl(selEl.id, p)} patchSoft={(p) => patchEl(selEl.id, p, false)} commitSoft={() => commit(deckRef.current)}
                 textRef={textRef} lessons={lessons} onDup={dupEl} onDel={delEl} onOrder={order} onAnimate={() => setPanel('anim')}
                 onCopyStyle={() => { setStyleCopy(selEl); setMsg({ kind: 'info', text: '🖌 Bấm vào vật khác để dán kiểu (Esc để huỷ).' }); }} />
             ) : <div className="dk-empty"><p>Bấm vào một vật trên trang để sửa. Bấm đúp vào chữ để gõ.</p>
@@ -679,7 +680,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
             }} onClick={() => setCtx(null)}>
               <SlideFrame className="dk-main cv-slide" style={{ width: W, maxWidth: 'none' }}>{(k) => <>
                 <SlideView key={slide.id} slide={slide} mode="edit" scale={k} assetUrl={assetUrl} sel={sel} multi={selIds} onSelect={pick}
-                  onSelectMany={(ids) => { setMulti(ids); setSel(ids[0] ?? null); }} onChange={onChange} onEditText={editText} editing={inline} />
+                  onSelectMany={(ids) => { setMulti(ids); setSel(ids[0] ?? null); }} onChange={onChange} onEditText={editText} editing={inline} snapGrid={snapGrid} />
                 {bb && (
                   <div className={`cv-quick${bb.t * k < 56 ? ' is-below' : ''}`} style={{ left: ((bb.l + bb.r) / 2) * k, top: (bb.t * k < 56 ? bb.b : bb.t) * k }} onPointerDown={(ev) => ev.stopPropagation()}>
                     <button type="button" className={allLock ? 'is-on' : ''} title={allLock ? 'Mở khoá' : 'Khoá (không kéo nhầm)'} aria-label={allLock ? 'Mở khoá' : 'Khoá'} onClick={() => setMany({ lock: !allLock })}>{allLock ? <Lock aria-hidden="true" /> : <Unlock aria-hidden="true" />}</button>
@@ -744,6 +745,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
             <span className="cv-grow" />
             <label className="cv-zoom"><input type="range" min={50} max={200} step={10} value={Math.round(zoom * 100)} onChange={(e) => setZoom(Number(e.target.value) / 100)} aria-label="Thu phóng" disabled={grid} /><b>{Math.round(zoom * 100)}%</b></label>
             <span className="cv-pg">{cur + 1} / {deck.slides.length}</span>
+            <button type="button" className={`cv-snap${snapGrid ? ' is-on' : ''}`} onClick={() => setSnapGrid((v) => !v)} title={snapGrid ? 'Tắt lưới và hút vật (Alt khi kéo để tắt tạm)' : 'Bật lưới và hút vật vào mỗi 20 px'} aria-label="Lưới và căn chỉnh" aria-pressed={snapGrid}><Grid2x2 aria-hidden="true" /><span>Hút 20</span></button>
             <button type="button" className={grid ? 'is-on' : ''} onClick={() => setGrid(!grid)} title="Xem lưới tất cả trang" aria-label="Xem lưới" aria-pressed={grid}><Grid2x2 aria-hidden="true" /></button>
             <button type="button" onClick={fullscreen} title="Toàn màn hình" aria-label="Toàn màn hình"><Maximize aria-hidden="true" /></button>
           </footer>
@@ -782,8 +784,8 @@ function Swatches({ colors, value, set, label }: { colors: string[]; value: stri
   );
 }
 
-function Props({ e, slide, deck, patch, patchSoft, commitSoft, textRef, lessons, onDup, onDel, onOrder, onAnimate, onCopyStyle }: {
-  e: El; slide: Slide; deck: Deck; patch: (p: Partial<El>) => void; patchSoft: (p: Partial<El>) => void; commitSoft: () => void;
+function Props({ e, slide, deck, images, patch, patchSoft, commitSoft, textRef, lessons, onDup, onDel, onOrder, onAnimate, onCopyStyle }: {
+  e: El; slide: Slide; deck: Deck; images: TeacherAsset[]; patch: (p: Partial<El>) => void; patchSoft: (p: Partial<El>) => void; commitSoft: () => void;
   textRef: React.RefObject<HTMLTextAreaElement | null>; lessons: Lesson3DRow[] | null;
   onDup: () => void; onDel: () => void; onOrder: (top: boolean) => void; onAnimate: () => void; onCopyStyle: () => void;
 }) {
@@ -822,14 +824,32 @@ function Props({ e, slide, deck, patch, patchSoft, commitSoft, textRef, lessons,
       {e.kind === 'quiz' && <>
         <label className="dk-f">Câu hỏi<textarea ref={textRef} rows={2} value={e.q} onChange={(v) => patchSoft({ q: v.target.value })} onBlur={commitSoft} /></label>
         <div className="dk-f">Đáp án (chọn ô tròn = đáp án đúng)
-          {e.opts.map((o, i) => (
-            <div key={i} className="dk-opt-row">
-              <input type="radio" name={`ans-${e.id}`} checked={e.a === i} onChange={() => patch({ a: i })} aria-label={`Đáp án đúng là ${String.fromCharCode(65 + i)}`} />
-              <b>{String.fromCharCode(65 + i)}</b>
-              <input value={o} maxLength={60} onChange={(v) => patchSoft({ opts: e.opts.map((x, k) => (k === i ? v.target.value : x)) })} onBlur={commitSoft} />
-              <button type="button" aria-label="Bỏ đáp án" disabled={e.opts.length <= 2} onClick={() => patch({ opts: e.opts.filter((_, k) => k !== i), a: e.a === i ? 0 : e.a > i ? e.a - 1 : e.a })}><X aria-hidden="true" /></button>
-            </div>
-          ))}
+          {e.opts.map((o, i) => {
+            const text = typeof o === 'string' ? o : o.text;
+            const image = typeof o === 'string' ? undefined : o.img;
+            const isAsset = typeof o !== 'string' && o.imageAsset;
+            const imageSelection = isAsset ? image ?? '' : image ? '__current__' : '';
+            return (
+              <div key={i} className="dk-quiz-option-edit">
+                <div className="dk-opt-row">
+                  <input type="radio" name={`ans-${e.id}`} checked={e.a === i} onChange={() => patch({ a: i })} aria-label={`Đáp án đúng là ${String.fromCharCode(65 + i)}`} />
+                  <b>{String.fromCharCode(65 + i)}</b>
+                  <input value={text} maxLength={60} onChange={(v) => patchSoft({ opts: e.opts.map((x, k) => (k === i ? (typeof x === 'string' ? v.target.value : { ...x, text: v.target.value }) : x)) })} onBlur={commitSoft} />
+                  <button type="button" aria-label="Bỏ đáp án" disabled={e.opts.length <= 2} onClick={() => patch({ opts: e.opts.filter((_, k) => k !== i), a: e.a === i ? 0 : e.a > i ? e.a - 1 : e.a })}><X aria-hidden="true" /></button>
+                </div>
+                <label className="dk-f dk-quiz-image-pick">Ảnh đáp án
+                  <select value={imageSelection} onChange={(v) => {
+                    if (v.target.value === '__current__') return;
+                    patch({ opts: e.opts.map((x, k) => k === i ? { ...(typeof x === 'string' ? { text: x } : x), img: v.target.value || undefined, imageAsset: v.target.value ? true : undefined } : x) });
+                  }}>
+                    <option value="">Không dùng ảnh</option>
+                    {image && !isAsset && <option value="__current__">Dùng hình minh hoạ hiện tại</option>}
+                    {images.map((asset) => <option key={asset.id} value={asset.path}>{asset.name}</option>)}
+                  </select>
+                </label>
+              </div>
+            );
+          })}
           {e.opts.length < 6 && <button type="button" className="btn btn-outline btn-sm" onClick={() => patch({ opts: [...e.opts, `Đáp án ${String.fromCharCode(65 + e.opts.length)}`] })}><Plus aria-hidden="true" /> Thêm đáp án</button>}
         </div>
         <div className="dk-f">Xếp đáp án<div className="dk-seg"><button type="button" className={e.cols === 2 ? 'is-on' : ''} onClick={() => patch({ cols: 2 })}>2 cột</button><button type="button" className={e.cols === 1 ? 'is-on' : ''} onClick={() => patch({ cols: 1 })}>1 cột</button></div></div>
