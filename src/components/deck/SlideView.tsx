@@ -9,9 +9,10 @@ import dynamic from 'next/dynamic';
 import SceneBg from './SceneBg';
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
-import { FONTS, FX_BY_ID, SH, SW, bgCss, type El, type ShapeEl, type Slide, type SortEl } from '@/lib/deck/types';
+import { FONTS, FX_BY_ID, SH, SW, bgCss, quizImage, quizText, type El, type ShapeEl, type Slide, type SortEl } from '@/lib/deck/types';
 import { animIterations, fxEasing, fxFrames, planSlide, type Step } from '@/lib/deck/player';
 import { playSound } from '@/lib/deck/sounds';
+import { questionSegments, speakSegments, stopSpeaking } from '@/lib/speech';
 
 const Scene3DBox = dynamic(() => import('./Scene3DBox'), { ssr: false });
 
@@ -77,6 +78,9 @@ function SortBody({ e, mode, st, onTile }: { e: SortEl; mode: 'edit' | 'play' | 
   return (
     <div className={`dk-sort${s.ok ? ' is-ok' : ''}`}>
       {e.prompt && <div className="dk-sort-q" style={{ fontSize: Math.min(54, fs * 1.05) }}>{e.prompt}</div>}
+      {(s.ok || s.bad.length > 0) && <div className={`dk-sort-feedback${s.ok ? ' is-ok' : ' is-bad'}`} role="status" aria-live="polite">
+       {s.ok ? 'Tuyệt vời! Em đã sắp xếp chính xác.' : `Chưa đúng ở ${s.bad.map((i) => `ô ${i + 1}`).join(', ')}. Thử lại nhé!`}
+      </div>}
       <div className="dk-sort-slots">
         {e.items.map((_, k) => {
           const v = shown ? shown[k] : s.slots[k];
@@ -121,13 +125,21 @@ function ElBody({ e, mode, assetUrl, pick, onPick, sort, onTile, board }: { e: E
           <div className="dk-quiz-q" style={{ fontSize: qs }}>{e.q}</div>
           <div className="dk-quiz-opts" style={{ gridTemplateColumns: e.cols === 2 ? '1fr 1fr' : '1fr' }}>
             {e.opts.map((o, i) => {
+              const text = quizText(o);
+              const image = quizImage(o);
+              const imageSrc = image && typeof o !== 'string' && o.imageAsset ? assetUrl?.(image) : image;
               const st = pick && pick.i === i ? (pick.ok ? ' is-ok' : ' is-bad') : pick?.ok && i === e.a ? '' : '';
               return (
                 <button key={i} type="button" className={`dk-opt${st}${mode === 'edit' && i === e.a ? ' is-key' : ''}`} style={{ fontSize: os }}
                   disabled={mode !== 'play' || !!pick?.ok}
                   onPointerDown={(ev) => { if (mode === 'play') ev.stopPropagation(); }}
                   onClick={(ev) => { if (mode !== 'play') return; ev.stopPropagation(); onPick?.(i); }}>
-                  <b style={{ background: COL[i % COL.length] }}>{String.fromCharCode(65 + i)}</b><span>{o}</span>
+                  <b style={{ background: COL[i % COL.length] }}>{String.fromCharCode(65 + i)}</b>
+                  {imageSrc && <>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- hình đáp án trong bài thao giảng */}
+                    <img src={imageSrc} alt={text} style={{ width: 82, height: 82, objectFit: 'cover', borderRadius: 12, flexShrink: 0 }} draggable={false} />
+                  </>}
+                  <span>{text}</span>
                 </button>
               );
             })}
@@ -186,17 +198,21 @@ type Props = {
   onWin?: (what: string) => void;
   /** điểm các tổ cho Bảng thi đua tổ */
   board?: BoardTeam[];
+  /** hiện lưới và hút vật vào lưới khi kéo */
+  snapGrid?: boolean;
 };
-
-const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, scale, assetUrl, sel, onSelect, multi, onSelectMany, onChange, onEditText, editing, onAction, onLink, startStep = 0, onWin, board }, ref) {
+const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, scale, assetUrl, sel, onSelect, multi, onSelectMany, onChange, onEditText, editing, onAction, onLink, startStep = 0, onWin, board, snapGrid = false }, ref) {
   const winRef = useRef(onWin); winRef.current = onWin;
   const plan = useMemo(() => planSlide(slide), [slide]);
   const play = mode === 'play';
+  useEffect(() => () => { if (play) stopSpeaking(); }, [play]);
   const [hidden, setHidden] = useState<Set<string>>(() => (play ? new Set(plan.hidden) : new Set()));
   const [picks, setPicks] = useState<Record<string, Pick>>({});
   const [pos, setPos] = useState<Record<string, { x: number; y: number }>>({});
   const [done, setDone] = useState<Set<string>>(new Set()); // vật đã kéo đúng ô
   const [sorts, setSorts] = useState<Record<string, SortSt>>({});
+  const [speaking, setSpeaking] = useState(false);
+  const [speechProblem, setSpeechProblem] = useState<'unsupported' | 'no_vi_voice' | null>(null);
   const sortsRef = useRef(sorts); sortsRef.current = sorts;
   const nodes = useRef(new Map<string, HTMLDivElement>());
   const step = useRef(0);
@@ -363,6 +379,10 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
         const Rr = Math.max(...d.many.map((m) => m.x + m.w)), B = Math.max(...d.many.map((m) => m.y + m.h));
         let sx = dx, sy = dy;
         const gv: number[] = [], gh: number[] = [];
+        if (!ev.altKey && snapGrid) {
+          sx += Math.round((L + sx) / 20) * 20 - (L + sx);
+          sy += Math.round((T + sy) / 20) * 20 - (T + sy);
+        }
         if (!ev.altKey) {
           const others = slide.els.filter((o) => !d.many.some((m) => m.id === o.id));
           const tx = [0, SW / 2, SW, ...others.flatMap((o) => [o.x, o.x + o.w / 2, o.x + o.w])];
@@ -413,6 +433,29 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
     if (plan.triggers[e.id]) { const a: PlayAction = { t: 'trigger', el: e.id }; apply(a); onAction?.(a); return; }
     if (e.link) onLink?.(e.link);
   };
+  const readAloud = useCallback(async () => {
+    if (speaking) { stopSpeaking(); setSpeaking(false); return; }
+    const quiz = slide.els.filter((e): e is Extract<El, { kind: 'quiz' }> => e.kind === 'quiz' && !e.hide);
+    const content = slide.els.filter((e) => !e.hide).flatMap((e) => {
+      switch (e.kind) {
+        case 'text': return [e.text];
+        case 'shape': return e.text ? [e.text] : [];
+        case 'quiz': return [e.q];
+        case 'sort': return [e.prompt, ...e.items];
+        case 'drop': return [e.label];
+        case 'scene3d': return [e.title];
+        case 'teams': return [e.title];
+        case 'img': return e.name ? [e.name] : [];
+      }
+    }).filter(Boolean);
+    const prompt = content.join('. ') || slide.notes || 'Nội dung trang';
+    const opts = quiz.flatMap((e) => e.opts.map((o) => quizText(o)));
+    const result = await speakSegments(questionSegments(prompt, opts, 'tieng-viet'), {
+      rate: 0.9, onStart: () => setSpeaking(true), onEnd: () => setSpeaking(false),
+    });
+    setSpeechProblem(result.ok ? null : result.reason);
+    if (!result.ok) setSpeaking(false);
+  }, [slide, speaking]);
 
   return (
     <div ref={rootRef} className={`dk-slide is-${mode}`} style={{ width: SW, height: SH, transform: `scale(${scale})`, background: bgCss(slide.bg) }}
@@ -435,7 +478,17 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
         const b = box; setBox(null);
         onSelectMany?.(slide.els.filter((e) => e.x < b.x + b.w && e.x + e.w > b.x && e.y < b.y + b.h && e.y + e.h > b.y).map((e) => e.id));
       }}>
+      {play && (
+        <>
+          <button type="button" className={`dk-tts${speaking ? ' is-on' : ''}`} onClick={(ev) => { ev.stopPropagation(); void readAloud(); }} title={speaking ? 'Dừng đọc' : 'Đọc nội dung trang'} aria-label={speaking ? 'Dừng đọc' : 'Đọc nội dung trang'} aria-pressed={speaking}>{speaking ? '⏹' : '🔊'}</button>
+          {speechProblem && <div className="dk-tts-msg" role="status">
+            {speechProblem === 'no_vi_voice' ? 'Máy chưa có giọng đọc Tiếng Việt. Thử Microsoft Edge hoặc cài giọng Tiếng Việt trong cài đặt Windows.' : 'Trình duyệt này không hỗ trợ đọc nội dung.'}
+            <button type="button" onClick={() => setSpeechProblem(null)} aria-label="Đóng">×</button>
+          </div>}
+        </>
+      )}
       {slide.scene && <SceneBg id={slide.scene} />}
+      {mode === 'edit' && snapGrid && <i className="dk-grid-overlay" aria-hidden="true" />}
       {slide.els.map((e) => {
         const p = play ? pos[e.id] : undefined;
         const clickable = play && (!!plan.triggers[e.id] || !!e.link || (!!e.drag && !done.has(e.id)));

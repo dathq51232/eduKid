@@ -38,7 +38,11 @@ export type ImgEl = ElBase & { kind: 'img'; src: string; /** ảnh trong Kho c�
   /** bo góc 0–100 (% bán kính tối đa) · đổ bóng mềm */ rad?: number; shadow?: boolean };
 export type ShapeEl = ElBase & { kind: 'shape'; shape: ShapeKind; fill: string; stroke: string; sw: number; text?: string; color?: string; size?: number;
   /** bo góc 0–100 (% bán kính tối đa, hình chữ nhật / thẻ) · đổ bóng mềm · kiểu nét viền */ rad?: number; shadow?: boolean; dash?: 'solid' | 'dash' | 'dot' };
-export type QuizEl = ElBase & { kind: 'quiz'; q: string; opts: string[]; a: number; cols: 1 | 2 };
+export type QuizOpt = { text: string; img?: string; imageAsset?: boolean; accent?: string };
+export type QuizMode = 'single' | 'tf' | 'fill';
+export type QuizEl = ElBase & { kind: 'quiz'; q: string; opts: Array<string | QuizOpt>; a: number; cols: 1 | 2; mode?: QuizMode };
+export const quizText = (o: string | QuizOpt): string => (typeof o === 'string' ? o : o.text);
+export const quizImage = (o: string | QuizOpt): string | undefined => (typeof o === 'string' ? undefined : o.img);
 export type DropEl = ElBase & { kind: 'drop'; label: string; /** id các vật kéo đúng vào ô này */ accept: string[]; color: string };
 export type SceneEl = ElBase & { kind: 'scene3d'; lesson: string; title: string };
 /** Trò chơi Sắp xếp: items là thứ tự ĐÚNG; khi chiếu các thẻ bị xáo, học sinh bấm / kéo thẻ vào ô theo thứ tự */
@@ -121,9 +125,13 @@ export const BGS: { id: string; label: string; css: string }[] = [
   { id: 'blob', label: 'Khối màu vui', css: 'radial-gradient(ellipse 560px 520px at 88% 12%,#ffd88a 98%,transparent 100%), radial-gradient(ellipse 380px 300px at 4% 100%,#bfe3ff 98%,transparent 100%), radial-gradient(circle,#f08a1c55 0 5px,transparent 6px) 140px 120px/1600px 900px, #fff8ec' },
   { id: 'kraft', label: 'Giấy sổ tay', css: 'radial-gradient(circle at 20% 25%,#ffffff80,transparent 40%), radial-gradient(circle at 85% 85%,#a0784624,transparent 45%), #f3e7cf' },
   { id: 'paper', label: 'Giấy kẻ ô', css: '#fffef7 url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2740%27 height=%2740%27%3E%3Cpath d=%27M40 0H0V40%27 fill=%27none%27 stroke=%27%23c7d2fe%27/%3E%3C/svg%3E")' },
+  { id: 'aurora', label: 'Cực quang', css: 'radial-gradient(ellipse at 16% 12%,#34d399bb,transparent 34%), radial-gradient(ellipse at 82% 18%,#818cf8cc,transparent 38%), radial-gradient(ellipse at 55% 88%,#ec4899aa,transparent 45%), linear-gradient(145deg,#172554,#312e81 58%,#111827)' },
+  { id: 'flowers', label: 'Vườn hoa', css: 'radial-gradient(circle at 12% 18%,#f9a8d4 0 12px,transparent 13px), radial-gradient(circle at 88% 24%,#c4b5fd 0 16px,transparent 17px), radial-gradient(circle at 78% 82%,#fda4af 0 14px,transparent 15px), radial-gradient(circle at 22% 78%,#a7f3d0 0 16px,transparent 17px), linear-gradient(135deg,#fff7ed,#fdf2f8 55%,#eff6ff)' },
+  { id: 'lollipop', label: 'Cầu vồng kẹo', css: 'radial-gradient(ellipse at 12% 8%,#fbcfe8 0 20%,transparent 20.5%), radial-gradient(ellipse at 92% 92%,#bae6fd 0 25%,transparent 25.5%), linear-gradient(135deg,#fff7ed,#fef3c7 45%,#dcfce7)' },
+  { id: 'chalk', label: 'Bảng phấn', css: 'radial-gradient(circle at 18% 22%,#ffffff14 0 2px,transparent 3px) 0 0/74px 68px, linear-gradient(135deg,#164e3b,#14532d 58%,#0f3d2e)' },
 ];
 export const bgCss = (bg: string) => BGS.find((b) => b.id === bg)?.css ?? (/^#[0-9a-f]{3,8}$/i.test(bg) ? bg : '#ffffff');
-export const darkBg = (bg: string) => bg === 'board' || bg === 'night' || bg === 'cosmos';
+export const darkBg = (bg: string) => bg === 'board' || bg === 'night' || bg === 'cosmos' || bg === 'aurora' || bg === 'chalk';
 
 export const uid = () => Math.random().toString(36).slice(2, 9);
 export const MAX_SLIDES = 80, MAX_ELS = 60;

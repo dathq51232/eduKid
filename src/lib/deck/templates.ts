@@ -42,6 +42,41 @@ export const SLIDE_TEMPLATES: Tpl[] = [
       return [slide('white', m)]; },
   },
   {
+    id: 'split', title: 'Hai cột cân đối', desc: 'Chia nội dung và hình minh hoạ thành hai mảng rõ ràng', bg: 'leaf', preview: [EM('open-book'), ST('sunflower')],
+    make: () => { const m: Mk = { els: [], anims: [] };
+      T(m, 'Cùng tìm hiểu', 110, 42, 1380, 120, 76, '#166534', { align: 'left' });
+      S(m, 'round', 90, 210, 680, 570, '#ffffff', '', { stroke: '#86efac', sw: 5 } as Partial<El>);
+      S(m, 'round', 820, 210, 690, 570, '#ffffff', '', { stroke: '#86efac', sw: 5 } as Partial<El>);
+      T(m, 'Ý chính\nViết nội dung ở đây…', 150, 300, 560, 360, 54, '#14532d', { font: 'quick' });
+      I(m, ST('sunflower'), 960, 270, 400, { name: 'Hình minh hoạ' });
+      return [slide('leaf', m)]; },
+  },
+  {
+    id: 'cards', title: 'Ba thẻ ý chính', desc: 'Trình bày ba ý ngắn bằng thẻ màu và hình dán', bg: 'lollipop', preview: [ST('star'), ST('red-apple')],
+    make: () => { const m: Mk = { els: [], anims: [] };
+      T(m, 'Ba điều em khám phá', 140, 45, 1320, 120, 76, '#7c2d12');
+      const cards = [
+        { x: 90, color: '#dbeafe', pic: 'open-book', text: 'Ý thứ nhất…' },
+        { x: 575, color: '#dcfce7', pic: 'seedling', text: 'Ý thứ hai…' },
+        { x: 1060, color: '#fce7f3', pic: 'star', text: 'Ý thứ ba…' },
+      ];
+      cards.forEach((c, i) => {
+        S(m, 'round', c.x, 230, 450, 530, c.color, '', { stroke: '#ffffff', sw: 5, shadow: true } as Partial<El>);
+        I(m, ST(c.pic), c.x + 115, 280, 220, { name: `Hình ý ${i + 1}` });
+        T(m, c.text, c.x + 35, 560, 380, 120, 48, '#334155', { font: 'quick' });
+      });
+      return [slide('lollipop', m)]; },
+  },
+  {
+    id: 'quiz-image', title: 'Trắc nghiệm có hình', desc: 'Câu hỏi tương tác với đáp án minh hoạ bằng tranh', bg: 'cosmos', preview: [ST('rabbit'), ST('cat')],
+    make: () => { const m: Mk = { els: [], anims: [] };
+      const q = { id: uid(), kind: 'quiz', x: 220, y: 120, w: 1160, h: 700, rot: 0, q: 'Con vật nào xuất hiện trong tranh?', opts: [
+        { text: 'Thỏ', img: ST('rabbit') }, { text: 'Mèo', img: ST('cat') }, { text: 'Vịt', img: ST('duck') }, { text: 'Cá', img: ST('fish') },
+      ], a: 0, cols: 2 } as El;
+      m.els.push(q); A(m, q.id, 'pop', 'with', { sound: 'pop' });
+      return [slide('cosmos', m, 'Quan sát hình minh hoạ ở các đáp án, rồi chọn đáp án đúng.')]; },
+  },
+  {
     id: 'gift', title: 'Khởi động: Hộp quà bí mật', desc: 'Bấm vào từng hộp quà để mở câu hỏi', bg: 'peach', preview: [ST('wrapped-gift')],
     make: () => { const m: Mk = { els: [], anims: [] };
       T(m, 'Hộp quà bí mật', 200, 40, 1200, 130, 84, '#be123c');
