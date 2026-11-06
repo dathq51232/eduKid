@@ -23,7 +23,7 @@ export type ElBase = {
   /** nhóm vật (chọn một vật trong nhóm là chọn cả nhóm) */
   group?: string;
   /** vai trò trong bố cục chủ đề (đổi chủ đề cả bài thì đổi màu theo): khung nội dung, nhãn bài, hình thức làm bài, chữ trang chia */
-  role?: 'card' | 'badge' | 'mode' | 'title' | 'divider' | 'cardback' | 'step' | 'body' | 'mascot' | 'deco';
+  role?: 'card' | 'badge' | 'mode' | 'title' | 'divider' | 'cardback' | 'step' | 'body' | 'mascot' | 'deco' | 'tape';
   /** độ trong suốt 0.1–1 (mặc định 1) */
   op?: number;
   /** lật ngang */
@@ -118,6 +118,8 @@ export const BGS: { id: string; label: string; css: string }[] = [
   { id: 'cosmos', label: 'Vũ trụ', css: 'radial-gradient(circle,#ffffffd9 0 3px,transparent 4px) 0 0/190px 170px, radial-gradient(circle,#ffffff80 0 2px,transparent 3px) 70px 90px/130px 150px, radial-gradient(circle at 20% 15%,#3b3f99,#151a46 60%,#0b0f2e)' },
   { id: 'leaf', label: 'Lá non', css: 'linear-gradient(160deg,#dcfce7,#bbf7d0 55%,#a7f3d0)' },
   { id: 'dots', label: 'Chấm bi', css: 'radial-gradient(circle,#bae6fd 0 6px,transparent 7px) 0 0/56px 56px, #e0f2fe' },
+  { id: 'blob', label: 'Khối màu vui', css: 'radial-gradient(ellipse 560px 520px at 88% 12%,#ffd88a 98%,transparent 100%), radial-gradient(ellipse 380px 300px at 4% 100%,#bfe3ff 98%,transparent 100%), radial-gradient(circle,#f08a1c55 0 5px,transparent 6px) 140px 120px/1600px 900px, #fff8ec' },
+  { id: 'kraft', label: 'Giấy sổ tay', css: 'radial-gradient(circle at 20% 25%,#ffffff80,transparent 40%), radial-gradient(circle at 85% 85%,#a0784624,transparent 45%), #f3e7cf' },
   { id: 'paper', label: 'Giấy kẻ ô', css: '#fffef7 url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2740%27 height=%2740%27%3E%3Cpath d=%27M40 0H0V40%27 fill=%27none%27 stroke=%27%23c7d2fe%27/%3E%3C/svg%3E")' },
 ];
 export const bgCss = (bg: string) => BGS.find((b) => b.id === bg)?.css ?? (/^#[0-9a-f]{3,8}$/i.test(bg) ? bg : '#ffffff');

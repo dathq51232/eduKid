@@ -4,12 +4,13 @@
 // “Đổi chủ đề cả bộ” đổi giao diện theo vai trò (role) của vật mà giữ nguyên nội dung đã soạn.
 import { uid, type Anim, type El, type Slide } from './types';
 
-export type SetId = 'oli' | 'cosmos' | 'leaf' | 'lab';
+export type SetId = 'oli' | 'cosmos' | 'leaf' | 'lab' | 'vui' | 'sotay';
 export type ThemeSet = {
   id: SetId; name: string; sub: string; bg: string;
   card: string; edge: string; title: string; text: string;
   /** tư thế Milo cho 7 trang */ mascots: string[];
   /** hình trang trí: bìa, trang nội dung, trang cuối */ deco: [string, string, string];
+  /** băng dính giấy dán 2 góc thẻ (kiểu sổ tay / scrapbook) */ tape?: [string, string];
 };
 const M = (n: string) => `/brand/milo${n ? `-${n}` : ''}.webp`;
 const F = (n: string) => `/emoji/f3d/${n}.webp`;
@@ -23,6 +24,12 @@ export const THEME_SETS: ThemeSet[] = [
     mascots: ['artist', '', 'doctor', 'artist', 'professor', 'artist', ''].map(M), deco: [F('seedling'), F('sunflower'), F('tulip')] },
   { id: 'lab', name: 'Phòng thí nghiệm', sub: 'Chấm bi · xanh dương', bg: 'dots', card: '#ffffff', edge: '#38bdf8', title: '#0369a1', text: '#0c4a6e',
     mascots: ['doctor', 'robot', 'professor', 'doctor', 'robot', 'professor', ''].map(M), deco: [F('microscope'), F('light-bulb'), F('star')] },
+  // Kiểu template Canva (11/2026): khối màu bo cong tràn mép, hình dán 3D, nền kem ấm
+  { id: 'vui', name: 'Vui tươi', sub: 'Khối màu · kem cam', bg: 'blob', card: '#ffffff', edge: '#f08a1c', title: '#1e293b', text: '#334155',
+    mascots: ['', 'artist', 'professor', 'robot', 'doctor', 'professor', ''].map(M), deco: [F('red-apple'), F('star'), F('party-popper')] },
+  // Kiểu scrapbook: giấy be, thẻ giấy kem, băng dính giấy 2 góc, chữ nâu
+  { id: 'sotay', name: 'Sổ tay ấm', sub: 'Giấy be · băng dính', bg: 'kraft', card: '#fdfbf4', edge: '#c9a27e', title: '#6b3d1a', text: '#5b3a1e',
+    mascots: ['professor', 'artist', '', 'doctor', 'professor', 'artist', ''].map(M), deco: [F('books'), F('blossom'), F('backpack')], tape: ['#d6a078cc', '#9fd2abcc'] },
 ];
 export const SET_BY_ID = Object.fromEntries(THEME_SETS.map((t) => [t.id, t])) as Record<SetId, ThemeSet>;
 
@@ -46,7 +53,10 @@ const anim = (m: Mk, el: string, fx: Anim['fx'], start: Anim['start'], o: Partia
 const card = (m: Mk, t: ThemeSet, x: number, y: number, w: number, h: number) => {
   m.els.push({ id: uid(), kind: 'shape', shape: 'round', x: x + 18, y: y + 20, w, h, rot: 0, fill: t.edge, stroke: t.edge, sw: 0, lock: true, role: 'cardback' } as El);
   m.els.push({ id: uid(), kind: 'shape', shape: 'round', x, y, w, h, rot: 0, fill: t.card, stroke: t.edge, sw: 6, lock: true, role: 'card' } as El);
+  m.els.push(...tapes(t, x, y, w));
 };
+/** 2 miếng băng dính giấy chéo ở 2 góc trên của thẻ */
+const tapes = (t: ThemeSet, x: number, y: number, w: number): El[] => (t.tape ?? []).map((c, k) => ({ id: uid(), kind: 'shape', shape: 'rect', x: k ? x + w - 150 : x - 40, y: y - 26, w: 190, h: 52, rot: k ? 24 : -26, fill: c, stroke: c, sw: 0, lock: true, role: 'tape' } as El));
 const step = (m: Mk, label: string) => txt(m, label, 64, 46, 40 + label.length * 26, 78, 40, '#ffffff', 'step', { bg: STEP_COLOR[label] ?? '#7c3aed', align: 'center' });
 
 export type SetInfo = { title: string; sub: string };
@@ -112,7 +122,10 @@ export function applySet(slides: Slide[], id: SetId): Slide[] {
   const t = SET_BY_ID[id];
   return slides.map((s, i) => {
     let mi = 0;
-    return { ...s, bg: t.bg, scene: undefined, els: s.els.map((e) => {
+    const cardEl = s.els.find((e) => e.role === 'card');
+    const els = s.els.filter((e) => e.role !== 'tape');
+    if (cardEl) els.splice(els.indexOf(cardEl) + 1, 0, ...tapes(t, cardEl.x, cardEl.y, cardEl.w));
+    return { ...s, bg: t.bg, scene: undefined, els: els.map((e) => {
       if (e.role === 'card' && e.kind === 'shape') return { ...e, fill: t.card, stroke: t.edge };
       if (e.role === 'cardback' && e.kind === 'shape') return { ...e, fill: t.edge, stroke: t.edge };
       if ((e.role === 'title' || e.role === 'divider') && e.kind === 'text') return { ...e, color: t.title };
