@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2, Headphones, Lightbulb, LockKeyhole, Mic, RotateCcw, Sparkles, Volume2, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2, Lightbulb, LockKeyhole, RotateCcw, Sparkles, Volume2, Zap } from 'lucide-react';
 import MiloMascot from '@/components/mascot/MiloMascot';
-import { ENGLISH_COMMUNICATION_BANK } from '@/lib/english/communicationBank';
+import ShadowingStudio from '@/components/english/ShadowingStudio';
+import { ENGLISH_COMMUNICATION_BANK, ENGLISH_COMMUNICATION_STORIES } from '@/lib/english/communicationBank';
 
 type Example = { subject: string; action: string; base: string; purpose: string; vi: string; why: string; icon: string };
 type Topic = { id: string; name: string; vi: string; icon: string; example: Example };
@@ -31,9 +32,9 @@ const EXAMPLE_ART: Record<string, string> = {
   sports: 'person-running', nature: 'deciduous-tree', food: 'red-apple', transport: 'bus', hobbies: 'artist-palette',
 };
 const STEP_ART: Record<string, string> = {
-  Think: 'light-bulb', Connect: 'speech-balloon', Build: 'puzzle-piece', Speak: 'speaking-head', Apply: 'star',
+  Think: 'light-bulb', Connect: 'speech-balloon', Build: 'puzzle-piece', Shadowing: 'speaking-head', Apply: 'star',
 };
-const STEPS = [{en:'Think',vi:'Tư duy',icon:'💭'},{en:'Connect',vi:'Liên kết',icon:'🔗'},{en:'Build',vi:'Ghép câu',icon:'🧩'},{en:'Speak',vi:'Luyện nói',icon:'🗣️'},{en:'Apply',vi:'Ứng dụng',icon:'🌟'}];
+const STEPS = [{en:'Think',vi:'Tư duy',icon:'💭'},{en:'Connect',vi:'Liên kết',icon:'🔗'},{en:'Build',vi:'Ghép câu',icon:'🧩'},{en:'Shadowing',vi:'Nghe & đọc theo',icon:'🎧'},{en:'Apply',vi:'Ứng dụng',icon:'🌟'}];
 const PROGRESS_KEY = 'educhain-english-progress-v1';
 const sentence = (e: Example) => `${e.subject} ${e.action} to ${e.base} ${e.purpose}.`;
 
@@ -113,7 +114,7 @@ export default function EnglishStudio() {
         {mode==='challenge'&&!challengeStarted&&!reviewed?<div className="en-challenge-start"><Zap size={27}/><b>Sẵn sàng thử phản xạ 3 giây?</b><span>Trả lời nhanh để giữ chuỗi sao. Câu trả lời sai hoặc hết giờ sẽ được giải thích nhẹ nhàng.</span><button onClick={startChallenge}>Bắt đầu thử thách <ArrowRight size={18}/></button></div>:<><div className="en-options">{options.map((o,i)=><button key={o} disabled={reviewed} className={`en-option${choice===i?' is-picked':''}${reviewed&&i===answerIndex?' is-answer':''}${reviewed&&choice===i&&i!==answerIndex?' is-gentle':''}`} onClick={()=>{setChoice(i);setReviewed(true);setChallengeStarted(false);}}><span>{String.fromCharCode(65+i)}</span>{o}{reviewed&&i===answerIndex&&<Check size={20}/>}</button>)}</div>{reviewed&&<div className="en-feedback"><span>{choice===answerIndex?'🌟':'💛'}</span><div><b>{choice===answerIndex?'Brilliant thinking! · Em suy luận giỏi lắm!':'Good try! Let’s connect the ideas. · Mình cùng nối ý nhé!'}</b><p>{bankQuestion?.sentence ?? e.why}<br/><small>{translation}</small></p></div></div>}{!reviewed&&mode==='learn'&&<p className="en-gentle-note">Không cần vội đâu — hãy nghĩ về hành động và mục đích nhé. · Take your time!</p>}{reviewed&&<button className="en-next" onClick={()=>{setStep(2);setPlaced([]);}}>Sang ghép câu <ArrowRight size={18}/></button>}</>}
       </div>}
       {step===2&&<div className="en-builder"><div className="en-builder-copy"><span className="en-kicker">STEP 3 · SENTENCE BUILDER</span><h3>Build the sentence <small>Chạm từ để ghép câu</small></h3><p>Rebuild the sentence from the mixed word bank.</p></div><div className="en-canvas" aria-label="C?u c?a em">{words.map((_,i)=><span className={placed[i]!==undefined?'has-word':''} key={i}>{placed[i]!==undefined?words[placed[i]]:`Word ${i+1}`}</span>)}</div><div className="en-word-bank"><span>WORD BANK · NGÂN HÀNG TỪ</span><div>{words.map((w,i)=><button key={`${w}-${i}`} disabled={placed.includes(i)} onClick={()=>setPlaced((p)=>[...p,i])}>{w}</button>)}</div></div>{placed.length===words.length&&<div className="en-feedback"><span>{placed.map((index)=>words[index]).join(' ')===answer.replace(/[.!?]+$/,'')?'✨':'💡'}</span><div><b>{placed.map((index)=>words[index]).join(' ')===answer.replace(/[.!?]+$/,'')?'Câu hoàn chỉnh! · Sentence complete!':'Thử sắp xếp lại thứ tự nhé. · Try the word order again.'}</b><p>{answer}<br/><small>{translation}</small></p></div></div>}<div className="en-builder-actions"><button className="en-sound" onClick={()=>setPlaced([])}><RotateCcw size={18}/> Làm lại</button>{placed.length===words.length&&<button className="en-next" onClick={()=>{setStep(3);}}>Luyện nói <ArrowRight size={18}/></button>}</div></div>}
-      {step===3&&<div className="en-speak"><div className="en-speak-art"><Image src="/emoji/f3d/speaking-head.webp" width={120} height={120} alt=""/></div><div><span className="en-kicker">STEP 4 · LISTEN & SPEAK</span><h3>Listen, then say it aloud. <small>Nghe mẫu rồi nói theo.</small></h3><div className="en-sentence"><b>{answer}</b><span>{translation}</span></div><div className="en-speak-actions"><button className="en-sound" onClick={()=>speak(answer)}><Headphones size={20}/> Nghe mẫu · Listen</button><button className="en-next" onClick={()=>speak(answer)}><Mic size={20}/> Nói theo · Speak</button></div><p>Chạm “Nói theo” để nghe câu mẫu và luyện phát âm. · Tap to hear the model and practice.</p></div></div>}
+      {step===3&&bankQuestion&&<ShadowingStudio key={`${bankQuestion.storyId}-${bankQuestion.number}`} questions={ENGLISH_COMMUNICATION_STORIES[bankQuestion.storyId] ?? []} initialNumber={bankQuestion.number}/>}
       {step===4&&<div className="en-apply"><div className="en-apply-art"><Image src={`/emoji/f3d/${EXAMPLE_ART[topic.id]}.webp`} width={120} height={120} alt=""/></div><div><span className="en-kicker">STEP 5 · APPLY IN REAL LIFE</span><h3>Use it in your day! <small>Thử áp dụng vào cuộc sống!</small></h3><div className="en-sentence"><b>{reason}</b><span>{translation}</span></div><p>Can you think of another reason? · Em nghĩ thêm được lý do nào không?</p><button className="en-next" onClick={()=>{markComplete();nextTopic();}}>Hoàn thành chủ đề <CheckCircle2 size={19}/></button></div></div>}
       {step>0&&<button className="en-step-back" onClick={()=>{setStep((s)=>s-1);setReviewed(false);setChallengeStarted(false);}}>← Bước trước · Previous step</button>}
     </section>
