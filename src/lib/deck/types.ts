@@ -103,7 +103,7 @@ export type Slide = { id: string; bg: string; els: El[]; anims: Anim[]; trans: T
   /** công cụ gợi ý cho trang (màn hình của cô hiện nút bấm nhanh): hẹn giờ thảo luận / gọi tên / thi đua tổ */
   tool?: { timer?: number; name?: boolean; teams?: boolean; label?: string } };
 /** nguồn của bài: tiết trong lịch báo giảng (giáo án) / bài trong ngân hàng nội dung */
-export type DeckSrc = { plan?: string; lesson?: string; date?: string; period?: number };
+export type DeckSrc = { plan?: string; lesson?: string; date?: string; period?: number; subject?: import('@/lib/types').SubjectCode };
 export type Deck = { v: 1; title: string; grade: number; slides: Slide[]; src?: DeckSrc;
   /** hẹn giờ cả tiết (phút); màn hình của cô đếm ngược */ mins?: number };
 
@@ -176,7 +176,8 @@ export function normalizeDeck(raw: unknown, fallbackTitle = 'Bài thao giảng')
     grade: Number(r.grade) >= 1 && Number(r.grade) <= 5 ? Number(r.grade) : 1,
     slides: slides.length ? slides : emptyDeck(fallbackTitle).slides,
     ...(typeof r.mins === 'number' && r.mins > 0 ? { mins: Math.min(180, Math.max(1, Math.round(r.mins))) } : {}),
-    ...(r.src && typeof r.src === 'object' ? { src: { plan: typeof r.src.plan === 'string' ? r.src.plan : undefined, lesson: typeof r.src.lesson === 'string' ? r.src.lesson : undefined, date: typeof r.src.date === 'string' ? r.src.date : undefined, period: typeof r.src.period === 'number' ? r.src.period : undefined } } : {}),
+    ...(r.src && typeof r.src === 'object' ? { src: { plan: typeof r.src.plan === 'string' ? r.src.plan : undefined, lesson: typeof r.src.lesson === 'string' ? r.src.lesson : undefined, date: typeof r.src.date === 'string' ? r.src.date : undefined, period: typeof r.src.period === 'number' ? r.src.period : undefined,
+      subject: (['toan', 'tieng-viet', 'tieng-anh'] as const).includes(r.src.subject as import('@/lib/types').SubjectCode) ? r.src.subject : undefined } } : {}),
   };
 }
 

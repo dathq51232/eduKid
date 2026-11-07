@@ -679,7 +679,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
               setCtx({ x: ev.clientX, y: ev.clientY });
             }} onClick={() => setCtx(null)}>
               <SlideFrame className="dk-main cv-slide" style={{ width: W, maxWidth: 'none' }}>{(k) => <>
-                <SlideView key={slide.id} slide={slide} mode="edit" scale={k} assetUrl={assetUrl} sel={sel} multi={selIds} onSelect={pick}
+                <SlideView key={slide.id} slide={slide} mode="edit" scale={k} assetUrl={assetUrl} speechSubject={deck.src?.subject ?? (/\benglish\b|tiếng anh/i.test(`${deck.title} ${deck.src?.lesson ?? ''}`) ? 'tieng-anh' : 'tieng-viet')} sel={sel} multi={selIds} onSelect={pick}
                   onSelectMany={(ids) => { setMulti(ids); setSel(ids[0] ?? null); }} onChange={onChange} onEditText={editText} editing={inline} snapGrid={snapGrid} />
                 {bb && (
                   <div className={`cv-quick${bb.t * k < 56 ? ' is-below' : ''}`} style={{ left: ((bb.l + bb.r) / 2) * k, top: (bb.t * k < 56 ? bb.b : bb.t) * k }} onPointerDown={(ev) => ev.stopPropagation()}>
@@ -769,7 +769,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
           <button type="button" role="menuitem" className="is-danger" onClick={delEl}>Xoá <kbd>Del</kbd></button>
         </div>
       )}
-      {preview && <Preview slide={slide} assetUrl={assetUrl} onClose={() => setPreview(false)} />}
+      {preview && <Preview slide={slide} assetUrl={assetUrl} speechSubject={deck.src?.subject ?? (/\benglish\b|tiếng anh/i.test(`${deck.title} ${deck.src?.lesson ?? ''}`) ? 'tieng-anh' : 'tieng-viet')} onClose={() => setPreview(false)} />}
     </div>
   );
 }
@@ -972,7 +972,7 @@ function AnimList({ slide, sel, setSel, patch, move, del, myAudio }: {
 }
 
 /* ---------- xem thử trang ---------- */
-function Preview({ slide, assetUrl, onClose }: { slide: Slide; assetUrl: (p: string) => string | undefined; onClose: () => void }) {
+function Preview({ slide, assetUrl, speechSubject, onClose }: { slide: Slide; assetUrl: (p: string) => string | undefined; speechSubject: 'toan' | 'tieng-viet' | 'tieng-anh'; onClose: () => void }) {
   const api = useRef<PlayApi>(null);
   const [, setN] = useState(0);
   const next = () => { if (api.current?.apply({ t: 'step' })) setN((x) => x + 1); };
@@ -985,7 +985,7 @@ function Preview({ slide, assetUrl, onClose }: { slide: Slide; assetUrl: (p: str
       <div className="dk-pv-bar"><b>Xem thử trang</b><span>Bấm “Tiếp” (phím cách) để chạy hiệu ứng · bấm vào vật có 🎯 để kích hoạt</span>
         <button type="button" className="btn btn-primary btn-sm" onClick={next}>Tiếp ▶ ({api.current ? api.current.stepsLeft() : '…'} bước)</button>
         <button type="button" className="btn btn-outline btn-sm" onClick={onClose}><X aria-hidden="true" /> Đóng</button></div>
-      <SlideFrame className="dk-pv-frame">{(k) => <SlideView key={slide.id} ref={api} slide={slide} mode="play" scale={k} assetUrl={assetUrl} />}</SlideFrame>
+      <SlideFrame className="dk-pv-frame">{(k) => <SlideView key={slide.id} ref={api} slide={slide} mode="play" scale={k} assetUrl={assetUrl} speechSubject={speechSubject} />}</SlideFrame>
     </div>
   );
 }

@@ -132,21 +132,24 @@ const STUDENT_AUTO_BG: Record<SceneKind, string> = {
 };
 const studentLayout = (seed: number) => {
   const layouts = [
-    { q: { x: 120, y: 130, w: 1360, h: 140 }, quiz: { x: 230, y: 200, w: 1140, h: 570 }, sort: { x: 160, y: 260, w: 1280, h: 560 }, drop: { x: 760, y: 280, w: 580, h: 330 } },
-    { q: { x: 160, y: 120, w: 1280, h: 130 }, quiz: { x: 180, y: 260, w: 1240, h: 500 }, sort: { x: 180, y: 220, w: 1240, h: 600 }, drop: { x: 700, y: 280, w: 640, h: 320 } },
-    { q: { x: 140, y: 160, w: 1320, h: 120 }, quiz: { x: 180, y: 290, w: 1240, h: 520 }, sort: { x: 130, y: 260, w: 1340, h: 520 }, drop: { x: 680, y: 300, w: 660, h: 260 } },
-    { q: { x: 100, y: 110, w: 1400, h: 160 }, quiz: { x: 200, y: 240, w: 1200, h: 560 }, sort: { x: 120, y: 260, w: 1360, h: 550 }, drop: { x: 730, y: 300, w: 620, h: 290 } },
+    { q: { x: 120, y: 130, w: 1360, h: 140 }, quiz: { x: 230, y: 220, w: 1140, h: 550 }, sort: { x: 160, y: 300, w: 1280, h: 540 }, drop: { x: 120, y: 300, w: 1360, h: 330 } },
+    { q: { x: 160, y: 120, w: 1280, h: 130 }, quiz: { x: 180, y: 220, w: 1240, h: 540 }, sort: { x: 180, y: 300, w: 1240, h: 540 }, drop: { x: 120, y: 300, w: 1360, h: 320 } },
+    { q: { x: 140, y: 160, w: 1320, h: 120 }, quiz: { x: 180, y: 220, w: 1240, h: 560 }, sort: { x: 130, y: 300, w: 1340, h: 540 }, drop: { x: 120, y: 300, w: 1360, h: 300 } },
+    { q: { x: 100, y: 110, w: 1400, h: 160 }, quiz: { x: 200, y: 220, w: 1200, h: 560 }, sort: { x: 120, y: 300, w: 1360, h: 540 }, drop: { x: 120, y: 300, w: 1360, h: 310 } },
   ] as const;
   return layouts[seed % layouts.length];
 };
 
-function studentSlide(sp: Spec, phase: { n: string; c: string }, n: number, topicToks: string[], sc: SceneKind): Slide {
+export function studentSlide(sp: Spec, phase: { n: string; c: string }, n: number, topicToks: string[], sc: SceneKind, layoutOffset = 0): Slide {
   const els: El[] = [cardEl(phase.c), badgeEl(n, phase.n, phase.c)];
   const anims: Anims = [];
-  const layout = studentLayout(n + phase.n.length + topicToks.join('').length);
+  const layout = studentLayout(n + phase.n.length + topicToks.join('').length + layoutOffset);
   const bg = STUDENT_AUTO_BG[sc] ?? 'sky';
-  const q = text(layout.q.x, layout.q.y, layout.q.w, layout.q.h, sp.q, sp.q.length > 50 ? 50 : 64, '#1f2937');
-  els.push(q); anim(anims, q, 'zoom', 'with', 'magic');
+  // Quiz đã có vùng câu hỏi riêng. Chỉ giữ dòng dẫn phía trên khi quiz có thẻ tình huống.
+  if (!sp.quiz || sp.cards?.length) {
+    const q = text(layout.q.x, sp.quiz ? 95 : layout.q.y, layout.q.w, sp.quiz ? 100 : layout.q.h, sp.q, sp.q.length > 50 ? 50 : 64, '#1f2937');
+    els.push(q); anim(anims, q, 'zoom', 'with', 'magic');
+  }
   if (sp.quiz) { // trắc nghiệm: bấm chọn, đúng/sai có âm thanh (phần tử quiz sẵn có)
     const qq = sp.cards?.[0] ?? sp.q;
     els.push({ id: uid(), kind: 'quiz', x: layout.quiz.x, y: layout.quiz.y, w: layout.quiz.w, h: layout.quiz.h, rot: 0, q: qq, opts: sp.quiz.opts, a: sp.quiz.a, cols: 2 } as El);
@@ -162,10 +165,13 @@ function studentSlide(sp: Spec, phase: { n: string; c: string }, n: number, topi
       const e = (it.pic ? { ...img(it.pic, x, 660, w), drag: true } : { id: uid(), kind: 'shape', shape: 'round', x, y: 680, w, h: 110, rot: 0, fill: '#ffffff', stroke: phase.c, sw: 5, text: it.text ?? '', color: '#1f2937', size: 30, drag: true }) as El;
       anim(anims, e, 'fly-up', 'after'); return e;
     });
-    const zs = sp.drop.zones, zw = Math.min(600, Math.floor(1360 / zs.length) - 20);
-    zs.forEach((z, i) => els.push({ id: uid(), kind: 'drop', x: Math.min(layout.drop.x + i * (zw + 18), 1050), y: layout.drop.y, w: zw, h: layout.drop.h, rot: 0, label: z.label, accept: z.ok.map((k) => items[k]?.id).filter(Boolean), color: phase.c } as El));
+    const zs = sp.drop.zones, gap = 20;
+    const zw = zs.length ? Math.min(600, Math.floor((layout.drop.w - gap * (zs.length - 1)) / zs.length)) : 0;
+    const totalW = zs.length ? zs.length * zw + (zs.length - 1) * gap : 0;
+    const startX = (1600 - totalW) / 2;
+    zs.forEach((z, i) => els.push({ id: uid(), kind: 'drop', x: startX + i * (zw + gap), y: layout.drop.y, w: zw, h: layout.drop.h, rot: 0, label: z.label, accept: z.ok.map((k) => items[k]?.id).filter(Boolean), color: phase.c } as El));
     els.push(...items);
-    if (sp.reveal) { const r = text(200, 760, 1200, 80, sp.reveal, 44, '#ffffff', { bg: phase.c }); els.push(r); anim(anims, r, 'pop', 'click', 'tada'); }
+    if (sp.reveal) { const r = text(200, 820, 1200, 60, sp.reveal, 38, '#ffffff', { bg: phase.c }); els.push(r); anim(anims, r, 'pop', 'click', 'tada'); }
     return { id: uid(), bg, trans: 'fade', anims, els, notes: '', phase: phase.n, scene: sc };
   }
   let y = 300;
@@ -211,12 +217,15 @@ function activitySlides(n: number, phase: { n: string; c: string }, x: LessonIde
   const tl = toolsOf(x);
   const toks = topic.replace(/[“”"]/g, '').split(/[\s,]+/).filter((t) => t && t.length <= 6).slice(0, 6);
   const max = Number(/ph[aạ]m vi\s*(\d+)/i.exec(topic)?.[1]) || 10;
-  const slides = specsOf(x, topic, math, minus, r, Math.min(100, Math.max(5, max)), vansIn(topic)).slice(0, Math.max(1, Math.ceil(x.m / 2))).map((sp) => studentSlide(sp, phase, n, toks, sc));
+  const slides = specsOf(x, topic, math, minus, r, Math.min(100, Math.max(5, max)), vansIn(topic)).slice(0, Math.max(1, Math.ceil(x.m / 2))).map((sp, i) => studentSlide(sp, phase, n, toks, sc, i));
   // linh vật dẫn dắt ở trang đầu hoạt động
-  const m = img0(MASCOTS[n % MASCOTS.length].src, 1330, 640, 200);
-  const b = { id: uid(), kind: 'shape', shape: 'bubble', x: 980, y: 560, w: 380, h: 120, rot: 0, fill: '#fffbeb', stroke: phase.c, sw: 4, text: `Cùng chơi: ${x.t}!`, color: '#1f2937', size: 26 } as El;
-  slides[0].els.push(m, b);
-  slides[0].anims.unshift({ id: uid(), el: m.id, fx: 'fly-right', start: 'with', delay: 0, dur: 0.6 }, { id: uid(), el: b.id, fx: 'pop', start: 'after', delay: 0.1, dur: 0.4 });
+  const hasInteraction = slides[0].els.some((e) => e.kind === 'quiz' || e.kind === 'sort' || e.kind === 'drop');
+  if (!hasInteraction) {
+    const m = img0(MASCOTS[n % MASCOTS.length].src, 1330, 640, 200);
+    const b = { id: uid(), kind: 'shape', shape: 'bubble', x: 980, y: 560, w: 380, h: 120, rot: 0, fill: '#fffbeb', stroke: phase.c, sw: 4, text: `Cùng chơi: ${x.t}!`, color: '#1f2937', size: 26 } as El;
+    slides[0].els.push(m, b);
+    slides[0].anims.unshift({ id: uid(), el: m.id, fx: 'fly-right', start: 'with', delay: 0, dur: 0.6 }, { id: uid(), el: b.id, fx: 'pop', start: 'after', delay: 0.1, dur: 0.4 });
+  }
   slides[0] = {
     ...slides[0], mins: x.m,
     notes: [`${x.t} (${x.m} phút${x.p ? `, chuẩn bị trước ${x.p} phút` : ''})`, ...x.s.map((s, j) => `${j + 1}. ${s}`), x.w && `Mục tiêu: ${x.w}`].filter(Boolean).join('\n'),
@@ -258,7 +267,7 @@ export async function deckFromIdeas(subject: string, title: string, pick: Pick, 
   const cover = contentOf('bia', 1);
   if (cover.length) deck.slides = cover;
   else deck.slides[0].els.push(text(360, 600, 880, 70, `${subject} · ${pick.dur} phút`, 40, '#475569', { font: 'quick' }));
-  deck.src = { lesson: lessonId ?? title };
+  deck.src = { lesson: lessonId ?? title, ...(code ? { subject: code as import('@/lib/types').SubjectCode } : {}) };
   const used = planOf(subject, title, pick).reduce((t, r) => t + r.idea.m, 0);
   if (used < pick.dur) deck.slides[0].notes = `⚠ Mới chọn hoạt động cho ${used}/${pick.dur} phút — còn ${pick.dur - used} phút chưa có hoạt động.${review && !lessonId ? '\n⚠ Chưa tìm thấy nội dung của tuần này trong ngân hàng bài — cô thêm ngữ liệu vào các trang.' : ''}\n${deck.slides[0].notes ?? ''}`.trim();
   deck.mins = pick.dur;

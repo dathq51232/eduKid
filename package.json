@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "check:content": "tsx scripts/check-content.ts",
+    "check:deck-layout": "tsx scripts/check-deck-layout.ts",
     "gen:sql": "tsx scripts/gen-curriculum-sql.ts > supabase/seed/curriculum_grade1.sql && tsx scripts/gen-content-sql.ts > supabase/seed/content_grade1_hk1.sql",
     "gen:sql2": "tsx scripts/gen-curriculum-sql.ts 2 > supabase/seed/curriculum_grade2.sql && tsx scripts/gen-content-sql.ts 2 1 > supabase/seed/content_grade2_hk1.sql && tsx scripts/gen-content-sql.ts 2 2 > supabase/seed/content_grade2_hk2.sql",
     "gen:sql3": "tsx scripts/gen-curriculum-sql.ts 3 > supabase/seed/curriculum_grade3.sql && tsx scripts/gen-content-sql.ts 3 1 > supabase/seed/content_grade3_hk1.sql && tsx scripts/gen-content-sql.ts 3 2 > supabase/seed/content_grade3_hk2.sql",

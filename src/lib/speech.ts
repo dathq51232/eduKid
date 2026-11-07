@@ -195,9 +195,10 @@ export function questionSegments(prompt: string, options: string[], subject: Sub
   const last = segs[segs.length - 1];
   if (last && !/[.!?:]$/.test(last.text)) last.text += '.';
 
-  const list: Segment[] = [{ text: 'Các đáp án là:', lang: 'vi' }];
+  const isEnglish = subject === 'tieng-anh';
+  const list: Segment[] = [{ text: isEnglish ? 'The options are:' : 'Các đáp án là:', lang: isEnglish ? 'en' : 'vi' }];
   options.forEach((o, i) => {
-    if (i === options.length - 1) list.push({ text: 'hay là', lang: 'vi' });
+    if (i === options.length - 1) list.push({ text: isEnglish ? 'or' : 'hay là', lang: isEnglish ? 'en' : 'vi' });
     const parts = segmentsFor(o.replace(/[.!?]+\s*$/, ''), subject);
     if (parts.length && i < options.length - 2) parts[parts.length - 1].text += ',';
     list.push(...parts);

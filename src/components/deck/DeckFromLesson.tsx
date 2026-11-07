@@ -146,11 +146,11 @@ export default function DeckFromLesson({ classId, grade, busy, made, onCreate, o
     if (key.startsWith('L:')) {
       const l = bank!.byId.get(key.slice(2))!;
       const D = emptyDeck((e.title.trim() || l.title).slice(0, 120), l.grade);
-      return { ...D, slides: planSlides(p, on, {}, bopts(l.subject)), src: { lesson: l.id } };
+      return { ...D, slides: planSlides(p, on, {}, bopts(l.subject)), src: { lesson: l.id, subject: l.subject } };
     }
     const ga = plans[key.slice(2)];
     const D = emptyDeck((e.title.trim() || ga.title).slice(0, 120), ga.grade);
-    return { ...D, slides: planSlides(p, on, {}, bopts(ga.subject)), src: { plan: key.slice(2), lesson: ga.lessonId || undefined, date: ga.date || undefined, period: ga.period || undefined } };
+    return { ...D, slides: planSlides(p, on, {}, bopts(ga.subject)), src: { plan: key.slice(2), lesson: ga.lessonId || undefined, date: ga.date || undefined, period: ga.period || undefined, subject: isAppSubject(ga.subject) ? ga.subject : undefined } };
   };
   const createNow = () => {
     const keys = mode === 'kho' ? (curKey ? [curKey] : []) : weekRows.filter((r) => picked.has(r.id)).map((r) => `P:${r.id}`);

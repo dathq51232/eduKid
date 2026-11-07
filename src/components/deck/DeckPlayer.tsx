@@ -231,7 +231,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
     <div className="dp-stagebox">
       <SlideFrame className="dp-frame">{(k) => (
         <div className="dp-stage" ref={(el) => { stageRef.current = el; frameRef.current = el; }} style={{ width: SW * k, height: SH * k }}>
-          <SlideView key={`${slide.id}-${show.nonce}`} ref={api} slide={slide} mode="play" scale={k} assetUrl={assetUrl} startStep={show.step}
+          <SlideView key={`${slide.id}-${show.nonce}`} ref={api} slide={slide} mode="play" scale={k} assetUrl={assetUrl} speechSubject={deck.src?.subject ?? (/\benglish\b|tiếng anh/i.test(`${deck.title} ${deck.src?.lesson ?? ''}`) ? 'tieng-anh' : 'tieng-viet')} startStep={show.step}
             onAction={onAction} onLink={(i) => { if (!audience) go(i - 1); }} onWin={onWin} board={show.teams ?? undefined} />
           <svg className={`dp-ink${tool === 'pen' || tool === 'spot' ? ' is-on' : ''}`} viewBox={`0 0 ${SW} ${SH}`} style={{ cursor: tool === 'pen' ? 'crosshair' : tool === 'spot' ? 'none' : undefined }}
             onPointerDown={onOvDown} onPointerMove={onOvMove} onPointerUp={onOvUp} onPointerLeave={() => { if (tool === 'spot') publish({ ...showRef.current, spot: null }); }}>

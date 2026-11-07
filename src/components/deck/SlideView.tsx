@@ -10,6 +10,7 @@ import SceneBg from './SceneBg';
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
 import { FONTS, FX_BY_ID, SH, SW, bgCss, quizImage, quizText, type El, type ShapeEl, type Slide, type SortEl } from '@/lib/deck/types';
+import type { SubjectCode } from '@/lib/types';
 import { animIterations, fxEasing, fxFrames, planSlide, type Step } from '@/lib/deck/player';
 import { playSound } from '@/lib/deck/sounds';
 import { questionSegments, speakSegments, stopSpeaking } from '@/lib/speech';
@@ -180,6 +181,7 @@ export type PlayApi = { apply: (a: PlayAction) => boolean; stepsLeft: () => numb
 
 type Props = {
   slide: Slide; mode: 'edit' | 'play' | 'thumb'; scale: number;
+  speechSubject?: SubjectCode;
   assetUrl?: (path: string) => string | undefined;
   /* soạn */
   sel?: string | null; onSelect?: (id: string | null, add?: boolean) => void;
@@ -201,7 +203,7 @@ type Props = {
   /** hiện lưới và hút vật vào lưới khi kéo */
   snapGrid?: boolean;
 };
-const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, scale, assetUrl, sel, onSelect, multi, onSelectMany, onChange, onEditText, editing, onAction, onLink, startStep = 0, onWin, board, snapGrid = false }, ref) {
+const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, scale, assetUrl, speechSubject = 'tieng-viet', sel, onSelect, multi, onSelectMany, onChange, onEditText, editing, onAction, onLink, startStep = 0, onWin, board, snapGrid = false }, ref) {
   const winRef = useRef(onWin); winRef.current = onWin;
   const plan = useMemo(() => planSlide(slide), [slide]);
   const play = mode === 'play';
@@ -450,12 +452,12 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
     }).filter(Boolean);
     const prompt = content.join('. ') || slide.notes || 'Nội dung trang';
     const opts = quiz.flatMap((e) => e.opts.map((o) => quizText(o)));
-    const result = await speakSegments(questionSegments(prompt, opts, 'tieng-viet'), {
+    const result = await speakSegments(questionSegments(prompt, opts, speechSubject), {
       rate: 0.9, onStart: () => setSpeaking(true), onEnd: () => setSpeaking(false),
     });
     setSpeechProblem(result.ok ? null : result.reason);
     if (!result.ok) setSpeaking(false);
-  }, [slide, speaking]);
+  }, [slide, speaking, speechSubject]);
 
   return (
     <div ref={rootRef} className={`dk-slide is-${mode}`} style={{ width: SW, height: SH, transform: `scale(${scale})`, background: bgCss(slide.bg) }}

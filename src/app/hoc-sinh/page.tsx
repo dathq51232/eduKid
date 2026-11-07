@@ -135,6 +135,7 @@ export default async function StudentHome() {
             {!locked && (
               <div className="sd-quick">
                 <Link href={`/chon-bai?grade=${grade}`}><BookOpen aria-hidden="true" /> Học bài khác</Link>
+                <Link href="/tieng-anh"><BookOpen aria-hidden="true" /> English Journey</Link>
                 <Link href="/tro-choi"><Gamepad2 aria-hidden="true" /> Game trí tuệ</Link>
                 <Link href="/co"><Crown aria-hidden="true" /> Đấu cờ</Link>
                 <Link href="/thanh-tich"><Trophy aria-hidden="true" /> Thành tích</Link>
