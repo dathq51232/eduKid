@@ -1,0 +1,1834 @@
+// Imported from the supplied EduChainKids English communication bank.
+// The source question numbers are preserved and mapped into the English Journey topics.
+export type CommunicationQuestion = {
+  number: number;
+  topicId: string;
+  sourceTopic: number;
+  action: string;
+  reason: string;
+  sentence: string;
+  translation: string;
+};
+
+export const ENGLISH_COMMUNICATION_BANK: Record<string, CommunicationQuestion[]> = {
+  "daily": [
+    {
+      "number": 1,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "The sun shines brightly into my bedroom",
+      "reason": "to wake me up for a new day.",
+      "sentence": "The sun shines brightly into my bedroom to wake me up for a new day.",
+      "translation": "Mặt trời chiếu sáng vào phòng ngủ để thức tỉnh tớ cho ngày mới."
+    },
+    {
+      "number": 2,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I rub my eyes gently",
+      "reason": "to stretch my body after a long sleep.",
+      "sentence": "I rub my eyes gently to stretch my body after a long sleep.",
+      "translation": "Tớ dụi mắt nhẹ nhàng để vươn người sau một giấc ngủ dài."
+    },
+    {
+      "number": 3,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I smile brightly",
+      "reason": "to start my morning with great energy.",
+      "sentence": "I smile brightly to start my morning with great energy.",
+      "translation": "Tớ mỉm cười rạng rỡ để bắt đầu buổi sáng tràn đầy năng lượng."
+    },
+    {
+      "number": 4,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I fold my blanket neatly",
+      "reason": "to keep my room tidy and clean.",
+      "sentence": "I fold my blanket neatly to keep my room tidy and clean.",
+      "translation": "Tớ gấp chăn ngăn nắp để giữ phòng gọn gàng sạch sẽ."
+    },
+    {
+      "number": 5,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I jump out of bed quickly",
+      "reason": "so that I won't be late for school.",
+      "sentence": "I jump out of bed quickly so that I won't be late for school.",
+      "translation": "Tớ nhảy ra khỏi giường nhanh chóng để không bị trễ học."
+    },
+    {
+      "number": 6,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I put on my soft slippers",
+      "reason": "to keep my feet warm on the cold floor.",
+      "sentence": "I put on my soft slippers to keep my feet warm on the cold floor.",
+      "translation": "Tớ đi đôi dép bông mềm để giữ ấm chân trên nền nhà lạnh."
+    },
+    {
+      "number": 7,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I open the bedroom window",
+      "reason": "to let fresh air come inside.",
+      "sentence": "I open the bedroom window to let fresh air come inside.",
+      "translation": "Tớ mở cửa sổ phòng ngủ để không khí trong lành tràn vào."
+    },
+    {
+      "number": 14,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I comb my hair neatly in front of the mirror",
+      "reason": "to look smart and tidy.",
+      "sentence": "I comb my hair neatly in front of the mirror to look smart and tidy.",
+      "translation": "Tớ chải tóc gọn gàng trước gương để nhìn chỉn chu, sạch sẽ."
+    },
+    {
+      "number": 15,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I choose my clean school uniform",
+      "reason": "to dress appropriately for class.",
+      "sentence": "I choose my clean school uniform to dress appropriately for class.",
+      "translation": "Tớ chọn bộ đồng phục học sinh sạch sẽ để mặc đi học cho đúng quy định."
+    },
+    {
+      "number": 16,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I button up my shirt carefully",
+      "reason": "so that it fits me comfortably.",
+      "sentence": "I button up my shirt carefully so that it fits me comfortably.",
+      "translation": "Tớ cài nút áo cẩn thận để áo vừa vặn thoải mái."
+    },
+    {
+      "number": 17,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I wear my dark blue trousers",
+      "reason": "to match my school outfit.",
+      "sentence": "I wear my dark blue trousers to match my school outfit.",
+      "translation": "Tớ mặc chiếc quần dài màu xanh đen để hợp với đồng phục."
+    },
+    {
+      "number": 18,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I put on a pair of clean white socks",
+      "reason": "to protect my feet.",
+      "sentence": "I put on a pair of clean white socks to protect my feet.",
+      "translation": "Tớ đi đôi tất trắng sạch để bảo vệ đôi chân."
+    },
+    {
+      "number": 32,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I put on my red scarf",
+      "reason": "to complete my student uniform.",
+      "sentence": "I put on my red scarf to complete my student uniform.",
+      "translation": "Tớ đeo khăn quàng đỏ để hoàn thiện bộ đồng phục học sinh."
+    },
+    {
+      "number": 33,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I step into my sneakers",
+      "reason": "so that I can walk and run comfortably.",
+      "sentence": "I step into my sneakers so that I can walk and run comfortably.",
+      "translation": "Tớ xỏ chân vào đôi giày thể thao để có thể đi và chạy thoải mái."
+    },
+    {
+      "number": 34,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I tie my shoelaces firmly",
+      "reason": "to avoid tripping over while walking.",
+      "sentence": "I tie my shoelaces firmly to avoid tripping over while walking.",
+      "translation": "Tớ buộc dây giày thật chặt để không bị vấp ngã khi đi."
+    },
+    {
+      "number": 94,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "We go to the nap room",
+      "reason": "to take a short afternoon nap.",
+      "sentence": "We go to the nap room to take a short afternoon nap.",
+      "translation": "Chúng tớ về phòng ngủ bán trú để chợp mắt một lúc buổi trưa."
+    },
+    {
+      "number": 95,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I lay my pillow down neatly",
+      "reason": "to sleep comfortably.",
+      "sentence": "I lay my pillow down neatly to sleep comfortably.",
+      "translation": "Tớ đặt gối ngay ngắn để ngủ cho thoải mái."
+    },
+    {
+      "number": 96,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I close my eyes quietly",
+      "reason": "to let my body rest for 45 minutes.",
+      "sentence": "I close my eyes quietly to let my body rest for 45 minutes.",
+      "translation": "Tớ nhắm mắt lại trật tự để cơ thể nghỉ ngơi 45 phút."
+    },
+    {
+      "number": 97,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "Soft music plays gently",
+      "reason": "to help us fall asleep easily.",
+      "sentence": "Soft music plays gently to help us fall asleep easily.",
+      "translation": "Nhạc nhẹ nhàng vang lên để giúp chúng tớ dễ đi vào giấc ngủ."
+    },
+    {
+      "number": 98,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "We wake up refreshed at 1:30 PM",
+      "reason": "to start the afternoon lessons.",
+      "sentence": "We wake up refreshed at 1:30 PM to start the afternoon lessons.",
+      "translation": "Chúng tớ thức dậy tỉnh táo lúc 1:30 chiều để bắt đầu tiết học chiều."
+    },
+    {
+      "number": 99,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I fold my blanket back",
+      "reason": "to maintain neatness in the nap room.",
+      "sentence": "I fold my blanket back to maintain neatness in the nap room.",
+      "translation": "Tớ gấp chăn gọn lại để giữ sự ngăn nắp trong phòng ngủ."
+    },
+    {
+      "number": 100,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I drink a glass of fresh water",
+      "reason": "to rehydrate my body.",
+      "sentence": "I drink a glass of fresh water to rehydrate my body.",
+      "translation": "Tớ uống một ly nước lọc để bù nước cho cơ thể."
+    },
+    {
+      "number": 120,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I take off my shoes",
+      "reason": "and put them neatly on the shoe rack.",
+      "sentence": "I take off my shoes and put them neatly on the shoe rack.",
+      "translation": "Tớ tháo giày ra và để ngăn nắp trên kệ giày."
+    },
+    {
+      "number": 122,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I change into comfortable home clothes",
+      "reason": "to relax after school.",
+      "sentence": "I change into comfortable home clothes to relax after school.",
+      "translation": "Tớ thay quần áo mặc ở nhà thoải mái để thư giãn sau giờ học."
+    },
+    {
+      "number": 124,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I sit in the living room",
+      "reason": "to rest for fifteen minutes.",
+      "sentence": "I sit in the living room to rest for fifteen minutes.",
+      "translation": "Tớ ngồi trong phòng khách để nghỉ ngơi 15 phút."
+    },
+    {
+      "number": 143,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I climb into my soft comfortable bed",
+      "reason": "to prepare for rest.",
+      "sentence": "I climb into my soft comfortable bed to prepare for rest.",
+      "translation": "Tớ trèo lên chiếc giường mềm mại để chuẩn bị nghỉ ngơi."
+    },
+    {
+      "number": 148,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "Mom turns off the bedroom light",
+      "reason": "so I can sleep peacefully.",
+      "sentence": "Mom turns off the bedroom light so I can sleep peacefully.",
+      "translation": "Mẹ tắt đèn phòng ngủ để tớ có thể ngủ ngon giấc."
+    },
+    {
+      "number": 149,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I pull up my warm blanket",
+      "reason": "to stay warm all night long.",
+      "sentence": "I pull up my warm blanket to stay warm all night long.",
+      "translation": "Tớ kéo chăn ấm lên để giữ ấm cả đêm."
+    },
+    {
+      "number": 150,
+      "topicId": "daily",
+      "sourceTopic": 1,
+      "action": "I close my eyes and fall asleep",
+      "reason": "to dream about another bright tomorrow.",
+      "sentence": "I close my eyes and fall asleep to dream about another bright tomorrow.",
+      "translation": "Tớ nhắm mắt và chìm vào giấc ngủ để mơ về một ngày mai tươi sáng."
+    }
+  ],
+  "school": [
+    {
+      "number": 19,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I check the school schedule",
+      "reason": "to pack the right textbooks for today.",
+      "sentence": "I check the school schedule to pack the right textbooks for today.",
+      "translation": "Tớ xem lịch học để xếp đúng sách giáo khoa cho hôm nay."
+    },
+    {
+      "number": 20,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I put my Math and English books into my bag",
+      "reason": "to prepare for my morning classes.",
+      "sentence": "I put my Math and English books into my bag to prepare for my morning classes.",
+      "translation": "Tớ bỏ sách Toán và Tiếng Anh vào cặp để chuẩn bị cho các tiết học buổi sáng."
+    },
+    {
+      "number": 22,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I pack a refillable water bottle",
+      "reason": "to stay hydrated throughout the day.",
+      "sentence": "I pack a refillable water bottle to stay hydrated throughout the day.",
+      "translation": "Tớ mang theo bình nước uống tái sử dụng để luôn đủ nước cả ngày."
+    },
+    {
+      "number": 23,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I zip up my backpack tightly",
+      "reason": "to prevent my school supplies from dropping out.",
+      "sentence": "I zip up my backpack tightly to prevent my school supplies from dropping out.",
+      "translation": "Tớ kéo khóa cặp thật chặt để tránh làm rơi dụng cụ học tập."
+    },
+    {
+      "number": 45,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I walk through the school gate",
+      "reason": "to start an exciting learning journey.",
+      "sentence": "I walk through the school gate to start an exciting learning journey.",
+      "translation": "Tớ bước qua cổng trường để bắt đầu hành trình học tập thú vị."
+    },
+    {
+      "number": 47,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I walk up the stairs calmly",
+      "reason": "to reach my second-floor classroom safely.",
+      "sentence": "I walk up the stairs calmly to reach my second-floor classroom safely.",
+      "translation": "Tớ đi lên cầu thang bình tĩnh để đến phòng học tầng 2 an toàn."
+    },
+    {
+      "number": 48,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I enter Classroom 3A",
+      "reason": "to place my backpack on my desk.",
+      "sentence": "I enter Classroom 3A to place my backpack on my desk.",
+      "translation": "Tớ vào lớp 3A để đặt cặp sách lên bàn."
+    },
+    {
+      "number": 50,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I take out my notebook and pens",
+      "reason": "to prepare for the first lesson.",
+      "sentence": "I take out my notebook and pens to prepare for the first lesson.",
+      "translation": "Tớ lấy vở và bút ra để chuẩn bị cho tiết học đầu tiên."
+    },
+    {
+      "number": 51,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "The school bell rings loudly",
+      "reason": "to signal the start of class.",
+      "sentence": "The school bell rings loudly to signal the start of class.",
+      "translation": "Chuông trường reo vang để báo hiệu giờ học bắt đầu."
+    },
+    {
+      "number": 52,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "All students stand up respectfully",
+      "reason": "to greet our teacher warmly.",
+      "sentence": "All students stand up respectfully to greet our teacher warmly.",
+      "translation": "Tất cả học sinh đứng dậy trang nghiêm để chào thầy cô giáo."
+    },
+    {
+      "number": 53,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "We sit down quietly",
+      "reason": "to focus on the teacher’s instruction.",
+      "sentence": "We sit down quietly to focus on the teacher’s instruction.",
+      "translation": "Chúng tớ ngồi xuống trật tự để tập trung vào lời giảng của thầy cô."
+    },
+    {
+      "number": 54,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "The teacher writes the Math lesson on the board",
+      "reason": "so we can follow the concepts easily.",
+      "sentence": "The teacher writes the Math lesson on the board so we can follow the concepts easily.",
+      "translation": "Cô giáo viết bài toán lên bảng để chúng tớ theo dõi kiến thức dễ dàng."
+    },
+    {
+      "number": 55,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I listen attentively",
+      "reason": "to understand how to solve addition problems.",
+      "sentence": "I listen attentively to understand how to solve addition problems.",
+      "translation": "Tớ lắng nghe chăm chú để hiểu cách giải các bài toán cộng."
+    },
+    {
+      "number": 56,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I raise my hand high",
+      "reason": "when I know the correct answer to the question.",
+      "sentence": "I raise my hand high when I know the correct answer to the question.",
+      "translation": "Tớ giơ tay cao khi biết câu trả lời đúng cho câu hỏi."
+    },
+    {
+      "number": 57,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "The teacher calls my name",
+      "reason": "to invite me to present my solution.",
+      "sentence": "The teacher calls my name to invite me to present my solution.",
+      "translation": "Cô giáo gọi tên tớ để mời tớ trình bày lời giải."
+    },
+    {
+      "number": 58,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I speak clearly and confidently",
+      "reason": "so that everyone in class can hear me.",
+      "sentence": "I speak clearly and confidently so that everyone in class can hear me.",
+      "translation": "Tớ nói rõ ràng và tự tin để mọi người trong lớp đều nghe thấy."
+    },
+    {
+      "number": 59,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "The teacher praises my correct answer",
+      "reason": "to encourage my learning spirit.",
+      "sentence": "The teacher praises my correct answer to encourage my learning spirit.",
+      "translation": "Cô giáo khen ngợi câu trả lời đúng của tớ để động viên tinh thần học tập."
+    },
+    {
+      "number": 60,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I feel happy and proud",
+      "reason": "because my effort pays off.",
+      "sentence": "I feel happy and proud because my effort pays off.",
+      "translation": "Tớ cảm thấy vui và tự hào vì sự cố gắng của mình đã có kết quả."
+    },
+    {
+      "number": 61,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I open my workbook",
+      "reason": "to complete the exercise on page ten.",
+      "sentence": "I open my workbook to complete the exercise on page ten.",
+      "translation": "Tớ mở sách bài tập để làm bài ở trang số 10."
+    },
+    {
+      "number": 62,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I write down my answers neatly",
+      "reason": "to avoid making silly handwriting mistakes.",
+      "sentence": "I write down my answers neatly to avoid making silly handwriting mistakes.",
+      "translation": "Tớ viết câu trả lời gọn gàng để tránh lỗi chữ viết xấu."
+    },
+    {
+      "number": 63,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I check my work twice",
+      "reason": "to ensure there are no calculation errors.",
+      "sentence": "I check my work twice to ensure there are no calculation errors.",
+      "translation": "Tớ kiểm tra lại bài hai lần để đảm bảo không sai sót tính toán."
+    },
+    {
+      "number": 84,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "The bell rings again",
+      "reason": "signaling us to go back to the classroom.",
+      "sentence": "The bell rings again signaling us to go back to the classroom.",
+      "translation": "Chuông lại reo lên báo hiệu chúng tớ quay lại lớp học."
+    },
+    {
+      "number": 85,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "We pick up our water bottles",
+      "reason": "and walk back in an orderly line.",
+      "sentence": "We pick up our water bottles and walk back in an orderly line.",
+      "translation": "Chúng tớ nhặt bình nước lên và xếp hàng ngăn nắp đi vào lớp."
+    },
+    {
+      "number": 105,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "We attend the English speaking class",
+      "reason": "to practice daily conversation.",
+      "sentence": "We attend the English speaking class to practice daily conversation.",
+      "translation": "Chúng tớ vào lớp luyện nói Tiếng Anh để thực hành giao tiếp hàng ngày."
+    },
+    {
+      "number": 108,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "The final bell rings at 4:30 PM",
+      "reason": "announcing the end of the school day.",
+      "sentence": "The final bell rings at 4:30 PM announcing the end of the school day.",
+      "translation": "Tiếng chuông cuối ngày reo lúc 4:30 chiều báo hiệu hết giờ học."
+    },
+    {
+      "number": 109,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I pack my books back into my bag",
+      "reason": "to get ready to go home.",
+      "sentence": "I pack my books back into my bag to get ready to go home.",
+      "translation": "Tớ xếp sách vở lại vào cặp để chuẩn bị về nhà."
+    },
+    {
+      "number": 110,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "We clean the blackboard together",
+      "reason": "to leave the classroom tidy for tomorrow.",
+      "sentence": "We clean the blackboard together to leave the classroom tidy for tomorrow.",
+      "translation": "Chúng tớ cùng nhau lau bảng để giữ lớp sạch ngăn nắp cho ngày mai."
+    },
+    {
+      "number": 131,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I walk to my study desk at 7:30 PM",
+      "reason": "to start my evening revision.",
+      "sentence": "I walk to my study desk at 7:30 PM to start my evening revision.",
+      "translation": "Tớ đi đến bàn học lúc 7:30 tối để bắt đầu ôn tập buổi tối."
+    },
+    {
+      "number": 132,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I turn on my desk lamp",
+      "reason": "to have enough light for reading.",
+      "sentence": "I turn on my desk lamp to have enough light for reading.",
+      "translation": "Tớ bật đèn bàn học để có đủ ánh sáng đọc sách."
+    },
+    {
+      "number": 133,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I open my homework assignment notebook",
+      "reason": "to check what tasks I need to do.",
+      "sentence": "I open my homework assignment notebook to check what tasks I need to do.",
+      "translation": "Tớ mở vở dặn dò để kiểm tra các bài tập cần làm."
+    },
+    {
+      "number": 134,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I solve five Math problems carefully",
+      "reason": "to practice logic skills.",
+      "sentence": "I solve five Math problems carefully to practice logic skills.",
+      "translation": "Tớ giải 5 bài toán cẩn thận để luyện kỹ năng tư duy."
+    },
+    {
+      "number": 135,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I write an English paragraph",
+      "reason": "to improve my vocabulary and grammar.",
+      "sentence": "I write an English paragraph to improve my vocabulary and grammar.",
+      "translation": "Tớ viết một đoạn văn Tiếng Anh để nâng cao từ vựng và ngữ pháp."
+    },
+    {
+      "number": 138,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I complete all my homework tasks",
+      "reason": "to feel prepared for tomorrow's class.",
+      "sentence": "I complete all my homework tasks to feel prepared for tomorrow's class.",
+      "translation": "Tớ hoàn thành tất cả bài tập để tự tin cho tiết học ngày mai."
+    },
+    {
+      "number": 139,
+      "topicId": "school",
+      "sourceTopic": 1,
+      "action": "I pack my backpack for the next day",
+      "reason": "so I won't forget anything in the morning.",
+      "sentence": "I pack my backpack for the next day so I won't forget anything in the morning.",
+      "translation": "Tớ xếp cặp sách cho ngày mai để sáng không bị quên đồ."
+    }
+  ],
+  "family": [
+    {
+      "number": 24,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "I walk down to the kitchen",
+      "reason": "to enjoy a delicious breakfast with my family.",
+      "sentence": "I walk down to the kitchen to enjoy a delicious breakfast with my family.",
+      "translation": "Tớ đi xuống bếp để thưởng thức bữa sáng ngon lành cùng gia đình."
+    },
+    {
+      "number": 25,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "I greet my parents with a cheerful voice",
+      "reason": "to show my love and respect.",
+      "sentence": "I greet my parents with a cheerful voice to show my love and respect.",
+      "translation": "Tớ chào bố mẹ bằng giọng nói vui vẻ để thể hiện sự yêu thương và tôn trọng."
+    },
+    {
+      "number": 31,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "I clear my plate off the table",
+      "reason": "to help Mom with light housework.",
+      "sentence": "I clear my plate off the table to help Mom with light housework.",
+      "translation": "Tớ dọn dĩa của mình khỏi bàn để giúp mẹ việc nhà nhẹ nhàng."
+    },
+    {
+      "number": 44,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "I thank my dad warmly",
+      "reason": "for driving me safely to school.",
+      "sentence": "I thank my dad warmly for driving me safely to school.",
+      "translation": "Tớ cảm ơn bố ấm áp vì đã đưa tớ đến trường an toàn."
+    },
+    {
+      "number": 115,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "Mom asks about my school day",
+      "reason": "to hear my fun stories.",
+      "sentence": "Mom asks about my school day to hear my fun stories.",
+      "translation": "Mẹ hỏi thăm về ngày đi học để nghe những câu chuyện vui của tớ."
+    },
+    {
+      "number": 116,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "I tell Mom about my high Math score",
+      "reason": "to make her proud of me.",
+      "sentence": "I tell Mom about my high Math score to make her proud of me.",
+      "translation": "Tớ kể cho mẹ nghe về điểm Toán cao để làm mẹ tự hào."
+    },
+    {
+      "number": 125,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "I help Mom wash the vegetables",
+      "reason": "to share household responsibilities.",
+      "sentence": "I help Mom wash the vegetables to share household responsibilities.",
+      "translation": "Tớ giúp mẹ rửa rau để chia sẻ việc nhà."
+    },
+    {
+      "number": 126,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "I set four pairs of chopsticks on the table",
+      "reason": "to prepare for family dinner.",
+      "sentence": "I set four pairs of chopsticks on the table to prepare for family dinner.",
+      "translation": "Tớ xếp 4 đôi đũa lên bàn để chuẩn bị bữa tối gia đình."
+    },
+    {
+      "number": 127,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "Dad comes home from work",
+      "reason": "and greets us with a warm smile.",
+      "sentence": "Dad comes home from work and greets us with a warm smile.",
+      "translation": "Bố đi làm về và chào cả nhà bằng nụ cười ấm áp."
+    },
+    {
+      "number": 128,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "We sit around the dining table",
+      "reason": "to enjoy a cozy family meal.",
+      "sentence": "We sit around the dining table to enjoy a cozy family meal.",
+      "translation": "Cả nhà ngồi quây quần bên bàn ăn để thưởng thức bữa cơm ấm cúng."
+    },
+    {
+      "number": 129,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "We talk and laugh together",
+      "reason": "to strengthen our family love.",
+      "sentence": "We talk and laugh together to strengthen our family love.",
+      "translation": "Chúng tớ trò chuyện và cười đùa để thắt chặt tình cảm gia đình."
+    },
+    {
+      "number": 130,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "I help clear the table after dinner",
+      "reason": "so Mom can rest.",
+      "sentence": "I help clear the table after dinner so Mom can rest.",
+      "translation": "Tớ giúp dọn bàn sau bữa ăn để mẹ được nghỉ ngơi."
+    },
+    {
+      "number": 136,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "I ask Dad for guidance",
+      "reason": "when I encounter a challenging question.",
+      "sentence": "I ask Dad for guidance when I encounter a challenging question.",
+      "translation": "Tớ nhờ bố hướng dẫn khi gặp một câu hỏi khó."
+    },
+    {
+      "number": 137,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "Dad explains the problem step-by-step",
+      "reason": "so I can understand easily.",
+      "sentence": "Dad explains the problem step-by-step so I can understand easily.",
+      "translation": "Bố giải thích bài toán từng bước một để tớ hiểu dễ dàng."
+    },
+    {
+      "number": 144,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "Mom sits next to my bed",
+      "reason": "to read me an adventure storybook.",
+      "sentence": "Mom sits next to my bed to read me an adventure storybook.",
+      "translation": "Mẹ ngồi cạnh giường để đọc cho tớ nghe cuốn sách phiêu lưu."
+    },
+    {
+      "number": 145,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "I listen to her gentle voice",
+      "reason": "as my eyes grow heavy and sleepy.",
+      "sentence": "I listen to her gentle voice as my eyes grow heavy and sleepy.",
+      "translation": "Tớ lắng nghe giọng nói dịu dàng của mẹ khi đôi mắt dần nặng trĩu."
+    },
+    {
+      "number": 146,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "Mom kisses me on the forehead",
+      "reason": "to wish me sweet dreams.",
+      "sentence": "Mom kisses me on the forehead to wish me sweet dreams.",
+      "translation": "Mẹ hôn lên trán tớ để chúc tớ có những giấc mơ đẹp."
+    },
+    {
+      "number": 147,
+      "topicId": "family",
+      "sourceTopic": 1,
+      "action": "I say \"Good night, Mom and Dad\"",
+      "reason": "to express my love.",
+      "sentence": "I say \"Good night, Mom and Dad\" to express my love.",
+      "translation": "Tớ nói \"Chúc bố mẹ ngủ ngon\" để thể hiện tình yêu thương."
+    }
+  ],
+  "food": [
+    {
+      "number": 26,
+      "topicId": "food",
+      "sourceTopic": 1,
+      "action": "I sit down at the dining table",
+      "reason": "to eat my breakfast peacefully.",
+      "sentence": "I sit down at the dining table to eat my breakfast peacefully.",
+      "translation": "Tớ ngồi vào bàn ăn để ăn sáng một cách vui vẻ."
+    },
+    {
+      "number": 27,
+      "topicId": "food",
+      "sourceTopic": 1,
+      "action": "Mom prepares warm pancakes with honey",
+      "reason": "to give me energy for the long day.",
+      "sentence": "Mom prepares warm pancakes with honey to give me energy for the long day.",
+      "translation": "Mẹ chuẩn bị bánh kếp nóng hổi rưới mật ong để cho tớ năng lượng cho ngày dài."
+    },
+    {
+      "number": 28,
+      "topicId": "food",
+      "sourceTopic": 1,
+      "action": "I eat my breakfast slowly",
+      "reason": "to digest my food properly.",
+      "sentence": "I eat my breakfast slowly to digest my food properly.",
+      "translation": "Tớ ăn sáng chậm rãi để tiêu hóa thức ăn tốt hơn."
+    },
+    {
+      "number": 29,
+      "topicId": "food",
+      "sourceTopic": 1,
+      "action": "I drink a glass of fresh warm milk",
+      "reason": "to make my bones strong and healthy.",
+      "sentence": "I drink a glass of fresh warm milk to make my bones strong and healthy.",
+      "translation": "Tớ uống một ly sữa nóng tươi để giúp xương chắc khỏe."
+    },
+    {
+      "number": 87,
+      "topicId": "food",
+      "sourceTopic": 1,
+      "action": "We line up nicely in front of the canteen",
+      "reason": "to receive our lunch trays.",
+      "sentence": "We line up nicely in front of the canteen to receive our lunch trays.",
+      "translation": "Chúng tớ xếp hàng thẳng trước nhà ăn để nhận khay cơm trưa."
+    },
+    {
+      "number": 88,
+      "topicId": "food",
+      "sourceTopic": 1,
+      "action": "The lunch server gives us rice, fish, and soup",
+      "reason": "to provide a balanced meal.",
+      "sentence": "The lunch server gives us rice, fish, and soup to provide a balanced meal.",
+      "translation": "Cô nhà bếp chia cơm, cá và canh để cung cấp bữa ăn đủ chất."
+    },
+    {
+      "number": 89,
+      "topicId": "food",
+      "sourceTopic": 1,
+      "action": "I carry my tray carefully",
+      "reason": "to avoid spilling the hot soup.",
+      "sentence": "I carry my tray carefully to avoid spilling the hot soup.",
+      "translation": "Tớ bê khay cơm cẩn thận để không làm đổ canh nóng."
+    },
+    {
+      "number": 90,
+      "topicId": "food",
+      "sourceTopic": 1,
+      "action": "We sit at the long dining table",
+      "reason": "to eat together happily.",
+      "sentence": "We sit at the long dining table to eat together happily.",
+      "translation": "Chúng tớ ngồi vào bàn ăn dài để ăn cùng nhau vui vẻ."
+    },
+    {
+      "number": 91,
+      "topicId": "food",
+      "sourceTopic": 1,
+      "action": "I eat my green vegetables",
+      "reason": "because they are full of vitamins.",
+      "sentence": "I eat my green vegetables because they are full of vitamins.",
+      "translation": "Tớ ăn rau xanh vì chúng chứa rất nhiều vitamin."
+    },
+    {
+      "number": 92,
+      "topicId": "food",
+      "sourceTopic": 1,
+      "action": "I finish all the food on my plate",
+      "reason": "to avoid wasting food.",
+      "sentence": "I finish all the food on my plate to avoid wasting food.",
+      "translation": "Tớ ăn hết đồ ăn trên dĩa để không lãng phí thực phẩm."
+    },
+    {
+      "number": 93,
+      "topicId": "food",
+      "sourceTopic": 1,
+      "action": "I place my empty tray in the collection bin",
+      "reason": "to keep the canteen clean.",
+      "sentence": "I place my empty tray in the collection bin to keep the canteen clean.",
+      "translation": "Tớ để khay rỗng vào thùng thu gom để giữ nhà ăn sạch đẹp."
+    },
+    {
+      "number": 117,
+      "topicId": "food",
+      "sourceTopic": 1,
+      "action": "We stop at the local market",
+      "reason": "to buy fresh ingredients for dinner.",
+      "sentence": "We stop at the local market to buy fresh ingredients for dinner.",
+      "translation": "Mẹ con tớ ghé vào chợ địa phương để mua nguyên liệu tươi cho bữa tối."
+    },
+    {
+      "number": 118,
+      "topicId": "food",
+      "sourceTopic": 1,
+      "action": "Mom buys fresh tomatoes and eggs",
+      "reason": "to cook my favorite soup.",
+      "sentence": "Mom buys fresh tomatoes and eggs to cook my favorite soup.",
+      "translation": "Mẹ mua cà chua tươi và trứng để nấu món canh tớ yêu thích."
+    },
+    {
+      "number": 123,
+      "topicId": "food",
+      "sourceTopic": 1,
+      "action": "I pour a glass of cold orange juice",
+      "reason": "to refresh my body.",
+      "sentence": "I pour a glass of cold orange juice to refresh my body.",
+      "translation": "Tớ rót một ly nước cam mát để làm mát cơ thể."
+    },
+    {
+      "number": 161,
+      "topicId": "food",
+      "sourceTopic": 2,
+      "action": "I choose fresh red apples and yellow bananas",
+      "reason": "to get natural vitamins.",
+      "sentence": "I choose fresh red apples and yellow bananas to get natural vitamins.",
+      "translation": "Tớ chọn táo đỏ tươi và chuối vàng để bổ sung vitamin tự nhiên."
+    },
+    {
+      "number": 162,
+      "topicId": "food",
+      "sourceTopic": 2,
+      "action": "I eat green broccoli and carrots",
+      "reason": "to make my immune system strong.",
+      "sentence": "I eat green broccoli and carrots to make my immune system strong.",
+      "translation": "Tớ ăn súp lơ xanh và cà rốt để giúp hệ miễn dịch mạnh khỏe."
+    },
+    {
+      "number": 163,
+      "topicId": "food",
+      "sourceTopic": 2,
+      "action": "I limit drinking sugary soft drinks",
+      "reason": "to protect my teeth and belly.",
+      "sentence": "I limit drinking sugary soft drinks to protect my teeth and belly.",
+      "translation": "Tớ hạn chế uống nước ngọt có đường để bảo vệ răng và bụng."
+    },
+    {
+      "number": 164,
+      "topicId": "food",
+      "sourceTopic": 2,
+      "action": "I drink two liters of pure water daily",
+      "reason": "to keep my body hydrated and energetic.",
+      "sentence": "I drink two liters of pure water daily to keep my body hydrated and energetic.",
+      "translation": "Tớ uống 2 lít nước tinh khiết mỗi ngày để giữ cơ thể đủ nước và tràn đầy năng lượng."
+    },
+    {
+      "number": 165,
+      "topicId": "food",
+      "sourceTopic": 2,
+      "action": "I go to sleep before 9:30 PM",
+      "reason": "so my brain can rest and grow taller.",
+      "sentence": "I go to sleep before 9:30 PM so my brain can rest and grow taller.",
+      "translation": "Tớ đi ngủ trước 9:30 tối để não bộ nghỉ ngơi và phát triển chiều cao."
+    },
+    {
+      "number": 166,
+      "topicId": "food",
+      "sourceTopic": 2,
+      "action": "I stretch my body every morning",
+      "reason": "to stay flexible and active.",
+      "sentence": "I stretch my body every morning to stay flexible and active.",
+      "translation": "Tớ vươn người mỗi sáng để giữ sự dẻo dai và năng động."
+    },
+    {
+      "number": 167,
+      "topicId": "food",
+      "sourceTopic": 2,
+      "action": "I play sports thirty minutes a day",
+      "reason": "to strengthen my heart and muscles.",
+      "sentence": "I play sports thirty minutes a day to strengthen my heart and muscles.",
+      "translation": "Tớ chơi thể thao 30 phút mỗi ngày để rèn luyện tim và cơ bắp."
+    }
+  ],
+  "health": [
+    {
+      "number": 8,
+      "topicId": "health",
+      "sourceTopic": 1,
+      "action": "I walk to the bathroom",
+      "reason": "to wash my face and brush my teeth.",
+      "sentence": "I walk to the bathroom to wash my face and brush my teeth.",
+      "translation": "Tớ đi vào nhà vệ sinh để rửa mặt và đánh răng."
+    },
+    {
+      "number": 9,
+      "topicId": "health",
+      "sourceTopic": 1,
+      "action": "I squeeze mint toothpaste onto my toothbrush",
+      "reason": "to make my teeth clean and white.",
+      "sentence": "I squeeze mint toothpaste onto my toothbrush to make my teeth clean and white.",
+      "translation": "Tớ lấy kem đánh răng vị bạc hà để làm răng sạch và trắng."
+    },
+    {
+      "number": 10,
+      "topicId": "health",
+      "sourceTopic": 1,
+      "action": "I brush my teeth thoroughly for two minutes",
+      "reason": "to protect my smile from cavities.",
+      "sentence": "I brush my teeth thoroughly for two minutes to protect my smile from cavities.",
+      "translation": "Tớ đánh răng kỹ trong 2 phút để bảo vệ nụ cười khỏi sâu răng."
+    },
+    {
+      "number": 11,
+      "topicId": "health",
+      "sourceTopic": 1,
+      "action": "I rinse my mouth with clean water",
+      "reason": "to feel fresh and confident.",
+      "sentence": "I rinse my mouth with clean water to feel fresh and confident.",
+      "translation": "Tớ súc miệng bằng nước sạch để cảm thấy sảng khoái và tự tin."
+    },
+    {
+      "number": 12,
+      "topicId": "health",
+      "sourceTopic": 1,
+      "action": "I splash cool water on my face",
+      "reason": "to wake up my mind completely.",
+      "sentence": "I splash cool water on my face to wake up my mind completely.",
+      "translation": "Tớ tạt nước mát lên mặt để tỉnh táo hoàn toàn."
+    },
+    {
+      "number": 13,
+      "topicId": "health",
+      "sourceTopic": 1,
+      "action": "I wipe my face with a soft towel",
+      "reason": "to dry my skin nicely.",
+      "sentence": "I wipe my face with a soft towel to dry my skin nicely.",
+      "translation": "Tớ lau mặt bằng khăn mềm để làm khô da."
+    },
+    {
+      "number": 30,
+      "topicId": "health",
+      "sourceTopic": 1,
+      "action": "I wipe my mouth with a napkin",
+      "reason": "to keep clean after finishing eating.",
+      "sentence": "I wipe my mouth with a napkin to keep clean after finishing eating.",
+      "translation": "Tớ lau miệng bằng khăn giấy để giữ sạch sau khi ăn xong."
+    },
+    {
+      "number": 80,
+      "topicId": "health",
+      "sourceTopic": 1,
+      "action": "I drink cold water from my bottle",
+      "reason": "to quench my thirst after running.",
+      "sentence": "I drink cold water from my bottle to quench my thirst after running.",
+      "translation": "Tớ uống nước mát từ bình để giải khát sau khi chạy nhảy."
+    },
+    {
+      "number": 81,
+      "topicId": "health",
+      "sourceTopic": 1,
+      "action": "I wipe the sweat off my forehead",
+      "reason": "with a small handkerchief.",
+      "sentence": "I wipe the sweat off my forehead with a small handkerchief.",
+      "translation": "Tớ lau mồ hôi trên trán bằng một chiếc khăn tay nhỏ."
+    },
+    {
+      "number": 86,
+      "topicId": "health",
+      "sourceTopic": 1,
+      "action": "We wash our hands thoroughly with soap",
+      "reason": "before eating lunch to remove germs.",
+      "sentence": "We wash our hands thoroughly with soap before eating lunch to remove germs.",
+      "translation": "Chúng tớ rửa tay kỹ bằng xà phòng trước khi ăn trưa để diệt vi khuẩn."
+    },
+    {
+      "number": 121,
+      "topicId": "health",
+      "sourceTopic": 1,
+      "action": "I wash my hands and feet with soap",
+      "reason": "to wash away dust from the road.",
+      "sentence": "I wash my hands and feet with soap to wash away dust from the road.",
+      "translation": "Tớ rửa tay chân bằng xà phòng để rửa sạch bụi bẩn đường phố."
+    },
+    {
+      "number": 140,
+      "topicId": "health",
+      "sourceTopic": 1,
+      "action": "I take a warm evening shower",
+      "reason": "to relax my muscles.",
+      "sentence": "I take a warm evening shower to relax my muscles.",
+      "translation": "Tớ tắm nước ấm buổi tối để thư giãn cơ thể."
+    },
+    {
+      "number": 141,
+      "topicId": "health",
+      "sourceTopic": 1,
+      "action": "I wear my warm soft pajamas",
+      "reason": "to stay cozy during the night.",
+      "sentence": "I wear my warm soft pajamas to stay cozy during the night.",
+      "translation": "Tớ mặc bộ đồ ngủ mềm mại để giữ ấm suốt đêm."
+    },
+    {
+      "number": 142,
+      "topicId": "health",
+      "sourceTopic": 1,
+      "action": "I brush my teeth one more time",
+      "reason": "to keep my breath fresh before bed.",
+      "sentence": "I brush my teeth one more time to keep my breath fresh before bed.",
+      "translation": "Tớ đánh răng thêm một lần nữa để giữ hơi thở thơm mát trước khi ngủ."
+    },
+    {
+      "number": 151,
+      "topicId": "health",
+      "sourceTopic": 2,
+      "action": "I wash my hands thoroughly with soap",
+      "reason": "to kill harmful bacteria and viruses.",
+      "sentence": "I wash my hands thoroughly with soap to kill harmful bacteria and viruses.",
+      "translation": "Tớ rửa tay kỹ bằng xà phòng để tiêu diệt vi khuẩn và vi-rút có hại."
+    },
+    {
+      "number": 152,
+      "topicId": "health",
+      "sourceTopic": 2,
+      "action": "I scrub between my fingers for twenty seconds",
+      "reason": "to make sure no dirt remains.",
+      "sentence": "I scrub between my fingers for twenty seconds to make sure no dirt remains.",
+      "translation": "Tớ chà kẽ ngón tay trong 20 giây để đảm bảo không còn bụi bẩn."
+    },
+    {
+      "number": 153,
+      "topicId": "health",
+      "sourceTopic": 2,
+      "action": "I rinse away all the soapy bubbles",
+      "reason": "to leave my skin fresh and clean.",
+      "sentence": "I rinse away all the soapy bubbles to leave my skin fresh and clean.",
+      "translation": "Tớ rửa sạch mọi bọt xà phòng để làn da tươi mát sạch sẽ."
+    },
+    {
+      "number": 154,
+      "topicId": "health",
+      "sourceTopic": 2,
+      "action": "I dry my hands with a clean dry towel",
+      "reason": "to prevent germs from growing.",
+      "sentence": "I dry my hands with a clean dry towel to prevent germs from growing.",
+      "translation": "Tớ lau khô tay bằng khăn sạch để ngăn vi khuẩn phát triển."
+    },
+    {
+      "number": 155,
+      "topicId": "health",
+      "sourceTopic": 2,
+      "action": "I trim my fingernails short every week",
+      "reason": "so dirt cannot hide underneath.",
+      "sentence": "I trim my fingernails short every week so dirt cannot hide underneath.",
+      "translation": "Tớ cắt móng tay ngắn hàng tuần để bụi bẩn không trốn bên dưới."
+    },
+    {
+      "number": 156,
+      "topicId": "health",
+      "sourceTopic": 2,
+      "action": "I cover my mouth when coughing",
+      "reason": "to avoid spreading germs to my friends.",
+      "sentence": "I cover my mouth when coughing to avoid spreading germs to my friends.",
+      "translation": "Tớ che miệng khi ho để tránh che vi khuẩn sang các bạn."
+    },
+    {
+      "number": 157,
+      "topicId": "health",
+      "sourceTopic": 2,
+      "action": "I use a clean tissue when sneezing",
+      "reason": "to keep the surrounding air clean.",
+      "sentence": "I use a clean tissue when sneezing to keep the surrounding air clean.",
+      "translation": "Tớ dùng khăn giấy sạch khi hắt hơi để giữ không khí xung quanh sạch."
+    },
+    {
+      "number": 158,
+      "topicId": "health",
+      "sourceTopic": 2,
+      "action": "I throw used tissues into the covered bin",
+      "reason": "to keep the house hygienic.",
+      "sentence": "I throw used tissues into the covered bin to keep the house hygienic.",
+      "translation": "Tớ bỏ khăn giấy đã dùng vào thùng rác có nắp để giữ nhà vệ sinh."
+    },
+    {
+      "number": 159,
+      "topicId": "health",
+      "sourceTopic": 2,
+      "action": "I take off my dusty outdoor clothes",
+      "reason": "as soon as I come back home.",
+      "sentence": "I take off my dusty outdoor clothes as soon as I come back home.",
+      "translation": "Tớ thay quần áo đi đường đầy bụi ngay khi về đến nhà."
+    },
+    {
+      "number": 160,
+      "topicId": "health",
+      "sourceTopic": 2,
+      "action": "I shower daily with warm water",
+      "reason": "to wash away sweat after exercising.",
+      "sentence": "I shower daily with warm water to wash away sweat after exercising.",
+      "translation": "Tớ tắm rửa hàng ngày với nước ấm để rửa sạch mồ hôi sau khi tập thể dục."
+    }
+  ],
+  "transport": [
+    {
+      "number": 35,
+      "topicId": "transport",
+      "sourceTopic": 1,
+      "action": "Dad wears his helmet carefully",
+      "reason": "to set a good example of road safety.",
+      "sentence": "Dad wears his helmet carefully to set a good example of road safety.",
+      "translation": "Bố đội mũ bảo hiểm cẩn thận để làm gương về an toàn giao thông."
+    },
+    {
+      "number": 36,
+      "topicId": "transport",
+      "sourceTopic": 1,
+      "action": "I fasten my helmet strap securely",
+      "reason": "to keep my head safe during the ride.",
+      "sentence": "I fasten my helmet strap securely to keep my head safe during the ride.",
+      "translation": "Tớ cài dây mũ bảo hiểm chắc chắn để giữ an toàn cho đầu khi đi xe."
+    },
+    {
+      "number": 37,
+      "topicId": "transport",
+      "sourceTopic": 1,
+      "action": "I wave goodbye to my mom",
+      "reason": "before hopping onto Dad’s motorbike.",
+      "sentence": "I wave goodbye to my mom before hopping onto Dad’s motorbike.",
+      "translation": "Tớ vẫy tay chào mẹ trước khi trèo lên xe máy của bố."
+    },
+    {
+      "number": 38,
+      "topicId": "transport",
+      "sourceTopic": 1,
+      "action": "I hold onto Dad’s waist tightly",
+      "reason": "to sit steadily on the moving bike.",
+      "sentence": "I hold onto Dad’s waist tightly to sit steadily on the moving bike.",
+      "translation": "Tớ ôm chặt eo bố để ngồi vững trên xe đang chạy."
+    },
+    {
+      "number": 39,
+      "topicId": "transport",
+      "sourceTopic": 1,
+      "action": "Dad drives slowly through the street",
+      "reason": "to navigate the morning traffic safely.",
+      "sentence": "Dad drives slowly through the street to navigate the morning traffic safely.",
+      "translation": "Bố lái xe chậm rãi qua đường để đi qua dòng xe buổi sáng an toàn."
+    },
+    {
+      "number": 40,
+      "topicId": "transport",
+      "sourceTopic": 1,
+      "action": "We stop at the red traffic light",
+      "reason": "to respect traffic laws.",
+      "sentence": "We stop at the red traffic light to respect traffic laws.",
+      "translation": "Chúng tớ dừng lại ở đèn đỏ để chấp hành luật giao thông."
+    },
+    {
+      "number": 41,
+      "topicId": "transport",
+      "sourceTopic": 1,
+      "action": "I look at the busy streets",
+      "reason": "to observe people commuting to work.",
+      "sentence": "I look at the busy streets to observe people commuting to work.",
+      "translation": "Tớ nhìn phố phường nhộn nhịp để ngắm mọi người đi làm."
+    },
+    {
+      "number": 43,
+      "topicId": "transport",
+      "sourceTopic": 1,
+      "action": "I unfasten my helmet",
+      "reason": "and hand it back to my dad.",
+      "sentence": "I unfasten my helmet and hand it back to my dad.",
+      "translation": "Tớ mở khóa mũ bảo hiểm và đưa lại cho bố."
+    },
+    {
+      "number": 112,
+      "topicId": "transport",
+      "sourceTopic": 1,
+      "action": "I walk to the pickup area",
+      "reason": "to wait for my mom to pick me up.",
+      "sentence": "I walk to the pickup area to wait for my mom to pick me up.",
+      "translation": "Tớ đi ra khu vực đón cháu để chờ mẹ đến đón."
+    },
+    {
+      "number": 113,
+      "topicId": "transport",
+      "sourceTopic": 1,
+      "action": "I spot Mom’s red scooter",
+      "reason": "and run towards her happily.",
+      "sentence": "I spot Mom’s red scooter and run towards her happily.",
+      "translation": "Tớ nhận ra chiếc xe máy đỏ của mẹ và chạy lại vui vẻ."
+    },
+    {
+      "number": 114,
+      "topicId": "transport",
+      "sourceTopic": 1,
+      "action": "I put on my helmet",
+      "reason": "and climb onto the back seat.",
+      "sentence": "I put on my helmet and climb onto the back seat.",
+      "translation": "Tớ đội mũ bảo hiểm và trèo lên ghế sau."
+    },
+    {
+      "number": 119,
+      "topicId": "transport",
+      "sourceTopic": 1,
+      "action": "We arrive home safely",
+      "reason": "and unlock the front door.",
+      "sentence": "We arrive home safely and unlock the front door.",
+      "translation": "Chúng tớ về nhà an toàn và mở khóa cửa trước."
+    },
+    {
+      "number": 185,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I hold my mom's hand firmly",
+      "reason": "when crossing the busy street safely.",
+      "sentence": "I hold my mom's hand firmly when crossing the busy street safely.",
+      "translation": "Tớ nắm chặt tay mẹ khi sang đường đông đúc an toàn."
+    },
+    {
+      "number": 186,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I look left, right, and left again",
+      "reason": "before stepping onto the pedestrian crossing.",
+      "sentence": "I look left, right, and left again before stepping onto the pedestrian crossing.",
+      "translation": "Tớ nhìn trái, phải, rồi nhìn lại bên trái trước khi bước vào vạch sang đường."
+    },
+    {
+      "number": 187,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I never talk to strangers",
+      "reason": "to keep myself safe from potential danger.",
+      "sentence": "I never talk to strangers to keep myself safe from potential danger.",
+      "translation": "Tớ không bao giờ chuyện trò với người lạ để giữ an toàn khỏi nguy hiểm."
+    },
+    {
+      "number": 188,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I memorize my parents' phone numbers",
+      "reason": "so I can call them in emergencies.",
+      "sentence": "I memorize my parents' phone numbers so I can call them in emergencies.",
+      "translation": "Tớ học thuộc số điện thoại của bố mẹ để có thể gọi trong trường hợp khẩn cấp."
+    },
+    {
+      "number": 189,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I do not play near boiling water pots",
+      "reason": "to avoid getting hot burns.",
+      "sentence": "I do not play near boiling water pots to avoid getting hot burns.",
+      "translation": "Tớ không chơi gần nồi nước sôi để tránh bị nướng nóng/bỏng."
+    },
+    {
+      "number": 190,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I stay away from sharp knives and scissors",
+      "reason": "to prevent accidental cuts.",
+      "sentence": "I stay away from sharp knives and scissors to prevent accidental cuts.",
+      "translation": "Tớ tránh xa dao và kéo sắc để phòng bị đứt tay."
+    },
+    {
+      "number": 191,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I do not touch electric sockets with wet hands",
+      "reason": "to avoid electrical shock.",
+      "sentence": "I do not touch electric sockets with wet hands to avoid electrical shock.",
+      "translation": "Tớ không chạm vào ổ điện khi tay ướt để tránh bị điện giật."
+    },
+    {
+      "number": 192,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I wear my bright raincoat",
+      "reason": "when it rains heavily to stay dry.",
+      "sentence": "I wear my bright raincoat when it rains heavily to stay dry.",
+      "translation": "Tớ mặc áo mưa màu sáng khi trời mưa to để giữ khô ráo."
+    },
+    {
+      "number": 193,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I walk carefully on slippery wet floors",
+      "reason": "so that I won't slip and fall.",
+      "sentence": "I walk carefully on slippery wet floors so that I won't slip and fall.",
+      "translation": "Tớ đi cẩn thận trên sàn nhà ướt trơn để không bị trượt ngã."
+    },
+    {
+      "number": 194,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I press the elevator buttons gently",
+      "reason": "to ride the lift safely.",
+      "sentence": "I press the elevator buttons gently to ride the lift safely.",
+      "translation": "Tớ bấm nút thang máy nhẹ nhàng để đi thang máy an toàn."
+    },
+    {
+      "number": 195,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I stay inside the house during thunderstorms",
+      "reason": "to stay protected from lightning.",
+      "sentence": "I stay inside the house during thunderstorms to stay protected from lightning.",
+      "translation": "Tớ ở trong nhà khi có dông bão để bảo vệ bản thân khỏi sấm sét."
+    },
+    {
+      "number": 196,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I tell my teacher immediately",
+      "reason": "if I feel sick or dizzy at school.",
+      "sentence": "I tell my teacher immediately if I feel sick or dizzy at school.",
+      "translation": "Tớ báo ngay cho cô giáo nếu cảm thấy mệt hoặc chóng mặt ở trường."
+    },
+    {
+      "number": 197,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I keep a small flashlight in my drawer",
+      "reason": "to use during unexpected power outages.",
+      "sentence": "I keep a small flashlight in my drawer to use during unexpected power outages.",
+      "translation": "Tớ để một chiếc đèn pin nhỏ trong ngăn kéo để dùng khi cúp điện."
+    },
+    {
+      "number": 198,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I buckle my seatbelt in the car",
+      "reason": "before the journey begins.",
+      "sentence": "I buckle my seatbelt in the car before the journey begins.",
+      "translation": "Tớ thắt dây an toàn trong ô tô trước khi chuyến đi bắt đầu."
+    },
+    {
+      "number": 199,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I follow school safety rules strictly",
+      "reason": "to keep everyone safe and happy.",
+      "sentence": "I follow school safety rules strictly to keep everyone safe and happy.",
+      "translation": "Tớ chấp hành nghiêm túc quy định an toàn của trường để mọi người an toàn và vui vẻ."
+    },
+    {
+      "number": 200,
+      "topicId": "transport",
+      "sourceTopic": 5,
+      "action": "I practice these English sentences every day",
+      "reason": "to become a fluent and confident speaker!",
+      "sentence": "I practice these English sentences every day to become a fluent and confident speaker!",
+      "translation": "Tớ luyện tập các câu Tiếng Anh này mỗi ngày để trở thành người nói trôi chảy và tự tin!"
+    }
+  ],
+  "friends": [
+    {
+      "number": 42,
+      "topicId": "friends",
+      "sourceTopic": 1,
+      "action": "We arrive at the school gate early",
+      "reason": "so I have time to greet my friends.",
+      "sentence": "We arrive at the school gate early so I have time to greet my friends.",
+      "translation": "Chúng tớ đến cổng trường sớm để tớ có thời gian chào bạn bè."
+    },
+    {
+      "number": 46,
+      "topicId": "friends",
+      "sourceTopic": 1,
+      "action": "I greet the school security guard",
+      "reason": "to show my politeness.",
+      "sentence": "I greet the school security guard to show my politeness.",
+      "translation": "Tớ chào bác bảo vệ trường để thể hiện sự lễ phép."
+    },
+    {
+      "number": 49,
+      "topicId": "friends",
+      "sourceTopic": 1,
+      "action": "I say \"Good morning!\" to my classmates",
+      "reason": "to spread positive energy.",
+      "sentence": "I say \"Good morning!\" to my classmates to spread positive energy.",
+      "translation": "Tớ nói \"Chào buổi sáng!\" với các bạn để lan tỏa năng lượng tích cực."
+    },
+    {
+      "number": 64,
+      "topicId": "friends",
+      "sourceTopic": 1,
+      "action": "My friend borrows my ruler",
+      "reason": "to draw straight lines in his notebook.",
+      "sentence": "My friend borrows my ruler to draw straight lines in his notebook.",
+      "translation": "Bạn tớ mượn thước kẻ để vẽ đường thẳng trong vở."
+    },
+    {
+      "number": 65,
+      "topicId": "friends",
+      "sourceTopic": 1,
+      "action": "I lend him my ruler happily",
+      "reason": "to be a helpful classmate.",
+      "sentence": "I lend him my ruler happily to be a helpful classmate.",
+      "translation": "Tớ vui vẻ cho bạn mượn thước để làm một người bạn tốt."
+    },
+    {
+      "number": 66,
+      "topicId": "friends",
+      "sourceTopic": 1,
+      "action": "He says \"Thank you\" politely",
+      "reason": "for my kindness.",
+      "sentence": "He says \"Thank you\" politely for my kindness.",
+      "translation": "Bạn ấy nói \"Cảm ơn\" lịch sự vì sự tốt bụng của tớ."
+    },
+    {
+      "number": 83,
+      "topicId": "friends",
+      "sourceTopic": 1,
+      "action": "We chat about our favorite cartoons",
+      "reason": "to bond with each other.",
+      "sentence": "We chat about our favorite cartoons to bond with each other.",
+      "translation": "Chúng tớ trò chuyện về phim hoạt hình yêu thích để gắn kết bạn bè."
+    },
+    {
+      "number": 106,
+      "topicId": "friends",
+      "sourceTopic": 1,
+      "action": "We pair up with a partner",
+      "reason": "to role-play a shopping scene.",
+      "sentence": "We pair up with a partner to role-play a shopping scene.",
+      "translation": "Chúng tớ ghép cặp với bạn để đóng vai cảnh mua sắm."
+    },
+    {
+      "number": 107,
+      "topicId": "friends",
+      "sourceTopic": 1,
+      "action": "I speak English fluently",
+      "reason": "to build my communication confidence.",
+      "sentence": "I speak English fluently to build my communication confidence.",
+      "translation": "Tớ nói tiếng Anh trôi chảy để xây dựng sự tự tin trong giao tiếp."
+    },
+    {
+      "number": 111,
+      "topicId": "friends",
+      "sourceTopic": 1,
+      "action": "I say goodbye to my teacher and friends",
+      "reason": "before walking out.",
+      "sentence": "I say goodbye to my teacher and friends before walking out.",
+      "translation": "Tớ chào tạm biệt cô giáo và bạn bè trước khi bước ra ngoài."
+    },
+    {
+      "number": 168,
+      "topicId": "friends",
+      "sourceTopic": 3,
+      "action": "I introduce myself with a warm smile",
+      "reason": "to make new friends easily.",
+      "sentence": "I introduce myself with a warm smile to make new friends easily.",
+      "translation": "Tớ tự giới thiệu bản thân với nụ cười ấm áp để kết bạn mới dễ dàng."
+    },
+    {
+      "number": 169,
+      "topicId": "friends",
+      "sourceTopic": 3,
+      "action": "I ask \"What is your favorite toy?\"",
+      "reason": "to start a friendly conversation.",
+      "sentence": "I ask \"What is your favorite toy?\" to start a friendly conversation.",
+      "translation": "Tớ hỏi \"Đồ chơi yêu thích của cậu là gì?\" để bắt đầu câu chuyện thân thiện."
+    },
+    {
+      "number": 170,
+      "topicId": "friends",
+      "sourceTopic": 3,
+      "action": "I share my favorite snacks with my seatmate",
+      "reason": "to show generosity.",
+      "sentence": "I share my favorite snacks with my seatmate to show generosity.",
+      "translation": "Tớ chia sẻ đồ ăn nhẹ với bạn ngồi cùng bàn để thể hiện sự rộng lượng."
+    },
+    {
+      "number": 171,
+      "topicId": "friends",
+      "sourceTopic": 3,
+      "action": "I say \"Thank you very much\"",
+      "reason": "whenever someone lends me a pencil.",
+      "sentence": "I say \"Thank you very much\" whenever someone lends me a pencil.",
+      "translation": "Tớ nói \"Cảm ơn cậu rất nhiều\" mỗi khi có ai cho mượn bút chì."
+    },
+    {
+      "number": 172,
+      "topicId": "friends",
+      "sourceTopic": 3,
+      "action": "I say \"I am sorry\" sincerely",
+      "reason": "when I accidentally bump into someone.",
+      "sentence": "I say \"I am sorry\" sincerely when I accidentally bump into someone.",
+      "translation": "Tớ nói \"Tớ xin lỗi\" chân thành khi vô tình va phải ai đó."
+    },
+    {
+      "number": 173,
+      "topicId": "friends",
+      "sourceTopic": 3,
+      "action": "I listen attentively to my friend’s story",
+      "reason": "to show respect for their thoughts.",
+      "sentence": "I listen attentively to my friend’s story to show respect for their thoughts.",
+      "translation": "Tớ lắng nghe chăm chú câu chuyện của bạn để thể hiện sự tôn trọng suy nghĩ của bạn."
+    },
+    {
+      "number": 174,
+      "topicId": "friends",
+      "sourceTopic": 3,
+      "action": "I cheer for my classmates",
+      "reason": "when they win a classroom game.",
+      "sentence": "I cheer for my classmates when they win a classroom game.",
+      "translation": "Tớ cổ vũ cho các bạn khi các bạn thắng trò chơi trên lớp."
+    },
+    {
+      "number": 175,
+      "topicId": "friends",
+      "sourceTopic": 3,
+      "action": "I help my friend carry heavy books",
+      "reason": "so that he doesn't get tired.",
+      "sentence": "I help my friend carry heavy books so that he doesn't get tired.",
+      "translation": "Tớ giúp bạn bê sách nặng để bạn không bị mệt."
+    },
+    {
+      "number": 176,
+      "topicId": "friends",
+      "sourceTopic": 3,
+      "action": "I speak politely using \"Please\" and \"Thank you\"",
+      "reason": "to be a well-mannered student.",
+      "sentence": "I speak politely using \"Please\" and \"Thank you\" to be a well-mannered student.",
+      "translation": "Tớ nói năng lịch sự dùng \"Vui lòng\" và \"Cảm ơn\" để làm một học sinh ngoan."
+    }
+  ],
+  "sports": [
+    {
+      "number": 69,
+      "topicId": "sports",
+      "sourceTopic": 1,
+      "action": "The break bell rings",
+      "reason": "to let us rest after hard study.",
+      "sentence": "The break bell rings to let us rest after hard study.",
+      "translation": "Chuông ra chơi reo để chúng tớ nghỉ ngơi sau giờ học căng thẳng."
+    },
+    {
+      "number": 70,
+      "topicId": "sports",
+      "sourceTopic": 1,
+      "action": "We put our pens down",
+      "reason": "and stretch our body for relaxation.",
+      "sentence": "We put our pens down and stretch our body for relaxation.",
+      "translation": "Chúng tớ đặt bút xuống và vươn người thư giãn."
+    },
+    {
+      "number": 71,
+      "topicId": "sports",
+      "sourceTopic": 1,
+      "action": "My friends and I walk to the courtyard",
+      "reason": "to play outdoor games.",
+      "sentence": "My friends and I walk to the courtyard to play outdoor games.",
+      "translation": "Tớ và bạn bè đi ra sân trường để chơi các trò chơi ngoài trời."
+    },
+    {
+      "number": 72,
+      "topicId": "sports",
+      "sourceTopic": 1,
+      "action": "We bring a black-and-white soccer ball",
+      "reason": "to play a friendly match.",
+      "sentence": "We bring a black-and-white soccer ball to play a friendly match.",
+      "translation": "Chúng tớ mang theo quả bóng đá trắng đen để chơi một trận giao hữu."
+    },
+    {
+      "number": 73,
+      "topicId": "sports",
+      "sourceTopic": 1,
+      "action": "We divide into two teams",
+      "reason": "to start the game fairly.",
+      "sentence": "We divide into two teams to start the game fairly.",
+      "translation": "Chúng tớ chia làm hai đội để bắt đầu trận đấu một cách công bằng."
+    },
+    {
+      "number": 74,
+      "topicId": "sports",
+      "sourceTopic": 1,
+      "action": "I run fast across the grass",
+      "reason": "to chase the moving ball.",
+      "sentence": "I run fast across the grass to chase the moving ball.",
+      "translation": "Tớ chạy nhanh trên thảm cỏ để đuổi theo quả bóng."
+    },
+    {
+      "number": 75,
+      "topicId": "sports",
+      "sourceTopic": 1,
+      "action": "I pass the ball to my teammate",
+      "reason": "so he can shoot into the goal.",
+      "sentence": "I pass the ball to my teammate so he can shoot into the goal.",
+      "translation": "Tớ chuyền bóng cho đồng đội để bạn ấy sút vào lưới."
+    },
+    {
+      "number": 76,
+      "topicId": "sports",
+      "sourceTopic": 1,
+      "action": "He kicks the ball hard",
+      "reason": "to score a fantastic goal.",
+      "sentence": "He kicks the ball hard to score a fantastic goal.",
+      "translation": "Bạn ấy sút bóng thật mạnh để ghi một bàn thắng tuyệt vời."
+    },
+    {
+      "number": 77,
+      "topicId": "sports",
+      "sourceTopic": 1,
+      "action": "We cheer loudly together",
+      "reason": "to celebrate our victory.",
+      "sentence": "We cheer loudly together to celebrate our victory.",
+      "translation": "Chúng tớ reo hò rộn ràng cùng nhau để ăn mừng chiến thắng."
+    },
+    {
+      "number": 78,
+      "topicId": "sports",
+      "sourceTopic": 1,
+      "action": "Some girls play jump rope near the tree",
+      "reason": "to exercise their agility.",
+      "sentence": "Some girls play jump rope near the tree to exercise their agility.",
+      "translation": "Một số bạn nữ chơi nhảy dây gần gốc cây để luyện sự dẻo dai."
+    },
+    {
+      "number": 79,
+      "topicId": "sports",
+      "sourceTopic": 1,
+      "action": "They count the jumps rhythmically",
+      "reason": "to keep the game fun and active.",
+      "sentence": "They count the jumps rhythmically to keep the game fun and active.",
+      "translation": "Các bạn đếm nhịp nhảy đều đặn để trò chơi thêm vui nhộn."
+    }
+  ],
+  "nature": [
+    {
+      "number": 82,
+      "topicId": "nature",
+      "sourceTopic": 1,
+      "action": "We sit under the big green banyan tree",
+      "reason": "to enjoy the cool breeze.",
+      "sentence": "We sit under the big green banyan tree to enjoy the cool breeze.",
+      "translation": "Chúng tớ ngồi dưới cây bàng xanh mát để tận hưởng làn gió mát."
+    },
+    {
+      "number": 177,
+      "topicId": "nature",
+      "sourceTopic": 4,
+      "action": "I turn off the water tap tightly",
+      "reason": "while brushing my teeth to save clean water.",
+      "sentence": "I turn off the water tap tightly while brushing my teeth to save clean water.",
+      "translation": "Tớ khóa chặt vòi nước trong khi đánh răng để tiết kiệm nước sạch."
+    },
+    {
+      "number": 178,
+      "topicId": "nature",
+      "sourceTopic": 4,
+      "action": "I switch off the lights and fans",
+      "reason": "before leaving the classroom to save electricity.",
+      "sentence": "I switch off the lights and fans before leaving the classroom to save electricity.",
+      "translation": "Tớ tắt đèn và quạt trước khi rời khỏi lớp để tiết kiệm điện."
+    },
+    {
+      "number": 179,
+      "topicId": "nature",
+      "sourceTopic": 4,
+      "action": "I separate plastic bottles and paper waste",
+      "reason": "to make recycling easier.",
+      "sentence": "I separate plastic bottles and paper waste to make recycling easier.",
+      "translation": "Tớ phân loại chai nhựa và rác giấy để việc tái chế dễ dàng hơn."
+    },
+    {
+      "number": 180,
+      "topicId": "nature",
+      "sourceTopic": 4,
+      "action": "I pick up plastic trash in the school yard",
+      "reason": "to keep our environment clean.",
+      "sentence": "I pick up plastic trash in the school yard to keep our environment clean.",
+      "translation": "Tớ nhặt rác nhựa ở sân trường để giữ môi trường sạch đẹp."
+    },
+    {
+      "number": 181,
+      "topicId": "nature",
+      "sourceTopic": 4,
+      "action": "I bring my cloth bag to the grocery store",
+      "reason": "to avoid using single-use plastic bags.",
+      "sentence": "I bring my cloth bag to the grocery store to avoid using single-use plastic bags.",
+      "translation": "Tớ mang túi vải đi cửa hàng để tránh dùng túi nhựa dùng một lần."
+    },
+    {
+      "number": 182,
+      "topicId": "nature",
+      "sourceTopic": 4,
+      "action": "I water the small flower pot on my balcony",
+      "reason": "to help the plants grow blossom.",
+      "sentence": "I water the small flower pot on my balcony to help the plants grow blossom.",
+      "translation": "Tớ tưới chậu hoa nhỏ ngoài ban công để giúp cây nở hoa."
+    },
+    {
+      "number": 183,
+      "topicId": "nature",
+      "sourceTopic": 4,
+      "action": "I walk or ride a bicycle short distances",
+      "reason": "to reduce smoke emissions in the air.",
+      "sentence": "I walk or ride a bicycle short distances to reduce smoke emissions in the air.",
+      "translation": "Tớ đi bộ hoặc đi xe đạp quãng đường ngắn để giảm khí thải vào không khí."
+    },
+    {
+      "number": 184,
+      "topicId": "nature",
+      "sourceTopic": 4,
+      "action": "I use both sides of paper sheets",
+      "reason": "to protect green trees in the forest.",
+      "sentence": "I use both sides of paper sheets to protect green trees in the forest.",
+      "translation": "Tớ dùng cả hai mặt giấy để bảo vệ cây xanh trong rừng."
+    }
+  ],
+  "hobbies": [
+    {
+      "number": 21,
+      "topicId": "hobbies",
+      "sourceTopic": 1,
+      "action": "I place my colorful pencil case inside",
+      "reason": "so I can draw and write easily.",
+      "sentence": "I place my colorful pencil case inside so I can draw and write easily.",
+      "translation": "Tớ để hộp bút màu vào trong để có thể vẽ và viết dễ dàng."
+    },
+    {
+      "number": 67,
+      "topicId": "hobbies",
+      "sourceTopic": 1,
+      "action": "We form a group of four",
+      "reason": "to discuss a science project together.",
+      "sentence": "We form a group of four to discuss a science project together.",
+      "translation": "Chúng tớ lập nhóm 4 người để cùng thảo luận dự án khoa học."
+    },
+    {
+      "number": 68,
+      "topicId": "hobbies",
+      "sourceTopic": 1,
+      "action": "We share our ideas activeley",
+      "reason": "to find the best creative solution.",
+      "sentence": "We share our ideas activeley to find the best creative solution.",
+      "translation": "Chúng tớ tích cực chia sẻ ý tưởng để tìm ra giải pháp sáng tạo nhất."
+    },
+    {
+      "number": 101,
+      "topicId": "hobbies",
+      "sourceTopic": 1,
+      "action": "We attend the Art lesson",
+      "reason": "to practice drawing and coloring skills.",
+      "sentence": "We attend the Art lesson to practice drawing and coloring skills.",
+      "translation": "Chúng tớ vào tiết Mỹ thuật để luyện kỹ năng vẽ và tô màu."
+    },
+    {
+      "number": 102,
+      "topicId": "hobbies",
+      "sourceTopic": 1,
+      "action": "I dip my brush into blue paint",
+      "reason": "to paint the ocean sky.",
+      "sentence": "I dip my brush into blue paint to paint the ocean sky.",
+      "translation": "Tớ nhúng cọ vào màu xanh biển để vẽ bầu trời đại dương."
+    },
+    {
+      "number": 103,
+      "topicId": "hobbies",
+      "sourceTopic": 1,
+      "action": "I draw a flying seagull",
+      "reason": "to make my painting look lively.",
+      "sentence": "I draw a flying seagull to make my painting look lively.",
+      "translation": "Tớ vẽ một chú chim hải âu đang bay để bức tranh sinh động hơn."
+    },
+    {
+      "number": 104,
+      "topicId": "hobbies",
+      "sourceTopic": 1,
+      "action": "The teacher displays our paintings on the wall",
+      "reason": "to show off our creativity.",
+      "sentence": "The teacher displays our paintings on the wall to show off our creativity.",
+      "translation": "Cô giáo treo các bức tranh lên tường để trưng bày sự sáng tạo của chúng tớ."
+    }
+  ]
+};
