@@ -9,13 +9,15 @@ type NavItem = {
   /** nhãn ngắn trên điện thoại (thanh 5 ô) */
   short?: string;
   /** biểu tượng 3D (public/emoji/nav, Fluent Emoji – MIT) */
-  icon: string;
+  icon?: string;
+  mark?: string;
   /** Các đường dẫn cũng thuộc về mục này (để tô sáng đúng tab) */
   match: string[];
 };
 
 export const NAV_ITEMS: NavItem[] = [
   { href: '/chon-bai', label: 'Học tập', icon: 'hoc-tap', match: ['/chon-bai', '/lam-bai', '/ket-qua'] },
+  { href: '/tieng-anh', label: 'English Journey', short: 'English', mark: 'ABC', match: ['/tieng-anh'] },
   { href: '/tro-choi', label: 'Game trí tuệ', short: 'Game', icon: 'game', match: ['/tro-choi'] },
   { href: '/co', label: 'Đấu cờ', icon: 'dau-co', match: ['/co'] },
   { href: '/thanh-tich', label: 'Thành tích', icon: 'thanh-tich', match: ['/thanh-tich'] },
@@ -36,8 +38,12 @@ export default function MainNavigation({ className = '' }: { className?: string 
           return (
             <li key={item.href}>
               <Link href={item.href} className="main-nav-link" aria-current={active ? 'page' : undefined}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- ảnh nhỏ 128px, đã tối ưu sẵn (webp) */}
-                <img src={`/emoji/nav/${item.icon}.webp`} width={36} height={36} alt="" aria-hidden="true" className="main-nav-icon main-nav-3d" decoding="async" />
+                {item.mark ? (
+                  <span className="main-nav-icon main-nav-mark" aria-hidden="true">{item.mark}</span>
+                ) : item.icon ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- ảnh nhỏ 128px, đã tối ưu sẵn (webp)
+                  <img src={`/emoji/nav/${item.icon}.webp`} width={36} height={36} alt="" aria-hidden="true" className="main-nav-icon main-nav-3d" decoding="async" />
+                ) : null}
                 <span className={item.short ? 'nav-long' : undefined}>{item.label}</span>
                 {item.short && <span className="nav-short">{item.short}</span>}
               </Link>
