@@ -8210,3 +8210,5 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 :root[data-theme="dark"] .en-shadow-story-list button.is-current,:root[data-theme="dark"] .en-shadow-hidden { background:#1e3150; }
 :root[data-theme="dark"] .en-shadow-footer button.is-done { background:#18382b; color:#a9e4c1; }
 @media(max-width:650px) { .en-shadow { padding:17px; } .en-shadow-head { align-items:flex-start; flex-direction:column; } .en-shadow-head h3 { font-size:20px; } .en-shadow-controls label { margin-left:0; } .en-shadow-english { font-size:17px; } .en-shadow-footer { justify-content:space-between; } }
+
+.en-shadow-audio-note { margin:8px 0 0; color:var(--en-muted); font-size:12px; text-align:center; }
