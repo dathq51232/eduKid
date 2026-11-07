@@ -188,6 +188,19 @@ function ChonBaiContent() {
           </div>
         </section>
 
+        {subjectCode === 'tieng-anh' && (
+          <section className="cb-english-journey" aria-label="English Journey">
+            <div>
+              <span className="cb-english-kicker">LUYỆN TIẾNG ANH THEO CÁCH MỚI</span>
+              <h2>English Journey</h2>
+              <p>Tư duy, kết nối ý tưởng và luyện phản xạ tiếng Anh qua 5 bước.</p>
+            </div>
+            <Link href="/tieng-anh" className="button button-blue">
+              Khám phá ngay <ArrowRight size={18} aria-hidden="true" />
+            </Link>
+          </section>
+        )}
+
         <section className="muc-all cb-muc" aria-labelledby="muc-all-title">
           <div className="cb-muc-head">
             <h2 id="muc-all-title"><Gauge size={22} aria-hidden="true" /> Mức độ cho tất cả các bài</h2>
