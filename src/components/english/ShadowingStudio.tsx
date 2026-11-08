@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, Check, ChevronLeft, ChevronRight, Eye, EyeOff, Headphones, Mic, Play, Square, Star, Volume2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { CommunicationQuestion } from '@/lib/english/communicationBank';
+import { analyzeSentenceProsody, toProsodicSentence } from '@/lib/english/prosody';
 
 type Mode = 'listen' | 'shadow' | 'read';
 type RecognitionResultLike = { transcript: string };
@@ -29,7 +30,7 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
   const [index, setIndex] = useState(initialIndex);
   const [mode, setMode] = useState<Mode>('listen');
   const [showText, setShowText] = useState(false);
-  const [rate, setRate] = useState(0.8);
+  const [rate, setRate] = useState(0.92);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [activeWord, setActiveWord] = useState(-1);
   const [practiced, setPracticed] = useState<number[]>([]);
@@ -48,13 +49,19 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
   const recognitionRef = useRef<RecognitionLike | null>(null);
   const supabase = useMemo(() => { try { return createClient(); } catch { return null; } }, []);
   const current = questions[index];
-  const preferredVoice = voices.find((voice) => /^en[-_]US$/i.test(voice.lang) && /female|samantha|zira|aria|jenny/i.test(voice.name))
-    ?? voices.find((voice) => /^en[-_]US$/i.test(voice.lang) && /google|natural/i.test(voice.name))
-    ?? voices.find((voice) => /^en[-_]US$/i.test(voice.lang))
-    ?? voices.find((voice) => /^en/i.test(voice.lang));
-  const sentenceWords = current ? current.sentence.match(/[^\s]+/g) ?? [] : [];
+
+  // Ưu tiên giọng Neural/Natural trực tuyến (Aria, Ana, Jenny, Guy, Google US English) thay vì giọng máy Zira/David
+  const preferredVoice =
+    voices.find((voice) => /^en[-_]US$/i.test(voice.lang) && /natural|online/i.test(voice.name) && /aria|ana|jenny|ava|emma/i.test(voice.name)) ??
+    voices.find((voice) => /^en[-_]US$/i.test(voice.lang) && /natural|online|google/i.test(voice.name)) ??
+    voices.find((voice) => /^en[-_]US$/i.test(voice.lang) && /samantha|ava|allison/i.test(voice.name)) ??
+    voices.find((voice) => /^en[-_]US$/i.test(voice.lang)) ??
+    voices.find((voice) => /^en/i.test(voice.lang));
+
+  const prosodyTokens = useMemo(() => (current ? analyzeSentenceProsody(current) : []), [current]);
 
   useEffect(() => {
+    const runRef = runId;
     const loadVoices = () => setVoices(window.speechSynthesis?.getVoices() ?? []);
     loadVoices();
     window.speechSynthesis?.addEventListener('voiceschanged', loadVoices);
@@ -63,7 +70,7 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
       if (saved) setPracticed(JSON.parse(saved) as number[]);
     } catch { /* Shadowing remains usable when browser storage is unavailable. */ }
     return () => {
-      runId.current++;
+      runRef.current++;
       stopActiveMedia();
       window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices);
     };
@@ -94,69 +101,87 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
     setActiveWord(-1);
   }
 
-  function sayChunk(text: string, wordOffset: number, run: number) {
+  function playAudioUrl(url: string, wordsInQuestion: string[], run: number): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
+      const audio = new Audio(url);
+      audio.playbackRate = rate;
+      audioRef.current = audio;
+      audio.ontimeupdate = () => {
+        if (runId.current !== run) return;
+        if (!audio.duration || !Number.isFinite(audio.duration) || !wordsInQuestion.length) return;
+        const spokenWord = Math.min(
+          wordsInQuestion.length - 1,
+          Math.floor((audio.currentTime / audio.duration) * wordsInQuestion.length),
+        );
+        setActiveWord(spokenWord);
+      };
+      audio.onended = () => {
+        if (audioRef.current === audio) audioRef.current = null;
+        resolve(true);
+      };
+      audio.onerror = () => {
+        if (audioRef.current === audio) audioRef.current = null;
+        resolve(false);
+      };
+      audio.play().catch(() => {
+        if (audioRef.current === audio) audioRef.current = null;
+        resolve(false);
+      });
+    });
+  }
+
+  function speakBrowserFallback(question: CommunicationQuestion, run: number) {
     return new Promise<void>((resolve) => {
       if (!('speechSynthesis' in window)) { resolve(); return; }
-      const utterance = new SpeechSynthesisUtterance(text);
+      // Đọc liền mạch câu có dấu phẩy prosodic giữa action và reason để giữ ngữ điệu nối câu (↗ | ↘)
+      const prosodicText = toProsodicSentence(question);
+      const utterance = new SpeechSynthesisUtterance(prosodicText);
       finishSpeechRef.current = resolve;
       utterance.lang = 'en-US';
       utterance.rate = rate;
-      utterance.pitch = 1.1;
+      utterance.pitch = 1.04;
       if (preferredVoice) utterance.voice = preferredVoice;
       utterance.onboundary = (event) => {
         if (runId.current !== run) return;
-        const before = text.slice(0, event.charIndex).trim();
+        const before = prosodicText.slice(0, event.charIndex).trim();
         const chunkWord = before ? before.split(/\s+/).length : 0;
-        setActiveWord(wordOffset + chunkWord);
+        setActiveWord(chunkWord);
       };
-      utterance.onend = () => { finishSpeechRef.current = null; resolve(); };
-      utterance.onerror = () => { finishSpeechRef.current = null; resolve(); };
+      utterance.onend = () => { finishSpeechRef.current = null; setActiveWord(-1); resolve(); };
+      utterance.onerror = () => { finishSpeechRef.current = null; setActiveWord(-1); resolve(); };
       window.speechSynthesis.speak(utterance);
     });
   }
 
-  async function speakWithChunks(question: CommunicationQuestion, run: number) {
-    const action = question.action.replace(/[.!?]+$/, '').trim();
-    const reason = question.reason.trim();
-    await sayChunk(action, 0, run);
-    if (runId.current !== run) return;
-    await new Promise((resolve) => window.setTimeout(resolve, 380));
-    if (runId.current !== run) return;
-    await sayChunk(reason, normalizeWords(action).length, run);
-    if (runId.current === run) setActiveWord(-1);
-  }
-
   async function playQuestion(question: CommunicationQuestion, run: number) {
+    const wordsInQuestion = question.sentence.match(/[^\s]+/g) ?? [];
+
+    // 1. Ưu tiên file thu mẫu Neural trên Supabase Storage (english-shadowing-audio)
     if (supabase) {
       const clipName = `${String(question.storyIndex).padStart(3, '0')}.mp3`;
       const { data } = supabase.storage.from('english-shadowing-audio').getPublicUrl(`${question.storyId}/${clipName}`);
-      const audio = new Audio(data.publicUrl);
-      audio.playbackRate = rate;
-      audioRef.current = audio;
-      try {
-        await new Promise<void>((resolve, reject) => {
-          audio.ontimeupdate = () => {
-            const wordsInQuestion = question.sentence.match(/[^\s]+/g) ?? [];
-            if (!audio.duration || !Number.isFinite(audio.duration) || !wordsInQuestion.length) return;
-            const spokenWord = Math.min(wordsInQuestion.length - 1, Math.floor((audio.currentTime / audio.duration) * wordsInQuestion.length));
-            setActiveWord(spokenWord);
-          };
-          audio.onended = () => resolve();
-          audio.onerror = () => reject(new Error('Audio sample unavailable'));
-          audio.play().catch(reject);
-        });
-        if (audioRef.current === audio) audioRef.current = null;
-        if (runId.current === run) { setAudioFallback(false); setActiveWord(-1); }
+      const ok = await playAudioUrl(data.publicUrl, wordsInQuestion, run);
+      if (runId.current !== run) return;
+      if (ok) {
+        setAudioFallback(false);
+        setActiveWord(-1);
         return;
-      } catch {
-        if (audioRef.current === audio) audioRef.current = null;
-        if (runId.current !== run) return;
-        setAudioFallback(true);
       }
-    } else {
-      setAudioFallback(true);
     }
-    if (runId.current === run) await speakWithChunks(question, run);
+
+    // 2. Dự phòng qua /api/tts Neural 24kHz với dấu ngắt nhịp prosodic (action, reason)
+    const prosodicText = toProsodicSentence(question);
+    const ttsOk = await playAudioUrl(`/api/tts?lang=en&q=${encodeURIComponent(prosodicText)}`, wordsInQuestion, run);
+    if (runId.current !== run) return;
+    if (ttsOk) {
+      setAudioFallback(false);
+      setActiveWord(-1);
+      return;
+    }
+
+    // 3. Dự phòng ngoại tuyến qua Web Speech API
+    setAudioFallback(true);
+    await speakBrowserFallback(question, run);
   }
 
   function startEchoInterval(question: CommunicationQuestion, run: number) {
@@ -292,18 +317,42 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
       <button type="button" className="en-shadow-main" onClick={() => void playCurrent()}><Play size={17}/> {mode === 'shadow' ? 'Nghe & đến lượt em' : 'Nghe câu này'}</button>
       <button type="button" onClick={() => void playStory()} disabled={playing}><Headphones size={17}/> {questions.length > 10 ? 'Nghe 10 câu liền' : 'Nghe cả mạch'}</button>
       {playing && <button type="button" onClick={stop}><Square size={15}/> Dừng</button>}
-      <label>Tốc độ <select value={rate} onChange={(event) => setRate(Number(event.target.value))}><option value={0.8}>Lớp 1–2 · 0.8x</option><option value={0.92}>Lớp 3–5 · 0.92x</option><option value={1}>Tự nhiên · 1.0x</option></select></label>
+      <label>Tốc độ <select value={rate} onChange={(event) => setRate(Number(event.target.value))}><option value={0.8}>Chậm rõ · 0.8x</option><option value={0.92}>Chuẩn tiểu học · 0.92x</option><option value={1}>Tự nhiên · 1.0x</option></select></label>
     </div>
-    {preferredVoice && <p className="en-shadow-voice">Giọng mẫu: {preferredVoice.name} · en-US · tông thân thiện</p>}
+    <p className="en-shadow-voice">
+      Giọng mẫu: <strong>EduChain Neural US (en-US)</strong> · có nhấn trọng âm &amp; ngữ điệu nối câu
+    </p>
 
     {mode !== 'read' && <article className={`en-shadow-current${showText ? ' has-text' : ''}`}>
       <span className="en-shadow-number">Câu {current.storyIndex} · {current.storySize}</span>
-      {mode === 'listen' && !showText && !playing && activeWord < 0 ? <p className="en-shadow-hidden">Nghe câu tiếng Anh, sau đó mở văn bản để đối chiếu.</p> : <>
-        <p className="en-shadow-english" aria-label={current.sentence}>{sentenceWords.map((word, wordIndex) => <span key={`${wordIndex}-${word}`} className={wordIndex === activeWord ? 'is-speaking' : ''}>{word}{wordIndex < sentenceWords.length - 1 ? ' ' : ''}</span>)}</p>
+      {mode === 'listen' && !showText && !playing && activeWord < 0 ? <p className="en-shadow-hidden">Nghe câu tiếng Anh, để ý chỗ nhấn giọng và nhịp nghỉ giữa câu, sau đó mở văn bản để đối chiếu.</p> : <>
+        <p className="en-shadow-english" aria-label={current.sentence}>
+          {prosodyTokens.map((tok) => (
+            <span key={`${tok.wordIndex}-${tok.word}`} className="en-word-wrap">
+              <span
+                className={`en-word${tok.stressed ? ' is-stressed' : ' is-weak'}${tok.wordIndex === activeWord ? ' is-speaking' : ''}`}
+              >
+                {tok.word}
+              </span>
+              {tok.intonationAfter === 'rise' && (
+                <span className="en-prosody-mark is-rise" title="Lên giọng nhẹ và nghỉ nửa nhịp" aria-hidden="true">↗ |</span>
+              )}
+              {tok.intonationAfter === 'fall' && (
+                <span className="en-prosody-mark is-fall" title="Hạ giọng kết câu" aria-hidden="true">↘</span>
+              )}
+              {tok.wordIndex < prosodyTokens.length - 1 ? ' ' : ''}
+            </span>
+          ))}
+        </p>
+        <div className="en-prosody-legend" aria-label="Chú giải ngữ điệu">
+          <span><b className="en-legend-dot">• Từ đậm</b> Nhấn trọng âm</span>
+          <span><b className="en-legend-rise">↗ |</b> Lên giọng nhẹ &amp; nghỉ nhịp</span>
+          <span><b className="en-legend-fall">↘</b> Hạ giọng cuối câu</span>
+        </div>
         {showText && <p className="en-shadow-vietnamese">{current.translation}</p>}
       </>}
-      <button type="button" className="en-shadow-reveal" onClick={() => setShowText((value) => !value)}>{showText ? <><EyeOff size={16}/> Ẩn văn bản</> : <><Eye size={16}/> Hiện câu & nghĩa</>}</button>
-      {mode === 'shadow' && <p className="en-shadow-prompt">Nghe mẫu, để ý nhịp ngắt rồi đọc theo thành tiếng.</p>}
+      <button type="button" className="en-shadow-reveal" onClick={() => setShowText((value) => !value)}>{showText ? <><EyeOff size={16}/> Ẩn văn bản</> : <><Eye size={16}/> Hiện câu &amp; nghĩa</>}</button>
+      {mode === 'shadow' && <p className="en-shadow-prompt">Nghe mẫu, nhấn rõ các từ có dấu chấm (•), nghỉ nhẹ ở vạch (↗ |) rồi đọc theo thành tiếng.</p>}
     </article>}
 
     {mode === 'shadow' && <section className={`en-shadow-echo${echoReady ? ' is-ready' : ''}`} aria-live="polite">
@@ -329,6 +378,6 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
       {mode === 'shadow' && index < questions.length - 1 && <button type="button" className="en-shadow-next" onClick={() => chooseSentence(index + 1)}>Câu tiếp <ChevronRight size={18}/></button>}
     </footer>
     {playing && <p className="en-shadow-status"><Volume2 size={16}/> Đang phát câu {index + 1}…</p>}
-    {audioFallback && <p className="en-shadow-audio-note">Chưa có bản thu mẫu cho câu này; đang dùng giọng đọc của trình duyệt.</p>}
+    {audioFallback && <p className="en-shadow-audio-note">Đang phát bằng giọng đọc dự phòng của trình duyệt.</p>}
   </div>;
 }
