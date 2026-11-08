@@ -1,12 +1,13 @@
+import { f3dSrc } from './f3d-catalog';
 import type { SceneKind } from './types';
 
 /** Cảnh nền minh hoạ: nền chuyển màu + hình dán đặt quanh mép (toạ độ trang 1600×900), không che chỗ đặt chữ ở giữa */
 export type ScenePart = { src?: string; x: number; y: number; w: number; h?: number; css?: string; op?: number; flip?: boolean };
 export type Scene = { id: SceneKind; label: string; icon: string; bg: string; dark?: boolean; parts: ScenePart[] };
 
-const S = (n: string) => `/emoji/sticker/${n}.webp`;
-const E = (n: string) => `/emoji/${n}.png`;
-const I = (n: string) => `/edu-icons/${n}.webp`;
+const S = f3dSrc;
+const E = f3dSrc;
+const I = f3dSrc;
 const cloud = (x: number, y: number, w: number): ScenePart => ({ x, y, w, h: w * 0.42, css: 'background:#fff;border-radius:999px;box-shadow:inset 0 -6px 0 rgba(148,163,184,.18)' });
 
 export const SCENES: Scene[] = [

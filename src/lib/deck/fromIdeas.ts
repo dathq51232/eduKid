@@ -112,17 +112,34 @@ function specsOf(x: LessonIdea, topic: string, math: boolean, minus: boolean, r:
   return [{ q: x.t, big: '⭐' }];
 }
 
-const img0 = (src: string, x: number, y: number, w: number): El => ({ id: uid(), kind: 'img', src, x, y, w, h: w, rot: 0 } as El);
-const img = (name: string, x: number, y: number, w: number): El => ({ id: uid(), kind: 'img', src: f3dSrc(name), x, y, w, h: w, rot: 0, name } as El);
+const img0 = (src: string, x: number, y: number, w: number): El => ({ id: uid(), kind: 'img', src, x, y, w, h: w, rot: 0, shadow: true } as El);
+const img = (name: string, x: number, y: number, w: number): El => ({ id: uid(), kind: 'img', src: f3dSrc(name), x, y, w, h: w, rot: 0, name, shadow: true } as El);
 type Anims = Slide['anims'];
 const anim = (anims: Anims, el: El, fx: 'pop' | 'zoom' | 'fly-up' | 'drop', start: 'click' | 'with' | 'after', sound?: string) =>
   anims.push({ id: uid(), el: el.id, fx, start, delay: start === 'after' ? 0.05 : 0, dur: 0.45, ...(sound ? { sound } : {}) });
 
-/** một nhóm đồ vật xếp lưới trong khung [x, x+w] */
+/** một nhóm đồ vật xếp trên Khay đếm Montessori (5 vật/hàng — chuẩn Subitizing Tiểu học) */
 function groupEls(n: number, obj: string, x: number, y: number, w: number, els: El[], anims: Anims, first: boolean) {
-  const cols = Math.min(5, n), sz = Math.min(110, Math.floor(w / cols) - 8);
+  const cols = Math.min(5, Math.max(1, n)), rows = Math.max(1, Math.ceil(n / 5));
+  const sz = Math.min(106, Math.floor((w - 56) / cols) - 10);
+  const trayH = rows * (sz + 10) + 42;
+  els.push({
+    id: uid(),
+    kind: 'shape',
+    shape: 'tray',
+    x: x + 12,
+    y: y - 20,
+    w: w - 24,
+    h: trayH,
+    rot: 0,
+    fill: '#f59e0b',
+    stroke: '#b45309',
+    sw: 5,
+    lock: true,
+    shadow: true,
+  } as El);
   for (let i = 0; i < n; i++) {
-    const e = img(obj, x + (w - cols * (sz + 8)) / 2 + (i % cols) * (sz + 8), y + Math.floor(i / cols) * (sz + 8), sz);
+    const e = img(obj, x + (w - cols * (sz + 10)) / 2 + (i % cols) * (sz + 10), y + Math.floor(i / cols) * (sz + 10), sz);
     els.push(e); anim(anims, e, 'pop', i === 0 && !first ? 'click' : 'after', i === 0 ? 'pop' : undefined);
   }
 }

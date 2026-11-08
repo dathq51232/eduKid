@@ -35,13 +35,14 @@ const RAIL: [Panel, string, React.ComponentType<{ 'aria-hidden'?: boolean }>][] 
 /** hình 3D hay dùng (bộ Fluent 3D trong public/emoji/f3d) */
 const F3D = ['red-apple', 'banana', 'strawberry', 'cherries', 'grapes', 'watermelon', 'carrot', 'pencil', 'books', 'open-book', 'notebook', 'backpack', 'scissors', 'straight-ruler', 'abacus', 'star',
   'balloon', 'wrapped-gift', 'party-popper', 'sports-medal', 'light-bulb', 'microscope', 'alarm-clock', 'game-die', 'puzzle-piece', 'soccer-ball', 'kite', 'teddy-bear', 'cat', 'dog', 'rabbit', 'bird',
-  'butterfly', 'fish', 'turtle', 'frog', 'sunflower', 'tulip', 'seedling', 'deciduous-tree', 'sun', 'rainbow', 'cloud', 'crescent-moon', 'house', 'school', 'bus', 'bicycle'].map((n) => `/emoji/f3d/${n}.webp`);
+  'butterfly', 'fish', 'turtle', 'frog', 'sunflower', 'tulip', 'seedling', 'deciduous-tree', 'sun', 'rainbow', 'cloud', 'crescent-moon', 'house', 'school', 'bus', 'bicycle'].map(f3dSrc);
 const MILO = ['professor', 'artist', 'doctor', 'astronaut', 'robot', ''].map((n) => `/brand/milo${n ? `-${n}` : ''}.webp`);
 const COLORS = ['#1d4ed8', '#111827', '#ffffff', '#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#0891b2', '#7c3aed', '#db2777', '#7c2d12', '#065f46'];
 const FILLS = ['#fde68a', '#bfdbfe', '#bbf7d0', '#fbcfe8', '#ddd6fe', '#fed7aa', '#ffffff', '#f87171', '#60a5fa', '#34d399', '#fbbf24', 'transparent'];
 const SHAPES: { k: ShapeKind; label: string }[] = [
   { k: 'round', label: 'Thẻ bo góc' }, { k: 'rect', label: 'Chữ nhật' }, { k: 'circle', label: 'Hình tròn' }, { k: 'star', label: 'Ngôi sao' },
   { k: 'heart', label: 'Trái tim' }, { k: 'arrow', label: 'Mũi tên' }, { k: 'cloud', label: 'Đám mây' }, { k: 'bubble', label: 'Bong bóng lời' },
+  { k: 'wheel', label: 'Vòng quay' }, { k: 'mystery', label: 'Thẻ bí ẩn' }, { k: 'tray', label: 'Khay đếm' }, { k: 'banner', label: 'Băng rôn' },
 ];
 type Lesson3DRow = { id: string; title: string };
 /** hình chưa có trên máy chủ (thiếu file): ẩn ô thay vì hiện ảnh lỗi */
@@ -175,7 +176,13 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   const center = (w: number, h: number) => ({ x: Math.round((SW - w) / 2 + (Math.random() - 0.5) * 120), y: Math.round((SH - h) / 2 + (Math.random() - 0.5) * 80) });
   const addText = (title: boolean) => addEl({ id: uid(), kind: 'text', ...center(title ? 1100 : 760, title ? 140 : 120), w: title ? 1100 : 760, h: title ? 140 : 120, rot: 0, text: title ? 'Tiêu đề' : 'Chữ của cô', size: title ? 84 : 48, color: dark ? '#ffffff' : title ? '#1d4ed8' : '#1f2937', font: title ? 'baloo' : 'quick', align: 'center', bg: '' });
   const addSticker = (src: string) => (replace && selEl?.kind === 'img' ? (patchEl(selEl.id, { src, asset: false, name: stickerName(src) || selEl.name }), setReplace(false), setMsg({ kind: 'ok', text: 'Đã thay hình.' })) : addEl({ id: uid(), kind: 'img', ...center(220, 220), w: 220, h: 220, rot: 0, src, name: src.split('/').pop()?.replace(/\.(webp|png)$/, '').replace(/-/g, ' ') }));
-  const addShape = (shape: ShapeKind) => addEl({ id: uid(), kind: 'shape', ...center(320, 220), w: shape === 'circle' || shape === 'star' || shape === 'heart' ? 260 : 360, h: shape === 'circle' || shape === 'star' || shape === 'heart' ? 260 : 200, rot: 0, shape, fill: '#fde68a', stroke: '#f59e0b', sw: 4, text: '', color: '#1f2937', size: 54 });
+  const addShape = (shape: ShapeKind) => {
+    const sq = shape === 'circle' || shape === 'star' || shape === 'heart' || shape === 'wheel';
+    const w = sq ? 280 : shape === 'tray' ? 520 : shape === 'banner' ? 480 : 360;
+    const h = sq ? 280 : shape === 'tray' ? 240 : shape === 'banner' ? 120 : 200;
+    const text = shape === 'mystery' || shape === 'wheel' ? '?' : '';
+    addEl({ id: uid(), kind: 'shape', ...center(w, h), w, h, rot: 0, shape, fill: '#fde68a', stroke: '#f59e0b', sw: 5, text, color: '#1f2937', size: 54 });
+  };
   const addQuiz = () => addEl({ id: uid(), kind: 'quiz', x: 220, y: 170, w: 1160, h: 620, rot: 0, q: 'Câu hỏi?', opts: ['Đáp án A', 'Đáp án B', 'Đáp án C', 'Đáp án D'], a: 0, cols: 2 }, 'pop');
   const addSort = () => addEl({ id: uid(), kind: 'sort', x: 180, y: 160, w: 1240, h: 600, rot: 0, prompt: 'Sắp xếp theo thứ tự đúng', items: ['1', '2', '3', '4'] }, 'fade');
   const addDrop = () => addEl({ id: uid(), kind: 'drop', ...center(300, 220), w: 300, h: 220, rot: 0, label: 'Thả vào đây', accept: [], color: '#2563eb' });

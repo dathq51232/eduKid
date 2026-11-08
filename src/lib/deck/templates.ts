@@ -1,9 +1,10 @@
 // Mẫu trang theo hoạt động cho bài thao giảng: dùng hình dán có sẵn trong dự án (public/emoji, public/edu-icons).
 // Giáo viên thêm mẫu vào bài rồi sửa chữ, đổi hình tuỳ ý.
+import { f3dSrc } from './f3d-catalog';
 import { uid, type Anim, type El, type Slide } from './types';
 
-const ST = (n: string) => `/emoji/sticker/${n}.webp`;
-const EM = (n: string) => `/emoji/${n}.png`;
+const ST = f3dSrc;
+const EM = f3dSrc;
 
 type Mk = { els: El[]; anims: Anim[] };
 const T = (m: Mk, text: string, x: number, y: number, w: number, h: number, size: number, color = '#1d4ed8', o: Partial<Extract<El, { kind: 'text' }>> = {}) => {
@@ -107,8 +108,9 @@ export const SLIDE_TEMPLATES: Tpl[] = [
       const zones: string[] = [];
       groups.forEach(([n, pic], gi) => {
         const x0 = 90 + gi * 500;
+        S(m, 'tray', x0 - 15, 145, 330, 325, '#f59e0b', '', { stroke: '#b45309', sw: 5, lock: true, shadow: true } as Partial<El>);
         for (let k = 0; k < n; k++) I(m, ST(pic), x0 + (k % 2) * 150 + (n === 3 && k === 2 ? 75 : 0), 160 + Math.floor(k / 2) * 150, 140, { lock: true });
-        const z = { id: uid(), kind: 'drop', x: x0 + 60, y: 500, w: 220, h: 170, rot: 0, label: 'Thả số vào đây', accept: [], color: '#2563eb' } as El;
+        const z = { id: uid(), kind: 'drop', x: x0 + 40, y: 500, w: 250, h: 170, rot: 0, label: 'Thả số vào đây', accept: [], color: '#2563eb' } as El;
         m.els.push(z); zones.push(z.id);
       });
       const cards = [4, 2, 3].map((n, i) => {
@@ -142,7 +144,7 @@ export const SLIDE_TEMPLATES: Tpl[] = [
       I(m, ST('rabbit'), 650, 160, 300, { name: 'Gợi ý' });
       const word = ['T', 'H', 'Ỏ'];
       word.forEach((c, i) => {
-        S(m, 'round', 470 + i * 230, 520, 200, 220, '#4c1d95', '', { lock: true });
+        S(m, 'mystery', 470 + i * 230, 520, 200, 220, '#7c3aed', '?', { stroke: '#4c1d95', sw: 5, color: '#ffffff', size: 84, lock: true } as Partial<El>);
         const l = S(m, 'round', 470 + i * 230, 520, 200, 220, '#ffffff', c, { stroke: '#7c3aed', sw: 6, size: 130, color: '#4c1d95' } as Partial<El>);
         A(m, l, 'spin-in', 'click', { sound: 'ding' });
       });
@@ -152,8 +154,8 @@ export const SLIDE_TEMPLATES: Tpl[] = [
     id: 'wheel', title: 'Vòng quay may mắn', desc: 'Bấm mũi tên cho bánh xe quay', bg: 'peach', preview: [ST('star')],
     make: () => { const m: Mk = { els: [], anims: [] };
       T(m, 'Vòng quay may mắn', 200, 30, 1200, 110, 76, '#9a3412');
-      const w = S(m, 'star', 560, 170, 480, 480, '#fbbf24', '?', { stroke: '#ea580c', sw: 6, size: 120, color: '#9a3412' } as Partial<El>);
-      const btn = S(m, 'arrow', 1120, 360, 260, 120, '#ef4444', 'Quay!', { size: 40, color: '#ffffff', rot: 180 } as Partial<El>);
+      const w = S(m, 'wheel', 560, 170, 480, 480, '#fbbf24', '?', { stroke: '#f59e0b', sw: 6, size: 96, color: '#9a3412', shadow: true } as Partial<El>);
+      const btn = S(m, 'arrow', 1120, 360, 260, 120, '#ef4444', 'Quay!', { stroke: '#b91c1c', sw: 5, size: 40, color: '#ffffff', rot: 180, shadow: true } as Partial<El>);
       A(m, w, 'spin', 'click', { trigger: btn, dur: 2.4, sound: 'drum' });
       A(m, w, 'pulse', 'after', { trigger: btn, sound: 'tada' });
       return [slide('peach', m, 'Bấm vào mũi tên "Quay!" để bánh xe quay, sau đó gọi một bạn trả lời.')]; },
@@ -190,10 +192,11 @@ export function deckFromTemplate(id: string, title: string): Slide[] {
   return t && t.id !== 'title' ? [...first, ...t.make()] : first;
 }
 
-/** Hình dán có sẵn trong dự án để chèn vào trang */
+/** Hình dán 3D sắc nét có sẵn trong dự án để chèn vào trang */
+const uniq = (a: string[]) => [...new Set(a)];
 export const STICKER_SETS: { label: string; items: string[] }[] = [
-  { label: 'Thú vật', items: [...['rabbit', 'cat', 'dog', 'duck', 'fish', 'butterfly', 'lady-beetle'].map(ST), ...['bear', 'fox', 'lion', 'tiger', 'monkey', 'panda', 'owl', 'horse', 'pig', 'rooster', 'baby-chick', 'dolphin', 'elephant', 'giraffe', 'penguin', 'frog', 'turtle', 'snail', 'ant', 'crab', 'deer', 'goose', 'ewe', 'donkey', 'unicorn', 't-rex'].map((n) => ['elephant', 'penguin', 'frog', 'turtle'].includes(n) ? `/edu-icons/${n}.webp` : EM(n))] },
-  { label: 'Trái cây · rau', items: [...['red-apple', 'banana', 'strawberry', 'carrot'].map(ST), ...['grapes', 'pear', 'mango', 'tangerine', 'tomato', 'lemon', 'kiwi-fruit', 'cucumber', 'eggplant', 'broccoli', 'mushroom', 'peanuts', 'ear-of-corn'].map(EM), ...['watermelon', 'pineapple', 'cherries', 'peach', 'pumpkin', 'potato'].map((n) => `/edu-icons/${n}.webp`)] },
-  { label: 'Đồ dùng', items: [ST('pencil'), ...['open-book', 'books', 'scissors', 'straight-ruler', 'paintbrush', 'bell', 'drum', 'trumpet', 'guitar', 'headphone', 'key', 'magnet', 'glasses', 'balance-scale', 'chair', 'bucket', 'broom', 'teapot', 'spoon', 'candle', 'light-bulb', 'envelope', 'bicycle', 'bus', 'delivery-truck', 'fire-engine', 'helicopter', 'sailboat'].map(EM)] },
-  { label: 'Thiên nhiên · khác', items: [...['sun', 'sunflower', 'deciduous-tree', 'house', 'balloon', 'star', 'trophy', 'wrapped-gift'].map(ST), ...['rainbow', 'crescent-moon', 'cloud-with-lightning', 'droplet', 'fire', 'blossom', 'evergreen-tree', 'mountain', 'school', 'glowing-star', 'gem-stone', 'sparkles'].map(EM)] },
+  { label: 'Thú vật', items: uniq(['rabbit', 'cat', 'dog', 'duck', 'fish', 'butterfly', 'lady-beetle', 'bear', 'fox', 'lion', 'tiger', 'monkey', 'owl', 'horse', 'pig', 'rooster', 'baby-chick', 'dolphin', 'elephant', 'giraffe', 'penguin', 'frog', 'turtle', 'snail', 'ant', 'crab', 'deer', 'ewe', 't-rex', 'snake', 'chameleon', 'squirrel', 'whale'].map(ST)) },
+  { label: 'Trái cây · rau', items: uniq(['red-apple', 'banana', 'strawberry', 'carrot', 'grapes', 'pear', 'mango', 'tangerine', 'tomato', 'lemon', 'kiwi-fruit', 'cucumber', 'eggplant', 'broccoli', 'mushroom', 'peanuts', 'ear-of-corn', 'watermelon', 'pineapple', 'cherries', 'peach', 'pumpkin', 'potato', 'blueberry', 'dragonfruit', 'cabbage', 'garlic', 'onion', 'pepper'].map(ST)) },
+  { label: 'Đồ dùng', items: uniq(['pencil', 'open-book', 'books', 'scissors', 'straight-ruler', 'paintbrush', 'bell', 'drum', 'trumpet', 'guitar', 'headphone', 'glasses', 'balance-scale', 'chair', 'bucket', 'broom', 'teapot', 'spoon', 'candle', 'light-bulb', 'envelope', 'bicycle', 'bus', 'delivery-truck', 'sailboat', 'car', 'rocket', 'pliers', 'saw', 'tape-measure', 'shovel'].map(ST)) },
+  { label: 'Thiên nhiên · khác', items: uniq(['sun', 'sunflower', 'deciduous-tree', 'house', 'balloon', 'star', 'crown', 'trophy', 'wrapped-gift', 'rainbow', 'crescent-moon', 'cloud', 'droplet', 'fire', 'blossom', 'mountain', 'school', 'planet', 'cactus', 'icecream', 'kite'].map(ST)) },
 ];

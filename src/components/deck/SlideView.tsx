@@ -31,24 +31,247 @@ export function SlideFrame({ children, className, style }: { children: (scale: n
 }
 
 export function ShapeSvg({ e }: { e: ShapeEl }) {
-  const dash = e.dash === 'dash' ? `${Math.max(8, e.sw * 3)} ${Math.max(6, e.sw * 2)}` : e.dash === 'dot' ? `0.1 ${Math.max(6, e.sw * 2.2)}` : undefined;
-  const p = { fill: e.fill, stroke: e.stroke, strokeWidth: e.sw, vectorEffect: 'non-scaling-stroke' as const, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const, strokeDasharray: dash };
-  // bo góc theo điểm ảnh thật (khung 100×100 bị kéo giãn theo w × h)
-  const r = e.rad != null && e.w > 1 ? (Math.min(e.w, e.h) / 2) * (e.rad / 100) : null;
-  const rx = r != null ? Math.min(49.5, (r * 100) / e.w) : 12, ry = r != null ? Math.min(49.5, (r * 100) / e.h) : 18;
+  const W = Math.max(40, Math.round(e.w || 100));
+  const H = Math.max(40, Math.round(e.h || 100));
+  const sw = Math.max(0, e.sw ?? 4);
+  const dash = e.dash === 'dash' ? `${Math.max(10, sw * 3)} ${Math.max(8, sw * 2)}` : e.dash === 'dot' ? `1 ${Math.max(8, sw * 2.4)}` : undefined;
+  const p = {
+    fill: e.fill,
+    stroke: e.stroke || 'none',
+    strokeWidth: sw,
+    strokeLinejoin: 'round' as const,
+    strokeLinecap: 'round' as const,
+    strokeDasharray: dash,
+  };
+  const pad = Math.max(3, Math.ceil(sw / 2) + 2);
+  const lipColor = e.stroke && e.stroke !== '#ffffff' && e.stroke !== 'transparent' ? e.stroke : 'rgba(15, 23, 42, 0.16)';
+
   const body = (() => {
     switch (e.shape) {
-      case 'rect': return r != null ? <rect x="0.5" y="0.5" width="99" height="99" rx={rx} ry={ry} {...p} /> : <rect x="0.5" y="0.5" width="99" height="99" {...p} />;
-      case 'round': return <rect x="0.5" y="0.5" width="99" height="99" rx={rx} ry={ry} {...p} />;
-      case 'circle': return <ellipse cx="50" cy="50" rx="49.5" ry="49.5" {...p} />;
-      case 'star': return <polygon points="50,2 61.8,36 98,36.5 69,58 79.5,96 50,74 20.5,96 31,58 2,36.5 38.2,36" {...p} />;
-      case 'heart': return <path d="M50 92 C 18 70 2 52 2 32 C 2 14 16 4 30 4 C 40 4 47 10 50 18 C 53 10 60 4 70 4 C 84 4 98 14 98 32 C 98 52 82 70 50 92 Z" {...p} />;
-      case 'arrow': return <polygon points="1,32 62,32 62,6 99,50 62,94 62,68 1,68" {...p} />;
-      case 'cloud': return <path d="M24 86 C 8 86 2 74 6 64 C 0 52 10 38 24 42 C 24 22 44 12 58 22 C 66 10 88 14 88 32 C 100 36 100 56 90 62 C 98 74 88 88 74 86 Z" {...p} />;
-      case 'bubble': return <path d="M10 4 H90 Q98 4 98 12 V64 Q98 72 90 72 H40 L18 96 L24 72 H10 Q2 72 2 64 V12 Q2 4 10 4 Z" {...p} />;
+      case 'rect':
+      case 'round': {
+        const isBgRole = e.role === 'card' || e.role === 'cardback' || e.role === 'tape';
+        const lip = isBgRole || e.fill === 'transparent' ? 0 : Math.min(8, Math.max(4, Math.round(H * 0.055)));
+        const bw = Math.max(10, W - pad * 2);
+        const bh = Math.max(10, H - pad * 2 - lip);
+        const defR = e.shape === 'round'
+          ? (e.role === 'card' ? Math.min(36, Math.min(bw, bh) * 0.045) : Math.min(30, Math.min(bw, bh) * 0.24))
+          : 0;
+        const r = e.rad != null ? (Math.min(bw, bh) / 2) * (e.rad / 100) : defR;
+        const rx = Math.min(bw / 2, Math.max(0, r));
+        return (
+          <>
+            {lip > 0 && (
+              <rect x={pad} y={pad + lip} width={bw} height={bh} rx={rx} ry={rx} fill={lipColor} opacity={0.85} />
+            )}
+            <rect x={pad} y={pad} width={bw} height={bh} rx={rx} ry={rx} {...p} />
+            {!isBgRole && e.fill !== 'transparent' && bh >= 48 && (
+              <rect
+                x={pad + sw * 0.6 + 3}
+                y={pad + sw * 0.6 + 3}
+                width={Math.max(4, bw - sw * 1.2 - 6)}
+                height={Math.max(6, Math.min(18, bh * 0.18))}
+                rx={Math.max(2, rx - 4)}
+                fill="rgba(255,255,255,0.32)"
+                pointerEvents="none"
+              />
+            )}
+          </>
+        );
+      }
+      case 'circle': {
+        const S = Math.min(W, H);
+        const lip = e.fill === 'transparent' ? 0 : Math.min(7, Math.max(3, Math.round(S * 0.045)));
+        const r = Math.max(8, (S - pad * 2 - lip) / 2);
+        const cx = W / 2;
+        const cy = (H - lip) / 2;
+        return (
+          <>
+            {lip > 0 && <circle cx={cx} cy={cy + lip} r={r} fill={lipColor} opacity={0.85} />}
+            <circle cx={cx} cy={cy} r={r} {...p} />
+            {e.fill !== 'transparent' && (
+              <ellipse cx={cx} cy={cy - r * 0.52} rx={r * 0.55} ry={r * 0.22} fill="rgba(255,255,255,0.32)" pointerEvents="none" />
+            )}
+          </>
+        );
+      }
+      case 'star': {
+        const S = Math.min(W, H);
+        const cx = W / 2, cy = H / 2;
+        const R = Math.max(12, S / 2 - pad - 3);
+        const r = R * 0.46;
+        const pts = Array.from({ length: 10 }, (_, i) => {
+          const a = -Math.PI / 2 + (i * Math.PI) / 5;
+          const rad = i % 2 === 0 ? R : r;
+          return `${(cx + Math.cos(a) * rad).toFixed(1)},${(cy + Math.sin(a) * rad).toFixed(1)}`;
+        }).join(' ');
+        const ptsLip = Array.from({ length: 10 }, (_, i) => {
+          const a = -Math.PI / 2 + (i * Math.PI) / 5;
+          const rad = i % 2 === 0 ? R : r;
+          return `${(cx + Math.cos(a) * rad).toFixed(1)},${(cy + Math.sin(a) * rad + 5).toFixed(1)}`;
+        }).join(' ');
+        return (
+          <>
+            <polygon points={ptsLip} fill={lipColor} opacity={0.75} />
+            <polygon points={pts} {...p} />
+            <circle cx={cx} cy={cy - R * 0.18} r={R * 0.22} fill="rgba(255,255,255,0.28)" pointerEvents="none" />
+          </>
+        );
+      }
+      case 'heart': {
+        const S = Math.min(W, H);
+        const ox = (W - S) / 2, oy = (H - S) / 2;
+        const k = S / 100;
+        const d = `M ${ox + 50 * k} ${oy + 90 * k} C ${ox + 18 * k} ${oy + 68 * k} ${ox + 4 * k} ${oy + 50 * k} ${ox + 4 * k} ${oy + 31 * k} C ${ox + 4 * k} ${oy + 14 * k} ${ox + 17 * k} ${oy + 6 * k} ${ox + 31 * k} ${oy + 6 * k} C ${ox + 41 * k} ${oy + 6 * k} ${ox + 47 * k} ${oy + 12 * k} ${ox + 50 * k} ${oy + 20 * k} C ${ox + 53 * k} ${oy + 12 * k} ${ox + 59 * k} ${oy + 6 * k} ${ox + 69 * k} ${oy + 6 * k} C ${ox + 83 * k} ${oy + 6 * k} ${ox + 96 * k} ${oy + 14 * k} ${ox + 96 * k} ${oy + 31 * k} C ${ox + 96 * k} ${oy + 50 * k} ${ox + 82 * k} ${oy + 68 * k} ${ox + 50 * k} ${oy + 90 * k} Z`;
+        return (
+          <>
+            <path d={d} transform="translate(0, 5)" fill={lipColor} opacity={0.75} />
+            <path d={d} {...p} />
+          </>
+        );
+      }
+      case 'arrow': {
+        const lip = Math.min(6, Math.max(3, Math.round(H * 0.05)));
+        const x0 = pad, x1 = W - pad;
+        const cy = (H - lip) / 2;
+        const headW = Math.min((x1 - x0) * 0.38, (H - pad * 2) * 0.72);
+        const shaftX = x1 - headW;
+        const sh = (H - pad * 2 - lip) * 0.26;
+        const yTop = pad, yBot = H - pad - lip;
+        const pts = `${x0},${cy - sh} ${shaftX},${cy - sh} ${shaftX},${yTop} ${x1},${cy} ${shaftX},${yBot} ${shaftX},${cy + sh} ${x0},${cy + sh}`;
+        const ptsLip = `${x0},${cy - sh + lip} ${shaftX},${cy - sh + lip} ${shaftX},${yTop + lip} ${x1},${cy + lip} ${shaftX},${yBot + lip} ${shaftX},${cy + lip + sh} ${x0},${cy + lip + sh}`;
+        return (
+          <>
+            <polygon points={ptsLip} fill={lipColor} opacity={0.8} strokeLinejoin="round" />
+            <polygon points={pts} {...p} />
+          </>
+        );
+      }
+      case 'cloud': {
+        const kx = W / 100, ky = H / 100;
+        const d = `M ${22 * kx} ${84 * ky} C ${8 * kx} ${84 * ky} ${3 * kx} ${72 * ky} ${7 * kx} ${61 * ky} C ${2 * kx} ${49 * ky} ${11 * kx} ${36 * ky} ${24 * kx} ${39 * ky} C ${26 * kx} ${20 * ky} ${45 * kx} ${11 * ky} ${59 * kx} ${21 * ky} C ${68 * kx} ${10 * ky} ${88 * kx} ${15 * ky} ${88 * kx} ${32 * ky} C ${98 * kx} ${36 * ky} ${98 * kx} ${56 * ky} ${90 * kx} ${63 * ky} C ${96 * kx} ${74 * ky} ${87 * kx} ${85 * ky} ${75 * kx} ${84 * ky} Z`;
+        return (
+          <>
+            <path d={d} transform="translate(0, 5)" fill={lipColor} opacity={0.7} />
+            <path d={d} {...p} />
+          </>
+        );
+      }
+      case 'bubble': {
+        const th = Math.min(28, Math.max(12, Math.round(H * 0.12)));
+        const tw = Math.min(36, Math.max(16, Math.round(W * 0.07)));
+        const lip = Math.min(6, Math.max(3, Math.round(H * 0.035)));
+        const x0 = pad, y0 = pad;
+        const bw = Math.max(24, W - pad * 2);
+        const bh = Math.max(24, H - pad * 2 - th - lip);
+        const r = Math.min(32, Math.min(bw, bh) * 0.22);
+        const tx = Math.min(x0 + r + tw * 1.4, x0 + bw * 0.35);
+        const x1 = x0 + bw, y1 = y0 + bh;
+        const d = [
+          `M ${x0 + r} ${y0}`,
+          `H ${x1 - r}`,
+          `Q ${x1} ${y0} ${x1} ${y0 + r}`,
+          `V ${y1 - r}`,
+          `Q ${x1} ${y1} ${x1 - r} ${y1}`,
+          `H ${tx}`,
+          `L ${tx - tw * 0.6} ${y1 + th}`,
+          `L ${Math.max(x0 + r, tx - tw)} ${y1}`,
+          `H ${x0 + r}`,
+          `Q ${x0} ${y1} ${x0} ${y1 - r}`,
+          `V ${y0 + r}`,
+          `Q ${x0} ${y0} ${x0 + r} ${y0}`,
+          'Z',
+        ].join(' ');
+        return (
+          <>
+            <path d={d} transform={`translate(0, ${lip})`} fill={lipColor} opacity={0.78} />
+            <path d={d} {...p} />
+          </>
+        );
+      }
+      case 'wheel': {
+        const S = Math.min(W, H);
+        const cx = W / 2, cy = H / 2;
+        const R = Math.max(16, S / 2 - pad - 4);
+        const colors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'];
+        const slices = colors.map((col, i) => {
+          const a0 = (i * Math.PI) / 3 - Math.PI / 2;
+          const a1 = ((i + 1) * Math.PI) / 3 - Math.PI / 2;
+          const x0 = cx + Math.cos(a0) * R, y0 = cy + Math.sin(a0) * R;
+          const x1 = cx + Math.cos(a1) * R, y1 = cy + Math.sin(a1) * R;
+          return <path key={i} d={`M ${cx} ${cy} L ${x0.toFixed(1)} ${y0.toFixed(1)} A ${R} ${R} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)} Z`} fill={col} stroke="#ffffff" strokeWidth={Math.max(2, R * 0.03)} />;
+        });
+        const pegs = Array.from({ length: 12 }, (_, i) => {
+          const a = (i * Math.PI) / 6;
+          return <circle key={i} cx={cx + Math.cos(a) * R} cy={cy + Math.sin(a) * R} r={Math.max(2.5, R * 0.045)} fill="#ffffff" stroke="#b45309" strokeWidth={1.5} />;
+        });
+        return (
+          <>
+            <circle cx={cx} cy={cy + 6} r={R + 3} fill="rgba(15,23,42,0.22)" />
+            {slices}
+            <circle cx={cx} cy={cy} r={R} fill="none" stroke={e.stroke || '#fbbf24'} strokeWidth={Math.max(4, R * 0.07)} />
+            {pegs}
+            <circle cx={cx} cy={cy} r={R * 0.25} fill="#ffffff" stroke="#f59e0b" strokeWidth={Math.max(3, R * 0.04)} />
+          </>
+        );
+      }
+      case 'mystery': {
+        const lip = Math.min(8, Math.max(4, Math.round(H * 0.06)));
+        const bw = Math.max(16, W - pad * 2);
+        const bh = Math.max(16, H - pad * 2 - lip);
+        const rx = Math.min(28, Math.min(bw, bh) * 0.22);
+        const cx = W / 2, cy = pad + bh / 2;
+        const cr = Math.min(bw, bh) * 0.34;
+        return (
+          <>
+            <rect x={pad} y={pad + lip} width={bw} height={bh} rx={rx} fill={e.stroke || '#b45309'} opacity={0.9} />
+            <rect x={pad} y={pad} width={bw} height={bh} rx={rx} fill={e.fill || '#fbbf24'} stroke={e.stroke || '#f59e0b'} strokeWidth={sw} />
+            <rect x={pad + 8} y={pad + 8} width={Math.max(6, bw - 16)} height={Math.max(6, bh - 16)} rx={Math.max(6, rx - 6)} fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth={2.5} strokeDasharray="8 6" />
+            <circle cx={cx} cy={cy} r={cr} fill="rgba(255,255,255,0.28)" />
+          </>
+        );
+      }
+      case 'tray': {
+        const lip = Math.min(8, Math.max(4, Math.round(H * 0.045)));
+        const bw = Math.max(20, W - pad * 2);
+        const bh = Math.max(20, H - pad * 2 - lip);
+        const rx = Math.min(28, Math.min(bw, bh) * 0.16);
+        const rim = Math.min(14, Math.max(6, Math.round(Math.min(bw, bh) * 0.06)));
+        return (
+          <>
+            <rect x={pad} y={pad + lip} width={bw} height={bh} rx={rx} fill="#92400e" opacity={0.85} />
+            <rect x={pad} y={pad} width={bw} height={bh} rx={rx} fill={e.fill || '#f59e0b'} stroke={e.stroke || '#b45309'} strokeWidth={sw} />
+            <rect x={pad + rim} y={pad + rim} width={Math.max(8, bw - rim * 2)} height={Math.max(8, bh - rim * 2)} rx={Math.max(6, rx - 6)} fill="#fffbeb" stroke="#fde68a" strokeWidth={2} />
+          </>
+        );
+      }
+      case 'banner': {
+        const tailW = Math.min(36, W * 0.1);
+        const inset = Math.min(22, H * 0.24);
+        const y0 = pad, y1 = H - pad - 5;
+        const cy = (y0 + y1) / 2;
+        const d = `M ${pad} ${y0} H ${W - pad} L ${W - pad - inset} ${cy} L ${W - pad} ${y1} H ${pad} L ${pad + inset} ${cy} Z`;
+        void tailW;
+        return (
+          <>
+            <path d={d} transform="translate(0, 5)" fill={lipColor} opacity={0.8} />
+            <path d={d} {...p} />
+          </>
+        );
+      }
     }
   })();
-  return <svg className="dk-shape" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" style={e.shadow ? { filter: 'drop-shadow(0 12px 18px rgba(15,23,42,.22))' } : undefined}>{body}</svg>;
+  return (
+    <svg
+      className="dk-shape"
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="none"
+      aria-hidden="true"
+      style={e.shadow ? { filter: 'drop-shadow(0 12px 20px rgba(15,23,42,.20))' } : undefined}
+    >
+      {body}
+    </svg>
+  );
 }
 
 type Pick = { i: number; ok: boolean };
@@ -99,8 +322,10 @@ function ElBody({ e, mode, assetUrl, pick, onPick, sort, onTile, board }: { e: E
     case 'text': {
       const f = FONTS[e.font] ?? FONTS.baloo;
       return (
-        <div className="dk-text" style={{ fontFamily: f.css, fontWeight: f.weight, fontSize: e.size, color: e.color, textAlign: e.align, fontStyle: e.italic ? 'italic' : undefined,
-          background: e.bg || undefined, padding: e.bg ? '10px 22px' : undefined, borderRadius: e.bg ? 24 : undefined,
+        <div className={`dk-text${e.bg ? ' has-bg' : ''}`} style={{ fontFamily: f.css, fontWeight: f.weight, fontSize: e.size, color: e.color, textAlign: e.align, fontStyle: e.italic ? 'italic' : undefined,
+          background: e.bg || undefined, padding: e.bg ? '12px 26px' : undefined, borderRadius: e.bg ? 26 : undefined,
+          boxShadow: e.bg ? '0 6px 0 rgba(15, 23, 42, 0.11), 0 10px 22px rgba(15, 23, 42, 0.07)' : undefined,
+          border: e.bg ? '2.5px solid rgba(255, 255, 255, 0.88)' : undefined,
           WebkitTextStroke: e.stroke ? `${e.strokeW ?? 10}px ${e.stroke}` : undefined, paintOrder: e.stroke ? 'stroke fill' : undefined, textShadow: e.shadow ? '0 8px 0 rgba(0,0,0,.18), 0 2px 14px rgba(0,0,0,.12)' : undefined, justifyContent: e.align === 'center' ? 'center' : e.align === 'right' ? 'flex-end' : 'flex-start' }}>
           <span>{e.text}</span>
         </div>
@@ -108,14 +333,31 @@ function ElBody({ e, mode, assetUrl, pick, onPick, sort, onTile, board }: { e: E
     }
     case 'img': {
       const src = e.asset ? assetUrl?.(e.src) : e.src;
-      const st: React.CSSProperties | undefined = e.rad || e.shadow ? { ...(e.rad ? { borderRadius: `${e.rad / 2}%`, objectFit: 'cover' } : {}), ...(e.shadow ? { filter: 'drop-shadow(0 12px 18px rgba(15,23,42,.25))' } : {}) } : undefined;
+      const st: React.CSSProperties = {
+        ...(e.rad ? { borderRadius: `${e.rad / 2}%`, objectFit: 'cover' } : {}),
+        filter: e.shadow ? 'drop-shadow(0 14px 22px rgba(15,23,42,.26))' : 'drop-shadow(0 8px 14px rgba(15,23,42,.15))',
+      };
       // eslint-disable-next-line @next/next/no-img-element -- hình dán / ảnh của cô, kích thước tự do
       return src ? <img className="dk-img" src={src} alt={e.name ?? ''} draggable={false} style={st} /> : <div className="dk-img-wait">🖼</div>;
     }
     case 'shape': return (
       <>
         <ShapeSvg e={e} />
-        {e.text && <div className="dk-shape-text" style={{ color: e.color ?? '#1f2937', fontSize: e.size ?? 40, fontFamily: FONTS.baloo.css, fontWeight: 800 }}>{e.text}</div>}
+        {e.text && (
+          <div
+            className="dk-shape-text"
+            style={{
+              color: e.color ?? '#1f2937',
+              fontSize: e.size ?? 40,
+              fontFamily: FONTS.baloo.css,
+              fontWeight: 800,
+              paddingBottom: e.shape === 'bubble' ? '7%' : undefined,
+              textShadow: e.shape === 'mystery' || e.shape === 'wheel' ? '0 3px 0 rgba(15,23,42,0.18)' : undefined,
+            }}
+          >
+            {e.text}
+          </div>
+        )}
       </>
     );
     case 'quiz': {

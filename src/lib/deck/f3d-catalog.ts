@@ -11,4 +11,108 @@ export const F3D_CATS: { label: string; items: string[] }[] = [
   { label: 'Đồ vật · lễ hội', items: ["amphora", "axe", "balloon", "basket", "bathtub", "bed", "billed-cap", "briefcase", "clapper-board", "coat", "couch-and-lamp", "door", "dress", "fireworks", "folding-hand-fan", "framed-picture", "hammer", "handbag", "ice-skate", "jeans", "kite", "locked", "loudspeaker", "love-letter", "microphone", "mirror", "musical-keyboard", "musical-note", "musical-notes", "nesting-dolls", "package", "party-popper", "performing-arts", "pill", "postbox", "purse", "red-envelope", "red-paper-lantern", "ribbon", "running-shoe", "scarf", "shopping-bags", "shopping-cart", "shorts", "soap", "sponge", "stethoscope", "studio-microphone", "t-shirt", "teddy-bear", "television", "thong-sandal", "top-hat", "triangular-flag", "violin", "window", "wrapped-gift", "yo-yo", "badminton", "basketball", "ping-pong", "soccer-ball", "sports-medal", "volleyball", "bell", "drum", "guitar", "trumpet", "broom", "bucket", "candle", "chair", "ear", "envelope", "glasses", "headphone", "sailboat", "spoon", "teapot"] },
   { label: 'Hình · màu', items: ["black-circle", "blue-circle", "blue-square", "brown-circle", "green-circle", "green-square", "large-orange-diamond", "orange-circle", "pink-heart", "purple-square", "red-circle", "red-heart", "red-square", "white-circle", "yellow-circle", "yellow-square", "speech-balloon"] },
 ];
-export const f3dSrc = (n: string) => `/emoji/f3d/${n}.webp`;
+const EDU_ICON_MAP: Record<string, string> = {
+  apple: 'apple', 'red-apple': 'apple',
+  banana: 'banana',
+  blueberry: 'blueberry',
+  'bok-choy': 'bok-choy',
+  broccoli: 'broccoli',
+  cabbage: 'cabbage', 'leafy-green': 'cabbage',
+  carrot: 'carrot',
+  cat: 'cat', 'cat-face': 'cat',
+  chameleon: 'chameleon',
+  cherries: 'cherries',
+  chick: 'chick', 'baby-chick': 'chick', 'front-facing-baby-chick': 'chick',
+  chicken: 'chicken',
+  corn: 'corn', 'ear-of-corn': 'corn',
+  cucumber: 'cucumber',
+  dog: 'dog', 'dog-face': 'dog',
+  dolphin: 'dolphin',
+  dragonfruit: 'dragonfruit',
+  duck: 'duck',
+  eggplant: 'eggplant',
+  elephant: 'elephant',
+  frog: 'frog',
+  garlic: 'garlic',
+  grapes: 'grapes',
+  kiwi: 'kiwi', 'kiwi-fruit': 'kiwi',
+  onion: 'onion',
+  orange: 'orange', tangerine: 'orange',
+  paintbrush: 'paintbrush',
+  peach: 'peach',
+  penguin: 'penguin',
+  pepper: 'pepper', 'hot-pepper': 'pepper',
+  pig: 'pig', 'pig-face': 'pig',
+  pineapple: 'pineapple',
+  pliers: 'pliers',
+  potato: 'potato',
+  pumpkin: 'pumpkin',
+  rabbit: 'rabbit', 'rabbit-face': 'rabbit',
+  rooster: 'rooster',
+  saw: 'saw',
+  shovel: 'shovel',
+  snake: 'snake',
+  squirrel: 'squirrel', chipmunk: 'squirrel',
+  strawberry: 'strawberry',
+  'tape-measure': 'tape-measure',
+  tomato: 'tomato',
+  turtle: 'turtle',
+  'utility-knife': 'utility-knife',
+  watermelon: 'watermelon',
+};
+
+const HD_STICKER_MAP: Record<string, string> = {
+  balloon: 'balloon',
+  boat: 'boat', sailboat: 'boat',
+  butterfly: 'butterfly',
+  cactus: 'cactus',
+  car: 'car', automobile: 'car',
+  cloud: 'cloud',
+  crown: 'crown',
+  dino: 'dino', 't-rex': 'dino',
+  goldfish: 'goldfish', fish: 'goldfish', 'tropical-fish': 'goldfish',
+  house: 'house', 'house-with-garden': 'house', houses: 'house',
+  icecream: 'icecream', 'soft-ice-cream': 'icecream',
+  kite: 'kite',
+  lucky: 'lucky', star: 'lucky', 'glowing-star': 'lucky',
+  moon: 'moon', 'crescent-moon': 'moon',
+  planet: 'planet', 'ringed-planet': 'planet',
+  rainbow: 'rainbow',
+  rocket: 'rocket',
+  sun: 'sun',
+  sunflower: 'sunflower',
+  tree: 'tree', 'deciduous-tree': 'tree', 'evergreen-tree': 'tree',
+  whale: 'whale', 'spouting-whale': 'whale',
+};
+
+const F3D_ALIAS: Record<string, string> = {
+  oyster: 'spiral-shell',
+  sparkles: 'party-popper',
+  'cloud-with-lightning': 'cloud-with-lightning-and-rain',
+  'fire-engine': 'delivery-truck',
+  helicopter: 'airplane',
+  'gem-stone': 'large-orange-diamond',
+  key: 'locked',
+  magnet: 'puzzle-piece',
+  panda: 'bear',
+  goose: 'duck',
+  donkey: 'horse',
+  unicorn: 'horse-face',
+};
+
+/**
+ * Phân giải tên hình sang nguồn 3D sắc nét nhất:
+ * 1. Bộ vật thật 3D có viền die-cut (/edu-icons/*.webp)
+ * 2. Bộ Sticker 3D HD 512px (/stickers/hd/*.webp)
+ * 3. Bộ Fluent 3D (/emoji/f3d/*.webp)
+ */
+export const f3dSrc = (n: string): string => {
+  const clean = n.replace(/\.(webp|png)$/, '');
+  if (clean === 'trophy') return '/emoji/sticker/trophy.webp';
+  if (EDU_ICON_MAP[clean]) return `/edu-icons/${EDU_ICON_MAP[clean]}.webp`;
+  if (HD_STICKER_MAP[clean]) return `/stickers/hd/${HD_STICKER_MAP[clean]}.webp`;
+  const aliased = F3D_ALIAS[clean] ?? clean;
+  if (EDU_ICON_MAP[aliased]) return `/edu-icons/${EDU_ICON_MAP[aliased]}.webp`;
+  if (HD_STICKER_MAP[aliased]) return `/stickers/hd/${HD_STICKER_MAP[aliased]}.webp`;
+  return `/emoji/f3d/${aliased}.webp`;
+};

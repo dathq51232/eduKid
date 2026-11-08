@@ -5,6 +5,7 @@ import type { ContentLesson, ContentQuestion } from '@/lib/content/types';
 import type { LessonPlan as GiaoAn } from '@/lib/plans/generate';
 import { SUBJECT_NAMES } from '@/lib/plans/generate';
 import { accentOf } from './scenes';
+import { f3dSrc as ST } from './f3d-catalog';
 import { uid, type Anim, type El, type SceneKind, type Slide, type TextEl } from './types';
 
 export type PhaseId = 'bia' | 'kd' | 'kp' | 'lt' | 'vd' | 'cc';
@@ -36,8 +37,8 @@ export type Cand = { key: string; phase: PhaseId; title: string; slide: Slide };
 export type LessonPlan = { cands: Cand[]; defaults: Record<PhaseId, number> };
 export type Knowledge = { points: string[]; example?: string } | null | undefined;
 
-const ST = (n: string) => `/emoji/sticker/${n}.webp`;
 const SUBJ: Record<string, string> = { toan: 'Toán', 'tieng-viet': 'Tiếng Việt', 'tieng-anh': 'Tiếng Anh' };
+const CIRCLED = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
 
 /* ---------- dựng vật ---------- */
 type Mk = { els: El[]; anims: Anim[] };
@@ -47,17 +48,17 @@ function T(m: Mk, text: string, x: number, y: number, w: number, h: number, size
   m.els.push(e); return e.id;
 }
 function I(m: Mk, src: string, x: number, y: number, s: number, o: Partial<El> = {}) {
-  const e = { id: uid(), kind: 'img', src, x, y, w: s, h: s, rot: 0, ...o } as El; m.els.push(e); return e.id;
+  const e = { id: uid(), kind: 'img', src, x, y, w: s, h: s, rot: 0, shadow: true, ...o } as El; m.els.push(e); return e.id;
 }
 function S(m: Mk, shape: Extract<El, { kind: 'shape' }>['shape'], x: number, y: number, w: number, h: number, fill: string, text = '', o: Partial<El> = {}) {
-  const e = { id: uid(), kind: 'shape', shape, x, y, w, h, rot: 0, fill, stroke: '#ffffff', sw: 4, text, color: '#1f2937', size: Math.round(Math.min(w, h) * 0.4), ...o } as El;
+  const e = { id: uid(), kind: 'shape', shape, x, y, w, h, rot: 0, fill, stroke: '#ffffff', sw: 5, text, color: '#1f2937', size: Math.round(Math.min(w, h) * 0.4), shadow: true, ...o } as El;
   m.els.push(e); return e.id;
 }
 function A(m: Mk, el: string, fx: Anim['fx'], start: Anim['start'] = 'click', o: Partial<Anim> = {}) { m.anims.push({ id: uid(), el, fx, start, delay: 0, dur: 0.6, ...o }); }
-/** miếng che đáp án: bấm vào miếng che thì nó mờ đi, lộ đáp án */
+/** miếng che đáp án 3D: bấm vào thẻ bí ẩn thì bung mở, lộ đáp án */
 function cover(m: Mk, x: number, y: number, w: number, h: number) {
-  const c = S(m, 'round', x, y, w, h, '#334155', '?', { stroke: '#a78bfa', sw: 6, color: '#ffffff', size: Math.min(80, h * 0.6) } as Partial<El>);
-  A(m, c, 'fade-out', 'click', { trigger: c, sound: 'ding', dur: 0.5 });
+  const c = S(m, 'mystery', x, y, w, h, '#fbbf24', '?', { stroke: '#d97706', sw: 5, color: '#78350f', size: Math.min(76, Math.round(h * 0.56)) } as Partial<El>);
+  A(m, c, 'zoom-out', 'click', { trigger: c, sound: 'ding', dur: 0.45 });
   return c;
 }
 /** cỡ chữ vừa khung theo độ dài */
@@ -69,7 +70,7 @@ const fit = (text: string, w: number, h: number, max = 64, min = 26) => {
   while (s > min && (rows(s) * 1.3 * s > h || word * 0.62 * s > w)) s -= 2;
   return Math.round(Math.max(min, s));
 };
-const title = (m: Mk, text: string, color = '#1e3a8a') => T(m, text, 280, 40, 1040, 100, fit(text, 1000, 92, 62, 32), color, { bg: '#ffffffd9', role: 'title' });
+const title = (m: Mk, text: string, color = '#1e3a8a') => T(m, text, 340, 38, 920, 88, fit(text, 880, 80, 58, 32), color, { bg: '#ffffffeb', role: 'title' });
 const page = (m: Mk, phase: PhaseId, scene: SceneKind, notes = '', sound?: string): Slide => ({ id: uid(), bg: 'white', els: m.els, anims: m.anims, trans: 'fade', notes, sound, scene, phase: PHASE_LABEL[phase] });
 
 /* ---------- ngẫu nhiên theo hạt giống ---------- */
@@ -231,9 +232,9 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
     if (w === 'wheel') {
       title(m, 'Vòng quay may mắn', '#9a3412');
       const q = take(easy); if (!q) return null;
-      const wh = S(m, 'star', 300, 190, 460, 460, '#fbbf24', '?', { stroke: '#ea580c', sw: 6, size: 120, color: '#9a3412' } as Partial<El>);
-      const btn = S(m, 'arrow', 820, 300, 240, 110, '#ef4444', 'Quay!', { size: 40, color: '#ffffff', rot: 180 } as Partial<El>);
-      const c = S(m, 'bubble', 800, 440, 560, 330, '#ffffff', q.ask, { stroke: '#f97316', sw: 5, size: fit(q.ask, 500, 220, 44, 24) } as Partial<El>);
+      const wh = S(m, 'wheel', 240, 180, 480, 480, '#fbbf24', '?', { stroke: '#f59e0b', sw: 6, size: 96, color: '#9a3412' } as Partial<El>);
+      const btn = S(m, 'arrow', 760, 290, 230, 110, '#ef4444', 'Quay!', { stroke: '#b91c1c', sw: 5, size: 40, color: '#ffffff', rot: 180 } as Partial<El>);
+      const c = S(m, 'bubble', 760, 430, 640, 340, '#ffffff', q.ask, { stroke: '#f97316', sw: 5, size: fit(q.ask, 560, 230, 44, 26) } as Partial<El>);
       A(m, wh, 'spin', 'click', { trigger: btn, dur: 2.4, sound: 'drum' }); A(m, c, 'pop', 'after', { trigger: btn, sound: 'tada' });
       return { t: 'Vòng quay may mắn', s: page(m, 'kd', sc, `Bấm “Quay!”, gọi một bạn trả lời. Đáp án: ${answerOf(q)}`) };
     }
@@ -256,9 +257,13 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
   /* Khám phá */
   if (know?.points?.length) {
     const m = mk(); title(m, 'Kiến thức cần nhớ', '#0369a1');
-    const pts = know.points.slice(0, 4), h = Math.min(150, 560 / pts.length);
-    pts.forEach((t, i) => { const id = T(m, `${i + 1}. ${t}`, 260, 170 + i * (h + 20), 1080, h, fit(t, 1040, h - 10, 48, 26), '#0f172a', { align: 'left', font: 'quick', bg: '#ffffffe6' }); A(m, id, 'fly-left', 'click', { sound: 'pop' }); });
-    I(m, M.src, 1350, 650, 220, { lock: true });
+    const pts = know.points.slice(0, 4), h = Math.min(145, 550 / pts.length);
+    const cardBgs = ['#eff6ff', '#f0fdf4', '#fefce8', '#fdf2f8'];
+    pts.forEach((t, i) => {
+      const id = T(m, `${CIRCLED[i] ?? i + 1}  ${t}`, 160, 165 + i * (h + 18), 1140, h, fit(t, 1080, h - 14, 46, 28), '#0f172a', { align: 'left', font: 'quick', bg: cardBgs[i % 4] });
+      A(m, id, 'fly-left', 'click', { sound: 'pop' });
+    });
+    I(m, M.src, 1330, 620, 210, { lock: true });
     add('kp', 'know', 'Kiến thức cần nhớ (hiện từng ý)', page(m, 'kp', sc, 'Bấm “Tiếp” để hiện từng ý, cho học sinh nhắc lại.'));
   }
   if (know?.example) {
@@ -350,8 +355,8 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
       const ask = q.ask.replace(/\n/g, ' ').replace(/\s*(\.\.\.|…|_{2,})\s*/g, ' ? ').trim();
       T(m, ask, 200, y, 860, h, fit(ask, 840, h - 10, 60, 26), '#0f172a', { align: 'left', bg: '#f8fafc' });
       const a = T(m, ans, 1100, y, 260, h, fit(ans, 240, h - 10, 72, 30), '#dc2626', { bg: '#fff7ed' });
-      const c = S(m, 'round', 1100, y, 260, h, '#fde68a', '?', { stroke: '#f59e0b', sw: 5, color: '#1d4ed8', size: Math.min(80, h * 0.6) } as Partial<El>);
-      A(m, c, 'fade-out', 'click', { sound: 'pop', dur: 0.3 }); A(m, a, 'pop', 'with');
+      const c = S(m, 'mystery', 1100, y, 260, h, '#fde68a', '?', { stroke: '#f59e0b', sw: 5, color: '#92400e', size: Math.min(76, Math.round(h * 0.56)) } as Partial<El>);
+      A(m, c, 'zoom-out', 'click', { sound: 'pop', dur: 0.35 }); A(m, a, 'pop', 'with');
       void a;
     });
     I(m, M.src, 24, 700, 180, { lock: true });
@@ -522,12 +527,11 @@ export type WorkMode = 'ca-nhan' | 'nhom-2' | 'nhom-4' | 'ca-lop';
 export const WORK_MODES: { id: WorkMode; label: string }[] = [
   { id: 'ca-nhan', label: '👤 Làm việc cá nhân' }, { id: 'nhom-2', label: '👥 Làm việc nhóm 2' }, { id: 'nhom-4', label: '👨‍👩‍👧‍👦 Thảo luận nhóm 4' }, { id: 'ca-lop', label: '🏫 Cả lớp' },
 ];
-const CIRCLED = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
-export const cardEl = (accent: string): El => ({ id: uid(), kind: 'shape', shape: 'round', x: 36, y: 26, w: 1528, h: 848, rot: 0, fill: '#ffffff', stroke: accent, sw: 8, lock: true, role: 'card' } as El);
+export const cardEl = (accent: string): El => ({ id: uid(), kind: 'shape', shape: 'round', x: 36, y: 26, w: 1528, h: 848, rot: 0, fill: '#ffffff', stroke: accent, sw: 7, shadow: true, lock: true, role: 'card' } as El);
 export const badgeEl = (n: number, label: string, accent: string): El =>
-  ({ id: uid(), kind: 'text', x: 56, y: 44, w: Math.min(420, 120 + label.length * 24), h: 70, rot: 0, text: `${CIRCLED[n - 1] ?? n} ${label}`, size: 36, color: '#ffffff', font: 'baloo', align: 'center', bg: accent, role: 'badge' } as El);
+  ({ id: uid(), kind: 'text', x: 56, y: 42, w: Math.min(360, 110 + label.length * 22), h: 66, rot: 0, text: `${CIRCLED[n - 1] ?? n} ${label}`, size: 34, color: '#ffffff', font: 'baloo', align: 'center', bg: accent, role: 'badge' } as El);
 export const modeEl = (mode: WorkMode, accent: string): El =>
-  ({ id: uid(), kind: 'text', x: 1110, y: 790, w: 430, h: 66, rot: 0, text: WORK_MODES.find((w) => w.id === mode)?.label ?? '', size: 30, color: accent, font: 'baloo', align: 'center', bg: '#fff7ed', role: 'mode' } as El);
+  ({ id: uid(), kind: 'text', x: 1180, y: 42, w: 360, h: 66, rot: 0, text: WORK_MODES.find((w) => w.id === mode)?.label ?? '', size: 28, color: accent, font: 'baloo', align: 'center', bg: '#fff7ed', role: 'mode' } as El);
 /** Trang chia hoạt động: tên hoạt động chữ thật to trên cảnh nền */
 export function dividerSlide(label: string, sc: SceneKind | undefined, mascot = MASCOTS[0].src, sub = ''): Slide {
   const m = mk(); const ac = accentOf(sc);

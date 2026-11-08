@@ -11,7 +11,7 @@ export const FONTS: Record<FontKey, { label: string; css: string; weight: number
   hand: { label: 'Chữ tập viết (HP001)', css: "'DeckHP4', PraiseScript, cursive", weight: 400 },
 };
 
-export type ShapeKind = 'rect' | 'round' | 'circle' | 'star' | 'heart' | 'arrow' | 'cloud' | 'bubble';
+export type ShapeKind = 'rect' | 'round' | 'circle' | 'star' | 'heart' | 'arrow' | 'cloud' | 'bubble' | 'wheel' | 'mystery' | 'tray' | 'banner';
 export type ElBase = {
   id: string; x: number; y: number; w: number; h: number; rot: number;
   /** khi trình chiếu: kéo được (dùng cho bài kéo thả) */
@@ -186,7 +186,7 @@ export function elLabel(e: El): string {
   switch (e.kind) {
     case 'text': return `Chữ “${e.text.split('\n')[0].slice(0, 22) || '…'}”`;
     case 'img': return e.name || 'Hình';
-    case 'shape': return e.text ? `Hình “${e.text.slice(0, 18)}”` : ({ rect: 'Hình chữ nhật', round: 'Thẻ bo góc', circle: 'Hình tròn', star: 'Ngôi sao', heart: 'Trái tim', arrow: 'Mũi tên', cloud: 'Đám mây', bubble: 'Bong bóng lời' } as const)[e.shape];
+    case 'shape': return e.text ? `Hình “${e.text.slice(0, 18)}”` : ({ rect: 'Hình chữ nhật', round: 'Thẻ bo góc', circle: 'Hình tròn', star: 'Ngôi sao', heart: 'Trái tim', arrow: 'Mũi tên', cloud: 'Đám mây', bubble: 'Bong bóng lời', wheel: 'Vòng quay', mystery: 'Thẻ bí ẩn', tray: 'Khay đếm', banner: 'Băng rôn' } as const)[e.shape];
     case 'quiz': return `Câu hỏi “${e.q.slice(0, 20)}”`;
     case 'drop': return `Ô thả “${e.label.slice(0, 16)}”`;
     case 'scene3d': return `Cảnh 3D “${e.title.slice(0, 18)}”`;

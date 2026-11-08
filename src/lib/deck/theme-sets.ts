@@ -2,6 +2,7 @@
 // nền, khung thẻ, màu chữ, bạn cú Milo đổi tư thế từng trang, hình 3D trang trí.
 // 7 trang: Bìa · Khởi động · Khám phá · Luyện tập · Vận dụng · Tổng kết · Cảm ơn. Giáo viên chỉ thay chữ.
 // “Đổi chủ đề cả bộ” đổi giao diện theo vai trò (role) của vật mà giữ nguyên nội dung đã soạn.
+import { f3dSrc as F } from './f3d-catalog';
 import { uid, type Anim, type El, type Slide } from './types';
 
 export type SetId = 'oli' | 'cosmos' | 'leaf' | 'lab' | 'vui' | 'sotay';
@@ -13,7 +14,6 @@ export type ThemeSet = {
   /** băng dính giấy dán 2 góc thẻ (kiểu sổ tay / scrapbook) */ tape?: [string, string];
 };
 const M = (n: string) => `/brand/milo${n ? `-${n}` : ''}.webp`;
-const F = (n: string) => `/emoji/f3d/${n}.webp`;
 
 export const THEME_SETS: ThemeSet[] = [
   { id: 'oli', name: 'Lớp học ô li', sub: 'Giấy kẻ ô · nâu kem', bg: 'oli', card: '#ffffff', edge: '#d6a07a', title: '#8b4a26', text: '#4a2b18',
@@ -94,8 +94,9 @@ export function makeSet(id: SetId, info: SetInfo): Slide[] {
     }, 'Giới thiệu tên bài. Hỏi: “Hôm nay chúng ta sẽ học gì nhỉ?”'),
     content(1, 'Khởi động', 'Ai nhanh hơn?', (m, L) => bullets(m, L, ['Câu hỏi 1 …', 'Câu hỏi 2 …', 'Câu hỏi 3 …'], F('star')), 'Trò chơi khởi động 2–3 phút: cô đọc câu hỏi, tổ nào giơ tay nhanh và đúng được cộng điểm thi đua.'),
     content(2, 'Khám phá', 'Cùng khám phá', (m, L) => {
-      txt(m, 'Quan sát tranh và trả lời:\n… ?', L, 330, 900, 180, 58, t.text, 'body');
-      [0, 1, 2, 3, 4].forEach((k) => img(m, F('red-apple'), L + 10 + k * 120, 540, 100, 100, undefined, 'Hình minh hoạ'));
+      txt(m, 'Quan sát tranh và trả lời:\n… ?', L, 320, 900, 170, 56, t.text, 'body');
+      m.els.push({ id: uid(), kind: 'shape', shape: 'tray', x: L, y: 515, w: 630, h: 150, rot: 0, fill: '#f59e0b', stroke: '#b45309', sw: 5, lock: true, shadow: true } as El);
+      [0, 1, 2, 3, 4].forEach((k) => img(m, F('red-apple'), L + 22 + k * 120, 540, 100, 100, undefined, 'Hình minh hoạ'));
     }, 'Cho học sinh quan sát, nêu nhận xét. Rút ra kiến thức mới, ghi bảng.'),
     content(3, 'Luyện tập', 'Bài 1. …', (m, L) => {
       ['a) …', 'b) …', 'c) …'].forEach((x, j) => txt(m, x, L + 20, 340 + j * 110, 400, 90, 64, t.text, 'body'));
