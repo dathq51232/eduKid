@@ -17,7 +17,7 @@ import {
 import { loadPraiseFonts } from '@/lib/praise/render';
 import { playSound, soundLabel, SOUNDS } from '@/lib/deck/sounds';
 import { SLIDE_TEMPLATES, STICKER_SETS } from '@/lib/deck/templates';
-import { SCENES, accentOf } from '@/lib/deck/scenes';
+import { SCENES, SCENE_VARIANTS, accentOf } from '@/lib/deck/scenes';
 import { WORK_MODES, applyTheme, badgeEl, cardEl, dividerSlide, modeEl, type WorkMode } from '@/lib/deck/fromLesson';
 import SlideView, { ShapeSvg, SlideFrame, type PlayApi } from './SlideView';
 import AnimTimeline from './AnimTimeline';
@@ -579,6 +579,12 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
                 <button type="button" className={!slide.scene ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: undefined }))}>Không</button>
                 {SCENES.map((c) => <button key={c.id} type="button" title={c.label} className={slide.scene === c.id ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: c.id }))}><span aria-hidden="true">{c.icon}</span>{c.label}</button>)}
               </div>
+              {slide.scene && <>
+                <p className="cv-ph">Bố cục cảnh (góc máy)</p>
+                <div className="dk-row dk-scenes cv-wrap">
+                  {SCENE_VARIANTS.map((v) => <button key={v.id} type="button" title={v.label} className={(slide.sceneVariant ?? 'bottom') === v.id ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, sceneVariant: v.id }))}>{v.short}</button>)}
+                </div>
+              </>}
               <p className="cv-ph">Âm thanh khi vào trang</p>
               <select className="cv-sel" value={slide.sound ?? ''} onChange={(e) => setSlide((s) => ({ ...s, sound: e.target.value || undefined }))} aria-label="Âm thanh khi vào trang">
                 <option value="">Không có</option>{SOUNDS.map((s) => <option key={s.id} value={s.id}>{s.icon} {s.label}</option>)}

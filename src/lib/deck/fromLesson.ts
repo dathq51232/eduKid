@@ -4,9 +4,9 @@
 import type { ContentLesson, ContentQuestion } from '@/lib/content/types';
 import type { LessonPlan as GiaoAn } from '@/lib/plans/generate';
 import { SUBJECT_NAMES } from '@/lib/plans/generate';
-import { accentOf } from './scenes';
+import { accentOf, inkOf } from './scenes';
 import { f3dSrc as ST } from './f3d-catalog';
-import { uid, type Anim, type El, type SceneKind, type Slide, type TextEl } from './types';
+import { uid, type Anim, type El, type SceneKind, type SceneVariant, type Slide, type TextEl } from './types';
 
 export type PhaseId = 'bia' | 'kd' | 'kp' | 'lt' | 'vd' | 'cc';
 export const PHASES: { id: PhaseId; label: string; color: string; time: string }[] = [
@@ -73,8 +73,8 @@ const fit = (text: string, w: number, h: number, max = 64, min = 26) => {
   while (s > min && (rows(s) * 1.3 * s > h || word * 0.62 * s > w)) s -= 2;
   return Math.round(Math.max(min, s));
 };
-const title = (m: Mk, text: string, color = '#1e3a8a') => T(m, text, 340, 38, 920, 88, fit(text, 880, 80, 58, 32), color, { bg: '#ffffffeb', role: 'title' });
-const page = (m: Mk, phase: PhaseId, scene: SceneKind, notes = '', sound?: string): Slide => ({ id: uid(), bg: 'white', els: m.els, anims: m.anims, trans: 'fade', notes, sound, scene, phase: PHASE_LABEL[phase] });
+const title = (m: Mk, text: string, color = '#1e3a8a') => T(m, text, 340, 38, 920, 88, fit(text, 880, 80, 58, 32), color, { bg: '#ffffffd9', role: 'title' });
+const page = (m: Mk, phase: PhaseId, scene: SceneKind, notes = '', sound?: string, sceneVariant?: SceneVariant): Slide => ({ id: uid(), bg: 'white', els: m.els, anims: m.anims, trans: 'fade', notes, sound, scene, sceneVariant, phase: PHASE_LABEL[phase] });
 
 /** Bảng màu Bento 4 ô chuẩn Canva Kids (nền pastel, viền nổi, màu chữ đậm, hình 3D góc thẻ) */
 const BENTO = [
@@ -84,16 +84,31 @@ const BENTO = [
   { bg: '#fdf2f8', bd: '#f472b6', tx: '#831843', ic: 'sunflower' },
 ] as const;
 
-/** Dàn 2–4 ý thành Lưới Bento 2×2 kiểu Canva Kids (thay cho danh sách dòng đơn điệu) */
-function bentoGrid(m: Mk, items: string[], mascotSrc: string, clickEach = true) {
+/** Dàn ý thành dải thẻ Pill bên trái (1–3 ý, chừa cảnh phải 'right') hoặc Lưới Bento 2×2 (4 ý, cảnh đáy 'bottom') chuẩn Canva Kids */
+function bentoGrid(m: Mk, items: string[], mascotSrc: string, clickEach = true, sc?: SceneKind): SceneVariant {
   const pts = items.slice(0, 4);
-  const cols = pts.length === 1 ? 1 : 2;
-  const rows = Math.ceil(pts.length / cols);
-  const bw = cols === 1 ? 1060 : 620;
-  const bh = rows === 1 ? 360 : 250;
-  const gapX = 36, gapY = 28;
-  const startX = cols === 1 ? 160 : 96;
-  const startY = rows === 1 ? 240 : 165;
+  const ink = inkOf(sc);
+  if (pts.length <= 3) {
+    const bh = pts.length <= 2 ? 165 : 132;
+    const gapY = 24;
+    const startY = 235;
+    pts.forEach((t, i) => {
+      const c = BENTO[i % BENTO.length];
+      const y = startY + i * (bh + gapY);
+      const box = S(m, 'round', 96, y, 810, bh, ink.pill, '', { stroke: ink.pillBorder, sw: 5, lock: true } as Partial<El>);
+      const ic = I(m, ST(c.ic), 116, y + Math.round((bh - 72) / 2), 72, { lock: true });
+      const txt = T(m, t, 204, y + 14, 682, bh - 28, fit(t, 665, bh - 34, 40, 24), ink.body, { align: 'left', font: 'quick' });
+      if (clickEach) {
+        A(m, box, 'pop', i === 0 ? 'with' : 'click', { sound: 'pop' });
+        A(m, ic, 'pop', 'with');
+        A(m, txt, 'fade', 'with');
+      }
+    });
+    return 'right';
+  }
+  const cols = 2, rows = 2;
+  const bw = 620, bh = 250, gapX = 36, gapY = 28, startX = 96, startY = 165;
+  void rows;
   pts.forEach((t, i) => {
     const c = BENTO[i % BENTO.length];
     const col = i % cols, row = Math.floor(i / cols);
@@ -109,6 +124,7 @@ function bentoGrid(m: Mk, items: string[], mascotSrc: string, clickEach = true) 
     }
   });
   I(m, mascotSrc, 1370, 635, 190, { lock: true });
+  return 'bottom';
 }
 
 /** Trang "Chuẩn bị đồ dùng học tập" đầu tiết (kiểu Canva Classroom Check-in) */
@@ -233,15 +249,24 @@ function qPage(q: Q, mascot: string, scene: SceneKind, phase: PhaseId, head?: st
   return null;
 }
 
-/** Trang bìa: tên bài chữ trang trí (viền trắng, đổ bóng), môn · lớp, "Tiết N", linh vật */
+/** Trang bìa chuẩn Canva Scenic Storybook: thông tin lớp 2 cột góc trái trên, tên bài lớn căn trái trên khoảng trời thoáng, cảnh minh hoạ đảo/nhân vật ở góc phải */
 function coverPage(name: string, sub: string, tiet: number | undefined, sc: SceneKind, mascot: string): Slide {
-  const m = mk(); const ac = accentOf(sc);
-  const t = T(m, name, 140, 200, 1320, 300, fit(name, 1280, 280, 120, 54), ac, { stroke: '#ffffff', strokeW: 14, shadow: true, role: 'divider' });
-  T(m, sub, 400, 520, 800, 80, fit(sub, 760, 70, 40, 24), '#ffffff', { font: 'quick', bg: ac, role: 'mode' });
-  if (tiet) { const k = T(m, `Tiết ${tiet}`, 680, 620, 240, 90, 56, ac, { bg: '#ffffff', role: 'badge' }); A(m, k, 'pop', 'after', { sound: 'pop' }); }
-  const p = I(m, mascot, 1260, 560, 300);
-  A(m, t, 'zoom', 'with', { dur: 0.8 }); A(m, p, 'pop', 'after', { sound: 'magic' });
-  return page(m, 'bia', sc);
+  const m = mk();
+  const ink = inkOf(sc);
+  const strokeCol = sc === 'space' ? '#0f172a' : '#ffffff';
+  T(m, 'Trường Tiểu học EduChain\nLớp học vui vẻ', 96, 56, 360, 72, 24, ink.body, { align: 'left', font: 'quick' });
+  T(m, `${sub}${tiet ? `\nTiết ${tiet}` : ''}`, 468, 56, 420, 72, 24, ink.body, { align: 'left', font: 'quick' });
+  const up = name.toUpperCase();
+  const t = T(m, up, 96, 178, 840, 260, fit(up, 820, 245, 92, 46), ink.title, { align: 'left', stroke: strokeCol, strokeW: 10, shadow: true, role: 'divider' });
+  T(m, `KHÁM PHÁ BÀI HỌC · ${sub.toUpperCase()}`, 100, 452, 780, 66, fit(sub, 740, 56, 34, 22), ink.sub, { align: 'left', font: 'baloo' });
+  if (tiet) {
+    const k = T(m, `Tiết ${tiet}`, 100, 530, 210, 68, 36, '#ffffff', { bg: ink.title, role: 'badge' });
+    A(m, k, 'pop', 'after', { sound: 'pop' });
+  }
+  const p = I(m, mascot, 1345, 625, 220);
+  A(m, t, 'zoom', 'with', { dur: 0.8 });
+  A(m, p, 'pop', 'after', { sound: 'magic' });
+  return page(m, 'bia', sc, '', undefined, 'cover');
 }
 
 /** Trang "Bảng thi đua tổ": khi chiếu hiện điểm tuần này của các tổ (cột mọc lên, tổ nhất có cúp) */
@@ -249,7 +274,7 @@ export function boardPage(sc: SceneKind | undefined): Slide {
   const m = mk(); title(m, 'Thi đua tổ', accentOf(sc));
   const b = { id: uid(), kind: 'teams', x: 200, y: 160, w: 1200, h: 680, rot: 0, title: '' } as El;
   m.els.push(b); A(m, b.id, 'fade', 'with', { sound: 'drum' });
-  return { id: uid(), bg: 'white', els: m.els, anims: m.anims, trans: 'zoom', notes: 'Điểm thi đua tổ tuần này (cộng cả điểm trên lớp, bài thao giảng, bài tập). Khen tổ dẫn đầu.', sound: 'clap', scene: sc, phase: PHASE_LABEL.cc };
+  return { id: uid(), bg: 'white', els: m.els, anims: m.anims, trans: 'zoom', notes: 'Điểm thi đua tổ tuần này (cộng cả điểm trên lớp, bài thao giảng, bài tập). Khen tổ dẫn đầu.', sound: 'clap', scene: sc, sceneVariant: 'bottom', phase: PHASE_LABEL.cc };
 }
 
 /* ---------- tình huống theo cảnh ---------- */
@@ -261,6 +286,8 @@ const SITU: Record<SceneKind, string[]> = {
   yard: ['Ngoài sân nhà, {M} và các bạn đang chơi. Bỗng có một thử thách: “{T}”. Mình cùng vượt qua nhé!', 'Chủ nhật, {M} chơi ở sân và nghĩ ra trò chơi về “{T}”. Các bạn chơi cùng {M} nhé!'],
   farm: ['{M} về thăm trang trại của ông bà. Bác nông dân đố {M} về “{T}”. Lớp mình giúp {M} nhé!', 'Đàn gà con lạc nhau! Muốn đưa gà về chuồng, {M} phải giải câu đố về “{T}”.'],
   sea: ['{M} đi biển cùng gia đình. Bạn cua đố {M} một câu về “{T}”. Cả lớp cùng giải nhé!', 'Con tàu của {M} chỉ ra khơi khi giải xong thử thách “{T}”. Các bạn giúp {M} nào!'],
+  dino: ['{M} bước vào khu rừng tiền sử. Bạn khủng long cổ dài đố {M} một câu về “{T}”. Cả lớp cùng giải nhé!', 'Trứng khủng long sắp nở rồi! Muốn giúp khủng long con, {M} cần vượt qua thử thách “{T}”.'],
+  candy: ['{M} lạc vào vương quốc kẹo ngọt. Lâu đài kem đố {M} một câu về “{T}”. Các bạn giúp {M} nhé!', 'Xe kẹo bông chỉ mở cửa khi {M} giải xong thử thách “{T}”. Cả lớp cùng khám phá nào!'],
   tet: ['Tết đến rồi! {M} cùng gia đình gói bánh chưng và gặp một câu đố về “{T}”. Cả lớp giúp {M} nhé!', 'Ông bà lì xì cho {M} một phong bao đỏ, bên trong là thử thách về “{T}”!'],
   space: ['Tàu vũ trụ của {M} cần mật mã để bay lên. Mật mã nằm trong bài “{T}”. Cả lớp cùng tìm nhé!', '{M} hạ cánh xuống một hành tinh lạ. Người hành tinh đố {M} về “{T}”!'],
 };
@@ -347,22 +374,30 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
   };
   // chỉ dựng trò đã chọn (đổi trò thì dựng lại), nếu bài thiếu câu dễ thì thử trò khác
   for (const w of [o.warmup, ...(['gift', 'wheel', 'puzzle', 'quiz'] as Warmup[]).filter((x) => x !== o.warmup)]) { const g = warm(w); if (g) { add('kd', w, g.t, g.s); break; } }
-  // tình huống mở đầu
+  // tình huống mở đầu (góc máy 'center': chữ ở khoảng trống giữa cảnh)
   shuffle(SITU[sc], r).forEach((tpl, i) => {
     const line = fill(tpl, M.name, Tp);
     const m = mk();
-    const p = I(m, M.src, 60, 380, 420);
-    const b = S(m, 'bubble', 500, 90, 980, 430, '#ffffff', line, { stroke: '#f59e0b', sw: 6, size: fit(line, 900, 330, 54, 28), color: '#0f172a' } as Partial<El>);
+    const ink = inkOf(sc);
+    const p = I(m, M.src, 80, 460, 320);
+    const b = S(m, 'bubble', 360, 140, 1020, 410, ink.pill, line, { stroke: ink.pillBorder, sw: 6, size: fit(line, 920, 320, 50, 28), color: ink.body } as Partial<El>);
     A(m, p, 'fly-left', 'with', { sound: 'whoosh' }); A(m, b, 'pop', 'after', { sound: 'pop' });
-    add('kd', `situ${i}`, `Tình huống: ${line.slice(0, 60)}…`, page(m, 'kd', sc, 'Đọc tình huống, hỏi lớp: “Muốn giúp bạn, chúng ta cần biết điều gì?”'));
+    add('kd', `situ${i}`, `Tình huống: ${line.slice(0, 60)}…`, page(m, 'kd', sc, 'Đọc tình huống, hỏi lớp: “Muốn giúp bạn, chúng ta cần biết điều gì?”', undefined, 'center'));
   });
   add('kd', 'prep', 'Chuẩn bị đồ dùng học tập', prepPage(lesson.subject, sc, M.src));
 
   /* Khám phá */
   if (know?.points?.length) {
-    const m = mk(); title(m, 'Kiến thức cần nhớ', '#0369a1');
-    bentoGrid(m, know.points, M.src, true);
-    add('kp', 'know', 'Kiến thức cần nhớ (Lưới Bento 2×2)', page(m, 'kp', sc, 'Bấm “Tiếp” để hiện từng thẻ kiến thức, cho học sinh nhắc lại.'));
+    const m = mk();
+    const ink = inkOf(sc);
+    const vr = bentoGrid(m, know.points, M.src, true, sc);
+    if (vr === 'right') {
+      T(m, 'KIẾN THỨC CẦN NHỚ', 96, 86, 810, 82, 54, ink.title, { align: 'left', role: 'title' });
+      T(m, 'CÙNG GHI NHỚ CÁC ĐIỂM CHÍNH TRONG BÀI:', 98, 168, 800, 48, 26, ink.sub, { align: 'left', font: 'quick' });
+    } else {
+      title(m, 'Kiến thức cần nhớ', ink.title);
+    }
+    add('kp', 'know', 'Kiến thức cần nhớ (Cảnh + Thẻ Pill/Bento)', page(m, 'kp', sc, 'Bấm “Tiếp” để hiện từng thẻ kiến thức, cho học sinh nhắc lại.', undefined, vr));
   }
   if (know?.example) {
     const m = mk(); title(m, 'Cùng làm ví dụ', '#0369a1');
@@ -403,12 +438,14 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
     add('kp', 'words', 'Từ mới (Flashcard Bento · bấm mở nghĩa)', page(m, 'kp', sc, 'Cho học sinh đọc từ ở nửa trái thẻ, đoán nghĩa rồi bấm mở thẻ bí ẩn ở nửa phải.'));
   }
   if (lesson.description && short(lesson.description, 260)) {
-    const m = mk(); title(m, `Hôm nay chúng ta học`, '#0369a1');
-    T(m, Tp, 300, 200, 1000, 160, fit(Tp, 980, 150, 80, 36), '#c2410c', { bg: '#ffffffe6' });
-    const d = T(m, lesson.description, 300, 400, 1000, 260, fit(lesson.description, 980, 250, 44, 24), '#1f2937', { font: 'quick', bg: '#ffffffd9' });
+    const m = mk();
+    const ink = inkOf(sc);
+    T(m, 'HÔM NAY CHÚNG TA HỌC GÌ?', 660, 120, 840, 84, 52, ink.title, { align: 'left', role: 'title' });
+    T(m, Tp, 660, 215, 840, 130, fit(Tp, 820, 120, 64, 34), ink.sub, { align: 'left', bg: ink.pill });
+    const d = T(m, lesson.description, 660, 368, 840, 250, fit(lesson.description, 820, 240, 40, 24), ink.body, { align: 'left', font: 'quick', bg: ink.pill });
     A(m, d, 'fade', 'click');
-    I(m, M.src, 40, 560, 280, { lock: true });
-    add('kp', 'intro', 'Giới thiệu bài', page(m, 'kp', sc));
+    I(m, M.src, 1340, 635, 210, { lock: true });
+    add('kp', 'intro', 'Giới thiệu bài', page(m, 'kp', sc, '', undefined, 'left'));
   }
   // câu khám phá: hỏi – đáp có miếng che
   for (let i = 0; i < 2; i++) {
@@ -427,12 +464,13 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
   }
   (LIENHE[lesson.subject] ?? LIENHE.toan).forEach((t, i) => {
     const line = fill(t, M.name, Tp); const m = mk();
-    title(m, 'Liên hệ thực tế', '#be185d');
-    I(m, M.src, 80, 300, 380);
-    const b = S(m, 'bubble', 500, 170, 960, 420, '#ffffff', line, { stroke: '#ec4899', sw: 6, size: fit(line, 880, 320, 54, 28), color: '#0f172a' } as Partial<El>);
+    const ink = inkOf(sc);
+    T(m, 'LIÊN HỆ THỰC TẾ', 640, 100, 860, 82, 52, ink.title, { align: 'left', role: 'title' });
+    const b = S(m, 'bubble', 640, 195, 860, 390, ink.pill, line, { stroke: ink.pillBorder, sw: 6, size: fit(line, 780, 300, 48, 26), color: ink.body } as Partial<El>);
     A(m, b, 'pop', 'with', { sound: 'pop' });
-    T(m, '👥 Thảo luận nhóm đôi · 2 phút', 560, 640, 840, 90, 40, '#9d174d', { bg: '#fce7f3' });
-    vdPages.push({ key: `vd:lh${i}`, phase: 'vd', title: `Liên hệ: ${line.slice(0, 56)}…`, slide: page(m, 'vd', sc, 'Mời 2–3 nhóm chia sẻ, cô nhận xét và khen.') });
+    T(m, '👥 Thảo luận nhóm đôi · 2 phút', 640, 615, 620, 82, 36, '#ffffff', { bg: ink.title });
+    I(m, M.src, 1310, 585, 230);
+    vdPages.push({ key: `vd:lh${i}`, phase: 'vd', title: `Liên hệ: ${line.slice(0, 56)}…`, slide: page(m, 'vd', sc, 'Mời 2–3 nhóm chia sẻ, cô nhận xét và khen.', undefined, 'left') });
   });
 
   /* Luyện tập: mọi câu còn lại hợp trình chiếu, ưu tiên đa dạng dạng câu */
@@ -529,22 +567,30 @@ export function buildPlanFromGiaoAn(ga: GiaoAn, o: GenOpts): LessonPlan {
 
   add('bia', 'cover', 'Trang bìa', coverPage(ga.title.replace(/\s*\(tiết\s*\d+\)/i, ''), `${subj} · Lớp ${ga.grade}${ga.className ? ' ' + ga.className : ''}`, o.tiet ?? tietOf(ga.title), sc, M.src));
 
-  // tình huống mở đầu
+  // tình huống mở đầu (góc máy 'center')
   shuffle(SITU[sc], r).forEach((tpl, i) => {
     const line = fill(tpl, M.name, Tp); const m = mk();
-    const p = I(m, M.src, 60, 380, 420);
-    const b = S(m, 'bubble', 500, 90, 980, 430, '#ffffff', line, { stroke: '#f59e0b', sw: 6, size: fit(line, 900, 330, 54, 28), color: '#0f172a' } as Partial<El>);
+    const ink = inkOf(sc);
+    const p = I(m, M.src, 80, 460, 320);
+    const b = S(m, 'bubble', 360, 140, 1020, 410, ink.pill, line, { stroke: ink.pillBorder, sw: 6, size: fit(line, 920, 320, 50, 28), color: ink.body } as Partial<El>);
     A(m, p, 'fly-left', 'with', { sound: 'whoosh' }); A(m, b, 'pop', 'after', { sound: 'pop' });
-    add('kd', `situ${i}`, `Tình huống: ${line.slice(0, 60)}…`, page(m, 'kd', sc, 'Đọc tình huống, hỏi lớp: “Các em đoán hôm nay chúng ta học gì?”'));
+    add('kd', `situ${i}`, `Tình huống: ${line.slice(0, 60)}…`, page(m, 'kd', sc, 'Đọc tình huống, hỏi lớp: “Các em đoán hôm nay chúng ta học gì?”', undefined, 'center'));
   });
   add('kd', 'prep', 'Chuẩn bị đồ dùng học tập', prepPage(ga.subject, sc, M.src));
 
-  // mục tiêu (yêu cầu cần đạt) — trình bày dạng Lưới Bento 2×2 kiểu Canva
+  // mục tiêu (yêu cầu cần đạt) — trình bày dạng thẻ Pill bên trái (cảnh phải) hoặc Lưới Bento 2×2 kiểu Canva
   const goals = lines(ga.goals.knowledge, 4);
   if (goals.length) {
-    const m = mk(); title(m, 'Hôm nay em sẽ', '#0369a1');
-    bentoGrid(m, goals, M.src, true);
-    add('kp', 'goals', 'Mục tiêu bài học (Lưới Bento)', page(m, 'kp', sc, 'Bấm “Tiếp” để hiện từng mục tiêu.'));
+    const m = mk();
+    const ink = inkOf(sc);
+    const vr = bentoGrid(m, goals, M.src, true, sc);
+    if (vr === 'right') {
+      T(m, 'MỤC TIÊU BÀI HỌC', 96, 86, 810, 82, 54, ink.title, { align: 'left', role: 'title' });
+      T(m, 'SAU BÀI HỌC HÔM NAY, EM SẼ:', 98, 168, 800, 48, 26, ink.sub, { align: 'left', font: 'quick' });
+    } else {
+      title(m, 'Mục tiêu bài học', ink.title);
+    }
+    add('kp', 'goals', 'Mục tiêu bài học (Cảnh + Thẻ Pill/Bento)', page(m, 'kp', sc, 'Bấm “Tiếp” để hiện từng mục tiêu.', undefined, vr));
   }
 
   // mỗi hoạt động của giáo án → trang nhiệm vụ của học sinh (hiện lần lượt)
@@ -552,10 +598,18 @@ export function buildPlanFromGiaoAn(ga: GiaoAn, o: GenOpts): LessonPlan {
     const ph = ACT_PHASE[a.key] ?? 'kp';
     const tasks = lines(a.student, 5).length ? lines(a.student, 5) : lines(a.teacher, 5);
     if (!tasks.length) continue;
-    const m = mk(); title(m, a.title || PHASE_LABEL[ph], PHASES.find((p) => p.id === ph)?.color ?? '#0369a1');
+    const m = mk();
+    const ink = inkOf(sc);
+    let vr: SceneVariant = 'bottom';
     if (tasks.length <= 4 && !a.goal) {
-      bentoGrid(m, tasks, M.src, true);
+      vr = bentoGrid(m, tasks, M.src, true, sc);
+      if (vr === 'right') {
+        T(m, (a.title || PHASE_LABEL[ph]).toUpperCase(), 96, 95, 810, 90, fit(a.title || PHASE_LABEL[ph], 790, 82, 54, 30), ink.title, { align: 'left', role: 'title' });
+      } else {
+        title(m, a.title || PHASE_LABEL[ph], ink.title);
+      }
     } else {
+      title(m, a.title || PHASE_LABEL[ph], PHASES.find((p) => p.id === ph)?.color ?? ink.title);
       if (a.goal && short(a.goal, 140)) T(m, a.goal, 260, 145, 1080, 76, fit(a.goal, 1040, 68, 36, 22), '#475569', { font: 'quick', italic: true, bg: '#ffffffcc' });
       const top = a.goal ? 238 : 165, h = Math.min(118, (720 - top) / tasks.length - 14);
       tasks.forEach((t, i) => {
@@ -565,7 +619,7 @@ export function buildPlanFromGiaoAn(ga: GiaoAn, o: GenOpts): LessonPlan {
       });
       I(m, M.src, 40, 640, 210, { lock: true });
     }
-    add(ph, `act-${a.key}`, `${a.title}: nhiệm vụ của học sinh`, page(m, ph, sc, [a.goal && `Mục tiêu: ${a.goal}`, a.teacher && `GV:\n${a.teacher}`].filter(Boolean).join('\n')));
+    add(ph, `act-${a.key}`, `${a.title}: nhiệm vụ của học sinh`, page(m, ph, sc, [a.goal && `Mục tiêu: ${a.goal}`, a.teacher && `GV:\n${a.teacher}`].filter(Boolean).join('\n'), undefined, vr));
     // các bước làm (3–6 bước ngắn) → trò Sắp xếp các bước (trang gợi ý, mặc định chưa chọn)
     const steps = lines(a.teacher, 6).filter((x) => short(x, 26));
     if (ph !== 'kd' && steps.length >= 3) {
@@ -582,14 +636,15 @@ export function buildPlanFromGiaoAn(ga: GiaoAn, o: GenOpts): LessonPlan {
     A(m, b, 'pop', 'with', { sound: 'pop' });
     T(m, '👥 Nhóm 4 · 3 phút', 640, 630, 680, 90, 42, '#166534', { bg: '#dcfce7' });
     add('lt', 'group', 'Thảo luận nhóm', page(m, 'lt', sc, 'Mời 2–3 nhóm trình bày, các nhóm khác nhận xét.')); }
-  // liên hệ (Vận dụng)
+  // liên hệ (Vận dụng — góc máy 'left': cảnh bên trái, chữ bên phải)
   LIENHE_OTHER.forEach((t, i) => {
     const line = fill(t, M.name, Tp); const m = mk();
-    title(m, 'Liên hệ thực tế', '#be185d');
-    I(m, M.src, 80, 300, 380);
-    const b = S(m, 'bubble', 500, 170, 960, 420, '#ffffff', line, { stroke: '#ec4899', sw: 6, size: fit(line, 880, 320, 54, 28), color: '#0f172a' } as Partial<El>);
+    const ink = inkOf(sc);
+    T(m, 'LIÊN HỆ THỰC TẾ', 640, 110, 860, 82, 52, ink.title, { align: 'left', role: 'title' });
+    const b = S(m, 'bubble', 640, 210, 860, 410, ink.pill, line, { stroke: ink.pillBorder, sw: 6, size: fit(line, 780, 320, 48, 26), color: ink.body } as Partial<El>);
     A(m, b, 'pop', 'with', { sound: 'pop' });
-    add('vd', `lh${i}`, `Liên hệ: ${line.slice(0, 56)}…`, page(m, 'vd', sc, 'Mời HS chia sẻ, cô nhận xét và khen.'));
+    I(m, M.src, 1310, 585, 230);
+    add('vd', `lh${i}`, `Liên hệ: ${line.slice(0, 56)}…`, page(m, 'vd', sc, 'Mời HS chia sẻ, cô nhận xét và khen.', undefined, 'left'));
   });
   // củng cố
   { const m = mk();
@@ -637,21 +692,23 @@ export type WorkMode = 'ca-nhan' | 'nhom-2' | 'nhom-4' | 'ca-lop';
 export const WORK_MODES: { id: WorkMode; label: string }[] = [
   { id: 'ca-nhan', label: '👤 Làm việc cá nhân' }, { id: 'nhom-2', label: '👥 Làm việc nhóm 2' }, { id: 'nhom-4', label: '👨‍👩‍👧‍👦 Thảo luận nhóm 4' }, { id: 'ca-lop', label: '🏫 Cả lớp' },
 ];
-export const cardBackEl = (accent: string): El => ({ id: uid(), kind: 'shape', shape: 'round', x: 50, y: 40, w: 1524, h: 844, rot: 0, fill: accent, stroke: accent, sw: 0, op: 0.28, lock: true, role: 'cardback' } as El);
-export const cardEl = (accent: string): El => ({ id: uid(), kind: 'shape', shape: 'round', x: 36, y: 26, w: 1524, h: 844, rot: 0, fill: '#fffdf9', stroke: accent, sw: 7, shadow: true, lock: true, role: 'card' } as El);
+export const cardBackEl = (accent: string): El => ({ id: uid(), kind: 'shape', shape: 'round', x: 50, y: 40, w: 1524, h: 780, rot: 0, fill: accent, stroke: accent, sw: 0, op: 0.2, lock: true, role: 'cardback' } as El);
+export const cardEl = (accent: string): El => ({ id: uid(), kind: 'shape', shape: 'round', x: 36, y: 26, w: 1524, h: 780, rot: 0, fill: 'rgba(255,255,255,0.78)', stroke: accent, sw: 6, shadow: true, lock: true, role: 'card' } as El);
 export const boardEls = (accent: string): El[] => [cardBackEl(accent), cardEl(accent)];
 export const badgeEl = (n: number, label: string, accent: string): El =>
   ({ id: uid(), kind: 'text', x: 56, y: 42, w: Math.min(360, 110 + label.length * 22), h: 66, rot: 0, text: `${CIRCLED[n - 1] ?? n} ${label}`, size: 34, color: '#ffffff', font: 'baloo', align: 'center', bg: accent, role: 'badge' } as El);
 export const modeEl = (mode: WorkMode, accent: string): El =>
   ({ id: uid(), kind: 'text', x: 1180, y: 42, w: 360, h: 66, rot: 0, text: WORK_MODES.find((w) => w.id === mode)?.label ?? '', size: 28, color: accent, font: 'baloo', align: 'center', bg: '#fff7ed', role: 'mode' } as El);
-/** Trang chia hoạt động: tên hoạt động chữ thật to trên cảnh nền */
+/** Trang chia hoạt động: chữ tiêu đề căn trái trên khoảng trời thoáng + cảnh nền bên phải (góc máy 'cover') */
 export function dividerSlide(label: string, sc: SceneKind | undefined, mascot = MASCOTS[0].src, sub = ''): Slide {
-  const m = mk(); const ac = accentOf(sc);
-  const t = T(m, label.toUpperCase(), 120, 250, 1360, 300, fit(label, 1300, 280, 190, 80), ac, { stroke: '#ffffff', strokeW: 16, shadow: true, role: 'divider' });
-  if (sub) T(m, sub, 450, 570, 700, 80, fit(sub, 660, 70, 42, 24), '#ffffff', { font: 'quick', bg: ac, role: 'mode' });
-  const p = I(m, mascot, 1230, 520, 330);
+  const m = mk();
+  const ink = inkOf(sc);
+  const strokeCol = sc === 'space' ? '#0f172a' : '#ffffff';
+  const t = T(m, label.toUpperCase(), 96, 210, 860, 240, fit(label, 840, 220, 140, 64), ink.title, { align: 'left', stroke: strokeCol, strokeW: 12, shadow: true, role: 'divider' });
+  if (sub) T(m, sub, 100, 470, 420, 74, fit(sub, 380, 64, 38, 24), '#ffffff', { font: 'quick', bg: ink.title, role: 'mode' });
+  const p = I(m, mascot, 1320, 580, 250);
   A(m, t, 'zoom', 'with', { dur: 0.7, sound: 'magic' }); A(m, p, 'fly-right', 'after');
-  return { id: uid(), bg: 'white', els: m.els, anims: m.anims, trans: 'zoom', notes: '', scene: sc, phase: label };
+  return { id: uid(), bg: 'white', els: m.els, anims: m.anims, trans: 'zoom', notes: '', scene: sc, sceneVariant: 'cover', phase: label };
 }
 /** nhãn bài + hình thức làm bài mặc định theo dạng trang */
 function labelOf(title: string, math: boolean): [string, WorkMode] | null {
@@ -678,7 +735,8 @@ export function planSlides(plan: LessonPlan, on: Set<string>, scenes: Record<str
     }
     lastPhase = c.phase;
     let s: Slide = { ...c.slide, scene: sc, els: [...c.slide.els], anims: [...c.slide.anims] };
-    const content = (c.phase === 'kp' || c.phase === 'lt' || c.phase === 'vd') && !c.key.includes('situ') && !s.els.some((e) => e.role === 'card');
+    const isScenicLayout = s.sceneVariant === 'cover' || s.sceneVariant === 'center' || s.sceneVariant === 'right' || s.sceneVariant === 'left';
+    const content = (c.phase === 'kp' || c.phase === 'lt' || c.phase === 'vd') && !c.key.includes('situ') && !isScenicLayout && !s.els.some((e) => e.role === 'card');
     if (content) {
       s.els = [...boardEls(ac), ...s.els.map((e) => (e.role === 'title' && e.kind === 'text' ? { ...e, bg: '', color: ac } : e))];
       const lb = c.phase === 'lt' ? labelOf(c.title, !!o.math) : null;
@@ -693,12 +751,13 @@ export function planSlides(plan: LessonPlan, on: Set<string>, scenes: Record<str
 /** Đổi chủ đề cả bài: cảnh nền mọi trang + màu khung / nhãn / chữ trang chia theo chủ đề mới */
 export function applyTheme(slides: Slide[], sc: SceneKind): Slide[] {
   const ac = accentOf(sc);
+  const ink = inkOf(sc);
   return slides.map((s) => ({ ...s, scene: sc, els: s.els.map((e) => {
     if (e.role === 'card' && e.kind === 'shape') return { ...e, stroke: ac };
     if (e.role === 'cardback' && e.kind === 'shape') return { ...e, fill: ac, stroke: ac };
     if (e.role === 'badge' && e.kind === 'text') return { ...e, bg: e.bg === '#ffffff' ? e.bg : ac, color: e.bg === '#ffffff' ? ac : e.color };
     if (e.role === 'mode' && e.kind === 'text') return e.bg === '#fff7ed' ? { ...e, color: ac } : { ...e, bg: ac };
-    if ((e.role === 'divider' || e.role === 'title') && e.kind === 'text') return { ...e, color: ac };
+    if ((e.role === 'divider' || e.role === 'title') && e.kind === 'text') return { ...e, color: ink.title };
     return e;
   }) }));
 }

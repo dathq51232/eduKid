@@ -731,7 +731,21 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
           </div>}
         </>
       )}
-      {slide.scene && <SceneBg id={slide.scene} />}
+      {slide.scene && (
+        <SceneBg
+          id={slide.scene}
+          variant={
+            slide.sceneVariant ??
+            (slide.phase === 'Trang bìa' || slide.els.some((e) => e.role === 'divider')
+              ? 'cover'
+              : slide.phase === 'Khám phá'
+              ? 'right'
+              : slide.phase === 'Vận dụng'
+              ? 'left'
+              : 'bottom')
+          }
+        />
+      )}
       {mode === 'edit' && snapGrid && <i className="dk-grid-overlay" aria-hidden="true" />}
       {slide.els.map((e) => {
         const p = play ? pos[e.id] : undefined;
