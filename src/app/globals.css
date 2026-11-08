@@ -8000,7 +8000,7 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .cv-th, .dk-th, .cv-pages button, .cv-set-pv, .dp-next { content-visibility: auto; contain-intrinsic-size: auto 140px auto 80px; }
 .cv-g { content-visibility: auto; contain-intrinsic-size: auto 260px auto 180px; }
 .cv-panel .dk-sgrid button, .cv-milo button { content-visibility: auto; contain-intrinsic-size: auto 72px; }
-.lesson-row { content-visibility: auto; contain-intrinsic-size: auto 72px; }
+.lesson-row:not(.is-next) { content-visibility: auto; contain-intrinsic-size: auto 72px; }
 .dk-slide.is-thumb * { animation: none !important; transition: none !important; }
 /* người dùng chọn giảm chuyển động trong hệ điều hành: tắt các hiệu ứng trang trí lặp */
 @media (prefers-reduced-motion: reduce) {
