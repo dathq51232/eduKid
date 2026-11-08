@@ -3,7 +3,7 @@
 // → (hoạt động thi đua: bảng thi đua tổ) → các trang nội dung bài học của đúng hoạt động đó.
 // Trang hướng dẫn gắn công cụ cho màn hình của cô (Slide.tool): hẹn giờ thảo luận / gọi tên.
 import { emptyDeck, uid, type Deck, type El, type SceneKind, type Slide } from './types';
-import { MASCOTS, badgeEl, boardPage, buildPlan, cardEl, dividerSlide, planSlides, tietOf, type PhaseId } from './fromLesson';
+import { MASCOTS, badgeEl, boardEls, boardPage, buildPlan, dividerSlide, planSlides, tietOf, type PhaseId } from './fromLesson';
 import { planOf, type LessonIdea, type Pick } from '@/lib/plans/idea-bank';
 import { F3D_VI, f3dSrc } from './f3d-catalog';
 import { pickScene } from './scenes';
@@ -157,8 +157,16 @@ const studentLayout = (seed: number) => {
   return layouts[seed % layouts.length];
 };
 
+const PASTEL_CARDS: [string, string][] = [
+  ['#dbeafe', '#3b82f6'],
+  ['#dcfce7', '#22c55e'],
+  ['#fef3c7', '#f59e0b'],
+  ['#fce7f3', '#ec4899'],
+  ['#ede9fe', '#8b5cf6'],
+];
+
 export function studentSlide(sp: Spec, phase: { n: string; c: string }, n: number, topicToks: string[], sc: SceneKind, layoutOffset = 0): Slide {
-  const els: El[] = [cardEl(phase.c), badgeEl(n, phase.n, phase.c)];
+  const els: El[] = [...boardEls(phase.c), badgeEl(n, phase.n, phase.c)];
   const anims: Anims = [];
   const layout = studentLayout(n + phase.n.length + topicToks.join('').length + layoutOffset);
   const bg = STUDENT_AUTO_BG[sc] ?? 'sky';
@@ -179,7 +187,8 @@ export function studentSlide(sp: Spec, phase: { n: string; c: string }, n: numbe
   if (sp.drop) { // kéo thả: vật kéo được ở dưới, ô nhận ở trên
     const items = sp.drop.items.map((it, i) => {
       const n = sp.drop!.items.length, w = Math.min(150, Math.floor(1360 / n) - 12), x = 800 - (n * (w + 12)) / 2 + i * (w + 12);
-      const e = (it.pic ? { ...img(it.pic, x, 660, w), drag: true } : { id: uid(), kind: 'shape', shape: 'round', x, y: 680, w, h: 110, rot: 0, fill: '#ffffff', stroke: phase.c, sw: 5, text: it.text ?? '', color: '#1f2937', size: 30, drag: true }) as El;
+      const [cBg, cBd] = PASTEL_CARDS[i % PASTEL_CARDS.length];
+      const e = (it.pic ? { ...img(it.pic, x, 660, w), drag: true } : { id: uid(), kind: 'shape', shape: 'round', x, y: 680, w, h: 110, rot: 0, fill: cBg, stroke: cBd, sw: 5, text: it.text ?? '', color: '#1f2937', size: 30, drag: true, shadow: true }) as El;
       anim(anims, e, 'fly-up', 'after'); return e;
     });
     const zs = sp.drop.zones, gap = 20;
@@ -207,20 +216,28 @@ export function studentSlide(sp: Spec, phase: { n: string; c: string }, n: numbe
       y += w + 20;
     } else { const t = text(120, y, 1360, 240, sp.big, sp.big.length > 24 ? 80 : 140, phase.c, { font: 'hand' }); els.push(t); anim(anims, t, 'pop', 'after'); y += 260; }
   }
-  if (sp.words) { // tiếng có vần của bài, kèm hình — bấm để hiện từng hình
+  if (sp.words) { // tiếng có vần của bài, kèm hình — Flashcard Bento 2 tầng
     const vs = vansIn(topicToks.join(' '));
     const ws = (vs.length ? vs.flatMap((v) => wordsOf(v).filter((w) => w.pic).map((w) => ({ pic: w.pic!, word: w.word }))) : topicToks.flatMap(picWords)).slice(0, 4);
-    const w = 240, x0 = 800 - (ws.length * (w + 30)) / 2;
+    const w = 270, gap = 28, x0 = 800 - (ws.length * (w + gap) - gap) / 2, topY = Math.min(y, 470);
     ws.forEach((x, i) => {
-      const e = img(x.pic, x0 + i * (w + 30) + 30, Math.min(y, 540), 180); const t = text(x0 + i * (w + 30), Math.min(y, 540) + 185, w, 70, x.word, 48, phase.c);
-      els.push(e, t); anim(anims, e, 'pop', 'click', 'pop'); anim(anims, t, 'fly-up', 'with');
+      const [cBg, cBd] = PASTEL_CARDS[i % PASTEL_CARDS.length];
+      const cx = x0 + i * (w + gap);
+      const card = { id: uid(), kind: 'shape', shape: 'round', x: cx, y: topY, w, h: 285, rot: 0, fill: cBg, stroke: cBd, sw: 5, lock: true, shadow: true } as El;
+      const e = img(x.pic, cx + (w - 165) / 2, topY + 18, 165);
+      const t = text(cx + 14, topY + 195, w - 28, 72, x.word, 46, '#0f172a', { bg: '#ffffffeb' });
+      els.push(card, e, t); anim(anims, card, 'pop', 'click', 'pop'); anim(anims, e, 'pop', 'with'); anim(anims, t, 'fly-up', 'with');
     });
-    y = Math.min(y, 540) + 270;
+    y = topY + 300;
   }
   const cards = sp.words ? [] : sp.cards ?? [];
   if (cards.length) {
-    const w = Math.min(260, Math.floor(1300 / cards.length) - 16), cy = Math.min(y, 610), x0 = 800 - (cards.length * (w + 16) - 16) / 2;
-    cards.forEach((c, i) => { const e = { id: uid(), kind: 'shape', shape: 'round', x: x0 + i * (w + 16), y: cy, w, h: 130, rot: 0, fill: '#ffffff', stroke: phase.c, sw: 6, text: c, color: '#1f2937', size: c.length > 6 ? 34 : 56 } as El; els.push(e); anim(anims, e, 'fly-up', 'after'); });
+    const w = Math.min(270, Math.floor(1320 / cards.length) - 18), cy = Math.min(y, 600), x0 = 800 - (cards.length * (w + 18) - 18) / 2;
+    cards.forEach((c, i) => {
+      const [cBg, cBd] = PASTEL_CARDS[i % PASTEL_CARDS.length];
+      const e = { id: uid(), kind: 'shape', shape: 'round', x: x0 + i * (w + 18), y: cy, w, h: 135, rot: 0, fill: cBg, stroke: cBd, sw: 5, text: c, color: '#0f172a', size: c.length > 6 ? 34 : 56, shadow: true } as El;
+      els.push(e); anim(anims, e, 'fly-up', 'after');
+    });
   }
   if (sp.reveal) {
     const r = text(200, 760, 1200, 90, sp.reveal, sp.reveal.length > 40 ? 38 : 58, '#ffffff', { bg: phase.c });

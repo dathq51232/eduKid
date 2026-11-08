@@ -173,6 +173,42 @@ export const SLIDE_TEMPLATES: Tpl[] = [
       return [slide('sky', m)]; },
   },
   {
+    id: 'prep', title: 'Đầu tiết: Chuẩn bị đồ dùng', desc: '4 thẻ Bento nhắc học sinh chuẩn bị sách, vở, bút, bảng con', bg: 'sky', preview: [ST('books'), ST('pencil')],
+    make: () => { const m: Mk = { els: [], anims: [] };
+      T(m, 'Chuẩn bị vào học', 200, 36, 1200, 100, 72, '#0369a1');
+      const items = [
+        ['books', '① Sách giáo khoa', '#dbeafe', '#3b82f6'],
+        ['notebook', '② Vở ghi · Bảng con', '#dcfce7', '#22c55e'],
+        ['pencil', '③ Bút chì · Thước kẻ', '#fef3c7', '#f59e0b'],
+        ['star', '④ Ngồi ngay ngắn', '#fce7f3', '#ec4899'],
+      ] as const;
+      items.forEach(([pic, lb, bg, bd], i) => {
+        const x = 80 + i * 365;
+        const c = S(m, 'round', x, 190, 340, 540, bg, '', { stroke: bd, sw: 6, shadow: true, lock: true } as Partial<El>);
+        const im = I(m, ST(pic), x + 65, 235, 210, { name: lb });
+        const tx = T(m, lb, x + 20, 480, 300, 180, 42, '#0f172a', { font: 'baloo' });
+        A(m, c, 'pop', i === 0 ? 'with' : 'after', { sound: i === 0 ? 'pop' : undefined });
+        A(m, im, 'pop', 'with'); A(m, tx, 'fade', 'with');
+      });
+      return [slide('sky', m, 'Kiểm tra đồ dùng học tập và tư thế ngồi của cả lớp trước khi vào bài.')]; },
+  },
+  {
+    id: 'puzzle', title: 'Khởi động: Mảnh ghép bí ẩn', desc: 'Trả lời 4 câu hỏi để lật mở bức tranh chủ đề dưới 4 mảnh ghép', bg: 'sun', preview: [ST('sunflower'), ST('star')],
+    make: () => { const m: Mk = { els: [], anims: [] };
+      T(m, 'Lật mảnh ghép bí ẩn', 200, 32, 1200, 100, 74, '#6d28d9');
+      S(m, 'round', 520, 170, 560, 540, '#fef3c7', '', { stroke: '#f59e0b', sw: 6, shadow: true, lock: true } as Partial<El>);
+      I(m, ST('sunflower'), 650, 200, 300, { lock: true, name: 'Hình bí mật' });
+      T(m, 'Chủ đề bài học!', 545, 520, 510, 140, 48, '#b45309', { bg: '#ffffffeb', lock: true });
+      const cols: [string, string][] = [['#fbbf24', '#d97706'], ['#38bdf8', '#0284c7'], ['#4ade80', '#16a34a'], ['#f472b6', '#db2777']];
+      [0, 1, 2, 3].forEach((i) => {
+        const c = i % 2, r = Math.floor(i / 2);
+        S(m, 'round', c === 0 ? 60 : 1110, 180 + r * 270, 430, 240, '#ffffff', `Câu ${i + 1}: … ?`, { stroke: cols[i][1], sw: 5, size: 38, color: '#0f172a', shadow: true } as Partial<El>);
+        const p = S(m, 'mystery', 520 + c * 280, 170 + r * 270, 280, 270, cols[i][0], `Mảnh ${i + 1}`, { stroke: cols[i][1], sw: 5, color: '#ffffff', size: 46, shadow: true } as Partial<El>);
+        A(m, p, 'zoom-out', 'click', { trigger: p, sound: 'magic', dur: 0.5 });
+      });
+      return [slide('sun', m, 'Học sinh chọn mảnh ghép và trả lời câu hỏi tương ứng, cô bấm vào mảnh ghép đó để lật mở bức tranh.')]; },
+  },
+  {
     id: 'stars', title: 'Củng cố: Sao thưởng', desc: 'Tổng kết, khen cả lớp, âm thanh vui', bg: 'sun', preview: [ST('trophy'), ST('star')],
     make: () => { const m: Mk = { els: [], anims: [] };
       const t = T(m, 'Cả lớp giỏi lắm!', 200, 40, 1200, 130, 92, '#b45309');
@@ -180,6 +216,25 @@ export const SLIDE_TEMPLATES: Tpl[] = [
       A(m, t, 'zoom', 'with'); A(m, c, 'drop', 'after', { sound: 'tada', dur: 1.2 });
       [0, 1, 2, 3, 4].forEach((i) => { const s = I(m, ST('star'), 180 + i * 260, 640, 170); A(m, s, 'pop', 'after', { sound: 'star', dur: 0.4 }); });
       return [slide('sun', m, 'Khen ngợi, nhận xét tiết học.', 'clap')]; },
+  },
+  {
+    id: 'exit', title: 'Củng cố: Vé ra về (1–2–3 ngón tay)', desc: 'Học sinh giơ 1, 2 hoặc 3 ngón tay tự đánh giá mức độ hiểu bài', bg: 'mint', preview: [ST('star'), ST('sun')],
+    make: () => { const m: Mk = { els: [], anims: [] };
+      T(m, 'Hôm nay em hiểu bài thế nào?', 160, 36, 1280, 100, 68, '#065f46');
+      const levels = [
+        ['grinning-face-with-smiling-eyes', '1 ngón tay ☝️', 'Em hiểu bài rất rõ!', '#dcfce7', '#22c55e'],
+        ['slightly-smiling-face', '2 ngón tay ✌️', 'Em cần luyện thêm!', '#fef3c7', '#f59e0b'],
+        ['raised-hand', '3 ngón tay 🤟', 'Em muốn hỏi thêm cô!', '#dbeafe', '#3b82f6'],
+      ] as const;
+      levels.forEach(([pic, f, desc, bg, bd], i) => {
+        const x = 100 + i * 480;
+        const c = S(m, 'round', x, 185, 440, 560, bg, '', { stroke: bd, sw: 6, shadow: true, lock: true } as Partial<El>);
+        const im = I(m, ST(pic), x + 110, 220, 220, { name: desc });
+        T(m, f, x + 30, 470, 380, 90, 44, '#0f172a', { bg: '#ffffffd9' });
+        T(m, desc, x + 25, 580, 390, 120, 38, '#1e293b', { font: 'quick' });
+        A(m, c, 'fly-up', 'after', { delay: i * 0.12 }); A(m, im, 'pop', 'with');
+      });
+      return [slide('mint', m, 'Cho học sinh giơ 1, 2 hoặc 3 ngón tay để tự đánh giá mức độ hiểu bài hôm nay.')]; },
   },
 ];
 
