@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, Check, ChevronLeft, ChevronRight, Eye, EyeOff, Headphones, Mic, Play, Square, Star, Volume2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import SentenceIllustration from '@/components/english/SentenceIllustration';
 import type { CommunicationQuestion } from '@/lib/english/communicationBank';
 import { analyzeSentenceProsody, toProsodicSentence } from '@/lib/english/prosody';
 
@@ -325,7 +326,16 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
 
     {mode !== 'read' && <article className={`en-shadow-current${showText ? ' has-text' : ''}`}>
       <span className="en-shadow-number">Câu {current.storyIndex} · {current.storySize}</span>
-      {mode === 'listen' && !showText && !playing && activeWord < 0 ? <p className="en-shadow-hidden">Nghe câu tiếng Anh, để ý chỗ nhấn giọng và nhịp nghỉ giữa câu, sau đó mở văn bản để đối chiếu.</p> : <>
+      <SentenceIllustration
+        action={current.action}
+        reason={current.reason}
+        sentence={current.sentence}
+        storyId={current.storyId}
+        topicId={current.topicId}
+        questionNumber={current.number}
+        variant="compact"
+      />
+      {mode === 'listen' && !showText && !playing && activeWord < 0 ? <p className="en-shadow-hidden">Nghe câu tiếng Anh, nhìn tranh minh họa tình huống và để ý chỗ nhấn giọng, sau đó mở văn bản để đối chiếu.</p> : <>
         <p className="en-shadow-english" aria-label={current.sentence}>
           {prosodyTokens.map((tok) => (
             <span key={`${tok.wordIndex}-${tok.word}`} className="en-word-wrap">
