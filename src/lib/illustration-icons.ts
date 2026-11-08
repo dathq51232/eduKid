@@ -99,12 +99,95 @@ const NAME_ICONS: Record<string, string> = {
   shovel: 'shovel',
   paintbrush: 'paintbrush',
   'utility-knife': 'utility-knife',
+  'red-apple': 'apple',
+  'hot-pepper': 'pepper',
+};
+
+const STICKER_ICONS: Record<string, string> = {
+  '🦖': 'dino',
+  '🦕': 'dino',
+  '🚀': 'rocket',
+  '🪐': 'planet',
+  '🌈': 'rainbow',
+  '🐳': 'whale',
+  '🐋': 'whale',
+  '🌵': 'cactus',
+  '☀️': 'sun',
+  '☀': 'sun',
+  '🌙': 'moon',
+  '☁️': 'cloud',
+  '☁': 'cloud',
+  '🌻': 'sunflower',
+  '🌳': 'tree',
+  '🌲': 'tree',
+  '🐟': 'goldfish',
+  '🐠': 'goldfish',
+  '🦋': 'butterfly',
+  '🍦': 'icecream',
+  '🎈': 'balloon',
+  '🪁': 'kite',
+  '⛵': 'boat',
+  '🚗': 'car',
+  '🏠': 'house',
+  '🏡': 'house',
+  '👑': 'crown',
+  '⭐': 'lucky',
+  '🌟': 'lucky',
+  dino: 'dino',
+  't-rex': 'dino',
+  sauropod: 'dino',
+  rocket: 'rocket',
+  planet: 'planet',
+  'ringed-planet': 'planet',
+  rainbow: 'rainbow',
+  whale: 'whale',
+  'spouting-whale': 'whale',
+  cactus: 'cactus',
+  sun: 'sun',
+  moon: 'moon',
+  'crescent-moon': 'moon',
+  cloud: 'cloud',
+  sunflower: 'sunflower',
+  tree: 'tree',
+  'deciduous-tree': 'tree',
+  'evergreen-tree': 'tree',
+  goldfish: 'goldfish',
+  'tropical-fish': 'goldfish',
+  butterfly: 'butterfly',
+  icecream: 'icecream',
+  'soft-ice-cream': 'icecream',
+  balloon: 'balloon',
+  kite: 'kite',
+  boat: 'boat',
+  sailboat: 'boat',
+  car: 'car',
+  automobile: 'car',
+  house: 'house',
+  'house-with-garden': 'house',
+  houses: 'house',
+  crown: 'crown',
+  lucky: 'lucky',
+  star: 'lucky',
+  'glowing-star': 'lucky',
 };
 
 export function illustrationIconSrc(value: string): string | null {
-  const name = EMOJI_ICONS[value] ?? NAME_ICONS[value];
+  const clean = value.replace(/\uFE0F/g, '');
+  const name = EMOJI_ICONS[value] ?? EMOJI_ICONS[clean] ?? NAME_ICONS[value] ?? NAME_ICONS[clean];
   if (name) return `/edu-icons/${name}.webp`;
+  const sticker = STICKER_ICONS[value] ?? STICKER_ICONS[clean];
+  if (sticker) return `/stickers/${sticker}.webp`;
   // các emoji khác: hình 3D nhiều màu (public/emoji/f3d)
-  const f = EMOJI_3D[value.replace(/\uFE0F/g, '')];
+  const f = EMOJI_3D[clean];
   return f ? `/emoji/f3d/${f}.webp` : null;
+}
+
+/**
+ * Tra cứu đường dẫn ảnh 3D cho tên icon (ví dụ trong /tieng-anh: 'red-apple', 'sun', 'cat', 'alarm-clock').
+ * Ưu tiên bộ hình 3D tả thực (/edu-icons, /stickers) trước khi dùng /emoji/f3d.
+ */
+export function resolveVisualIconSrc(iconName: string): string {
+  const mapped = illustrationIconSrc(iconName);
+  if (mapped) return mapped;
+  return `/emoji/f3d/${iconName}.webp`;
 }

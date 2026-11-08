@@ -25,6 +25,7 @@ import {
 import MiloMascot from '@/components/mascot/MiloMascot';
 import ShadowingStudio from '@/components/english/ShadowingStudio';
 import SentenceIllustration from '@/components/english/SentenceIllustration';
+import { resolveVisualIconSrc } from '@/lib/illustration-icons';
 import { createClient } from '@/lib/supabase/client';
 import { ENGLISH_COMMUNICATION_BANK, ENGLISH_COMMUNICATION_STORIES } from '@/lib/english/communicationBank';
 import { analyzeSentenceProsody, toProsodicSentence } from '@/lib/english/prosody';
@@ -493,7 +494,7 @@ export default function EnglishStudio() {
         <div className="en-slot-visual">
           <span className="en-scene-tag">STIMULUS · {currentChunk.stimulusContext.toUpperCase()}</span>
           <Image
-            src={`/emoji/f3d/${currentSlot.icon}.webp`}
+            src={resolveVisualIconSrc(currentSlot.icon)}
             width={92}
             height={92}
             alt={currentSlot.slotEn}
@@ -521,7 +522,7 @@ export default function EnglishStudio() {
                   void speakText(s.fullSentence);
                 }}
               >
-                <Image src={`/emoji/f3d/${s.icon}.webp`} width={24} height={24} alt="" />
+                <Image src={resolveVisualIconSrc(s.icon)} width={26} height={26} alt="" />
                 <span>{s.slotEn}</span>
               </button>
             ))}

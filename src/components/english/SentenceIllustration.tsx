@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { ArrowRight, Volume2 } from 'lucide-react';
 import { buildSentenceVisual } from '@/lib/english/sentenceVisuals';
+import { resolveVisualIconSrc } from '@/lib/illustration-icons';
 
 type Props = {
   action: string;
@@ -62,7 +63,7 @@ export default function SentenceIllustration({
           <div className="en-scene-art-wrap">
             <Image
               className="en-scene-main-art"
-              src={`/emoji/f3d/${visual.actionMainIcon}.webp`}
+              src={resolveVisualIconSrc(visual.actionMainIcon)}
               width={variant === 'compact' ? 60 : 82}
               height={variant === 'compact' ? 60 : 82}
               alt={shortAction}
@@ -70,7 +71,7 @@ export default function SentenceIllustration({
             {visual.actionSubIcon && (
               <Image
                 className="en-scene-sub-art"
-                src={`/emoji/f3d/${visual.actionSubIcon}.webp`}
+                src={resolveVisualIconSrc(visual.actionSubIcon)}
                 width={variant === 'compact' ? 30 : 38}
                 height={variant === 'compact' ? 30 : 38}
                 alt=""
@@ -89,7 +90,7 @@ export default function SentenceIllustration({
           <div className="en-scene-art-wrap">
             <Image
               className="en-scene-main-art"
-              src={`/emoji/f3d/${hidePurpose ? 'red-question-mark' : visual.purposeMainIcon}.webp`}
+              src={resolveVisualIconSrc(hidePurpose ? 'red-question-mark' : visual.purposeMainIcon)}
               width={variant === 'compact' ? 60 : 82}
               height={variant === 'compact' ? 60 : 82}
               alt={hidePurpose ? 'Mục đích là gì?' : shortReason}
@@ -97,7 +98,7 @@ export default function SentenceIllustration({
             {!hidePurpose && visual.purposeSubIcon && (
               <Image
                 className="en-scene-sub-art"
-                src={`/emoji/f3d/${visual.purposeSubIcon}.webp`}
+                src={resolveVisualIconSrc(visual.purposeSubIcon)}
                 width={variant === 'compact' ? 30 : 38}
                 height={variant === 'compact' ? 30 : 38}
                 alt=""
@@ -120,7 +121,7 @@ export default function SentenceIllustration({
                 onClick={() => speakVocab(item.en)}
                 title={`Nghe phát âm: ${item.en}`}
               >
-                <Image src={`/emoji/f3d/${item.icon}.webp`} width={24} height={24} alt="" />
+                <Image src={resolveVisualIconSrc(item.icon)} width={26} height={26} alt="" />
                 <span>
                   <b>{item.en}</b>
                   <small>{item.vi}</small>
