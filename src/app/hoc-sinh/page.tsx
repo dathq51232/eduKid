@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { BookOpen, CheckCircle2, ChevronRight, ClipboardList, Clock, Crown, CreditCard, Flame, Gamepad2, Lock, PenLine, RotateCcw, Sparkles, Star, Trophy } from 'lucide-react';
+import { BookOpen, CheckCircle2, ChevronRight, ClipboardList, Clock, Crown, CreditCard, Flame, Gamepad2, Lock, PenLine, RotateCcw, Sparkles, Star, Trophy, Users } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import GalleryTeaser from '@/components/gallery/GalleryTeaser';
 import MiloMascot from '@/components/mascot/MiloMascot';
@@ -94,7 +94,10 @@ export default async function StudentHome() {
             <h1>Chào {firstName}!</h1>
             <p>{st.studiedToday ? `Hôm nay em đã học ${todayCount || 1} bài rồi, giỏi quá! 🎉` : st.streak > 0 ? `Học một bài nhỏ để giữ chuỗi ${st.streak} ngày nhé! 🔥` : 'Hôm nay mình học một bài nhỏ nhé.'}</p>
           </div>
-          <SignOutButton className="sd-signout" />
+          <div className="sd-hero-actions">
+            <Link href="/phu-huynh" className="btn btn-outline btn-sm sd-parent-switch"><Users aria-hidden="true" /> Mở Góc Phụ huynh</Link>
+            <SignOutButton className="sd-signout" />
+          </div>
         </section>
 
         <div className="sd-top">

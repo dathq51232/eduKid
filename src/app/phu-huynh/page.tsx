@@ -120,7 +120,7 @@ export default async function ParentsPage() {
     const weak = bySubj.filter((x) => (x.pct ?? 100) < 70).sort((a, b) => (a.pct ?? 0) - (b.pct ?? 0))[0];
     return (
       <>
-        <ParentHeader />
+        <ParentHeader childCorner />
         <main className="ph wrap">
           {ovErr && <p className="adm-alert is-warn">Một số mục chưa bật: hãy chạy <code>supabase/migrations/0033_parent_family.sql</code> trên Supabase.</p>}
           <section className="ph-hero">

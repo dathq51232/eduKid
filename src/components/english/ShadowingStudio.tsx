@@ -302,7 +302,7 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
         <p className="en-shadow-english" aria-label={current.sentence}>{sentenceWords.map((word, wordIndex) => <span key={`${wordIndex}-${word}`} className={wordIndex === activeWord ? 'is-speaking' : ''}>{word}{wordIndex < sentenceWords.length - 1 ? ' ' : ''}</span>)}</p>
         {showText && <p className="en-shadow-vietnamese">{current.translation}</p>}
       </>}
-      {mode !== 'read' && <button type="button" className="en-shadow-reveal" onClick={() => setShowText((value) => !value)}>{showText ? <><EyeOff size={16}/> Ẩn văn bản</> : <><Eye size={16}/> Hiện câu & nghĩa</>}</button>}
+      <button type="button" className="en-shadow-reveal" onClick={() => setShowText((value) => !value)}>{showText ? <><EyeOff size={16}/> Ẩn văn bản</> : <><Eye size={16}/> Hiện câu & nghĩa</>}</button>
       {mode === 'shadow' && <p className="en-shadow-prompt">Nghe mẫu, để ý nhịp ngắt rồi đọc theo thành tiếng.</p>}
     </article>}
 

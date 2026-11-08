@@ -12,8 +12,9 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { AlarmClock, ArrowLeft, ArrowRight, Check, Clock, Dices, Flag, House, Lightbulb, Play, RefreshCw, SkipForward, Sparkles, Star, Volume2, VolumeX, X } from 'lucide-react';
+import { AlarmClock, ArrowLeft, ArrowRight, Check, Clock, Dices, Flag, House, Lightbulb, Play, RefreshCw, Settings2, SkipForward, Sparkles, Star, Volume2, VolumeX, X } from 'lucide-react';
 import { LogoMark, BrandWord } from '@/components/brand/BrandLogo';
+import MiloMascot from '@/components/mascot/MiloMascot';
 import { QuizBackdrop, QuizSideProps, StudentPill } from '@/components/learn/QuizScene';
 import EmojiText from '@/components/EmojiText';
 import Figure from '@/components/Figure';
@@ -337,8 +338,9 @@ function LamBaiContent() {
           points: pts.base + pts.speed,
           speedBonus: pts.speed,
         });
-        setShowSolution(false);
-        setHoldAdvance(false);
+        const isWrongOrTimeout = kind !== 'correct';
+        setShowSolution(isWrongOrTimeout);
+        setHoldAdvance(isWrongOrTimeout);
         setFeedback({ id, kind, points: pts.base + pts.speed, speedBonus: pts.speed });
         playIf(kind === 'correct' ? 'correct' : kind === 'timeout' ? 'timeout' : 'wrong');
       } finally {
@@ -519,6 +521,7 @@ function LamBaiContent() {
 
   if (phase === 'intro') {
     const rank = rankFor(startTotal);
+    const activeSoundLabel = TIMER_SOUND_MODES.find((m) => m.id === timerSound)?.label ?? '10 giây cuối';
     return (
       <>
         <LearnHeader />
@@ -528,94 +531,117 @@ function LamBaiContent() {
             <ArrowLeft size={20} aria-hidden="true" /> Danh sách bài
           </Link>
           <section className="intro-card">
-            <p className="lesson-tag">{lesson.title}</p>
-            <h1>Sẵn sàng chưa nào?</h1>
+            <div className="intro-hero-top">
+              <div className="intro-hero-copy">
+                <p className="lesson-tag">Lớp {grade} · {lesson.title}</p>
+                <h1>Sẵn sàng chưa nào?</h1>
+                <ul className="intro-facts">
+                  <li><strong>{order.length}</strong> câu hỏi</li>
+                  <li><Clock size={18} aria-hidden="true" /> tối đa <strong>{formatDuration(totalLimitSec * 1000)}</strong></li>
+                  <li>🎯 Mức: <strong>{MUC[muc].name}</strong></li>
+                  <li>{rank.icon} Em đang có <strong>{startTotal}</strong> điểm</li>
+                </ul>
+                <div className="intro-primary-actions">
+                  <button
+                    type="button"
+                    className="button button-yellow intro-start"
+                    onClick={() => {
+                      if (soundEnabled) playSound('tick'); // mở khoá âm thanh trên iPad/Safari
+                      setPhase('quiz');
+                    }}
+                  >
+                    <Play size={20} aria-hidden="true" /> Bắt đầu làm bài ngay
+                  </button>
+                  <button type="button" className="button button-practice" onClick={() => router.replace(newSetHref(muc))}>
+                    <Dices size={20} aria-hidden="true" /> Đổi bộ đề
+                  </button>
+                </div>
+              </div>
+              <div className="intro-hero-milo" aria-hidden="true">
+                <MiloMascot variant={SUBJECT_MASCOT[subjectCode]} size={112} />
+              </div>
+            </div>
 
             {knowledgeFor(lessonId) && <KnowledgeCard knowledge={knowledgeFor(lessonId)!} />}
 
-            <div className="set-panel">
-              <p className="set-panel-title">Chọn mức độ</p>
-              <div className="muc-picker" role="radiogroup" aria-label="Mức độ của bộ câu hỏi">
-                {MUC_LIST.map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    role="radio"
-                    aria-checked={!!seed && m === muc}
-                    className={`muc-option is-m${m}`}
-                    onClick={() => {
-                      saveMucLesson(lessonId, m);
-                      router.replace(newSetHref(m));
-                    }}
-                  >
-                    <strong>{MUC[m].name}</strong>
-                    <small>{MUC[m].describe}</small>
-                  </button>
-                ))}
+            <details className="intro-settings">
+              <summary className="intro-settings-summary">
+                <Settings2 size={20} aria-hidden="true" />
+                <div>
+                  <strong>Tuỳ chỉnh Mức độ, Âm thanh đồng hồ &amp; Cách tính điểm</strong>
+                  <small>Đang bật: Mức {MUC[muc].name} · Âm thanh: {activeSoundLabel} · +{SPEED_BONUS} điểm thưởng làm nhanh</small>
+                </div>
+              </summary>
+              <div className="intro-settings-body">
+                <div className="set-panel">
+                  <p className="set-panel-title">Chọn mức độ</p>
+                  <div className="muc-picker" role="radiogroup" aria-label="Mức độ của bộ câu hỏi">
+                    {MUC_LIST.map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        role="radio"
+                        aria-checked={(!seed && m === 1) || (!!seed && m === muc)}
+                        className={`muc-option is-m${m}`}
+                        onClick={() => {
+                          saveMucLesson(lessonId, m);
+                          router.replace(newSetHref(m));
+                        }}
+                      >
+                        <strong>{MUC[m].name}</strong>
+                        <small>{MUC[m].describe}</small>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="set-actions">
+                    <button type="button" className="button button-practice" onClick={() => router.replace(newSetHref(muc))}>
+                      <Dices size={20} aria-hidden="true" /> Đổi bộ câu hỏi
+                    </button>
+                    {seed && !practice && (
+                      <button type="button" className="button button-white" onClick={() => { saveMucLesson(lessonId, null); router.replace(originalHref); }}>
+                        Về bộ câu gốc
+                      </button>
+                    )}
+                  </div>
+                  <p className="intro-seed">
+                    {seed ? <>Đang dùng: <strong>bộ câu mới, mức {MUC[muc].name}</strong>. Bấm “Đổi bộ câu hỏi” để lấy bộ khác — không trùng câu nào với bộ đang làm.</> : <>Đang dùng: <strong>bộ câu gốc của bài</strong>.</>}
+                  </p>
+                  {setNote && <p className="set-note">{setNote}</p>}
+                </div>
+                <fieldset className="timer-sound">
+                  <legend><Volume2 size={18} aria-hidden="true" /> Âm thanh đồng hồ</legend>
+                  <div className="timer-sound-options">
+                    {TIMER_SOUND_MODES.map((m) => (
+                      <label key={m.id} className="timer-sound-option">
+                        <input type="radio" name="timer-sound" value={m.id} checked={timerSound === m.id} onChange={() => chooseTimerSound(m.id)} />
+                        <span>
+                          <strong>{m.label}</strong>
+                          <small>{m.hint}</small>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <div className="level-strip" aria-label="Số câu theo cấp độ">
+                  {LEVEL_LIST.map((lv) => {
+                    const n = order.filter((x) => x.level === lv).length;
+                    if (!n) return null;
+                    return (
+                      <span key={lv} className={`level-chip is-l${lv}`}>
+                        {LEVELS[lv].code} {LEVELS[lv].name} · {n} câu · {LEVELS[lv].points} điểm/câu
+                      </span>
+                    );
+                  })}
+                </div>
+                <ol className="intro-rules">
+                  <li>Câu <strong>dễ</strong> làm trước, câu <strong>khó</strong> để cuối.</li>
+                  <li>Mỗi câu có <strong>đồng hồ đếm ngược</strong> có tiếng báo (chọn ở trên; nút 🔊 trên cùng tắt mọi âm thanh). Bấm <strong>Nghe đọc đề</strong> thì đồng hồ tạm dừng.</li>
+                  <li>Chưa làm được? Bấm <strong>Để sau</strong>, em quay lại làm câu đó sau.</li>
+                  <li>Muốn câu khác? Bấm <strong>Đổi câu khác</strong> để lấy câu mới cùng mức độ (tối đa {MAX_SWAPS} lần mỗi bài).</li>
+                  <li>Đúng và nhanh (dùng chưa tới nửa thời gian) được thưởng <strong>+{SPEED_BONUS} điểm</strong>.</li>
+                </ol>
               </div>
-              <div className="set-actions">
-                <button type="button" className="button button-practice" onClick={() => router.replace(newSetHref(muc))}>
-                  <Dices size={20} aria-hidden="true" /> Đổi bộ câu hỏi
-                </button>
-                {seed && !practice && (
-                  <button type="button" className="button button-white" onClick={() => { saveMucLesson(lessonId, null); router.replace(originalHref); }}>
-                    Về bộ câu gốc
-                  </button>
-                )}
-              </div>
-              <p className="intro-seed">
-                {seed ? <>Đang dùng: <strong>bộ câu mới, mức {MUC[muc].name}</strong>. Bấm “Đổi bộ câu hỏi” để lấy bộ khác — không trùng câu nào với bộ đang làm.</> : <>Đang dùng: <strong>bộ câu gốc của bài</strong>.</>}
-              </p>
-              {setNote && <p className="set-note">{setNote}</p>}
-            </div>
-            <fieldset className="timer-sound">
-              <legend><Volume2 size={18} aria-hidden="true" /> Âm thanh đồng hồ</legend>
-              <div className="timer-sound-options">
-                {TIMER_SOUND_MODES.map((m) => (
-                  <label key={m.id} className="timer-sound-option">
-                    <input type="radio" name="timer-sound" value={m.id} checked={timerSound === m.id} onChange={() => chooseTimerSound(m.id)} />
-                    <span>
-                      <strong>{m.label}</strong>
-                      <small>{m.hint}</small>
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <ul className="intro-facts">
-              <li><strong>{order.length}</strong> câu hỏi</li>
-              <li><Clock size={18} aria-hidden="true" /> tối đa <strong>{formatDuration(totalLimitSec * 1000)}</strong></li>
-              <li>{rank.icon} Em đang có <strong>{startTotal}</strong> điểm</li>
-            </ul>
-            <div className="level-strip" aria-label="Số câu theo cấp độ">
-              {LEVEL_LIST.map((lv) => {
-                const n = order.filter((x) => x.level === lv).length;
-                if (!n) return null;
-                return (
-                  <span key={lv} className={`level-chip is-l${lv}`}>
-                    {LEVELS[lv].code} {LEVELS[lv].name} · {n} câu · {LEVELS[lv].points} điểm/câu
-                  </span>
-                );
-              })}
-            </div>
-            <ol className="intro-rules">
-              <li>Câu <strong>dễ</strong> làm trước, câu <strong>khó</strong> để cuối.</li>
-              <li>Mỗi câu có <strong>đồng hồ đếm ngược</strong> có tiếng báo (chọn ở trên; nút 🔊 trên cùng tắt mọi âm thanh). Bấm <strong>Nghe đọc đề</strong> thì đồng hồ tạm dừng.</li>
-              <li>Chưa làm được? Bấm <strong>Để sau</strong>, em quay lại làm câu đó sau.</li>
-              <li>Muốn câu khác? Bấm <strong>Đổi câu khác</strong> để lấy câu mới cùng mức độ (tối đa {MAX_SWAPS} lần mỗi bài).</li>
-              <li>Đúng và nhanh (dùng chưa tới nửa thời gian) được thưởng <strong>+{SPEED_BONUS} điểm</strong>.</li>
-            </ol>
-            <button
-              type="button"
-              className="button button-yellow intro-start"
-              onClick={() => {
-                if (soundEnabled) playSound('tick'); // mở khoá âm thanh trên iPad/Safari
-                setPhase('quiz');
-              }}
-            >
-              <Play size={20} aria-hidden="true" /> Bắt đầu làm bài
-            </button>
-
+            </details>
           </section>
         </main>
       </>
@@ -762,7 +788,7 @@ function LamBaiContent() {
         </section>
 
         {submitted && item.solution && (
-          <section className="solution-card" aria-label="Lời giải">
+          <section className={`solution-card${showSolution ? ' is-open' : ''}`} aria-label="Lời giải">
             {!showSolution ? (
               <button
                 type="button"
@@ -775,23 +801,26 @@ function LamBaiContent() {
                 <Lightbulb size={20} aria-hidden="true" /> Xem lời giải
               </button>
             ) : (
-              <>
-                <div className="solution-head">
-                  <h2><Lightbulb size={22} aria-hidden="true" /> Lời giải</h2>
-                  <button
-                    type="button"
-                    className="button button-white"
-                    style={{ minHeight: 44 }}
-                    onClick={async () => {
-                      const r = await speakSegments(segmentsFor(item.solution ?? '', subjectCode));
-                      if (!r.ok) setVoiceProblem(r.reason);
-                    }}
-                  >
-                    <Volume2 size={18} aria-hidden="true" /> Nghe
-                  </button>
+              <div className="solution-milo-box">
+                <div className="solution-milo-main">
+                  <MiloMascot variant="professor" size={56} />
+                  <div>
+                    <h2><Lightbulb size={20} aria-hidden="true" /> Milo giải thích cho em:</h2>
+                    <p className="solution-text"><EmojiText text={item.solution} /></p>
+                  </div>
                 </div>
-                <p className="solution-text">{item.solution}</p>
-              </>
+                <button
+                  type="button"
+                  className="button button-white solution-speak-btn"
+                  style={{ minHeight: 44 }}
+                  onClick={async () => {
+                    const r = await speakSegments(segmentsFor(item.solution ?? '', subjectCode));
+                    if (!r.ok) setVoiceProblem(r.reason);
+                  }}
+                >
+                  <Volume2 size={18} aria-hidden="true" /> Nghe lời giải
+                </button>
+              </div>
             )}
           </section>
         )}
@@ -813,10 +842,13 @@ function LamBaiContent() {
                 </span>
                 <div>
                   <h2>
-                    {item.status === 'correct' ? 'Đúng rồi, em giỏi quá!' : item.status === 'timeout' ? 'Hết giờ rồi!' : 'Chưa đúng, cố lên nào!'}
+                    {item.status === 'correct' ? 'Đúng rồi, em giỏi quá!' : item.status === 'timeout' ? 'Hết giờ rồi!' : 'Tiếc quá, chưa đúng rồi!'}
                     {item.points > 0 && <span className="points-pop">+{item.points} điểm{item.speedBonus > 0 ? ' (nhanh!)' : ''}</span>}
                   </h2>
                   {item.explanation && <p><EmojiText text={item.explanation} /></p>}
+                  {item.status !== 'correct' && item.solution && (
+                    <p className="advance-note">Em đọc (hoặc nghe) lời giải của Milo rồi bấm nút bên cạnh để sang câu mới nhé.</p>
+                  )}
                   {fb && !holdAdvance && !dialog && (
                     <p className="advance-note">{lastOne ? 'Xem kết quả' : 'Sang câu tiếp'} sau {advanceLeft} giây…</p>
                   )}
@@ -838,8 +870,8 @@ function LamBaiContent() {
                 </button>
               </>
             ) : (
-              <button type="button" className="button button-dark" onClick={goNext}>
-                <span>{lastOne ? 'Xem kết quả' : 'Câu tiếp theo'}</span>
+              <button type="button" className={`button ${item.status === 'correct' ? 'button-dark' : 'button-yellow'}`} onClick={goNext}>
+                <span>{item.status === 'correct' ? (lastOne ? 'Xem kết quả' : 'Câu tiếp theo') : (lastOne ? 'Đã hiểu · Xem kết quả' : 'Đã hiểu · Câu tiếp theo')}</span>
                 <ArrowRight size={20} aria-hidden="true" />
               </button>
             )}

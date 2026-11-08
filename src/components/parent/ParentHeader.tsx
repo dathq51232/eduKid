@@ -12,7 +12,7 @@ export default function ParentHeader({ childCorner = false, signedIn = true }: {
         <Link href="/phu-huynh" className="brand" aria-label="EduChain Kids - Góc phụ huynh"><BrandLogo size={36} /></Link>
         <span className="ph-pill"><Users aria-hidden="true" /> Góc phụ huynh</span>
         <span className="ph-top-sp" />
-        {childCorner && <Link href="/hoc-sinh" className="ph-ghost ph-hide-sm"><BookOpen aria-hidden="true" /> Góc học của bé</Link>}
+        {childCorner && <Link href="/hoc-sinh" className="ph-ghost ph-child-switch"><BookOpen aria-hidden="true" /> <span>Cho con vào học</span></Link>}
         <ThemeToggle />
         {signedIn && <SignOutButton className="ph-ghost" />}
       </div>

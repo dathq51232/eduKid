@@ -19,7 +19,7 @@ function adultError(message: string): string {
   return 'Không đăng nhập được. Vui lòng thử lại.';
 }
 
-function AdultLogin({ next, configured }: { next: string; configured: boolean }) {
+function AdultLogin({ next, configured, parentEmailMode = false }: { next: string; configured: boolean; parentEmailMode?: boolean }) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -57,7 +57,12 @@ function AdultLogin({ next, configured }: { next: string; configured: boolean })
         <LogIn aria-hidden="true" /> {busy ? 'Đang đăng nhập…' : 'Đăng nhập'}
       </button>
       <p className="auth-switch"><Link href="/quen-mat-khau">Quên mật khẩu?</Link></p>
-      <p className="auth-switch">Chưa có tài khoản? <Link href="/dang-ky">Đăng ký tài khoản thầy cô</Link></p>
+      <p className="auth-switch">
+        Chưa có tài khoản?{' '}
+        <Link href={parentEmailMode ? '/dang-ky?vai=phu-huynh' : '/dang-ky'}>
+          {parentEmailMode ? 'Đăng ký tài khoản phụ huynh' : 'Đăng ký tài khoản thầy cô'}
+        </Link>
+      </p>
     </form>
   );
 }
@@ -280,6 +285,7 @@ function LoginScreen() {
   const params = useSearchParams();
   const next = safeNext(params.get('next'));
   const [tab, setTab] = useState<Tab>(params.get('vai') === 'phu-huynh' || next.startsWith('/phu-huynh') ? 'parent' : params.get('vai') === 'nguoi-lon' || next.startsWith('/quan-tri') || next.startsWith('/giao-vien') ? 'adult' : 'student');
+  const [parentAuthMode, setParentAuthMode] = useState<'pin' | 'email'>('pin');
   const configured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   // Mỗi trình duyệt chỉ giữ MỘT phiên đăng nhập (cookie). Báo trước để thầy cô không vô tình bị thay bằng tài khoản học sinh và ngược lại.
   const [signedIn, setSignedIn] = useState(false);
@@ -335,20 +341,55 @@ function LoginScreen() {
             <Users aria-hidden="true" /> Phụ huynh
           </button>
           <button type="button" role="tab" aria-selected={tab === 'adult'} className="auth-tab" onClick={() => setTab('adult')}>
-            <Presentation aria-hidden="true" /> Thầy cô
+            <Presentation aria-hidden="true" /> Giáo viên
           </button>
         </div>
         <div role="tabpanel">
           {tab === 'student' && <StudentLogin configured={configured} initialCode={(params.get('lop') ?? '').toUpperCase().slice(0, 8)} next={next} />}
           {tab === 'parent' && (
             <>
-              <p className="adm-alert is-info">Phụ huynh dùng chung <strong>mã lớp</strong> và <strong>mã PIN của con</strong> (trên thẻ đăng nhập) để xem tiến độ học, không cần tạo tài khoản riêng.</p>
-              <StudentLogin configured={configured} initialCode={(params.get('lop') ?? '').toUpperCase().slice(0, 8)} next={next} parentMode />
+              <div className="parent-auth-modes" role="radiogroup" aria-label="Chọn cách đăng nhập phụ huynh">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={parentAuthMode === 'pin'}
+                  className={`parent-auth-mode${parentAuthMode === 'pin' ? ' is-on' : ''}`}
+                  onClick={() => setParentAuthMode('pin')}
+                >
+                  <strong>🏫 1. Xem theo thẻ lớp của con</strong>
+                  <small>Nhập Mã lớp + PIN 6 số</small>
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={parentAuthMode === 'email'}
+                  className={`parent-auth-mode${parentAuthMode === 'email' ? ' is-on' : ''}`}
+                  onClick={() => setParentAuthMode('email')}
+                >
+                  <strong>🏡 2. Tài khoản Gia đình</strong>
+                  <small>Đăng nhập bằng Email phụ huynh</small>
+                </button>
+              </div>
+              {parentAuthMode === 'pin' ? (
+                <>
+                  <p className="adm-alert is-info">Phụ huynh dùng chung <strong>mã lớp</strong> và <strong>mã PIN của con</strong> (trên thẻ đăng nhập) để xem tiến độ học, không cần tạo tài khoản riêng.</p>
+                  <StudentLogin configured={configured} initialCode={(params.get('lop') ?? '').toUpperCase().slice(0, 8)} next={next} parentMode />
+                </>
+              ) : (
+                <>
+                  <p className="adm-alert is-info">Dành cho phụ huynh đăng ký cho con học tại nhà hoặc liên kết con qua mã mời của giáo viên.</p>
+                  <AdultLogin next={next || '/phu-huynh'} configured={configured} parentEmailMode />
+                </>
+              )}
               <div className="auth-family">
                 <b>Cho con học tại nhà?</b>
                 <span>Tạo tài khoản phụ huynh, thêm con để nhận <strong>mã gia đình + PIN</strong> — học thử 7 ngày.</span>
-                <div><Link href="/dang-ky?vai=phu-huynh" className="btn btn-primary btn-sm">Đăng ký cho con</Link>
-                  <button type="button" className="btn btn-outline btn-sm" onClick={() => setTab('adult')}>Đăng nhập bằng email</button></div>
+                <div>
+                  <Link href="/dang-ky?vai=phu-huynh" className="btn btn-primary btn-sm">Đăng ký cho con</Link>
+                  {parentAuthMode === 'pin' && (
+                    <button type="button" className="btn btn-outline btn-sm" onClick={() => setParentAuthMode('email')}>Đăng nhập bằng email</button>
+                  )}
+                </div>
               </div>
             </>
           )}
