@@ -73,10 +73,16 @@ export function pickVoice(voices: SpeechSynthesisVoice[], lang: SpeechLang): Spe
 }
 
 export async function getVoiceStatus(): Promise<VoiceStatus> {
-  if (!synth()) return { supported: false, vi: false, en: false };
-  const voices = await loadVoices();
+  if (typeof window === 'undefined') return { supported: false, vi: false, en: false };
+  const voices = synth() ? await loadVoices() : [];
   const vi = pickVoice(voices, 'vi');
-  return { supported: true, vi: Boolean(vi), en: Boolean(pickVoice(voices, 'en')), viName: vi?.name };
+  // Luôn hỗ trợ đọc tiếng Việt & tiếng Anh nhờ tích hợp sẵn /api/tts làm fallback trực tuyến
+  return {
+    supported: true,
+    vi: true,
+    en: true,
+    viName: vi?.name ?? 'Giọng đọc trực tuyến EduChain',
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -227,33 +233,110 @@ function chunk(text: string, max = 160): string[] {
 }
 
 let session = 0;
+let activeAudio: HTMLAudioElement | null = null;
 
 export function stopSpeaking() {
   session++;
+  if (activeAudio) {
+    try {
+      activeAudio.onended = null;
+      activeAudio.onerror = null;
+      activeAudio.pause();
+      activeAudio.currentTime = 0;
+    } catch {
+      // ignore
+    }
+    activeAudio = null;
+  }
   synth()?.cancel();
 }
 
 export type SpeakResult = { ok: true } | { ok: false; reason: 'unsupported' | 'no_vi_voice' };
 
+async function speakViaCloudTts(
+  segments: Segment[],
+  my: number,
+  opts: { rate?: number; onStart?: () => void; onEnd?: () => void },
+): Promise<SpeakResult> {
+  const merged = merge(segments).flatMap((seg) =>
+    chunk(seg.text, 480).map((text) => ({ text, lang: seg.lang })),
+  );
+  if (merged.length === 0) {
+    opts.onEnd?.();
+    return { ok: true };
+  }
+
+  // Tạo sẵn danh sách Audio và preload đoạn tiếp theo để không bị ngắt quãng
+  const audios = merged.map((seg) => {
+    const a = new Audio(`/api/tts?lang=${seg.lang}&q=${encodeURIComponent(seg.text)}`);
+    a.preload = 'auto';
+    a.playbackRate = opts.rate ?? (seg.lang === 'en' ? 0.92 : 1.0);
+    return a;
+  });
+
+  let started = false;
+  for (let i = 0; i < audios.length; i++) {
+    if (my !== session) return { ok: true };
+    const audio = audios[i];
+    if (audios[i + 1]) audios[i + 1].load();
+    activeAudio = audio;
+
+    if (!started) {
+      started = true;
+      opts.onStart?.();
+    }
+
+    const ok = await new Promise<boolean>((resolve) => {
+      audio.onended = () => resolve(true);
+      audio.onerror = () => resolve(false);
+      audio.play().catch(() => resolve(false));
+    });
+
+    if (activeAudio === audio) activeAudio = null;
+    if (my !== session) return { ok: true };
+    if (!ok) {
+      opts.onEnd?.();
+      return { ok: false, reason: 'no_vi_voice' };
+    }
+  }
+
+  if (my === session) opts.onEnd?.();
+  return { ok: true };
+}
+
 export async function speakSegments(
   segments: Segment[],
   opts: { rate?: number; onStart?: () => void; onEnd?: () => void } = {},
 ): Promise<SpeakResult> {
+  if (typeof window === 'undefined') return { ok: false, reason: 'unsupported' };
   const s = synth();
-  if (!s) return { ok: false, reason: 'unsupported' };
-  const voices = await loadVoices();
+  const voices = s ? await loadVoices() : [];
   const vi = pickVoice(voices, 'vi');
   const en = pickVoice(voices, 'en');
-  if (segments.some((x) => x.lang === 'vi') && !vi) return { ok: false, reason: 'no_vi_voice' };
+  const needVi = segments.some((x) => x.lang === 'vi');
+  const needEn = segments.some((x) => x.lang === 'en');
 
   stopSpeaking();
   const my = session;
+
+  // Nếu máy chưa cài giọng tiếng Việt (ví dụ Windows + Chrome) hoặc không có Web Speech API:
+  // tự động phát qua /api/tts mà không bắt phụ huynh/học sinh cài đặt thủ công.
+  if (!s || (needVi && !vi) || (needEn && !en)) {
+    return speakViaCloudTts(segments, my, opts);
+  }
+
   // Chrome đôi khi nuốt lệnh speak() gọi ngay sau cancel(): đợi một nhịp
   await new Promise((r) => setTimeout(r, 60));
   if (my !== session) return { ok: true };
   if (s.paused) s.resume();
 
   const items = segments.flatMap((seg) => chunk(seg.text).map((text) => ({ text, lang: seg.lang })));
+  if (items.length === 0) {
+    opts.onEnd?.();
+    return { ok: true };
+  }
+
+  let fallbackTriggered = false;
   items.forEach((item, i) => {
     const u = new SpeechSynthesisUtterance(item.text);
     const voice = item.lang === 'vi' ? vi : en ?? undefined;
@@ -263,11 +346,16 @@ export async function speakSegments(
     u.pitch = 1.05;
     if (i === 0) u.onstart = () => my === session && opts.onStart?.();
     if (i === items.length - 1) {
-      u.onend = () => my === session && opts.onEnd?.();
-      u.onerror = () => my === session && opts.onEnd?.();
+      u.onend = () => my === session && !fallbackTriggered && opts.onEnd?.();
     }
+    u.onerror = (ev) => {
+      if (my !== session || fallbackTriggered) return;
+      if (ev.error === 'canceled' || ev.error === 'interrupted') return;
+      fallbackTriggered = true;
+      s.cancel();
+      void speakViaCloudTts(segments, my, opts);
+    };
     s.speak(u);
   });
-  if (items.length === 0) opts.onEnd?.();
   return { ok: true };
 }
