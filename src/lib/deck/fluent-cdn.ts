@@ -12,7 +12,7 @@ export const fluentCdnUrl = (code: string) =>
  * Fallback CDN nếu jsDelivr bị mạng chặn hoặc quá tải
  */
 export const fluentCdnFallbackUrl = (code: string) =>
-  `https://registry.npmmirror.com/@lobehub/fluent-emoji-3d/${FLUENT_CDN_VER}/files/assets/${code}.webp`;
+  `https://fastly.jsdelivr.net/npm/@lobehub/fluent-emoji-3d@${FLUENT_CDN_VER}/assets/${code}.webp`;
 
 export { FLUENT_CDN_GROUPS, FLUENT_CDN_VER };
 

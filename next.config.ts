@@ -11,7 +11,7 @@ const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: https://*.supabase.co${SB}`,
+  `img-src 'self' data: blob: https://*.supabase.co https://cdn.jsdelivr.net https://fastly.jsdelivr.net https://unpkg.com https://registry.npmmirror.com${SB}`,
   `media-src 'self' data: blob: https://*.supabase.co${SB}`, // tiếng giới thiệu tác phẩm (Phòng triển lãm) nằm trong Supabase Storage
   "font-src 'self' data:",
   `connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co${SB}${SB_WS}`,

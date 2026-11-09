@@ -575,8 +575,10 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
                 const grid = (list: string[]) => <div className="dk-sgrid cv-grid4">{list.map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
                   {/* eslint-disable-next-line @next/next/no-img-element -- hình có sẵn */}
                   <img src={src} alt={stickerName(src)} loading="lazy" onError={(e) => {
-                    if (src.includes('@lobehub/fluent-emoji-3d')) {
+                    const fallback = e.currentTarget.getAttribute('data-fallback');
+                    if (src.includes('@lobehub/fluent-emoji-3d') && !fallback) {
                       const code = src.split('/').pop()?.replace(/\.(webp|png)$/, '') ?? '';
+                      e.currentTarget.setAttribute('data-fallback', '1');
                       e.currentTarget.src = fluentCdnFallbackUrl(code);
                     } else {
                       hideBroken(e);
