@@ -15,7 +15,14 @@ export const STICKER_VI: Record<string, string> = {
   'wrapped-gift': 'quà', rainbow: 'cầu vồng', 'crescent-moon': 'mặt trăng', 'cloud-with-lightning': 'mây sấm sét mưa', droplet: 'giọt nước', fire: 'lửa', blossom: 'hoa',
   'evergreen-tree': 'cây thông', mountain: 'núi', school: 'trường học', 'glowing-star': 'sao sáng', 'gem-stone': 'kim cương đá quý', sparkles: 'lấp lánh',
 };
-export const stickerName = (src: string) => { const k = src.split('/').pop()?.replace(/\.(webp|png)$/, '') ?? ''; return STICKER_VI[k] ?? F3D_VI[k] ?? k.replace(/-/g, ' '); };
+export const stickerName = (src: string) => {
+  if (src.includes('@lobehub/fluent-emoji-3d')) {
+    const code = src.split('/').pop()?.replace(/\.(webp|png)$/, '') ?? '';
+    return `Emoji 3D (${code})`;
+  }
+  const k = src.split('/').pop()?.replace(/\.(webp|png)$/, '') ?? '';
+  return STICKER_VI[k] ?? F3D_VI[k] ?? k.replace(/-/g, ' ');
+};
 
 /** Kiểu chữ có sẵn (bấm là áp ngay; thêm chữ mới theo kiểu) */
 export const TEXT_STYLES: { id: string; label: string; size: number; font: 'baloo' | 'quick'; color: string; bg: string; stroke?: boolean; w: number; h: number }[] = [

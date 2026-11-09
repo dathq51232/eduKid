@@ -23,6 +23,7 @@ import SlideView, { ShapeSvg, SlideFrame, type PlayApi } from './SlideView';
 import AnimTimeline from './AnimTimeline';
 import { TEXT_STYLES, stickerName } from '@/lib/deck/sticker-names';
 import { F3D_CATS, F3D_VI, f3dSrc } from '@/lib/deck/f3d-catalog';
+import { ALL_FLUENT_CDN_ITEMS, FLUENT_CDN_GROUPS, fluentCdnFallbackUrl, fluentCdnUrl } from '@/lib/deck/fluent-cdn';
 import { STEP_COLOR, THEME_SETS, applySet, isBlankDeck, makeSet, type SetId } from '@/lib/deck/theme-sets';
 import { fold } from '@/lib/classroom/teacher-nav';
 
@@ -50,11 +51,18 @@ const SCRAP_SHAPES: ShapeKind[] = ['sticky', 'plaid-card', 'badge-card', 'flower
 /** Danh mục của bảng Thành phần (kiểu “Browse categories” của Canva): id 'f3d:i' = nhóm hình 3D thứ i, 'st:i' = bộ hình dán thứ i */
 const F3D_ICON = ['cat', 'red-apple', 'pencil', 'girl', 'sun', 'bus', 'balloon', 'blue-circle'];
 const F3D_TILE = ['#fdba74,#f97316', '#fca5a5,#ef4444', '#93c5fd,#3b82f6', '#f9a8d4,#ec4899', '#86efac,#16a34a', '#a5b4fc,#6366f1', '#fde68a,#f59e0b', '#c4b5fd,#8b5cf6'];
+const CDN_TILE = ['#f472b6,#db2777', '#fb923c,#ea580c', '#4ade80,#16a34a', '#38bdf8,#0284c7', '#a78bfa,#7c3aed', '#facc15,#ca8a04', '#60a5fa,#2563eb', '#94a3b8,#475569'];
 const EL_CATS: { id: string; label: string; icon: string; bg: string }[] = [
   { id: 'milo', label: 'Linh vật Milo', icon: '/brand/milo-professor-sm.webp', bg: 'linear-gradient(140deg,#ddd6fe,#8b5cf6)' },
   { id: 'scene', label: 'Cảnh nền', icon: f3dSrc('rainbow'), bg: 'linear-gradient(140deg,#a5f3fc,#0ea5e9)' },
   { id: 'shape', label: 'Hình khối', icon: f3dSrc('star'), bg: 'linear-gradient(140deg,#99f6e4,#14b8a6)' },
   { id: 'scrap', label: 'Sổ tay', icon: f3dSrc('notebook'), bg: 'linear-gradient(140deg,#fde68a,#e8a33d)' },
+  ...FLUENT_CDN_GROUPS.map((g, i) => ({
+    id: `cdn:${i}`,
+    label: `${g.label} (CDN)`,
+    icon: fluentCdnUrl(g.items[0]?.[0] || '1f34e'),
+    bg: `linear-gradient(140deg,${CDN_TILE[i % CDN_TILE.length]})`,
+  })),
   ...F3D_CATS.map((c, i) => ({ id: `f3d:${i}`, label: c.label, icon: f3dSrc(F3D_ICON[i] ?? c.items[0]), bg: `linear-gradient(140deg,${F3D_TILE[i % F3D_TILE.length]})` })),
   ...STICKER_SETS.map((s, i) => ({ id: `st:${i}`, label: `Hình dán · ${s.label}`, icon: s.items[0], bg: 'linear-gradient(140deg,#e2e8f0,#64748b)' })),
 ];
@@ -521,15 +529,24 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
               {replace && <p className="dk-msg is-info">Bấm một hình bên dưới để <b>thay</b> hình đang chọn. <button type="button" onClick={() => setReplace(false)}>Huỷ</button></p>}
               {q.trim().length > 0 ? (() => {
                 const f = fold(q.trim());
-                const imgs = [...Object.keys(F3D_VI).map(f3dSrc), ...STICKER_SETS.flatMap((x) => x.items)].filter((src) => fold(stickerName(src)).includes(f) || (src.split('/').pop() ?? '').replace(/\.(webp|png)$/, '').split('-').some((w) => w.startsWith(f))).slice(0, 80);
+                const localImgs = [...Object.keys(F3D_VI).map(f3dSrc), ...STICKER_SETS.flatMap((x) => x.items)].filter((src) => fold(stickerName(src)).includes(f) || (src.split('/').pop() ?? '').replace(/\.(webp|png)$/, '').split('-').some((w) => w.startsWith(f)));
+                const cdnMatches = ALL_FLUENT_CDN_ITEMS.filter((it) => fold(it.name).includes(f) || fold(it.slug).includes(f)).map((it) => it.url);
+                const imgs = [...new Set([...localImgs, ...cdnMatches])].slice(0, 100);
                 const scenes = SCENES.filter((c) => fold(c.label).includes(f));
                 const sounds = SOUNDS.filter((x) => fold(x.label).includes(f));
                 return <>
                   {!imgs.length && !scenes.length && !sounds.length && <p className="dk-hint">Không thấy “{q}”. Thử từ khác (thỏ, cây, sách, vỗ tay…).</p>}
-                  {imgs.length > 0 && <p className="cv-ph">Hình <small>{imgs.length}{imgs.length >= 80 ? '+' : ''} kết quả</small></p>}
+                  {imgs.length > 0 && <p className="cv-ph">Hình <small>{imgs.length}{imgs.length >= 100 ? '+' : ''} kết quả (gồm cả kho CDN 1600+)</small></p>}
                   {imgs.length > 0 && <div className="dk-sgrid cv-grid4">{imgs.map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
                     {/* eslint-disable-next-line @next/next/no-img-element -- hình có sẵn */}
-                    <img src={src} alt={stickerName(src)} loading="lazy" onError={hideBroken} /></button>)}</div>}
+                    <img src={src} alt={stickerName(src)} loading="lazy" onError={(e) => {
+                      if (src.includes('@lobehub/fluent-emoji-3d')) {
+                        const code = src.split('/').pop()?.replace(/\.(webp|png)$/, '') ?? '';
+                        e.currentTarget.src = fluentCdnFallbackUrl(code);
+                      } else {
+                        hideBroken(e);
+                      }
+                    }} /></button>)}</div>}
                   {scenes.length > 0 && <div className="dk-row dk-scenes"><b>Cảnh:</b>{scenes.map((c) => <button key={c.id} type="button" onClick={() => setSlide((x) => ({ ...x, scene: c.id }))}>{c.icon} {c.label}</button>)}</div>}
                   {sounds.length > 0 && <div className="dk-row dk-snds"><b>Âm thanh:</b>{sounds.map((x) => <span key={x.id} className="dk-snd"><button type="button" onClick={() => playSound(x.id)}>{x.icon}</button><button type="button" onClick={() => { playSound(x.id); attachSound(x.id); }}>{x.label}</button></span>)}</div>}
                 </>;
@@ -552,11 +569,19 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
               </> : (() => {
                 // Trang chi tiết một danh mục (có nút quay lại như Canva)
                 const cat = EL_CATS.find((c) => c.id === elCat);
+                const cdnIdx = elCat.startsWith('cdn:') ? Number(elCat.slice(4)) : null;
                 const f3dIdx = elCat.startsWith('f3d:') ? Number(elCat.slice(4)) : null;
                 const stIdx = elCat.startsWith('st:') ? Number(elCat.slice(3)) : null;
                 const grid = (list: string[]) => <div className="dk-sgrid cv-grid4">{list.map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
                   {/* eslint-disable-next-line @next/next/no-img-element -- hình có sẵn */}
-                  <img src={src} alt={stickerName(src)} loading="lazy" onError={hideBroken} /></button>)}</div>;
+                  <img src={src} alt={stickerName(src)} loading="lazy" onError={(e) => {
+                    if (src.includes('@lobehub/fluent-emoji-3d')) {
+                      const code = src.split('/').pop()?.replace(/\.(webp|png)$/, '') ?? '';
+                      e.currentTarget.src = fluentCdnFallbackUrl(code);
+                    } else {
+                      hideBroken(e);
+                    }
+                  }} /></button>)}</div>;
                 const shapeBtns = (list: typeof SHAPES) => <div className="cv-shapes">{list.map((s) => (
                   <button key={s.k} type="button" title={s.label} aria-label={s.label} onClick={() => addShape(s.k)}><span className="dk-shape-ic"><ShapeSvg e={{ id: '', kind: 'shape', shape: s.k, x: 0, y: 0, w: 1, h: 1, rot: 0, fill: s.k === 'sticky' ? '#f5c76b' : s.k === 'plaid-card' || s.k === 'badge-card' ? '#faeedb' : s.k === 'flower-bullet' ? '#eebfb8' : '#fde68a', stroke: '#d97706', sw: 1.5 }} /></span><small>{s.label}</small></button>))}</div>;
                 return <>
@@ -574,6 +599,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
                     <div className="cv-scenetiles">{SCENES.map((c) => <button key={c.id} type="button" className={slide.scene === c.id ? 'is-on' : ''} style={{ background: c.bg }} onClick={() => setSlide((x) => ({ ...x, scene: c.id }))}><span>{c.icon}</span><b>{c.label}</b></button>)}</div>
                   </>}
                   {f3dIdx !== null && grid(f3dIdx < 0 ? F3D : (F3D_CATS[f3dIdx]?.items ?? []).map(f3dSrc))}
+                  {cdnIdx !== null && grid((FLUENT_CDN_GROUPS[cdnIdx]?.items ?? []).map(([code]) => fluentCdnUrl(code)))}
                   {stIdx !== null && grid(STICKER_SETS[stIdx]?.items ?? [])}
                 </>;
               })()}
