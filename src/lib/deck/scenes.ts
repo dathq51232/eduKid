@@ -447,6 +447,38 @@ export const SCENES: Scene[] = [
       ],
     },
   },
+  {
+    id: 'family',
+    label: 'Sổ tay · Thảm hoa',
+    icon: '🌺',
+    bg: 'linear-gradient(180deg,#fdfbf4 0%,#fdf9ee 68%,#e8d166 68%,#dfc34d 100%)',
+    bgInner: '#fdfaf0',
+    ink: { title: '#111827', sub: '#1f2937', body: '#1f2937', pill: '#f9eedb', pillBorder: '#f2b3a9' },
+    parts: [
+      { src: S('girl'), x: 960, y: 520, w: 210 },
+      { src: S('boy'), x: 1180, y: 510, w: 220 },
+    ],
+    variants: {
+      cover: [
+        { src: S('girl'), x: 930, y: 510, w: 220 },
+        { src: S('boy'), x: 1165, y: 500, w: 230 },
+        { src: S('teddy-bear'), x: 780, y: 610, w: 150 },
+      ],
+      center: [
+        { src: S('boy'), x: 90, y: 240, w: 280 },
+        { src: S('girl'), x: 1210, y: 240, w: 280, flip: true },
+      ],
+      right: [
+        { src: S('girl'), x: 1120, y: 270, w: 320, flip: true },
+        { src: S('teddy-bear'), x: 980, y: 520, w: 180 },
+      ],
+      left: [
+        { src: S('boy'), x: 120, y: 250, w: 320 },
+        { src: S('open-book'), x: 340, y: 470, w: 185 },
+      ],
+      bottom: [],
+    },
+  },
 ];
 
 /** màu nhấn của mỗi chủ đề (khung nội dung, nhãn bài, chữ trang chia) */
@@ -462,6 +494,7 @@ export const ACCENT: Record<string, string> = {
   pond: '#0284c7',
   candy: '#db2777',
   tet: '#dc2626',
+  family: '#0e6b8a',
 };
 export const accentOf = (id?: string) => (id && ACCENT[id]) || '#035397';
 export const SCENE_BY_ID: Record<string, Scene> = Object.fromEntries(SCENES.map((s) => [s.id, s]));
@@ -480,7 +513,8 @@ const KEYS: [SceneKind, string][] = [
   ['candy', 'kẹo|ngọt|cầu vồng|sinh nhật|ước mơ|cổ tích|party|candy|rainbow'],
   ['garden', 'táo|hoa|cây|vườn|rừng|lá|bướm|ong|thỏ|hươu|sóc|garden|forest|flower|tree'],
   ['class', 'lớp|bút|sách|vở|thước|trường|cô giáo|thầy|bạn bè|school|class|pen|book|ruler'],
-  ['yard', 'nhà|sân|chó|mèo|bóng|đồ chơi|gia đình|bố|mẹ|home|family|toy|pet'],
+  ['family', 'gia đình|cha mẹ|bố mẹ|yêu thương|hạnh phúc|ông bà|anh chị|em bé|tình cảm|lắng nghe|thấu hiểu|chăm sóc|family|parent|love'],
+  ['yard', 'nhà|sân|chó|mèo|bóng|đồ chơi|home|toy|pet'],
 ];
 /** Chọn cảnh theo nội dung bài (đếm từ khoá), mặc định: Đại dương hoặc Khu rừng */
 export function pickScene(text: string, fallback: SceneKind = 'garden'): SceneKind {

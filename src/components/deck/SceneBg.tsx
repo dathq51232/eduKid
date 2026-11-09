@@ -310,6 +310,103 @@ function LandThemeSvg({ id, variant }: { id: string; variant: SceneVariant }) {
           <rect y="852" width="1600" height="48" fill="#fbbf24" opacity="0.85" />
         </svg>
       );
+    case 'family':
+      if (variant === 'cover') {
+        // Cảnh bìa cắm trại gia đình (Slide 1.webp): vòm lá cây góc trên, đồi cỏ vàng cốm, lều chữ A cam vàng có sao
+        return (
+          <svg className="dk-scene-svg" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true">
+            {/* Đồi cỏ vàng cốm ấm áp dưới đáy */}
+            <path d="M 0 600 Q 340 570 680 630 T 1600 610 L 1600 900 L 0 900 Z" fill="#e5ce5c" />
+            <path d="M 0 680 Q 480 630 980 690 T 1600 660 L 1600 900 L 0 900 Z" fill="#d9be46" opacity="0.7" />
+            {/* Bụi cây xanh cốm bên cạnh lều */}
+            <circle cx="745" cy="640" r="65" fill="#b4cb68" />
+            <circle cx="795" cy="615" r="55" fill="#c5d87d" />
+            <circle cx="705" cy="665" r="48" fill="#a2bc57" />
+            {/* Thân cây & vòm lá góc phải */}
+            <path d="M 1510 0 C 1540 240 1560 480 1600 720 L 1600 0 Z" fill="#6b4c35" />
+            <circle cx="1360" cy="40" r="130" fill="#b5cf6b" opacity="0.92" />
+            <circle cx="1480" cy="140" r="145" fill="#94b853" opacity="0.92" />
+            <circle cx="1540" cy="290" r="125" fill="#a3c460" opacity="0.9" />
+            <circle cx="1190" cy="20" r="95" fill="#dce79b" opacity="0.85" />
+            {/* Vòm lá góc trái trên */}
+            <circle cx="60" cy="30" r="115" fill="#a3c460" opacity="0.9" />
+            <circle cx="180" cy="20" r="95" fill="#cde087" opacity="0.88" />
+            <circle cx="30" cy="140" r="85" fill="#c5d87d" opacity="0.85" />
+            {/* Lều cắm trại chữ A màu vàng cam (x: 820..1460, y: 80..720) */}
+            <line x1="1155" y1="65" x2="1205" y2="145" stroke="#b46924" strokeWidth="12" strokeLinecap="round" />
+            <line x1="1205" y1="65" x2="1155" y2="145" stroke="#b46924" strokeWidth="12" strokeLinecap="round" />
+            <polygon points="1180,100 815,695 1475,695" fill="#f39c3d" stroke="#d47a22" strokeWidth="6" />
+            <polygon points="1180,100 945,695 1415,695" fill="#fdf1cd" />
+            <polygon points="1180,185 1030,695 1330,695" fill="#e67e22" />
+            {/* Các ngôi sao trang trí trên vải lều */}
+            <polygon points="1175,235 1185,256 1208,259 1191,274 1195,296 1175,285 1155,296 1159,274 1142,259 1165,256" fill="#f5b041" />
+            <polygon points="1095,385 1102,400 1118,402 1106,412 1109,428 1095,420 1081,428 1084,412 1072,402 1088,400" fill="#f7dc6f" />
+            <polygon points="1075,470 1083,486 1100,489 1087,500 1090,518 1075,509 1060,518 1063,500 1050,489 1067,486" fill="#f39c3d" />
+          </svg>
+        );
+      }
+      if (variant === 'center' || variant === 'bottom') {
+        // Nền kem ấm + Thảm hoa dại màu nước sát đáy (Slide 2, 10, 11, 12)
+        const flowers: [number, number, string, string, number][] = [
+          [75, 810, '#f48fb1', '#d81b60', 28],
+          [165, 845, '#ce93d8', '#8e24aa', 22],
+          [265, 775, '#ffd54f', '#f57f17', 34],
+          [385, 825, '#ff8a80', '#c62828', 26],
+          [490, 815, '#d1c4e9', '#5e35b1', 24],
+          [570, 765, '#ffd54f', '#f57f17', 32],
+          [690, 835, '#ffab91', '#d84315', 22],
+          [800, 755, '#ffd54f', '#f57f17', 36],
+          [945, 765, '#f8bbd0', '#ad1457', 34],
+          [1030, 830, '#ff8a80', '#c62828', 28],
+          [1135, 785, '#f48fb1', '#c2185b', 25],
+          [1255, 820, '#f8bbd0', '#ad1457', 24],
+          [1335, 785, '#ff8a80', '#c62828', 30],
+          [1425, 825, '#ffd54f', '#f57f17', 25],
+          [1515, 755, '#ffd54f', '#f57f17', 36],
+        ];
+        return (
+          <svg className="dk-scene-svg" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true">
+            <FlatCloud x={140} y={36} w={480} op={0.55} />
+            <FlatCloud x={1020} y={48} w={440} op={0.5} />
+            {/* Cành lá xanh mảnh vươn từ chân trang */}
+            {flowers.map(([fx, fy], i) => (
+              <path
+                key={`s${i}`}
+                d={`M ${fx + (i % 2 === 0 ? -12 : 12)} 900 Q ${fx} ${(fy + 900) / 2} ${fx} ${fy}`}
+                fill="none"
+                stroke="#7cb342"
+                strokeWidth="4.5"
+                opacity="0.72"
+              />
+            ))}
+            {/* Bông hoa 6 cánh màu nước */}
+            {flowers.map(([fx, fy, petal, center, r], i) => (
+              <g key={`f${i}`}>
+                {[0, 60, 120, 180, 240, 300].map((deg) => (
+                  <ellipse
+                    key={deg}
+                    cx={fx}
+                    cy={fy - r * 0.55}
+                    rx={r * 0.36}
+                    ry={r * 0.58}
+                    fill={petal}
+                    opacity="0.9"
+                    transform={`rotate(${deg} ${fx} ${fy})`}
+                  />
+                ))}
+                <circle cx={fx} cy={fy} r={r * 0.22} fill={center} />
+              </g>
+            ))}
+          </svg>
+        );
+      }
+      // Two-Tier Grounded Horizon: 75% Kem Ấm (#fdfaf0) + 25% Dải cỏ Xanh Cốm (#dce7a7) từ y = 670..900 (Slide 3, 4, 5, 6, 7, 8, 9)
+      return (
+        <svg className="dk-scene-svg" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true">
+          <rect x="0" y="670" width="1600" height="230" fill="#dce7a7" />
+          <line x1="0" y1="670" x2="1600" y2="670" stroke="#c8d88b" strokeWidth="3" />
+        </svg>
+      );
     default:
       return null;
   }

@@ -145,7 +145,7 @@ function groupEls(n: number, obj: string, x: number, y: number, w: number, els: 
 }
 
 const STUDENT_AUTO_BG: Record<SceneKind, string> = {
-  garden: 'meadow', pond: 'sea', kitchen: 'sun', class: 'sky', yard: 'mint', sea: 'sea', dino: 'leaf', candy: 'lollipop', space: 'cosmos', farm: 'leaf', tet: 'peach',
+  garden: 'meadow', pond: 'sea', kitchen: 'sun', class: 'sky', yard: 'mint', sea: 'sea', dino: 'leaf', candy: 'lollipop', family: 'kraft', space: 'cosmos', farm: 'leaf', tet: 'peach',
 };
 const studentLayout = (seed: number) => {
   const layouts = [

@@ -259,6 +259,185 @@ export function ShapeSvg({ e }: { e: ShapeEl }) {
           </>
         );
       }
+      case 'sticky': {
+        // Giấy Note sổ tay (Slide 2, 3, 6, 8, 9, 11): có miếng băng dính Washi ở mép trên & góc dưới phải quăn nhẹ
+        const tapeH = Math.min(36, Math.max(18, Math.round(H * 0.1)));
+        const tapeW = Math.min(220, Math.max(90, Math.round(W * 0.34)));
+        const tx0 = (W - tapeW) / 2, tx1 = tx0 + tapeW;
+        const y0 = Math.round(tapeH * 0.55), y1 = H - 6;
+        const x0 = 6, x1 = W - 6;
+        const r = Math.min(18, Math.min(W, H) * 0.05);
+        const curl = Math.min(42, Math.max(18, Math.round(Math.min(W, H) * 0.13)));
+        const isGolden = /f5c76b|fbbf24|fde68a|facc15/i.test(e.fill || '');
+        const paperFill = e.fill && e.fill !== 'transparent' ? e.fill : '#f9eedb';
+        const bodyPath = [
+          `M ${x0 + r} ${y0}`,
+          `H ${x1 - r}`,
+          `Q ${x1} ${y0} ${x1} ${y0 + r}`,
+          `V ${y1 - curl}`,
+          `Q ${x1} ${y1 - curl * 0.25} ${x1 - curl} ${y1}`,
+          `H ${x0 + r}`,
+          `Q ${x0} ${y1} ${x0} ${y1 - r}`,
+          `V ${y0 + r}`,
+          `Q ${x0} ${y0} ${x0 + r} ${y0}`,
+          'Z',
+        ].join(' ');
+        const curlPath = `M ${x1} ${y1 - curl} C ${x1 - curl * 0.65} ${y1 - curl * 0.9} ${x1 - curl * 0.9} ${y1 - curl * 0.65} ${x1 - curl} ${y1} Q ${x1 - curl * 0.3} ${y1 - curl * 0.2} ${x1} ${y1 - curl} Z`;
+        // Miếng băng dính Washi viền răng cưa 2 đầu
+        const tapePath = [
+          `M ${tx0} 2`,
+          `H ${tx1}`,
+          `L ${tx1 - 5} ${2 + tapeH * 0.25}`,
+          `L ${tx1 + 3} ${2 + tapeH * 0.5}`,
+          `L ${tx1 - 4} ${2 + tapeH * 0.75}`,
+          `L ${tx1} ${2 + tapeH}`,
+          `H ${tx0}`,
+          `L ${tx0 + 5} ${2 + tapeH * 0.75}`,
+          `L ${tx0 - 3} ${2 + tapeH * 0.5}`,
+          `L ${tx0 + 4} ${2 + tapeH * 0.25}`,
+          'Z',
+        ].join(' ');
+        return (
+          <>
+            <path d={bodyPath} transform="translate(0, 5)" fill="rgba(15,23,42,0.08)" />
+            <path d={bodyPath} fill={paperFill} stroke={e.stroke && e.stroke !== '#ffffff' ? e.stroke : 'none'} strokeWidth={e.sw || 0} />
+            <path d={curlPath} fill={isGolden ? '#b88328' : '#e2cfb4'} opacity={0.88} />
+            {isGolden ? (
+              /* Băng dính xanh cổ vịt chấm bi trắng (Slide 9, 11) */
+              <g>
+                <path d={tapePath} fill="#3f7d7a" opacity={0.94} />
+                {Array.from({ length: 11 }, (_, i) => {
+                  const dx = tx0 + 14 + (i * (tapeW - 28)) / 10;
+                  const dy = i % 2 === 0 ? 2 + tapeH * 0.34 : 2 + tapeH * 0.68;
+                  return <circle key={i} cx={dx} cy={dy} r={Math.max(2.5, tapeH * 0.11)} fill="#fef9e7" />;
+                })}
+              </g>
+            ) : (
+              /* Băng dính hồng cam kẻ sọc zíc-zắc vẽ tay (Slide 2, 3, 6, 8) */
+              <g>
+                <path d={tapePath} fill="#f2b3a9" opacity={0.92} />
+                <path
+                  d={Array.from({ length: 18 }, (_, i) => {
+                    const zx = tx0 + 8 + (i * (tapeW - 16)) / 17;
+                    const zy = i % 2 === 0 ? 5 : tapeH - 1;
+                    return `${i === 0 ? 'M' : 'L'} ${zx.toFixed(1)} ${zy.toFixed(1)}`;
+                  }).join(' ')}
+                  fill="none"
+                  stroke="#d9776c"
+                  strokeWidth={2.2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </g>
+            )}
+          </>
+        );
+      }
+      case 'plaid-card': {
+        // Thẻ bước thực hành có Nhãn Kẻ Caro xanh viền rách răng cưa ở đầu thẻ (Slide 7: Bước 1, Bước 2, Bước 3)
+        const headH = Math.min(115, Math.max(54, Math.round(H * 0.23)));
+        const headW = Math.round(W * 0.78);
+        const hx0 = Math.round((W - headW) / 2), hx1 = hx0 + headW;
+        const cardY = Math.round(headH * 0.52);
+        const cardH = H - cardY - 6;
+        const paperFill = e.fill && e.fill !== 'transparent' ? e.fill : '#faeedb';
+        const headPath = [
+          `M ${hx0 + 8} 4`,
+          `H ${hx1 - 8}`,
+          `L ${hx1} ${4 + headH * 0.2}`,
+          `L ${hx1 - 5} ${4 + headH * 0.4}`,
+          `L ${hx1 + 2} ${4 + headH * 0.6}`,
+          `L ${hx1 - 4} ${4 + headH * 0.8}`,
+          `L ${hx1 - 6} ${4 + headH}`,
+          `H ${hx0 + 6}`,
+          `L ${hx0 + 2} ${4 + headH * 0.8}`,
+          `L ${hx0 + 6} ${4 + headH * 0.6}`,
+          `L ${hx0} ${4 + headH * 0.4}`,
+          `L ${hx0 + 5} ${4 + headH * 0.2}`,
+          'Z',
+        ].join(' ');
+        return (
+          <>
+            <rect x={8} y={cardY + 5} width={W - 16} height={cardH} rx={12} fill="rgba(15,23,42,0.07)" />
+            <rect x={8} y={cardY} width={W - 16} height={cardH} rx={12} fill={paperFill} />
+            <path d={headPath} fill="#e2ebd7" stroke="#ffffff" strokeWidth={3} />
+            {/* Hoạ tiết kẻ caro xanh cốm trên nhãn tiêu đề */}
+            {Array.from({ length: 5 }, (_, i) => (
+              <line key={`h${i}`} x1={hx0 + 6} y1={12 + i * ((headH - 12) / 4)} x2={hx1 - 6} y2={12 + i * ((headH - 12) / 4)} stroke="#c5d6b3" strokeWidth={5} opacity={0.55} />
+            ))}
+            {Array.from({ length: 9 }, (_, i) => (
+              <line key={`v${i}`} x1={hx0 + 18 + i * ((headW - 36) / 8)} y1={6} x2={hx0 + 18 + i * ((headW - 36) / 8)} y2={headH} stroke="#c5d6b3" strokeWidth={5} opacity={0.45} />
+            ))}
+          </>
+        );
+      }
+      case 'badge-card': {
+        // Thẻ vuông có Biểu tượng Tròn (Mặt trời mỉm cười) nhô 50% ra khỏi mép trên thẻ (Slide 4, 5)
+        const R = Math.min(72, Math.max(32, Math.round(Math.min(W, H) * 0.19)));
+        const cy = R + 18, cx = W / 2;
+        const cardY = cy;
+        const cardH = H - cardY - 6;
+        const paperFill = e.fill && e.fill !== 'transparent' ? e.fill : '#faeedb';
+        const sunColor = e.stroke && e.stroke !== '#ffffff' ? e.stroke : '#ecc978';
+        return (
+          <>
+            <rect x={8} y={cardY + 5} width={W - 16} height={cardH} rx={12} fill="rgba(15,23,42,0.06)" />
+            <rect x={8} y={cardY} width={W - 16} height={cardH} rx={12} fill={paperFill} />
+            {/* 8 tia nắng tròn nhỏ quanh mặt trời */}
+            {Array.from({ length: 8 }, (_, i) => {
+              const a = (i * Math.PI) / 4;
+              const r0 = R + 10, r1 = R + 22;
+              return (
+                <line
+                  key={i}
+                  x1={cx + Math.cos(a) * r0}
+                  y1={cy + Math.sin(a) * r0}
+                  x2={cx + Math.cos(a) * r1}
+                  y2={cy + Math.sin(a) * r1}
+                  stroke={sunColor}
+                  strokeWidth={6}
+                  strokeLinecap="round"
+                />
+              );
+            })}
+            <circle cx={cx} cy={cy} r={R} fill={sunColor} />
+            {/* Khuôn mặt mỉm cười má hồng dễ thương */}
+            <ellipse cx={cx - R * 0.26} cy={cy + R * 0.04} rx={R * 0.07} ry={R * 0.12} fill="#111827" />
+            <ellipse cx={cx + R * 0.26} cy={cy + R * 0.04} rx={R * 0.07} ry={R * 0.12} fill="#111827" />
+            <ellipse cx={cx - R * 0.34} cy={cy + R * 0.18} rx={R * 0.1} ry={R * 0.055} fill="#e07a5f" opacity={0.85} />
+            <ellipse cx={cx + R * 0.34} cy={cy + R * 0.18} rx={R * 0.1} ry={R * 0.055} fill="#e07a5f" opacity={0.85} />
+            <path d={`M ${cx - R * 0.11} ${cy + R * 0.16} Q ${cx} ${cy + R * 0.28} ${cx + R * 0.11} ${cy + R * 0.16}`} fill="none" stroke="#111827" strokeWidth={3.5} strokeLinecap="round" />
+          </>
+        );
+      }
+      case 'flower-bullet': {
+        // Bông hoa cúc 8 cánh làm đầu dòng (Slide 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+        const S = Math.min(W, H);
+        const cx = W / 2, cy = H / 2;
+        const pr = S * 0.22;
+        const dist = S * 0.24;
+        const petalFill = e.fill && e.fill !== 'transparent' ? e.fill : '#eebfb8';
+        const centerFill = e.stroke && e.stroke !== '#ffffff' ? e.stroke : '#d97757';
+        return (
+          <>
+            {Array.from({ length: 8 }, (_, i) => {
+              const deg = i * 45;
+              return (
+                <ellipse
+                  key={i}
+                  cx={cx}
+                  cy={cy - dist}
+                  rx={pr * 0.55}
+                  ry={pr}
+                  fill={petalFill}
+                  transform={`rotate(${deg} ${cx} ${cy})`}
+                />
+              );
+            })}
+            <circle cx={cx} cy={cy} r={S * 0.13} fill={centerFill} />
+          </>
+        );
+      }
     }
   })();
   return (

@@ -11,7 +11,7 @@ export const FONTS: Record<FontKey, { label: string; css: string; weight: number
   hand: { label: 'Chữ tập viết (HP001)', css: "'DeckHP4', PraiseScript, cursive", weight: 400 },
 };
 
-export type ShapeKind = 'rect' | 'round' | 'circle' | 'star' | 'heart' | 'arrow' | 'cloud' | 'bubble' | 'wheel' | 'mystery' | 'tray' | 'banner';
+export type ShapeKind = 'rect' | 'round' | 'circle' | 'star' | 'heart' | 'arrow' | 'cloud' | 'bubble' | 'wheel' | 'mystery' | 'tray' | 'banner' | 'sticky' | 'plaid-card' | 'badge-card' | 'flower-bullet';
 export type ElBase = {
   id: string; x: number; y: number; w: number; h: number; rot: number;
   /** khi trình chiếu: kéo được (dùng cho bài kéo thả) */
@@ -90,7 +90,7 @@ export type Anim = {
 export type Trans = 'none' | 'fade' | 'slide' | 'zoom' | 'flip';
 export const TRANS_LABEL: Record<Trans, string> = { none: 'Không', fade: 'Mờ dần', slide: 'Trượt sang', zoom: 'Phóng to', flip: 'Lật trang' };
 
-export type SceneKind = 'garden' | 'pond' | 'kitchen' | 'class' | 'yard' | 'sea' | 'space' | 'farm' | 'tet' | 'dino' | 'candy';
+export type SceneKind = 'garden' | 'pond' | 'kitchen' | 'class' | 'yard' | 'sea' | 'space' | 'farm' | 'tet' | 'dino' | 'candy' | 'family';
 export type SceneVariant = 'cover' | 'center' | 'right' | 'left' | 'bottom';
 export type Slide = { id: string; bg: string; els: El[]; anims: Anim[]; trans: Trans; notes: string; sound?: string;
   /** thời gian chuyển trang (giây) */ transDur?: number;
@@ -191,7 +191,7 @@ export function elLabel(e: El): string {
   switch (e.kind) {
     case 'text': return `Chữ “${e.text.split('\n')[0].slice(0, 22) || '…'}”`;
     case 'img': return e.name || 'Hình';
-    case 'shape': return e.text ? `Hình “${e.text.slice(0, 18)}”` : ({ rect: 'Hình chữ nhật', round: 'Thẻ bo góc', circle: 'Hình tròn', star: 'Ngôi sao', heart: 'Trái tim', arrow: 'Mũi tên', cloud: 'Đám mây', bubble: 'Bong bóng lời', wheel: 'Vòng quay', mystery: 'Thẻ bí ẩn', tray: 'Khay đếm', banner: 'Băng rôn' } as const)[e.shape];
+    case 'shape': return e.text ? `Hình “${e.text.slice(0, 18)}”` : ({ rect: 'Hình chữ nhật', round: 'Thẻ bo góc', circle: 'Hình tròn', star: 'Ngôi sao', heart: 'Trái tim', arrow: 'Mũi tên', cloud: 'Đám mây', bubble: 'Bong bóng lời', wheel: 'Vòng quay', mystery: 'Thẻ bí ẩn', tray: 'Khay đếm', banner: 'Băng rôn', sticky: 'Giấy note', 'plaid-card': 'Thẻ bước', 'badge-card': 'Thẻ mặt trời', 'flower-bullet': 'Hoa đầu dòng' } as const)[e.shape];
     case 'quiz': return `Câu hỏi “${e.q.slice(0, 20)}”`;
     case 'drop': return `Ô thả “${e.label.slice(0, 16)}”`;
     case 'scene3d': return `Cảnh 3D “${e.title.slice(0, 18)}”`;

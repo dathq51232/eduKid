@@ -43,6 +43,20 @@ const SHAPES: { k: ShapeKind; label: string }[] = [
   { k: 'round', label: 'Thẻ bo góc' }, { k: 'rect', label: 'Chữ nhật' }, { k: 'circle', label: 'Hình tròn' }, { k: 'star', label: 'Ngôi sao' },
   { k: 'heart', label: 'Trái tim' }, { k: 'arrow', label: 'Mũi tên' }, { k: 'cloud', label: 'Đám mây' }, { k: 'bubble', label: 'Bong bóng lời' },
   { k: 'wheel', label: 'Vòng quay' }, { k: 'mystery', label: 'Thẻ bí ẩn' }, { k: 'tray', label: 'Khay đếm' }, { k: 'banner', label: 'Băng rôn' },
+  { k: 'sticky', label: 'Giấy note' }, { k: 'plaid-card', label: 'Thẻ bước' }, { k: 'badge-card', label: 'Thẻ mặt trời' }, { k: 'flower-bullet', label: 'Hoa đầu dòng' },
+];
+/** hình khối phong cách sổ tay (Canva Scrapbook) — tách thành danh mục riêng */
+const SCRAP_SHAPES: ShapeKind[] = ['sticky', 'plaid-card', 'badge-card', 'flower-bullet'];
+/** Danh mục của bảng Thành phần (kiểu “Browse categories” của Canva): id 'f3d:i' = nhóm hình 3D thứ i, 'st:i' = bộ hình dán thứ i */
+const F3D_ICON = ['cat', 'red-apple', 'pencil', 'girl', 'sun', 'bus', 'balloon', 'blue-circle'];
+const F3D_TILE = ['#fdba74,#f97316', '#fca5a5,#ef4444', '#93c5fd,#3b82f6', '#f9a8d4,#ec4899', '#86efac,#16a34a', '#a5b4fc,#6366f1', '#fde68a,#f59e0b', '#c4b5fd,#8b5cf6'];
+const EL_CATS: { id: string; label: string; icon: string; bg: string }[] = [
+  { id: 'milo', label: 'Linh vật Milo', icon: '/brand/milo-professor-sm.webp', bg: 'linear-gradient(140deg,#ddd6fe,#8b5cf6)' },
+  { id: 'scene', label: 'Cảnh nền', icon: f3dSrc('rainbow'), bg: 'linear-gradient(140deg,#a5f3fc,#0ea5e9)' },
+  { id: 'shape', label: 'Hình khối', icon: f3dSrc('star'), bg: 'linear-gradient(140deg,#99f6e4,#14b8a6)' },
+  { id: 'scrap', label: 'Sổ tay', icon: f3dSrc('notebook'), bg: 'linear-gradient(140deg,#fde68a,#e8a33d)' },
+  ...F3D_CATS.map((c, i) => ({ id: `f3d:${i}`, label: c.label, icon: f3dSrc(F3D_ICON[i] ?? c.items[0]), bg: `linear-gradient(140deg,${F3D_TILE[i % F3D_TILE.length]})` })),
+  ...STICKER_SETS.map((s, i) => ({ id: `st:${i}`, label: `Hình dán · ${s.label}`, icon: s.items[0], bg: 'linear-gradient(140deg,#e2e8f0,#64748b)' })),
 ];
 type Lesson3DRow = { id: string; title: string };
 /** hình chưa có trên máy chủ (thiếu file): ẩn ô thay vì hiện ảnh lỗi */
@@ -67,7 +81,8 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   const [snapGrid, setSnapGrid] = useState(false);
   const [tplTab, setTplTab] = useState<'set' | 'page'>('set');
   const [replace, setReplace] = useState(false);
-  const [cat3d, setCat3d] = useState(-1);
+  /** danh mục đang mở trong bảng Thành phần (null = trang chủ “Duyệt danh mục”) */
+  const [elCat, setElCat] = useState<string | null>(null);
   // chữ đang sửa trực tiếp trên trang
   const [inline, setInline] = useState<string | null>(null);
   useEffect(() => { if (inline && inline !== sel) setInline(null); }, [sel, inline]);
@@ -91,7 +106,6 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   const [saved, setSaved] = useState<'saved' | 'saving' | 'error'>('saved');
   const [startMode, setStartMode] = useState<Start>('click');
   const [trigMode, setTrigMode] = useState<string>('');
-  const [stickerSet, setStickerSet] = useState(0);
   const [mine, setMine] = useState<TeacherAsset[] | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error' | 'info'; text: string } | null>(null);
   const [busy, setBusy] = useState('');
@@ -519,28 +533,50 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
                   {scenes.length > 0 && <div className="dk-row dk-scenes"><b>Cảnh:</b>{scenes.map((c) => <button key={c.id} type="button" onClick={() => setSlide((x) => ({ ...x, scene: c.id }))}>{c.icon} {c.label}</button>)}</div>}
                   {sounds.length > 0 && <div className="dk-row dk-snds"><b>Âm thanh:</b>{sounds.map((x) => <span key={x.id} className="dk-snd"><button type="button" onClick={() => playSound(x.id)}>{x.icon}</button><button type="button" onClick={() => { playSound(x.id); attachSound(x.id); }}>{x.label}</button></span>)}</div>}
                 </>;
-              })() : <>
-                <p className="cv-ph">Bạn cú Milo <small>6 tư thế</small></p>
-                <div className="cv-milo">{MILO.map((src) => <button key={src} type="button" onClick={() => (replace && selEl?.kind === 'img' ? addSticker(src) : addEl({ id: uid(), kind: 'img', ...center(300, 400), w: 300, h: 400, rot: 0, src, name: 'Bạn cú Milo', role: 'mascot' }, 'pop'))}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- linh vật */}
-                  <img src={src.replace('.webp', '-sm.webp')} alt="Bạn cú Milo" loading="lazy" onError={hideBroken} /></button>)}</div>
-                <p className="cv-ph">Hình 3D <small>{Object.keys(F3D_VI).length} hình</small></p>
-                <div className="cv-chips cv-cats">
-                  <button type="button" className={cat3d < 0 ? 'is-on' : ''} onClick={() => setCat3d(-1)}>Gợi ý</button>
-                  {F3D_CATS.map((c, i) => <button key={c.label} type="button" className={cat3d === i ? 'is-on' : ''} onClick={() => setCat3d(i)}>{c.label}</button>)}
-                </div>
-                <div className="dk-sgrid cv-grid4">{(cat3d < 0 ? F3D : F3D_CATS[cat3d].items.map(f3dSrc)).map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- hình 3D */}
+              })() : elCat === null ? <>
+                {/* Trang chủ Thành phần kiểu Canva: Gợi ý cho bạn + Duyệt danh mục */}
+                <p className="cv-ph">Gợi ý cho bạn <button type="button" className="cv-link cv-seeall" onClick={() => setElCat('f3d:-1')}>Xem tất cả</button></p>
+                <div className="cv-reco">{F3D.slice(0, 12).map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- hình 3D gợi ý */}
                   <img src={src} alt={stickerName(src)} loading="lazy" onError={hideBroken} /></button>)}</div>
-                <p className="cv-ph">Hình khối</p>
-                <div className="cv-shapes">{SHAPES.map((s) => (
-                  <button key={s.k} type="button" title={s.label} aria-label={s.label} onClick={() => addShape(s.k)}><span className="dk-shape-ic"><ShapeSvg e={{ id: '', kind: 'shape', shape: s.k, x: 0, y: 0, w: 1, h: 1, rot: 0, fill: '#fde68a', stroke: '#d97706', sw: 1.5 }} /></span></button>))}</div>
-                <p className="cv-ph">Hình dán khác</p>
-                <div className="dk-stabs">{STICKER_SETS.map((st, i) => <button key={st.label} type="button" className={stickerSet === i ? 'is-on' : ''} onClick={() => setStickerSet(i)}>{st.label}</button>)}</div>
-                <div className="dk-sgrid cv-grid4">{STICKER_SETS[stickerSet]?.items.map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- hình dán có sẵn */}
-                  <img src={src} alt="" loading="lazy" onError={hideBroken} /></button>)}</div>
-              </>}
+                <p className="cv-ph">Duyệt danh mục</p>
+                <div className="cv-cattiles">{EL_CATS.map((c) => (
+                  <button key={c.id} type="button" onClick={() => setElCat(c.id)}>
+                    <span className="cv-cattile-ic" style={{ '--tile': c.bg } as React.CSSProperties}>
+                      {/* eslint-disable-next-line @next/next/no-img-element -- biểu tượng danh mục */}
+                      <img src={c.icon} alt="" loading="lazy" />
+                    </span>
+                    <span className="cv-cattile-lb">{c.label}</span>
+                  </button>
+                ))}</div>
+              </> : (() => {
+                // Trang chi tiết một danh mục (có nút quay lại như Canva)
+                const cat = EL_CATS.find((c) => c.id === elCat);
+                const f3dIdx = elCat.startsWith('f3d:') ? Number(elCat.slice(4)) : null;
+                const stIdx = elCat.startsWith('st:') ? Number(elCat.slice(3)) : null;
+                const grid = (list: string[]) => <div className="dk-sgrid cv-grid4">{list.map((src) => <button key={src} type="button" title={stickerName(src)} onClick={() => addSticker(src)}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- hình có sẵn */}
+                  <img src={src} alt={stickerName(src)} loading="lazy" onError={hideBroken} /></button>)}</div>;
+                const shapeBtns = (list: typeof SHAPES) => <div className="cv-shapes">{list.map((s) => (
+                  <button key={s.k} type="button" title={s.label} aria-label={s.label} onClick={() => addShape(s.k)}><span className="dk-shape-ic"><ShapeSvg e={{ id: '', kind: 'shape', shape: s.k, x: 0, y: 0, w: 1, h: 1, rot: 0, fill: s.k === 'sticky' ? '#f5c76b' : s.k === 'plaid-card' || s.k === 'badge-card' ? '#faeedb' : s.k === 'flower-bullet' ? '#eebfb8' : '#fde68a', stroke: '#d97706', sw: 1.5 }} /></span><small>{s.label}</small></button>))}</div>;
+                return <>
+                  <button type="button" className="cv-catback" onClick={() => setElCat(null)}><ArrowLeft aria-hidden="true" /> {cat?.label ?? (f3dIdx === -1 ? 'Hình 3D gợi ý' : 'Danh mục')}</button>
+                  {elCat === 'milo' && <div className="cv-milo">{MILO.map((src) => <button key={src} type="button" onClick={() => (replace && selEl?.kind === 'img' ? addSticker(src) : addEl({ id: uid(), kind: 'img', ...center(300, 400), w: 300, h: 400, rot: 0, src, name: 'Bạn cú Milo', role: 'mascot' }, 'pop'))}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- linh vật */}
+                    <img src={src.replace('.webp', '-sm.webp')} alt="Bạn cú Milo" loading="lazy" onError={hideBroken} /></button>)}</div>}
+                  {elCat === 'shape' && shapeBtns(SHAPES.filter((s) => !SCRAP_SHAPES.includes(s.k)))}
+                  {elCat === 'scrap' && <>
+                    <p className="dk-hint">Giấy note dán băng dính, thẻ bước kẻ caro, thẻ mặt trời, hoa cúc đầu dòng — phong cách sổ tay Canva.</p>
+                    {shapeBtns(SHAPES.filter((s) => SCRAP_SHAPES.includes(s.k)))}
+                  </>}
+                  {elCat === 'scene' && <>
+                    <p className="dk-hint">Bấm để đặt cảnh nền cho trang này (đổi góc máy ở bảng Nền).</p>
+                    <div className="cv-scenetiles">{SCENES.map((c) => <button key={c.id} type="button" className={slide.scene === c.id ? 'is-on' : ''} style={{ background: c.bg }} onClick={() => setSlide((x) => ({ ...x, scene: c.id }))}><span>{c.icon}</span><b>{c.label}</b></button>)}</div>
+                  </>}
+                  {f3dIdx !== null && grid(f3dIdx < 0 ? F3D : (F3D_CATS[f3dIdx]?.items ?? []).map(f3dSrc))}
+                  {stIdx !== null && grid(STICKER_SETS[stIdx]?.items ?? [])}
+                </>;
+              })()}
             </>}
             {panel === 'text' && <>
               <button type="button" className="cv-big is-h" onClick={() => addText(true)}>Thêm tiêu đề</button>
