@@ -751,7 +751,8 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
     /** đã chọn sẵn trước khi bấm (bấm lần hai vào chữ = sửa trực tiếp) */ was?: boolean;
     /** kéo cả nhóm / nhiều vật: vị trí ban đầu của từng vật */ many: { id: string; x: number; y: number; w: number; h: number }[] } | null>(null);
   // đường gióng khi kéo (canh giữa trang, mép / giữa vật khác)
-  const [guides, setGuides] = useState<{ v: number[]; h: number[] }>({ v: [], h: [] });
+  type GuideLine = { pos: number; kind: 'center' | 'margin' | 'el'; label: string };
+  const [guides, setGuides] = useState<{ v: GuideLine[]; h: GuideLine[] }>({ v: [], h: [] });
   const marquee = useRef<{ x0: number; y0: number; moved: boolean } | null>(null);
   const [box, setBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
 
@@ -797,23 +798,54 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
         return;
       }
       if (d.kind === 'move') {
-        // khung bao của các vật đang kéo → gióng theo mép / giữa trang và vật khác (giữ Alt để tắt)
+        // khung bao của các vật đang kéo → gióng theo tâm trang (X:800, Y:450), mép lề an toàn và vật khác (giữ Alt để tắt)
         const L = Math.min(...d.many.map((m) => m.x)), T = Math.min(...d.many.map((m) => m.y));
         const Rr = Math.max(...d.many.map((m) => m.x + m.w)), B = Math.max(...d.many.map((m) => m.y + m.h));
         let sx = dx, sy = dy;
-        const gv: number[] = [], gh: number[] = [];
+        const gv: GuideLine[] = [], gh: GuideLine[] = [];
         if (!ev.altKey && snapGrid) {
           sx += Math.round((L + sx) / 20) * 20 - (L + sx);
           sy += Math.round((T + sy) / 20) * 20 - (T + sy);
         }
         if (!ev.altKey) {
           const others = slide.els.filter((o) => !d.many.some((m) => m.id === o.id));
-          const tx = [0, SW / 2, SW, ...others.flatMap((o) => [o.x, o.x + o.w / 2, o.x + o.w])];
-          const ty = [0, SH / 2, SH, ...others.flatMap((o) => [o.y, o.y + o.h / 2, o.y + o.h])];
-          const snap = (vals: number[], targets: number[], out: number[]) => {
-            let best: { d: number; t: number } | null = null;
-            for (const v of vals) for (const t of targets) { const k = t - v; if (Math.abs(k) <= 6 / Math.max(scale, 0.2) && (!best || Math.abs(k) < Math.abs(best.d))) best = { d: k, t }; }
-            if (best) out.push(best.t);
+          const tx: GuideLine[] = [
+            { pos: SW / 2, kind: 'center', label: 'Tâm dọc · 800' },
+            { pos: 80, kind: 'margin', label: 'Lề trái · 80' },
+            { pos: SW - 80, kind: 'margin', label: 'Lề phải · 1520' },
+            ...others.flatMap((o) => [
+              { pos: o.x, kind: 'el' as const, label: 'Mép trái vật' },
+              { pos: Math.round(o.x + o.w / 2), kind: 'el' as const, label: 'Tâm vật khác' },
+              { pos: o.x + o.w, kind: 'el' as const, label: 'Mép phải vật' },
+            ]),
+          ];
+          const ty: GuideLine[] = [
+            { pos: SH / 2, kind: 'center', label: 'Tâm ngang · 450' },
+            { pos: 60, kind: 'margin', label: 'Lề trên · 60' },
+            { pos: SH - 60, kind: 'margin', label: 'Lề dưới · 840' },
+            ...others.flatMap((o) => [
+              { pos: o.y, kind: 'el' as const, label: 'Mép trên vật' },
+              { pos: Math.round(o.y + o.h / 2), kind: 'el' as const, label: 'Tâm vật khác' },
+              { pos: o.y + o.h, kind: 'el' as const, label: 'Mép dưới vật' },
+            ]),
+          ];
+          const tol = Math.min(18, Math.max(8, Math.round(10 / Math.max(scale, 0.2))));
+          const snap = (vals: number[], targets: GuideLine[], out: GuideLine[]) => {
+            let best: { d: number; guide: GuideLine } | null = null;
+            for (const v of vals) {
+              for (const t of targets) {
+                const k = t.pos - v;
+                if (Math.abs(k) <= tol) {
+                  const bonus = t.kind === 'center' ? 3 : 0;
+                  if (!best || (Math.abs(k) - bonus) < Math.abs(best.d)) {
+                    best = { d: k, guide: t };
+                  }
+                }
+              }
+            }
+            if (best && !out.some((g) => Math.abs(g.pos - best!.guide.pos) < 2)) {
+              out.push(best.guide);
+            }
             return best?.d ?? 0;
           };
           sx += snap([L + dx, (L + Rr) / 2 + dx, Rr + dx], tx, gv);
@@ -824,6 +856,42 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
       } else {
         let w = Math.max(30, d.w0 + dx), h = Math.max(24, d.h0 + dy);
         if (d.ratio || ev.shiftKey) { const k = Math.max(w / d.w0, h / d.h0); w = d.w0 * k; h = d.h0 * k; }
+        const gv: GuideLine[] = [], gh: GuideLine[] = [];
+        if (!ev.altKey) {
+          const others = slide.els.filter((o) => o.id !== d.id);
+          const tx: GuideLine[] = [
+            { pos: SW / 2, kind: 'center', label: 'Tâm dọc · 800' },
+            { pos: SW - 80, kind: 'margin', label: 'Lề phải · 1520' },
+            ...others.flatMap((o) => [
+              { pos: o.x, kind: 'el' as const, label: 'Mép vật khác' },
+              { pos: o.x + o.w, kind: 'el' as const, label: 'Mép vật khác' },
+            ]),
+          ];
+          const ty: GuideLine[] = [
+            { pos: SH / 2, kind: 'center', label: 'Tâm ngang · 450' },
+            { pos: SH - 60, kind: 'margin', label: 'Lề dưới · 840' },
+            ...others.flatMap((o) => [
+              { pos: o.y, kind: 'el' as const, label: 'Mép vật khác' },
+              { pos: o.y + o.h, kind: 'el' as const, label: 'Mép vật khác' },
+            ]),
+          ];
+          const tol = Math.min(16, Math.max(8, Math.round(9 / Math.max(scale, 0.2))));
+          for (const t of tx) {
+            if (Math.abs(t.pos - (d.x0 + w)) <= tol) {
+              w = Math.max(30, t.pos - d.x0);
+              gv.push(t);
+              break;
+            }
+          }
+          for (const t of ty) {
+            if (Math.abs(t.pos - (d.y0 + h)) <= tol) {
+              h = Math.max(24, t.pos - d.y0);
+              gh.push(t);
+              break;
+            }
+          }
+        }
+        setGuides({ v: gv, h: gh });
         onChange?.(d.id, { w: Math.round(w), h: Math.round(h) }, false);
       }
       return;
@@ -934,7 +1002,7 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
             className={`dk-el k-${e.kind}${e.hide ? ' is-hide' : ''}${mode === 'edit' && editing === e.id ? ' is-editing' : ''}${e.flip ? ' is-flip' : ''}${sel === e.id || multi?.includes(e.id) ? ' is-sel' : ''}${multi && multi.length > 1 && multi.includes(e.id) && sel !== e.id ? ' is-sel2' : ''}${clickable ? ' is-click' : ''}${play && e.drag && !done.has(e.id) ? ' is-drag' : ''}${done.has(e.id) ? ' is-done' : ''}`}
             style={{ left: p?.x ?? e.x, top: p?.y ?? e.y, width: e.w, height: e.h, transform: e.rot ? `rotate(${e.rot}deg)` : undefined, visibility: (play && hidden.has(e.id)) || (e.hide && mode !== 'edit') ? 'hidden' : undefined, zIndex: play && playDrag.current?.id === e.id ? 50 : undefined }}
             onPointerDown={(ev) => onElDown(e, ev)} onPointerMove={onElMove} onPointerUp={() => onElUp(e)}
-            onClick={(ev) => { if (play && !e.drag) { ev.stopPropagation(); click(e); } }}
+            onClick={(ev) => { if (play && !e.drag && clickable) { ev.stopPropagation(); click(e); } }}
             onDoubleClick={() => { if (mode === 'edit' && (e.kind === 'text' || e.kind === 'shape' || e.kind === 'quiz' || e.kind === 'sort')) onEditText?.(e.id); }}>
             <div className="dk-a" style={e.op != null && e.op < 1 ? { opacity: e.op } : undefined}><ElBody e={e} mode={mode} assetUrl={assetUrl} pick={picks[e.id]} onPick={(i) => { const a: PlayAction = { t: 'quiz', el: e.id, i }; apply(a); onAction?.(a); }}
               board={board} sort={sorts[e.id]} onTile={(tile) => { const a: PlayAction = { t: 'sort', el: e.id, tile }; if (apply(a)) onAction?.(a); }} /></div>
@@ -945,8 +1013,16 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
           </div>
         );
       })}
-      {mode === 'edit' && guides.v.map((x, i) => <i key={`v${i}`} className="dk-guide is-v" style={{ left: x }} />)}
-      {mode === 'edit' && guides.h.map((y, i) => <i key={`h${i}`} className="dk-guide is-h" style={{ top: y }} />)}
+      {mode === 'edit' && guides.v.map((g, i) => (
+        <i key={`v${i}`} className={`dk-guide is-v is-${g.kind}`} style={{ left: g.pos }}>
+          <span className="dk-guide-badge">{g.label}</span>
+        </i>
+      ))}
+      {mode === 'edit' && guides.h.map((g, i) => (
+        <i key={`h${i}`} className={`dk-guide is-h is-${g.kind}`} style={{ top: g.pos }}>
+          <span className="dk-guide-badge">{g.label}</span>
+        </i>
+      ))}
       {mode === 'edit' && box && <i className="dk-marquee" style={{ left: box.x, top: box.y, width: box.w, height: box.h }} />}
     </div>
   );

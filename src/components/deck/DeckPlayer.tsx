@@ -19,9 +19,9 @@ import { createClient } from '@/lib/supabase/client';
 import { SOURCE, TEAM_COLORS, normalizeTeams, teamTotals, vnDay, weekOf, type Point, type TeamsState } from '@/lib/classroom/class-tools';
 import SlideView, { SlideFrame, type BoardTeam, type PlayAction, type PlayApi } from './SlideView';
 
-type Tool = '' | 'pen' | 'spot';
-type Stroke = { c: string; p: number[] };
-type Show = { slide: number; step: number; nonce: number; black: '' | 'black' | 'white'; spot: [number, number] | null; ink: Record<number, Stroke[]>; name: string | null; timer: number | null; stars: number;
+type Tool = '' | 'pen' | 'spot' | 'laser';
+type Stroke = { c: string; w?: number; p: number[] };
+type Show = { slide: number; step: number; nonce: number; black: '' | 'black' | 'white'; spot: [number, number] | null; laser: [number, number] | null; ink: Record<number, Stroke[]>; name: string | null; timer: number | null; stars: number;
   /** thi đua tổ: điểm tuần này của các tổ (null = lớp chưa có tổ) và câu hỏi "cộng cho tổ nào?" đang hiện */
   teams: BoardTeam[] | null; ask: string | null; bump: number | null };
 type Msg =
@@ -30,16 +30,18 @@ type Msg =
   | { type: 'act'; slide: number; a: PlayAction }
   | { type: 'cmd'; c: 'next' | 'prev' };
 
-const INK = ['#ef4444', '#2563eb', '#16a34a', '#f59e0b', '#111827', '#ffffff'];
+const INK = ['#ef4444', '#facc15', '#22c55e', '#3b82f6', '#ec4899', '#ffffff', '#111827'];
 const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
 export default function DeckPlayer({ classId, deckId, deck, students, start = 0, audience = false }: {
   classId: string; deckId: string; deck: Deck; students: { id: string; name: string }[]; start?: number; audience?: boolean;
 }) {
   const n = deck.slides.length;
-  const [show, setShow] = useState<Show>({ slide: Math.min(Math.max(0, start), n - 1), step: 0, nonce: 0, black: '', spot: null, ink: {}, name: null, timer: null, stars: 0, teams: null, ask: null, bump: null });
+  const [show, setShow] = useState<Show>({ slide: Math.min(Math.max(0, start), n - 1), step: 0, nonce: 0, black: '', spot: null, laser: null, ink: {}, name: null, timer: null, stars: 0, teams: null, ask: null, bump: null });
   const [tool, setTool] = useState<Tool>('');
   const [color, setColor] = useState(INK[0]);
+  const [strokeWidth, setStrokeWidth] = useState<number>(8);
+  const [clickRipple, setClickRipple] = useState<{ x: number; y: number; dir: 'prev' | 'next'; id: number } | null>(null);
   const [mine, setMine] = useState<TeacherAsset[]>([]);
   const [now, setNow] = useState(() => Date.now());
   const [t0, setT0] = useState(() => Date.now());
@@ -131,6 +133,13 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
 
   const onAction = (a: PlayAction) => { send({ type: 'act', slide: showRef.current.slide, a }); setLeft(api.current?.stepsLeft() ?? 0); };
 
+  const undoStroke = useCallback(() => {
+    const s = showRef.current;
+    const cur = s.ink[s.slide] ?? [];
+    if (!cur.length) return;
+    publish({ ...s, ink: { ...s.ink, [s.slide]: cur.slice(0, -1) } });
+  }, [publish]);
+
   /* ---------- phím tắt ---------- */
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
@@ -139,21 +148,43 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
       else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); prev(); }
       else if (!audience && e.key.toLowerCase() === 'b') publish({ ...showRef.current, black: showRef.current.black === 'black' ? '' : 'black' });
       else if (!audience && e.key.toLowerCase() === 'w') publish({ ...showRef.current, black: showRef.current.black === 'white' ? '' : 'white' });
-      else if (e.key === 'Escape') setTool('');
+      else if (!audience && e.key.toLowerCase() === 'l') {
+        setTool((cur) => {
+          const nxt = cur === 'laser' ? '' : 'laser';
+          if (cur === 'laser') publish({ ...showRef.current, laser: null });
+          return nxt;
+        });
+      }
+      else if (!audience && e.key.toLowerCase() === 'p') {
+        setTool((cur) => cur === 'pen' ? '' : 'pen');
+      }
+      else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        undoStroke();
+      }
+      else if (e.key === 'Escape') {
+        setTool('');
+        publish({ ...showRef.current, spot: null, laser: null });
+      }
     };
     window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
-  }, [next, prev, publish, audience]);
+  }, [next, prev, publish, audience, undoStroke]);
 
-  /* ---------- bút vẽ / đèn chiếu ---------- */
+  /* ---------- bút vẽ / đèn chiếu / con trỏ laser ---------- */
   const toSlide = (e: { clientX: number; clientY: number }) => {
     const r = stageRef.current!.getBoundingClientRect();
     return [Math.round(((e.clientX - r.left) / r.width) * SW), Math.round(((e.clientY - r.top) / r.height) * SH)] as [number, number];
   };
   const spotRaf = useRef(0);
   const onOvDown = (e: React.PointerEvent) => {
+    if (tool === 'laser') {
+      const p = toSlide(e);
+      publish({ ...showRef.current, laser: p });
+      return;
+    }
     if (tool !== 'pen') return;
     (e.target as Element).setPointerCapture?.(e.pointerId);
-    drawing.current = { c: color, p: toSlide(e) }; force((x) => x + 1);
+    drawing.current = { c: color, w: strokeWidth, p: toSlide(e) }; force((x) => x + 1);
   };
   const onOvMove = (e: React.PointerEvent) => {
     if (tool === 'spot') {
@@ -162,16 +193,58 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
       spotRaf.current = requestAnimationFrame(() => publish({ ...showRef.current, spot: p }));
       return;
     }
+    if (tool === 'laser') {
+      const p = toSlide(e);
+      cancelAnimationFrame(spotRaf.current);
+      spotRaf.current = requestAnimationFrame(() => publish({ ...showRef.current, laser: p }));
+      return;
+    }
     const d = drawing.current; if (!d) return;
     const [x, y] = toSlide(e); d.p.push(x, y); force((v) => v + 1);
   };
   const onOvUp = () => {
+    if (tool === 'laser') return;
     const d = drawing.current; drawing.current = null;
     if (!d || d.p.length < 4) { force((v) => v + 1); return; }
     const s = showRef.current, list = [...(s.ink[s.slide] ?? []), d];
     publish({ ...s, ink: { ...s.ink, [s.slide]: list } });
   };
   const pathOf = (p: number[]) => p.reduce((a, v, i) => a + (i % 2 ? `${v} ` : `${i ? 'L' : 'M'}${v} `), '');
+
+  /* ---------- bấm vào nền trang để chuyển lùi / tiếp ---------- */
+  const onStageClick = (ev: React.MouseEvent<HTMLDivElement>) => {
+    if (tool === 'pen' || tool === 'spot' || tool === 'laser') return;
+    const target = ev.target as HTMLElement;
+    if (target.closest('.dp-name, .dp-ask, .dp-timer, .dp-stars, .dp-tstrip, .dp-float, button, input, textarea, select')) {
+      return;
+    }
+    const stage = stageRef.current;
+    if (!stage) return;
+    const rect = stage.getBoundingClientRect();
+    const relX = ev.clientX - rect.left;
+    const relY = ev.clientY - rect.top;
+    const ratio = relX / rect.width;
+    const clickId = Date.now();
+
+    if (ratio < 0.22) {
+      setClickRipple({ x: relX, y: relY, dir: 'prev', id: clickId });
+      prev();
+    } else {
+      setClickRipple({ x: relX, y: relY, dir: 'next', id: clickId });
+      next();
+    }
+    window.setTimeout(() => {
+      setClickRipple((r) => (r?.id === clickId ? null : r));
+    }, 450);
+  };
+
+  const onStageContextMenu = (ev: React.MouseEvent<HTMLDivElement>) => {
+    if (tool === 'pen' || tool === 'spot' || tool === 'laser') return;
+    const target = ev.target as HTMLElement;
+    if (target.closest('.dp-name, .dp-ask, button, input')) return;
+    ev.preventDefault();
+    prev();
+  };
 
   /* ---------- công cụ lớp ---------- */
   const callName = () => {
@@ -230,14 +303,40 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
   const stage = (
     <div className="dp-stagebox">
       <SlideFrame className="dp-frame">{(k) => (
-        <div className="dp-stage" ref={(el) => { stageRef.current = el; frameRef.current = el; }} style={{ width: SW * k, height: SH * k }}>
+        <div
+          className={`dp-stage${!tool ? ' is-nav-ready' : ''}`}
+          ref={(el) => { stageRef.current = el; frameRef.current = el; }}
+          style={{ width: SW * k, height: SH * k }}
+          onClick={onStageClick}
+          onContextMenu={onStageContextMenu}
+        >
           <SlideView key={`${slide.id}-${show.nonce}`} ref={api} slide={slide} mode="play" scale={k} assetUrl={assetUrl} speechSubject={deck.src?.subject ?? (/\benglish\b|tiếng anh/i.test(`${deck.title} ${deck.src?.lesson ?? ''}`) ? 'tieng-anh' : 'tieng-viet')} startStep={show.step}
             onAction={onAction} onLink={(i) => { if (!audience) go(i - 1); }} onWin={onWin} board={show.teams ?? undefined} />
-          <svg className={`dp-ink${tool === 'pen' || tool === 'spot' ? ' is-on' : ''}`} viewBox={`0 0 ${SW} ${SH}`} style={{ cursor: tool === 'pen' ? 'crosshair' : tool === 'spot' ? 'none' : undefined }}
-            onPointerDown={onOvDown} onPointerMove={onOvMove} onPointerUp={onOvUp} onPointerLeave={() => { if (tool === 'spot') publish({ ...showRef.current, spot: null }); }}>
-            {[...strokes, ...(drawing.current ? [drawing.current] : [])].map((s, i) => <path key={i} d={pathOf(s.p)} fill="none" stroke={s.c} strokeWidth={9} strokeLinecap="round" strokeLinejoin="round" />)}
+          <svg className={`dp-ink${tool === 'pen' || tool === 'spot' || tool === 'laser' ? ' is-on' : ''}`} viewBox={`0 0 ${SW} ${SH}`} style={{ cursor: tool === 'pen' ? 'crosshair' : tool === 'spot' || tool === 'laser' ? 'none' : undefined }}
+            onPointerDown={onOvDown} onPointerMove={onOvMove} onPointerUp={onOvUp} onPointerLeave={() => {
+              if (tool === 'spot') publish({ ...showRef.current, spot: null });
+              if (tool === 'laser') publish({ ...showRef.current, laser: null });
+            }}>
+            {[...strokes, ...(drawing.current ? [drawing.current] : [])].map((s, i) => <path key={i} d={pathOf(s.p)} fill="none" stroke={s.c} strokeWidth={s.w ?? 9} strokeOpacity={s.w === 24 ? 0.45 : 1} strokeLinecap="round" strokeLinejoin="round" />)}
           </svg>
+          {show.laser && (
+            <div className="dp-laser" style={{ left: `${(show.laser[0] / SW) * 100}%`, top: `${(show.laser[1] / SH) * 100}%` }}>
+              <div className="dp-laser-ping" />
+              <div className="dp-laser-dot" />
+            </div>
+          )}
           {show.spot && <div className="dp-spot" style={{ background: `radial-gradient(circle at ${(show.spot[0] / SW) * 100}% ${(show.spot[1] / SH) * 100}%, transparent 0, transparent ${150 * k}px, rgba(0,0,0,.78) ${170 * k}px)` }} />}
+          {clickRipple && (
+            <div className={`dp-click-ripple is-${clickRipple.dir}`} style={{ left: clickRipple.x, top: clickRipple.y }}>
+              <span>{clickRipple.dir === 'prev' ? '◀ Lùi' : 'Tiếp ▶'}</span>
+            </div>
+          )}
+          {!tool && (
+            <>
+              <div className="dp-nav-hint is-left" aria-hidden="true">◀ Bấm lùi</div>
+              <div className="dp-nav-hint is-right" aria-hidden="true">Bấm tiếp ▶</div>
+            </>
+          )}
           {show.black && <div className={`dp-black is-${show.black}`} />}
           {show.name && <button type="button" className="dp-name" onClick={() => { if (!audience) publish({ ...showRef.current, name: null }); }}><small>Mời bạn</small><b>{show.name.replace('★ ', '')}</b>{show.name.startsWith('★') && <span>🎉</span>}</button>}
           {show.timer && <div className={`dp-timer${timerLeft <= 10 ? ' is-low' : ''}`}>⏱ {fmt(timerLeft)}</div>}
@@ -259,7 +358,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
     return (
       <div className="dp-aud" onDoubleClick={fullStage}>
         {stage}
-        <p className="dp-aud-hint">Nháy đúp để toàn màn hình · phím cách / mũi tên để chuyển trang</p>
+        <p className="dp-aud-hint">Nháy đúp để toàn màn hình · Bấm vào nền để chuyển trang (Trái: Lùi, Phải: Tiếp) · Chuột phải: Lùi</p>
       </div>
     );
   }
@@ -309,19 +408,33 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
               </div>
             )}
             <div className="dp-tools">
-              <button type="button" className={tool === 'pen' ? 'is-on' : ''} onClick={() => setTool(tool === 'pen' ? '' : 'pen')}><span>✏️</span>Bút vẽ</button>
+              <button type="button" className={tool === 'laser' ? 'is-on' : ''} onClick={() => {
+                setTool(tool === 'laser' ? '' : 'laser');
+                if (tool === 'laser') publish({ ...showRef.current, laser: null });
+              }} title="Con trỏ Laser (Phím tắt: L)"><span>🎯</span>Laser</button>
+              <button type="button" className={tool === 'pen' ? 'is-on' : ''} onClick={() => setTool(tool === 'pen' ? '' : 'pen')} title="Bút vẽ (Phím tắt: P)"><span>✏️</span>Bút vẽ</button>
               <button type="button" className={tool === 'spot' ? 'is-on' : ''} onClick={() => { setTool(tool === 'spot' ? '' : 'spot'); if (tool === 'spot') publish({ ...showRef.current, spot: null }); }}><span>🔦</span>Đèn chiếu</button>
               <button type="button" className={show.black === 'black' ? 'is-on' : ''} onClick={() => publish({ ...show, black: show.black === 'black' ? '' : 'black' })}><span>⬛</span>Che màn</button>
-              <button type="button" onClick={() => publish({ ...show, ink: { ...show.ink, [show.slide]: [] } })} disabled={!strokes.length}><span>🧽</span>Xoá nét vẽ</button>
+              <button type="button" onClick={undoStroke} disabled={!strokes.length} title="Hoàn tác nét vẽ (Ctrl+Z)"><span>↩</span>Hoàn tác</button>
+              <button type="button" onClick={() => publish({ ...show, ink: { ...show.ink, [show.slide]: [] } })} disabled={!strokes.length} title="Xoá tất cả nét vẽ trên trang"><span>🧽</span>Xoá nét</button>
               <button type="button" onClick={callName}><img src="/emoji/tool/goi-ten.webp" alt="" />Gọi tên</button>
               <button type="button" onClick={() => publish({ ...show, timer: show.timer ? null : Date.now() + 60_000 })} className={show.timer ? 'is-on' : ''}><img src="/emoji/tool/hen-gio.webp" alt="" />{show.timer ? 'Tắt giờ' : 'Đếm 1 phút'}</button>
               {!show.teams && <button type="button" onClick={addStar}><img src="/emoji/tool/thi-dua.webp" alt="" />Cộng sao</button>}
               <button type="button" onClick={() => publish({ ...show, stars: 0, name: null })} disabled={!show.stars && !show.name}><span>↺</span>Đặt lại</button>
             </div>
-            {tool === 'pen' && <div className="dp-inks">{INK.map((c) => <button key={c} type="button" aria-label={`Mực ${c}`} className={color === c ? 'is-on' : ''} style={{ background: c }} onClick={() => setColor(c)} />)}</div>}
+            {tool === 'pen' && (
+              <div className="dp-pen-panel">
+                <div className="dp-inks">{INK.map((c) => <button key={c} type="button" aria-label={`Mực ${c}`} className={color === c ? 'is-on' : ''} style={{ background: c }} onClick={() => setColor(c)} />)}</div>
+                <div className="dp-sizes">
+                  {([ { w: 4, label: 'Mảnh' }, { w: 8, label: 'Vừa' }, { w: 14, label: 'Đậm' }, { w: 24, label: 'Dạ quang' } ] as const).map((s) => (
+                    <button key={s.w} type="button" className={strokeWidth === s.w ? 'is-on' : ''} onClick={() => setStrokeWidth(s.w)}>{s.label}</button>
+                  ))}
+                </div>
+              </div>
+            )}
             {show.timer && <div className="dp-inks">{[1, 2, 3, 5].map((m) => <button key={m} type="button" className="dp-min" onClick={() => publish({ ...show, timer: Date.now() + m * 60_000 })}>{m} phút</button>)}</div>}
           </section>
-          <p className="dp-keys">Phím: cách / → tiếp · ← lùi · B che màn đen · W màn trắng · Esc tắt công cụ</p>
+          <p className="dp-keys">Phím: L (Laser) · P (Bút) · Ctrl+Z (Hoàn tác) · cách/→ (Tiếp) · ← (Lùi) · Chuột phải hoặc bấm lề trái để lùi</p>
         </aside>
       </div>
       <footer className="dp-strip">

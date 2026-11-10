@@ -822,7 +822,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
             <span className="cv-grow" />
             <label className="cv-zoom"><input type="range" min={50} max={200} step={10} value={Math.round(zoom * 100)} onChange={(e) => setZoom(Number(e.target.value) / 100)} aria-label="Thu phóng" disabled={grid} /><b>{Math.round(zoom * 100)}%</b></label>
             <span className="cv-pg">{cur + 1} / {deck.slides.length}</span>
-            <button type="button" className={`cv-snap${snapGrid ? ' is-on' : ''}`} onClick={() => setSnapGrid((v) => !v)} title={snapGrid ? 'Tắt lưới và hút vật (Alt khi kéo để tắt tạm)' : 'Bật lưới và hút vật vào mỗi 20 px'} aria-label="Lưới và căn chỉnh" aria-pressed={snapGrid}><Grid2x2 aria-hidden="true" /><span>Hút 20</span></button>
+            <button type="button" className={`cv-snap${snapGrid ? ' is-on' : ''}`} onClick={() => setSnapGrid((v) => !v)} title={snapGrid ? 'Đang bật Thước thông minh & Lưới 20px (Alt khi kéo để tắt tạm)' : 'Thước căn chỉnh thông minh & Hút tâm (X: 800, Y: 450) luôn sẵn sàng. Bấm để bật thêm lưới 20px'} aria-label="Thước căn chỉnh thông minh và hút" aria-pressed={snapGrid}><Grid2x2 aria-hidden="true" /><span>{snapGrid ? 'Lưới 20 + Tâm' : 'Căn thông minh'}</span></button>
             <button type="button" className={grid ? 'is-on' : ''} onClick={() => setGrid(!grid)} title="Xem lưới tất cả trang" aria-label="Xem lưới" aria-pressed={grid}><Grid2x2 aria-hidden="true" /></button>
             <button type="button" onClick={fullscreen} title="Toàn màn hình" aria-label="Toàn màn hình"><Maximize aria-hidden="true" /></button>
           </footer>
