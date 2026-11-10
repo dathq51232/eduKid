@@ -211,7 +211,7 @@ export default function Lesson3DStudio({ classId, lessonId, initial }: { classId
   return (
     <div className={`s3d${play ? ' is-play' : ''}`}>
       <header className="s3d-top">
-        <Link href={`/giao-vien/lop/${classId}/ke-hoach?tab=bai-giang`} className="s3d-btn" aria-label="Về danh sách bài giảng 3D"><ArrowLeft aria-hidden="true" /></Link>
+        <Link href={`/giao-vien/lop/${classId}/bai-giang-3d`} className="s3d-btn" aria-label="Về danh sách bài giảng 3D"><ArrowLeft aria-hidden="true" /></Link>
         <label className="s3d-ttl"><small>Xưởng bài giảng 3D · Lớp {L.grade}{stem ? ` · STEM bài ${stem.no}` : ''}</small>
           <input value={L.title} maxLength={120} onChange={(e) => { const v = e.target.value; update((d) => { d.title = v; return d; }); }} aria-label="Tên bài giảng" /></label>
         {!play && <>

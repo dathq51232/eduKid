@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { CalendarDays, Copy, FileDown, FileSpreadsheet, FilePlus2, MonitorPlay, Save, Sparkles, Trash2, Undo2, Maximize2, Minimize2, Upload, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -17,7 +18,6 @@ import PlanLibrary from './PlanLibrary';
 import DocPreview from './DocPreview';
 import PlanWorkspace from './PlanWorkspace';
 import PlanWeekBoard from './PlanWeekBoard';
-import Lesson3DHome, { type Lesson3DRow } from '@/components/lesson3d/Lesson3DHome';
 import type { DeckRow } from '@/components/deck/DeckHome';
 import type { LibraryMeta } from '@/lib/plans/library';
 import { ToolIcon } from '@/components/classroom/tool-icons';
@@ -28,12 +28,12 @@ const ALL_SUBJECTS: SubjectCode[] = ['toan', 'tieng-viet', 'tieng-anh'];
 const notReady = (m: string) => /function|does not exist|schema cache/i.test(m);
 const MIGRATION_HINT = 'Chưa bật lưu giáo án: chạy supabase/migrations/0021_lesson_plans.sql và 0022_lesson_plans_subjects.sql trên Supabase. Vẫn soạn và tải Word được.';
 const SUBJECT_HINT = 'Giáo án môn này cần chạy supabase/migrations/0022_lesson_plans_subjects.sql trên Supabase. Vẫn tải Word được.';
-type Tab = 'tuan' | 'kho' | 'bai-giang' | 'da-luu' | 'mau';
-const TABS: Tab[] = ['tuan', 'kho', 'bai-giang', 'da-luu', 'mau'];
+// Bài giảng & 3D đã tách thành mục riêng (/giao-vien/lop/[id]/bai-giang-3d), cùng cấp Kế hoạch bài dạy.
+type Tab = 'tuan' | 'kho' | 'da-luu' | 'mau';
+const TABS: Tab[] = ['tuan', 'kho', 'da-luu', 'mau'];
 const LEAD: Record<Tab, string> = {
   tuan: 'Mỗi tiết trong tuần là một thẻ: bấm để soạn giáo án, tạo bài giảng, mở phiếu của tiết đó.',
   kho: 'Giáo án Word của trường, tách sẵn từng tiết — khi nạp lịch báo giảng, tiết nào có trong kho được dùng ngay.',
-  'bai-giang': 'Bài trình chiếu, bài thao giảng, mô hình 3D và bài STEM — tạo thẳng từ giáo án của tiết.',
   'da-luu': 'Mọi giáo án đã lưu, kể cả của lớp cũ — mở, nhân bản cho lớp mới.',
   mau: 'Cách in lịch báo giảng tuần cho vừa 1 trang.',
 };
@@ -47,17 +47,19 @@ const todayIso = () => {
  * từ dữ liệu bài học và các dạng lớp còn hay sai; giáo viên sửa, lưu, nhân bản sang tiết khác, xuất Word,
  * tải lịch báo giảng cả tuần.
  */
-export default function LessonPlanner({ classId, className, grade, school, weakForms, lessonsBySubject, lessons3d, lessons3dMissing, decks, decksMissing, initialTab, initialSub, initialPlan }: {
+export default function LessonPlanner({ classId, className, grade, school, weakForms, lessonsBySubject, decks, initialTab }: {
   classId: string; className: string; grade: number; school: string; weakForms: Record<SubjectCode, string[]>;
   lessonsBySubject: Record<SubjectCode, LessonInfo[]>;
-  /** bài 3D và bài thao giảng (mục Bài giảng & 3D) */
-  lessons3d: Lesson3DRow[]; lessons3dMissing: boolean; decks: DeckRow[]; decksMissing: boolean;
-  /** mở sẵn mục (?tab=), thẻ con của Bài giảng & 3D (?sub=), tạo bài giảng cho giáo án (?plan=) */
-  initialTab?: string; initialSub?: string; initialPlan?: string;
+  /** bài thao giảng đã gắn giáo án (hiện trên thẻ tiết ở Tuần dạy) */
+  decks: DeckRow[];
+  /** mở sẵn mục (?tab=) */
+  initialTab?: string;
 }) {
   const [tab, setTab] = useState<Tab>(() => (TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'tuan'));
-  const go = (t: Tab) => { setTab(t); try { const u = new URL(window.location.href); u.searchParams.set('tab', t); u.searchParams.delete('plan'); u.searchParams.delete('sub'); window.history.replaceState(null, '', u); } catch { /* bỏ qua */ } };
-  const [deckPlan, setDeckPlan] = useState<string | null>(initialPlan ?? null);
+  const go = (t: Tab) => { setTab(t); try { const u = new URL(window.location.href); u.searchParams.set('tab', t); window.history.replaceState(null, '', u); } catch { /* bỏ qua */ } };
+  const router = useRouter();
+  /** Tạo bài thao giảng từ giáo án → mở mục Bài giảng & 3D */
+  const deckHref = (planId: string) => `/giao-vien/lop/${classId}/bai-giang-3d?plan=${planId}`;
   const [importOpen, setImportOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [drafts, setDrafts] = useState<LessonPlan[]>([]);
@@ -233,7 +235,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
   };
 
   const MENU: [Tab, string, number | null][] = [
-    ['tuan', '📅 Tuần dạy', null], ['kho', '📚 Kho giáo án', library.length], ['bai-giang', '🎬 Bài giảng & 3D', decks.length + lessons3d.length],
+    ['tuan', '📅 Tuần dạy', null], ['kho', '📚 Kho giáo án', library.length],
     ['da-luu', '🗂 Đã lưu (tất cả)', saved.length], ['mau', '⚙️ Mẫu in lịch báo giảng', null],
   ];
   return (
@@ -276,16 +278,11 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
             weak={Object.values(weakForms).flat()}
             onOpen={(id) => void open(id)} onOpenDraft={openDraft} onRemove={(id) => void remove(id)}
             onPreviewPlan={(pl) => setPreview({ title: pl.title || 'Giáo án', filename: `giao-an-${pl.title || 'bai-hoc'}`, html: plansDocument([pl], school) })}
-            onExportWeek={(w) => void exportWeek(w)} onImport={() => setImportOpen(true)} onMakeDeck={(id) => { setDeckPlan(id); go('bai-giang'); }} />
+            onExportWeek={(w) => void exportWeek(w)} onImport={() => setImportOpen(true)} onMakeDeck={(id) => router.push(deckHref(id))} />
         )}
 
         {/* kho luôn gắn sẵn (để gợi ý giáo án từ kho khi nạp lịch), chỉ hiện ở mục Kho giáo án */}
         <div hidden={tab !== 'kho'}><PlanLibrary grade={grade} className={className} onOpen={openDraft} onChange={setLibrary} /></div>
-
-        {tab === 'bai-giang' && (
-          <Lesson3DHome key={deckPlan ?? 'b3d'} embedded classId={classId} className={className} grade={grade} lessons={lessons3d} missing={lessons3dMissing}
-            decks={decks} decksMissing={decksMissing} initialTab={deckPlan ? 'tg' : initialSub} openPlan={deckPlan ?? undefined} />
-        )}
 
         {tab === 'da-luu' && (
       <section className="dash-section planner-card" aria-labelledby="pl-saved">
@@ -404,7 +401,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
               <button type="button" className="btn btn-outline btn-sm" onClick={() => setFull(!full)}>{full ? <><Minimize2 aria-hidden="true" /> Thu nhỏ</> : <><Maximize2 aria-hidden="true" /> Toàn màn hình</>}</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={undo} disabled={!history.current.length} title="Hoàn tác"><Undo2 aria-hidden="true" /> Hoàn tác</button>
               {planId && plan.date
-                ? <Link className="btn btn-outline btn-sm" href={`/giao-vien/lop/${classId}/ke-hoach?tab=bai-giang&plan=${planId}`}><MonitorPlay aria-hidden="true" /> Tạo bài thao giảng</Link>
+                ? <Link className="btn btn-outline btn-sm" href={deckHref(planId)}><MonitorPlay aria-hidden="true" /> Tạo bài thao giảng</Link>
                 : <button type="button" className="btn btn-outline btn-sm" disabled title="Lưu giáo án (có ngày dạy) trước"><MonitorPlay aria-hidden="true" /> Tạo bài thao giảng</button>}
               <button type="button" className="btn btn-primary btn-sm" disabled={busy || !canSave} onClick={() => void save(false)}><Save aria-hidden="true" /> Lưu</button>
               {planId && <button type="button" className="btn btn-outline btn-sm" disabled={busy || !canSave} onClick={() => void save(true)}>Lưu thành bản mới</button>}

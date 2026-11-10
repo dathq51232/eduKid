@@ -17,7 +17,7 @@ type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: '/chon-bai', label: 'Học tập', icon: 'hoc-tap', match: ['/chon-bai', '/lam-bai', '/ket-qua'] },
-  { href: '/tieng-anh', label: 'Phản xạ Anh', short: 'Tiếng Anh', iconSrc: '/emoji/f3d/open-book.webp', match: ['/tieng-anh'] },
+  { href: '/tieng-anh', label: 'Phản xạ tiếng Anh', short: 'Tiếng Anh', iconSrc: '/emoji/f3d/open-book.webp', match: ['/tieng-anh'] },
   { href: '/tro-choi', label: 'Game trí tuệ', short: 'Game', icon: 'game', match: ['/tro-choi'] },
   { href: '/co', label: 'Đấu cờ', icon: 'dau-co', match: ['/co'] },
   { href: '/thanh-tich', label: 'Thành tích', icon: 'thanh-tich', match: ['/thanh-tich'] },
