@@ -8,11 +8,13 @@ export interface ReflexMetrics {
   latencyMs: number;       // ΔT_reflex = T1 - T0 (ms)
   speechDurationMs: number;// ΔT_duration = T2 - T1 (ms)
   speedScore: number;      // S_speed (0..100)
-  accuracyScore: number;   // S_acc (0..100)
+  /** S_acc (0..100). null = trình duyệt không nhận dạng được giọng nói → không chấm nội dung. */
+  accuracyScore: number | null;
   fluencyScore: number;    // S_fluency (0..100)
   reflexScore: number;     // RS = 0.5*S_speed + 0.3*S_acc + 0.2*S_fluency
   tier: ReflexTier;
-  heard: string;
+  /** Câu máy nghe được. null = không có nhận dạng giọng nói. */
+  heard: string | null;
 }
 
 export const REFLEX_TIER_META: Record<
@@ -116,18 +118,24 @@ export function evaluateReflexMetrics(params: {
   latencyMs: number;
   speechDurationMs: number;
   expectedText: string;
-  heardText: string;
+  /**
+   * Câu máy nhận dạng được.
+   * - chuỗi (kể cả rỗng ''): đã chạy nhận dạng giọng nói → chấm độ chính xác ('' = 0 điểm).
+   * - null: trình duyệt không hỗ trợ / lỗi mạng → KHÔNG cộng điểm nội dung, chỉ chấm tốc độ + trôi chảy.
+   */
+  heardText: string | null;
   targetLatencyMs?: number;
 }): ReflexMetrics {
   const words = normalizeWords(params.expectedText);
   const targetMs = params.targetLatencyMs ?? (words.length <= 5 ? 800 : words.length <= 9 ? 1000 : 1200);
   const speedScore = computeSpeedScore(params.latencyMs, targetMs, 3000);
-  const accuracyScore = params.heardText.trim()
-    ? computeAccuracyScore(params.expectedText, params.heardText)
-    : 75; // Nếu trình duyệt chỉ bắt được VAD mà không trả transcript thì tính điểm khích lệ
+  const accuracyScore = params.heardText === null ? null : computeAccuracyScore(params.expectedText, params.heardText);
   const fluencyScore = computeFluencyScore(params.speechDurationMs, words.length);
 
-  const reflexScore = Math.round(0.5 * speedScore + 0.3 * accuracyScore + 0.2 * fluencyScore);
+  // Không có điểm nội dung thì chia lại trọng số cho tốc độ + trôi chảy (không tặng điểm ảo).
+  const reflexScore = accuracyScore === null
+    ? Math.round((0.5 * speedScore + 0.2 * fluencyScore) / 0.7)
+    : Math.round(0.5 * speedScore + 0.3 * accuracyScore + 0.2 * fluencyScore);
 
   let tier: ReflexTier = 'HESITANT';
   if (params.latencyMs <= Math.max(850, targetMs) && reflexScore >= 82) {
@@ -137,6 +145,9 @@ export function evaluateReflexMetrics(params: {
   } else if (params.latencyMs <= 2500 && reflexScore >= 50) {
     tier = 'THINKING';
   }
+  // Chưa xác nhận được nội dung → không trao hạng Tia chớp; nói sai phần lớn → tối đa "Đang dịch nhẩm".
+  if (accuracyScore === null && tier === 'LIGHTNING') tier = 'NATURAL';
+  if (accuracyScore !== null && accuracyScore < 50 && (tier === 'LIGHTNING' || tier === 'NATURAL')) tier = 'THINKING';
 
   return {
     latencyMs: Math.max(120, Math.round(params.latencyMs)),
@@ -188,96 +199,128 @@ export async function playRhythmCountIn(beats = 2, bpm = 108): Promise<void> {
 /**
  * Bộ theo dõi VAD (Voice Activity Detection) qua Web Audio API để bắt chính xác mốc T1
  * ngay khi trẻ bắt đầu bật âm vào micro.
+ *
+ * Micro được mở MỘT LẦN (openMic) rồi dùng lại cho nhiều lượt đo (monitor). Nhờ vậy mốc T0
+ * chỉ được ghi khi micro ĐÃ sẵn sàng — thời gian xin quyền / khởi tạo micro không bị cộng
+ * nhầm vào ΔT của trẻ.
  */
-export interface VadSession {
-  stop: () => { latencyMs: number | null; durationMs: number; currentDb: number };
+export interface VadStats { latencyMs: number | null; durationMs: number; currentDb: number }
+export interface VadSession { stop: () => VadStats }
+
+export interface MicHandle {
+  /** Bắt đầu đo một lượt với mốc T0 cho trước (đồng bộ, không chờ). */
+  monitor: (opts: {
+    t0: number;
+    hintTimeoutMs?: number;
+    onSpeechOnset?: (latencyMs: number) => void;
+    /** Gọi mỗi khung hình — chỉ nên ghi thẳng vào DOM, KHÔNG setState. */
+    onLevel?: (levelPercent: number) => void;
+    onHintNeeded?: () => void;
+    /** Gọi một lần khi trẻ đã bật âm rồi im lặng liên tục `endSilenceMs` (mặc định 1400 ms). */
+    onSpeechEnd?: () => void;
+    endSilenceMs?: number;
+  }) => VadSession;
+  close: () => void;
 }
 
-export async function startVadMonitor(opts: {
-  t0: number;
-  hintTimeoutMs?: number;
-  onSpeechOnset?: (latencyMs: number) => void;
-  onVolumeChange?: (levelPercent: number) => void;
-  onHintNeeded?: () => void;
-}): Promise<VadSession | null> {
-  if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) return null;
+const VAD_THRESHOLD_DB = -42; // Ngưỡng dB phát hiện bật âm giọng nói
 
+export async function openMic(): Promise<MicHandle | null> {
+  if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) return null;
+  const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AudioCtx) return null;
+
+  let stream: MediaStream;
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
+    stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
     });
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtx) {
-      stream.getTracks().forEach((t) => t.stop());
-      return null;
-    }
+  } catch {
+    return null;
+  }
 
-    const ctx = new AudioCtx();
-    const source = ctx.createMediaStreamSource(stream);
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 512;
-    source.connect(analyser);
+  const ctx = new AudioCtx();
+  try { await ctx.resume(); } catch { /* Một số trình duyệt tự chạy sẵn */ }
+  const source = ctx.createMediaStreamSource(stream);
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 512;
+  source.connect(analyser);
+  const dataArray = new Float32Array(analyser.fftSize);
+  let closed = false;
+  let stopCurrent: (() => void) | null = null;
 
-    const dataArray = new Float32Array(analyser.fftSize);
-    let stopped = false;
-    let t1: number | null = null;
-    let lastActiveTime: number | null = null;
-    let consecutiveAbove = 0;
-    let lastDb = -100;
-    const vadThresholdDb = -42; // Ngưỡng dB phát hiện bật âm giọng nói
+  const readDb = () => {
+    analyser.getFloatTimeDomainData(dataArray);
+    let sumSquares = 0;
+    for (let i = 0; i < dataArray.length; i++) sumSquares += dataArray[i] * dataArray[i];
+    return 20 * Math.log10(Math.max(Math.sqrt(sumSquares / dataArray.length), 1e-7));
+  };
 
-    const hintTimer = window.setTimeout(() => {
-      if (!stopped && t1 === null) {
-        opts.onHintNeeded?.();
-      }
-    }, opts.hintTimeoutMs ?? 2500);
+  return {
+    monitor: (opts) => {
+      stopCurrent?.(); // Mỗi micro chỉ đo một lượt tại một thời điểm
+      let stopped = false;
+      let t1: number | null = null;
+      let lastActiveTime: number | null = null;
+      let consecutiveAbove = 0;
+      let lastDb = -100;
+      let frame = 0;
+      let endFired = false;
+      const endSilenceMs = opts.endSilenceMs ?? 1400;
 
-    const checkVolume = () => {
-      if (stopped) return;
-      analyser.getFloatTimeDomainData(dataArray);
-      let sumSquares = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        sumSquares += dataArray[i] * dataArray[i];
-      }
-      const rms = Math.sqrt(sumSquares / dataArray.length);
-      const db = 20 * Math.log10(Math.max(rms, 1e-7));
-      lastDb = db;
+      const hintTimer = window.setTimeout(() => {
+        if (!stopped && t1 === null) opts.onHintNeeded?.();
+      }, opts.hintTimeoutMs ?? 2500);
 
-      const levelPercent = Math.max(0, Math.min(100, Math.round(((db + 65) / 50) * 100)));
-      opts.onVolumeChange?.(levelPercent);
-
-      if (db > vadThresholdDb) {
-        consecutiveAbove++;
-        lastActiveTime = performance.now();
-        // Cần ít nhất 2 frame liên tiếp vượt ngưỡng để lọc nhiễu tích tắc
-        if (t1 === null && consecutiveAbove >= 2) {
-          t1 = performance.now();
-          const latency = Math.max(120, Math.round(t1 - opts.t0));
-          window.clearTimeout(hintTimer);
-          opts.onSpeechOnset?.(latency);
+      const tick = () => {
+        if (stopped || closed) return;
+        const db = readDb();
+        lastDb = db;
+        opts.onLevel?.(Math.max(0, Math.min(100, Math.round(((db + 65) / 50) * 100))));
+        if (db > VAD_THRESHOLD_DB) {
+          consecutiveAbove++;
+          lastActiveTime = performance.now();
+          // Cần ít nhất 2 frame liên tiếp vượt ngưỡng để lọc nhiễu tích tắc
+          if (t1 === null && consecutiveAbove >= 2) {
+            t1 = performance.now();
+            window.clearTimeout(hintTimer);
+            opts.onSpeechOnset?.(Math.max(120, Math.round(t1 - opts.t0)));
+          }
+        } else {
+          consecutiveAbove = 0;
+          if (!endFired && t1 !== null && lastActiveTime !== null && performance.now() - lastActiveTime > endSilenceMs) {
+            endFired = true;
+            opts.onSpeechEnd?.();
+            if (stopped) return;
+          }
         }
-      } else {
-        consecutiveAbove = 0;
-      }
+        frame = requestAnimationFrame(tick);
+      };
+      frame = requestAnimationFrame(tick);
 
-      requestAnimationFrame(checkVolume);
-    };
-
-    requestAnimationFrame(checkVolume);
-
-    return {
-      stop: () => {
-        stopped = true;
-        window.clearTimeout(hintTimer);
-        stream.getTracks().forEach((t) => t.stop());
-        void ctx.close().catch(() => {});
+      const stop = (): VadStats => {
+        if (!stopped) {
+          stopped = true;
+          cancelAnimationFrame(frame);
+          window.clearTimeout(hintTimer);
+          opts.onLevel?.(0);
+          if (stopCurrent === stopFn) stopCurrent = null;
+        }
         const latencyMs = t1 !== null ? Math.max(120, Math.round(t1 - opts.t0)) : null;
         const t2 = lastActiveTime ?? performance.now();
         const durationMs = t1 !== null ? Math.max(350, Math.round(t2 - t1)) : 0;
         return { latencyMs, durationMs, currentDb: lastDb };
-      },
-    };
-  } catch {
-    return null;
-  }
+      };
+      const stopFn = () => { stop(); };
+      stopCurrent = stopFn;
+      return { stop };
+    },
+    close: () => {
+      if (closed) return;
+      closed = true;
+      stopCurrent?.();
+      stream.getTracks().forEach((t) => t.stop());
+      void ctx.close().catch(() => {});
+    },
+  };
 }

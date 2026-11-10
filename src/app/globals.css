@@ -9078,16 +9078,32 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
   flex: 1;
 }
 .en-vad-meter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.en-vad-bar {
+  flex: 1 1 140px;
+  min-width: 100px;
   height: 8px;
   border-radius: 999px;
   background: rgba(148, 163, 184, 0.24);
   overflow: hidden;
 }
-.en-vad-bar {
+/* Độ dài thanh do JS ghi thẳng vào transform (không setState theo khung hình) */
+.en-vad-bar i {
+  display: block;
+  width: 100%;
   height: 100%;
-  border-radius: 999px;
+  border-radius: inherit;
   background: linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6);
-  transition: width 70ms linear;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 80ms linear;
+  will-change: transform;
 }
 .en-vad-latency {
   display: flex;

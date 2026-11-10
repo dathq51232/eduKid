@@ -4,35 +4,23 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, Check, ChevronLeft, ChevronRight, Eye, EyeOff, Headphones, Lightbulb, Mic, Music, Play, Square, Volume2, Zap } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import SentenceIllustration from '@/components/english/SentenceIllustration';
+import { ReflexScorecard, VadMeter } from '@/components/english/ReflexWidgets';
+import type { ReflexRound } from '@/components/english/useReflexRound';
 import type { CommunicationQuestion } from '@/lib/english/communicationBank';
 import { analyzeSentenceProsody, toProsodicSentence } from '@/lib/english/prosody';
-import {
-  REFLEX_TIER_META,
-  evaluateReflexMetrics,
-  playRhythmCountIn,
-  startVadMonitor,
-  type ReflexMetrics,
-  type VadSession,
-} from '@/lib/english/reflexEngine';
+import { playRhythmCountIn } from '@/lib/english/reflexEngine';
 
 type Mode = 'listen' | 'shadow' | 'read';
-type RecognitionResultLike = { transcript: string };
-type RecognitionEventLike = Event & { results: ArrayLike<ArrayLike<RecognitionResultLike>> };
-type RecognitionLike = {
-  lang: string;
-  interimResults: boolean;
-  onresult: ((event: RecognitionEventLike) => void) | null;
-  onerror: (() => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-};
-type RecognitionWindow = Window & {
-  SpeechRecognition?: new () => RecognitionLike;
-  webkitSpeechRecognition?: new () => RecognitionLike;
-};
+const SHADOW_TAG = 'shadow';
 
-export default function ShadowingStudio({ questions, initialNumber }: { questions: CommunicationQuestion[]; initialNumber: number }) {
+export default function ShadowingStudio({ questions, initialNumber, reflex, onBeforePlay }: {
+  questions: CommunicationQuestion[];
+  initialNumber: number;
+  /** Lượt đo phản xạ dùng chung của trang (một micro cho cả trang). */
+  reflex: ReflexRound;
+  /** Gọi trước khi phát để trang cha dừng âm thanh khác. */
+  onBeforePlay?: () => void;
+}) {
   const initialIndex = Math.max(0, questions.findIndex((question) => question.number === initialNumber));
   const [index, setIndex] = useState(initialIndex);
   const [mode, setMode] = useState<Mode>('shadow');
@@ -44,26 +32,15 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
   const [practiced, setPracticed] = useState<number[]>([]);
   const [playing, setPlaying] = useState(false);
   const [audioFallback, setAudioFallback] = useState(false);
-  const [echoSeconds, setEchoSeconds] = useState(0);
-  const [echoReady, setEchoReady] = useState(false);
-  const [listening, setListening] = useState(false);
-  const [micLevel, setMicLevel] = useState(0);
-  const [liveLatencyMs, setLiveLatencyMs] = useState<number | null>(null);
-  const [showVisualHint, setShowVisualHint] = useState(false);
-  const [recognitionNote, setRecognitionNote] = useState('');
-  const [reflexMetrics, setReflexMetrics] = useState<ReflexMetrics | null>(null);
 
   const runId = useRef(0);
-  const t0Ref = useRef(0);
-  const onsetRef = useRef<number | null>(null);
-  const vadRef = useRef<VadSession | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const finishSpeechRef = useRef<(() => void) | null>(null);
-  const echoTimerRef = useRef<number | null>(null);
-  const finishEchoRef = useRef<(() => void) | null>(null);
-  const recognitionRef = useRef<RecognitionLike | null>(null);
+  /** Kết thúc ngay lời hứa đang chờ (audio/giọng trình duyệt) khi bị dừng — tránh treo. */
+  const abortPlayRef = useRef<(() => void) | null>(null);
   const supabase = useMemo(() => { try { return createClient(); } catch { return null; } }, []);
   const current = questions[index];
+  const mine = reflex.tag === SHADOW_TAG;
+  const listening = mine && reflex.listening;
 
   const preferredVoice =
     voices.find((voice) => /^en[-_]US$/i.test(voice.lang) && /natural|online/i.test(voice.name) && /aria|ana|jenny|ava|emma/i.test(voice.name)) ??
@@ -85,36 +62,26 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
     } catch { /* Shadowing remains usable when browser storage is unavailable. */ }
     return () => {
       runRef.current++;
-      stopActiveMedia();
+      stopMedia();
       window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices);
     };
   }, [questions]);
 
-  function stopActiveMedia() {
+  function stopMedia() {
     const audio = audioRef.current;
     audioRef.current = null;
     if (audio) { audio.pause(); audio.currentTime = 0; }
     window.speechSynthesis?.cancel();
-    finishSpeechRef.current?.();
-    finishSpeechRef.current = null;
-    if (echoTimerRef.current !== null) window.clearInterval(echoTimerRef.current);
-    echoTimerRef.current = null;
-    finishEchoRef.current?.();
-    finishEchoRef.current = null;
-    vadRef.current?.stop();
-    vadRef.current = null;
-    recognitionRef.current?.stop();
-    recognitionRef.current = null;
-    setMicLevel(0);
+    const abort = abortPlayRef.current;
+    abortPlayRef.current = null;
+    abort?.();
   }
 
   function stop() {
     runId.current++;
-    stopActiveMedia();
+    stopMedia();
+    reflex.cancel();
     setPlaying(false);
-    setListening(false);
-    setEchoSeconds(0);
-    setEchoReady(false);
     setActiveWord(-1);
   }
 
@@ -123,27 +90,25 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
       const audio = new Audio(url);
       audio.playbackRate = rate;
       audioRef.current = audio;
+      let settled = false;
+      const done = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        if (audioRef.current === audio) audioRef.current = null;
+        if (abortPlayRef.current === abort) abortPlayRef.current = null;
+        resolve(ok);
+      };
+      const abort = () => done(false);
+      abortPlayRef.current = abort;
       audio.ontimeupdate = () => {
         if (runId.current !== run) return;
         if (!audio.duration || !Number.isFinite(audio.duration) || !wordsInQuestion.length) return;
-        const spokenWord = Math.min(
-          wordsInQuestion.length - 1,
-          Math.floor((audio.currentTime / audio.duration) * wordsInQuestion.length),
-        );
-        setActiveWord(spokenWord);
+        // React bỏ qua giá trị trùng → chỉ vẽ lại khi sang từ mới.
+        setActiveWord(Math.min(wordsInQuestion.length - 1, Math.floor((audio.currentTime / audio.duration) * wordsInQuestion.length)));
       };
-      audio.onended = () => {
-        if (audioRef.current === audio) audioRef.current = null;
-        resolve(true);
-      };
-      audio.onerror = () => {
-        if (audioRef.current === audio) audioRef.current = null;
-        resolve(false);
-      };
-      audio.play().catch(() => {
-        if (audioRef.current === audio) audioRef.current = null;
-        resolve(false);
-      });
+      audio.onended = () => done(true);
+      audio.onerror = () => done(false);
+      audio.play().catch(() => done(false));
     });
   }
 
@@ -152,7 +117,15 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
       if (!('speechSynthesis' in window)) { resolve(); return; }
       const prosodicText = toProsodicSentence(question);
       const utterance = new SpeechSynthesisUtterance(prosodicText);
-      finishSpeechRef.current = resolve;
+      let settled = false;
+      const done = () => {
+        if (settled) return;
+        settled = true;
+        if (abortPlayRef.current === done) abortPlayRef.current = null;
+        setActiveWord(-1);
+        resolve();
+      };
+      abortPlayRef.current = done;
       utterance.lang = 'en-US';
       utterance.rate = rate;
       utterance.pitch = 1.04;
@@ -160,11 +133,10 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
       utterance.onboundary = (event) => {
         if (runId.current !== run) return;
         const before = prosodicText.slice(0, event.charIndex).trim();
-        const chunkWord = before ? before.split(/\s+/).length : 0;
-        setActiveWord(chunkWord);
+        setActiveWord(before ? before.split(/\s+/).length : 0);
       };
-      utterance.onend = () => { finishSpeechRef.current = null; setActiveWord(-1); resolve(); };
-      utterance.onerror = () => { finishSpeechRef.current = null; setActiveWord(-1); resolve(); };
+      utterance.onend = done;
+      utterance.onerror = done;
       window.speechSynthesis.speak(utterance);
     });
   }
@@ -182,176 +154,67 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
       const { data } = supabase.storage.from('english-shadowing-audio').getPublicUrl(`${question.storyId}/${clipName}`);
       const ok = await playAudioUrl(data.publicUrl, wordsInQuestion, run);
       if (runId.current !== run) return;
-      if (ok) {
-        setAudioFallback(false);
-        setActiveWord(-1);
-        return;
-      }
+      if (ok) { setAudioFallback(false); setActiveWord(-1); return; }
     }
 
     const prosodicText = toProsodicSentence(question);
     const ttsOk = await playAudioUrl(`/api/tts?lang=en&q=${encodeURIComponent(prosodicText)}`, wordsInQuestion, run);
     if (runId.current !== run) return;
-    if (ttsOk) {
-      setAudioFallback(false);
-      setActiveWord(-1);
-      return;
-    }
+    if (ttsOk) { setAudioFallback(false); setActiveWord(-1); return; }
 
     setAudioFallback(true);
     await speakBrowserFallback(question, run);
   }
 
-  async function startReflexCapture(question: CommunicationQuestion, isAutoAfterPrompt = false) {
-    if (!current) return;
-    vadRef.current?.stop();
-    vadRef.current = null;
-    recognitionRef.current?.stop();
-    recognitionRef.current = null;
-
-    setReflexMetrics(null);
-    setRecognitionNote('');
-    setShowVisualHint(false);
-    setLiveLatencyMs(null);
-    onsetRef.current = null;
-
-    if (beatEnabled && !isAutoAfterPrompt) {
-      await playRhythmCountIn(2, 112);
-    }
-
-    const t0 = performance.now();
-    t0Ref.current = t0;
-    setListening(true);
-    setEchoReady(true);
-
-    // 1. Khởi chạy VAD (Web Audio API) để bắt chính xác mốc T1 khi trẻ bật âm đầu tiên
-    const vad = await startVadMonitor({
-      t0,
-      hintTimeoutMs: 2500,
-      onSpeechOnset: (lat) => {
-        onsetRef.current = lat;
-        setLiveLatencyMs(lat);
-      },
-      onVolumeChange: (pct) => setMicLevel(pct),
-      onHintNeeded: () => setShowVisualHint(true),
+  function markPracticed(number: number, storyId: string) {
+    setPracticed((prev) => {
+      if (prev.includes(number)) return prev;
+      const next = [...prev, number];
+      try { localStorage.setItem(`educhain-shadow-v1:${storyId}`, JSON.stringify(next)); } catch { /* Keep progress for this visit. */ }
+      return next;
     });
-    vadRef.current = vad;
-
-    // 2. Khởi chạy SpeechRecognition song song để chấm điểm độ chính xác nội dung (S_acc)
-    const recognitionConstructor =
-      (window as RecognitionWindow).SpeechRecognition ?? (window as RecognitionWindow).webkitSpeechRecognition;
-
-    if (!recognitionConstructor) {
-      setRecognitionNote('Đang đo tốc độ bật âm qua Micro (VAD). Nhấn "Chấm điểm phản xạ" khi em đọc xong nhé!');
-      return;
-    }
-
-    let heardTranscript = '';
-    const recognition = new recognitionConstructor();
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-    recognition.onresult = (event) => {
-      heardTranscript = event.results[event.results.length - 1]?.[0]?.transcript ?? '';
-      const vadStats = vadRef.current?.stop();
-      vadRef.current = null;
-      const latencyMs = onsetRef.current ?? vadStats?.latencyMs ?? Math.round(performance.now() - t0Ref.current);
-      const speechDurationMs = vadStats?.durationMs || Math.max(800, Math.round(performance.now() - t0Ref.current - latencyMs));
-      const metrics = evaluateReflexMetrics({
-        latencyMs,
-        speechDurationMs,
-        expectedText: question.sentence,
-        heardText: heardTranscript,
-      });
-      setReflexMetrics(metrics);
-      if (metrics.reflexScore >= 70) markPracticed();
-    };
-    recognition.onerror = () => {
-      const vadStats = vadRef.current?.stop();
-      vadRef.current = null;
-      if (vadStats?.latencyMs) {
-        const metrics = evaluateReflexMetrics({
-          latencyMs: vadStats.latencyMs,
-          speechDurationMs: vadStats.durationMs,
-          expectedText: question.sentence,
-          heardText: '',
-        });
-        setReflexMetrics(metrics);
-      } else {
-        setRecognitionNote('Chưa nhận được giọng nói. Em hãy đọc to hơn một chút nhé!');
-      }
-    };
-    recognition.onend = () => {
-      if (vadRef.current) {
-        const vadStats = vadRef.current.stop();
-        vadRef.current = null;
-        if (!heardTranscript && vadStats.latencyMs) {
-          const metrics = evaluateReflexMetrics({
-            latencyMs: vadStats.latencyMs,
-            speechDurationMs: vadStats.durationMs,
-            expectedText: question.sentence,
-            heardText: '',
-          });
-          setReflexMetrics(metrics);
-        }
-      }
-      setListening(false);
-      setMicLevel(0);
-      recognitionRef.current = null;
-    };
-    recognitionRef.current = recognition;
-    try {
-      recognition.start();
-    } catch {
-      setListening(false);
-      setRecognitionNote('Không thể bật micro lúc này. Em thử bấm "Đo phản xạ nói" nhé.');
-    }
   }
 
-  function finishManualVadCapture() {
-    if (!current) return;
-    const vadStats = vadRef.current?.stop();
-    vadRef.current = null;
-    recognitionRef.current?.stop();
-    recognitionRef.current = null;
-    setListening(false);
-    setMicLevel(0);
-    const latencyMs = onsetRef.current ?? vadStats?.latencyMs ?? 1200;
-    const durationMs = vadStats?.durationMs || 1400;
-    const metrics = evaluateReflexMetrics({
-      latencyMs,
-      speechDurationMs: durationMs,
-      expectedText: current.sentence,
-      heardText: '',
+  /** Đo phản xạ: micro mở sẵn → (giọng mẫu / nhịp phách) → T0 → chờ em bật âm (T1). */
+  function startReflexCapture(question: CommunicationQuestion, withModel: boolean) {
+    onBeforePlay?.();
+    stopMedia();
+    const run = ++runId.current;
+    setPlaying(false);
+    void reflex.start({
+      tag: SHADOW_TAG,
+      expected: question.sentence,
+      before: async () => {
+        if (withModel) {
+          setPlaying(true);
+          await playQuestion(question, run);
+          if (runId.current !== run) return false;
+          setPlaying(false);
+        } else if (beatEnabled) {
+          await playRhythmCountIn(2, 112);
+        }
+        return runId.current === run;
+      },
+      onScored: (metrics) => { if (metrics.reflexScore >= 70) markPracticed(question.number, question.storyId); },
     });
-    setReflexMetrics(metrics);
   }
 
   async function playCurrent() {
     if (!current) return;
-    stopActiveMedia();
-    const run = ++runId.current;
-    setEchoSeconds(0);
-    setEchoReady(false);
-    setReflexMetrics(null);
-    setRecognitionNote('');
-    setShowVisualHint(false);
-    setLiveLatencyMs(null);
+    if (mode === 'shadow') { startReflexCapture(current, true); return; }
+    onBeforePlay?.();
+    stop();
+    const run = runId.current;
     setPlaying(true);
     await playQuestion(current, run);
-    if (runId.current !== run) return;
-    setPlaying(false);
-    // Ngay khi câu mẫu vừa dứt (T0), tự động kích hoạt đo phản xạ VAD + ASR ở chế độ Shadowing
-    if (mode === 'shadow') {
-      await startReflexCapture(current, true);
-    }
+    if (runId.current === run) setPlaying(false);
   }
 
   async function playStory() {
     if (!questions.length) return;
-    stopActiveMedia();
-    const run = ++runId.current;
-    setEchoSeconds(0);
-    setEchoReady(false);
+    onBeforePlay?.();
+    stop();
+    const run = runId.current;
     setPlaying(true);
     const start = index;
     const end = Math.min(start + 10, questions.length);
@@ -368,19 +231,9 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
 
   function chooseSentence(next: number) {
     stop();
+    reflex.reset();
     setIndex((next + questions.length) % questions.length);
     setShowText(false);
-    setReflexMetrics(null);
-    setRecognitionNote('');
-    setShowVisualHint(false);
-    setLiveLatencyMs(null);
-  }
-
-  function markPracticed() {
-    if (!current || practiced.includes(current.number)) return;
-    const next = [...practiced, current.number];
-    setPracticed(next);
-    try { localStorage.setItem(`educhain-shadow-v1:${current.storyId}`, JSON.stringify(next)); } catch { /* Keep progress for this visit. */ }
   }
 
   if (!current) return null;
@@ -465,26 +318,20 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
     </article>}
 
     {mode === 'shadow' && (
-      <section className={`en-shadow-echo${listening || echoReady ? ' is-ready' : ''}`} aria-live="polite">
+      <section className={`en-shadow-echo${mine && reflex.busy ? ' is-ready' : ''}`} aria-live="polite">
         <Headphones size={20}/>
         <div className="en-vad-body">
           <b>
             {listening
-              ? liveLatencyMs !== null
-                ? `⚡ Đã bắt được âm đầu tiên (T1 − T0 = ${liveLatencyMs} ms)! Hãy nói hết câu…`
-                : '🎙️ Micro VAD đang lắng nghe (T0 đã bắt đầu)… Em hãy bật tiếng ngay!'
-              : echoSeconds > 0
-                ? `Đến lượt em nói sau ${echoSeconds} giây…`
+              ? reflex.liveLatency !== null
+                ? `⚡ Đã bắt được âm đầu tiên (T1 − T0 = ${reflex.liveLatency} ms)! Hãy nói hết câu…`
+                : '🎙️ Micro đang lắng nghe (T0 đã bắt đầu)… Em hãy bật tiếng ngay!'
+              : mine && reflex.status === 'preparing'
+                ? playing ? '🔊 Nghe giọng mẫu… nói ngay khi giọng mẫu dứt!' : '⏳ Đang chuẩn bị micro…'
                 : 'Bấm "Nghe mẫu & Bật phản xạ nói" hoặc bấm trực tiếp nút Micro bên phải'}
           </b>
-          {listening && (
-            <div className="en-vad-meter" aria-label="Cường độ âm thanh micro">
-              <span>Âm lượng Micro (VAD):</span>
-              <div className="en-vad-bar"><i style={{ width: `${micLevel}%` }} /></div>
-              {liveLatencyMs !== null && <strong className="en-vad-latency">ΔT: {liveLatencyMs} ms</strong>}
-            </div>
-          )}
-          {showVisualHint && (
+          {listening && <VadMeter reflex={reflex} label="Âm lượng Micro (VAD):" />}
+          {mine && reflex.hintVisible && (
             <div className="en-visual-hint" role="status">
               <Lightbulb size={16} />
               <span>
@@ -494,50 +341,20 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
           )}
         </div>
         {listening ? (
-          <button type="button" className="en-vad-stop" onClick={finishManualVadCapture}>
+          <button type="button" className="en-vad-stop" onClick={reflex.finish} disabled={reflex.status === 'scoring'}>
             <Square size={15}/> Chấm điểm
           </button>
         ) : (
-          <button type="button" onClick={() => void startReflexCapture(current, false)}>
+          <button type="button" onClick={() => startReflexCapture(current, false)} disabled={mine && reflex.busy}>
             <Mic size={17}/> Đo phản xạ nói
           </button>
         )}
       </section>
     )}
 
-    {mode === 'shadow' && reflexMetrics && (
-      <div className={`en-reflex-scorecard is-${REFLEX_TIER_META[reflexMetrics.tier].color}`} role="status">
-        <div className="en-rs-header">
-          <span className="en-rs-badge">
-            {REFLEX_TIER_META[reflexMetrics.tier].badge} {REFLEX_TIER_META[reflexMetrics.tier].label} · {REFLEX_TIER_META[reflexMetrics.tier].vi}
-          </span>
-          <strong className="en-rs-total">Reflex Score: {reflexMetrics.reflexScore}/100</strong>
-        </div>
-        <div className="en-rs-metrics">
-          <div className="en-rs-metric">
-            <small>Độ trễ bật âm (ΔT = T1 − T0)</small>
-            <b>{reflexMetrics.latencyMs} ms</b>
-            <span>Điểm tốc độ (50%): {reflexMetrics.speedScore}/100</span>
-          </div>
-          <div className="en-rs-metric">
-            <small>Độ chính xác nội dung (ASR)</small>
-            <b>{reflexMetrics.accuracyScore}%</b>
-            <span>Trọng số (30%): {reflexMetrics.accuracyScore}/100</span>
-          </div>
-          <div className="en-rs-metric">
-            <small>Độ trôi chảy cơ miệng (Fluency)</small>
-            <b>{(reflexMetrics.speechDurationMs / 1000).toFixed(1)}s</b>
-            <span>Trọng số (20%): {reflexMetrics.fluencyScore}/100</span>
-          </div>
-        </div>
-        <p className="en-rs-tip">
-          {REFLEX_TIER_META[reflexMetrics.tier].tip}
-          {reflexMetrics.heard && <> · Máy nghe được: <em>“{reflexMetrics.heard}”</em></>}
-        </p>
-      </div>
-    )}
+    {mode === 'shadow' && mine && reflex.metrics && <ReflexScorecard metrics={reflex.metrics} showExp={false} showHeard />}
 
-    {recognitionNote && <p className="en-shadow-audio-note">{recognitionNote}</p>}
+    {mine && reflex.note && <p className="en-shadow-audio-note">{reflex.note}</p>}
 
     {mode === 'read' && <div className="en-shadow-story-list" aria-label="Văn bản câu chuyện">
       {questions.map((question, i) => <button type="button" key={question.number} className={i === index ? 'is-current' : ''} onClick={() => { chooseSentence(i); setMode('read'); }}>
@@ -550,7 +367,7 @@ export default function ShadowingStudio({ questions, initialNumber }: { question
     <footer className="en-shadow-footer">
       <button type="button" onClick={() => chooseSentence(index - 1)} disabled={index === 0}><ChevronLeft size={18}/> Câu trước</button>
       <span>{index + 1} / {questions.length}</span>
-      {mode === 'shadow' && <button type="button" className={current && practiced.includes(current.number) ? 'is-done' : ''} onClick={markPracticed} disabled={practiced.includes(current.number)}><Check size={17}/> {practiced.includes(current.number) ? 'Đã luyện' : 'Đánh dấu hoàn thành'}</button>}
+      {mode === 'shadow' && <button type="button" className={current && practiced.includes(current.number) ? 'is-done' : ''} onClick={() => markPracticed(current.number, current.storyId)} disabled={practiced.includes(current.number)}><Check size={17}/> {practiced.includes(current.number) ? 'Đã luyện' : 'Đánh dấu hoàn thành'}</button>}
       {mode !== 'shadow' && <button type="button" className="en-shadow-next" onClick={() => chooseSentence(index + 1)}>Câu tiếp <ChevronRight size={18}/></button>}
       {mode === 'shadow' && index < questions.length - 1 && <button type="button" className="en-shadow-next" onClick={() => chooseSentence(index + 1)}>Câu tiếp <ChevronRight size={18}/></button>}
     </footer>
