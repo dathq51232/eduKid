@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { AlertTriangle, ArrowLeft, FileText, Send, Users } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, FileText, Send, Target, Users } from 'lucide-react';
 import { SUBJECT_NAME } from '@/lib/classroom/assignments';
 import type { computeGaps } from '@/lib/classroom/gaps';
 import { compareViName } from '@/lib/classroom/names';
@@ -73,6 +73,34 @@ export default function GapsView({ id, c, students, days, g, failed }: {
             </ol>
           )}
         </section>
+
+        {g.traps.length > 0 && (
+          <section className="dash-section" aria-label="Bẫy lớp hay mắc">
+            <h2><Target aria-hidden="true" /> Bẫy lớp hay mắc · Chuyên đề nâng cao</h2>
+            <p className="dash-muted">Khi em trả lời sai, app so đáp án của em với các lỗi sai thường gặp của dạng toán (quên cộng 1, lấy nhầm đại lượng…). Tỉ lệ là phần các câu sai rơi đúng vào bẫy đó.</p>
+            <ol className="gap-list">
+              {g.traps.map((t) => {
+                const ids = t.students.map((s) => s.id);
+                return (
+                  <li key={t.key} className="gap-card is-mid">
+                    <div className="gap-rate"><strong>{pct(t.n / Math.max(t.wrong, t.n))}</strong><span>câu sai</span></div>
+                    <div className="gap-body">
+                      <h3>“{t.why.charAt(0).toUpperCase() + t.why.slice(1)}”</h3>
+                      <p className="gap-lesson">{t.lessonTitle}</p>
+                      <p className="dash-muted">{t.n} lần mắc · {t.students.length} em</p>
+                      <p className="gap-weak"><Users aria-hidden="true" /> {t.students.slice(0, 10).map((s) => `${s.name} (${s.n})`).join(', ')}{t.students.length > 10 ? '…' : ''}</p>
+                      <div className="comments-actions no-print">
+                        <Link className="btn btn-primary btn-sm" href={`/giao-vien/lop/${id}/giao-bai?lesson=${encodeURIComponent(t.lessonCode)}&hs=${ids.join(',')}`}>
+                          <Send aria-hidden="true" /> Giao bài ôn cho {ids.length} em
+                        </Link>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        )}
 
         <section className="dash-section" aria-label="Từng học sinh">
           <h2><Users aria-hidden="true" /> Từng học sinh ({days} ngày)</h2>

@@ -1,5 +1,6 @@
 // Bộ sinh câu luyện tập lớp 2 (tách riêng để trang học chỉ tải đúng khối của em).
 import { entry, type AnyPool, type Entry } from './core';
+import { advancedEntries } from './advanced/lessons';
 import { TOAN2_HK1, TOAN2_HK2 } from '../content/toan2';
 import { T2_LESSONS, t2Id } from '../content/toan2-plan';
 import { t2Context, t2Pool } from './toan2';
@@ -15,4 +16,6 @@ export const ENTRIES_G2: Entry[] = [
   ...TV2_WEEKS.map((w) => entry([...TV2_HK1, ...TV2_HK2].find((l) => l.id === `tv2-kntt-t${String(w.week).padStart(2, '0')}`), () => tv2Ctx(w.week), TV2G_POOL as unknown as AnyPool, 2100 + w.week)),
   // Tiếng Anh 2 — Unit 1–16, Fun time 1–4, Review 1–4
   ...TA2_SPECS.map((sp) => entry([...TA2_HK1, ...TA2_HK2].find((l) => l.id === sp.id), () => ta2SpecCtx(sp), TA2G_POOL as unknown as AnyPool, sp.sortNo)),
+  // Chuyên đề nâng cao
+  ...advancedEntries(2),
 ];

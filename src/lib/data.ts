@@ -8,6 +8,7 @@
 import { demoLessons, demoQuestions, SUBJECTS } from './demo-data';
 import { shuffle } from './shuffle';
 import { gradeLocal } from './grading';
+import { trapNote } from './practice/advanced/engine';
 import { generateOne, generatePractice, isPracticeId, newSeed, practiceLesson, questionById, signature, PER_LEVEL, type GeneratedQuestion } from './practice/core';
 import { buildSet, coreSig, eligiblePool, generatorFor, type Avoid, type Muc } from './sets';
 import { readSetEntry, saveSetEntry } from './set-history';
@@ -195,10 +196,12 @@ export async function gradeAnswer(
     const gq = questionById(questionId);
     if (!gq) return { correct: false };
     if (answer === null) return { correct: false, explanation: gq.explanation, solution: gq.solution };
-    return { correct: gradeLocal(gq.type, answer, gq.key), explanation: gq.explanation, solution: gq.solution };
+    const ok = gradeLocal(gq.type, answer, gq.key);
+    return { correct: ok, explanation: ok ? gq.explanation : trapNote(gq.traps, answer, gq.explanation), solution: gq.solution };
   }
   const q = demoQuestions().find((item) => item.id === questionId);
   if (!q) return { correct: false };
   if (answer === null) return { correct: false, explanation: q.explanation, solution: q.solution }; // hết giờ
-  return { correct: gradeLocal(q.type, answer, q.answerKey), explanation: q.explanation, solution: q.solution };
+  const ok = gradeLocal(q.type, answer, q.answerKey);
+  return { correct: ok, explanation: ok ? q.explanation : trapNote(q.traps, answer, q.explanation), solution: q.solution };
 }

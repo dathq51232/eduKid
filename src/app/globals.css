@@ -8387,6 +8387,14 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
   margin-bottom: 4px;
 }
 .solution-speak-btn { flex: none; }
+/* Lời giải mở từng bước (SolutionSteps) */
+.solution-steps { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.solution-step { display: flex; align-items: flex-start; gap: 10px; font-size: 19px; line-height: 1.6; animation: solution-step-in .28s ease-out both; }
+.solution-step-no { flex: none; display: inline-grid; place-items: center; width: 28px; height: 28px; margin-top: 2px; border-radius: 50%; background: #f59e0b; color: #fff; font-size: 15px; font-weight: 800; }
+.solution-steps-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+.solution-steps-hint { flex: 1 1 100%; margin: 0; font-size: 15px; color: var(--muted, #6b7280); }
+@keyframes solution-step-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .solution-step { animation: none; } }
 
 .parent-auth-modes {
   display: grid;

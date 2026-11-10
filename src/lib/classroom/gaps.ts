@@ -7,9 +7,9 @@ import type { SubjectCode } from '../types';
 
 export type ResultRow = {
   student_id: string; lesson_code: string; lesson_title: string | null; subject_code: string | null;
-  score: number; total: number; answers: { q: string; ok: boolean }[] | null; created_at: string;
+  score: number; total: number; answers: { q: string; ok: boolean; t?: number }[] | null; created_at: string;
 };
-type Meta = { form: string; outcome: string };
+type Meta = { form: string; outcome: string; traps?: { v: string; why: string }[] };
 
 const metaCache = new Map<string, Meta | null>();
 /** Dạng bài + mục tiêu của một câu theo mã câu (câu sinh tự động: sinh lại từ mã; câu soạn sẵn: tra theo số thứ tự) */
@@ -18,11 +18,11 @@ export function questionMeta(qid: string): Meta | null {
   let meta: Meta | null = null;
   if (qid.startsWith('lt-')) {
     const g = questionById(qid);
-    if (g) meta = { form: g.form, outcome: g.outcome };
+    if (g) meta = { form: g.form, outcome: g.outcome, traps: g.traps };
   } else {
     const m = /^(.+)-q(\d+)$/.exec(qid);
     const q = m ? CONTENT.find((l) => l.id === m[1])?.questions[Number(m[2]) - 1] : undefined;
-    if (q) meta = { form: q.form, outcome: q.outcome };
+    if (q) meta = { form: q.form, outcome: q.outcome, traps: q.traps };
   }
   if (metaCache.size > 50_000) metaCache.clear();
   metaCache.set(qid, meta);
@@ -35,12 +35,14 @@ export type Gap = {
   n: number; ok: number; rate: number; studentCount: number; weak: { id: string; name: string; n: number; ok: number }[];
 };
 export type StudentStat = { id: string; name: string; n: number; ok: number; rate: number | null; lessons: number; lastAt: string | null };
+/** Bẫy (lỗi sai thường gặp) lớp hay mắc ở các chuyên đề nâng cao: gom theo bài + kiểu bẫy (bỏ số cụ thể của từng đề) */
+export type TrapStat = { key: string; lessonCode: string; lessonTitle: string; why: string; n: number; wrong: number; students: { id: string; name: string; n: number }[] };
 export type SubjectStat = { subject: SubjectCode; n: number; ok: number; rate: number; students: number };
 
 const SUBJECTS: SubjectCode[] = ['toan', 'tieng-viet', 'tieng-anh'];
 const asSubject = (s: string | null | undefined): SubjectCode | null => (SUBJECTS.includes(s as SubjectCode) ? (s as SubjectCode) : null);
 
-export function computeGaps(rows: ResultRow[], students: StudentRef[], opts: { minAnswers?: number; maxGaps?: number } = {}) {
+export function computeGaps(rows: ResultRow[], students: StudentRef[], opts: { minAnswers?: number; maxGaps?: number; maxTraps?: number } = {}) {
   const minAnswers = opts.minAnswers ?? 6;
   const names = new Map(students.map((s) => [s.id, s.name]));
   const lessonInfo = new Map(CONTENT.map((l) => [l.id, l]));
@@ -48,6 +50,8 @@ export function computeGaps(rows: ResultRow[], students: StudentRef[], opts: { m
   const skills = new Map<string, Acc>();
   const perStudent = new Map<string, { n: number; ok: number; lessons: Set<string>; lastAt: string | null }>();
   const perSubject = new Map<SubjectCode, { n: number; ok: number; students: Set<string> }>();
+  const traps = new Map<string, { lessonCode: string; title: string; why: string; raws: Set<string>; n: number; per: Map<string, number> }>();
+  const wrongWithTraps = new Map<string, number>(); // số câu sai (ở câu có bẫy) theo bài
 
   for (const r of rows) {
     if (!names.has(r.student_id)) continue;
@@ -67,6 +71,20 @@ export function computeGaps(rows: ResultRow[], students: StudentRef[], opts: { m
       }
       const meta = questionMeta(a.q);
       if (!meta || !subject) continue;
+      if (!a.ok && meta.traps?.length) {
+        wrongWithTraps.set(r.lesson_code, (wrongWithTraps.get(r.lesson_code) ?? 0) + 1);
+        const tr = typeof a.t === 'number' ? meta.traps[a.t] : undefined;
+        if (tr) {
+          // cùng kiểu bẫy nhưng mỗi đề một số ("quên cộng 99 trang đầu") → gộp lại, hiện "…" thay cho số
+          const why = tr.why.replace(/\d+/g, '…');
+          const tk = `${r.lesson_code}|${why}`;
+          const acc = traps.get(tk) ?? { lessonCode: r.lesson_code, title: lesson?.title ?? r.lesson_title ?? r.lesson_code, why, raws: new Set<string>(), n: 0, per: new Map<string, number>() };
+          acc.n++;
+          acc.raws.add(tr.why);
+          acc.per.set(r.student_id, (acc.per.get(r.student_id) ?? 0) + 1);
+          traps.set(tk, acc);
+        }
+      }
       const key = `${r.lesson_code}|${meta.form}`;
       const acc = skills.get(key) ?? { lessonCode: r.lesson_code, subject, form: meta.form, outcome: meta.outcome, title: lesson?.title ?? r.lesson_title ?? r.lesson_code, n: 0, ok: 0, per: new Map() };
       acc.n++; if (a.ok) acc.ok++;
@@ -99,5 +117,13 @@ export function computeGaps(rows: ResultRow[], students: StudentRef[], opts: { m
     const v = perSubject.get(s)!;
     return { subject: s, n: v.n, ok: v.ok, rate: v.ok / v.n, students: v.students.size };
   });
-  return { gaps, students: studentStats, subjects, answers: studentStats.reduce((a, s) => a + s.n, 0) };
+  const trapStats: TrapStat[] = [...traps.entries()]
+    .map(([key, t]) => ({
+      key, lessonCode: t.lessonCode, lessonTitle: t.title, why: t.raws.size === 1 ? [...t.raws][0] : t.why, n: t.n, wrong: wrongWithTraps.get(t.lessonCode) ?? t.n,
+      students: [...t.per.entries()].map(([id, n]) => ({ id, name: names.get(id) ?? '', n })).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, 'vi')),
+    }))
+    .filter((t) => t.n >= 2)
+    .sort((a, b) => b.n - a.n || b.students.length - a.students.length)
+    .slice(0, opts.maxTraps ?? 8);
+  return { gaps, traps: trapStats, students: studentStats, subjects, answers: studentStats.reduce((a, s) => a + s.n, 0) };
 }

@@ -26,6 +26,7 @@ import VoiceHelp from '@/components/VoiceHelp';
 import Confetti from '@/components/learn/Confetti';
 import LessonDecor from '@/components/learn/LessonDecor';
 import MiloTrail from '@/components/learn/MiloTrail';
+import SolutionSteps from '@/components/learn/SolutionSteps';
 import { awardSticker, prefersReducedMotion, readFx, saveFx } from '@/lib/stickers';
 import { SUBJECT_MASCOT } from '@/lib/mascots';
 import { getLesson, getQuestionSet, getReplacement, gradeAnswer, isSubjectCode, parseGrade } from '@/lib/data';
@@ -806,7 +807,7 @@ function LamBaiContent() {
                   <MiloMascot variant="professor" size={56} />
                   <div>
                     <h2><Lightbulb size={20} aria-hidden="true" /> Milo giải thích cho em:</h2>
-                    <p className="solution-text"><EmojiText text={item.solution} /></p>
+                    <SolutionSteps key={q.id} text={item.solution} />
                   </div>
                 </div>
                 <button

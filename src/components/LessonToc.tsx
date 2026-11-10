@@ -19,6 +19,8 @@ export function lessonBadge(title: string, fallback: number): [string, string] {
   if (m) return [`R${m[1]}`, m[2]];
   m = title.match(/^Đề ôn\s+(\d+)/);
   if (m) return [`Ô${m[1]}`, title];
+  m = title.match(/^Chuyên đề\s+(\d+)\.\s*(.*)$/); // Chuyên đề nâng cao: NC1, NC2…
+  if (m) return [`NC${m[1]}`, m[2]];
   return [String(fallback), title];
 }
 

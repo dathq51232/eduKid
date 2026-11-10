@@ -35,6 +35,7 @@ type DemoQuestion = Question & {
   answerKey: AnswerKey;
   explanation: string;
   solution?: string;
+  traps?: { v: string; why: string }[]; // chuyên đề nâng cao: đáp án "bẫy"
 };
 
 function toQuestions(): DemoQuestion[] {
@@ -55,6 +56,7 @@ function toQuestions(): DemoQuestion[] {
       answerKey: q.key,
       explanation: q.explanation,
       solution: q.solution,
+      ...(q.traps ? { traps: q.traps } : {}),
     };
   }),
 );

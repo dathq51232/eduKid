@@ -148,9 +148,10 @@ import { TOAN2_KNOWLEDGE } from './knowledge2';
 import { TOAN3_KNOWLEDGE } from './knowledge3';
 import { TOAN4_KNOWLEDGE } from './knowledge4';
 import { TOAN5_KNOWLEDGE } from './knowledge5';
+import { ADV_KNOWLEDGE } from './knowledge-nc';
 
 /** Kiến thức cần nhớ của mọi lớp (thêm lớp mới: gộp thêm map của lớp đó) */
-export const KNOWLEDGE: Record<string, Knowledge> = { ...TOAN1_KNOWLEDGE, ...TOAN2_KNOWLEDGE, ...TOAN3_KNOWLEDGE, ...TOAN4_KNOWLEDGE, ...TOAN5_KNOWLEDGE };
+export const KNOWLEDGE: Record<string, Knowledge> = { ...TOAN1_KNOWLEDGE, ...TOAN2_KNOWLEDGE, ...TOAN3_KNOWLEDGE, ...TOAN4_KNOWLEDGE, ...TOAN5_KNOWLEDGE, ...ADV_KNOWLEDGE };
 
 export function knowledgeFor(lessonId: string): Knowledge | undefined {
   return KNOWLEDGE[lessonId.replace(/^lt-/, '')];

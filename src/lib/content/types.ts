@@ -20,6 +20,8 @@ export type ContentQuestion = {
   outcome: string; // mã YCCĐ (src/lib/curriculum/grade1.ts)
   form: string; // mã dạng bài
   skill?: string;
+  /** đáp án "bẫy" (lỗi sai thường gặp) của chuyên đề nâng cao — để nhận ra em mắc bẫy nào */
+  traps?: { v: string; why: string }[];
 };
 
 // Phạm vi kiến thức của bài — dùng để kiểm tra tự động "không vượt trước".

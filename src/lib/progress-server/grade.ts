@@ -5,6 +5,7 @@ import { getLesson } from '@/lib/data';
 import { gradeLocal } from '@/lib/grading';
 import { lessonBonus, questionPoints } from '@/lib/levels';
 import { isPracticeId, questionById } from '@/lib/practice';
+import { matchTrap } from '@/lib/practice/advanced/engine';
 import { eligiblePool, generatorFor } from '@/lib/sets';
 import type { AnswerValue } from '@/lib/types';
 
@@ -20,7 +21,8 @@ export type GradedLesson = {
   total: number;
   points: number;
   durationMs: number;
-  answers: { q: string; ok: boolean; ms: number }[];
+  /** t: chỉ số đáp án "bẫy" em đã chọn/điền (chỉ có ở câu có bẫy, khi trả lời sai) */
+  answers: { q: string; ok: boolean; ms: number; t?: number }[];
 };
 
 const MIN_MS = 1500; // nhanh hơn mức này coi như bấm bừa: vẫn tính đúng/sai nhưng không có thưởng nhanh
@@ -51,15 +53,16 @@ export function gradeLessonSubmission(lessonId: string, submitted: SubmittedAnsw
     ids.add(a.questionId);
     if (!allowedFor(lessonId, a.questionId)) return { error: 'question_not_in_lesson' };
 
-    let type, key, level, limit;
+    let type, key, level, limit, traps;
     if (isPracticeId(a.questionId)) {
       const g = questionById(a.questionId);
       if (!g) return { error: 'invalid_answers' };
-      ({ type, key, level } = g);
+      ({ type, key, level, traps } = g);
       limit = g.timeLimit;
     } else {
       const d = demoQuestions().find((x) => x.id === a.questionId)!;
       type = d.type; key = d.answerKey; level = d.level; limit = d.timeLimit;
+      traps = d.traps;
     }
     const spent = Math.min(Math.max(Number.isFinite(a.spentMs) ? Math.round(a.spentMs) : 0, 0), limit * 1000);
     const ok = a.answer !== null && a.answer !== undefined && gradeLocal(type, a.answer, key);
@@ -67,7 +70,8 @@ export function gradeLessonSubmission(lessonId: string, submitted: SubmittedAnsw
     if (ok) score += 1;
     qPoints += p.base + p.speed;
     duration += spent;
-    rows.push({ q: a.questionId, ok, ms: spent });
+    const t = ok ? null : matchTrap(traps, a.answer);
+    rows.push(t === null ? { q: a.questionId, ok, ms: spent } : { q: a.questionId, ok, ms: spent, t });
   }
 
   const total = submitted.length;
