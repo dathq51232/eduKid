@@ -23,7 +23,7 @@ export type ElBase = {
   /** nhóm vật (chọn một vật trong nhóm là chọn cả nhóm) */
   group?: string;
   /** vai trò trong bố cục chủ đề (đổi chủ đề cả bài thì đổi màu theo): khung nội dung, nhãn bài, hình thức làm bài, chữ trang chia */
-  role?: 'card' | 'badge' | 'mode' | 'title' | 'divider' | 'cardback' | 'step' | 'body' | 'mascot' | 'deco' | 'tape';
+  role?: 'card' | 'badge' | 'mode' | 'title' | 'divider' | 'cardback' | 'step' | 'body' | 'mascot' | 'deco' | 'tape' | 'photo';
   /** độ trong suốt 0.1–1 (mặc định 1) */
   op?: number;
   /** lật ngang */
@@ -134,9 +134,31 @@ export const BGS: { id: string; label: string; css: string }[] = [
   { id: 'lollipop', label: 'Cầu vồng kẹo', css: 'radial-gradient(ellipse at 12% 8%,#fbcfe8 0 20%,transparent 20.5%), radial-gradient(ellipse at 92% 92%,#bae6fd 0 25%,transparent 25.5%), linear-gradient(135deg,#fff7ed,#fef3c7 45%,#dcfce7)' },
   { id: 'chalk', label: 'Bảng phấn', css: 'radial-gradient(circle at 18% 22%,#ffffff14 0 2px,transparent 3px) 0 0/74px 68px, linear-gradient(135deg,#164e3b,#14532d 58%,#0f3d2e)' },
 ];
+/* Nền hoạ tiết (11/2026): đơn giản, nhẹ màu để chữ luôn nổi — thay cho hình dán cảnh vẽ sau chữ. Hoạ tiết là SVG lặp lại, độ đậm thấp. */
+const svg = (w: number, h: number, body: string) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}' viewBox='0 0 ${w} ${h}'>${body}</svg>`)}")`;
+const LEAF = (x: number, y: number, r: number, c: string) => `<g transform='translate(${x} ${y}) rotate(${r})'><path d='M0 0C0-18 16-28 30-26C28-10 16 2 0 0Z' fill='${c}'/><path d='M2-2C10-10 18-18 26-24' stroke='white' stroke-opacity='.6' stroke-width='1.6' fill='none'/></g>`;
+const FLOWER = (x: number, y: number, s: number, petal: string, mid: string) => `<g transform='translate(${x} ${y}) scale(${s})'>${[0, 72, 144, 216, 288].map((a) => `<ellipse cx='0' cy='-9' rx='6' ry='9' fill='${petal}' transform='rotate(${a})'/>`).join('')}<circle r='5' fill='${mid}'/></g>`;
+const STAR4 = (x: number, y: number, s: number) => `<path transform='translate(${x} ${y}) scale(${s})' d='M0-10L2.5-2.5L10 0L2.5 2.5L0 10L-2.5 2.5L-10 0L-2.5-2.5Z' fill='#fde68a'/>`;
+export const PATTERN_BGS: { id: string; label: string; css: string }[] = [
+  { id: 'leafy', label: 'Lá non (hoạ tiết)', css: `${svg(150, 150, `<g opacity='.22'>${LEAF(24, 46, -20, '#22c55e')}${LEAF(100, 110, 30, '#16a34a')}${LEAF(110, 30, 70, '#4ade80')}${LEAF(36, 128, 150, '#22c55e')}</g>`)} 0 0/150px 150px, linear-gradient(160deg,#f0fdf4,#dcfce7 60%,#d1fae5)` },
+  { id: 'waves', label: 'Sóng biển (hoạ tiết)', css: `${svg(180, 60, `<path d='M0 30C30 10 60 10 90 30S150 50 180 30' fill='none' stroke='#06b6d4' stroke-opacity='.22' stroke-width='4' stroke-linecap='round'/>`)} 0 0/180px 60px, linear-gradient(180deg,#ecfeff,#cffafe 70%,#a5f3fc)` },
+  { id: 'starry', label: 'Trời sao (hoạ tiết)', css: `${svg(160, 160, `<g opacity='.7'>${STAR4(30, 34, 0.9)}${STAR4(118, 96, 0.6)}${STAR4(64, 132, 0.5)}</g><g fill='white' opacity='.45'><circle cx='96' cy='26' r='1.8'/><circle cx='18' cy='98' r='1.4'/><circle cx='142' cy='148' r='1.6'/><circle cx='78' cy='76' r='1.2'/></g>`)} 0 0/160px 160px, radial-gradient(circle at 18% 12%,#3730a3,#1e1b4b 58%,#0f0d2e)` },
+  { id: 'confetti', label: 'Hoa giấy (hoạ tiết)', css: `${svg(170, 170, `<g opacity='.35'><circle cx='22' cy='30' r='6' fill='#f472b6'/><rect x='110' y='22' width='12' height='12' rx='3' fill='#60a5fa' transform='rotate(20 116 28)'/><path d='M70 120l10-16 10 16z' fill='#facc15'/><path d='M130 120c6-8 14-8 20 0' stroke='#34d399' stroke-width='4' fill='none' stroke-linecap='round'/><circle cx='48' cy='150' r='4' fill='#a78bfa'/><circle cx='150' cy='70' r='4' fill='#fb923c'/></g>`)} 0 0/170px 170px, linear-gradient(135deg,#fffbeb,#fff7ed)` },
+  { id: 'blossom', label: 'Hoa nhí (hoạ tiết)', css: `${svg(120, 120, `<g opacity='.4'>${FLOWER(28, 30, 0.9, '#f9a8d4', '#fbbf24')}${FLOWER(88, 88, 0.7, '#c4b5fd', '#fde68a')}</g>`)} 0 0/120px 120px, linear-gradient(135deg,#fff1f2,#fdf2f8 60%,#faf5ff)` },
+  { id: 'gingham', label: 'Caro dã ngoại', css: 'repeating-linear-gradient(0deg,rgba(134,239,172,.2) 0 24px,transparent 24px 48px), repeating-linear-gradient(90deg,rgba(134,239,172,.2) 0 24px,transparent 24px 48px), #fffdf5' },
+  { id: 'gingham-warm', label: 'Caro nắng ấm', css: 'repeating-linear-gradient(0deg,rgba(253,186,116,.2) 0 24px,transparent 24px 48px), repeating-linear-gradient(90deg,rgba(253,186,116,.2) 0 24px,transparent 24px 48px), #fffaf3' },
+  { id: 'notebook', label: 'Vở kẻ ngang', css: 'linear-gradient(90deg,transparent 118px,rgba(248,113,113,.35) 118px 121px,transparent 121px), repeating-linear-gradient(180deg,transparent 0 50px,rgba(147,197,253,.4) 50px 52px), #fffef8' },
+  { id: 'sunny', label: 'Nắng sớm', css: 'radial-gradient(circle at 94% 6%,rgba(253,224,71,.55) 0 110px,transparent 112px), repeating-conic-gradient(from 0deg at 94% 6%,rgba(253,224,71,.14) 0 6deg,transparent 6deg 18deg), linear-gradient(180deg,#fffbeb,#fef3c7)' },
+  { id: 'bubbles', label: 'Bong bóng', css: `${svg(200, 200, `<g fill='none' stroke='#38bdf8' stroke-opacity='.28' stroke-width='3'><circle cx='40' cy='50' r='22'/><circle cx='150' cy='40' r='12'/><circle cx='120' cy='140' r='28'/><circle cx='30' cy='160' r='9'/></g>`)} 0 0/200px 200px, linear-gradient(180deg,#eff6ff,#e0f2fe)` },
+  { id: 'tet-flower', label: 'Hoa mai Tết', css: `${svg(140, 140, `<g opacity='.38'>${FLOWER(34, 36, 1, '#facc15', '#ea580c')}${FLOWER(104, 100, 0.75, '#fde047', '#dc2626')}</g><g fill='#ef4444' opacity='.25'><circle cx='112' cy='26' r='3'/><circle cx='22' cy='112' r='3'/></g>`)} 0 0/140px 140px, linear-gradient(135deg,#fff7ed,#ffe4e6)` },
+  { id: 'candy-stripe', label: 'Sọc kẹo', css: 'repeating-linear-gradient(135deg,rgba(244,114,182,.12) 0 28px,transparent 28px 56px), linear-gradient(135deg,#fdf2f8,#fff1f2)' },
+];
+BGS.push(...PATTERN_BGS);
 export const bgCss = (bg: string) => BGS.find((b) => b.id === bg)?.css ?? (/^#[0-9a-f]{3,8}$/i.test(bg) ? bg : '#ffffff');
-export const darkBg = (bg: string) => bg === 'board' || bg === 'night' || bg === 'cosmos' || bg === 'aurora' || bg === 'chalk';
+export const darkBg = (bg: string) => bg === 'board' || bg === 'night' || bg === 'cosmos' || bg === 'aurora' || bg === 'chalk' || bg === 'starry';
 
+/** khung "Ảnh minh hoạ" giữ chỗ trong bài tự sinh (ẩn khi trình chiếu đến khi cô chèn ảnh) */
+export const PHOTO_SRC = '/deck/anh-minh-hoa.svg';
 export const uid = () => Math.random().toString(36).slice(2, 9);
 export const MAX_SLIDES = 80, MAX_ELS = 60;
 

@@ -120,3 +120,9 @@ Nhịp trang: xen kẽ trang nhiều chữ với trang hình/tương tác; khôn
 - Trò Toán đặc thù (ngón tay, xe buýt, domino, tia số…) chỉ dùng cho số trong phạm vi 10 của lớp 1; bài số lớn dùng câu của bài.
 - Thêm hình thức mới: thêm luật vào `FORMAT_RULES`, khai báo bước hợp lệ ở `PHASE_OK`, viết hàm dựng trả `{ title, slide }[]` (trả `[]` khi bài thiếu nội dung để chuyển hình thức gần nhất) và thêm vào `BUILDERS`.
 - `npm run check:deck-all` kiểm cả bài theo gợi ý và theo giáo án của mọi bài: báo "chép nguyên gợi ý lên trang", "lời GV/HS trên trang", "câu hỏi lặp trong bài".
+
+## 10. Nền: hoạ tiết, không hình dán cảnh sau chữ
+- Bài tự sinh **không dùng cảnh hình dán** (`slide.scene`) — hình vẽ sau chữ dễ đè, làm mờ chữ. `planSlides` / `deckFromIdeas` gọi `toPattern`: cảnh → nền hoạ tiết cùng tông (`SCENE_PATTERN` trong `scenes.ts`, nền ở `PATTERN_BGS` trong `types.ts`); chữ giữ màu `inkOf(scene)`.
+- Chỗ trống mà cảnh từng chiếm (bìa, trang `right`, `left`) → khung `photoEl` "Ảnh minh hoạ" (`role: 'photo'`, `hide: true`, ảnh `/deck/anh-minh-hoa.svg`): ẩn khi chiếu; cô chọn khung → tự bật "Thay hình" → tải ảnh bài tập / SGK của cô lên là lấp vào khung (`hide: false`). Không tự chèn ảnh SGK (bản quyền) — ngân hàng nội dung không có ảnh.
+- Hình dán / Milo: cô tự thêm sau trong trình soạn. Bài cũ còn cảnh: nút "🎨 Dùng nền hoạ tiết cho cả bài" ở bảng Nền.
+- Thêm nền mới: thêm vào `PATTERN_BGS` (SVG lặp lại, độ đậm ≤ 0,4, nền sáng; nền tối phải thêm vào `darkBg`). `check:deck-all` báo "hình dán cảnh vẽ sau chữ" nếu bài tự sinh còn `scene`.

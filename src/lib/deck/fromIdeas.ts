@@ -3,7 +3,7 @@
 // → (hoạt động thi đua: bảng thi đua tổ) → các trang nội dung bài học của đúng hoạt động đó.
 // Trang hướng dẫn gắn công cụ cho màn hình của cô (Slide.tool): hẹn giờ thảo luận / gọi tên.
 import { emptyDeck, uid, type Deck, type El, type SceneKind, type Slide } from './types';
-import { MASCOTS, actCtx, activityPages, badgeEl, boardEls, boardPage, buildPlan, dividerSlide, planSlides, tietOf, type ActCtx, type ActivitySpec, type PhaseId } from './fromLesson';
+import { MASCOTS, toPattern, actCtx, activityPages, badgeEl, boardEls, boardPage, buildPlan, dividerSlide, planSlides, tietOf, type ActCtx, type ActivitySpec, type PhaseId } from './fromLesson';
 import { planOf, type LessonIdea, type Pick } from '@/lib/plans/idea-bank';
 import { F3D_VI, f3dSrc } from './f3d-catalog';
 import { pickScene } from './scenes';
@@ -358,5 +358,6 @@ export async function deckFromIdeas(subject: string, title: string, pick: Pick, 
   });
   deck.slides.push(...contentOf('cc', 1));
   deck.slides.push(dividerSlide('Hẹn gặp lại', sc, undefined, 'Cả lớp giỏi lắm!'));
+  deck.slides = deck.slides.map(toPattern); // nền hoạ tiết, không hình dán cảnh sau chữ
   return deck;
 }

@@ -7,9 +7,9 @@ import { formsOf } from '@/lib/curriculum';
 import type { ContentLesson, ContentQuestion } from '@/lib/content/types';
 import type { LessonPlan as GiaoAn } from '@/lib/plans/generate';
 import { SUBJECT_NAMES } from '@/lib/plans/generate';
-import { accentOf, inkOf } from './scenes';
+import { SCENE_PATTERN, accentOf, inkOf } from './scenes';
 import { f3dSrc as ST } from './f3d-catalog';
-import { uid, type Anim, type El, type SceneKind, type SceneVariant, type Slide, type TextEl } from './types';
+import { PHOTO_SRC, uid, type Anim, type El, type SceneKind, type SceneVariant, type Slide, type TextEl } from './types';
 
 export type PhaseId = 'bia' | 'kd' | 'kp' | 'lt' | 'vd' | 'cc';
 export const PHASES: { id: PhaseId; label: string; color: string; time: string }[] = [
@@ -791,7 +791,9 @@ export function planSlides(plan: LessonPlan, on: Set<string>, scenes: Record<str
     if (c.phase !== 'bia') s.els.push(...progressEls(c.phase));
     out.push(s);
   }
-  return o.set ? applySet(out, o.set) : out;
+  // nền hoạ tiết thay cho hình dán cảnh (hình dán, ảnh minh hoạ cô tự thêm trong trình soạn)
+  const pat = out.map(toPattern);
+  return o.set ? applySet(pat, o.set) : pat;
 }
 
 /** thanh tiến trình 5 bước của tiết dạy ở mép trên trang: bước hiện tại đậm, bước đã qua nhạt, bước sau xám */
@@ -1130,4 +1132,24 @@ function activityName(title: string, teacher: string, ph: PhaseId): string {
   const game = /(?:trò chơi|chơi)\s*[“"]([^”"]{3,40})[”"]/i.exec(teacher)?.[1];
   if (game) return game;
   return (title || PHASE_LABEL[ph]).replace(/^\s*\d+\s*[.)]\s*/, '').trim() || PHASE_LABEL[ph];
+}
+
+/* ================= Nền hoạ tiết + khung ảnh minh hoạ =================
+ * Bài tự sinh không vẽ hình dán cảnh sau chữ (dễ đè, làm mờ chữ): cảnh → nền hoạ tiết cùng tông màu.
+ * Chỗ trống mà cảnh từng chiếm → khung "Ảnh minh hoạ" (ẩn khi trình chiếu) để cô chèn ảnh bài tập / SGK của mình. */
+export const photoEl = (x: number, y: number, w: number, h: number): El =>
+  ({ id: uid(), kind: 'img', src: PHOTO_SRC, x, y, w, h, rot: 0, rad: 10, shadow: true, hide: true, role: 'photo', name: 'Ảnh minh hoạ' } as El);
+const PHOTO_ZONE: Partial<Record<SceneVariant, { x: number; y: number; w: number; h: number }>> = {
+  cover: { x: 1000, y: 150, w: 520, h: 400 },
+  right: { x: 990, y: 200, w: 520, h: 400 },
+  left: { x: 90, y: 200, w: 500, h: 385 },
+};
+export function toPattern(s: Slide): Slide {
+  if (!s.scene) return s;
+  const zone = s.sceneVariant ? PHOTO_ZONE[s.sceneVariant] : undefined;
+  const els = [...s.els];
+  const blocks = (z: { x: number; y: number; w: number; h: number }) => els.some((e) => !e.hide && e.role !== 'card' && e.role !== 'cardback' && e.group !== 'tien-trinh'
+    && e.x < z.x + z.w && e.x + e.w > z.x && e.y < z.y + z.h && e.y + e.h > z.y);
+  if (zone && !els.some((e) => e.role === 'photo') && !blocks(zone)) els.push(photoEl(zone.x, zone.y, zone.w, zone.h));
+  return { ...s, bg: SCENE_PATTERN[s.scene] ?? 'leafy', scene: undefined, sceneVariant: undefined, els };
 }

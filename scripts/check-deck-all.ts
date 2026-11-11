@@ -24,6 +24,8 @@ const box = (e: El) => ({ x: e.x, y: e.y, r: e.x + e.w, b: e.y + e.h });
 const hit = (a: El, b: El) => { const p = box(a), q = box(b); return p.x < q.r - 4 && p.r > q.x + 4 && p.y < q.b - 4 && p.b > q.y + 4; };
 const isRead = (e: El) => (e.kind === 'text' && !!e.text.trim()) || e.kind === 'quiz' || e.kind === 'sort' || e.kind === 'drop';
 
+/** bài tự sinh hoàn chỉnh: dùng nền hoạ tiết, không vẽ hình dán cảnh sau chữ */
+const noScene = (ss: Slide[], where: string) => ss.forEach((s, i) => { if (s.scene) errors.push({ kind: 'hình dán cảnh vẽ sau chữ', where: `${where} · trang ${i + 1}`, detail: `cảnh ${s.scene}` }); });
 function checkSlide(s: Slide, where: string) {
   const els = s.els.filter((e) => !e.hide);
   for (const e of els) {
@@ -71,6 +73,7 @@ for (const l of CONTENT) {
   for (const c of p.cands) checkSlide(c.slide, `${l.id} · ${c.title.slice(0, 40)}`);
   const slides = planSlides(p, on, {}, { mascot: MASCOTS[0].src, math: l.subject === 'toan' });
   slides.forEach((s, i) => checkRelayout(s, `${l.id} · trang ${i + 1}`));
+  noScene(slides, l.id);
   decks++; pages += slides.length;
   dividers += slides.filter((s) => s.els.some((e) => e.role === 'divider') && s.els.filter(isRead).length <= 2).length;
 }
@@ -113,6 +116,7 @@ for (const [n, l] of CONTENT.entries()) {
   const hints = planOf(subj, l.title, pick).flatMap((r) => [r.idea.d, ...r.idea.s]);
   checkNoCopy(deck.slides, hints, `gợi ý ${l.id}`);
   checkNoRepeat(deck.slides, `gợi ý ${l.id}`);
+  noScene(deck.slides, `gợi ý ${l.id}`);
   for (const r of planOf(subj, l.title, pick)) { const k = formatOf({ title: r.idea.t, text: r.idea.d, steps: r.idea.s, phase: r.phase.k, mins: r.idea.m }); fmtCount.set(k, (fmtCount.get(k) ?? 0) + 1); }
 }
 // ===== Bài theo GIÁO ÁN gợi ý (lịch báo giảng) =====
@@ -133,6 +137,7 @@ for (const l of CONTENT) {
   const gaLines = ga.activities.flatMap((a) => [...a.teacher.split('\n'), ...a.student.split('\n')]).filter((x) => !x.trim().startsWith('+'));
   checkNoCopy(slides, gaLines.map((x) => x.replace(/^\s*[-•*–]\s*/, '')), `giáo án ${l.id}`);
   checkNoRepeat(slides, `giáo án ${l.id}`);
+  noScene(slides, `giáo án ${l.id}`);
 }
 console.log(`Gợi ý dạy: ${ideaDecks} bài (${ideaPages} trang); hình thức: ${[...fmtCount].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(', ')}`);
 console.log(`Giáo án: ${gaDecks} bài dựng theo hoạt động của giáo án`);

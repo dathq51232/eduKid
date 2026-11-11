@@ -14,12 +14,13 @@ import {
   BGS, EASE_LABEL, FONTS, FX, FX_BY_ID, MAX_ELS, MAX_SLIDES, SH, START_LABEL, SW, TRANS_LABEL, darkBg, elLabel, newSlide, uid,
   type Anim, type Deck, type Ease, type El, type FontKey, type Fx, type SceneKind, type ShapeKind, type Slide, type Start, type Trans,
 } from '@/lib/deck/types';
+import { PHOTO_SRC } from '@/lib/deck/types';
 import { loadPraiseFonts } from '@/lib/praise/render';
 import { playSound, soundLabel, SOUNDS } from '@/lib/deck/sounds';
 import { SLIDE_TEMPLATES, STICKER_SETS } from '@/lib/deck/templates';
 import { LAYOUTS, relayout, relayoutBlocker } from '@/lib/deck/relayout';
 import { SCENES, SCENES_SORTED, SCENE_VARIANTS, accentOf, sceneGroups } from '@/lib/deck/scenes';
-import { WORK_MODES, applyTheme, badgeEl, cardEl, dividerSlide, modeEl, type WorkMode } from '@/lib/deck/fromLesson';
+import { WORK_MODES, applyTheme, badgeEl, cardEl, dividerSlide, modeEl, toPattern, type WorkMode } from '@/lib/deck/fromLesson';
 import SlideView, { ShapeSvg, SlideFrame, type PlayApi } from './SlideView';
 import AnimTimeline from './AnimTimeline';
 import { TEXT_STYLES, stickerName } from '@/lib/deck/sticker-names';
@@ -134,6 +135,13 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   /** các vật đang chọn: nhóm / chọn nhiều, không thì vật đang chọn */
   const selIds = multi.length > 1 && sel && multi.includes(sel) ? multi : sel ? [sel] : [];
   const selEls = slide.els.filter((e) => selIds.includes(e.id));
+  // chọn khung "Ảnh minh hoạ" còn trống → bật sẵn "Thay hình" để cô chèn ảnh bài tập / SGK (tải lên hoặc chọn trong Kho)
+  const photoSlot = selEl?.kind === 'img' && selEl.role === 'photo' && selEl.src === PHOTO_SRC ? selEl.id : null;
+  useEffect(() => {
+    if (!photoSlot) return;
+    setReplace(true); setPanel('el');
+    setMsg({ kind: 'info', text: 'Khung ảnh minh hoạ: tải ảnh bài tập / SGK lên (Tải lên) hoặc chọn hình bên trái — ảnh sẽ lấp vào khung. Khung trống không hiện khi trình chiếu.' });
+  }, [photoSlot]);
   const pick = (id: string | null, add = false) => {
     if (!id) { setSel(null); setMulti([]); return; }
     if (add) {
@@ -211,7 +219,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   const dark = darkBg(slide.bg);
   const center = (w: number, h: number) => ({ x: Math.round((SW - w) / 2 + (Math.random() - 0.5) * 120), y: Math.round((SH - h) / 2 + (Math.random() - 0.5) * 80) });
   const addText = (title: boolean) => addEl({ id: uid(), kind: 'text', ...center(title ? 1100 : 760, title ? 140 : 120), w: title ? 1100 : 760, h: title ? 140 : 120, rot: 0, text: title ? 'Tiêu đề' : 'Chữ của cô', size: title ? 84 : 48, color: dark ? '#ffffff' : title ? '#1d4ed8' : '#1f2937', font: title ? 'baloo' : 'quick', align: 'center', bg: '' });
-  const addSticker = (src: string) => (replace && selEl?.kind === 'img' ? (patchEl(selEl.id, { src, asset: false, name: stickerName(src) || selEl.name }), setReplace(false), setMsg({ kind: 'ok', text: 'Đã thay hình.' })) : addEl({ id: uid(), kind: 'img', ...center(220, 220), w: 220, h: 220, rot: 0, src, name: src.split('/').pop()?.replace(/\.(webp|png)$/, '').replace(/-/g, ' ') }));
+  const addSticker = (src: string) => (replace && selEl?.kind === 'img' ? (patchEl(selEl.id, { src, asset: false, name: stickerName(src) || selEl.name, hide: false }), setReplace(false), setMsg({ kind: 'ok', text: 'Đã thay hình.' })) : addEl({ id: uid(), kind: 'img', ...center(220, 220), w: 220, h: 220, rot: 0, src, name: src.split('/').pop()?.replace(/\.(webp|png)$/, '').replace(/-/g, ' ') }));
   const addShape = (shape: ShapeKind) => {
     const sq = shape === 'circle' || shape === 'star' || shape === 'heart' || shape === 'wheel';
     const w = sq ? 280 : shape === 'tray' ? 520 : shape === 'banner' ? 480 : 360;
@@ -237,6 +245,8 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
       const row = await uploadAsset('image', baseName(f), r.blob, { thumb: r.thumb, meta: { w: r.w, h: r.h } });
       setMine((m) => [row, ...(m ?? [])]);
       const k = Math.min(1, 600 / Math.max(r.w, r.h));
+      // đang chọn khung ảnh (vd khung "Ảnh minh hoạ") và bấm Thay hình: ảnh tải lên lấp vào khung đó
+      if (replace && selEl?.kind === 'img') { patchEl(selEl.id, { src: row.path, asset: true, name: row.name, hide: false }); setReplace(false); setMsg({ kind: 'ok', text: 'Đã chèn ảnh vào khung.' }); return; }
       addEl({ id: uid(), kind: 'img', ...center(r.w * k, r.h * k), w: Math.round(r.w * k), h: Math.round(r.h * k), rot: 0, src: row.path, asset: true, name: row.name });
     } catch (e) { setMsg({ kind: 'error', text: assetError(e) }); } finally { setBusy(''); }
   };
@@ -661,6 +671,11 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
               <div className="dk-bgs cv-bgs">{BGS.map((b) => <button key={b.id} type="button" title={b.label} aria-label={`Nền ${b.label}`} className={slide.bg === b.id ? 'is-on' : ''} style={{ background: b.css }} onClick={() => setSlide((s) => ({ ...s, bg: b.id }))} />)}
                 <label className="cv-bgc" title="Màu khác"><input type="color" value={/^#[0-9a-f]{6}$/i.test(slide.bg) ? slide.bg : '#ffffff'} onChange={(e) => setSlide((s) => ({ ...s, bg: e.target.value }))} aria-label="Màu nền khác" /></label></div>
               <button type="button" className="cv-link" onClick={() => commit({ ...deckRef.current, slides: deckRef.current.slides.map((x) => ({ ...x, bg: slide.bg })) })}>Áp dụng nền này cho mọi trang</button>
+              {deck.slides.some((x) => x.scene) && (
+                <button type="button" className="cv-link" onClick={() => { commit({ ...deckRef.current, slides: deckRef.current.slides.map(toPattern) }); setMsg({ kind: 'ok', text: 'Đã đổi sang nền hoạ tiết cho cả bài. Khung “Ảnh minh hoạ” (ẩn khi chiếu) đặt ở chỗ trống để cô chèn ảnh bài. Ctrl+Z để quay lại.' }); }}>
+                  🎨 Dùng nền hoạ tiết cho cả bài (bỏ hình dán cảnh)
+                </button>
+              )}
               <p className="cv-ph">Cảnh minh hoạ (trang này)</p>
               <div className="dk-row dk-scenes cv-wrap">
                 <button type="button" className={!slide.scene ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: undefined }))}>Không</button>
@@ -693,7 +708,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
               <button type="button" className="cv-big is-h" onClick={() => imgInput.current?.click()} disabled={!!busy}><Upload aria-hidden="true" /> Tải ảnh lên</button>
               <p className="cv-ph">Ảnh của tôi <small>{myImages.length} ảnh</small></p>
               {mine === null ? <p className="dk-hint">Đang tải…</p> : !myImages.length ? <p className="dk-hint">Chưa có ảnh. Ảnh tải lên được lưu trong Kho của tôi.</p> : (
-                <div className="dk-sgrid cv-grid3">{myImages.map((a) => <button key={a.id} type="button" title={a.name} onClick={() => (replace && selEl?.kind === 'img' ? (patchEl(selEl.id, { src: a.path, asset: true, name: a.name }), setReplace(false)) : addEl({ id: uid(), kind: 'img', ...center(360, 260), w: 360, h: Math.round(360 * ((a.meta.h as number) || 3) / ((a.meta.w as number) || 4)), rot: 0, src: a.path, asset: true, name: a.name }))}>
+                <div className="dk-sgrid cv-grid3">{myImages.map((a) => <button key={a.id} type="button" title={a.name} onClick={() => (replace && selEl?.kind === 'img' ? (patchEl(selEl.id, { src: a.path, asset: true, name: a.name, hide: false }), setReplace(false)) : addEl({ id: uid(), kind: 'img', ...center(360, 260), w: 360, h: Math.round(360 * ((a.meta.h as number) || 3) / ((a.meta.w as number) || 4)), rot: 0, src: a.path, asset: true, name: a.name }))}>
                   {/* eslint-disable-next-line @next/next/no-img-element -- ảnh trong kho */}
                   <img src={a.thumb ?? a.url ?? ''} alt={a.name} /></button>)}</div>
               )}

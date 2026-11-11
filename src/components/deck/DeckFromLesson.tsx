@@ -342,7 +342,7 @@ function PlanEditor({ plan, ed, setEd, mascot, setMascot, warmup, setWarmup, div
       <div className="dfl-opt dfl-row">
         <button type="button" className="btn btn-outline btn-sm" onClick={() => setEd({ seed: ed.seed + 1, removed: [] })}>🎲 Tình huống khác</button>
         <span className="dfl-step" aria-label="Tổng số trang"><button type="button" aria-label="Bớt một trang" disabled={total <= MIN_TOTAL} onClick={() => grow(-1)}><Minus aria-hidden="true" /></button><b>{total} trang</b><button type="button" aria-label="Thêm một trang" disabled={total >= MAX_TOTAL || !GROW.some(room)} onClick={() => grow(1)}><Plus aria-hidden="true" /></button></span>
-        <small className="dk-hint">✨ cảnh app tự chọn theo bài · mỗi trang đổi cảnh riêng trong trình soạn</small>
+        <small className="dk-hint">✨ app tự chọn theo bài · nền hoạ tiết cùng tông với cảnh; hình dán, ảnh minh hoạ cô thêm trong trình soạn</small>
       </div>
     </div>
     {PHASES.map((p) => {
