@@ -2,8 +2,11 @@ import Link from 'next/link';
 import BrandLogo from '@/components/brand/BrandLogo';
 import ThemeToggle from '@/components/brand/ThemeToggle';
 import { redirect } from 'next/navigation';
-import { ExternalLink, LogOut } from 'lucide-react';
+import { ExternalLink, LogOut, Menu, Search } from 'lucide-react';
 import AdminNav from '@/components/admin/AdminNav';
+import NotificationBell from '@/components/admin/NotificationBell';
+import { createClient } from '@/lib/supabase/server';
+import type { NavCounts } from '@/lib/admin/insights';
 import { AdminProvider } from '@/components/admin/AdminContext';
 import { getStaffContext } from '@/lib/auth/staff';
 
@@ -45,17 +48,34 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const user = { userId: ctx.userId, email: ctx.email, displayName: ctx.displayName, isAdmin: ctx.isAdmin, isTeacher: ctx.isTeacher };
+  // Số việc chưa xử lý cho menu + chuông (migration 0049; chưa chạy migration thì bỏ qua)
+  let counts: NavCounts | null = null;
+  if (ctx.isAdmin) {
+    const { data } = await (await createClient()).rpc('admin_nav_counts');
+    counts = (data as NavCounts | null) ?? null;
+  }
 
   return (
     <AdminProvider value={user}>
-      <div className="adm">
+      <div className="adm adm-v2">
         <header className="adm-top">
           <div className="adm-top-inner">
+            <details className="adm-burger">
+              <summary aria-label="Mở menu quản trị"><Menu size={22} aria-hidden="true" /></summary>
+              <div className="adm-burger-panel"><AdminNav counts={counts} /></div>
+            </details>
             <Link href="/quan-tri" className="brand adm-brand">
               <BrandLogo size={34} />
               <span className="adm-brand-tag">Quản trị</span>
             </Link>
+            {ctx.isAdmin && (
+              <form action="/quan-tri/nguoi-dung" className="adm-topsearch" role="search">
+                <Search size={18} aria-hidden="true" />
+                <input name="q" type="search" placeholder="Tìm người dùng theo tên, email…" aria-label="Tìm người dùng" />
+              </form>
+            )}
             <div className="adm-user">
+              {ctx.isAdmin && <NotificationBell initial={counts?.unread ?? 0} />}
               <ThemeToggle />
               <Link href="/" className="adm-top-link" target="_blank">
                 <ExternalLink size={16} aria-hidden="true" /> <span>Trang học sinh</span>
@@ -71,11 +91,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               </form>
             </div>
           </div>
-          <div className="adm-top-inner">
-            <AdminNav />
-          </div>
         </header>
-        <main className="adm-main">{children}</main>
+        <div className="adm-body">
+          <aside className="adm-side"><AdminNav counts={counts} /></aside>
+          <main className="adm-main">{children}</main>
+        </div>
       </div>
     </AdminProvider>
   );

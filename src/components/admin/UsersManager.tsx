@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Search, X } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { ago, isOnline } from '@/lib/admin/insights';
+import ExportCsv from './ExportCsv';
 import { createClient } from '@/lib/supabase/client';
 import { errorText } from '@/lib/admin/questions';
 import { useAdminUser } from './AdminContext';
@@ -14,7 +17,17 @@ type UserRow = {
   display_name: string;
   created_at: string;
   roles: { role: Role; school_id: string | null; school_name: string | null }[];
+  // có từ migration 0049 (admin_list_users_v2)
+  last_seen?: string | null;
+  grade?: number | null;
+  pending_teacher?: boolean;
 };
+const ROLE_FILTERS: { v: string; label: string }[] = [
+  { v: '', label: 'Tất cả vai trò' }, { v: 'student', label: 'Học sinh' }, { v: 'teacher', label: 'Giáo viên' },
+  { v: 'parent', label: 'Phụ huynh / người lớn' }, { v: 'system_admin', label: 'Quản trị hệ thống' },
+];
+const isNew = (iso: string) => Date.now() - new Date(iso).getTime() < 7 * 86400_000;
+const fmtDate = (iso: string) => new Date(iso).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 type School = { id: string; name: string };
 
 const ROLE_LABEL: Record<Role, string> = {
@@ -30,22 +43,33 @@ export default function UsersManager() {
   const supabase = useMemo(() => createClient(), []);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
-  const [search, setSearch] = useState('');
-  const [query, setQuery] = useState('');
+  const sp = useSearchParams();
+  const [search, setSearch] = useState(sp.get('q') ?? '');
+  const [query, setQuery] = useState(sp.get('q') ?? '');
+  const [roleFilter, setRoleFilter] = useState(sp.get('vai') ?? '');
+  const [newDays, setNewDays] = useState<number | null>(sp.get('moi') ? Number(sp.get('moi')) || 7 : null);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [v2, setV2] = useState(true);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [granting, setGranting] = useState<string | null>(null);
   const [newSchool, setNewSchool] = useState('');
 
   const load = useCallback(async () => {
-    const [{ data: u, error }, { data: s }] = await Promise.all([
-      supabase.rpc('admin_list_users', { p_search: query || null }),
+    const [first, { data: s }] = await Promise.all([
+      supabase.rpc('admin_list_users_v2', { p_search: query || null, p_role: roleFilter || null, p_new_days: newDays }),
       supabase.from('schools').select('id,name').eq('status', 'active').order('name'),
     ]);
+    let { data: u, error } = first;
+    // Chưa chạy migration 0049: dùng hàm cũ (không có lọc vai trò / lần cuối truy cập)
+    if (error) {
+      setV2(false);
+      ({ data: u, error } = await supabase.rpc('admin_list_users', { p_search: query || null }));
+    } else setV2(true);
     if (error) setMsg({ kind: 'error', text: errorText(error) });
     setUsers((u ?? []) as UserRow[]);
     setSchools((s ?? []) as School[]);
-  }, [supabase, query]);
+  }, [supabase, query, roleFilter, newDays]);
 
   useEffect(() => {
     load();
@@ -80,7 +104,7 @@ export default function UsersManager() {
     <div className="adm-stack">
       <div className="adm-head">
         <div>
-          <h1>Người dùng</h1>
+          <h1>👥 Người dùng ({users.length}{users.length >= 300 ? '+' : ''})</h1>
           <p>Cấp quyền giáo viên để soạn bài, quản trị trường để quản lý lớp. Tài khoản mới chưa có quyền gì cho tới khi được cấp vai trò giáo viên.</p>
         </div>
       </div>
@@ -101,11 +125,27 @@ export default function UsersManager() {
         </form>
       </section>
 
+      <div className="adm-users-layout">
       <section className="adm-card">
-        <form className="adm-search" onSubmit={(e) => { e.preventDefault(); setQuery(search.trim()); }}>
-          <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo email hoặc tên" aria-label="Tìm người dùng" />
-          <button type="submit" className="adm-btn" aria-label="Tìm"><Search size={18} aria-hidden="true" /></button>
-        </form>
+        <div className="adm-filters">
+          <form className="adm-search" style={{ flex: '1 1 260px' }} onSubmit={(e) => { e.preventDefault(); setQuery(search.trim()); }}>
+            <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo email hoặc tên" aria-label="Tìm người dùng" />
+            <button type="submit" className="adm-btn" aria-label="Tìm"><Search size={18} aria-hidden="true" /></button>
+          </form>
+          {v2 && (
+            <>
+              <label className="adm-field is-inline">
+                <span>Vai trò</span>
+                <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+                  {ROLE_FILTERS.map((r) => <option key={r.v} value={r.v}>{r.label}</option>)}
+                </select>
+              </label>
+              <button type="button" className="adm-chip" aria-pressed={newDays !== null} onClick={() => setNewDays((d) => (d === null ? 7 : null))}>🆕 Mới 7 ngày</button>
+            </>
+          )}
+          <ExportCsv name="nguoi-dung" rows={[['Tên', 'Email', 'Vai trò', 'Lớp', 'Đăng ký', 'Lần cuối truy cập'], ...users.map((u) => [u.display_name, u.email ?? '', u.roles.map((r) => ROLE_LABEL[r.role]).join(' / '), u.grade ?? '', fmtDate(u.created_at), u.last_seen ? fmtDate(u.last_seen) : ''])]} />
+        </div>
+        {!v2 && <p className="adm-muted">Chạy migration 0049_admin_insights.sql để có lọc theo vai trò, “Mới 7 ngày” và cột “Lần cuối truy cập”.</p>}
 
         <div className="adm-table-wrap">
           <table className="adm-table">
@@ -113,14 +153,17 @@ export default function UsersManager() {
               <tr>
                 <th scope="col">Người dùng</th>
                 <th scope="col">Vai trò</th>
+                <th scope="col">Lớp</th>
+                <th scope="col">Đăng ký</th>
+                <th scope="col">Lần cuối</th>
                 <th scope="col"><span className="sr-only">Thao tác</span></th>
               </tr>
             </thead>
             <tbody>
               {users.map((u) => (
-                <tr key={u.user_id}>
+                <tr key={u.user_id} className={`is-clickable${picked === u.user_id ? ' is-picked' : ''}`} onClick={(e) => { if (!(e.target as HTMLElement).closest('button, select, a')) setPicked(u.user_id); }}>
                   <td>
-                    <div className="adm-row-title">{u.display_name}</div>
+                    <div className="adm-row-title">{isNew(u.created_at) && <span className="adm-pill is-new">🆕</span>} {u.display_name}</div>
                     <div className="adm-muted">{u.email}</div>
                   </td>
                   <td>
@@ -136,8 +179,12 @@ export default function UsersManager() {
                         </span>
                       ))}
                     </div>
+                    {u.pending_teacher && <span className="adm-pill is-wait">⏳ xin quyền giáo viên</span>}
                     {granting === u.user_id && <GrantForm schools={schools} busy={busy} onCancel={() => setGranting(null)} onGrant={(role, school) => setRole(u.user_id, role, school, true)} />}
                   </td>
+                  <td>{u.grade ?? '—'}</td>
+                  <td className="adm-muted" title={fmtDate(u.created_at)}>{ago(u.created_at)}</td>
+                  <td>{isOnline(u.last_seen ?? null) ? <span className="adm-pill is-online">● online</span> : <span className="adm-muted">{ago(u.last_seen ?? null)}</span>}</td>
                   <td>
                     {granting !== u.user_id && (
                       <button type="button" className="adm-btn is-ghost" onClick={() => setGranting(u.user_id)}>
@@ -152,7 +199,31 @@ export default function UsersManager() {
         </div>
         {users.length === 0 && <p className="adm-muted">Không có người dùng nào.</p>}
       </section>
+      <UserDetail u={users.find((x) => x.user_id === picked) ?? null} onGrant={(id) => setGranting(id)} />
+      </div>
     </div>
+  );
+}
+
+/** Khung chi tiết bên phải khi bấm một dòng */
+function UserDetail({ u, onGrant }: { u: UserRow | null; onGrant: (id: string) => void }) {
+  if (!u) return <aside className="adm-card adm-detail"><p className="adm-muted">Bấm một người dùng để xem chi tiết.</p></aside>;
+  return (
+    <aside className="adm-card adm-detail" aria-label={`Chi tiết ${u.display_name}`}>
+      <div className="adm-people-main">
+        <b style={{ fontSize: 18 }}>{u.display_name}</b>
+        <span className="adm-muted">{u.email}</span>
+      </div>
+      <dl>
+        <dt>Vai trò</dt><dd>{u.roles.length ? u.roles.map((r) => ROLE_LABEL[r.role]).join(', ') : 'Chưa có'}</dd>
+        {u.roles.some((r) => r.school_name) && (<><dt>Trường</dt><dd>{u.roles.map((r) => r.school_name).filter(Boolean).join(', ')}</dd></>)}
+        {u.grade ? (<><dt>Lớp</dt><dd>{u.grade}</dd></>) : null}
+        <dt>Đăng ký</dt><dd>{fmtDate(u.created_at)}</dd>
+        <dt>Lần cuối</dt><dd>{u.last_seen ? `${fmtDate(u.last_seen)} (${ago(u.last_seen)})` : 'Chưa ghi nhận'}</dd>
+        {u.pending_teacher && (<><dt>Đơn GV</dt><dd><a className="adm-link" href="/quan-tri/duyet-giao-vien">Đang chờ duyệt →</a></dd></>)}
+      </dl>
+      <button type="button" className="adm-btn" onClick={() => onGrant(u.user_id)}><Plus size={16} aria-hidden="true" /> Cấp quyền</button>
+    </aside>
   );
 }
 

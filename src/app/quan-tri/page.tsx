@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { ArrowRight, Plus } from 'lucide-react';
 import StatusBadge from '@/components/admin/StatusBadge';
+import AdminDashboard from '@/components/admin/AdminDashboard';
+import { parsePeriod, type Insights } from '@/lib/admin/insights';
 import { getStaffContext } from '@/lib/auth/staff';
 import { createClient } from '@/lib/supabase/server';
 import type { AdminLesson, LessonStatus } from '@/lib/admin/types';
@@ -35,7 +37,7 @@ function Stat({ label, value, note }: { label: string; value: string | number; n
   );
 }
 
-export default async function AdminHome() {
+export default async function AdminHome({ searchParams }: { searchParams: Promise<{ k?: string }> }) {
   const ctx = await getStaffContext();
   if (ctx.state !== 'ok') return null;
   const supabase = await createClient();
@@ -65,10 +67,13 @@ export default async function AdminHome() {
     );
   }
 
-  const [{ data: ov, error }, { data: reviewData }] = await Promise.all([
+  const k = parsePeriod((await searchParams).k, 1);
+  const [{ data: ov, error }, { data: reviewData }, { data: ins, error: insErr }] = await Promise.all([
     supabase.rpc('admin_overview'),
     supabase.from('lessons').select(lessonSelect).eq('status', 'review').order('updated_at', { ascending: true }).limit(10),
+    supabase.rpc('admin_insights', { p_days: k }),
   ]);
+  const insights = !insErr && ins ? (ins as Insights) : null;
   if (error || !ov) return <p className="adm-alert is-error">Không tải được số liệu: {error?.message}</p>;
   const o = ov as Overview;
   const review = (reviewData ?? []) as unknown as AdminLesson[];
@@ -76,9 +81,12 @@ export default async function AdminHome() {
 
   return (
     <div className="adm-stack">
+      {insights ? <AdminDashboard i={insights} k={k} name={ctx.displayName} /> : (
+        <p className="adm-setup">Chưa có số liệu người dùng &amp; truy cập: hãy chạy migration <code>supabase/migrations/0049_admin_insights.sql</code> trên Supabase (SQL Editor) rồi tải lại trang.</p>
+      )}
       <div className="adm-head">
         <div>
-          <h1>Tổng quan</h1>
+          <h2>Nội dung &amp; việc học</h2>
           <p>Tình hình nội dung và việc học trên toàn hệ thống.</p>
         </div>
         <Link href="/quan-tri/bai-hoc?tao=1" className="adm-btn is-primary"><Plus size={18} aria-hidden="true" /> Tạo bài mới</Link>

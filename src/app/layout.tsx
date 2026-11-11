@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Quicksand } from 'next/font/google';
 import './globals.css';
+import VisitTracker from '@/components/VisitTracker';
 
 // Quicksand: phông chữ của bộ nhận diện EduChain Kids — nét tròn, thân thiện, có đủ dấu tiếng Việt.
 // Tiêu đề dùng Bold (700), nội dung Medium (500), phụ đề Regular (400), chú thích Light (300).
@@ -33,7 +34,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <VisitTracker />
+      </body>
     </html>
   );
 }
