@@ -17,7 +17,7 @@ import {
 import { loadPraiseFonts } from '@/lib/praise/render';
 import { playSound, soundLabel, SOUNDS } from '@/lib/deck/sounds';
 import { SLIDE_TEMPLATES, STICKER_SETS } from '@/lib/deck/templates';
-import { SCENES, SCENE_VARIANTS, accentOf } from '@/lib/deck/scenes';
+import { SCENES, SCENES_SORTED, SCENE_VARIANTS, accentOf, sceneGroups } from '@/lib/deck/scenes';
 import { WORK_MODES, applyTheme, badgeEl, cardEl, dividerSlide, modeEl, type WorkMode } from '@/lib/deck/fromLesson';
 import SlideView, { ShapeSvg, SlideFrame, type PlayApi } from './SlideView';
 import AnimTimeline from './AnimTimeline';
@@ -502,7 +502,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
                 ))}
                 <p className="cv-ph">Chủ đề cảnh minh hoạ</p>
                 <select className="cv-sel" aria-label="Chủ đề cảnh cả bài" value="" onChange={(e) => { const v = e.target.value as SceneKind; if (v) commit({ ...deckRef.current, slides: applyTheme(deckRef.current.slides, v) }); }}>
-                  <option value="">🎨 Đổi cảnh minh hoạ cả bài…</option>{SCENES.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
+                  <option value="">🎨 Đổi cảnh minh hoạ cả bài…</option>{SCENES_SORTED.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
                 </select>
               </> : <>
                 <p className="cv-ph">Trang của bộ mẫu <small>bấm để thêm một trang</small></p>
@@ -598,7 +598,15 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
                   </>}
                   {elCat === 'scene' && <>
                     <p className="dk-hint">Bấm để đặt cảnh nền cho trang này (đổi góc máy ở bảng Nền).</p>
-                    <div className="cv-scenetiles">{SCENES.map((c) => <button key={c.id} type="button" className={slide.scene === c.id ? 'is-on' : ''} style={{ background: c.bg }} onClick={() => setSlide((x) => ({ ...x, scene: c.id }))}><span>{c.icon}</span><b>{c.label}</b></button>)}</div>
+                    {sceneGroups().map((g) => (
+                      <div key={g.label} className="cv-scenegroup">
+                        <p className="cv-ph">{g.label}</p>
+                        <div className="cv-scenetiles">{g.scenes.map((c) => <button key={c.id} type="button" aria-pressed={slide.scene === c.id} className={slide.scene === c.id ? 'is-on' : ''} style={{ background: c.bg }} onClick={() => setSlide((x) => ({ ...x, scene: c.id }))}>
+                          {/* eslint-disable-next-line @next/next/no-img-element -- hình có sẵn */}
+                          <img src={c.art} alt="" loading="lazy" draggable={false} /><b>{c.label}</b>
+                        </button>)}</div>
+                      </div>
+                    ))}
                   </>}
                   {f3dIdx !== null && grid(f3dIdx < 0 ? F3D : (F3D_CATS[f3dIdx]?.items ?? []).map(f3dSrc))}
                   {cdnIdx !== null && grid((FLUENT_CDN_GROUPS[cdnIdx]?.items ?? []).map(([code]) => fluentCdnUrl(code)))}
@@ -641,7 +649,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
               <p className="cv-ph">Cảnh minh hoạ (trang này)</p>
               <div className="dk-row dk-scenes cv-wrap">
                 <button type="button" className={!slide.scene ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: undefined }))}>Không</button>
-                {SCENES.map((c) => <button key={c.id} type="button" title={c.label} className={slide.scene === c.id ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: c.id }))}><span aria-hidden="true">{c.icon}</span>{c.label}</button>)}
+                {SCENES_SORTED.map((c) => <button key={c.id} type="button" title={c.label} className={slide.scene === c.id ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: c.id }))}><span aria-hidden="true">{c.icon}</span>{c.label}</button>)}
               </div>
               {slide.scene && <>
                 <p className="cv-ph">Bố cục cảnh (góc máy)</p>

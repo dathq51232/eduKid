@@ -8,6 +8,8 @@ export type Scene = {
   id: SceneKind;
   label: string;
   icon: string;
+  /** Hình 3D đại diện (ô chọn cảnh) */
+  art: string;
   bg: string;
   bgInner?: string;
   dark?: boolean;
@@ -30,7 +32,8 @@ export const SCENES: Scene[] = [
   {
     id: 'sea',
     label: 'Đại dương',
-    icon: '🌊',
+    icon: '🐳',
+    art: S('whale'),
     bg: 'linear-gradient(180deg,#ccf2ff 0%,#dcf7ff 55%,#6bc4d8 55%,#52b2c7 100%)',
     bgInner: 'linear-gradient(180deg,#c2f2fc 0%,#88d9ec 58%,#4eb6cf 100%)',
     ink: { title: '#035397', sub: '#0077b6', body: '#0c4a6e', pill: 'rgba(255,255,255,0.78)', pillBorder: '#7dd3fc' },
@@ -69,6 +72,7 @@ export const SCENES: Scene[] = [
     id: 'garden',
     label: 'Rừng xanh',
     icon: '🌳',
+    art: S('tree'),
     bg: 'linear-gradient(180deg,#d8f3dc 0%,#f1faee 58%,#95d5b2 58%,#52b788 100%)',
     bgInner: 'linear-gradient(180deg,#e9f7ec 0%,#d8f3dc 64%,#74c69d 100%)',
     ink: { title: '#14532d', sub: '#15803d', body: '#1e3a2f', pill: 'rgba(255,255,255,0.82)', pillBorder: '#86efac' },
@@ -111,7 +115,8 @@ export const SCENES: Scene[] = [
   {
     id: 'farm',
     label: 'Nông trại',
-    icon: '🌾',
+    icon: '🐓',
+    art: S('rooster'),
     bg: 'linear-gradient(180deg,#dbeafe 0%,#f0f9ff 56%,#bbf7d0 56%,#86efac 100%)',
     bgInner: 'linear-gradient(180deg,#e0f2fe 0%,#f0fdf4 62%,#86efac 100%)',
     ink: { title: '#9a3412', sub: '#b45309', body: '#431407', pill: 'rgba(255,255,255,0.82)', pillBorder: '#fcd34d' },
@@ -153,7 +158,8 @@ export const SCENES: Scene[] = [
   {
     id: 'dino',
     label: 'Khủng long',
-    icon: '🦖',
+    icon: '🦕',
+    art: S('dino'),
     bg: 'linear-gradient(180deg,#ccfbf1 0%,#e6fffa 55%,#a7f3d0 55%,#34d399 100%)',
     bgInner: 'linear-gradient(180deg,#d1fae5 0%,#ecfdf5 62%,#6ee7b7 100%)',
     ink: { title: '#115e59', sub: '#0f766e', body: '#134e4a', pill: 'rgba(255,255,255,0.82)', pillBorder: '#5eead4' },
@@ -191,6 +197,7 @@ export const SCENES: Scene[] = [
     id: 'space',
     label: 'Vũ trụ',
     icon: '🚀',
+    art: S('rocket'),
     dark: true,
     bg: 'radial-gradient(circle at 78% 22%,#3b3f8f 0%,#1e1b4b 45%,#0b1026 100%)',
     bgInner: 'radial-gradient(circle at 50% 20%,#312e81 0%,#1e1b4b 55%,#090d24 100%)',
@@ -229,7 +236,8 @@ export const SCENES: Scene[] = [
   {
     id: 'class',
     label: 'Lớp học',
-    icon: '🏫',
+    icon: '🎒',
+    art: S('backpack'),
     bg: 'linear-gradient(180deg,#fef3c7 0%,#fffbeb 66%,#e2b170 66%,#c99456 100%)',
     bgInner: 'linear-gradient(180deg,#fffbeb 0%,#fef3c7 70%,#d6a266 100%)',
     ink: { title: '#92400e', sub: '#b45309', body: '#451a03', pill: 'rgba(255,255,255,0.85)', pillBorder: '#fbbf24' },
@@ -267,6 +275,7 @@ export const SCENES: Scene[] = [
     id: 'yard',
     label: 'Sân nhà',
     icon: '🏡',
+    art: S('house'),
     bg: 'linear-gradient(180deg,#c7e9ff 0%,#eef8ff 58%,#fde68a 58%,#f59e0b 100%)',
     bgInner: 'linear-gradient(180deg,#e0f2fe 0%,#f8fafc 62%,#fcd34d 100%)',
     ink: { title: '#9a3412', sub: '#d97706', body: '#431407', pill: 'rgba(255,255,255,0.82)', pillBorder: '#fbbf24' },
@@ -302,7 +311,8 @@ export const SCENES: Scene[] = [
   {
     id: 'kitchen',
     label: 'Tiệm bánh',
-    icon: '🍳',
+    icon: '🧁',
+    art: S('cupcake'),
     bg: 'linear-gradient(180deg,#ffe4e6 0%,#fff1f2 62%,#fed7aa 62%,#fDBA74 100%)',
     bgInner: 'linear-gradient(180deg,#fff1f2 0%,#fff7ed 66%,#fed7aa 100%)',
     ink: { title: '#9f1239', sub: '#e11d48', body: '#4c0519', pill: 'rgba(255,255,255,0.84)', pillBorder: '#fda4af' },
@@ -338,7 +348,8 @@ export const SCENES: Scene[] = [
   {
     id: 'pond',
     label: 'Ao sen',
-    icon: '🪷',
+    icon: '🐸',
+    art: S('frog'),
     bg: 'linear-gradient(180deg,#cffafe 0%,#ecfeff 52%,#67e8f9 52%,#06b6d4 100%)',
     bgInner: 'linear-gradient(180deg,#e0f2fe 0%,#bae6fd 58%,#38bdf8 100%)',
     ink: { title: '#075985', sub: '#0284c7', body: '#0c4a6e', pill: 'rgba(255,255,255,0.82)', pillBorder: '#7dd3fc' },
@@ -373,7 +384,8 @@ export const SCENES: Scene[] = [
   {
     id: 'candy',
     label: 'Kẹo ngọt',
-    icon: '🍭',
+    icon: '🍦',
+    art: S('icecream'),
     bg: 'linear-gradient(180deg,#fdf2f8 0%,#fce7f3 58%,#fbcfe8 58%,#f9a8d4 100%)',
     bgInner: 'linear-gradient(180deg,#fdf4ff 0%,#fce7f3 64%,#f5d0fe 100%)',
     ink: { title: '#9d174d', sub: '#db2777', body: '#500724', pill: 'rgba(255,255,255,0.85)', pillBorder: '#f9a8d4' },
@@ -410,7 +422,8 @@ export const SCENES: Scene[] = [
   {
     id: 'tet',
     label: 'Ngày Tết',
-    icon: '🧧',
+    icon: '🏮',
+    art: S('red-paper-lantern'),
     dark: true,
     bg: 'radial-gradient(circle at 35% 35%,#ef4444 0%,#b91c1c 62%,#7f1d1d 100%)',
     bgInner: 'radial-gradient(circle at 50% 30%,#dc2626 0%,#991b1b 68%,#7f1d1d 100%)',
@@ -450,7 +463,8 @@ export const SCENES: Scene[] = [
   {
     id: 'family',
     label: 'Sổ tay · Thảm hoa',
-    icon: '🌺',
+    icon: '🌻',
+    art: S('sunflower'),
     bg: 'linear-gradient(180deg,#fdfbf4 0%,#fdf9ee 68%,#e8d166 68%,#dfc34d 100%)',
     bgInner: '#fdfaf0',
     ink: { title: '#111827', sub: '#1f2937', body: '#1f2937', pill: '#f9eedb', pillBorder: '#f2b3a9' },
@@ -497,7 +511,17 @@ export const ACCENT: Record<string, string> = {
   family: '#0e6b8a',
 };
 export const accentOf = (id?: string) => (id && ACCENT[id]) || '#035397';
+/** Nhóm cảnh theo chủ đề — thứ tự hiển thị cố định trong bảng chọn */
+export const SCENE_GROUPS: { label: string; ids: SceneKind[] }[] = [
+  { label: 'Thiên nhiên', ids: ['garden', 'pond', 'farm', 'sea'] },
+  { label: 'Khám phá', ids: ['dino', 'space'] },
+  { label: 'Trường & nhà', ids: ['class', 'yard', 'family'] },
+  { label: 'Vui chơi & lễ hội', ids: ['kitchen', 'candy', 'tet'] },
+];
 export const SCENE_BY_ID: Record<string, Scene> = Object.fromEntries(SCENES.map((s) => [s.id, s]));
+/** Danh sách cảnh theo thứ tự nhóm (dùng cho các ô chọn) */
+export const SCENES_SORTED: Scene[] = SCENE_GROUPS.flatMap((g) => g.ids.map((id) => SCENE_BY_ID[id]).filter(Boolean));
+export const sceneGroups = () => SCENE_GROUPS.map((g) => ({ label: g.label, scenes: g.ids.map((id) => SCENE_BY_ID[id]).filter(Boolean) }));
 export const sceneDark = (id?: string) => !!(id && SCENE_BY_ID[id]?.dark);
 export const inkOf = (id?: string): SceneInk =>
   (id && SCENE_BY_ID[id]?.ink) || { title: '#035397', sub: '#0077b6', body: '#0f172a', pill: 'rgba(255,255,255,0.82)', pillBorder: '#7dd3fc' };

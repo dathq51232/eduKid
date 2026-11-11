@@ -7894,10 +7894,12 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .cv-catback { display: flex; align-items: center; gap: 6px; width: 100%; padding: 6px 2px 10px; border: 0; background: none; color: inherit; font: 800 15px var(--font-display), sans-serif; cursor: pointer; }
 .cv-catback svg { width: 18px; height: 18px; }
 .cv-scenetiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-.cv-scenetiles button { height: 74px; border: 2px solid transparent; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #0f172a; }
-.cv-scenetiles button.is-on { border-color: #8b5cf6; }
-.cv-scenetiles span { font-size: 24px; }
-.cv-scenetiles b { font-size: 12px; background: rgba(255, 255, 255, .78); padding: 1px 8px; border-radius: 99px; }
+.cv-scenegroup + .cv-scenegroup { margin-top: 6px; }
+.cv-scenetiles button { position: relative; height: 84px; border: 2px solid transparent; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; padding: 6px 4px 8px; color: #0f172a; overflow: hidden; transition: transform .15s ease; }
+.cv-scenetiles button:hover { transform: translateY(-2px); }
+.cv-scenetiles button.is-on { border-color: #8b5cf6; box-shadow: 0 0 0 2px rgba(139, 92, 246, .35); }
+.cv-scenetiles img { width: 44px; height: 44px; object-fit: contain; filter: drop-shadow(0 3px 4px rgba(15, 23, 42, .25)); pointer-events: none; }
+.cv-scenetiles b { font-size: 12px; background: rgba(255, 255, 255, .85); padding: 1px 8px; border-radius: 99px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .cv-big { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px; border-radius: 10px; border: 1px solid var(--line-strong); background: #f8fafc; color: var(--ink); font: 700 15px var(--font-display), sans-serif; cursor: pointer; }
 .cv-big.is-h { background: var(--cv-pri); border-color: var(--cv-pri); color: #fff; font-size: 16px; margin-right: 30px; width: calc(100% - 30px); }
 .cv-big svg { width: 18px; height: 18px; }

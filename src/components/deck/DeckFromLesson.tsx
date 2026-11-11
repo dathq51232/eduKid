@@ -10,7 +10,7 @@ import { Check, Minus, Plus, RotateCcw, Search, Sparkles, X } from 'lucide-react
 import { createClient } from '@/lib/supabase/client';
 import type { ContentLesson } from '@/lib/content/types';
 import { emptyDeck, type Deck, type SceneKind } from '@/lib/deck/types';
-import { SCENES, pickScene } from '@/lib/deck/scenes';
+import { SCENES_SORTED, pickScene } from '@/lib/deck/scenes';
 import { MASCOTS, PHASES, WARMUPS, buildPlan, buildPlanFromGiaoAn, planSlides, tietOf, type BuildOpts, type Knowledge, type LessonPlan, type MascotId, type PhaseId, type Warmup } from '@/lib/deck/fromLesson';
 import { SUBJECT_NAMES, isAppSubject, isPlan, mondayOf, addDays, viDate, weekdayVi, type LessonPlan as GiaoAn } from '@/lib/plans/generate';
 import SlideView, { SlideFrame } from './SlideView';
@@ -328,7 +328,7 @@ function PlanEditor({ plan, ed, setEd, mascot, setMascot, warmup, setWarmup, div
     <div className="dfl-opts">
       <div className="dfl-opt"><b>Linh vật</b><span className="dfl-mascots">{MASCOTS.map((m) => <button key={m.id} type="button" title={m.name} aria-label={m.name} className={mascot === m.id ? 'is-on' : ''} onClick={() => setMascot(m.id)}><img src={m.src} alt="" /></button>)}</span></div>
       <div className="dfl-opt"><b>Khởi động</b><span className="dk-seg">{WARMUPS.map((w) => <button key={w.id} type="button" className={warmup === w.id ? 'is-on' : ''} onClick={() => setWarmup(w.id)}>{w.icon} {w.label}</button>)}</span></div>
-      <div className="dfl-opt"><b>Cảnh nền</b><span className="dfl-scenes">{SCENES.map((s) => <button key={s.id} type="button" className={ed.scene === s.id ? 'is-on' : ''} onClick={() => setEd({ scene: s.id })}><i>{s.icon}</i>{s.label}{ed.autoScene === s.id ? ' ✨' : ''}</button>)}</span></div>
+      <div className="dfl-opt"><b>Cảnh nền</b><span className="dfl-scenes">{SCENES_SORTED.map((s) => <button key={s.id} type="button" className={ed.scene === s.id ? 'is-on' : ''} onClick={() => setEd({ scene: s.id })}><i>{s.icon}</i>{s.label}{ed.autoScene === s.id ? ' ✨' : ''}</button>)}</span></div>
       <div className="dfl-opt"><b>Bố cục</b>
         <label className="dk-chk"><input type="checkbox" checked={dividers} onChange={(e) => setDividers(e.target.checked)} /> Trang chia hoạt động (chữ to “KHỞI ĐỘNG”, “KHÁM PHÁ”…)</label>
         <label className="dfl-tiet">Tiết <select value={ed.tiet ?? ''} onChange={(e) => setEd({ tiet: e.target.value ? Number(e.target.value) : undefined })}><option value="">—</option>{[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
