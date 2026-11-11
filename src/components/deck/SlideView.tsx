@@ -993,6 +993,8 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
               ? 'left'
               : 'bottom')
           }
+          // cảnh minh hoạ = phông nền + bạn cú Milo; trang đã có Milo (vật trên trang) thì không vẽ thêm
+          milo={!slide.els.some((e) => !e.hide && ((e.kind === 'img' && /milo/i.test(e.src)) || e.role === 'card'))} // trang có khung nội dung che kín: không vẽ Milo sau khung
         />
       )}
       {mode === 'edit' && snapGrid && <i className="dk-grid-overlay" aria-hidden="true" />}

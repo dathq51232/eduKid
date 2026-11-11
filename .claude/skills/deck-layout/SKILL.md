@@ -132,3 +132,4 @@ Nhịp trang: xen kẽ trang nhiều chữ với trang hình/tương tác; khôn
 - `makeSet(id, info, ct?)`: có `ct` (`setContentOf(lesson, know)` trong `fromLesson.ts`) thì điền câu khởi động, câu khám phá, bài luyện tập, bài vận dụng, ý chính, dặn dò của bài; đáp án vào ghi chú. Không có (bài tự nhập) thì giữ chữ mẫu.
 - Trình soạn tự tải nội dung khi bài có `deck.src.lesson` (mở bảng Mẫu → Bộ chủ đề).
 - Chia câu: Luyện tập trước (phép tính ngắn 2 cột; câu dài 1 cột, tối đa 4), rồi Khởi động, Vận dụng, Khám phá; trắc nghiệm kèm lựa chọn, nối có hai vế; bài đọc → khởi động đoán nội dung, khám phá hỏi về bài đọc.
+- Cảnh minh hoạ = phông nền + bạn cú Milo: `SceneBg` vẽ Milo (tư thế theo chủ đề, góc theo góc máy — `MILO_AT`) khi trang chưa có Milo và không có khung nội dung `role: card` che kín (SlideView truyền `milo`).

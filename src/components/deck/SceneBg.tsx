@@ -418,7 +418,7 @@ function LandThemeSvg({ id, variant }: { id: string; variant: SceneVariant }) {
 /** Cảnh nền minh hoạ đa góc máy (vẽ sau các vật, không bấm được) */
 /** Cảnh nền: CHỈ vẽ phong cảnh (trời, mây, đồi, biển, sàn lớp…). Không vẽ hình dán 3D và con vật sau chữ
  *  (dễ đè, làm mờ chữ) — áp cho mọi bài cũ và mới; hình dán cô tự chèn ở Thành phần. */
-function SceneBg({ id, variant = 'cover' }: { id: string; variant?: SceneVariant }) {
+function SceneBg({ id, variant = 'cover', milo = true }: { id: string; variant?: SceneVariant; /** vẽ bạn cú Milo ở góc (khi trang chưa có Milo) */ milo?: boolean }) {
   const bare = true;
   const [rawId, explicitVar] = id.split(':') as [string, SceneVariant | undefined];
   const sc = SCENE_BY_ID[rawId];
@@ -431,6 +431,7 @@ function SceneBg({ id, variant = 'cover' }: { id: string; variant?: SceneVariant
       <div className="dk-scene" aria-hidden="true" style={{ background: bg }}>
         <div className="dk-scene-quiet" />
         {!bare && <img src={sc.art} alt="" draggable={false} style={{ left: 1448, top: 748, width: 120, opacity: 0.95, filter: 'drop-shadow(0 8px 14px rgba(15,23,42,0.18))' }} />}
+        {milo && <SceneMilo id={rawId} v={v} />}
       </div>
     );
   }
@@ -463,6 +464,7 @@ function SceneBg({ id, variant = 'cover' }: { id: string; variant?: SceneVariant
           <div key={i} style={{ left: p.x, top: p.y, width: p.w, height: p.h, ...cssObj(p.css) }} />
         ),
       )}
+      {milo && <SceneMilo id={rawId} v={v} />}
     </div>
   );
 }
@@ -474,6 +476,17 @@ function cssObj(css?: string): React.CSSProperties {
     if (k > 0) o[d.slice(0, k).trim().replace(/-([a-z])/g, (_, c: string) => c.toUpperCase())] = d.slice(k + 1).trim();
   }
   return o as React.CSSProperties;
+}
+
+/** bạn cú Milo của cảnh: tư thế hợp chủ đề, đứng ở góc không có chữ của từng góc máy */
+const MILO_POSE: Record<string, string> = { space: 'astronaut', kitchen: 'artist', candy: 'artist', class: 'professor', family: 'professor', sea: 'doctor', pond: 'doctor' };
+const MILO_AT: Record<SceneVariant, { x: number; y: number; w: number }> = {
+  cover: { x: 1300, y: 560, w: 250 }, right: { x: 1300, y: 560, w: 250 }, left: { x: 60, y: 560, w: 250 },
+  bottom: { x: 1380, y: 650, w: 190 }, center: { x: 24, y: 660, w: 190 }, quiet: { x: 1400, y: 680, w: 170 },
+};
+function SceneMilo({ id, v }: { id: string; v: SceneVariant }) {
+  const at = MILO_AT[v] ?? MILO_AT.bottom;
+  return <img src={`/brand/milo-${MILO_POSE[id] ?? 'professor'}-sm.webp`} alt="" draggable={false} style={{ left: at.x, top: at.y, width: at.w, filter: 'drop-shadow(0 10px 18px rgba(15,23,42,0.2))' }} />;
 }
 
 export default memo(SceneBg);
