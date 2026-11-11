@@ -1,8 +1,11 @@
-// Kiến thức cần nhớ của mục "Chuyên đề nâng cao" (Toán 2–5). Tách khỏi bộ sinh đề (src/lib/practice/advanced) để trang học
+// Kiến thức cần nhớ của mục "Chuyên đề nâng cao" (Toán 1–5). Tách khỏi bộ sinh đề (src/lib/practice/advanced) để trang học
 // chỉ tải phần chữ này khi mở bài. Mã bài: nc<lớp>-<chuyên đề>.
 import type { Knowledge } from './knowledge';
 
 export const advId = (grade: number, slug: string) => `nc${grade}-${slug}`;
+/** Tên "bộ sách" của các bài chuyên đề nâng cao; mã bài nc<lớp>-… */
+export const ADV_BOOK = 'Chuyên đề nâng cao';
+export const isAdvancedId = (lessonId: string) => /^nc[1-5]-/.test(lessonId);
 
 const BY_SLUG: Record<string, { grades: number[]; k: Knowledge }> = {
   'them-bot': { grades: [2, 3], k: { points: ['Bạn nhiều hơn cho bạn ít hơn 1 cái thì phần hơn giảm đi 2 (bạn này bớt 1, bạn kia thêm 1).', 'Muốn hai bạn bằng nhau: lấy phần hơn chia đôi, đó là số phải cho.', 'Nếu chỉ một bạn được thêm (không ai cho đi) thì phải thêm đúng bằng phần hơn.', 'Tìm số lúc đầu: người cho đi thì cộng lại, người được nhận thì trừ đi.'], example: 'An có 14 viên bi, Bình có 8 viên bi. An hơn Bình 14 − 8 = 6 viên, An phải cho Bình 6 : 2 = 3 viên thì hai bạn bằng nhau.' } },
@@ -16,6 +19,15 @@ const BY_SLUG: Record<string, { grades: number[]; k: Knowledge }> = {
   'cong-viec-chung': { grades: [5], k: { points: ['Coi cả công việc là W phần, W là số chia hết cho mọi số ngày đã cho.', 'Một ngày mỗi người làm được W : (số ngày của người đó) phần.', 'Có người nghỉ giữa chừng: tính phần đã làm chung, phần còn lại chia cho năng suất của những người làm tiếp.', 'Vòi chảy vào và vòi tháo ra: mỗi giờ bể thêm hiệu hai năng suất.'], example: 'A làm 6 ngày, B làm 12 ngày: coi việc là 12 phần, một ngày A làm 2 phần, B làm 1 phần → cùng làm 12 : 3 = 4 ngày.' } },
 };
 
-export const ADV_KNOWLEDGE: Record<string, Knowledge> = Object.fromEntries(
-  Object.entries(BY_SLUG).flatMap(([slug, v]) => v.grades.map((g) => [advId(g, slug), v.k])),
-);
+// Toán lớp 1 (chỉ cộng, trừ trong phạm vi 100, không nhớ)
+const GRADE1: Record<string, Knowledge> = {
+  'xep-hang': { points: ['Đếm từ trái và đếm từ phải đều tính cả bạn đó: số bạn của hàng = thứ tự từ trái + thứ tự từ phải − 1.', 'Trước có mấy bạn, sau có mấy bạn: cộng lại rồi thêm chính bạn đó (thêm 1).', 'Bên phải bạn có số bạn = số bạn cả hàng − thứ tự của bạn tính từ trái.'], example: 'An đứng thứ 3 từ trái, thứ 4 từ phải: hàng có 3 + 4 − 1 = 6 bạn.' },
+  'o-trong': { points: ['… + a = b: lấy b − a.', 'a − … = b: lấy a − b.', '… − a = b: lấy b + a.', 'Hai vế bằng nhau: tính vế đã biết trước rồi mới tìm số còn thiếu.'], example: '… + 3 = 8 → 8 − 3 = 5.' },
+  'quy-luat-day': { points: ['Xem số sau hơn (hay kém) số trước bao nhiêu: đếm thêm (hay đếm bớt) đúng bấy nhiêu.', 'Dãy đếm thêm 10: chỉ chữ số hàng chục thay đổi.', 'Nếu khoảng cách thay đổi: xem nó tăng dần thế nào, hoặc tách thành hai dãy xen kẽ.'], example: 'Dãy 2; 4; 6; 8; … đếm thêm 2 → số tiếp theo là 10.' },
+  'hon-kem': { points: ['Hơn mấy thì cộng thêm, kém mấy thì bớt đi.', 'Mỗi năm ai cũng thêm 1 tuổi nên anh chị luôn hơn em bấy nhiêu tuổi.', 'Bài nhiều bước: tìm số của từng bạn lần lượt rồi mới trả lời.'], example: 'An 6 tuổi, chị hơn An 3 tuổi → chị 6 + 3 = 9 tuổi. 2 năm nữa chị vẫn hơn An 3 tuổi.' },
+};
+
+export const ADV_KNOWLEDGE: Record<string, Knowledge> = {
+  ...Object.fromEntries(Object.entries(BY_SLUG).flatMap(([slug, v]) => v.grades.map((g) => [advId(g, slug), v.k]))),
+  ...Object.fromEntries(Object.entries(GRADE1).map(([slug, k]) => [advId(1, slug), k])),
+};

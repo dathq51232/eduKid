@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { MUC } from '@/lib/basics';
 import { useSearchParams } from 'next/navigation';
 import { Check, Clock, Home, ListChecks, MinusCircle, RotateCcw, Star, Volume2, X, Dices } from 'lucide-react';
+import { isAdvancedId } from '@/lib/content/knowledge-nc';
 import LearnHeader from '@/components/LearnHeader';
 import VoiceHelp from '@/components/VoiceHelp';
 import LessonDecor from '@/components/learn/LessonDecor';
@@ -74,7 +75,7 @@ function KetQuaContent() {
 
   if (!loaded) return <LearnHeader />;
 
-  const listHref = `/chon-bai?subject=${attempt?.subject ?? subjectCode}&grade=${attempt?.grade ?? grade}`;
+  const listHref = `/chon-bai?subject=${attempt?.subject ?? subjectCode}&grade=${attempt?.grade ?? grade}${attempt && isAdvancedId(attempt.lessonId) ? '&nc=1' : ''}`;
 
   if (!attempt) {
     return (

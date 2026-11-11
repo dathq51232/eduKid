@@ -17,6 +17,7 @@ const err = (k: string, m: string) => { const key = k + m.replace(/\d+/g, '#'); 
 let made = 0, nulls = 0;
 
 for (const t of ADV_TOPICS) {
+  if (!t.pool) continue; // Tiếng Việt / Tiếng Anh: kiểm bằng check-content + check-practice
   for (const grade of t.grades) {
     const c: AdvCtx = { grade };
     for (const lv of [1, 2, 3, 4, 5] as Level[]) {

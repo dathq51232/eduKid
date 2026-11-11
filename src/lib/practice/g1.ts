@@ -1,5 +1,6 @@
 // Bộ sinh câu luyện tập lớp 1 (tách riêng để trang học chỉ tải đúng khối của em).
 import { entry, bind, mergeAny, type AnyPool, type Entry } from './core';
+import { advancedEntries } from './advanced/lessons';
 import { TOAN1_HK1 } from '../content/toan1-hk1';
 import { TOAN1_HK2 } from '../content/toan1-hk2';
 import { TV1_HK1 } from '../content/tv1-hk1';
@@ -44,4 +45,6 @@ export const ENTRIES_G1: Entry[] = [
   entry(TA1_HK2.find((l) => l.id === 'ta1-gs-review3'), () => taContext(12), TA2_POOL, 215),
   ...[13, 14, 15, 16].map((u) => entry(TA1_HK2.find((l) => l.id === `ta1-gs-u${u}`), () => taContext(u), TA2_POOL, 203 + u)),
   entry(TA1_HK2.find((l) => l.id === 'ta1-gs-review4'), () => taContext(16), TA2_POOL, 220),
+  // Chuyên đề nâng cao (Toán, Tiếng Việt, Tiếng Anh)
+  ...advancedEntries(1),
 ];

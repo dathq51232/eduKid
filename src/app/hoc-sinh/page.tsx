@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { BookOpen, CheckCircle2, ChevronRight, ClipboardList, Clock, Crown, CreditCard, Flame, Gamepad2, Lock, PenLine, RotateCcw, Sparkles, Star, Trophy, Users } from 'lucide-react';
+import { BookOpen, CheckCircle2, ChevronRight, ClipboardList, Clock, Crown, CreditCard, Flame, Gamepad2, Lock, PenLine, Rocket, RotateCcw, Sparkles, Star, Trophy, Users } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import GalleryTeaser from '@/components/gallery/GalleryTeaser';
 import MiloMascot from '@/components/mascot/MiloMascot';
@@ -138,6 +138,7 @@ export default async function StudentHome() {
             {!locked && (
               <div className="sd-quick">
                 <Link href={`/chon-bai?grade=${grade}`}><BookOpen aria-hidden="true" /> Học bài khác</Link>
+                <Link href={`/chon-bai?grade=${grade}&nc=1`}><Rocket aria-hidden="true" /> Chuyên đề nâng cao</Link>
                 <Link href="/tieng-anh"><BookOpen aria-hidden="true" /> English Journey</Link>
                 <Link href="/tro-choi"><Gamepad2 aria-hidden="true" /> Game trí tuệ</Link>
                 <Link href="/co"><Crown aria-hidden="true" /> Đấu cờ</Link>

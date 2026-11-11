@@ -39,7 +39,7 @@ export type Problem = {
   outcome: string;
   skill: string;
 };
-export type AdvGrade = 2 | 3 | 4 | 5;
+export type AdvGrade = 1 | 2 | 3 | 4 | 5;
 export type AdvCtx = { grade: AdvGrade };
 export type Gen = (r: Rng, c: AdvCtx, l: Level) => Problem | null;
 export type GenPool = Record<Level, Gen[]>;

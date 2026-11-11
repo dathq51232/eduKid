@@ -27,6 +27,7 @@ import Confetti from '@/components/learn/Confetti';
 import LessonDecor from '@/components/learn/LessonDecor';
 import MiloTrail from '@/components/learn/MiloTrail';
 import SolutionSteps from '@/components/learn/SolutionSteps';
+import { isAdvancedId } from '@/lib/content/knowledge-nc';
 import { awardSticker, prefersReducedMotion, readFx, saveFx } from '@/lib/stickers';
 import { SUBJECT_MASCOT } from '@/lib/mascots';
 import { getLesson, getQuestionSet, getReplacement, gradeAnswer, isSubjectCode, parseGrade } from '@/lib/data';
@@ -86,7 +87,7 @@ function LamBaiContent() {
   const subjectParam = searchParams.get('subject');
   const subjectCode = isSubjectCode(subjectParam) ? subjectParam : 'toan';
   const grade = parseGrade(searchParams.get('grade'));
-  const backHref = `/chon-bai?subject=${subjectCode}&grade=${grade}`;
+  const backHref = `/chon-bai?subject=${subjectCode}&grade=${grade}${isAdvancedId(lessonId) ? '&nc=1' : ''}`;
 
   // Bộ câu: không có seed = bộ câu gốc; có seed = bộ câu mới theo mức độ (Cơ bản / Khá / Giỏi).
   // seed nằm trên địa chỉ trang nên tải lại trang vẫn giữ đúng bộ câu đó.

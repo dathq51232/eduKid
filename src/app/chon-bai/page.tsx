@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Check, Clock, Dices, Gauge, ListChecks, Map as MapIcon, Play, RotateCcw, Star, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Check, Clock, Dices, Gauge, ListChecks, Map as MapIcon, Play, Rocket, RotateCcw, Star, Trophy } from 'lucide-react';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import Sticker from '@/components/learn/Sticker';
 import { SUBJECT_MASCOT } from '@/lib/mascots';
@@ -16,6 +16,7 @@ import { rankFor } from '@/lib/levels';
 import { MUC, MUC_LIST, type Muc } from '@/lib/sets';
 import { mucFor, readBest, readMucStore, readTotalPoints, saveMucAll, saveMucLesson, starsFor, type BestMap, type MucStore } from '@/lib/progress';
 import { TOPICS_BY_GRADE } from '@/lib/curriculum';
+import { ADV_BOOK } from '@/lib/content/knowledge-nc';
 import type { Lesson, SubjectCode } from '@/lib/types';
 
 /** Sticker 3D trang trí theo môn (ảnh có sẵn trong public/stickers) */
@@ -54,7 +55,13 @@ function ChonBaiContent() {
   const subjectCode = isSubjectCode(subjectParam) ? subjectParam : 'toan';
   const grade = parseGrade(searchParams.get('grade'));
   const subject = getSubject(subjectCode);
-  const lessons = getLessons(subjectCode, grade);
+  // Hai chế độ ngay dưới tab môn: "Theo sách" (bài theo SGK) và "Nâng cao" (chuyên đề tư duy, bồi dưỡng) — ?nc=1
+  const allLessons = getLessons(subjectCode, grade);
+  const isAdv = (l: Lesson) => l.book === ADV_BOOK;
+  const advCount = allLessons.filter(isAdv).length;
+  const bookCount = allLessons.length - advCount;
+  const advMode = searchParams.get('nc') === '1' && advCount > 0;
+  const lessons = allLessons.filter((l) => isAdv(l) === advMode);
 
   const [best, setBest] = useState<BestMap>({});
   const [mucStore, setMucStore] = useState<MucStore>({ all: 1, lessons: {} });
@@ -79,7 +86,7 @@ function ChonBaiContent() {
     }
     g.list.push(l);
   }
-  const book = lessons.find((l) => l.book && l.kind !== 'review')?.book;
+  const book = advMode ? undefined : lessons.find((l) => l.book && l.kind !== 'review')?.book;
 
   const doneCount = lessons.filter((l) => best[l.id]).length;
   const nextLesson = lessons.find((l) => !best[l.id]);
@@ -112,7 +119,8 @@ function ChonBaiContent() {
     : doneCount * 2 < lessons.length ? `Em đã học ${doneCount} bài rồi. Cố lên!`
     : `Sắp về đích rồi! Còn ${lessons.length - doneCount} bài.`;
 
-  const go = (code: string, g: number) => router.replace(`/chon-bai?subject=${code}&grade=${g}`, { scroll: false });
+  const ncq = advMode ? '&nc=1' : '';
+  const go = (code: string, g: number, nc = advMode) => router.replace(`/chon-bai?subject=${code}&grade=${g}${nc ? '&nc=1' : ''}`, { scroll: false });
 
   return (
     <>
@@ -129,7 +137,7 @@ function ChonBaiContent() {
           {GRADES.filter((g) => !lockedGrade || g === lockedGrade).map((g) => (
             <Link
               key={g}
-              href={`/chon-bai?subject=${subjectCode}&grade=${g}`}
+              href={`/chon-bai?subject=${subjectCode}&grade=${g}${ncq}`}
               replace
               scroll={false}
               className="grade-chip"
@@ -155,13 +163,27 @@ function ChonBaiContent() {
           ))}
         </div>
 
+        {advCount > 0 && (
+          <div className={`cb-mode ${subject.tone}`} role="group" aria-label={`Loại bài ${subject.name}`}>
+            <button type="button" className={`cb-mode-btn${!advMode ? ' is-on' : ''}`} aria-pressed={!advMode} onClick={() => go(subjectCode, grade, false)}>
+              <BookOpen size={20} aria-hidden="true" />
+              <span><b>Theo sách</b><small>{bookCount} bài theo SGK</small></span>
+            </button>
+            <button type="button" className={`cb-mode-btn is-adv${advMode ? ' is-on' : ''}`} aria-pressed={advMode} onClick={() => go(subjectCode, grade, true)}>
+              <Rocket size={20} aria-hidden="true" />
+              <span><b>Nâng cao</b><small>{advCount} chuyên đề tư duy</small></span>
+            </button>
+          </div>
+        )}
+
         <section className={`subject-banner cb-hero ${subject.tone}`} aria-labelledby="cb-title">
           <div className="cb-hero-deco" aria-hidden="true">
             {HERO_STICKERS[subjectCode].map((id, i) => <span key={id} className={`cb-float is-${i}`}><Sticker id={id} size={i ? 64 : 84} /></span>)}
           </div>
           <div className="cb-hero-text">
             {book && <p className="cb-kicker">Lớp {grade} · Bộ {book}</p>}
-            <h1 id="cb-title">{subject.name} lớp {grade}</h1>
+            {advMode && <p className="cb-kicker">Lớp {grade} · Chuyên đề nâng cao</p>}
+            <h1 id="cb-title">{subject.name} lớp {grade}{advMode ? ' · Nâng cao' : ''}</h1>
             <div className="cb-stats">
               <span className="cb-ring" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label="Tiến độ môn học">
                 <svg viewBox="0 0 44 44" aria-hidden="true">
@@ -221,6 +243,7 @@ function ChonBaiContent() {
 
         <h2 className="learn-heading cb-heading"><MapIcon size={24} aria-hidden="true" /> Hành trình bài học</h2>
         {book && <p className="book-note">Theo trình tự sách {subject.name} {grade} — bộ {book}. Câu hỏi do EduChain Kids biên soạn.</p>}
+        {advMode && <p className="book-note">Dạng bài tư duy, bồi dưỡng học sinh giỏi, vẫn trong phạm vi kiến thức lớp {grade}. Mỗi lần “Đổi bộ câu hỏi” là một đề mới, có lời giải từng bước của Milo.</p>}
 
         {lessons.length === 0 ? (
           <div className="empty-state">
