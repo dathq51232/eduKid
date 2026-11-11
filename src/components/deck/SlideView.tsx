@@ -4,6 +4,7 @@
 //  - edit: chọn, kéo, đổi cỡ vật (trình soạn)
 //  - play: chạy hiệu ứng, kích hoạt khi bấm, câu hỏi, kéo thả, cảnh 3D (trình chiếu)
 //  - thumb: ảnh thu nhỏ tĩnh
+import { quizSizes } from '@/lib/deck/fit';
 import TeamAvatar from '@/components/classroom/TeamAvatar';
 import dynamic from 'next/dynamic';
 import SceneBg from './SceneBg';
@@ -540,7 +541,8 @@ function ElBody({ e, mode, assetUrl, pick, onPick, sort, onTile, board }: { e: E
       </>
     );
     case 'quiz': {
-      const qs = Math.max(26, Math.min(64, e.w / 16)), os = Math.max(22, Math.min(54, e.w / (e.cols === 2 ? 22 : 18)));
+      // cỡ chữ theo nội dung: lớn nhất mà câu hỏi và mọi đáp án vẫn nằm trong khung
+      const { qs, os } = quizSizes({ w: e.w, h: e.h, q: e.q, opts: e.opts.map(quizText), cols: e.cols, img: e.opts.some((o) => !!quizImage(o)) });
       const COL = ['#ef4444', '#2563eb', '#f59e0b', '#16a34a', '#9333ea', '#0891b2'];
       return (
         <div className="dk-quiz">

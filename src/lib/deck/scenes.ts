@@ -24,6 +24,7 @@ export const SCENE_VARIANTS: { id: SceneVariant; label: string; short: string }[
   { id: 'right', label: '🐋 Cảnh Phải · Chữ Trái', short: 'Cảnh phải' },
   { id: 'left', label: '🐬 Cảnh Trái · Chữ Phải', short: 'Cảnh trái' },
   { id: 'bottom', label: '🪸 Cảnh Đáy · Chữ Trên', short: 'Cảnh đáy' },
+  { id: 'quiet', label: '🌤️ Nền dịu (trang nội dung, chữ nổi bật)', short: 'Dịu' },
 ];
 
 const S = f3dSrc;
@@ -81,7 +82,7 @@ export const SCENES: Scene[] = [
       { src: S('deer'), x: 920, y: 460, w: 230, flip: true },
       { src: S('rabbit'), x: 640, y: 630, w: 155 },
       { src: S('squirrel'), x: 1280, y: 620, w: 150, flip: true },
-      { src: S('butterfly'), x: 780, y: 220, w: 110 },
+      { src: S('butterfly'), x: 960, y: 40, w: 110 },
       { src: S('sunflower'), x: 1440, y: 680, w: 120 },
     ],
     variants: {
@@ -123,7 +124,7 @@ export const SCENES: Scene[] = [
     parts: [
       { src: S('sun'), x: 1380, y: 40, w: 160 },
       { src: S('house'), x: 1080, y: 210, w: 380 },
-      { src: S('cow'), x: 820, y: 490, w: 240, flip: true },
+      { src: S('cow'), x: 900, y: 490, w: 240, flip: true },
       { src: S('pig'), x: 1140, y: 580, w: 185, flip: true },
       { src: S('rooster'), x: 560, y: 640, w: 155 },
       { src: S('chick'), x: 740, y: 730, w: 95 },
@@ -167,7 +168,7 @@ export const SCENES: Scene[] = [
       { src: S('dino'), x: 940, y: 240, w: 460, flip: true },
       { src: S('turtle'), x: 620, y: 660, w: 170 },
       { src: S('chameleon'), x: 1350, y: 620, w: 175, flip: true },
-      { src: S('cactus'), x: 820, y: 520, w: 150 },
+      { src: S('cactus'), x: 900, y: 520, w: 150 },
     ],
     variants: {
       center: [
@@ -204,9 +205,9 @@ export const SCENES: Scene[] = [
     ink: { title: '#fef08a', sub: '#7dd3fc', body: '#f8fafc', pill: 'rgba(30,41,59,0.78)', pillBorder: '#818cf8' },
     parts: [
       { src: S('planet'), x: 1020, y: 120, w: 380 },
-      { src: S('rocket'), x: 780, y: 360, w: 260 },
+      { src: S('rocket'), x: 950, y: 380, w: 260 },
       { src: S('moon'), x: 1340, y: 460, w: 190 },
-      { src: S('star'), x: 620, y: 160, w: 95 },
+      { src: S('star'), x: 960, y: 40, w: 95 },
       { src: S('star'), x: 1420, y: 90, w: 80 },
     ],
     variants: {
@@ -283,7 +284,7 @@ export const SCENES: Scene[] = [
       { src: S('house'), x: 1020, y: 170, w: 440 },
       { src: S('dog'), x: 780, y: 580, w: 190 },
       { src: S('cat'), x: 1320, y: 620, w: 165, flip: true },
-      { src: S('balloon'), x: 920, y: 90, w: 135 },
+      { src: S('balloon'), x: 990, y: 70, w: 135 },
     ],
     variants: {
       center: [
@@ -391,9 +392,9 @@ export const SCENES: Scene[] = [
     ink: { title: '#9d174d', sub: '#db2777', body: '#500724', pill: 'rgba(255,255,255,0.85)', pillBorder: '#f9a8d4' },
     parts: [
       { src: S('rainbow'), x: 980, y: 80, w: 480 },
-      { src: S('icecream'), x: 860, y: 470, w: 230 },
+      { src: S('icecream'), x: 900, y: 610, w: 230 },
       { src: S('cupcake'), x: 1160, y: 520, w: 220 },
-      { src: S('balloon'), x: 680, y: 220, w: 150 },
+      { src: S('balloon'), x: 960, y: 190, w: 150 },
       { src: S('star'), x: 1380, y: 420, w: 130 },
     ],
     variants: {

@@ -10,6 +10,7 @@ import { Check, Minus, Plus, RotateCcw, Search, Sparkles, X } from 'lucide-react
 import { createClient } from '@/lib/supabase/client';
 import type { ContentLesson } from '@/lib/content/types';
 import { emptyDeck, type Deck, type SceneKind } from '@/lib/deck/types';
+import { THEME_SETS, type SetId } from '@/lib/deck/theme-sets';
 import { SCENES_SORTED, pickScene } from '@/lib/deck/scenes';
 import { MASCOTS, PHASES, WARMUPS, buildPlan, buildPlanFromGiaoAn, planSlides, tietOf, type BuildOpts, type Knowledge, type LessonPlan, type MascotId, type PhaseId, type Warmup } from '@/lib/deck/fromLesson';
 import { SUBJECT_NAMES, isAppSubject, isPlan, mondayOf, addDays, viDate, weekdayVi, type LessonPlan as GiaoAn } from '@/lib/plans/generate';
@@ -45,7 +46,8 @@ export default function DeckFromLesson({ classId, grade, busy, made, onCreate, o
   const [mode, setMode] = useState<'lich' | 'kho'>('lich');
   const [mascot, setMascot] = useState<MascotId>('professor');
   const [warmup, setWarmup] = useState<Warmup>('gift');
-  const [dividers, setDividers] = useState(true);
+  const [look, setLook] = useState<SetId | ''>(''); // '' = cảnh minh hoạ; còn lại: bộ chủ đề
+  const [dividers, setDividers] = useState(false); // mặc định: thanh tiến trình trên mỗi trang thay cho trang chia
   const [eds, setEds] = useState<Record<string, Ed>>({});
   /* kho bài học */
   const [subject, setSubject] = useState('toan');
@@ -138,7 +140,7 @@ export default function DeckFromLesson({ classId, grade, busy, made, onCreate, o
   const plan = useMemo(() => (curKey && ed ? planOf(curKey, ed) : null), [curKey, ed, planOf]);
   const setEd = (patch: Partial<Ed>) => { if (curKey && ed) setEds((m) => ({ ...m, [curKey]: { ...ed, ...patch } })); };
 
-  const bopts = (subject: string) => ({ dividers, mascot: MASCOTS.find((m) => m.id === mascot)?.src, math: subject === 'toan' });
+  const bopts = (subject: string) => ({ dividers, mascot: MASCOTS.find((m) => m.id === mascot)?.src, math: subject === 'toan', set: look || undefined });
   const deckFor = (key: string): Deck | null => {
     const e = edOf(key); if (!e) return null;
     const p = planOf(key, e); if (!p) return null;
@@ -262,7 +264,7 @@ export default function DeckFromLesson({ classId, grade, busy, made, onCreate, o
 
         <div className="dfl-plan">
           {!plan || !ed ? (mode === 'kho' || rows?.length ? <div className="dfl-empty"><img src="/brand/milo-professor-sm.webp" alt="" /><p>{mode === 'kho' ? <>Chọn một bài ở cột bên trái,<br />Cú Milo sẽ dựng sẵn kịch bản tiết dạy.</> : <>Bấm vào một tiết trong lịch để xem và chỉnh các trang.</>}</p></div> : null)
-            : <PlanEditor key={curKey!} plan={plan} ed={ed} setEd={setEd} mascot={mascot} setMascot={setMascot} warmup={warmup} setWarmup={setWarmup} dividers={dividers} setDividers={setDividers} bo={bopts(curKey!.startsWith('L:') ? lesson?.subject ?? '' : (focus && plans[focus]?.subject) || '')} />}
+            : <PlanEditor key={curKey!} plan={plan} ed={ed} setEd={setEd} mascot={mascot} setMascot={setMascot} warmup={warmup} setWarmup={setWarmup} dividers={dividers} setDividers={setDividers} theme={look} setTheme={setLook} bo={bopts(curKey!.startsWith('L:') ? lesson?.subject ?? '' : (focus && plans[focus]?.subject) || '')} />}
           {(mode === 'kho' ? !!plan : rows?.length) ? (
             <div className="dfl-foot">
               {mode === 'kho' || nPicked <= 1
@@ -303,10 +305,10 @@ function divCount(plan: LessonPlan, ed: Ed) {
   return new Set(plan.cands.filter((c) => on.has(c.key) && c.phase !== 'bia').map((c) => c.phase)).size;
 }
 
-function PlanEditor({ plan, ed, setEd, mascot, setMascot, warmup, setWarmup, dividers, setDividers, bo }: {
+function PlanEditor({ plan, ed, setEd, mascot, setMascot, warmup, setWarmup, dividers, setDividers, theme, setTheme, bo }: {
   plan: LessonPlan; ed: Ed; setEd: (p: Partial<Ed>) => void;
   mascot: MascotId; setMascot: (m: MascotId) => void; warmup: Warmup; setWarmup: (w: Warmup) => void;
-  dividers: boolean; setDividers: (v: boolean) => void; bo: BuildOpts;
+  dividers: boolean; setDividers: (v: boolean) => void; theme: SetId | ''; setTheme: (v: SetId | '') => void; bo: BuildOpts;
 }) {
   const { avail, cnt, removed } = countsOf(plan, ed);
   const onKeys = onKeysOf(plan, ed);
@@ -329,6 +331,10 @@ function PlanEditor({ plan, ed, setEd, mascot, setMascot, warmup, setWarmup, div
       <div className="dfl-opt"><b>Linh vật</b><span className="dfl-mascots">{MASCOTS.map((m) => <button key={m.id} type="button" title={m.name} aria-label={m.name} className={mascot === m.id ? 'is-on' : ''} onClick={() => setMascot(m.id)}><img src={m.src} alt="" /></button>)}</span></div>
       <div className="dfl-opt"><b>Khởi động</b><span className="dk-seg">{WARMUPS.map((w) => <button key={w.id} type="button" className={warmup === w.id ? 'is-on' : ''} onClick={() => setWarmup(w.id)}>{w.icon} {w.label}</button>)}</span></div>
       <div className="dfl-opt"><b>Cảnh nền</b><span className="dfl-scenes">{SCENES_SORTED.map((s) => <button key={s.id} type="button" className={ed.scene === s.id ? 'is-on' : ''} onClick={() => setEd({ scene: s.id })}><i>{s.icon}</i>{s.label}{ed.autoScene === s.id ? ' ✨' : ''}</button>)}</span></div>
+      <div className="dfl-opt"><b>Phong cách</b><span className="dk-seg dfl-looks">
+        <button type="button" className={theme === '' ? 'is-on' : ''} onClick={() => setTheme('')}>🏞️ Cảnh minh hoạ</button>
+        {THEME_SETS.map((t) => <button key={t.id} type="button" title={t.sub} className={theme === t.id ? 'is-on' : ''} onClick={() => setTheme(t.id)}>{t.name}</button>)}
+      </span></div>
       <div className="dfl-opt"><b>Bố cục</b>
         <label className="dk-chk"><input type="checkbox" checked={dividers} onChange={(e) => setDividers(e.target.checked)} /> Trang chia hoạt động (chữ to “KHỞI ĐỘNG”, “KHÁM PHÁ”…)</label>
         <label className="dfl-tiet">Tiết <select value={ed.tiet ?? ''} onChange={(e) => setEd({ tiet: e.target.value ? Number(e.target.value) : undefined })}><option value="">—</option>{[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n}</option>)}</select></label>

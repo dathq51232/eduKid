@@ -1,6 +1,8 @@
 // Dựng bài thao giảng từ một bài học trong ngân hàng nội dung: 5 hoạt động của tiết dạy
 // (Khởi động · Khám phá · Luyện tập · Vận dụng · Củng cố) với tình huống, trò chơi và câu hỏi của bài.
 // Hàm thuần: không gọi mạng, dùng hình có sẵn trong dự án; mỗi trang là Slide bình thường nên sửa được trong trình soạn.
+import { fit, shrinkToFit } from './fit';
+import { applySet, type SetId } from './theme-sets';
 import type { ContentLesson, ContentQuestion } from '@/lib/content/types';
 import type { LessonPlan as GiaoAn } from '@/lib/plans/generate';
 import { SUBJECT_NAMES } from '@/lib/plans/generate';
@@ -48,6 +50,7 @@ type Mk = { els: El[]; anims: Anim[] };
 const mk = (): Mk => ({ els: [], anims: [] });
 function T(m: Mk, text: string, x: number, y: number, w: number, h: number, size: number, color = '#1e3a8a', o: Partial<TextEl> = {}) {
   const e: TextEl = { id: uid(), kind: 'text', x, y, w, h, rot: 0, text, size, color, font: 'baloo', align: 'center', bg: '', ...o };
+  e.size = shrinkToFit(text, w, h, e.size, !!e.bg); // không để chữ tràn khung
   m.els.push(e); return e.id;
 }
 function I(m: Mk, src: string, x: number, y: number, s: number, o: Partial<El> = {}) {
@@ -64,15 +67,6 @@ function cover(m: Mk, x: number, y: number, w: number, h: number) {
   A(m, c, 'zoom-out', 'click', { trigger: c, sound: 'ding', dur: 0.45 });
   return c;
 }
-/** cỡ chữ vừa khung theo độ dài */
-const fit = (text: string, w: number, h: number, max = 64, min = 26) => {
-  // chữ tự xuống dòng: chọn cỡ lớn nhất mà số dòng (ước lượng) vẫn vừa chiều cao và từ dài nhất vừa chiều ngang
-  const lines = text.split('\n'), word = Math.max(...text.split(/\s+/).map((x) => x.length), 1);
-  const rows = (s: number) => lines.reduce((n, l) => n + Math.max(1, Math.ceil((l.length * 0.56 * s) / (w * 0.92))), 0);
-  let s = max;
-  while (s > min && (rows(s) * 1.3 * s > h || word * 0.62 * s > w)) s -= 2;
-  return Math.round(Math.max(min, s));
-};
 const title = (m: Mk, text: string, color = '#1e3a8a') => T(m, text, 340, 38, 920, 88, fit(text, 880, 80, 58, 32), color, { bg: '#ffffffd9', role: 'title' });
 const page = (m: Mk, phase: PhaseId, scene: SceneKind, notes = '', sound?: string, sceneVariant?: SceneVariant): Slide => ({ id: uid(), bg: 'white', els: m.els, anims: m.anims, trans: 'fade', notes, sound, scene, sceneVariant, phase: PHASE_LABEL[phase] });
 
@@ -89,8 +83,8 @@ function editorialHeader(m: Mk, heading: string, sub: string, sc?: SceneKind) {
 /** Dải đúc kết đáy trang (Bottom Takeaway Strip — Quy tắc 3: Bông hoa ✿ + câu ghi nhớ in nghiêng trên thảm cỏ đáy y = 720) */
 function takeawayStrip(m: Mk, text: string, sc?: SceneKind) {
   const ink = inkOf(sc);
-  S(m, 'flower-bullet', 190, 730, 54, 54, '#ffffff', '', { stroke: '#d97757', sw: 0, lock: true, shadow: false } as Partial<El>);
-  T(m, text, 258, 718, 980, 88, fit(text, 950, 80, 28, 20), ink.body, { align: 'left', font: 'baloo', italic: true, bg: 'rgba(255,255,255,0.55)' });
+  S(m, 'flower-bullet', 186, 732, 54, 54, '#ffffff', '', { stroke: '#d97757', sw: 0, lock: true, shadow: false } as Partial<El>);
+  T(m, text, 254, 704, 1090, 110, fit(text, 1030, 84, 34, 28), ink.body, { align: 'left', font: 'baloo', italic: true, bg: 'rgba(255,255,255,0.55)' });
 }
 
 /** Bảng màu Bento 4 ô chuẩn Canva Kids (nền pastel, viền nổi, màu chữ đậm, hình 3D góc thẻ) */
@@ -182,7 +176,7 @@ function exitTicketPage(sc: SceneKind, mascot: string): Slide {
     T(m, desc, x + 24, y + 275, w - 48, 125, 34, '#1f2937', { font: 'quick' });
     A(m, c, 'fly-up', 'after', { delay: i * 0.12 });
   });
-  takeawayStrip(m, 'Điều quan trọng không phải là làm đúng ngay từ đầu,\nmà là chúng ta luôn cố gắng và tiến bộ mỗi ngày.', sc);
+  takeawayStrip(m, 'Điều quan trọng không phải là làm đúng ngay từ đầu, mà là chúng ta luôn cố gắng và tiến bộ mỗi ngày.', sc);
   I(m, mascot, 1380, 665, 185, { lock: true });
   return page(m, 'cc', sc, 'Cho học sinh giơ 1, 2 hoặc 3 ngón tay để tự đánh giá mức độ hiểu bài hôm nay.', undefined, 'bottom');
 }
@@ -252,7 +246,7 @@ function qPage(q: Q, mascot: string, scene: SceneKind, phase: PhaseId, head?: st
     case 'multiple_choice': {
       const ans = q.type === 'fill_blank' ? accepted(q) : ((key(q).correct as string[] | undefined) ?? []).join(', ');
       if (!ans || !short(ans, 60)) return null;
-      const body = q.type === 'multiple_choice' ? `${q.ask}\n${q.options.map((o, i) => `${String.fromCharCode(65 + i)}. ${o}`).join('   ')}` : q.ask;
+      const body = q.type === 'multiple_choice' ? `${q.ask}\n${optionLines(q.options)}` : q.ask;
       if (head) title(m, head);
       S(m, 'bubble', 230, head ? 150 : 60, 1140, 420, '#ffffff', '', { stroke: '#38bdf8', sw: 5, lock: true } as Partial<El>);
       T(m, body, 280, head ? 175 : 85, 1040, 300, fit(body, 1020, 290, 60, 28), '#0f172a', { font: 'baloo' });
@@ -270,11 +264,13 @@ function coverPage(name: string, sub: string, tiet: number | undefined, sc: Scen
   const m = mk();
   const ink = inkOf(sc);
   const strokeCol = sc === 'space' ? '#0f172a' : '#ffffff';
-  T(m, 'Trường Tiểu học EduChain\nLớp học vui vẻ', 96, 56, 360, 72, 24, ink.body, { align: 'left', font: 'quick' });
-  T(m, `${sub}${tiet ? `\nTiết ${tiet}` : ''}`, 468, 56, 420, 72, 24, ink.body, { align: 'left', font: 'quick' });
+  T(m, 'Trường Tiểu học EduChain\nLớp học vui vẻ', 96, 48, 420, 86, 28, ink.body, { align: 'left', font: 'quick' });
+  const head = sub.length > 26 ? sub.split(' · ')[0] : sub; // tên chủ đề dài đã có ở dòng dưới tên bài
+  T(m, `${head}${tiet ? `\nTiết ${tiet}` : ''}`, 530, 48, 430, 86, 28, ink.body, { align: 'left', font: 'quick' });
   const up = name.toUpperCase();
   const t = T(m, up, 96, 178, 840, 260, fit(up, 820, 245, 92, 46), ink.title, { align: 'left', stroke: strokeCol, strokeW: 10, shadow: true, role: 'divider' });
-  T(m, `KHÁM PHÁ BÀI HỌC · ${sub.toUpperCase()}`, 100, 452, 780, 66, fit(sub, 740, 56, 34, 22), ink.sub, { align: 'left', font: 'baloo' });
+  const st = sub.toUpperCase();
+  T(m, st, 100, 448, 820, 76, fit(st, 800, 70, 36, 28), ink.sub, { align: 'left', font: 'baloo' });
   if (tiet) {
     const k = T(m, `Tiết ${tiet}`, 100, 530, 210, 68, 36, '#ffffff', { bg: ink.title, role: 'badge' });
     A(m, k, 'pop', 'after', { sound: 'pop' });
@@ -291,6 +287,28 @@ export function boardPage(sc: SceneKind | undefined): Slide {
   const b = { id: uid(), kind: 'teams', x: 200, y: 160, w: 1200, h: 680, rot: 0, title: '' } as El;
   m.els.push(b); A(m, b.id, 'fade', 'with', { sound: 'drum' });
   return { id: uid(), bg: 'white', els: m.els, anims: m.anims, trans: 'zoom', notes: 'Điểm thi đua tổ tuần này (cộng cả điểm trên lớp, bài thao giảng, bài tập). Khen tổ dẫn đầu.', sound: 'clap', scene: sc, sceneVariant: 'bottom', phase: PHASE_LABEL.cc };
+}
+
+/** các lựa chọn A. B. C. … xuống dòng gọn: lựa chọn ngắn xếp 2 cái một dòng, dài thì mỗi cái một dòng */
+function optionLines(opts: string[]): string {
+  const lab = opts.map((o, i) => `${String.fromCharCode(65 + i)}. ${o}`);
+  if (!lab.every((x) => x.length <= 18)) return lab.join('\n');
+  const rows: string[] = [];
+  for (let i = 0; i < lab.length; i += 2) rows.push(lab.slice(i, i + 2).join('        '));
+  return rows.join('\n');
+}
+/** tách bài đọc thành các đoạn ≤ ~330 ký tự theo ranh giới câu (tối đa 3 trang) */
+function readingChunks(pass: string): string[] {
+  const sents = pass.replace(/\s+/g, ' ').match(/[^.!?…]+[.!?…]+["”»]?\s*|[^.!?…]+$/g) ?? [pass];
+  const out: string[] = [];
+  let cur = '';
+  for (const x of sents) {
+    if (cur && (cur + x).length > 330) { out.push(cur.trim()); cur = ''; }
+    cur += x;
+  }
+  if (cur.trim()) out.push(cur.trim());
+  if (out.length > 3) { const tail = out.slice(2).join(' '); return [out[0], out[1], tail.length > 360 ? tail.slice(0, 340).replace(/\s\S*$/, '') + ' …' : tail]; }
+  return out;
 }
 
 /* ---------- tình huống theo cảnh ---------- */
@@ -431,10 +449,12 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
   // bài đọc (Tiếng Việt)
   const pass = qs.find((q) => q.passage)?.passage;
   if (pass) {
-    const m = mk(); title(m, 'Đọc bài', '#7c2d12');
-    const txt = pass.length > 620 ? pass.slice(0, 600).replace(/\s\S*$/, '') + ' …' : pass;
-    T(m, txt, 220, 150, 1160, 640, fit(txt, 1120, 620, 44, 24), '#1f2937', { align: 'left', font: 'quick', bg: '#fffbeb' });
-    add('kp', 'read', 'Đọc bài (bài đọc của câu hỏi)', page(m, 'kp', sc, 'Cô đọc mẫu, học sinh đọc nối tiếp từng câu.'));
+    // bài dài: tách theo câu thành nhiều trang (chữ ≥ 32 px để cả lớp đọc được từ cuối lớp)
+    readingChunks(pass).forEach((txt, i, all) => {
+      const m = mk(); title(m, all.length > 1 ? `Đọc bài (${i + 1}/${all.length})` : 'Đọc bài', '#7c2d12');
+      T(m, txt, 200, 150, 1200, 640, fit(txt, 1140, 600, 52, 32), '#1f2937', { align: 'left', font: 'quick', bg: '#fffbeb' });
+      add('kp', i ? `read${i + 1}` : 'read', all.length > 1 ? `Đọc bài – đoạn ${i + 1}/${all.length}` : 'Đọc bài (bài đọc của câu hỏi)', page(m, 'kp', sc, 'Cô đọc mẫu, học sinh đọc nối tiếp từng câu.'));
+    });
   }
   // từ mới (từ câu ghép đôi): Lưới Bento Flashcard 2×2 — bấm miếng che để mở nghĩa
   const mt = qs.find((q) => q.type === 'matching' && (q.left?.length ?? 0) >= 2 && (q.left ?? []).every((t) => short(t, 18)));
@@ -762,7 +782,8 @@ function labelOf(title: string, math: boolean): [string, WorkMode] | null {
   if (title.startsWith('Hỏi – đáp')) return [math ? 'Tính' : 'Trả lời', 'ca-nhan'];
   return null;
 }
-export type BuildOpts = { dividers?: boolean; mascot?: string; math?: boolean };
+/** set: áp bộ chủ đề (nền, khung, màu chữ, font tiêu đề) lên cả bài thay cho cảnh minh hoạ */
+export type BuildOpts = { dividers?: boolean; mascot?: string; math?: boolean; set?: SetId };
 
 /** Các trang đã chọn (theo thứ tự hoạt động), lắp bố cục chủ đề: khung nội dung, nhãn ①②③, hình thức làm bài, trang chia hoạt động */
 export function planSlides(plan: LessonPlan, on: Set<string>, scenes: Record<string, SceneKind | ''>, o: BuildOpts = {}): Slide[] {
@@ -776,7 +797,7 @@ export function planSlides(plan: LessonPlan, on: Set<string>, scenes: Record<str
       out.push(dividerSlide(c.phase === 'cc' ? 'Củng cố' : ph.label, sc, o.mascot, ph.time));
     }
     lastPhase = c.phase;
-    let s: Slide = { ...c.slide, scene: sc, els: [...c.slide.els], anims: [...c.slide.anims] };
+    const s: Slide = { ...c.slide, scene: sc, els: [...c.slide.els], anims: [...c.slide.anims] };
     const isScenicLayout = s.sceneVariant === 'cover' || s.sceneVariant === 'center' || s.sceneVariant === 'right' || s.sceneVariant === 'left';
     const content = (c.phase === 'kp' || c.phase === 'lt' || c.phase === 'vd') && !c.key.includes('situ') && !isScenicLayout && !s.els.some((e) => e.role === 'card');
     if (content) {
@@ -784,10 +805,23 @@ export function planSlides(plan: LessonPlan, on: Set<string>, scenes: Record<str
       const lb = c.phase === 'lt' ? labelOf(c.title, !!o.math) : null;
       if (lb) { n++; s.els.push(badgeEl(n, lb[0], ac), modeEl(lb[1], ac)); }
     }
-    s = { ...s };
+    // trang nội dung không đặt góc máy riêng → nền dịu (cảnh đầy đủ chỉ ở bìa, trang chia, tình huống)
+    if (sc && !s.sceneVariant && c.phase !== 'bia') s.sceneVariant = 'quiet';
+    if (c.phase !== 'bia') s.els.push(...progressEls(c.phase));
     out.push(s);
   }
-  return out;
+  return o.set ? applySet(out, o.set) : out;
+}
+
+/** thanh tiến trình 5 bước của tiết dạy ở mép trên trang: bước hiện tại đậm, bước đã qua nhạt, bước sau xám */
+const STEP_IDS: PhaseId[] = ['kd', 'kp', 'lt', 'vd', 'cc'];
+export function progressEls(phase: PhaseId): El[] {
+  const cur = STEP_IDS.indexOf(phase), w = 92, gap = 10, x0 = (1600 - (5 * w + 4 * gap)) / 2;
+  return STEP_IDS.map((id, i) => {
+    const col = PHASES.find((p) => p.id === id)!.color;
+    return { id: uid(), kind: 'shape', shape: 'round', x: x0 + i * (w + gap), y: 8, w, h: 12, rot: 0, rad: 100,
+      fill: i <= cur ? col : '#cbd5e1', stroke: 'transparent', sw: 0, op: i === cur ? 1 : i < cur ? 0.5 : 0.7, lock: true, shadow: false, group: 'tien-trinh' } as El;
+  });
 }
 
 /** Đổi chủ đề cả bài: cảnh nền mọi trang + màu khung / nhãn / chữ trang chia theo chủ đề mới */

@@ -91,7 +91,8 @@ export type Trans = 'none' | 'fade' | 'slide' | 'zoom' | 'flip';
 export const TRANS_LABEL: Record<Trans, string> = { none: 'Không', fade: 'Mờ dần', slide: 'Trượt sang', zoom: 'Phóng to', flip: 'Lật trang' };
 
 export type SceneKind = 'garden' | 'pond' | 'kitchen' | 'class' | 'yard' | 'sea' | 'space' | 'farm' | 'tet' | 'dino' | 'candy' | 'family';
-export type SceneVariant = 'cover' | 'center' | 'right' | 'left' | 'bottom';
+/** quiet: nền dịu cho trang nội dung — chỉ màu nền của cảnh + một hình nhỏ ở góc, để chữ và câu hỏi nổi bật */
+export type SceneVariant = 'cover' | 'center' | 'right' | 'left' | 'bottom' | 'quiet';
 export type Slide = { id: string; bg: string; els: El[]; anims: Anim[]; trans: Trans; notes: string; sound?: string;
   /** thời gian chuyển trang (giây) */ transDur?: number;
   /** tự sang bước / trang sau ... giây khi trình chiếu (0 = không) */ autoNext?: number;
@@ -166,7 +167,7 @@ export function normalizeDeck(raw: unknown, fallbackTitle = 'Bài thao giảng')
       ...(typeof s?.transDur === 'number' ? { transDur: Math.min(3, Math.max(0.1, s.transDur)) } : {}),
       ...(typeof s?.autoNext === 'number' && s.autoNext > 0 ? { autoNext: Math.min(120, Math.max(1, s.autoNext)) } : {}),
       scene: typeof s?.scene === 'string' ? s.scene : undefined,
-      sceneVariant: (['cover', 'center', 'right', 'left', 'bottom'] as const).includes(s?.sceneVariant as SceneVariant) ? (s.sceneVariant as SceneVariant) : undefined,
+      sceneVariant: (['cover', 'center', 'right', 'left', 'bottom', 'quiet'] as const).includes(s?.sceneVariant as SceneVariant) ? (s.sceneVariant as SceneVariant) : undefined,
       phase: typeof s?.phase === 'string' ? s.phase : undefined,
       ...(typeof s?.mins === 'number' && s.mins > 0 ? { mins: Math.min(90, Math.max(0.5, s.mins)) } : {}),
       ...(s?.tool && typeof s.tool === 'object' ? { tool: {

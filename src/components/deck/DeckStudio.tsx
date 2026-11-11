@@ -17,6 +17,7 @@ import {
 import { loadPraiseFonts } from '@/lib/praise/render';
 import { playSound, soundLabel, SOUNDS } from '@/lib/deck/sounds';
 import { SLIDE_TEMPLATES, STICKER_SETS } from '@/lib/deck/templates';
+import { LAYOUTS, relayout, relayoutBlocker } from '@/lib/deck/relayout';
 import { SCENES, SCENES_SORTED, SCENE_VARIANTS, accentOf, sceneGroups } from '@/lib/deck/scenes';
 import { WORK_MODES, applyTheme, badgeEl, cardEl, dividerSlide, modeEl, type WorkMode } from '@/lib/deck/fromLesson';
 import SlideView, { ShapeSvg, SlideFrame, type PlayApi } from './SlideView';
@@ -168,6 +169,19 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
     if (record) commit(next); else { deckRef.current = next; setDeck(next); }
   }, [commit, cur]);
   const patchEl = useCallback((id: string, p: Partial<El>, record = true) => setSlide((s) => ({ ...s, els: s.els.map((e) => (e.id === id ? ({ ...e, ...p } as El) : e)) }), record), [setSlide]);
+  /** "Bố cục khác": mỗi lần bấm xoay sang bố cục chuẩn tiếp theo (giữ nội dung, hiệu ứng) */
+  const layoutTurn = useRef<Record<string, number>>({});
+  const nextLayout = () => {
+    const s = deckRef.current.slides[Math.min(cur, deckRef.current.slides.length - 1)];
+    const why = relayoutBlocker(s);
+    if (why) { setMsg({ kind: 'info', text: `Chưa đổi bố cục tự động được: ${why}` }); return; }
+    const k = layoutTurn.current[s.id] ?? 0;
+    const r = relayout(s, k);
+    if (!r) { setMsg({ kind: 'info', text: 'Trang này đã chật: không có bố cục khác giữ được cỡ chữ. Hãy bớt chữ hoặc tách trang.' }); return; }
+    layoutTurn.current[s.id] = r.used + 1;
+    setSlide(() => r.slide);
+    setMsg({ kind: 'ok', text: `Bố cục: ${r.layout.label} (${(r.used % LAYOUTS.length) + 1}/${LAYOUTS.length}) — bấm lần nữa để xem kiểu khác, Ctrl+Z để quay lại.` });
+  };
   const undo = () => { const p = past.at(-1); if (!p) return; setPast(past.slice(0, -1)); setFuture((f) => [deckRef.current, ...f]); deckRef.current = p; setDeck(p); };
   const redo = () => { const f = future[0]; if (!f) return; setFuture(future.slice(1)); setPast((p) => [...p, deckRef.current]); deckRef.current = f; setDeck(f); };
   // kéo / đổi cỡ trên trang: lưu lịch sử một lần khi thả chuột
@@ -412,6 +426,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
       <span className="cv-d" />
       <label className="cv-c">Chuyển trang <select value={slide.trans} onChange={(e) => setSlide((s) => ({ ...s, trans: e.target.value as Trans }))} aria-label="Chuyển trang">{(Object.keys(TRANS_LABEL) as Trans[]).map((t) => <option key={t} value={t}>{TRANS_LABEL[t]}</option>)}</select></label>
       <span className="cv-d" />
+      <button type="button" className="cv-c" onClick={nextLayout} title="Sắp xếp lại trang theo bố cục chuẩn tiếp theo"><LayoutTemplate aria-hidden="true" /> Bố cục khác</button>
       <button type="button" className="cv-c" onClick={() => setPanel('anim')}><Sparkles aria-hidden="true" /> Hiệu ứng cả trang</button>
       <button type="button" className="cv-c is-hl" onClick={() => { setPanel('tpl'); setTplTab('set'); }}>✨ Đổi chủ đề cả bộ</button>
     </>;

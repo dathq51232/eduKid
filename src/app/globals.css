@@ -7114,7 +7114,7 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .dk-badges { position: absolute; left: -14px; top: -14px; display: flex; gap: 3px; z-index: 4; pointer-events: none; }
 .dk-badges i { display: grid; place-items: center; min-width: 30px; height: 30px; padding: 0 6px; border-radius: 15px; background: #7c3aed; color: #fff; font: 800 17px/1 var(--font-display), sans-serif; font-style: normal; box-shadow: 0 0 0 3px #fff; }
 .dk-badges i.is-trg, .dk-badges i.is-trg2 { background: #f59e0b; }
-.dk-text { width: 100%; height: 100%; display: flex; align-items: center; white-space: pre-wrap; line-height: 1.15; overflow: hidden; box-sizing: border-box; }
+.dk-text { width: 100%; height: 100%; display: flex; align-items: safe center; white-space: pre-wrap; line-height: 1.15; overflow: hidden; box-sizing: border-box; }
 .dk-text > span { width: 100%; }
 .dk-img { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
 .dk-img-wait { width: 100%; height: 100%; display: grid; place-items: center; font-size: 60px; background: #f1f5f9; border-radius: 16px; }
@@ -9460,3 +9460,8 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .adm-detail dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 14px; }
 .adm-detail dt { color: var(--muted); }
 .adm-detail dd { margin: 0; font-weight: 600; }
+
+/* Bài giảng: nền dịu cho trang nội dung (góc máy 'quiet') — vệt sáng mềm phía trên, không hoạ tiết */
+.dk-scene-quiet { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 55% at 50% 30%, rgba(255,255,255,.55), transparent 70%); }
+.dk-quiz-q, .dk-opt { line-height: 1.2; } /* khớp ước lượng cỡ chữ trong src/lib/deck/fit.ts */
+.dk-quiz-q { flex-shrink: 0; } /* câu hỏi không bị ép nhỏ hơn chữ của nó (lựa chọn chia phần còn lại) */

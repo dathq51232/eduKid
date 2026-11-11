@@ -419,6 +419,15 @@ function SceneBg({ id, variant = 'cover' }: { id: string; variant?: SceneVariant
   if (!sc) return null;
   const v: SceneVariant = explicitVar ?? variant ?? 'cover';
   const bg = v === 'cover' ? sc.bg : (sc.bgInner ?? sc.bg);
+  // nền dịu: chỉ màu nền của cảnh + một hình nhỏ ở góc phải dưới
+  if (v === 'quiet') {
+    return (
+      <div className="dk-scene" aria-hidden="true" style={{ background: bg }}>
+        <div className="dk-scene-quiet" />
+        <img src={sc.art} alt="" draggable={false} style={{ left: 1448, top: 748, width: 120, opacity: 0.95, filter: 'drop-shadow(0 8px 14px rgba(15,23,42,0.18))' }} />
+      </div>
+    );
+  }
   const parts = sc.variants?.[v] ?? sc.parts;
 
   return (
