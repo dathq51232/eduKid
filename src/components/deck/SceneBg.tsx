@@ -52,7 +52,7 @@ function PalmTree({ bx, by, tx, ty, scale = 1 }: { bx: number; by: number; tx: n
 }
 
 /** Cảnh bìa Đại dương & Đảo dừa (khớp mẫu Canva "Động vật dưới đại dương") */
-function OceanCoverSvg() {
+function OceanCoverSvg({ bare = false }: { bare?: boolean }) {
   return (
     <svg className="dk-scene-svg" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true">
       {/* Bầu trời & Mây trắng đáy phẳng */}
@@ -92,6 +92,8 @@ function OceanCoverSvg() {
       <PalmTree bx={1295} by={530} tx={1075} ty={165} scale={1.02} />
       <PalmTree bx={1465} by={565} tx={1325} ty={105} scale={1.15} />
 
+      {/* con vật vẽ trên cảnh (cá heo, hải cẩu, rùa, cua, sao biển): ẩn khi chỉ dùng phong cảnh làm nền */}
+      {!bare && (<>
       {/* Cá heo phóng lên giữa biển */}
       <g transform="translate(680, 355)">
         <path d="M 35 105 C 15 60 45 15 95 18 C 102 -8 118 -4 114 22 C 155 35 178 80 162 135 C 182 145 190 165 168 168 C 150 168 142 155 138 142 C 132 100 105 78 68 88 C 52 92 42 108 35 105 Z" fill="#7aa7c7" />
@@ -146,6 +148,7 @@ function OceanCoverSvg() {
         <path d="M 0 18 C 0 0 28 0 28 18 L 14 32 Z" fill="#f48fb1" />
         <path d="M 55 5 C 55 -10 78 -10 78 5 L 66 18 Z" fill="#f8bbd0" />
       </g>
+      </>)}
     </svg>
   );
 }
@@ -413,7 +416,10 @@ function LandThemeSvg({ id, variant }: { id: string; variant: SceneVariant }) {
 }
 
 /** Cảnh nền minh hoạ đa góc máy (vẽ sau các vật, không bấm được) */
+/** Cảnh nền: CHỈ vẽ phong cảnh (trời, mây, đồi, biển, sàn lớp…). Không vẽ hình dán 3D và con vật sau chữ
+ *  (dễ đè, làm mờ chữ) — áp cho mọi bài cũ và mới; hình dán cô tự chèn ở Thành phần. */
 function SceneBg({ id, variant = 'cover' }: { id: string; variant?: SceneVariant }) {
+  const bare = true;
   const [rawId, explicitVar] = id.split(':') as [string, SceneVariant | undefined];
   const sc = SCENE_BY_ID[rawId];
   if (!sc) return null;
@@ -424,16 +430,16 @@ function SceneBg({ id, variant = 'cover' }: { id: string; variant?: SceneVariant
     return (
       <div className="dk-scene" aria-hidden="true" style={{ background: bg }}>
         <div className="dk-scene-quiet" />
-        <img src={sc.art} alt="" draggable={false} style={{ left: 1448, top: 748, width: 120, opacity: 0.95, filter: 'drop-shadow(0 8px 14px rgba(15,23,42,0.18))' }} />
+        {!bare && <img src={sc.art} alt="" draggable={false} style={{ left: 1448, top: 748, width: 120, opacity: 0.95, filter: 'drop-shadow(0 8px 14px rgba(15,23,42,0.18))' }} />}
       </div>
     );
   }
-  const parts = sc.variants?.[v] ?? sc.parts;
+  const parts = bare ? [] : sc.variants?.[v] ?? sc.parts; // hình dán 3D của cảnh
 
   return (
     <div className="dk-scene" aria-hidden="true" style={{ background: bg }}>
       {rawId === 'sea' ? (
-        v === 'cover' ? <OceanCoverSvg /> : <OceanUnderwaterSvg variant={v} />
+        v === 'cover' ? <OceanCoverSvg bare={bare} /> : <OceanUnderwaterSvg variant={v} />
       ) : (
         <LandThemeSvg id={rawId} variant={v} />
       )}

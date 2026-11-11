@@ -519,11 +519,6 @@ export const SCENE_GROUPS: { label: string; ids: SceneKind[] }[] = [
   { label: 'Trường & nhà', ids: ['class', 'yard', 'family'] },
   { label: 'Vui chơi & lễ hội', ids: ['kitchen', 'candy', 'tet'] },
 ];
-/** cảnh → nền hoạ tiết cùng tông màu (bài tự sinh dùng nền hoạ tiết, không vẽ hình dán cảnh sau chữ) */
-export const SCENE_PATTERN: Record<SceneKind, string> = {
-  garden: 'leafy', dino: 'leafy', pond: 'bubbles', sea: 'waves', space: 'starry', class: 'notebook',
-  yard: 'gingham', kitchen: 'gingham-warm', farm: 'sunny', tet: 'tet-flower', candy: 'candy-stripe', family: 'blossom',
-};
 export const SCENE_BY_ID: Record<string, Scene> = Object.fromEntries(SCENES.map((s) => [s.id, s]));
 /** Danh sách cảnh theo thứ tự nhóm (dùng cho các ô chọn) */
 export const SCENES_SORTED: Scene[] = SCENE_GROUPS.flatMap((g) => g.ids.map((id) => SCENE_BY_ID[id]).filter(Boolean));

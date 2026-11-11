@@ -20,13 +20,13 @@ import { playSound, soundLabel, SOUNDS } from '@/lib/deck/sounds';
 import { SLIDE_TEMPLATES, STICKER_SETS } from '@/lib/deck/templates';
 import { LAYOUTS, relayout, relayoutBlocker } from '@/lib/deck/relayout';
 import { SCENES, SCENES_SORTED, SCENE_VARIANTS, accentOf, sceneGroups } from '@/lib/deck/scenes';
-import { WORK_MODES, applyTheme, badgeEl, cardEl, dividerSlide, modeEl, toPattern, type WorkMode } from '@/lib/deck/fromLesson';
+import { WORK_MODES, applyTheme, badgeEl, cardEl, dividerSlide, modeEl, setContentOf, type WorkMode } from '@/lib/deck/fromLesson';
 import SlideView, { ShapeSvg, SlideFrame, type PlayApi } from './SlideView';
 import AnimTimeline from './AnimTimeline';
 import { TEXT_STYLES, stickerName } from '@/lib/deck/sticker-names';
 import { F3D_CATS, F3D_VI, f3dSrc } from '@/lib/deck/f3d-catalog';
 import { ALL_FLUENT_CDN_ITEMS, FLUENT_CDN_GROUPS, fluentCdnFallbackUrl, fluentCdnUrl } from '@/lib/deck/fluent-cdn';
-import { STEP_COLOR, THEME_SETS, applySet, isBlankDeck, makeSet, type SetId } from '@/lib/deck/theme-sets';
+import { STEP_COLOR, THEME_SETS, applySet, isBlankDeck, makeSet, type SetContent, type SetId } from '@/lib/deck/theme-sets';
 import { fold } from '@/lib/classroom/teacher-nav';
 
 /** bảng bên trái (kiểu Canva): mở từ cột biểu tượng hoặc từ thanh công cụ ngữ cảnh */
@@ -391,9 +391,21 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   // xem trước bộ mẫu: chỉ dựng khi mở bảng Mẫu; tên bài cập nhật trễ để gõ tên không bị giật
   const lazyTitle = useDeferredValue(deck.title);
   const tplOpen = panel === 'tpl';
-  const setPreviews = useMemo(() => (tplOpen ? Object.fromEntries(THEME_SETS.map((t) => [t.id, makeSet(t.id, { title: lazyTitle, sub: `Lớp ${deck.grade} · Tiết …` })])) : {}) as Record<SetId, Slide[]>, [tplOpen, lazyTitle, deck.grade]);
+  // bài gắn với một bài trong ngân hàng: Bộ chủ đề 5 bước điền nội dung bài học (câu hỏi, bài tập, ý chính) thay cho chữ mẫu
+  const [setCt, setSetCt] = useState<SetContent | null>(null);
+  const lessonId = deck.src?.lesson;
+  useEffect(() => {
+    if (!tplOpen || !lessonId || setCt) return;
+    let live = true;
+    void Promise.all([import('@/lib/content'), import('@/lib/content/knowledge')]).then(([c, k]) => {
+      const l = c.CONTENT.find((x) => x.id === lessonId);
+      if (live && l) setSetCt(setContentOf(l, k.knowledgeFor(l.id)));
+    });
+    return () => { live = false; };
+  }, [tplOpen, lessonId, setCt]);
+  const setPreviews = useMemo(() => (tplOpen ? Object.fromEntries(THEME_SETS.map((t) => [t.id, makeSet(t.id, { title: lazyTitle, sub: `Lớp ${deck.grade} · Tiết …` }, setCt)])) : {}) as Record<SetId, Slide[]>, [tplOpen, lazyTitle, deck.grade, setCt]);
   const chooseSet = (id: SetId) => {
-    const list = makeSet(id, info);
+    const list = makeSet(id, info, setCt);
     if (isBlankDeck(deckRef.current.slides)) { commit({ ...deckRef.current, slides: list }); setCur(0); setSel(null); setMsg({ kind: 'ok', text: 'Đã dùng bộ mẫu 7 trang. Bấm đúp vào chữ để sửa.' }); }
     else { addSlides(list); setMsg({ kind: 'ok', text: 'Đã thêm 7 trang của bộ mẫu sau trang đang soạn.' }); }
   };
@@ -533,7 +545,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
                 <p className="cv-ph">Trang của bộ mẫu <small>bấm để thêm một trang</small></p>
                 {THEME_SETS.map((t) => (
                   <div key={t.id} className="cv-pages"><small>{t.name}</small><div>{setPreviews[t.id].map((s, i) => (
-                    <button key={s.id} type="button" title={s.phase ?? (i ? 'Trang cuối' : 'Trang bìa')} onClick={() => addSlides([makeSet(t.id, info)[i]])}>
+                    <button key={s.id} type="button" title={s.phase ?? (i ? 'Trang cuối' : 'Trang bìa')} onClick={() => addSlides([makeSet(t.id, info, setCt)[i]])}>
                       <SlideFrame>{(k) => <SlideView slide={s} mode="thumb" scale={k} />}</SlideFrame></button>))}</div></div>
                 ))}
                 <p className="cv-ph">Trang mẫu theo hoạt động</p>
@@ -671,11 +683,6 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
               <div className="dk-bgs cv-bgs">{BGS.map((b) => <button key={b.id} type="button" title={b.label} aria-label={`Nền ${b.label}`} className={slide.bg === b.id ? 'is-on' : ''} style={{ background: b.css }} onClick={() => setSlide((s) => ({ ...s, bg: b.id }))} />)}
                 <label className="cv-bgc" title="Màu khác"><input type="color" value={/^#[0-9a-f]{6}$/i.test(slide.bg) ? slide.bg : '#ffffff'} onChange={(e) => setSlide((s) => ({ ...s, bg: e.target.value }))} aria-label="Màu nền khác" /></label></div>
               <button type="button" className="cv-link" onClick={() => commit({ ...deckRef.current, slides: deckRef.current.slides.map((x) => ({ ...x, bg: slide.bg })) })}>Áp dụng nền này cho mọi trang</button>
-              {deck.slides.some((x) => x.scene) && (
-                <button type="button" className="cv-link" onClick={() => { commit({ ...deckRef.current, slides: deckRef.current.slides.map(toPattern) }); setMsg({ kind: 'ok', text: 'Đã đổi sang nền hoạ tiết cho cả bài. Khung “Ảnh minh hoạ” (ẩn khi chiếu) đặt ở chỗ trống để cô chèn ảnh bài. Ctrl+Z để quay lại.' }); }}>
-                  🎨 Dùng nền hoạ tiết cho cả bài (bỏ hình dán cảnh)
-                </button>
-              )}
               <p className="cv-ph">Cảnh minh hoạ (trang này)</p>
               <div className="dk-row dk-scenes cv-wrap">
                 <button type="button" className={!slide.scene ? 'is-on' : ''} onClick={() => setSlide((s) => ({ ...s, scene: undefined }))}>Không</button>

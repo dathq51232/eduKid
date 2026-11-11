@@ -10,7 +10,7 @@ import { pickScene } from '../src/lib/deck/scenes';
 import { LAYOUTS, relayout, relayoutBlocker } from '../src/lib/deck/relayout';
 import { SW, SH, quizText, quizImage, type El, type Slide } from '../src/lib/deck/types';
 import { deckFromIdeas } from '../src/lib/deck/fromIdeas';
-import { formatOf } from '../src/lib/deck/fromLesson';
+import { formatOf, setContentOf } from '../src/lib/deck/fromLesson';
 import { ideasFor, planOf } from '../src/lib/plans/idea-bank';
 import { generatePlan } from '../src/lib/plans/generate';
 import { lessonInfos } from '../src/lib/plans/lessons';
@@ -24,8 +24,8 @@ const box = (e: El) => ({ x: e.x, y: e.y, r: e.x + e.w, b: e.y + e.h });
 const hit = (a: El, b: El) => { const p = box(a), q = box(b); return p.x < q.r - 4 && p.r > q.x + 4 && p.y < q.b - 4 && p.b > q.y + 4; };
 const isRead = (e: El) => (e.kind === 'text' && !!e.text.trim()) || e.kind === 'quiz' || e.kind === 'sort' || e.kind === 'drop';
 
-/** bài tự sinh hoàn chỉnh: dùng nền hoạ tiết, không vẽ hình dán cảnh sau chữ */
-const noScene = (ss: Slide[], where: string) => ss.forEach((s, i) => { if (s.scene) errors.push({ kind: 'hình dán cảnh vẽ sau chữ', where: `${where} · trang ${i + 1}`, detail: `cảnh ${s.scene}` }); });
+/** bài tự sinh hoàn chỉnh: cảnh nền chỉ vẽ phong cảnh, không hình dán 3D / con vật sau chữ */
+const noScene = (ss: Slide[], where: string) => ss.forEach((s, i) => { if (s.scene && !s.sceneBare) errors.push({ kind: 'hình dán cảnh vẽ sau chữ', where: `${where} · trang ${i + 1}`, detail: `cảnh ${s.scene}` }); });
 function checkSlide(s: Slide, where: string) {
   const els = s.els.filter((e) => !e.hide);
   for (const e of els) {
@@ -142,6 +142,14 @@ for (const l of CONTENT) {
 console.log(`Gợi ý dạy: ${ideaDecks} bài (${ideaPages} trang); hình thức: ${[...fmtCount].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(', ')}`);
 console.log(`Giáo án: ${gaDecks} bài dựng theo hoạt động của giáo án`);
 
+// Bộ chủ đề 5 bước điền nội dung bài học (mỗi bài thử một bộ, xoay vòng 6 bộ)
+let setDecks = 0;
+for (const [n, l] of CONTENT.entries()) {
+  const t = THEME_SETS[n % THEME_SETS.length];
+  makeSet(t.id, { title: l.title, sub: `Lớp ${l.grade} · Tiết 1` }, setContentOf(l, knowledgeFor(l.id))).forEach((s, i) => checkSlide(s, `bộ ${t.name} · ${l.id} · trang ${i + 1}`));
+  setDecks++;
+}
+console.log(`Bộ chủ đề điền nội dung bài: ${setDecks} bài`);
 for (const t of THEME_SETS) makeSet(t.id, { title: 'Phép cộng có nhớ trong phạm vi 100', sub: 'Toán 2 · Tiết 1' }).forEach((s, i) => checkSlide(s, `bộ ${t.name} · trang ${i + 1}`));
 for (const t of SLIDE_TEMPLATES) t.make().forEach((s, i) => { checkSlide(s, `mẫu ${t.title} · trang ${i + 1}`); checkRelayout(s, `mẫu ${t.title}`); });
 

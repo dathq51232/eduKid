@@ -121,8 +121,14 @@ Nhịp trang: xen kẽ trang nhiều chữ với trang hình/tương tác; khôn
 - Thêm hình thức mới: thêm luật vào `FORMAT_RULES`, khai báo bước hợp lệ ở `PHASE_OK`, viết hàm dựng trả `{ title, slide }[]` (trả `[]` khi bài thiếu nội dung để chuyển hình thức gần nhất) và thêm vào `BUILDERS`.
 - `npm run check:deck-all` kiểm cả bài theo gợi ý và theo giáo án của mọi bài: báo "chép nguyên gợi ý lên trang", "lời GV/HS trên trang", "câu hỏi lặp trong bài".
 
-## 10. Nền: hoạ tiết, không hình dán cảnh sau chữ
-- Bài tự sinh **không dùng cảnh hình dán** (`slide.scene`) — hình vẽ sau chữ dễ đè, làm mờ chữ. `planSlides` / `deckFromIdeas` gọi `toPattern`: cảnh → nền hoạ tiết cùng tông (`SCENE_PATTERN` trong `scenes.ts`, nền ở `PATTERN_BGS` trong `types.ts`); chữ giữ màu `inkOf(scene)`.
-- Chỗ trống mà cảnh từng chiếm (bìa, trang `right`, `left`) → khung `photoEl` "Ảnh minh hoạ" (`role: 'photo'`, `hide: true`, ảnh `/deck/anh-minh-hoa.svg`): ẩn khi chiếu; cô chọn khung → tự bật "Thay hình" → tải ảnh bài tập / SGK của cô lên là lấp vào khung (`hide: false`). Không tự chèn ảnh SGK (bản quyền) — ngân hàng nội dung không có ảnh.
-- Hình dán / Milo: cô tự thêm sau trong trình soạn. Bài cũ còn cảnh: nút "🎨 Dùng nền hoạ tiết cho cả bài" ở bảng Nền.
-- Thêm nền mới: thêm vào `PATTERN_BGS` (SVG lặp lại, độ đậm ≤ 0,4, nền sáng; nền tối phải thêm vào `darkBg`). `check:deck-all` báo "hình dán cảnh vẽ sau chữ" nếu bài tự sinh còn `scene`.
+## 10. Nền: phong cảnh của cảnh minh hoạ, không hình dán sau chữ
+- Bài tự sinh giữ cảnh minh hoạ nhưng `sceneBare: true` (`bareScene` trong `fromLesson.ts`, gọi ở `planSlides` / `deckFromIdeas`): `SceneBg` chỉ vẽ phong cảnh SVG (trời, mây, đồi, biển, sàn lớp…), **không** vẽ hình dán 3D (`parts`) và con vật vẽ trong SVG (cá heo, hải cẩu, rùa, cua ở cảnh biển). Hình dán / Milo cô tự chèn sau.
+- Trang nội dung không đặt góc máy → `bottom` (phong cảnh ở đáy, chữ ở phần trời thoáng).
+- Chỗ trống của cảnh (bìa, `right`, `left`) → khung `photoEl` "Ảnh minh hoạ" (`role: 'photo'`, `hide: true`): ẩn khi chiếu; cô chọn khung → tự bật "Thay hình" → ảnh bài tập / SGK của cô lấp vào khung. Không tự chèn ảnh SGK (bản quyền).
+- `SceneBg` **luôn** chỉ vẽ phong cảnh (không đọc `parts`, ẩn con vật SVG) — áp cho mọi bài cũ, mới, và khi đổi cảnh cả bài (`applyTheme`). 12 nền hoạ tiết (`PATTERN_BGS`) vẫn có trong bảng Nền để cô tự chọn.
+- Vẽ thêm con vật / vật trang trí vào SVG cảnh: bọc trong `{!bare && …}`. `check:deck-all` báo "hình dán cảnh vẽ sau chữ" nếu bài tự sinh có cảnh mà thiếu `sceneBare`.
+
+## 11. Bộ chủ đề 5 bước điền nội dung bài học
+- `makeSet(id, info, ct?)`: có `ct` (`setContentOf(lesson, know)` trong `fromLesson.ts`) thì điền câu khởi động, câu khám phá, bài luyện tập, bài vận dụng, ý chính, dặn dò của bài; đáp án vào ghi chú. Không có (bài tự nhập) thì giữ chữ mẫu.
+- Trình soạn tự tải nội dung khi bài có `deck.src.lesson` (mở bảng Mẫu → Bộ chủ đề).
+- Chia câu: Luyện tập trước (phép tính ngắn 2 cột; câu dài 1 cột, tối đa 4), rồi Khởi động, Vận dụng, Khám phá; trắc nghiệm kèm lựa chọn, nối có hai vế; bài đọc → khởi động đoán nội dung, khám phá hỏi về bài đọc.

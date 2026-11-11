@@ -2,12 +2,12 @@
 // (Khởi động · Khám phá · Luyện tập · Vận dụng · Củng cố) với tình huống, trò chơi và câu hỏi của bài.
 // Hàm thuần: không gọi mạng, dùng hình có sẵn trong dự án; mỗi trang là Slide bình thường nên sửa được trong trình soạn.
 import { fit, shrinkToFit } from './fit';
-import { applySet, type SetId } from './theme-sets';
+import { applySet, type SetContent, type SetId } from './theme-sets';
 import { formsOf } from '@/lib/curriculum';
 import type { ContentLesson, ContentQuestion } from '@/lib/content/types';
 import type { LessonPlan as GiaoAn } from '@/lib/plans/generate';
 import { SUBJECT_NAMES } from '@/lib/plans/generate';
-import { SCENE_PATTERN, accentOf, inkOf } from './scenes';
+import { accentOf, inkOf } from './scenes';
 import { f3dSrc as ST } from './f3d-catalog';
 import { PHOTO_SRC, uid, type Anim, type El, type SceneKind, type SceneVariant, type Slide, type TextEl } from './types';
 
@@ -787,12 +787,12 @@ export function planSlides(plan: LessonPlan, on: Set<string>, scenes: Record<str
       }
     }
     // trang nội dung không đặt góc máy riêng → nền dịu (cảnh đầy đủ chỉ ở bìa, trang chia, tình huống)
-    if (sc && !s.sceneVariant && c.phase !== 'bia') s.sceneVariant = 'quiet';
+    if (sc && !s.sceneVariant && c.phase !== 'bia') s.sceneVariant = 'bottom'; // phong cảnh ở đáy trang, chữ ở phần trời thoáng
     if (c.phase !== 'bia') s.els.push(...progressEls(c.phase));
     out.push(s);
   }
-  // nền hoạ tiết thay cho hình dán cảnh (hình dán, ảnh minh hoạ cô tự thêm trong trình soạn)
-  const pat = out.map(toPattern);
+  // nền = phong cảnh của cảnh minh hoạ, bỏ hình dán 3D / con vật (cô tự chèn sau trong trình soạn)
+  const pat = out.map(bareScene);
   return o.set ? applySet(pat, o.set) : pat;
 }
 
@@ -1134,8 +1134,8 @@ function activityName(title: string, teacher: string, ph: PhaseId): string {
   return (title || PHASE_LABEL[ph]).replace(/^\s*\d+\s*[.)]\s*/, '').trim() || PHASE_LABEL[ph];
 }
 
-/* ================= Nền hoạ tiết + khung ảnh minh hoạ =================
- * Bài tự sinh không vẽ hình dán cảnh sau chữ (dễ đè, làm mờ chữ): cảnh → nền hoạ tiết cùng tông màu.
+/* ================= Cảnh nền chỉ phong cảnh + khung ảnh minh hoạ =================
+ * Bài tự sinh không vẽ hình dán 3D / con vật sau chữ (dễ đè, làm mờ chữ): giữ phong cảnh của cảnh (trời, mây, đồi, biển…).
  * Chỗ trống mà cảnh từng chiếm → khung "Ảnh minh hoạ" (ẩn khi trình chiếu) để cô chèn ảnh bài tập / SGK của mình. */
 export const photoEl = (x: number, y: number, w: number, h: number): El =>
   ({ id: uid(), kind: 'img', src: PHOTO_SRC, x, y, w, h, rot: 0, rad: 10, shadow: true, hide: true, role: 'photo', name: 'Ảnh minh hoạ' } as El);
@@ -1144,12 +1144,58 @@ const PHOTO_ZONE: Partial<Record<SceneVariant, { x: number; y: number; w: number
   right: { x: 990, y: 200, w: 520, h: 400 },
   left: { x: 90, y: 200, w: 500, h: 385 },
 };
-export function toPattern(s: Slide): Slide {
-  if (!s.scene) return s;
+/** cảnh minh hoạ → chỉ giữ phong cảnh (trời, mây, đồi, biển…), bỏ hình dán 3D / con vật; chỗ trống của cảnh → khung "Ảnh minh hoạ" */
+export function bareScene(s: Slide): Slide {
+  if (!s.scene || s.sceneBare) return s;
   const zone = s.sceneVariant ? PHOTO_ZONE[s.sceneVariant] : undefined;
   const els = [...s.els];
   const blocks = (z: { x: number; y: number; w: number; h: number }) => els.some((e) => !e.hide && e.role !== 'card' && e.role !== 'cardback' && e.group !== 'tien-trinh'
     && e.x < z.x + z.w && e.x + e.w > z.x && e.y < z.y + z.h && e.y + e.h > z.y);
   if (zone && !els.some((e) => e.role === 'photo') && !blocks(zone)) els.push(photoEl(zone.x, zone.y, zone.w, zone.h));
-  return { ...s, bg: SCENE_PATTERN[s.scene] ?? 'leafy', scene: undefined, sceneVariant: undefined, els };
+  return { ...s, sceneBare: true, els };
+}
+
+/** nội dung bài học cho Bộ chủ đề 5 bước (theme-sets): câu khởi động, câu khám phá, bài luyện tập, bài vận dụng, ý chính, dặn dò */
+export function setContentOf(lesson: ContentLesson, know: Knowledge): SetContent {
+  const used = new Set<ContentQuestion>();
+  const qs = shuffle(lesson.questions.map(splitQ), rng(lesson.id.length * 7 + 3));
+  const take = (f: (q: Q) => boolean) => { const q = qs.find((x) => !used.has(x) && f(x)); if (q) qs.forEach((x) => { if (x.ask === q.ask) used.add(x); }); return q; };
+  const pairsOf = (q: Q) => (key(q).pairs as Record<string, string> | undefined) ?? {};
+  const ans = (q: Q) => (q.type === 'fill_blank' ? accepted(q)
+    : q.type === 'multiple_choice' ? ((key(q).correct as string[] | undefined) ?? []).join(', ')
+    : q.type === 'matching' ? (q.left ?? []).map((l) => `${l} – ${pairsOf(q)[l] ?? ''}`).join('; ')
+    : correct(q));
+  const line = (q: Q) => q.ask.replace(/\n/g, ' ').replace(/\s*(\.\.\.|…|_{2,})\s*/g, ' ? ').trim();
+  // trắc nghiệm: kèm lựa chọn; đúng / sai: hỏi rõ; nối: hai vế (vế phải đảo thứ tự)
+  const say = (q: Q) => (q.type === 'single_choice' || q.type === 'multiple_choice' ? `${line(q)} (${q.options.join(' · ')})`
+    : q.type === 'true_false' ? `${line(q)} Đúng hay sai?`
+    : q.type === 'matching' ? `${line(q).replace(/[.:]\s*$/, '')}: ${(q.left ?? []).join(', ')} ↔ ${shuffle((q.left ?? []).map((l) => pairsOf(q)[l] ?? ''), rng(q.ask.length)).join(', ')}`
+    : line(q));
+  const ok = (q: Q, n: number) => !q.passage && !!ans(q) && q.type !== 'ordering' && short(say(q), n);
+  const many = (n: number, f: (q: Q) => boolean) => Array.from({ length: n }, () => take(f)).filter(Boolean) as Q[];
+  // chia câu: Luyện tập trước (trọng tâm tiết học), rồi Khởi động, Vận dụng, Khám phá — mỗi bài chỉ có khoảng 8 câu
+  const prac0 = many(6, (q) => ok(q, 40) && q.level <= 3);
+  const practice = prac0.length >= 3 ? prac0 : [...prac0, ...many(3 - prac0.length, (q) => ok(q, 90))];
+  const warm = many(3, (q) => ok(q, 90) && q.level <= 2);
+  const app = take((q) => ok(q, 170) && q.level >= 3) ?? take((q) => ok(q, 170));
+  const exp = take((q) => ok(q, 140) && q.level <= 2) ?? take((q) => ok(q, 140));
+  if (!warm.length) warm.push(...many(2, (q) => ok(q, 90)));
+  if (!warm.length && practice.length >= 4) warm.push(...practice.splice(0, 2)); // bài ít câu: chia bớt cho Khởi động
+  // bài đọc (mọi câu gắn với bài đọc): khởi động bằng đoán nội dung qua tên bài đọc
+  const readTitle = /^Đọc (?:bài|đoạn|câu chuyện)[^"“]*["“]([^"”]+)["”]/.exec(lesson.questions.find((q) => /^Đọc /.test(q.prompt))?.prompt ?? '')?.[1];
+  const warmText = warm.map(say);
+  const warmAns = warm.map(ans);
+  if (!warmText.length && readTitle) { warmText.push(`Bài đọc hôm nay tên là “${readTitle}”. Em đoán bài nói về điều gì?`); warmAns.push('Học sinh nêu dự đoán, cô ghi nhận rồi dẫn vào bài đọc.'); }
+  const summary = know?.points?.length ? know.points.slice(0, 3) : learnItems(lesson.description).map((x) => x.replace(/^\S+\s/, '')).slice(0, 3);
+  return {
+    warm: warmText, warmAns,
+    // thiếu câu khám phá: dùng ví dụ của bài (cô làm mẫu cùng lớp)
+    explore: exp ? say(exp) : know?.example ? `Cùng làm ví dụ: ${know.example.split('→')[0].trim()}` : readTitle ? `Đọc bài “${readTitle}”. Bài đọc nói về điều gì? Em thích chi tiết nào nhất?` : '',
+    exploreAns: exp ? ans(exp) : know?.example ? know.example.split('→').slice(1).join(' → ').trim() : readTitle ? 'Học sinh đọc bài, nêu nội dung chính và chi tiết em thích.' : '',
+    practice: practice.map(say), practiceAns: practice.map(ans),
+    // thiếu bài vận dụng: nhiệm vụ nói / liên hệ với từ ngữ, nội dung của bài
+    apply: app ? say(app) : fill((LIENHE[lesson.subject] ?? LIENHE.toan)[0], '', topicOf(lesson)),
+    applyAns: app ? ans(app) : 'Học sinh trình bày, các bạn nhận xét, cô khen.', math: lesson.subject === 'toan',
+    summary, home: (HOMEWORK[lesson.subject] ?? HOMEWORK.toan).split('\n')[0].replace(/^•\s*/, ''),
+  };
 }

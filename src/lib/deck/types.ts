@@ -100,6 +100,8 @@ export type Slide = { id: string; bg: string; els: El[]; anims: Anim[]; trans: T
   scene?: SceneKind;
   /** góc máy của cảnh nền (5 kiểu chuẩn Canva: bìa, giữa, cảnh phải, cảnh trái, cảnh đáy) */
   sceneVariant?: SceneVariant;
+  /** chỉ vẽ phong cảnh của cảnh nền (trời, mây, đồi, biển…), không hình dán 3D / con vật — cô tự chèn sau */
+  sceneBare?: boolean;
   /** hoạt động của tiết dạy: Khởi động / Khám phá / Luyện tập / Vận dụng / Củng cố */
   phase?: string;
   /** thời gian dự kiến cho trang (phút) — hiện ở xem lưới và màn hình của cô */
@@ -190,6 +192,7 @@ export function normalizeDeck(raw: unknown, fallbackTitle = 'Bài thao giảng')
       ...(typeof s?.autoNext === 'number' && s.autoNext > 0 ? { autoNext: Math.min(120, Math.max(1, s.autoNext)) } : {}),
       scene: typeof s?.scene === 'string' ? s.scene : undefined,
       sceneVariant: (['cover', 'center', 'right', 'left', 'bottom', 'quiet'] as const).includes(s?.sceneVariant as SceneVariant) ? (s.sceneVariant as SceneVariant) : undefined,
+      ...(s?.sceneBare === true ? { sceneBare: true } : {}),
       phase: typeof s?.phase === 'string' ? s.phase : undefined,
       ...(typeof s?.mins === 'number' && s.mins > 0 ? { mins: Math.min(90, Math.max(0.5, s.mins)) } : {}),
       ...(s?.tool && typeof s.tool === 'object' ? { tool: {

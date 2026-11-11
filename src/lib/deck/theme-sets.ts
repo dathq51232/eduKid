@@ -4,7 +4,7 @@
 // “Đổi chủ đề cả bộ” đổi giao diện theo vai trò (role) của vật mà giữ nguyên nội dung đã soạn.
 import { f3dSrc as F } from './f3d-catalog';
 import { fit, shrinkToFit } from './fit';
-import { darkBg, uid, type Anim, type El, type FontKey, type Slide } from './types';
+import { PHOTO_SRC, darkBg, uid, type Anim, type El, type FontKey, type Slide } from './types';
 
 export type SetId = 'oli' | 'cosmos' | 'leaf' | 'lab' | 'vui' | 'sotay';
 export type ThemeSet = {
@@ -61,12 +61,21 @@ const card = (m: Mk, t: ThemeSet, x: number, y: number, w: number, h: number) =>
 };
 /** 2 miếng băng dính giấy chéo ở 2 góc trên của thẻ */
 const tapes = (t: ThemeSet, x: number, y: number, w: number): El[] => (t.tape ?? []).map((c, k) => ({ id: uid(), kind: 'shape', shape: 'rect', x: k ? x + w - 150 : x - 40, y: y - 26, w: 190, h: 52, rot: k ? 24 : -26, fill: c, stroke: c, sw: 0, lock: true, role: 'tape' } as El));
-const step = (m: Mk, label: string) => txt(m, label, 64, 46, 40 + label.length * 26, 78, 40, '#ffffff', 'step', { bg: STEP_COLOR[label] ?? '#7c3aed', align: 'center' });
+const step = (m: Mk, label: string) => txt(m, label, 64, 46, 80 + label.length * 26, 78, 40, '#ffffff', 'step', { bg: STEP_COLOR[label] ?? '#7c3aed', align: 'center' });
 
 export type SetInfo = { title: string; sub: string };
+/** nội dung của bài học điền vào bộ mẫu (lấy từ ngân hàng bài — xem setContentOf trong fromLesson.ts); không có thì để chữ mẫu */
+export type SetContent = {
+  warm: string[]; warmAns: string[];
+  explore: string; exploreAns: string;
+  practice: string[]; practiceAns: string[];
+  apply: string; applyAns: string; math: boolean;
+  summary: string[]; home: string;
+};
+const ansNote = (label: string, qs: string[], as: string[]) => qs.length ? `\n${label}:\n${qs.map((q, i) => `${i + 1}. ${q} → ${as[i] ?? ''}`).join('\n')}` : '';
 
-/** 7 trang của bộ mẫu (chữ mẫu để cô thay) */
-export function makeSet(id: SetId, info: SetInfo): Slide[] {
+/** 7 trang của bộ mẫu: có nội dung bài (ct) thì điền nội dung bài học, không thì chữ mẫu để cô thay */
+export function makeSet(id: SetId, info: SetInfo, ct?: SetContent | null): Slide[] {
   const t = SET_BY_ID[id];
   const page = (i: number, phase: string | undefined, build: (m: Mk) => void, notes: string): Slide => {
     const m: Mk = { els: [], anims: [] }; build(m);
@@ -84,10 +93,16 @@ export function makeSet(id: SetId, info: SetInfo): Slide[] {
     step(m, label);
     anim(m, tt, 'fade', 'with', { dur: 0.5 }); anim(m, mm, 'pop', 'after', { delay: 0.2 }); anim(m, dd, 'spin-in', 'with');
   }, notes);
-  const bullets = (m: Mk, L: number, lines: string[], icon: string, size = 64, gap = 112) => lines.forEach((x, j) => {
-    img(m, icon, L + 10, 340 + j * gap, size, size, undefined, 'Ngôi sao');
-    txt(m, x, L + size + 34, 330 + j * gap, 820, size + 20, Math.round(size * 0.92), t.text, 'body');
-  });
+  const bullets = (m: Mk, L: number, lines: string[], icon: string, size = 64, gap = 112) => {
+    // câu dài (nội dung bài thật): dòng cao hơn, cùng một cỡ chữ cho cả danh sách (≥ 34 px)
+    const long = lines.some((x) => x.length > 34);
+    const g = long ? Math.min(140, Math.floor(420 / Math.max(1, lines.length))) : gap, h = long ? g - 14 : size + 20;
+    const fs = long ? Math.min(...lines.map((x) => fit(x, 820, h, 52, 34))) : Math.round(size * 0.92);
+    lines.forEach((x, j) => {
+      img(m, icon, L + 10, 340 + j * g, size, size, undefined, 'Ngôi sao');
+      txt(m, x, L + size + 34, 330 + j * g, 820, h, fs, t.text, 'body');
+    });
+  };
   return [
     page(0, undefined, (m) => {
       card(m, t, 220, 170, 1220, 520);
@@ -98,26 +113,44 @@ export function makeSet(id: SetId, info: SetInfo): Slide[] {
       img(m, t.deco[0], 1330, 90, 170, 170, 'deco', 'Hình trang trí');
       anim(m, tt, 'zoom', 'with', { dur: 0.8 }); anim(m, mm, 'fly-left', 'with', { delay: 0.2 });
     }, 'Giới thiệu tên bài. Hỏi: “Hôm nay chúng ta sẽ học gì nhỉ?”'),
-    content(1, 'Khởi động', 'Ai nhanh hơn?', (m, L) => bullets(m, L, ['Câu hỏi 1 …', 'Câu hỏi 2 …', 'Câu hỏi 3 …'], F('star')), 'Trò chơi khởi động 2–3 phút: cô đọc câu hỏi, tổ nào giơ tay nhanh và đúng được cộng điểm thi đua.'),
+    content(1, 'Khởi động', 'Ai nhanh hơn?', (m, L) => bullets(m, L, ct?.warm.length ? ct.warm : ['Câu hỏi 1 …', 'Câu hỏi 2 …', 'Câu hỏi 3 …'], F('star')),
+      'Trò chơi khởi động 2–3 phút: cô đọc câu hỏi, tổ nào giơ tay nhanh và đúng được cộng điểm thi đua.' + ansNote('Đáp án', ct?.warm ?? [], ct?.warmAns ?? [])),
     content(2, 'Khám phá', 'Cùng khám phá', (m, L) => {
+      if (ct?.explore) {
+        // câu hỏi khám phá của bài + khung ảnh minh hoạ (ẩn khi chiếu đến khi cô chèn ảnh bài / SGK)
+        txt(m, ct.explore, L, 320, 900, 200, 56, t.text, 'body');
+        m.els.push({ id: uid(), kind: 'img', src: PHOTO_SRC, x: L, y: 535, w: 300, h: 220, rot: 0, rad: 10, hide: true, role: 'photo', name: 'Ảnh minh hoạ' } as El);
+        return;
+      }
       txt(m, 'Quan sát tranh và trả lời:\n… ?', L, 320, 900, 170, 56, t.text, 'body');
       m.els.push({ id: uid(), kind: 'shape', shape: 'tray', x: L, y: 515, w: 630, h: 150, rot: 0, fill: '#f59e0b', stroke: '#b45309', sw: 5, lock: true, shadow: true } as El);
       [0, 1, 2, 3, 4].forEach((k) => img(m, F('red-apple'), L + 22 + k * 120, 540, 100, 100, undefined, 'Hình minh hoạ'));
-    }, 'Cho học sinh quan sát, nêu nhận xét. Rút ra kiến thức mới, ghi bảng.'),
-    content(3, 'Luyện tập', 'Bài 1. …', (m, L) => {
-      ['a) …', 'b) …', 'c) …'].forEach((x, j) => txt(m, x, L + 20, 340 + j * 110, 400, 90, 64, t.text, 'body'));
-      ['d) …', 'e) …', 'g) …'].forEach((x, j) => txt(m, x, L + 440, 340 + j * 110, 400, 90, 64, t.text, 'body'));
-    }, 'Học sinh làm cá nhân vào vở / bảng con. Gọi 3 em chữa bài, cả lớp nhận xét.'),
-    content(4, 'Vận dụng', 'Giải toán', (m, L) => {
+    }, 'Cho học sinh quan sát, nêu nhận xét. Rút ra kiến thức mới, ghi bảng.' + (ct?.explore ? `\nĐáp án: ${ct.exploreAns}` : '')),
+    content(3, 'Luyện tập', ct?.practice.length ? (ct.math ? 'Tính' : 'Bài tập') : 'Bài 1. …', (m, L) => {
+      const raw = ct?.practice.length ? ct.practice.map((x, j) => `${'abcdeg'[j]}) ${x}`) : ['a) …', 'b) …', 'c) …', 'd) …', 'e) …', 'g) …'];
+      // bài ngắn (phép tính): 2 cột; bài dài (câu chữ): 1 cột, tối đa 4 bài, chữ cùng cỡ
+      const two = raw.length > 3 && raw.every((x) => x.length <= 24);
+      const items = two ? raw : raw.slice(0, 4);
+      const half = Math.ceil(items.length / 2);
+      const rh = two ? 110 : Math.min(130, Math.floor(420 / items.length)), w = two ? 400 : 860;
+      const fs = Math.min(...items.map((x) => fit(x, w, rh - 12, 64, 34)));
+      items.forEach((x, j) => {
+        const col = two && j >= half ? 1 : 0, row = two ? j % half : j;
+        txt(m, x, L + 20 + col * 440, 330 + row * rh, w, rh - 12, fs, t.text, 'body');
+      });
+    }, 'Học sinh làm cá nhân vào vở / bảng con. Gọi 3 em chữa bài, cả lớp nhận xét.' + ansNote('Đáp án', ct?.practice ?? [], ct?.practiceAns ?? [])),
+    content(4, 'Vận dụng', ct && !ct.math ? 'Vận dụng' : 'Giải toán', (m, L) => {
+      if (ct?.apply) { txt(m, ct.apply, L, 320, 900, 300, 56, t.text, 'body'); return; }
       txt(m, 'Đề bài: …\nHỏi: … ?', L, 330, 900, 180, 56, t.text, 'body');
       [0, 1, 2, 3].forEach((k) => img(m, F('pencil'), L + 20 + k * 160, 540, 120, 120, undefined, 'Hình minh hoạ'));
-    }, 'Thảo luận nhóm đôi, trình bày bài giải. Liên hệ thực tế.'),
-    content(5, 'Tổng kết', 'Hôm nay em học được', (m, L) => bullets(m, L, ['Điều thứ nhất …', 'Điều thứ hai …', 'Điều thứ ba …'], F('star'), 58, 100), 'Hỏi lại ý chính của bài. Khen các tổ, tổng kết điểm thi đua.'),
+    }, 'Thảo luận nhóm đôi, trình bày bài giải. Liên hệ thực tế.' + (ct?.apply ? `\nĐáp án: ${ct.applyAns}` : '')),
+    content(5, 'Tổng kết', 'Hôm nay em học được', (m, L) => bullets(m, L, ct?.summary.length ? ct.summary : ['Điều thứ nhất …', 'Điều thứ hai …', 'Điều thứ ba …'], F('star'), 58, 100), 'Hỏi lại ý chính của bài. Khen các tổ, tổng kết điểm thi đua.'),
     page(6, undefined, (m) => {
       card(m, t, 220, 170, 1220, 520);
       const mm = img(m, t.mascots[6], 80, 150, 560, 620, 'mascot', 'Bạn cú Milo');
       const tt = txt(m, 'Cảm ơn các em!', 640, 250, 760, 190, fit('Cảm ơn các em!', 760, 190, 100, 56), t.title, 'title');
-      txt(m, 'Về nhà: …', 646, 450, 760, 80, 46, t.text, 'body', { font: 'quick' });
+      const home = ct?.home ? `Về nhà: ${ct.home}` : 'Về nhà: …';
+      txt(m, home, 646, 450, 760, 120, 46, t.text, 'body', { font: 'quick' });
       const d = img(m, t.deco[2], 1250, 520, 150, 150, 'deco', 'Hình trang trí');
       anim(m, tt, 'pop', 'with'); anim(m, mm, 'fly-left', 'with', { delay: 0.2 }); anim(m, d, 'jump', 'after', { sound: 'tada' });
     }, 'Dặn dò bài về nhà, chuẩn bị bài sau.'),
