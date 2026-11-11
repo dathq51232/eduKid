@@ -3,16 +3,19 @@
 // → (hoạt động thi đua: bảng thi đua tổ) → các trang nội dung bài học của đúng hoạt động đó.
 // Trang hướng dẫn gắn công cụ cho màn hình của cô (Slide.tool): hẹn giờ thảo luận / gọi tên.
 import { emptyDeck, uid, type Deck, type El, type SceneKind, type Slide } from './types';
-import { MASCOTS, badgeEl, boardEls, boardPage, buildPlan, dividerSlide, planSlides, tietOf, type PhaseId } from './fromLesson';
+import { MASCOTS, actCtx, activityPages, badgeEl, boardEls, boardPage, buildPlan, dividerSlide, planSlides, tietOf, type ActCtx, type ActivitySpec, type PhaseId } from './fromLesson';
 import { planOf, type LessonIdea, type Pick } from '@/lib/plans/idea-bank';
 import { F3D_VI, f3dSrc } from './f3d-catalog';
 import { pickScene } from './scenes';
+import { shrinkToFit } from './fit';
 import { otherWords, vansIn, wordsOf } from '@/lib/plans/van-bank';
 import type { ContentLesson } from '@/lib/content/types';
 
 const PER_PHASE: Record<string, number> = { kd: 2, kp: 3, lt: 4, vd: 2 };
+/** trò Toán có sẵn cách sinh phép tính theo đúng hình thức trò (dùng specsOf) — chỉ cho số trong phạm vi 10 của lớp 1 */
+const MATH_GAME = /ngón tay|xe buýt|domino|tia số|tìm bạn|đi chợ|bingo|vẽ tranh|xếp hàng|so sánh|đếm/;
 const text = (x: number, y: number, w: number, h: number, t: string, size: number, color: string, o: Record<string, unknown> = {}): El =>
-  ({ id: uid(), kind: 'text', x, y, w, h, rot: 0, text: t, size, color, font: 'baloo', align: 'center', bg: '', ...o } as El);
+  ({ id: uid(), kind: 'text', x, y, w, h, rot: 0, text: t, size: shrinkToFit(t, w, h, size, !!o.bg, 28), color, font: 'baloo', align: 'center', bg: '', ...o } as El);
 
 const norm = (t: string) => t.toLowerCase().replace(/\s*-\s*ti[eế]t\s*\d+.*$/i, '').replace(/\s+/g, ' ').trim();
 const subjCode = (s: string) => (/to[aá]n/i.test(s) ? 'toan' : /vi[eệ]t/i.test(s) ? 'tieng-viet' : /anh/i.test(s) ? 'tieng-anh' : '');
@@ -273,6 +276,7 @@ export async function deckFromIdeas(subject: string, title: string, pick: Pick, 
   const code = subjCode(subject);
   let lessonPlan: ReturnType<typeof buildPlan> | null = null;
   let lessonId: string | undefined;
+  let ctx: ActCtx | null = null; // nội dung của bài để dựng từng hoạt động gợi ý
   // tiết "Ôn luyện tuần N": lấy nội dung các bài của tuần N, KHÔNG lấy chữ trong tên tiết làm ngữ liệu
   const wk = /tu[aầ]n\s*(\d+)/i.exec(title)?.[1];
   const review = /[oô]n\s*(luy[eệ]n|t[aậ]p)|tu[aầ]n\s*\d+/i.test(title);
@@ -288,6 +292,7 @@ export async function deckFromIdeas(subject: string, title: string, pick: Pick, 
       srcTitle = l.title;
       lessonId = l.id;
       lessonPlan = buildPlan(l, k.knowledgeFor(l.id), { mascot: MASCOTS[0].id, warmup: 'quiz', scene: 'class', seed: 1, tiet: tietOf(title) });
+      ctx = actCtx(l, k.knowledgeFor(l.id), { mascot: MASCOTS[0].id, warmup: 'quiz', scene: pickScene(`${title} ${subject}`, code === 'toan' ? 'garden' : 'class'), seed: 1 });
     }
   }
   const bo = { dividers: false, mascot: MASCOTS[0].src, math: code === 'toan' };
@@ -311,10 +316,41 @@ export async function deckFromIdeas(subject: string, title: string, pick: Pick, 
   const rand = rnd(title.length * 7 + pick.dur);
   const sc = pickScene(`${title} ${subject}`, code === 'toan' ? 'garden' : 'class'); // cảnh nền theo bài
   planOf(subject, title, pick).forEach((r, k) => {
-    deck.slides.push(dividerSlide(r.phase.n, sc, undefined, `${r.start}′ – ${r.end}′`));
-    deck.slides.push(...activitySlides(k + 1, r.phase, r.idea, topic, code === 'toan', minus, rand, sc));
-    if (toolsOf(r.idea).teams) deck.slides.push({ ...boardPage(sc), phase: r.phase.n });
-    deck.slides.push(...contentOf(r.phase.k as PhaseId, PER_PHASE[r.phase.k] ?? 2).map((s) => ({ ...s, phase: r.phase.n })));
+    const ph = r.phase.k as PhaseId;
+    const tl = toolsOf(r.idea);
+    // Toán: các trò đặc thù (ngón tay, xe buýt, tia số…) tự sinh phép tính đúng phạm vi bài theo đúng hình thức trò
+    // chỉ hợp với số nhỏ (lớp 1, phạm vi 10); bài số lớn hơn thì dùng câu hỏi của chính bài (Bingo dùng được mọi phạm vi)
+    const small = grade === 1 && (Number(/ph[aạ]m vi (\d+)/i.exec(topic)?.[1]) || 10) <= 10;
+    const mathGame = code === 'toan' && MATH_GAME.test(r.idea.t.toLowerCase()) && small;
+    if (ctx && !mathGame) {
+      // gợi ý quyết định HÌNH THỨC, nội dung lấy từ bài; các bước tổ chức của cô nằm trong ghi chú
+      const spec: ActivitySpec = { title: r.idea.t, text: `${r.idea.d} ${r.idea.w}`, steps: r.idea.s, phase: ph, mins: r.idea.m };
+      const { format, pages } = activityPages(spec, ctx);
+      // Khám phá: hoạt động gợi ý không phải trang kiến thức thì vẫn dạy kiến thức mới của bài ngay sau đó
+      const more = ph === 'kp' && format !== 'explore' ? activityPages({ ...spec, title: 'Kiến thức mới', steps: [] }, ctx, 'explore').pages : [];
+      const cands = [...pages, ...more].map((g, i) => ({ key: `${ph}:idea${k}-${i}`, phase: ph, title: g.title, slide: g.slide }));
+      const slides = planSlides({ cands, defaults: { bia: 0, kd: 0, kp: 0, lt: 0, vd: 0, cc: 0 } }, new Set(cands.map((c) => c.key)), {}, bo).map((s) => ({ ...s, phase: r.phase.n }));
+      if (slides[0]) slides[0] = { ...slides[0], notes: `⏱ ${r.start}′ – ${r.end}′ · ${slides[0].notes}`, tool: { timer: tl.timer || undefined, name: tl.name || undefined, teams: tl.teams || undefined, label: r.idea.t } };
+      deck.slides.push(...slides);
+      if (tl.teams && format !== 'race') deck.slides.push({ ...boardPage(sc), phase: r.phase.n });
+    } else if (ctx) {
+      // trò Toán đặc thù: trang trò tự sinh phép tính; Khám phá thêm kiến thức mới của bài (dùng chung câu với các hoạt động khác)
+      const game = activitySlides(k + 1, r.phase, r.idea, topic, true, minus, rand, sc);
+      game[0] = { ...game[0], notes: `⏱ ${r.start}′ – ${r.end}′ · ${game[0].notes}` };
+      deck.slides.push(...game);
+      if (tl.teams) deck.slides.push({ ...boardPage(sc), phase: r.phase.n });
+      if (ph === 'kp') {
+        const more = activityPages({ title: 'Kiến thức mới', text: '', steps: [], phase: ph, mins: 4 }, ctx, 'explore').pages;
+        const cands = more.map((g, i) => ({ key: `${ph}:game${k}-${i}`, phase: ph, title: g.title, slide: g.slide }));
+        deck.slides.push(...planSlides({ cands, defaults: { bia: 0, kd: 0, kp: 0, lt: 0, vd: 0, cc: 0 } }, new Set(cands.map((c) => c.key)), {}, bo).map((s) => ({ ...s, phase: r.phase.n })));
+      }
+    } else {
+      // chưa có nội dung bài trong ngân hàng: trang theo trò (cô thêm ngữ liệu)
+      deck.slides.push(dividerSlide(r.phase.n, sc, undefined, `${r.start}′ – ${r.end}′`));
+      deck.slides.push(...activitySlides(k + 1, r.phase, r.idea, topic, code === 'toan', minus, rand, sc));
+      if (tl.teams) deck.slides.push({ ...boardPage(sc), phase: r.phase.n });
+      deck.slides.push(...contentOf(ph, PER_PHASE[r.phase.k] ?? 2).map((s) => ({ ...s, phase: r.phase.n })));
+    }
     if (r.phase.k === 'kp' && pick.dur >= 30) { // giải lao vận động ~1 phút giữa tiết
       const br = studentSlide({ q: 'Giải lao! Đứng dậy vỗ tay, vươn vai theo cô 👏', big: '🙋 🎵' }, r.phase, k + 1, [], sc);
       deck.slides.push({ ...br, mins: 1, notes: 'Giải lao vận động 1 phút: hát + vỗ tay + vươn vai rồi chuyển sang Luyện tập.', tool: { timer: 1, label: 'Giải lao' } });

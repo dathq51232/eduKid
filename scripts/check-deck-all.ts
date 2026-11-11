@@ -9,6 +9,11 @@ import { fits, quizSizes } from '../src/lib/deck/fit';
 import { pickScene } from '../src/lib/deck/scenes';
 import { LAYOUTS, relayout, relayoutBlocker } from '../src/lib/deck/relayout';
 import { SW, SH, quizText, quizImage, type El, type Slide } from '../src/lib/deck/types';
+import { deckFromIdeas } from '../src/lib/deck/fromIdeas';
+import { formatOf } from '../src/lib/deck/fromLesson';
+import { ideasFor, planOf } from '../src/lib/plans/idea-bank';
+import { generatePlan } from '../src/lib/plans/generate';
+import { lessonInfos } from '../src/lib/plans/lessons';
 
 const verbose = process.argv.includes('--verbose');
 type Issue = { kind: string; where: string; detail: string };
@@ -69,6 +74,69 @@ for (const l of CONTENT) {
   decks++; pages += slides.length;
   dividers += slides.filter((s) => s.els.some((e) => e.role === 'divider') && s.els.filter(isRead).length <= 2).length;
 }
+void (async () => {
+// ===== Bài theo GỢI Ý: gợi ý quyết định hình thức, nội dung lấy từ bài — không được chép nguyên văn gợi ý / lời GV, HS lên trang =====
+const normT = (t: string) => t.toLowerCase().replace(/\s+/g, ' ').replace(/[.…:;!?]+$/, '').trim();
+function checkNoCopy(slides: Slide[], hints: string[], where: string) {
+  const hs = hints.map(normT).filter((h) => h.length >= 16);
+  slides.forEach((s, i) => {
+    for (const e of s.els) {
+      const t = e.kind === 'text' ? e.text : e.kind === 'shape' ? e.text ?? '' : '';
+      if (!t.trim()) continue;
+      const n = normT(t);
+      if (hs.some((h) => n.includes(h))) errors.push({ kind: 'chép nguyên gợi ý lên trang', where: `${where} · trang ${i + 1}`, detail: `"${t.slice(0, 60)}"` });
+      if (/(^|[^\p{L}])(GV|HS)([^\p{L}]|$)/u.test(t)) errors.push({ kind: 'lời GV/HS trên trang', where: `${where} · trang ${i + 1}`, detail: `"${t.slice(0, 60)}"` });
+    }
+  });
+}
+/** một câu hỏi của bài không xuất hiện ở hai trang khác nhau (trắc nghiệm, bong bóng câu hỏi) */
+function checkNoRepeat(slides: Slide[], where: string) {
+  const seen = new Map<string, number>();
+  slides.forEach((s, i) => {
+    const qs = s.els.flatMap((e) => (e.kind === 'quiz' ? [e.q] : e.kind === 'shape' && e.shape === 'bubble' && (e.text ?? '').length >= 30 ? [e.text ?? ''] : []));
+    for (const q of new Set(qs.map(normT))) {
+      if (seen.has(q)) errors.push({ kind: 'câu hỏi lặp trong bài', where: `${where} · trang ${seen.get(q)! + 1} & ${i + 1}`, detail: `"${q.slice(0, 50)}"` });
+      else seen.set(q, i);
+    }
+  });
+}
+let ideaDecks = 0, ideaPages = 0, gaDecks = 0;
+const fmtCount = new Map<string, number>();
+for (const [n, l] of CONTENT.entries()) {
+  if (l.kind === 'review') continue;
+  const subj = l.subject === 'toan' ? 'Toán' : l.subject === 'tieng-viet' ? 'Tiếng Việt' : 'Tiếng Anh';
+  const ideas = ideasFor(subj, l.title).ideas;
+  const pick = { dur: 35, sel: Object.fromEntries((['kd', 'kp', 'lt', 'vd'] as const).map((p) => [p, n % Math.max(1, ideas[p].length)])) };
+  const deck = await deckFromIdeas(subj, l.title, pick, l.grade);
+  ideaDecks++; ideaPages += deck.slides.length;
+  deck.slides.forEach((s, i) => checkSlide(s, `gợi ý ${l.id} · trang ${i + 1}`));
+  const hints = planOf(subj, l.title, pick).flatMap((r) => [r.idea.d, ...r.idea.s]);
+  checkNoCopy(deck.slides, hints, `gợi ý ${l.id}`);
+  checkNoRepeat(deck.slides, `gợi ý ${l.id}`);
+  for (const r of planOf(subj, l.title, pick)) { const k = formatOf({ title: r.idea.t, text: r.idea.d, steps: r.idea.s, phase: r.phase.k, mins: r.idea.m }); fmtCount.set(k, (fmtCount.get(k) ?? 0) + 1); }
+}
+// ===== Bài theo GIÁO ÁN gợi ý (lịch báo giảng) =====
+const infoCache = new Map<string, Map<string, ReturnType<typeof lessonInfos>[number]>>();
+for (const l of CONTENT) {
+  if (l.kind === 'review') continue;
+  const ck = `${l.subject}${l.grade}`;
+  if (!infoCache.has(ck)) infoCache.set(ck, new Map(lessonInfos(l.subject, l.grade).map((x) => [x.id, x])));
+  const info = infoCache.get(ck)!.get(l.id); if (!info) continue;
+  const ga = generatePlan({ subject: l.subject, grade: l.grade, className: '1A', lesson: info });
+  const sc = pickScene(`${l.title} ${l.questions.map((q) => q.prompt).join(' ')}`, 'garden');
+  const p = buildPlan(l, knowledgeFor(l.id), { mascot: MASCOTS[0].id, warmup: 'quiz', scene: sc, seed: 1, tiet: 1 }, ga);
+  const on = new Set(PHASES.flatMap((ph) => p.cands.filter((x) => x.phase === ph.id).slice(0, p.defaults[ph.id]).map((x) => x.key)));
+  const slides = planSlides(p, on, {}, { mascot: MASCOTS[0].src, math: l.subject === 'toan' });
+  gaDecks++;
+  slides.forEach((s, i) => checkSlide(s, `giáo án ${l.id} · trang ${i + 1}`));
+  // dòng "+ …" trong giáo án là nội dung của bài (ý kiến thức, dạng bài) — được phép xuất hiện trên trang
+  const gaLines = ga.activities.flatMap((a) => [...a.teacher.split('\n'), ...a.student.split('\n')]).filter((x) => !x.trim().startsWith('+'));
+  checkNoCopy(slides, gaLines.map((x) => x.replace(/^\s*[-•*–]\s*/, '')), `giáo án ${l.id}`);
+  checkNoRepeat(slides, `giáo án ${l.id}`);
+}
+console.log(`Gợi ý dạy: ${ideaDecks} bài (${ideaPages} trang); hình thức: ${[...fmtCount].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(', ')}`);
+console.log(`Giáo án: ${gaDecks} bài dựng theo hoạt động của giáo án`);
+
 for (const t of THEME_SETS) makeSet(t.id, { title: 'Phép cộng có nhớ trong phạm vi 100', sub: 'Toán 2 · Tiết 1' }).forEach((s, i) => checkSlide(s, `bộ ${t.name} · trang ${i + 1}`));
 for (const t of SLIDE_TEMPLATES) t.make().forEach((s, i) => { checkSlide(s, `mẫu ${t.title} · trang ${i + 1}`); checkRelayout(s, `mẫu ${t.title}`); });
 
@@ -86,3 +154,4 @@ for (const [k, xs] of group(warns)) {
 }
 console.log(errors.length ? `\n✗ ${errors.length} lỗi bố cục` : '\n✓ Không có lỗi bố cục');
 process.exit(errors.length ? 1 : 0);
+})();

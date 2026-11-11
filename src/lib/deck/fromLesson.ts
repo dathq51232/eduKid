@@ -3,6 +3,7 @@
 // Hàm thuần: không gọi mạng, dùng hình có sẵn trong dự án; mỗi trang là Slide bình thường nên sửa được trong trình soạn.
 import { fit, shrinkToFit } from './fit';
 import { applySet, type SetId } from './theme-sets';
+import { formsOf } from '@/lib/curriculum';
 import type { ContentLesson, ContentQuestion } from '@/lib/content/types';
 import type { LessonPlan as GiaoAn } from '@/lib/plans/generate';
 import { SUBJECT_NAMES } from '@/lib/plans/generate';
@@ -350,65 +351,32 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
   const add = (phase: PhaseId, k: string, t: string, s: Slide) => cands.push({ key: `${phase}:${k}`, phase, title: t, slide: s });
   const qs = shuffle(lesson.questions.map(splitQ), r);
   const used = new Set<ContentQuestion>();
-  const take = (f: (q: Q) => boolean) => { const q = qs.find((x) => !used.has(x) && f(x)); if (q) used.add(q); return q; };
+  // câu cùng đề (ngân hàng có thể có bản trùng) coi như đã dùng
+  const take = (f: (q: Q) => boolean) => { const q = qs.find((x) => !used.has(x) && f(x)); if (q) qs.forEach((x) => { if (x.ask === q.ask) used.add(x); }); return q; };
 
   /* Bìa */
   add('bia', 'cover', 'Trang bìa', coverPage(lesson.title, `${subj} ${lesson.grade}${lesson.unit?.title ? ' · ' + lesson.unit.title.replace(/^Chủ đề\s*\d+[.:]?\s*/i, '') : ''}`, o.tiet, sc, M.src));
 
-  /* Khởi động: trò chơi */
-  const easy = (q: Q) => q.level <= 2 && short(q.ask, 90) && (q.type === 'single_choice' || q.type === 'fill_blank' || q.type === 'true_false');
-  const answerOf = (q: Q) => q.type === 'fill_blank' ? accepted(q) : correct(q);
-  const warm = (w: Warmup) => {
-    const m = mk();
-    if (w === 'gift') {
-      title(m, 'Hộp quà bí mật', '#be123c');
-      const gs = [take(easy), take(easy), take(easy)].filter(Boolean) as Q[];
-      if (gs.length < 2) return null;
-      gs.forEach((q, i) => {
-        const x = 800 - (gs.length * 470) / 2 + i * 470;
-        const g = I(m, ST('wrapped-gift'), x + 100, 250, 270, { name: `Hộp quà ${i + 1}` });
-        const n = T(m, String(i + 1), x + 200, 540, 70, 70, 48, '#ffffff', { bg: '#e11d48' });
-        const c = S(m, 'bubble', x + 20, 200, 430, 380, '#ffffff', q.ask + (q.type === 'single_choice' ? `\n(${q.options.join(' · ')})` : ''), { stroke: '#f43f5e', sw: 5, size: fit(q.ask, 380, 260, 40, 22) } as Partial<El>);
-        A(m, g, 'zoom-out', 'click', { trigger: g, sound: 'magic', dur: 0.5 }); A(m, n, 'fade-out', 'with', { trigger: g }); A(m, c, 'pop', 'after', { trigger: g, sound: 'tada' });
-      });
-      return { t: 'Hộp quà bí mật', s: page(m, 'kd', sc, 'Mời học sinh chọn hộp quà, cô bấm vào hộp đó để mở câu hỏi.\n' + gs.map((q, i) => `Hộp ${i + 1}: ${answerOf(q)}`).join('\n'), 'drum') };
+  /* Hoạt động theo giáo án (nếu tạo từ lịch báo giảng): mỗi hoạt động của giáo án → trang đúng hình thức, nội dung của bài */
+  const ctx = actCtx(lesson, know, o, formNamesOf(lesson.subject), used, qs);
+  const gaFormats = new Set<ActFormat>();
+  if (ga) {
+    for (const a of ga.activities) {
+      const ph = ACT_PHASE[a.key] ?? 'kp';
+      const spec: ActivitySpec = { title: activityName(a.title, a.teacher, ph), text: [a.goal, a.teacher, a.student].filter(Boolean).join('\n'), steps: lines(a.teacher, 8), phase: ph, mins: a.minutes, forms: formsInText(a.teacher) };
+      const got = activityPages(spec, ctx);
+      gaFormats.add(got.format);
+      got.pages.forEach((g, i) => add(ph, `ga-${a.key}-${i}`, g.title, g.slide));
     }
-    if (w === 'wheel') {
-      title(m, 'Vòng quay may mắn', '#9a3412');
-      const q = take(easy); if (!q) return null;
-      const wh = S(m, 'wheel', 240, 180, 480, 480, '#fbbf24', '?', { stroke: '#f59e0b', sw: 6, size: 96, color: '#9a3412' } as Partial<El>);
-      const btn = S(m, 'arrow', 760, 290, 230, 110, '#ef4444', 'Quay!', { stroke: '#b91c1c', sw: 5, size: 40, color: '#ffffff', rot: 180 } as Partial<El>);
-      const c = S(m, 'bubble', 760, 430, 640, 340, '#ffffff', q.ask, { stroke: '#f97316', sw: 5, size: fit(q.ask, 560, 230, 44, 26) } as Partial<El>);
-      A(m, wh, 'spin', 'click', { trigger: btn, dur: 2.4, sound: 'drum' }); A(m, c, 'pop', 'after', { trigger: btn, sound: 'tada' });
-      return { t: 'Vòng quay may mắn', s: page(m, 'kd', sc, `Bấm “Quay!”, gọi một bạn trả lời. Đáp án: ${answerOf(q)}`) };
-    }
-    if (w === 'puzzle') {
-      title(m, 'Lật mảnh ghép bí ẩn', '#6d28d9');
-      const ps = [take(easy), take(easy), take(easy), take(easy)].filter(Boolean) as Q[];
-      if (ps.length < 2) return null;
-      // Khung tranh chủ đề ẩn dưới 4 mảnh ghép ở trung tâm (x: 520..1080, y: 175..695)
-      S(m, 'round', 520, 175, 560, 520, '#fef3c7', '', { stroke: '#f59e0b', sw: 6, lock: true } as Partial<El>);
-      const secretPic = lesson.subject === 'toan' ? 'abacus' : lesson.subject === 'tieng-anh' ? 'open-book' : 'sunflower';
-      I(m, ST(secretPic), 660, 205, 280, { lock: true, name: Tp });
-      T(m, Tp, 545, 505, 510, 160, fit(Tp, 480, 145, 48, 26), '#b45309', { bg: '#ffffffeb', lock: true });
-      const pColors: [string, string][] = [['#fbbf24', '#d97706'], ['#38bdf8', '#0284c7'], ['#4ade80', '#16a34a'], ['#f472b6', '#db2777']];
-      ps.forEach((q, i) => {
-        const col = i % 2, row = Math.floor(i / 2);
-        const px = 520 + col * 280, py = 175 + row * 260;
-        const qx = col === 0 ? 64 : 1106, qy = 185 + row * 265;
-        const qCard = S(m, 'round', qx, qy, 430, 235, '#ffffff', `${CIRCLED[i]} ${q.ask}`, { stroke: pColors[i][1], sw: 5, size: fit(q.ask, 390, 195, 34, 22), color: '#0f172a' } as Partial<El>);
-        const piece = S(m, 'mystery', px, py, 280, 260, pColors[i][0], `Mảnh ${i + 1}`, { stroke: pColors[i][1], sw: 5, color: '#ffffff', size: 44 } as Partial<El>);
-        A(m, piece, 'zoom-out', 'click', { trigger: piece, sound: 'magic', dur: 0.5 });
-        void qCard;
-      });
-      return { t: 'Mảnh ghép bí ẩn', s: page(m, 'kd', sc, 'Học sinh trả lời câu hỏi ở 2 bên, cô bấm vào từng Mảnh ghép ở giữa để lật mở bức tranh chủ đề.\n' + ps.map((q, i) => `Mảnh ${i + 1}: ${answerOf(q)}`).join('\n'), 'drum') };
-    }
-    const q = take((x) => x.type === 'single_choice' && x.level <= 2);
-    const got = q && qPage(q, M.src, sc, 'kd', 'Ai nhanh hơn?');
-    return got ? { t: 'Ai nhanh hơn?', s: got.slide } : null;
-  };
-  // chỉ dựng trò đã chọn (đổi trò thì dựng lại), nếu bài thiếu câu dễ thì thử trò khác
-  for (const w of [o.warmup, ...(['gift', 'wheel', 'puzzle', 'quiz'] as Warmup[]).filter((x) => x !== o.warmup)]) { const g = warm(w); if (g) { add('kd', w, g.t, g.s); break; } }
+  }
+  /* Khởi động: trò chơi đã chọn (đổi trò thì dựng lại), bài thiếu câu dễ thì thử trò khác */
+  const WARM: Record<Warmup, [ActFormat, string]> = { gift: ['box', 'Hộp quà bí mật'], wheel: ['wheel', 'Vòng quay may mắn'], puzzle: ['puzzle', 'Lật mảnh ghép bí ẩn'], quiz: ['bell', 'Ai nhanh hơn?'] };
+  for (const w of [o.warmup, ...(['gift', 'wheel', 'puzzle', 'quiz'] as Warmup[]).filter((x) => x !== o.warmup)]) {
+    const [f, t] = WARM[w];
+    const g = BUILDERS[f]({ title: t, text: '', steps: [], phase: 'kd', mins: 4 }, ctx)[0];
+    // trò khởi động mặc định: ghi chú chỉ cần đáp án (bỏ dòng tên hoạt động)
+    if (g) { add('kd', w, t, { ...g.slide, notes: g.slide.notes.split('\n').slice(1).join('\n') }); break; }
+  }
   // tình huống mở đầu (góc máy 'center': chữ ở khoảng trống giữa cảnh)
   shuffle(SITU[sc], r).forEach((tpl, i) => {
     const line = fill(tpl, M.name, Tp);
@@ -422,7 +390,8 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
   add('kd', 'prep', 'Chuẩn bị đồ dùng học tập', prepPage(lesson.subject, sc, M.src));
 
   /* Khám phá */
-  if (know?.points?.length) {
+  // theo giáo án đã có trang kiến thức (hình thức khám phá) thì không thêm bản trùng
+  if (know?.points?.length && !gaFormats.has('explore')) {
     const m = mk();
     const ink = inkOf(sc);
     const vr = bentoGrid(m, know.points, M.src, true, sc);
@@ -433,7 +402,7 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
     }
     add('kp', 'know', 'Kiến thức cần nhớ (Cảnh + Thẻ Pill/Bento)', page(m, 'kp', sc, 'Bấm “Tiếp” để hiện từng thẻ kiến thức, cho học sinh nhắc lại.', undefined, vr));
   }
-  if (know?.example) {
+  if (know?.example && !gaFormats.has('explore')) {
     const m = mk(); title(m, 'Cùng làm ví dụ', '#0369a1');
     const parts = know.example.split('→').map((s) => s.trim()).filter(Boolean);
     const n = parts.length, w = Math.min(520, 1240 / n - 30);
@@ -448,7 +417,7 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
   }
   // bài đọc (Tiếng Việt)
   const pass = qs.find((q) => q.passage)?.passage;
-  if (pass) {
+  if (pass && !ctx.readDone) { // hoạt động giáo án đã chiếu bài đọc thì không thêm bản trùng
     // bài dài: tách theo câu thành nhiều trang (chữ ≥ 32 px để cả lớp đọc được từ cuối lớp)
     readingChunks(pass).forEach((txt, i, all) => {
       const m = mk(); title(m, all.length > 1 ? `Đọc bài (${i + 1}/${all.length})` : 'Đọc bài', '#7c2d12');
@@ -478,8 +447,13 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
     const ink = inkOf(sc);
     T(m, 'HÔM NAY CHÚNG TA HỌC GÌ?', 660, 120, 840, 84, 52, ink.title, { align: 'left', role: 'title' });
     T(m, Tp, 660, 215, 840, 130, fit(Tp, 820, 120, 64, 34), ink.sub, { align: 'left', bg: ink.pill });
-    const d = T(m, lesson.description, 660, 368, 840, 250, fit(lesson.description, 820, 240, 40, 24), ink.body, { align: 'left', font: 'quick', bg: ink.pill });
-    A(m, d, 'fade', 'click');
+    // phần mô tả bài là ghi chú phạm vi cho cô → đổi thành các mục "hôm nay em sẽ…" (mỗi mục hiện khi bấm)
+    const items = learnItems(lesson.description);
+    const ih = Math.min(100, Math.floor(450 / Math.max(1, items.length)) - 12);
+    items.forEach((it, i) => {
+      const d = T(m, it, 660, 362 + i * (ih + 12), 660, ih, fit(it, 610, ih - 20, 36, 28), ink.body, { align: 'left', font: 'quick', bg: ink.pill });
+      A(m, d, 'fade', 'click');
+    });
     I(m, M.src, 1340, 635, 210, { lock: true });
     add('kp', 'intro', 'Giới thiệu bài', page(m, 'kp', sc, '', undefined, 'left'));
   }
@@ -487,7 +461,7 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
   for (let i = 0; i < 2; i++) {
     const q = take((x) => (x.type === 'fill_blank' || x.type === 'single_choice') && x.level <= 2 && !x.passage);
     if (!q) break;
-    const g = qPage({ ...q, type: 'fill_blank', key: { accepted: [answerOf(q)] } } as Q, M.src, sc, 'kp', 'Cùng tìm hiểu');
+    const g = qPage({ ...q, type: 'fill_blank', key: { accepted: [answerOfQ(q)] } } as Q, M.src, sc, 'kp', 'Cùng tìm hiểu');
     if (g) add('kp', `ask${i}`, g.title, g.slide);
   }
 
@@ -498,7 +472,8 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
     const g = qPage(hard, M.src, sc, 'vd', `Thử thách của ${M.name}`);
     if (g) vdPages.push({ key: 'vd:hard', phase: 'vd', title: g.title, slide: g.slide });
   }
-  (LIENHE[lesson.subject] ?? LIENHE.toan).forEach((t, i) => {
+  // theo giáo án đã có trang đóng vai / hỏi – đáp thì trang liên hệ dùng câu chưa dùng
+  (LIENHE[lesson.subject] ?? LIENHE.toan).slice(gaFormats.has('role') ? ctx.talk : 0).forEach((t, i) => {
     const line = fill(t, M.name, Tp); const m = mk();
     const ink = inkOf(sc);
     T(m, 'LIÊN HỆ THỰC TẾ', 640, 100, 860, 82, 52, ink.title, { align: 'left', role: 'title' });
@@ -638,7 +613,8 @@ export function buildPlanFromGiaoAn(ga: GiaoAn, o: GenOpts): LessonPlan {
   // mỗi hoạt động của giáo án → trang nhiệm vụ của học sinh (hiện lần lượt)
   for (const a of ga.activities) {
     const ph = ACT_PHASE[a.key] ?? 'kp';
-    const tasks = lines(a.student, 5).length ? lines(a.student, 5) : lines(a.teacher, 5);
+    // bài không có trong ngân hàng nội dung: nhiệm vụ viết lại thành lời nói với học sinh (không chép nguyên câu "GV…/HS…")
+    const tasks = (lines(a.student, 5).length ? lines(a.student, 5) : lines(a.teacher, 5)).map(studentVoice).filter(Boolean);
     if (!tasks.length) continue;
     const m = mk();
     const ink = inkOf(sc);
@@ -803,7 +779,12 @@ export function planSlides(plan: LessonPlan, on: Set<string>, scenes: Record<str
     if (content) {
       s.els = [...boardEls(ac), ...s.els.map((e) => (e.role === 'title' && e.kind === 'text' ? { ...e, bg: '', color: ac } : e))];
       const lb = c.phase === 'lt' ? labelOf(c.title, !!o.math) : null;
-      if (lb) { n++; s.els.push(badgeEl(n, lb[0], ac), modeEl(lb[1], ac)); }
+      if (lb) {
+        // nhãn dạng bài / hình thức làm việc chỉ gắn khi không đè lên chữ hay trò chơi của trang
+        const be = badgeEl(n + 1, lb[0], ac), me = modeEl(lb[1], ac);
+        const clear = (b: El) => !s.els.some((e) => ((e.kind === 'text' && !!e.text.trim()) || e.kind === 'quiz' || e.kind === 'sort' || e.kind === 'drop') && e.x < b.x + b.w && e.x + e.w > b.x && e.y < b.y + b.h && e.y + e.h > b.y);
+        if (clear(be) && clear(me)) { n++; s.els.push(be, me); }
+      }
     }
     // trang nội dung không đặt góc máy riêng → nền dịu (cảnh đầy đủ chỉ ở bìa, trang chia, tình huống)
     if (sc && !s.sceneVariant && c.phase !== 'bia') s.sceneVariant = 'quiet';
@@ -836,4 +817,317 @@ export function applyTheme(slides: Slide[], sc: SceneKind): Slide[] {
     if ((e.role === 'divider' || e.role === 'title') && e.kind === 'text') return { ...e, color: ink.title };
     return e;
   }) }));
+}
+
+
+/* ================= Hoạt động theo gợi ý dạy =================
+ * Gợi ý (hoạt động trong giáo án / ngân hàng ý tưởng) quyết định HÌNH THỨC trang (rung chuông, hộp quà, tiếp sức, đóng vai…);
+ * NỘI DUNG lấy từ chính bài học (câu hỏi, kiến thức, bài đọc, từ ngữ). Các bước tổ chức của cô nằm trong ghi chú, không in lên trang. */
+export type ActivitySpec = { title: string; text: string; steps: string[]; phase: PhaseId; mins: number; /** tên dạng bài giáo án giao (ưu tiên câu đúng dạng) */ forms?: string[] };
+export type ActFormat = 'bell' | 'box' | 'wheel' | 'puzzle' | 'race' | 'sort' | 'match' | 'role' | 'read' | 'write' | 'explore' | 'reflect' | 'home';
+const FORMAT_RULES: [ActFormat, RegExp][] = [
+  ['reflect', /thẻ ra về|tự đánh giá|ghế nóng|bàn tay|cây ước/],
+  ['wheel', /vòng quay/],
+  ['puzzle', /mảnh ghép|ô chữ/],
+  ['box', /hộp|truyền|quà|bốc thăm|hái hoa/],
+  ['race', /tiếp sức|hai đội|đội nào|thi đua|bingo/],
+  ['sort', /sắp xếp|xếp hàng|thứ tự|kể nối tiếp/],
+  ['match', /ghép|nối từ|nối cột|tìm bạn|domino|slap|câu cá|săn chữ|thám tử/],
+  ['bell', /rung chuông|bảng con|ai nhanh|bắn tên|trả lời nhanh|đố vui/],
+  ['role', /đóng vai|phóng viên|hỏi – đáp|hỏi đáp|phỏng vấn|gõ cửa|nói theo|nói 1–2 câu|kể chuyện|bài toán gắn/],
+  ['read', /đọc|flashcard|chant|hát/],
+  ['write', /viết|chính tả/],
+  ['explore', /quan sát|khám phá|tìm hiểu|thám tử|nhận xét|rút ra|hình thành|giới thiệu/],
+  ['home', /về nhà|bố mẹ|phụ huynh/],
+];
+/** hình thức hợp với từng bước tiết dạy (gợi ý chọn hình thức không hợp bước thì dùng mặc định của bước) */
+const PHASE_OK: Record<PhaseId, ActFormat[]> = {
+  bia: ['explore'], kd: ['bell', 'box', 'wheel', 'puzzle', 'race', 'match', 'sort', 'role'],
+  kp: ['explore', 'read', 'write', 'role', 'sort', 'match', 'bell'], lt: ['bell', 'race', 'sort', 'match', 'box', 'wheel', 'puzzle', 'write', 'read'],
+  vd: ['role', 'race', 'bell', 'write', 'home', 'reflect'], cc: ['reflect', 'home', 'bell'],
+};
+const PHASE_FORMAT: Record<PhaseId, ActFormat> = { bia: 'explore', kd: 'box', kp: 'explore', lt: 'bell', vd: 'role', cc: 'reflect' };
+export function formatOf(a: ActivitySpec): ActFormat {
+  // tên hoạt động quyết định trước, rồi đến mô tả / các bước
+  for (const src of [a.title, `${a.text} ${a.steps.join(' ')}`]) {
+    const t = src.toLowerCase();
+    for (const [f, re] of FORMAT_RULES) if (re.test(t)) return PHASE_OK[a.phase].includes(f) ? f : PHASE_FORMAT[a.phase];
+  }
+  return PHASE_FORMAT[a.phase];
+}
+
+export type ActCtx = {
+  take: (f: (q: Q) => boolean) => Q | undefined;
+  M: (typeof MASCOTS)[number]; sc: SceneKind; Tp: string; subject: string; know: Knowledge;
+  passage?: string; pairs: [string, string][]; formCode: (name: string) => string | undefined;
+  /** số lần đã dùng câu gợi ý nói (đóng vai hết câu hỏi) — mỗi lần một câu khác */ talk: number;
+  /** bài đọc đã trình chiếu */ readDone: boolean;
+};
+/** bối cảnh nội dung của một bài để dựng các hoạt động (câu đã dùng không lặp lại) */
+export function actCtx(lesson: ContentLesson, know: Knowledge, o: GenOpts, formNames: Record<string, string> = {}, used = new Set<ContentQuestion>(), shared?: Q[]): ActCtx {
+  // shared: dùng chung danh sách câu với bộ dựng khác để câu đã dùng không lặp lại
+  const qs = shared ?? shuffle(lesson.questions.map(splitQ), rng(o.seed + lesson.id.length * 13));
+  const mt = qs.find((q) => q.type === 'matching' && (q.left?.length ?? 0) >= 2);
+  const mp = (mt ? key(mt).pairs : undefined) as Record<string, string> | undefined;
+  const pairs = mt && mp ? (mt.left ?? []).map((l) => [l, String(mp[l] ?? '')] as [string, string]).filter(([, v]) => v) : [];
+  return {
+    take: (f) => { const q = qs.find((x) => !used.has(x) && f(x)); if (q) qs.forEach((x) => { if (x.ask === q.ask) used.add(x); }); return q; },
+    talk: 0, readDone: false,
+    M: MASCOTS.find((x) => x.id === o.mascot) ?? MASCOTS[0], sc: o.scene, Tp: topicOf(lesson), subject: lesson.subject, know,
+    passage: qs.find((q) => q.passage)?.passage, pairs,
+    formCode: (name) => formNames[name.trim().toLowerCase()],
+  };
+}
+
+const LEVEL_OK: Record<PhaseId, (l: number) => boolean> = { bia: () => true, kd: (l) => l <= 2, kp: (l) => l <= 2, lt: (l) => l >= 2 && l <= 3, vd: (l) => l >= 3, cc: () => true };
+const answerOfQ = (q: Q) => (q.type === 'fill_blank' ? accepted(q) : correct(q));
+const shortQ = (q: Q) => !q.passage && short(q.ask.replace(/\n/g, ' '), 90) && (q.type === 'single_choice' || q.type === 'fill_blank' || q.type === 'true_false') && !!answerOfQ(q);
+/** lấy câu hợp bước tiết dạy, ưu tiên đúng dạng bài gợi ý giao; thiếu thì nới dần */
+function pickQ(c: ActCtx, a: ActivitySpec, f: (q: Q) => boolean): Q | undefined {
+  const codes = new Set((a.forms ?? []).map(c.formCode).filter(Boolean));
+  const lv = LEVEL_OK[a.phase];
+  return (codes.size ? c.take((q) => f(q) && codes.has(q.form) && lv(q.level)) ?? c.take((q) => f(q) && codes.has(q.form)) : undefined)
+    ?? c.take((q) => f(q) && lv(q.level)) ?? c.take(f);
+}
+/** ghi chú cho cô: tên hoạt động, thời gian, các bước tổ chức (+ đáp án) */
+const teachNotes = (a: ActivitySpec, extra = '') => [`${a.title} (${a.mins} phút)`, ...a.steps.map((s, i) => `${i + 1}. ${s}`), extra].filter(Boolean).join('\n');
+type Built = { title: string; slide: Slide };
+
+function bellPages(a: ActivitySpec, c: ActCtx): Built[] {
+  const n = Math.max(1, Math.min(4, Math.round(a.mins / (a.phase === 'lt' ? 3 : 2.5))));
+  const out: Built[] = [];
+  for (let i = 0; i < n; i++) {
+    const q = pickQ(c, a, (x) => !x.passage && short(x.ask, 170) && x.type !== 'matching');
+    if (!q) break;
+    const g = qPage(q, c.M.src, c.sc, a.phase, a.title);
+    if (g) out.push(g);
+  }
+  return out;
+}
+function boxPage(a: ActivitySpec, c: ActCtx): Built[] {
+  const boxBody = (q: Q) => q.ask + (q.type === 'single_choice' ? `\n(${q.options.join(' · ')})` : '');
+  const gs = [0, 1, 2].map(() => pickQ(c, a, (q) => shortQ(q) && fit(boxBody(q), 380, 260, 40, 24) >= 28)).filter(Boolean) as Q[];
+  if (gs.length < 2) return [];
+  const m = mk(); title(m, a.title, '#be123c');
+  gs.forEach((q, i) => {
+    const x = 800 - (gs.length * 470) / 2 + i * 470;
+    const g = I(m, ST('wrapped-gift'), x + 100, 250, 270, { name: `Hộp quà ${i + 1}` });
+    const n = T(m, String(i + 1), x + 200, 540, 70, 70, 48, '#ffffff', { bg: '#e11d48' });
+    const body = q.ask + (q.type === 'single_choice' ? `\n(${q.options.join(' · ')})` : '');
+    const cd = S(m, 'bubble', x + 20, 200, 430, 380, '#ffffff', body, { stroke: '#f43f5e', sw: 5, size: fit(body, 380, 260, 40, 24) } as Partial<El>);
+    A(m, g, 'zoom-out', 'click', { trigger: g, sound: 'magic', dur: 0.5 }); A(m, n, 'fade-out', 'with', { trigger: g }); A(m, cd, 'pop', 'after', { trigger: g, sound: 'tada' });
+  });
+  return [{ title: `${a.title}: ${gs.length} hộp câu hỏi của bài`, slide: page(m, a.phase, c.sc, teachNotes(a, gs.map((q, i) => `Hộp ${i + 1}: ${answerOfQ(q)}`).join('\n')), 'drum') }];
+}
+function wheelPage(a: ActivitySpec, c: ActCtx): Built[] {
+  const q = pickQ(c, a, shortQ); if (!q) return [];
+  const m = mk(); title(m, a.title, '#9a3412');
+  const wh = S(m, 'wheel', 240, 180, 480, 480, '#fbbf24', '?', { stroke: '#f59e0b', sw: 6, size: 96, color: '#9a3412' } as Partial<El>);
+  const btn = S(m, 'arrow', 760, 290, 230, 110, '#ef4444', 'Quay', { stroke: '#b91c1c', sw: 5, size: 40, color: '#ffffff', rot: 180 } as Partial<El>);
+  const cd = S(m, 'bubble', 760, 430, 640, 340, '#ffffff', q.ask, { stroke: '#f97316', sw: 5, size: fit(q.ask, 560, 230, 44, 28) } as Partial<El>);
+  A(m, wh, 'spin', 'click', { trigger: btn, dur: 2.4, sound: 'drum' }); A(m, cd, 'pop', 'after', { trigger: btn, sound: 'tada' });
+  return [{ title: `${a.title}: câu hỏi của bài`, slide: page(m, a.phase, c.sc, teachNotes(a, `Đáp án: ${answerOfQ(q)}`)) }];
+}
+function puzzlePage(a: ActivitySpec, c: ActCtx): Built[] {
+  const ps = [0, 1, 2, 3].map(() => pickQ(c, a, (q) => shortQ(q) && fit(q.ask, 390, 195, 34, 24) >= 28)).filter(Boolean) as Q[];
+  if (ps.length < 2) return [];
+  const m = mk(); title(m, a.title, '#6d28d9');
+  S(m, 'round', 520, 175, 560, 520, '#fef3c7', '', { stroke: '#f59e0b', sw: 6, lock: true } as Partial<El>);
+  I(m, ST(c.subject === 'toan' ? 'abacus' : c.subject === 'tieng-anh' ? 'open-book' : 'sunflower'), 660, 205, 280, { lock: true, name: c.Tp });
+  T(m, c.Tp, 545, 505, 510, 160, fit(c.Tp, 480, 145, 48, 28), '#b45309', { bg: '#ffffffeb', lock: true });
+  const col: [string, string][] = [['#fbbf24', '#d97706'], ['#38bdf8', '#0284c7'], ['#4ade80', '#16a34a'], ['#f472b6', '#db2777']];
+  ps.forEach((q, i) => {
+    const cx = i % 2, row = Math.floor(i / 2);
+    S(m, 'round', cx === 0 ? 64 : 1106, 185 + row * 265, 430, 235, '#ffffff', `${CIRCLED[i]} ${q.ask}`, { stroke: col[i][1], sw: 5, size: fit(q.ask, 390, 195, 34, 24), color: '#0f172a' } as Partial<El>);
+    const piece = S(m, 'mystery', 520 + cx * 280, 175 + row * 260, 280, 260, col[i][0], `Mảnh ${i + 1}`, { stroke: col[i][1], sw: 5, color: '#ffffff', size: 44 } as Partial<El>);
+    A(m, piece, 'zoom-out', 'click', { trigger: piece, sound: 'magic', dur: 0.5 });
+  });
+  return [{ title: `${a.title}: ${ps.length} câu mở mảnh ghép`, slide: page(m, a.phase, c.sc, teachNotes(a, ps.map((q, i) => `Mảnh ${i + 1}: ${answerOfQ(q)}`).join('\n')), 'drum') }];
+}
+/** tiếp sức hai đội: mỗi đội cùng số câu của bài, đáp án che, bấm để mở */
+function racePage(a: ActivitySpec, c: ActCtx): Built[] {
+  const ok = (q: Q) => shortQ(q) && short(q.ask.replace(/\n/g, ' '), 64) && short(answerOfQ(q), 14);
+  const qs = [0, 1, 2, 3, 4, 5].map(() => pickQ(c, a, ok)).filter(Boolean) as Q[];
+  if (qs.length < 4) return [];
+  const per = Math.floor(qs.length / 2);
+  const m = mk(); title(m, a.title, '#0f172a');
+  const teams: [string, string, string][] = [['🔴 Đội Đỏ', '#ef4444', '#fef2f2'], ['🔵 Đội Xanh', '#2563eb', '#eff6ff']];
+  teams.forEach(([name, colr, bg], t) => {
+    const x = t ? 820 : 100;
+    T(m, name, x, 145, 680, 70, 40, '#ffffff', { bg: colr });
+    qs.slice(t * per, t * per + per).forEach((q, i) => {
+      const y = 235 + i * 185, ask = q.ask.replace(/\n/g, ' ').replace(/\s*(\.\.\.|…|_{2,})\s*/g, ' ? ').trim(), ans = answerOfQ(q);
+      T(m, ask, x, y, 470, 160, fit(ask, 430, 140, 44, 28), '#0f172a', { align: 'left', bg });
+      T(m, ans, x + 490, y, 190, 160, fit(ans, 170, 140, 60, 28), colr, { bg: '#ffffff' });
+      const cv = S(m, 'mystery', x + 490, y, 190, 160, '#fde68a', '?', { stroke: '#f59e0b', sw: 5, color: '#92400e', size: 70 } as Partial<El>);
+      A(m, cv, 'zoom-out', 'click', { trigger: cv, sound: 'pop', dur: 0.35 });
+    });
+  });
+  const notes = teachNotes(a, qs.slice(0, per * 2).map((q, i) => `${i < per ? 'Đỏ' : 'Xanh'} ${(i % per) + 1}: ${answerOfQ(q)}`).join('\n'));
+  return [{ title: `${a.title}: hai đội, ${per * 2} câu của bài`, slide: { ...page(m, a.phase, c.sc, notes), tool: { teams: true, label: a.title } } }];
+}
+function typedPage(a: ActivitySpec, c: ActCtx, type: 'ordering' | 'matching'): Built[] {
+  for (let k = 0; k < 3; k++) {
+    const q = pickQ(c, a, (x) => x.type === type && !x.passage);
+    if (!q) return [];
+    const g = qPage(q, c.M.src, c.sc, a.phase);
+    if (g) return [g];
+  }
+  return [];
+}
+/** đóng vai / hỏi – đáp: hai bạn nói với nhau bằng nội dung của bài */
+function rolePage(a: ActivitySpec, c: ActCtx): Built[] {
+  const m = mk(); title(m, a.title, '#7c3aed');
+  I(m, ST('boy'), 60, 480, 280, { lock: true }); I(m, ST('girl'), 1260, 480, 280, { lock: true });
+  const q = pickQ(c, a, (x) => shortQ(x) || (!x.passage && x.type === 'fill_blank' && short(x.ask, 150) && !!accepted(x)));
+  if (q) {
+    const ask = q.ask, ans = answerOfQ(q);
+    const b1 = S(m, 'bubble', 300, 160, 900, 300, '#ffffff', ask, { stroke: '#8b5cf6', sw: 5, size: fit(ask, 820, 220, 46, 28) } as Partial<El>);
+    S(m, 'bubble', 560, 490, 660, 230, '#f5f3ff', ans, { stroke: '#8b5cf6', sw: 5, size: fit(ans, 580, 150, 56, 30), flip: true } as Partial<El>);
+    const cv = S(m, 'mystery', 560, 490, 660, 230, '#fde68a', '?', { stroke: '#f59e0b', sw: 5, color: '#92400e', size: 90 } as Partial<El>);
+    A(m, b1, 'pop', 'with', { sound: 'pop' }); A(m, cv, 'zoom-out', 'click', { trigger: cv, sound: 'tada' });
+    return [{ title: `${a.title}: hỏi – đáp bằng câu của bài`, slide: page(m, a.phase, c.sc, teachNotes(a, `Bạn A hỏi, bạn B trả lời. Đáp án: ${ans}`), undefined, 'bottom') }];
+  }
+  // hết câu hỏi: nói với bạn, dùng từ ngữ của bài
+  const words = c.pairs.map(([l]) => l).filter((w) => w.length <= 14).slice(0, 4);
+  const talks = LIENHE[c.subject] ?? LIENHE.toan;
+  const line = fill(talks[c.talk++ % talks.length], c.M.name, c.Tp);
+  S(m, 'bubble', 300, 160, 1000, 300, '#ffffff', line, { stroke: '#8b5cf6', sw: 5, size: fit(line, 900, 220, 46, 28) } as Partial<El>);
+  words.forEach((w, i) => T(m, w, 380 + i * 220, 520, 200, 90, fit(w, 180, 70, 44, 28), '#5b21b6', { bg: '#ede9fe' }));
+  return [{ title: `${a.title}: nói với bạn bằng từ ngữ của bài`, slide: page(m, a.phase, c.sc, teachNotes(a), undefined, 'bottom') }];
+}
+/** đọc: bài đọc của bài (tách trang) hoặc thẻ từ mới có miếng che nghĩa */
+function readPages(a: ActivitySpec, c: ActCtx): Built[] {
+  if (c.passage && !c.readDone) {
+    c.readDone = true; // bài đọc chỉ trình chiếu một lần trong bài
+    return readingChunks(c.passage).map((txt, i, all) => {
+      const m = mk(); title(m, all.length > 1 ? `${a.title} (${i + 1}/${all.length})` : a.title, '#7c2d12');
+      T(m, txt, 200, 150, 1200, 640, fit(txt, 1140, 600, 52, 32), '#1f2937', { align: 'left', font: 'quick', bg: '#fffbeb' });
+      return { title: `${a.title}: bài đọc ${i + 1}/${all.length}`, slide: page(m, a.phase, c.sc, i ? '' : teachNotes(a)) };
+    });
+  }
+  if (c.pairs.length >= 2) {
+    const m = mk(); title(m, a.title, '#6d28d9');
+    c.pairs.slice(0, 4).forEach(([l, rr], i) => {
+      const bx = 92 + (i % 2) * 708, by = 175 + Math.floor(i / 2) * 285, bc = BENTO[i % BENTO.length];
+      S(m, 'round', bx, by, 676, 245, bc.bg, '', { stroke: bc.bd, sw: 5, lock: true } as Partial<El>);
+      T(m, l, bx + 20, by + 28, 300, 188, fit(l, 280, 170, 64, 28), bc.tx, { bg: '#ffffffeb' });
+      T(m, rr, bx + 340, by + 28, 316, 188, fit(rr, 296, 170, 56, 28), '#15803d', { bg: '#dcfce7' });
+      cover(m, bx + 340, by + 28, 316, 188);
+    });
+    return [{ title: `${a.title}: thẻ từ của bài`, slide: page(m, a.phase, c.sc, teachNotes(a)) }];
+  }
+  return [];
+}
+/** viết: từ ngữ / kết quả của bài viết to bằng chữ tập viết để học sinh viết bảng con */
+function writePage(a: ActivitySpec, c: ActCtx): Built[] {
+  const words = c.pairs.map(([l]) => l);
+  for (let k = 0; words.length < 4 && k < 6; k++) { const q = pickQ(c, a, (x) => x.type === 'fill_blank' && !!accepted(x) && short(accepted(x), 14)); if (q) words.push(accepted(q)); }
+  const ws = [...new Set(words)].slice(0, 4);
+  if (!ws.length) return [];
+  const m = mk(); title(m, a.title, '#0f766e');
+  ws.forEach((w, i) => {
+    const y = 170 + i * 165;
+    S(m, 'round', 160, y, 1280, 145, '#ffffff', '', { stroke: '#99f6e4', sw: 4, lock: true, dash: 'dash' } as Partial<El>);
+    const t = T(m, w, 200, y + 8, 1200, 130, fit(w, 1180, 120, 92, 40), '#0f172a', { font: 'hand' });
+    A(m, t, 'fade', i ? 'click' : 'with');
+  });
+  return [{ title: `${a.title}: ${ws.length} từ của bài`, slide: page(m, a.phase, c.sc, teachNotes(a, 'Học sinh viết vào bảng con, giơ bảng, cô nhận xét.')) }];
+}
+/** khám phá: kiến thức cần nhớ của bài (hiện lần lượt) + ví dụ có miếng che */
+function explorePages(a: ActivitySpec, c: ActCtx): Built[] {
+  const out: Built[] = [];
+  if (!c.know?.points?.length && c.passage && !c.readDone) out.push(...readPages({ ...a, title: 'Đọc bài' }, c));
+  if (c.know?.points?.length) {
+    const m = mk(); const ink = inkOf(c.sc);
+    const vr = bentoGrid(m, c.know.points, c.M.src, true, c.sc);
+    if (vr === 'right') editorialHeader(m, 'KIẾN THỨC CẦN NHỚ', 'Những điểm quan trọng giúp em làm tốt bài học hôm nay', c.sc); else title(m, 'Kiến thức cần nhớ', ink.title);
+    out.push({ title: 'Kiến thức cần nhớ của bài', slide: page(m, a.phase, c.sc, teachNotes(a), undefined, vr) });
+  }
+  if (c.know?.example) {
+    const m = mk(); title(m, 'Cùng làm ví dụ', '#0369a1');
+    const parts = c.know.example.split('→').map((s) => s.trim()).filter(Boolean), n = parts.length, w = Math.min(520, 1240 / n - 30);
+    parts.forEach((t, i) => {
+      const x = 180 + i * (w + 40);
+      const id = T(m, t, x, 330, w, 220, fit(t, w - 20, 200, 64, 28), i === n - 1 ? '#15803d' : '#0f172a', { bg: '#ffffffe6' });
+      if (i > 0 && i < n - 1) A(m, id, 'fade', 'click', { sound: 'pop' });
+      if (i < n - 1) T(m, '➜', x + w, 400, 40, 80, 50, '#f59e0b');
+      if (i === n - 1 && n > 1) cover(m, x, 330, w, 220);
+    });
+    out.push({ title: 'Ví dụ của bài (miếng che đáp án)', slide: page(m, a.phase, c.sc, out.length ? '' : teachNotes(a)) });
+  }
+  if (out.length < 2) {
+    const q = pickQ(c, a, (x) => (x.type === 'fill_blank' || x.type === 'single_choice') && !x.passage && short(x.ask, 170) && !!answerOfQ(x));
+    const g = q && qPage({ ...q, type: 'fill_blank', key: { accepted: [answerOfQ(q)] } } as Q, c.M.src, c.sc, a.phase, 'Cùng tìm hiểu');
+    if (g) out.push(g);
+  }
+  return out;
+}
+function homePage(a: ActivitySpec, c: ActCtx): Built[] {
+  const m = mk(); editorialHeader(m, 'NHIỆM VỤ VỀ NHÀ', `Luyện thêm bài “${c.Tp}” cùng bố mẹ`, c.sc);
+  (HOMEWORK[c.subject] ?? HOMEWORK.toan).split('\n').map((x) => x.replace(/^•\s*/, '')).slice(0, 3).forEach((item, i) => {
+    const x = 92 + i * 485, y = 245, w = 445, h = 290;
+    const note = S(m, 'sticky', x, y, w, h, '#f5c76b', '', { stroke: '#3f7d7a', sw: 0, lock: true, shadow: true } as Partial<El>);
+    const tx = T(m, item, x + 28, y + 62, w - 56, h - 96, fit(item, w - 70, h - 110, 40, 28), '#111827', { font: 'baloo', italic: true });
+    A(m, note, 'pop', i === 0 ? 'with' : 'after', { delay: i * 0.12 }); A(m, tx, 'fade', 'with');
+  });
+  return [{ title: `${a.title}: nhiệm vụ về nhà`, slide: page(m, a.phase, c.sc, teachNotes(a), undefined, 'bottom') }];
+}
+const BUILDERS: Record<ActFormat, (a: ActivitySpec, c: ActCtx) => Built[]> = {
+  bell: bellPages, box: boxPage, wheel: wheelPage, puzzle: puzzlePage, race: racePage,
+  sort: (a, c) => typedPage(a, c, 'ordering'), match: (a, c) => typedPage(a, c, 'matching'),
+  role: rolePage, read: readPages, write: writePage, explore: explorePages, home: homePage,
+  reflect: (a, c) => [{ title: 'Vé ra về · tự đánh giá', slide: exitTicketPage(c.sc, c.M.src) }],
+};
+/** các trang của một hoạt động: đúng hình thức gợi ý, nội dung của bài; bài thiếu nội dung cho hình thức đó thì dùng hình thức gần nhất */
+export function activityPages(a: ActivitySpec, c: ActCtx, fmt: ActFormat = formatOf(a)): { format: ActFormat; pages: Built[] } {
+  for (const f of [...new Set([fmt, PHASE_FORMAT[a.phase], 'bell'] as ActFormat[])]) {
+    const pages = BUILDERS[f](a, c);
+    if (!pages.length) continue;
+    // ghi chú hướng dẫn tổ chức luôn ở trang đầu của hoạt động; số phút để màn hình của cô đếm giờ
+    const first = pages[0].slide;
+    const notes = first.notes.startsWith(`${a.title} (`) ? first.notes : teachNotes(a, first.notes);
+    pages[0] = { ...pages[0], slide: { ...first, notes, mins: a.mins } };
+    return { format: f, pages };
+  }
+  return { format: fmt, pages: [] };
+}
+
+/** tên dạng bài (chữ thường) → mã dạng bài của môn — để hoạt động giáo án "giao các dạng bài" chọn đúng câu */
+function formNamesOf(subject: string): Record<string, string> {
+  if (subject !== 'toan' && subject !== 'tieng-viet' && subject !== 'tieng-anh') return {};
+  return Object.fromEntries(formsOf(subject).map((f) => [f.name.trim().toLowerCase(), f.code]));
+}
+/** các dòng "+ tên dạng bài" trong phần việc của giáo viên */
+function formsInText(t: string): string[] {
+  return t.split('\n').map((l) => l.trim()).filter((l) => l.startsWith('+')).map((l) => l.slice(1).trim());
+}
+/** mô tả bài ("Sách: A; B. Luyện tập: X; Y.") → các mục cho học sinh: 📖 Đọc bài…, ✏️ …, 💬 Mẫu câu… */
+export function learnItems(desc: string): string[] {
+  const out: string[] = [];
+  for (const seg of desc.split(/\.\s+(?=\S)/)) {
+    const m = /^(Sách|Đọc|Luyện tập|Luyện từ và câu|Mẫu câu|Viết|Nói và nghe)\s*:\s*(.*)$/i.exec(seg.trim());
+    const label = m?.[1].toLowerCase(), body = (m ? m[2] : seg).replace(/\.\s*$/, '').trim();
+    if (!body) continue;
+    if (label === 'sách' || label === 'đọc') out.push(`📖 Đọc bài: ${body.split(/;\s*/).join(', ')}`);
+    else if (label === 'mẫu câu') out.push(`💬 Mẫu câu: ${body}`);
+    else body.split(/;\s*/).filter(Boolean).forEach((x) => out.push(`✏️ ${x.charAt(0).toUpperCase()}${x.slice(1)}`));
+  }
+  // mục dài (danh sách từ vựng…) cắt gọn để chữ đủ to
+  return out.slice(0, 4).map((x) => (x.length > 58 ? x.slice(0, 55).replace(/[,;\s]+[^,;\s]*$/, '') + ', …' : x));
+}
+/** câu trong giáo án → lời nói với học sinh: bỏ "GV cho/yêu cầu HS…", "HS" → "em", viết hoa đầu câu */
+export function studentVoice(t: string): string {
+  const s = t.replace(/^(GV|Giáo viên)\s+(cho|yêu cầu|hướng dẫn|tổ chức cho|mời|gọi)?\s*(HS|học sinh)?\s*/i, '')
+    .replace(/^(HS|Học sinh)\s+/i, '')
+    .replace(/\b(HS|học sinh)\b/g, 'em')
+    .replace(/\.$/, '')
+    .trim();
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+}
+/** tên hoạt động trên trang: tên trò trong ngoặc kép của giáo án (“Ai nhanh – Ai đúng”) hoặc tên bước, bỏ số thứ tự đầu dòng */
+function activityName(title: string, teacher: string, ph: PhaseId): string {
+  const game = /(?:trò chơi|chơi)\s*[“"]([^”"]{3,40})[”"]/i.exec(teacher)?.[1];
+  if (game) return game;
+  return (title || PHASE_LABEL[ph]).replace(/^\s*\d+\s*[.)]\s*/, '').trim() || PHASE_LABEL[ph];
 }

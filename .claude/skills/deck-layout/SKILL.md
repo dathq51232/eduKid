@@ -110,3 +110,13 @@ Nhịp trang: xen kẽ trang nhiều chữ với trang hình/tương tác; khôn
 4. Thêm assert cho mẫu mới vào `scripts/check-deck-layout.ts` (trong khung, không chồng nhau).
 5. Chạy: `npm run check:deck-all`, `npm run check:deck-layout`, `npx tsc --noEmit -p .`, `npx eslint src/lib/deck src/components/deck`.
 6. Chụp màn hình thật (trình soạn hoặc trang xem trước tạm, xoá trước khi commit) với chữ ngắn **và** chữ dài nhất, trên ít nhất 2 cảnh nền (một sáng, một tối như `space`). Nhìn ảnh rồi mới báo xong.
+
+## 9. Bài sinh theo GỢI Ý: gợi ý = hình thức, bài học = nội dung
+- Gợi ý dạy (`src/lib/plans/idea-bank.ts`) và hoạt động trong giáo án (`src/lib/plans/generate.ts`) **không được in nguyên văn lên trang**. Chúng chỉ quyết định HÌNH THỨC trang; nội dung (câu hỏi, kiến thức, bài đọc, từ ngữ) lấy từ chính bài trong ngân hàng.
+- Bộ máy chung ở cuối `fromLesson.ts`: `formatOf(spec)` (tên/mô tả hoạt động → `bell | box | wheel | puzzle | race | sort | match | role | read | write | explore | reflect | home`, có lọc theo bước tiết dạy) → `activityPages(spec, actCtx(...))`.
+- Các bước tổ chức của cô, thời gian, đáp án → `notes` của trang đầu hoạt động (màn hình của cô). Trên trang chỉ có tên trò (vd “Ai nhanh – Ai đúng”) + nội dung bài.
+- Câu đã dùng không lặp (dùng chung `used` + `qs` giữa các bộ dựng; câu cùng đề coi như đã dùng); bài đọc chỉ chiếu một lần (`ctx.readDone`).
+- Giáo án giao "các dạng bài: + …" → ưu tiên câu đúng dạng (`formsInText` + `formNamesOf`).
+- Trò Toán đặc thù (ngón tay, xe buýt, domino, tia số…) chỉ dùng cho số trong phạm vi 10 của lớp 1; bài số lớn dùng câu của bài.
+- Thêm hình thức mới: thêm luật vào `FORMAT_RULES`, khai báo bước hợp lệ ở `PHASE_OK`, viết hàm dựng trả `{ title, slide }[]` (trả `[]` khi bài thiếu nội dung để chuyển hình thức gần nhất) và thêm vào `BUILDERS`.
+- `npm run check:deck-all` kiểm cả bài theo gợi ý và theo giáo án của mọi bài: báo "chép nguyên gợi ý lên trang", "lời GV/HS trên trang", "câu hỏi lặp trong bài".
