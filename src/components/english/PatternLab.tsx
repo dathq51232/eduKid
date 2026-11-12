@@ -86,7 +86,7 @@ export default function PatternLab({ audio, reflex, speak, stopAll }: {
           <button
             key={c.id}
             type="button"
-            className={`en-chunk-pill${idx === chunkIdx % levelChunks.length ? ' is-on' : ''}`}
+            className={`en-chunk-pill${idx === chunkIdx % levelChunks.length ? ' is-active' : ''}`}
             onClick={() => { stopAll(); setChunkIdx(idx); setSlotIdx(0); }}
           >
             <b>{c.pattern}</b>

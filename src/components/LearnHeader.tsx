@@ -22,7 +22,7 @@ export default function LearnHeader({ studentName, avatar }: Props) {
         <MainNavigation className="main-nav-learn" />
 
         <div className="learn-tools">
-          <Link href="/phu-huynh" className="parent-top-link" title="Góc phụ huynh">
+          <Link href="/phu-huynh" className="parent-top-link" title="Góc phụ huynh" aria-label="Góc phụ huynh">
             {/* eslint-disable-next-line @next/next/no-img-element -- ảnh nhỏ đã tối ưu sẵn */}
             <img src="/emoji/nav/phu-huynh.webp" width={20} height={20} alt="" aria-hidden="true" decoding="async" />
             <span>Phụ huynh</span>

@@ -10266,3 +10266,241 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
   .tsh-tabs a, .tsh-tabs button { min-width: 0; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 @media (max-width: 380px) { .tsh-tabs a, .tsh-tabs button { font-size: 10px; } }
+
+/* ===== Rà soát UI/UX 11/2026: tràn ngang, độ tương phản, trạng thái chưa rõ ===== */
+/* Header khu học tập: 761–1199px không còn đẩy nút Đăng nhập ra ngoài màn hình */
+@media (max-width: 1199px) {
+  .learn-top-inner { gap: 10px; }
+  .learn-tools { gap: 4px; flex: none; }
+  .learn-tools .theme-switch-label { display: none; }
+  .parent-top-link { padding: 6px 9px; }
+  .parent-top-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+@media (min-width: 761px) and (max-width: 1199px) {
+  .main-nav-learn { min-width: 0; }
+  .main-nav-learn .main-nav-list { gap: 2px; }
+  .main-nav-learn .main-nav-link { padding: 6px 8px; font-size: 13.5px; }
+}
+/* Điện thoại: logo + nút cùng một hàng, menu hàng dưới (bớt một hàng header) */
+@media (max-width: 560px) {
+  .learn-top-inner { column-gap: 6px; }
+  .learn-tools { margin-left: auto; gap: 2px; }
+  .learn-tools .theme-toggle.theme-switch { padding-inline: 2px; }
+  .learn-tools .account-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .learn-tools .account-link { padding-inline: 10px; }
+}
+
+/* Tiếng Anh: lưới trang không bị nội dung dài kéo giãn (gây thanh kéo ngang trên điện thoại) */
+.en-studio { grid-template-columns: minmax(0, 1fr); }
+.en-studio > * { min-width: 0; }
+.en-chunk-pill { display: grid; gap: 2px; text-align: left; }
+.en-chunk-pill small { font-size: 11.5px; font-weight: 600; opacity: .8; }
+.en-speech small { color: #5b6b82; }
+/* Chế độ tối: chữ xanh đậm cũ gần như chìm vào nền tối */
+:root[data-theme="dark"] .en-back { color: #9cc0f5; }
+:root[data-theme="dark"] .en-kicker { color: #8fb4ee; }
+:root[data-theme="dark"] .en-topic-state { color: #b3c4dd; }
+:root[data-theme="dark"] .en-journey li button { color: #a9b6ca; }
+:root[data-theme="dark"] .en-journey li.is-current button { background: rgb(59 130 246 / .2); color: #b9d1ff; }
+:root[data-theme="dark"] .en-journey li.is-past button { color: #7fdcaa; }
+:root[data-theme="dark"] .en-mode button { color: #b4c0d4; }
+:root[data-theme="dark"] .en-mode button.is-active { background: var(--surface-2); color: #b9d1ff; }
+:root[data-theme="dark"] .en-shadow-reveal, :root[data-theme="dark"] .en-footer a { color: #9cc0f5; }
+:root[data-theme="dark"] .en-footer b { color: #c9dbff; }
+:root[data-theme="dark"] .en-speech small { color: var(--muted); }
+
+.en-journey li button { color: #5f6e85; }
+:root[data-theme="dark"] .en-question-nav button { color: #9cc0f5; }
+/* Sao đánh giá: vàng đậm hơn để đọc được trên nền trắng / xanh nhạt */
+.home-proof-stars, .home-feedback-stars { color: #c47f00; }
+/* Cờ: sao đánh giá đủ đậm trên nền xanh nhạt */
+.chs-stars { color: #b45309; }
+:root[data-theme="dark"] .chs-stars { color: #fbbf24; }
+
+/* ===== Chế độ tối: làm dịu nền sáng còn sót (sinh tự động từ các khối nền trắng/pastel chưa có bản tối — chế độ sáng giữ nguyên) ===== */
+:root[data-theme="dark"] .balance-facts li { background: var(--surface-2); }
+:root[data-theme="dark"] .balance-main { background: var(--surface-2); }
+:root[data-theme="dark"] .lb-row.top-2 .lb-rank { background: var(--surface-2); color: var(--ink); }
+:root[data-theme="dark"] .exam-muc.m1 { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
+:root[data-theme="dark"] .exam-muc.m2 { background: color-mix(in srgb, #1e40af 24%, var(--surface)); color: color-mix(in srgb, #1e40af 40%, #fff); }
+:root[data-theme="dark"] .sr-level.lv-T { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
+:root[data-theme="dark"] .sr-level.lv-H, :root[data-theme="dark"] .sr-level.lv-D { background: color-mix(in srgb, #1e40af 24%, var(--surface)); color: color-mix(in srgb, #1e40af 40%, #fff); }
+:root[data-theme="dark"] .tag-miss { background: color-mix(in srgb, #b91c1c 24%, var(--surface)); color: color-mix(in srgb, #b91c1c 40%, #fff); }
+:root[data-theme="dark"] .assign-items tr.is-weak td, :root[data-theme="dark"] .assign-items tr.is-weak th { background: color-mix(in srgb, #fff4e5 14%, var(--surface)); }
+:root[data-theme="dark"] .gap-pill.is-low { background: color-mix(in srgb, #b91c1c 24%, var(--surface)); color: color-mix(in srgb, #b91c1c 40%, #fff); }
+:root[data-theme="dark"] .exam-result-list li.is-wrong { background: color-mix(in srgb, #b91c1c 24%, var(--surface)); color: color-mix(in srgb, #b91c1c 40%, #fff); }
+:root[data-theme="dark"] .pay-warn { background: color-mix(in srgb, #7a4b00 24%, var(--surface)); color: color-mix(in srgb, #7a4b00 40%, #fff); }
+:root[data-theme="dark"] .praise-custom-tag { background: color-mix(in srgb, #f3e8ff 14%, var(--surface)); }
+:root[data-theme="dark"] .pe { background: var(--surface-2); }
+:root[data-theme="dark"] .pe-top { background: var(--surface); }
+:root[data-theme="dark"] .pe-icon { background: var(--surface); }
+:root[data-theme="dark"] .pe-icon.is-on { background: color-mix(in srgb, #ede9fe 14%, var(--surface)); }
+:root[data-theme="dark"] .pe-lib, :root[data-theme="dark"] .pe-props { background: var(--surface); }
+:root[data-theme="dark"] .pe-preset, :root[data-theme="dark"] .pe-shape { background: var(--surface-2); }
+:root[data-theme="dark"] .pe-preset:hover, :root[data-theme="dark"] .pe-shape:hover { background: var(--surface-2); }
+:root[data-theme="dark"] .pe-grid button { background: var(--surface-2); }
+:root[data-theme="dark"] .pe-stage { background: var(--surface); }
+:root[data-theme="dark"] .pe-h { background: var(--surface); }
+:root[data-theme="dark"] .pe-sw-none { background: var(--surface) !important; }
+:root[data-theme="dark"] .pe-vars button { background: var(--surface-2); }
+:root[data-theme="dark"] .cb-tab[aria-pressed="true"] .cb-tab-mark { background: var(--surface); }
+:root[data-theme="dark"] .cb-bubble { background: var(--surface); color: var(--ink); }
+:root[data-theme="dark"] .cb-bubble::after { background: var(--surface); }
+:root[data-theme="dark"] .praise-style { background: color-mix(in srgb, #8a5a00 24%, var(--surface)); color: color-mix(in srgb, #8a5a00 40%, #fff); }
+:root[data-theme="dark"] .praise-style.is-formal { background: color-mix(in srgb, #9a1b1b 24%, var(--surface)); color: color-mix(in srgb, #9a1b1b 40%, #fff); }
+:root[data-theme="dark"] .planner-kind { background: var(--surface-2); color: var(--ink); }
+:root[data-theme="dark"] .planner-kind.is-app { background: color-mix(in srgb, #17603a 24%, var(--surface)); color: color-mix(in srgb, #17603a 40%, #fff); }
+:root[data-theme="dark"] .planner-kind.is-review { background: color-mix(in srgb, #7a4b00 24%, var(--surface)); color: color-mix(in srgb, #7a4b00 40%, #fff); }
+:root[data-theme="dark"] .report-chip.is-low { background: color-mix(in srgb, #b3261e 24%, var(--surface)); color: color-mix(in srgb, #b3261e 40%, #fff); }
+:root[data-theme="dark"] .report-chip.is-up { background: color-mix(in srgb, #15803d 24%, var(--surface)); color: color-mix(in srgb, #15803d 40%, #fff); }
+:root[data-theme="dark"] .pv-frame { background: var(--surface-2); }
+:root[data-theme="dark"] .planner-orig { background: var(--surface-2); border-color: color-mix(in srgb, #b7e0c4 35%, var(--surface)); }
+:root[data-theme="dark"] .ws-pair.is-on { background: color-mix(in srgb, #0d47a1 24%, var(--surface)); color: color-mix(in srgb, #0d47a1 40%, #fff); }
+:root[data-theme="dark"] .ws-notes { background: color-mix(in srgb, #6d4c00 24%, var(--surface)); color: color-mix(in srgb, #6d4c00 40%, #fff); }
+:root[data-theme="dark"] .planner-import .planner-group th { background: color-mix(in srgb, #0d47a1 24%, var(--surface)); color: color-mix(in srgb, #0d47a1 40%, #fff); }
+:root[data-theme="dark"] .callon-notice { background: color-mix(in srgb, #7a4d00 24%, var(--surface)); color: color-mix(in srgb, #7a4d00 40%, #fff); }
+:root[data-theme="dark"] .cw-hub { background: var(--surface); }
+:root[data-theme="dark"] .cl-back { background: var(--surface); color: var(--ink); }
+:root[data-theme="dark"] .ce-shell i { background: color-mix(in srgb, #fffaf0 14%, var(--surface)); border-color: color-mix(in srgb, #f0cf75 35%, var(--surface)); }
+:root[data-theme="dark"] .callon-result { background: var(--surface); color: var(--ink); }
+:root[data-theme="dark"] .callon-close { background: var(--surface-2); color: var(--ink); }
+:root[data-theme="dark"] .callon-q { background: var(--surface-2); }
+:root[data-theme="dark"] .callon-ans { background: var(--surface); color: var(--ink); border-color: color-mix(in srgb, #b9c4d8 35%, var(--surface)); }
+:root[data-theme="dark"] .m-ok { background: color-mix(in srgb, #116b33 24%, var(--surface)); color: color-mix(in srgb, #116b33 40%, #fff); }
+:root[data-theme="dark"] .m-no { background: color-mix(in srgb, #a8282e 24%, var(--surface)); color: color-mix(in srgb, #a8282e 40%, #fff); }
+:root[data-theme="dark"] .m-star { background: color-mix(in srgb, #7a4d00 24%, var(--surface)); color: color-mix(in srgb, #7a4d00 40%, #fff); }
+:root[data-theme="dark"] .callon-drawer li .is-now { background: color-mix(in srgb, #fff3d1 14%, var(--surface)); color: var(--ink); }
+:root[data-theme="dark"] .diary-pill.is-green { background: color-mix(in srgb, #116b33 24%, var(--surface)); color: color-mix(in srgb, #116b33 40%, #fff); border-color: color-mix(in srgb, #9fdcbc 35%, var(--surface)); }
+:root[data-theme="dark"] .diary-pill.is-red { background: color-mix(in srgb, #a8282e 24%, var(--surface)); color: color-mix(in srgb, #a8282e 40%, #fff); border-color: color-mix(in srgb, #f3b3b5 35%, var(--surface)); }
+:root[data-theme="dark"] .diary-pill.is-amber { background: color-mix(in srgb, #7a4d00 24%, var(--surface)); color: color-mix(in srgb, #7a4d00 40%, #fff); border-color: color-mix(in srgb, #f0cf75 35%, var(--surface)); }
+:root[data-theme="dark"] .diary-tag.is-praise { background: color-mix(in srgb, #116b33 24%, var(--surface)); color: color-mix(in srgb, #116b33 40%, #fff); }
+:root[data-theme="dark"] .diary-tag.is-remind { background: color-mix(in srgb, #7a4d00 24%, var(--surface)); color: color-mix(in srgb, #7a4d00 40%, #fff); }
+:root[data-theme="dark"] .diary-ab.is-unexcused { background: color-mix(in srgb, #a8282e 24%, var(--surface)); color: color-mix(in srgb, #a8282e 40%, #fff); }
+:root[data-theme="dark"] .diary-ab.is-excused { background: color-mix(in srgb, #5321a8 24%, var(--surface)); color: color-mix(in srgb, #5321a8 40%, #fff); }
+:root[data-theme="dark"] .diary-seg .q-present[aria-pressed="true"], :root[data-theme="dark"] .diary-quick .q-present[aria-pressed="true"] { background: color-mix(in srgb, #116b33 24%, var(--surface)); color: color-mix(in srgb, #116b33 40%, #fff); border-color: color-mix(in srgb, #9fdcbc 35%, var(--surface)); }
+:root[data-theme="dark"] .diary-seg .q-excused[aria-pressed="true"], :root[data-theme="dark"] .diary-quick .q-excused[aria-pressed="true"] { background: color-mix(in srgb, #5321a8 24%, var(--surface)); color: color-mix(in srgb, #5321a8 40%, #fff); border-color: color-mix(in srgb, #cdbcf5 35%, var(--surface)); }
+:root[data-theme="dark"] .diary-seg .q-unexcused[aria-pressed="true"], :root[data-theme="dark"] .diary-quick .q-unexcused[aria-pressed="true"] { background: color-mix(in srgb, #a8282e 24%, var(--surface)); color: color-mix(in srgb, #a8282e 40%, #fff); border-color: color-mix(in srgb, #f3b3b5 35%, var(--surface)); }
+:root[data-theme="dark"] .diary-chip.is-praise[aria-pressed="true"] { background: color-mix(in srgb, #116b33 24%, var(--surface)); color: color-mix(in srgb, #116b33 40%, #fff); }
+:root[data-theme="dark"] .diary-chip.is-remind[aria-pressed="true"] { background: color-mix(in srgb, #7a4d00 24%, var(--surface)); color: color-mix(in srgb, #7a4d00 40%, #fff); }
+:root[data-theme="dark"] .mini-btn.is-copied { background: color-mix(in srgb, #116b33 24%, var(--surface)); color: color-mix(in srgb, #116b33 40%, #fff); }
+:root[data-theme="dark"] .diary-alerts li.is-warn { background: color-mix(in srgb, #7a4d00 24%, var(--surface)); color: color-mix(in srgb, #7a4d00 40%, #fff); }
+:root[data-theme="dark"] .diary-alerts li.is-good { background: color-mix(in srgb, #116b33 24%, var(--surface)); color: color-mix(in srgb, #116b33 40%, #fff); }
+:root[data-theme="dark"] .callon-spot-card { background: var(--surface); color: var(--ink); border-color: color-mix(in srgb, #ffc83d 35%, var(--surface)); }
+:root[data-theme="dark"] .tdy-tag.is-urgent { background: color-mix(in srgb, #b4232a 24%, var(--surface)); color: color-mix(in srgb, #b4232a 40%, #fff); }
+:root[data-theme="dark"] .s3d-play .s3d-btn { background: var(--surface); color: var(--ink); border-color: color-mix(in srgb, #dbe3f0 35%, var(--surface)); }
+:root[data-theme="dark"] .s3d-optb { background: var(--surface); color: var(--ink); border-color: color-mix(in srgb, #dbe3f0 35%, var(--surface)); }
+:root[data-theme="dark"] .s3d-optb.is-ok { background: color-mix(in srgb, #e3f8ea 14%, var(--surface)); }
+:root[data-theme="dark"] .s3d-optb.is-no { background: color-mix(in srgb, #fde9e9 14%, var(--surface)); }
+:root[data-theme="dark"] .s3d-fb.is-ok { background: color-mix(in srgb, #11602f 24%, var(--surface)); color: color-mix(in srgb, #11602f 40%, #fff); }
+:root[data-theme="dark"] .s3d-fb.is-no { background: color-mix(in srgb, #8c1d18 24%, var(--surface)); color: color-mix(in srgb, #8c1d18 40%, #fff); }
+:root[data-theme="dark"] .s3d-spotcard .s3d-btn { background: var(--surface); color: var(--ink); border-color: color-mix(in srgb, #dbe3f0 35%, var(--surface)); }
+:root[data-theme="dark"] .chs-note { background: color-mix(in srgb, #7a5300 24%, var(--surface)); color: color-mix(in srgb, #7a5300 40%, #fff); }
+:root[data-theme="dark"] .chl-seeks li.is-personal { background: color-mix(in srgb, #fff8e8 14%, var(--surface)); }
+:root[data-theme="dark"] .chl-res.is-w { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
+:root[data-theme="dark"] .chl-res.is-l { background: color-mix(in srgb, #991b1b 24%, var(--surface)); color: color-mix(in srgb, #991b1b 40%, #fff); }
+:root[data-theme="dark"] .chs-emote { background: color-mix(in srgb, #6b4a00 24%, var(--surface)); color: color-mix(in srgb, #6b4a00 40%, #fff); border-color: color-mix(in srgb, #f5c542 35%, var(--surface)); }
+:root[data-theme="dark"] .chs-offer { background: color-mix(in srgb, #e8f7ee 14%, var(--surface)); border-color: color-mix(in srgb, #86d3a5 35%, var(--surface)); }
+:root[data-theme="dark"] .chs-turn.is-me { background: color-mix(in srgb, #e7f8ee 14%, var(--surface)); }
+:root[data-theme="dark"] .chs-turn.is-check { background: color-mix(in srgb, #fee2e2 14%, var(--surface)); border-color: color-mix(in srgb, #ef4444 35%, var(--surface)); }
+:root[data-theme="dark"] .pm-st.is-approved, :root[data-theme="dark"] .pm-st.is-answered { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
+:root[data-theme="dark"] .pm-st.is-declined { background: color-mix(in srgb, #991b1b 24%, var(--surface)); color: color-mix(in srgb, #991b1b 40%, #fff); }
+:root[data-theme="dark"] .adm-alert.is-ok { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); border-color: color-mix(in srgb, #86d3a5 35%, var(--surface)); }
+:root[data-theme="dark"] .inb-kind.is-leave { background: color-mix(in srgb, #fde7e7 14%, var(--surface)); }
+:root[data-theme="dark"] .inb-st.is-approved, :root[data-theme="dark"] .inb-st.is-answered { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
+:root[data-theme="dark"] .inb-st.is-declined { background: color-mix(in srgb, #991b1b 24%, var(--surface)); color: color-mix(in srgb, #991b1b 40%, #fff); }
+:root[data-theme="dark"] .callon-verdict.is-ok { background: color-mix(in srgb, #15803d 24%, var(--surface)); color: color-mix(in srgb, #15803d 40%, #fff); }
+:root[data-theme="dark"] .callon-verdict.is-no { background: color-mix(in srgb, #b91c1c 24%, var(--surface)); color: color-mix(in srgb, #b91c1c 40%, #fff); }
+:root[data-theme="dark"] .callon-choice { background: var(--surface); color: var(--ink); border-color: color-mix(in srgb, #c9d4ea 35%, var(--surface)); }
+:root[data-theme="dark"] .callon-choice:hover:not(:disabled) { background: color-mix(in srgb, #f0f5ff 14%, var(--surface)); }
+:root[data-theme="dark"] .callon-box { background: var(--surface); border-color: color-mix(in srgb, #9fb0d0 35%, var(--surface)); }
+:root[data-theme="dark"] .callon-choice.is-on { background: color-mix(in srgb, #e8efff 14%, var(--surface)); }
+:root[data-theme="dark"] .callon-choice.is-right { background: color-mix(in srgb, #dcfce7 14%, var(--surface)); }
+:root[data-theme="dark"] .callon-choice.is-wrong { background: color-mix(in srgb, #fee2e2 14%, var(--surface)); border-color: color-mix(in srgb, #f87171 35%, var(--surface)); }
+:root[data-theme="dark"] .callon-diary { background: color-mix(in srgb, #6b4e00 24%, var(--surface)); color: color-mix(in srgb, #6b4e00 40%, #fff); }
+:root[data-theme="dark"] .callon-comment.is-ok { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
+:root[data-theme="dark"] .callon-comment.is-no { background: color-mix(in srgb, #9a3412 24%, var(--surface)); color: color-mix(in srgb, #9a3412 40%, #fff); }
+:root[data-theme="dark"] .gr { background: var(--surface-2); }
+:root[data-theme="dark"] .gr-pad button:active { background: color-mix(in srgb, #dbeafe 14%, var(--surface)); }
+:root[data-theme="dark"] .gg-star { background: var(--surface); }
+:root[data-theme="dark"] .gv-hearts button.is-on { background: color-mix(in srgb, #9d174d 24%, var(--surface)); color: color-mix(in srgb, #9d174d 40%, #fff); }
+:root[data-theme="dark"] .su-enh button.is-on { background: color-mix(in srgb, #5b21b6 24%, var(--surface)); color: color-mix(in srgb, #5b21b6 40%, #fff); }
+:root[data-theme="dark"] .gt-ic { background: var(--surface); }
+:root[data-theme="dark"] .hp-chip.is-on { background: var(--surface-2); color: var(--ink); }
+:root[data-theme="dark"] .hp-grid-pick button.is-on { background: var(--surface-2); color: color-mix(in srgb, #5b21b6 40%, #fff); }
+:root[data-theme="dark"] .hp-brushes button.is-on { background: var(--surface-2); border-color: color-mix(in srgb, #a78bfa 35%, var(--surface)); }
+:root[data-theme="dark"] .ap-sel { background: color-mix(in srgb, #ecfeff 14%, var(--surface)); color: var(--ink); }
+:root[data-theme="dark"] .wsb-up { background: var(--surface); }
+:root[data-theme="dark"] .mb-ai { background: color-mix(in srgb, #f3e8ff 14%, var(--surface)); }
+:root[data-theme="dark"] .mb-opts label.is-ok { background: color-mix(in srgb, #dcfce7 14%, var(--surface)); }
+:root[data-theme="dark"] .praise-demo-tag { background: color-mix(in srgb, #8a5a00 24%, var(--surface)); color: color-mix(in srgb, #8a5a00 40%, #fff); }
+:root[data-theme="dark"] .wb-pages button.is-danger, :root[data-theme="dark"] .wb-actions .is-danger { background: color-mix(in srgb, #b91c1c 24%, var(--surface)); color: color-mix(in srgb, #b91c1c 40%, #fff); border-color: color-mix(in srgb, #fca5a5 35%, var(--surface)); }
+:root[data-theme="dark"] .ws-warn { background: color-mix(in srgb, #991b1b 24%, var(--surface)); color: color-mix(in srgb, #991b1b 40%, #fff); }
+:root[data-theme="dark"] .dk-col select.is-trg { background: color-mix(in srgb, #92400e 24%, var(--surface)); color: color-mix(in srgb, #92400e 40%, #fff); }
+:root[data-theme="dark"] .dk-tool.is-rec { background: color-mix(in srgb, #b91c1c 24%, var(--surface)); color: color-mix(in srgb, #b91c1c 40%, #fff); }
+:root[data-theme="dark"] .dk-busy { background: color-mix(in srgb, #075985 24%, var(--surface)); color: color-mix(in srgb, #075985 40%, #fff); }
+:root[data-theme="dark"] .dk-msg.is-error { background: color-mix(in srgb, #991b1b 24%, var(--surface)); color: color-mix(in srgb, #991b1b 40%, #fff); }
+:root[data-theme="dark"] .dk-msg.is-ok { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
+:root[data-theme="dark"] .dk-acts .is-danger { background: color-mix(in srgb, #b91c1c 24%, var(--surface)); color: color-mix(in srgb, #b91c1c 40%, #fff); border-color: color-mix(in srgb, #fca5a5 35%, var(--surface)); }
+:root[data-theme="dark"] .dk-tts-msg { background: color-mix(in srgb, #7c2d12 24%, var(--surface)); color: color-mix(in srgb, #7c2d12 40%, #fff); }
+:root[data-theme="dark"] .dfl-p { background: var(--surface-2); color: var(--ink); }
+:root[data-theme="dark"] .dfl-p.s-toan { background: color-mix(in srgb, #dbeafe 14%, var(--surface)); }
+:root[data-theme="dark"] .dfl-p.s-tv { background: color-mix(in srgb, #fee2e2 14%, var(--surface)); }
+:root[data-theme="dark"] .dfl-p.s-ta { background: color-mix(in srgb, #dcfce7 14%, var(--surface)); }
+:root[data-theme="dark"] .dfl-p.s-tn { background: color-mix(in srgb, #e0f2fe 14%, var(--surface)); }
+:root[data-theme="dark"] .dfl-p.s-hd { background: color-mix(in srgb, #f3e8ff 14%, var(--surface)); }
+:root[data-theme="dark"] .dfl-ck { background: var(--surface); }
+:root[data-theme="dark"] .dfl-tag2.is-ok { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
+:root[data-theme="dark"] .dfl-tag2.is-blue { background: color-mix(in srgb, #1e40af 24%, var(--surface)); color: color-mix(in srgb, #1e40af 40%, #fff); }
+:root[data-theme="dark"] .td-srct.is-tg { background: color-mix(in srgb, #5b21b6 24%, var(--surface)); color: color-mix(in srgb, #5b21b6 40%, #fff); }
+:root[data-theme="dark"] .td-srct.is-bt { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
+:root[data-theme="dark"] .pw-nav > button.is-on { background: color-mix(in srgb, #5b21b6 24%, var(--surface)); color: color-mix(in srgb, #5b21b6 40%, #fff); }
+:root[data-theme="dark"] .pw-checks button { background: color-mix(in srgb, #92400e 24%, var(--surface)); color: color-mix(in srgb, #92400e 40%, #fff); }
+:root[data-theme="dark"] .pw-snips button.is-on, :root[data-theme="dark"] .pw-snips button:hover { background: color-mix(in srgb, #4c1d95 24%, var(--surface)); color: color-mix(in srgb, #4c1d95 40%, #fff); }
+:root[data-theme="dark"] .pw-pv-note { background: color-mix(in srgb, #92400e 24%, var(--surface)); color: color-mix(in srgb, #92400e 40%, #fff); }
+:root[data-theme="dark"] .pv-fit { background: color-mix(in srgb, #15803d 24%, var(--surface)); color: color-mix(in srgb, #15803d 40%, #fff); }
+:root[data-theme="dark"] .pv-opts { background: var(--surface-2); border-bottom-color: color-mix(in srgb, #e2e8f0 35%, var(--surface)); }
+:root[data-theme="dark"] .pv-opts select { background: var(--surface); border-color: color-mix(in srgb, #cbd5e1 35%, var(--surface)); }
+:root[data-theme="dark"] .td-pick-grid button.is-on { background: color-mix(in srgb, #e8f0ff 14%, var(--surface)); }
+:root[data-theme="dark"] .planner-norm { background: color-mix(in srgb, #065f46 24%, var(--surface)); color: color-mix(in srgb, #065f46 40%, #fff); border-color: color-mix(in srgb, #a7f3d0 35%, var(--surface)); }
+:root[data-theme="dark"] .pa-warn { background: color-mix(in srgb, #92400e 24%, var(--surface)); color: color-mix(in srgb, #92400e 40%, #fff); border-color: color-mix(in srgb, #fde68a 35%, var(--surface)); }
+:root[data-theme="dark"] .pa-data { background: color-mix(in srgb, #9a3412 24%, var(--surface)); color: color-mix(in srgb, #9a3412 40%, #fff); border-color: color-mix(in srgb, #fed7aa 35%, var(--surface)); }
+:root[data-theme="dark"] .pa-sug { background: color-mix(in srgb, #f0fdf4 14%, var(--surface)); color: var(--ink); border-color: color-mix(in srgb, #a7f3d0 35%, var(--surface)); }
+:root[data-theme="dark"] .planner-kho-row > td { background: var(--surface-2); }
+:root[data-theme="dark"] .kho-card.is-on { background: var(--surface-2); }
+:root[data-theme="dark"] .kho-pct { background: var(--surface-2); color: var(--ink); }
+:root[data-theme="dark"] .kho-pct.is-hi { background: color-mix(in srgb, #15803d 24%, var(--surface)); color: color-mix(in srgb, #15803d 40%, #fff); }
+:root[data-theme="dark"] .dk-layer.is-on { background: var(--surface-2); }
+:root[data-theme="dark"] .cv-btn.is-w { background: var(--surface); color: color-mix(in srgb, #4c1d95 40%, #fff); border-color: color-mix(in srgb, #fff 35%, var(--surface)); }
+:root[data-theme="dark"] .cv-chips button.is-on, :root[data-theme="dark"] .cv-row2 button.is-on { background: color-mix(in srgb, #5b21b6 24%, var(--surface)); color: color-mix(in srgb, #5b21b6 40%, #fff); }
+:root[data-theme="dark"] .cv-reco button { background: var(--surface-2); }
+:root[data-theme="dark"] .cv-big { background: var(--surface-2); }
+:root[data-theme="dark"] .cv-acts button.is-rec { background: color-mix(in srgb, #b91c1c 24%, var(--surface)); color: color-mix(in srgb, #b91c1c 40%, #fff); }
+:root[data-theme="dark"] .cv-fx button:hover:not(:disabled) { background: var(--surface-2); border-color: color-mix(in srgb, #a78bfa 35%, var(--surface)); }
+:root[data-theme="dark"] .cv-row2 select.is-trg { background: color-mix(in srgb, #fffbeb 14%, var(--surface)); }
+:root[data-theme="dark"] .cv-c.is-hl { background: var(--surface-2); color: color-mix(in srgb, #5b21b6 40%, #fff); }
+:root[data-theme="dark"] .cv-paint { background: var(--surface-2); }
+:root[data-theme="dark"] .cv-snap.is-on { background: color-mix(in srgb, #5b21b6 24%, var(--surface)) !important; color: color-mix(in srgb, #5b21b6 40%, #fff); border-color: color-mix(in srgb, #c4b5fd 35%, var(--surface)); }
+:root[data-theme="dark"] .cv-g-add { background: var(--surface); border-color: color-mix(in srgb, #c4b5fd 35%, var(--surface)); }
+:root[data-theme="dark"] .fam-code button { background: color-mix(in srgb, #eef4ff 14%, var(--surface)); }
+:root[data-theme="dark"] .fam-acc.is-ok { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
+:root[data-theme="dark"] .fam-acc.is-off { background: color-mix(in srgb, #991b1b 24%, var(--surface)); color: color-mix(in srgb, #991b1b 40%, #fff); }
+:root[data-theme="dark"] .en-count { background: color-mix(in srgb, #89620d 24%, var(--surface)); color: color-mix(in srgb, #89620d 40%, #fff); }
+:root[data-theme="dark"] .en-journey li>i { background: var(--surface-2); }
+:root[data-theme="dark"] .en-progress-line { background: var(--surface-2); }
+:root[data-theme="dark"] .en-picture span { background: var(--surface); color: color-mix(in srgb, #34537e 40%, #fff); }
+:root[data-theme="dark"] .en-timer { background: color-mix(in srgb, #2457a5 24%, var(--surface)); color: color-mix(in srgb, #2457a5 40%, #fff); }
+:root[data-theme="dark"] .en-timer.is-soft { background: color-mix(in srgb, #ad7910 24%, var(--surface)); color: color-mix(in srgb, #ad7910 40%, #fff); }
+:root[data-theme="dark"] .en-option.is-picked { background: var(--surface-2); border-color: color-mix(in srgb, #75a1f2 35%, var(--surface)); }
+:root[data-theme="dark"] .en-option.is-answer { background: var(--surface-2); border-color: color-mix(in srgb, #83d1a5 35%, var(--surface)); }
+:root[data-theme="dark"] .en-option.is-gentle { background: color-mix(in srgb, #fffbef 14%, var(--surface)); border-color: color-mix(in srgb, #f1d38d 35%, var(--surface)); }
+:root[data-theme="dark"] .en-challenge-start { background: var(--surface-2); color: color-mix(in srgb, #315c9f 40%, #fff); }
+:root[data-theme="dark"] .en-step-back { background: var(--surface-2); color: var(--ink); }
+:root[data-theme="dark"] .parent-top-link:hover { background: color-mix(in srgb, #ffedd5 14%, var(--surface)); }
+:root[data-theme="dark"] .hs2 { background: color-mix(in srgb, #eef3fb 14%, var(--surface)); }
+:root[data-theme="dark"] .kn-opt.is-right { background: color-mix(in srgb, #14532d 24%, var(--surface)); color: color-mix(in srgb, #14532d 40%, #fff); }
+:root[data-theme="dark"] .kn-opt.is-wrong { background: color-mix(in srgb, #7f1d1d 24%, var(--surface)); color: color-mix(in srgb, #7f1d1d 40%, #fff); }
+:root[data-theme="dark"] .kn-why { background: color-mix(in srgb, #7c2d12 24%, var(--surface)); color: color-mix(in srgb, #7c2d12 40%, #fff); }
+:root[data-theme="dark"] .kn-why.is-right { background: color-mix(in srgb, #14532d 24%, var(--surface)); color: color-mix(in srgb, #14532d 40%, #fff); }
+:root[data-theme="dark"] .tdy-prog.is-all { background: color-mix(in srgb, #15803d 24%, var(--surface)); color: color-mix(in srgb, #15803d 40%, #fff); }
+:root[data-theme="dark"] .tdy-mark:hover, :root[data-theme="dark"] .tdy-mark:focus-visible { background: color-mix(in srgb, #15803d 24%, var(--surface)); color: color-mix(in srgb, #15803d 40%, #fff); }
+:root[data-theme="dark"] .tdy-chip.is-done { background: color-mix(in srgb, #15803d 24%, var(--surface)); color: color-mix(in srgb, #15803d 40%, #fff); }
