@@ -17,7 +17,8 @@ type Row = MoneyRow & { category: string };
 type Draft = { id: string | null; kind: Kind; amount: string; category: string; note: string; day: string };
 const blank = (kind: Kind = 'chi'): Draft => ({ id: null, kind, amount: '', category: PERSONAL_CATS[kind][0].name, note: '', day: todayVn() });
 
-export default function PersonalMoney() {
+/** kicker: dòng nhỏ trên tiêu đề; icon: biểu tượng cạnh tiêu đề (mặc định biểu tượng công cụ giáo viên) */
+export default function PersonalMoney({ kicker = 'Tiện ích · chỉ mình thầy cô xem được', icon }: { kicker?: string; icon?: React.ReactNode } = {}) {
   const supabase = useMemo(() => { try { return createClient(); } catch { return null; } }, []);
   const now = todayVn();
   const [ym, setYm] = useState(now.slice(0, 7));
@@ -83,8 +84,8 @@ export default function PersonalMoney() {
     <div className="ct mn">
       <div className="ct-head">
         <div>
-          <p className="ct-sub"><Lock aria-hidden="true" /> Tiện ích · chỉ mình thầy cô xem được</p>
-          <h1><ToolIcon k="thu-chi" /> Thu chi cá nhân</h1>
+          <p className="ct-sub"><Lock aria-hidden="true" /> {kicker}</p>
+          <h1>{icon ?? <ToolIcon k="thu-chi" />} Thu chi cá nhân</h1>
         </div>
         <div className="ct-actions">
           <button type="button" className="btn btn-outline" onClick={toggleHide} aria-pressed={hide}>{hide ? <><Eye aria-hidden="true" /> Hiện số tiền</> : <><EyeOff aria-hidden="true" /> Ẩn khi chiếu</>}</button>

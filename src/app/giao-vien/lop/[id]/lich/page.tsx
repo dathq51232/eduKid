@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
-import TeacherCalendar from '@/components/classroom/TeacherCalendar';
+import LunarCalendar from '@/components/utils/LunarCalendar';
+import { ToolIcon } from '@/components/classroom/tool-icons';
 import { loadClassPage } from '@/lib/classroom/class-page';
 
 export const metadata: Metadata = { title: 'Lịch âm dương · EduChain Kids', robots: { index: false } };
@@ -16,7 +17,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     <>
       <LearnHeader />
       <main className="dash wrap ct-page">
-        <TeacherCalendar classId={p.cls.id} className={p.cls.name} students={p.students} />
+        <LunarCalendar title="Lịch âm dương" subtitle={`Tiện ích · Lớp ${p.cls.name}`} icon={<ToolIcon k="lich" />} classId={p.cls.id} students={p.students} profileHref={`/giao-vien/lop/${p.cls.id}?xem=ho-so`} />
       </main>
     </>
   );
