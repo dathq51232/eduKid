@@ -2,9 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { Inbox } from '@/lib/classroom/messages';
 import { redirect } from 'next/navigation';
-import { BookCheck, BookOpen, CalendarDays, Check, ChevronRight, Dices, School, Send, Target } from 'lucide-react';
+import { BookCheck, Check, ChevronRight, Dices, Moon, School, Send, UserRound } from 'lucide-react';
 import { TodoList } from '@/components/classroom/TeacherToday';
-import TodaySchedule from '@/components/classroom/TodaySchedule';
+import TodaySchedule, { NowBar } from '@/components/classroom/TodaySchedule';
+import { LUNAR_MONTH_NAME, canChiYear, solarToLunar } from '@/lib/utils/lunar';
 import ClassPulse, { type Birthday } from '@/components/classroom/ClassPulse';
 import MiniCalendar from '@/components/utils/MiniCalendar';
 import MoneyCard from '@/components/utils/MoneyCard';
@@ -79,6 +80,8 @@ export default async function TeacherHome() {
   let todo: TodayItem[] = [];
   let k: Kpis | null = null;
   let todayPlans: { id: string; subject: string; title: string; period: number | null }[] = [];
+  let tomorrowPlans: typeof todayPlans = [];
+  const tomorrowIso = new Date(nowMs + 7 * 3600_000 + 86_400_000).toISOString().slice(0, 10);
   let watch: Watch[] = [];
   let inbox: Inbox | null = null;
   let births: Birthday[] = [];
@@ -151,8 +154,8 @@ export default async function TeacherHome() {
     const today0 = births.filter((b) => b.inDays === 0);
     if (today0.length) todo.unshift({ tone: 'soon', title: `Hôm nay sinh nhật ${today0.map((b) => b.short).join(', ')} 🎂`, detail: 'Cả lớp hát mừng sinh nhật, hoặc gửi em một thư khen nhỏ.', href: `/giao-vien/lop/${active.id}/thu-khen`, cta: 'Viết thư khen' });
     if (noAccount) todo.push({ tone: 'soon', title: `${noAccount} em chưa có PIN đăng nhập`, detail: 'Đặt PIN rồi in thẻ để các em vào luyện bài ở nhà.', href: `/giao-vien/lop/${active.id}`, cta: 'Đặt PIN' });
-    if (prof && profileLack) todo.push({ tone: 'info', title: `Hồ sơ còn thiếu ${profileLack} em`, detail: 'Chưa có ngày sinh hoặc chỗ ở — dán một lần từ file danh sách của trường.', href: `/giao-vien/lop/${active.id}?xem=ho-so`, cta: 'Bổ sung' });
-    if (contactGaps) todo.push({ tone: 'info', title: `${contactGaps} em chưa có số điện thoại phụ huynh`, detail: 'Cần khi nhắn tin, báo vắng; phụ huynh cũng tự thêm được ở Góc phụ huynh.', href: `/giao-vien/lop/${active.id}/danh-ba`, cta: 'Thêm số' });
+    if (prof && profileLack) todo.push({ tone: 'info', title: `Hồ sơ còn thiếu ${profileLack} em`, detail: 'Chưa có ngày sinh hoặc chỗ ở — dán một lần từ file danh sách của trường.', href: `/giao-vien/lop/${active.id}?xem=ho-so`, cta: 'Bổ sung', later: true });
+    if (contactGaps) todo.push({ tone: 'info', title: `${contactGaps} em chưa có số điện thoại phụ huynh`, detail: 'Cần khi nhắn tin, báo vắng; phụ huynh cũng tự thêm được ở Góc phụ huynh.', href: `/giao-vien/lop/${active.id}/danh-ba`, cta: 'Thêm số', later: true });
     if (inbox?.unread) {
       todo.unshift({ tone: 'urgent', title: `${inbox.unread} tin nhắn phụ huynh chưa đọc`, detail: inbox.pending_leave ? `Có ${inbox.pending_leave} tin xin phép nghỉ đang chờ cô đồng ý.` : 'Phụ huynh hỏi han, nhắn cô.', href: `/giao-vien/lop/${active.id}/tin-nhan`, cta: 'Đọc tin' });
     } else if (inbox?.items.length) {
@@ -161,6 +164,8 @@ export default async function TeacherHome() {
     }
     todayPlans = planErr ? [] : ((plans ?? []) as { id: string; subject: string; title: string; period: number | null; teach_date: string | null }[])
       .filter((p) => p.teach_date === todayIso).sort((a, b) => (a.period ?? 99) - (b.period ?? 99));
+    tomorrowPlans = planErr ? [] : ((plans ?? []) as { id: string; subject: string; title: string; period: number | null; teach_date: string | null }[])
+      .filter((p) => p.teach_date === tomorrowIso).sort((a, b) => (a.period ?? 99) - (b.period ?? 99));
     // cần để ý: từ Sổ lớp tháng này + em làm đúng dưới một nửa trong 2 tuần
     const sum = month ? summarize(students, month as RangeData) : null;
     const fromDiary: Watch[] = sum ? alertsOf(sum.rows).map((a) => ({ id: a.studentId, name: a.strong, text: a.text.replace(/\.$/, ''), tone: a.tone })) : [];
@@ -177,15 +182,14 @@ export default async function TeacherHome() {
   const DAYS = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
   const dateLabel = `${DAYS[weekday]}, ${todayIso.slice(8)}/${todayIso.slice(5, 7)}/${todayIso.slice(0, 4)}`;
   const base = active ? `/giao-vien/lop/${active.id}` : '';
-  const pct = (x: number | null) => (x === null ? '–' : `${Math.round(x * 100)}`);
   const delta = k && k.rate !== null && k.prevRate !== null ? Math.round((k.rate - k.prevRate) * 100) : null;
-  const maxSpark = Math.max(1, ...(k?.spark ?? [1]));
+  const lunar = solarToLunar(+todayIso.slice(8), +todayIso.slice(5, 7), +todayIso.slice(0, 4));
 
   return (
     <main className="tdy">
       <header className="tdy-head">
         <div>
-          <p className="tdy-date">{dateLabel}{todayPlans.length ? ` · hôm nay có ${todayPlans.length} tiết đã soạn` : ''}</p>
+          <p className="tdy-date">{dateLabel} <span className="tdy-lunar" title={`Ngày ${lunar.day} tháng ${LUNAR_MONTH_NAME[lunar.month]} năm ${canChiYear(lunar.year)}`}><Moon aria-hidden="true" /> {lunar.day}/{lunar.month}{lunar.leap ? ' nhuận' : ''} {canChiYear(lunar.year)}</span></p>
           <h1>Chào {firstName} <span aria-hidden="true">👋</span></h1>
         </div>
         {active && (
@@ -221,54 +225,37 @@ export default async function TeacherHome() {
 
       {active && k && (
         <>
-          {/* 1 · Số liệu lớp: một hàng gọn, bấm để mở chi tiết */}
-          <section className="tdy-stats" aria-label="Số liệu lớp">
-            <Link href={`${base}/so-lop`} className="tdy-stat">
-              <span className="tsh-ic tone-yellow"><BookCheck aria-hidden="true" /></span>
-              {!k.diaryOn ? <span><b>Chưa bật</b><small>Sổ lớp (migration 0026)</small></span>
-                : k.attendanceSaved ? <span><b>{k.students - k.absent}<i>/{k.students}</i></b><small>{k.absent ? `có mặt · ${k.absent} em vắng` : 'có mặt · đủ lớp'}</small></span>
-                : <span><b className="is-todo">Chưa điểm danh</b><small>bấm để điểm danh →</small></span>}
-            </Link>
-            <Link href={`${base}/giao-bai`} className="tdy-stat">
-              <span className="tsh-ic tone-blue"><BookOpen aria-hidden="true" /></span>
-              <span><b>{k.practiced}<i>/{k.students}</i></b><small>luyện bài 7 ngày</small></span>
-              <span className="tdy-spark" aria-label={`Số em luyện bài mỗi ngày: ${k.spark.join(', ')}`}>{k.spark.map((n, i) => <i key={i} className={i === 6 ? 'is-today' : ''} style={{ height: `${12 + (n / maxSpark) * 88}%` }} />)}</span>
-            </Link>
-            <Link href={`${base}/giao-bai`} className="tdy-stat">
-              <span className="tsh-ic tone-violet"><Send aria-hidden="true" /></span>
-              {k.openFirst
-                ? <span><b>{k.openFirst.done}<i>/{k.openFirst.assigned}</i></b><small title={k.openFirst.title}>đã nộp “{k.openFirst.title}”{k.open > 1 ? ` · +${k.open - 1} bài` : ''}</small></span>
-                : <span><b className="is-todo">Chưa có bài giao</b><small>bấm để giao bài →</small></span>}
-            </Link>
-            <Link href={`${base}/lo-hong`} className="tdy-stat">
-              <span className="tsh-ic tone-green"><Target aria-hidden="true" /></span>
-              {k.practiced >= 5 && k.rate !== null
-                ? <span><b>{pct(k.rate)}<i>%</i></b><small>đúng TB 7 ngày{delta !== null ? <> · <em className={delta >= 0 ? 'is-good' : 'is-bad'}>{delta >= 0 ? '▲' : '▼'}{Math.abs(delta)}%</em></> : ''}</small></span>
-                : <span><b className="is-todo">Tỉ lệ đúng</b><small>hiện khi ≥5 em luyện bài{k.practiced ? ` (mới ${k.practiced})` : ''}</small></span>}
-            </Link>
-          </section>
+          {/* ① Bây giờ: tiết đang dạy / kế tiếp + nút dùng ngay trong tiết */}
+          <NowBar classId={active.id} day={todayIso} tomorrow={tomorrowIso} base={base} saved={todayPlans} savedTomorrow={tomorrowPlans} />
 
-          {/* 2 · Hai cột: trái = việc phải làm + tiết phải dạy; phải = gợi ý tiết dạy + nhịp của lớp */}
           <div className="tdy-cols">
+            {/* ② Hôm nay dạy  ③ Việc hôm nay */}
             <div className="tdy-stack">
+              <section className="tdy-card tdy-sched" aria-labelledby="tdy-sched">
+                <TodaySchedule classId={active.id} day={todayIso} tomorrow={tomorrowIso} base={base} saved={todayPlans} savedTomorrow={tomorrowPlans} headingId="tdy-sched" />
+              </section>
               <section className="tdy-card tdy-todo" aria-labelledby="tdy-todo">
                 <TodoList items={todo} day={todayIso} headingId="tdy-todo" />
               </section>
-              <section className="tdy-card tdy-sched" aria-labelledby="tdy-sched">
-                <h2 id="tdy-sched"><CalendarDays aria-hidden="true" /> Hôm nay dạy <Link href={`${base}/ke-hoach`}>Giáo án</Link></h2>
-                <TodaySchedule classId={active.id} day={todayIso} base={base} saved={todayPlans} />
-              </section>
             </div>
-
+            {/* ④ Lớp mình (gợi ý tiết dạy đã chọn hiện ở trên khi có) */}
             <div className="tdy-stack">
               <LessonPlanAside classId={active.id} grade={active.grade} />
-              <MiniCalendar href={`${base}/lich`} />
               <ClassPulse base={base} births={births} birthsOn={birthsOn} watch={watch}
                 unread={inbox?.unread ?? 0} pendingLeave={inbox?.pending_leave ?? 0} recentMsgs={inbox?.items.length ?? 0} contactGaps={contactGaps}
-                spark={k.spark} students={k.students} todayIso={todayIso} planText={planText} />
-              <MoneyCard href={`${base}/thu-chi`} title="Thu chi cá nhân" fundHref={`${base}/quy-lop`} classId={active.id} />
+                spark={k.spark} students={k.students} todayIso={todayIso} planText={planText}
+                kpi={{ practiced: k.practiced, rate: k.rate, delta, open: k.open, openFirst: k.openFirst }} />
             </div>
           </div>
+
+          {/* ⑤ Của tôi: việc cá nhân, ít gấp — để cuối, số tiền luôn che khi mở trang */}
+          <section className="tdy-mine" aria-labelledby="tdy-mine-h">
+            <h2 id="tdy-mine-h" className="tdy-sect"><UserRound aria-hidden="true" /> Của tôi</h2>
+            <div className="tdy-mine-grid">
+              <MiniCalendar href={`${base}/lich`} compact title="📅 Tuần này" />
+              <MoneyCard href={`${base}/thu-chi`} title="Thu chi cá nhân" fundHref={`${base}/quy-lop`} classId={active.id} />
+            </div>
+          </section>
         </>
       )}
 

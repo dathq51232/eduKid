@@ -10,9 +10,11 @@ const DOW = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 const DOW_LONG = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
 const initials = (n: string) => n.trim().split(/\s+/).slice(-2).map((x) => x[0]).join('');
 
-export default function ClassPulse({ base, births, birthsOn, watch, unread, pendingLeave, recentMsgs, contactGaps, spark, students, todayIso, planText }: {
+export type PulseKpi = { practiced: number; rate: number | null; delta: number | null; open: number; openFirst: { title: string; done: number; assigned: number } | null };
+
+export default function ClassPulse({ base, births, birthsOn, watch, unread, pendingLeave, recentMsgs, contactGaps, spark, students, todayIso, planText, kpi }: {
   base: string; births: Birthday[]; birthsOn: boolean; watch: Watch[]; unread: number; pendingLeave: number; recentMsgs: number;
-  contactGaps: number | null; spark: number[]; students: number; todayIso: string; planText: string | null;
+  contactGaps: number | null; spark: number[]; students: number; todayIso: string; planText: string | null; kpi: PulseKpi;
 }) {
   const t0 = Date.parse(`${todayIso}T00:00:00Z`);
   const dowOf = (offset: number) => new Date(t0 + offset * 86_400_000).getUTCDay();
@@ -22,6 +24,21 @@ export default function ClassPulse({ base, births, birthsOn, watch, unread, pend
   return (
     <section className="tdy-card tdy-pulse" aria-labelledby="tdy-pulse">
       <h2 id="tdy-pulse"><Users aria-hidden="true" /> Lớp mình</h2>
+
+      {/* Số liệu học tập của lớp (trước đây là hàng 4 ô ở đầu trang) */}
+      <ul className="tdy-kpis">
+        <li><Link href={`${base}/giao-bai`}><small>Luyện bài 7 ngày</small><b>{kpi.practiced}<i>/{students} em</i></b></Link></li>
+        <li><Link href={`${base}/lo-hong`}><small>Tỉ lệ đúng</small>
+          {kpi.practiced >= 5 && kpi.rate !== null
+            ? <b>{Math.round(kpi.rate * 100)}<i>%</i>{kpi.delta !== null && <em className={kpi.delta >= 0 ? 'is-good' : 'is-bad'}>{kpi.delta >= 0 ? '▲' : '▼'}{Math.abs(kpi.delta)}</em>}</b>
+            : <b className="is-muted">—<i>khi ≥5 em luyện</i></b>}
+        </Link></li>
+        <li><Link href={`${base}/giao-bai`}><small>Bài đang giao</small>
+          {kpi.openFirst
+            ? <b title={kpi.openFirst.title}>{kpi.openFirst.done}<i>/{kpi.openFirst.assigned} đã nộp{kpi.open > 1 ? ` · +${kpi.open - 1}` : ''}</i></b>
+            : <b className="is-muted">0<i>bài</i></b>}
+        </Link></li>
+      </ul>
 
       <div className="tdy-pulse-part">
         <h3>🎂 Sinh nhật tuần này</h3>
@@ -80,8 +97,8 @@ export default function ClassPulse({ base, births, birthsOn, watch, unread, pend
       </div>
 
       <div className="tdy-pulse-part">
-        <h3>📈 Luyện bài 7 ngày <small>{total ? `${total} lượt em` : 'chưa có'}</small></h3>
-        <div className="tdy-bars" role="img" aria-label={`Số em luyện bài mỗi ngày (cũ → mới): ${spark.join(', ')}`}>
+        <h3>📈 Luyện bài 7 ngày <small>{total ? `${total} lượt em` : 'chưa em nào luyện'}</small></h3>
+        {total > 0 && <div className="tdy-bars" role="img" aria-label={`Số em luyện bài mỗi ngày (cũ → mới): ${spark.join(', ')}`}>
           {spark.map((n, i) => (
             <div key={i} className={`tdy-bar${i === 6 ? ' is-today' : ''}`} title={`${DOW[dowOf(i - 6)]}: ${n}/${students} em luyện bài`}>
               <span className="tdy-bar-n">{n || ''}</span>
@@ -89,7 +106,7 @@ export default function ClassPulse({ base, births, birthsOn, watch, unread, pend
               <span className="tdy-bar-d">{i === 6 ? 'Nay' : DOW[dowOf(i - 6)]}</span>
             </div>
           ))}
-        </div>
+        </div>}
       </div>
 
       <p className="tdy-pulse-foot">

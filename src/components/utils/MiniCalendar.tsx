@@ -25,7 +25,8 @@ function build(): Data {
   return { today, week, next };
 }
 
-export default function MiniCalendar({ href }: { href: string }) {
+/** compact: bỏ 2 thẻ ngày lớn (khi ngày âm/dương đã hiện ở đầu trang) — chỉ còn dải tuần + lễ sắp tới */
+export default function MiniCalendar({ href, compact = false, title = '📅 Lịch hôm nay' }: { href: string; compact?: boolean; title?: string }) {
   // tính sau khi gắn vào trang để ngày luôn theo đồng hồ máy (tránh lệch giữa máy chủ và trình duyệt)
   const [data, setData] = useState<Data | null>(null);
   useEffect(() => { setData(build()); }, []);
@@ -35,10 +36,10 @@ export default function MiniCalendar({ href }: { href: string }) {
   return (
     <section className="uw uw-cal" aria-labelledby="uw-cal-h">
       <div className="uw-hd">
-        <h2 id="uw-cal-h">📅 Lịch hôm nay</h2>
+        <h2 id="uw-cal-h">{title}</h2>
         <Link href={href} className="uw-more">Mở lịch <ChevronRight aria-hidden="true" /></Link>
       </div>
-      <div className="uw-faces">
+      {!compact && <div className="uw-faces">
         <div className="uw-face is-s">
           <small><Sun aria-hidden="true" /> {WEEKDAYS[t.weekday]}</small>
           <b>{t.d}</b>
@@ -49,7 +50,7 @@ export default function MiniCalendar({ href }: { href: string }) {
           <b>{t.lunar.day}</b>
           <span>tháng {LUNAR_MONTH_NAME[t.lunar.month]}{t.lunar.leap ? ' nhuận' : ''} · {canChiYear(t.lunar.year)}</span>
         </div>
-      </div>
+      </div>}
       <p className="uw-cc">Ngày {canChiDay(t.jd)}{t.holidays.length ? ` · ${t.holidays.map((h) => h.name).join(', ')}` : ''}</p>
       <ol className="uw-week" aria-label="Tuần này">
         {week.map((d) => {

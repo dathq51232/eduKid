@@ -3,7 +3,7 @@
 // Các ô có tương tác của trang "Hôm nay": việc cần làm (tích được, nhớ trên máy) và "Dùng nhanh" (tự sắp theo số lần dùng).
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check, ListTodo, Undo2 } from 'lucide-react';
+import { Check, Coffee, ListTodo, Undo2 } from 'lucide-react';
 import { TOOLS, quickTools, toolHref, type ToolKey } from '@/lib/classroom/teacher-nav';
 import { TOOL_ICON, USAGE_KEY } from '@/components/classroom/TeacherShell';
 import type { TodayItem } from '@/lib/classroom/today';
@@ -24,6 +24,8 @@ export function TodoList({ items, day, headingId }: { items: TodayItem[]; day: s
   const isDone = (t: TodayItem) => t.tone === 'done' || done.includes(t.title);
   const rank = { urgent: 0, soon: 1, info: 2, done: 3 } as const;
   const pending = items.filter((t) => !isDone(t)).sort((a, b) => rank[a.tone] - rank[b.tone]);
+  const now = pending.filter((t) => !t.later), later = pending.filter((t) => t.later);
+  const [showLater, setShowLater] = useState(false);
   const finished = items.filter(isDone);
   const row = (t: TodayItem) => {
     const d = isDone(t); const tag = TONE_TAG[t.tone];
@@ -48,9 +50,17 @@ export function TodoList({ items, day, headingId }: { items: TodayItem[]; day: s
         <ListTodo aria-hidden="true" /> Việc hôm nay
         {items.length > 0 && <span className={`tdy-prog${pending.length ? '' : ' is-all'}`}>{finished.length}/{items.length} xong</span>}
       </h2>
-      {pending.length === 0
-        ? <p className="dash-muted tdy-empty">Xong hết việc hôm nay. 🎉</p>
-        : <ul className="tdy-tasks">{pending.map(row)}</ul>}
+      {now.length === 0
+        ? <p className="dash-muted tdy-empty">{later.length ? 'Không còn việc gấp hôm nay. 🎉' : 'Xong hết việc hôm nay. 🎉'}</p>
+        : <ul className="tdy-tasks">{now.map(row)}</ul>}
+      {later.length > 0 && (
+        <div className="tdy-later">
+          <button type="button" className="ct-link" onClick={() => setShowLater((v) => !v)} aria-expanded={showLater}>
+            <Coffee aria-hidden="true" /> Khi rảnh ({later.length}) {showLater ? '· ẩn bớt' : `· ${later.map((t) => t.cta.toLowerCase()).join(', ')}`}
+          </button>
+          {showLater && <ul className="tdy-tasks">{later.map(row)}</ul>}
+        </div>
+      )}
       {finished.length > 0 && (
         <div className="tdy-done">
           <button type="button" className="ct-link" onClick={() => setShowDone((v) => !v)} aria-expanded={showDone}>

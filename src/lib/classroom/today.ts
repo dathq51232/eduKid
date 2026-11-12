@@ -4,7 +4,8 @@
 import { periodsFor } from './comments';
 import { examsFor } from './school';
 
-export type TodayItem = { tone: 'urgent' | 'soon' | 'info' | 'done'; title: string; detail: string; href: string; cta: string };
+/** later: việc nền, làm lúc rảnh (hồ sơ, số điện thoại…) — gom vào nhóm "Khi rảnh" thu gọn */
+export type TodayItem = { tone: 'urgent' | 'soon' | 'info' | 'done'; title: string; detail: string; href: string; cta: string; later?: boolean };
 
 type PlanRow = { id: string; title: string; subject: string; teach_date: string | null; period: number | null };
 type AssignmentRow = { id: string; title: string; due_at: string | null; status: string; assigned: number; done: number };

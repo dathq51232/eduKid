@@ -2,14 +2,13 @@
 
 // Khối "Thu chi tháng này" cho dashboard: tổng thu / chi / còn lại (bảng teacher_money, chỉ chủ tài khoản đọc được),
 // ghi nhanh một khoản ngay trên dashboard, và (giáo viên) tồn quỹ lớp + còn phải thu.
-// Số tiền mặc định che đi (màn hình giáo viên hay được chiếu) — bấm con mắt để hiện, nhớ trên máy.
+// Số tiền luôn che khi mở trang (màn hình giáo viên hay được chiếu) — bấm con mắt để hiện trong lần xem này.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { fmtMoney, parseMoney, todayVn, type Kind } from '@/lib/utils/money';
 
-const SHOW_KEY = 'uw-hien-tien';
 type Fund = { balance: number; owed: number };
 
 export default function MoneyCard({ href, title = 'Thu chi tháng này', fundHref, classId }: { href: string; title?: string; fundHref?: string; classId?: string }) {
@@ -21,8 +20,7 @@ export default function MoneyCard({ href, title = 'Thu chi tháng này', fundHre
   const [amount, setAmount] = useState('');
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState('');
-  useEffect(() => { try { setShow(localStorage.getItem(SHOW_KEY) === '1'); } catch { /* bỏ qua */ } }, []);
-  const toggle = () => setShow((v) => { try { localStorage.setItem(SHOW_KEY, v ? '0' : '1'); } catch { /* bỏ qua */ } return !v; });
+  const toggle = () => setShow((v) => !v);
   const money = (n: number) => (show ? fmtMoney(n) : '•••••');
 
   const load = useCallback(async () => {

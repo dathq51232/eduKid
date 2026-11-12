@@ -10150,3 +10150,60 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .uw { --uw-s: #8fb0ff; --uw-s-bg: rgb(96 140 255 / .16); --uw-l: #fdba74; --uw-l-bg: rgb(251 146 60 / .16); }
 }
+
+/* ===== Trang Hôm nay — sắp xếp: ① Bây giờ → ② Hôm nay dạy / ③ Việc → ④ Lớp mình → ⑤ Của tôi ===== */
+.tdy-lunar { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; padding: 1px 8px; border-radius: 99px; background: #ffedd5; color: #c2410c; font-weight: 700; }
+.tdy-lunar svg { width: 12px; height: 12px; }
+:root[data-theme="dark"] .tdy-lunar { background: rgb(251 146 60 / .16); color: #fdba74; }
+
+.tdy-now-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.tdy-now-bar.is-live { border-color: color-mix(in srgb, var(--brand-blue) 45%, transparent); background: linear-gradient(100deg, var(--blue-soft), var(--surface) 70%); }
+.tdy-now-ic { display: grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 13px; background: var(--surface-2); color: var(--muted); }
+.tdy-now-ic svg { width: 22px; height: 22px; }
+.is-live .tdy-now-ic { background: var(--brand-blue); }
+.tdy-live-dot { width: 12px; height: 12px; border-radius: 50%; background: #fff; animation: tdy-live 1.6s ease-in-out infinite; }
+@keyframes tdy-live { 50% { opacity: .35; transform: scale(.75); } }
+.tdy-now-txt { display: grid; flex: 1 1 260px; min-width: 0; }
+.tdy-now-txt small { color: var(--muted); font-size: 13px; font-weight: 700; }
+.is-live .tdy-now-txt small { color: var(--brand-blue); }
+.tdy-now-txt b { font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tdy-now-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.tdy-now-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 42px; padding: 0 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font-size: 14.5px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.tdy-now-btn svg { width: 17px; height: 17px; }
+.tdy-now-btn:hover { border-color: var(--line-strong); }
+.tdy-now-btn.is-main { border-color: var(--brand-blue); background: var(--brand-blue); color: #fff; }
+@media (prefers-reduced-motion: reduce) { .tdy-live-dot { animation: none; } }
+
+.tdy-cols { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+.tdy-sched h2 .tdy-prog { font-size: 12px; }
+.tdy-slot-t small { color: var(--muted); font-size: 11.5px; font-weight: 600; }
+.tdy-slot-s b .tdy-slot-ic { display: inline; font-style: normal; font-size: 13px; }
+.tdy-slot-s b { display: flex; align-items: center; gap: 4px; }
+
+.tdy-later { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); }
+.tdy-later .ct-link { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 700; text-align: left; }
+.tdy-later .ct-link svg { width: 16px; height: 16px; color: #b45309; }
+.tdy-later .tdy-task { opacity: .9; }
+
+.tdy-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 6px 0 4px; padding: 0; list-style: none; }
+.tdy-kpis a { display: grid; gap: 2px; min-height: 64px; padding: 8px 10px; border-radius: 12px; background: var(--surface-2); color: var(--ink); text-decoration: none; }
+.tdy-kpis a:hover { box-shadow: inset 0 0 0 1px var(--line-strong); }
+.tdy-kpis small { color: var(--muted); font-size: 12px; font-weight: 700; }
+.tdy-kpis b { font-size: 20px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.tdy-kpis b i { display: block; color: var(--muted); font-size: 11.5px; font-style: normal; font-weight: 600; }
+.tdy-kpis b.is-muted { color: var(--muted); }
+.tdy-kpis em { margin-left: 4px; font-size: 12px; font-style: normal; }
+.tdy-kpis em.is-good { color: #15803d; } .tdy-kpis em.is-bad { color: #c2323a; }
+
+.tdy-mine { display: grid; gap: 4px; }
+.tdy-mine .tdy-sect svg { color: var(--muted); }
+.tdy-mine-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 14px; align-items: start; }
+
+@media (max-width: 860px) { .tdy-cols { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) {
+  .tdy-now-bar { padding: 12px; }
+  .tdy-now-acts { width: 100%; }
+  .tdy-now-btn { flex: 1; justify-content: center; }
+  .tdy-kpis b { font-size: 17px; }
+}
+.tdy-done .ct-link, .tdy-later .ct-link { font-size: 14px; }
