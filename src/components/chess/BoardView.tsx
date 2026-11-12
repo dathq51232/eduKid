@@ -8,10 +8,11 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { Box, Maximize2, Minimize2, RotateCcw, RotateCw, ScanEye, Square } from 'lucide-react';
 
 export type View = 'top' | 'tp' | 'close';
-const VIEWS: { id: View; label: string; Icon: typeof Box; tilt: number; fit: number }[] = [
-  { id: 'top', label: 'Nhìn thẳng', Icon: Square, tilt: 0, fit: 1 },
-  { id: 'tp', label: 'Góc 3D', Icon: Box, tilt: 40, fit: 1 },
-  { id: 'close', label: 'Cận cảnh', Icon: ScanEye, tilt: 56, fit: 1 },
+// persp: khoảng cách mắt tới bàn (theo bề ngang bàn) — càng nhỏ phối cảnh càng mạnh, như đang cúi sát bàn
+const VIEWS: { id: View; label: string; tip: string; Icon: typeof Box; tilt: number; fit: number; persp: number }[] = [
+  { id: 'top', label: 'Nhìn thẳng', tip: 'Nhìn thẳng từ trên xuống', Icon: Square, tilt: 0, fit: 1, persp: 250 },
+  { id: 'tp', label: 'Góc 3D', tip: 'Góc nhìn thứ 3 — nhìn chéo xuống cả bàn', Icon: Box, tilt: 40, fit: 1, persp: 250 },
+  { id: 'close', label: 'Cận cảnh', tip: 'Góc nhìn thứ nhất — như đang ngồi sát trước bàn cờ', Icon: ScanEye, tilt: 64, fit: 1.32, persp: 120 },
 ];
 const KEY = 'co-goc-nhin';
 
@@ -66,14 +67,16 @@ export default function BoardStage({ children }: { children: React.ReactNode }) 
   // Bàn xoay thì hình chiếu rộng ra (cos + sin) → thu nhỏ tương ứng để không tràn khung
   const rad = (Math.abs(spin) * Math.PI) / 180;
   const fit = cur.fit / (Math.cos(rad) + Math.sin(rad));
-  const style = { '--tilt': `${cur.tilt}deg`, '--spin': `${spin}deg`, '--fit': fit.toFixed(3) } as React.CSSProperties;
+  const style = { '--tilt': `${cur.tilt}deg`, '--spin': `${spin}deg`, '--fit': fit.toFixed(3), '--persp': `${cur.persp}cqw` } as React.CSSProperties;
 
   return (
     <BoardViewCtx.Provider value={{ is3d }}>
+      {/* .bv: khung bàn (đơn vị cqw tính theo bề ngang bàn); toàn màn hình thì đứng giữa, cao bằng màn hình */}
+      <div className="bv" style={style}>
       <div className="bv-bar" role="toolbar" aria-label="Góc nhìn bàn cờ">
         <div className="bv-seg" role="group" aria-label="Chọn góc nhìn">
-          {VIEWS.map(({ id, label, Icon }) => (
-            <button key={id} type="button" aria-pressed={view === id} onClick={() => pick(id)} title={label}>
+          {VIEWS.map(({ id, label, tip, Icon }) => (
+            <button key={id} type="button" aria-pressed={view === id} onClick={() => pick(id)} title={tip} data-view={id}>
               <Icon aria-hidden="true" /><span>{label}</span>
             </button>
           ))}
@@ -88,8 +91,9 @@ export default function BoardStage({ children }: { children: React.ReactNode }) 
           {fs ? <Minimize2 aria-hidden="true" /> : <Maximize2 aria-hidden="true" />}<span>{fs ? 'Thu nhỏ' : 'Toàn màn hình'}</span>
         </button>
       </div>
-      <div ref={ref} className={`chs-boardwrap bv-stage${is3d ? ' is-3d' : ''} v-${view}`} style={style}>
+      <div ref={ref} className={`chs-boardwrap bv-stage${is3d ? ' is-3d' : ''} v-${view}`}>
         {children}
+      </div>
       </div>
     </BoardViewCtx.Provider>
   );

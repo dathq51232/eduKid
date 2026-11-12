@@ -87,16 +87,24 @@ export function WoodSurface({ p, x, y, w, h }: { p: string; x: number; y: number
 
 /** Chỉ các dải màu cho quân cờ tướng (không có bộ lọc) — dùng ở lớp quân cờ */
 export function DiscDefs({ p }: { p: string }) {
+  // Gỗ vàng cam (kiểu quân cờ tướng gỗ tiện): mặt sáng ở góc trên-trái, cạnh cam đậm
   return (
     <defs>
-      <radialGradient id={`${p}disc`} cx=".38" cy=".32" r=".75">
-        <stop offset="0" stopColor="#fbf0da" />
-        <stop offset=".6" stopColor="#ecd3a6" />
-        <stop offset="1" stopColor="#d4b07a" />
+      <radialGradient id={`${p}disc`} cx=".36" cy=".3" r=".8">
+        <stop offset="0" stopColor="#fde7bf" />
+        <stop offset=".45" stopColor="#f3c27e" />
+        <stop offset=".85" stopColor="#e2a157" />
+        <stop offset="1" stopColor="#cf8840" />
       </radialGradient>
       <linearGradient id={`${p}edge`} x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stopColor="#c99c63" />
-        <stop offset="1" stopColor="#8c6236" />
+        <stop offset="0" stopColor="#d18a42" />
+        <stop offset=".55" stopColor="#b06526" />
+        <stop offset="1" stopColor="#7d4317" />
+      </linearGradient>
+      <linearGradient id={`${p}bevel`} x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stopColor="#fff4dc" stopOpacity=".95" />
+        <stop offset=".5" stopColor="#fff4dc" stopOpacity="0" />
+        <stop offset="1" stopColor="#8a4a17" stopOpacity=".55" />
       </linearGradient>
     </defs>
   );

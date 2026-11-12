@@ -64,6 +64,9 @@ export function playSound(name: SoundName) {
     // Safari/iPad và một số bản Chrome tạo AudioContext ở trạng thái "suspended": phải resume mới có tiếng
     if (ctx.state === 'suspended') void ctx.resume();
     const now = ctx.currentTime + 0.02;
+    // Cờ: tiếng gỗ thật (đặt quân "cộc", ăn quân đập mạnh "CỘC" + nảy) thay cho nốt nhạc
+    if (name === 'move') { woodHit(ctx, now, 0.55, 1); return; }
+    if (name === 'capture') { woodHit(ctx, now, 1, 0.82); woodHit(ctx, now + 0.075, 0.32, 1.15); return; }
     for (const note of NOTES[name]) {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -81,6 +84,33 @@ export function playSound(name: SoundName) {
   } catch {
     // Trình duyệt chặn âm thanh: bỏ qua, không ảnh hưởng bài làm.
   }
+}
+
+/**
+ * Tiếng gỗ gõ vào gỗ (tổng hợp, không cần file): tiếng "cạch" của mặt gỗ (nhiễu trắng qua lọc dải ~1,4–2 kHz, tắt rất nhanh)
+ * + tiếng "cộc" thân gỗ (sóng sin trầm ~150 Hz hạ dần). force: 0–1 độ mạnh, pitch: >1 cao hơn (quân nhỏ / nảy lại).
+ */
+function woodHit(ac: AudioContext, at: number, force: number, pitch: number) {
+  const len = Math.floor(ac.sampleRate * 0.09);
+  const buf = ac.createBuffer(1, len, ac.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 6);
+  const noise = ac.createBufferSource(); noise.buffer = buf;
+  const band = ac.createBiquadFilter(); band.type = 'bandpass'; band.frequency.value = 1500 * pitch; band.Q.value = 2.2;
+  const ng = ac.createGain(); ng.gain.value = 0.9 * force;
+  noise.connect(band).connect(ng).connect(ac.destination);
+  noise.start(at); noise.stop(at + 0.1);
+  // Thân gỗ cộng hưởng
+  const body = ac.createOscillator(); body.type = 'sine';
+  body.frequency.setValueAtTime(190 * pitch, at); body.frequency.exponentialRampToValueAtTime(110 * pitch, at + 0.12);
+  const bg = ac.createGain();
+  bg.gain.setValueAtTime(0.0001, at); bg.gain.exponentialRampToValueAtTime(0.55 * force, at + 0.004); bg.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
+  body.connect(bg).connect(ac.destination); body.start(at); body.stop(at + 0.18);
+  // Tiếng "tách" cao của mép gỗ
+  const click = ac.createOscillator(); click.type = 'triangle'; click.frequency.value = 2600 * pitch;
+  const cg = ac.createGain();
+  cg.gain.setValueAtTime(0.0001, at); cg.gain.exponentialRampToValueAtTime(0.18 * force, at + 0.002); cg.gain.exponentialRampToValueAtTime(0.0001, at + 0.03);
+  click.connect(cg).connect(ac.destination); click.start(at); click.stop(at + 0.04);
 }
 
 // ---------------------------------------------------------------------------

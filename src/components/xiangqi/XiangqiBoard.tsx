@@ -28,19 +28,31 @@ const H = 2 * T + 2 * PAD + 9 * C;
 const GX = T + PAD, GY = T + PAD;
 const INK = '#3a2210';
 
-/** Quân cờ tướng gỗ (tâm 0,0; bán kính ~36), khắc chữ Hán. Không dùng bộ lọc SVG (bóng là hình elip) để máy yếu vẫn mượt. */
-export function XqDisc({ p, piece, lifted = false }: { p: string; piece: XqPiece; lifted?: boolean }) {
+/**
+ * Quân cờ tướng gỗ tiện (tâm 0,0; bán kính ~36), theo kiểu quân gỗ vàng cam: cạnh dày, viền vát sáng,
+ * vân gỗ vòng tròn, vòng khắc trong và chữ Hán khắc đỏ / đen. Không dùng bộ lọc SVG để máy yếu vẫn mượt.
+ * face = chỉ vẽ mặt trên (góc 3D: cạnh dày dựng bằng các lớp HTML xếp chồng).
+ */
+export function XqDisc({ p, piece, lifted = false, face = false }: { p: string; piece: XqPiece; lifted?: boolean; face?: boolean }) {
   const red = piece.side === 'r';
-  const ink = red ? '#b4231a' : '#2a1d14';
+  const ink = red ? '#b81d14' : '#24170f';
   const ch = XQ_HAN[piece.side][piece.kind];
   return (
     <g>
-      <ellipse cx={lifted ? 3 : 1.5} cy={lifted ? 12 : 6} rx="37" ry="35" fill="#2a1607" opacity={lifted ? 0.28 : 0.32} />
-      <circle cy="3.5" r="36" fill={`url(#${p}edge)`} />
-      <circle r="35" fill={`url(#${p}disc)`} stroke="#9a6b3b" strokeWidth="1.5" />
-      <circle r="28.5" fill="none" stroke={ink} strokeWidth="2.2" opacity=".85" />
-      <circle r="27" fill="none" stroke="#fff6e4" strokeWidth=".9" opacity=".6" />
-      <path d={XQ_GLYPHS[ch]} transform="translate(-23 -23) scale(.46)" fill={ink}><title>{XQ_VIET[piece.kind]}</title></path>
+      {!face && <ellipse cx={lifted ? 3 : 1.5} cy={lifted ? 13 : 8} rx="37" ry="35" fill="#2a1607" opacity={lifted ? 0.26 : 0.34} />}
+      {!face && <circle cy="6" r="36" fill={`url(#${p}edge)`} />}
+      <circle r="36" fill={`url(#${p}disc)`} />
+      {/* vân gỗ vòng */}
+      <g fill="none" stroke="#b9732f" opacity=".22" strokeWidth="1.1">
+        <circle cx="3" cy="2" r="31" /><circle cx="2" cy="1" r="18" /><circle cx="2.5" cy="1.5" r="9" />
+      </g>
+      {/* viền vát: sáng phía trên-trái, tối phía dưới-phải */}
+      <circle r="34.6" fill="none" stroke={`url(#${p}bevel)`} strokeWidth="2.8" />
+      <circle r="28.5" fill="none" stroke={ink} strokeWidth="2.4" opacity=".9" />
+      <circle r="27" fill="none" stroke="#fff3da" strokeWidth=".9" opacity=".55" />
+      {/* chữ khắc: lớp sáng lệch xuống tạo cảm giác khắc lõm */}
+      <path d={XQ_GLYPHS[ch]} transform="translate(-23.6 -22.2) scale(.48)" fill="#fff1d6" opacity=".55" />
+      <path d={XQ_GLYPHS[ch]} transform="translate(-24 -23) scale(.48)" fill={ink}><title>{XQ_VIET[piece.kind]}</title></path>
     </g>
   );
 }
@@ -64,12 +76,12 @@ function XiangqiBoard({ board, orientation = 'r', selected, targets = [], lastMo
   const X = (f: number) => GX + (flip ? 8 - f : f) * C;
   const Y = (r: number) => GY + (flip ? 9 - r : r) * C;
 
-  const hit = (e: React.PointerEvent<SVGSVGElement>) => {
+  const hit = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!onPoint) return;
     // Góc 3D: bàn nghiêng → lấy điểm từ vùng chạm trình duyệt đã tính theo hình 3D
     const hitPt = (e.target as Element).closest?.('[data-pt]')?.getAttribute('data-pt');
     if (is3d) { if (hitPt) { const [f, r] = hitPt.split(',').map(Number); onPoint({ f, r }); } return; }
-    const rect = e.currentTarget.getBoundingClientRect();
+    const rect = (e.currentTarget.querySelector('.xq-fg') as SVGSVGElement).getBoundingClientRect();
     const sx = ((e.clientX - rect.left) / rect.width) * W, sy = ((e.clientY - rect.top) / rect.height) * H;
     const fv = Math.round((sx - GX) / C), rv = Math.round((sy - GY) / C);
     if (fv < 0 || fv > 8 || rv < 0 || rv > 9) return;
@@ -78,9 +90,9 @@ function XiangqiBoard({ board, orientation = 'r', selected, targets = [], lastMo
   };
 
   return (
-    <div className="xq-board">
+    <div className="xq-board" onPointerDown={hit} style={{ touchAction: 'manipulation' }}>
       <XqBackdrop />
-      <svg className="xq-fg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label ?? 'Bàn cờ tướng'} onPointerDown={hit} style={{ touchAction: 'manipulation' }}>
+      <svg className="xq-fg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label ?? 'Bàn cờ tướng'}>
         <DiscDefs p={p} />
         {lastMove && [lastMove.from, lastMove.to].map((pt, i) => (
           <g key={`lm${i}`} transform={`translate(${X(pt.f)} ${Y(pt.r)})`} className="xq-last">
@@ -88,7 +100,7 @@ function XiangqiBoard({ board, orientation = 'r', selected, targets = [], lastMo
           </g>
         ))}
         {check && <circle cx={X(check.f)} cy={Y(check.r)} r="44" className="xq-check" />}
-        {board.flatMap((row, r) => row.map((pc, f) => pc && (
+        {!is3d && board.flatMap((row, r) => row.map((pc, f) => pc && (
           <g key={`${f}-${r}`} transform={`translate(${X(f)} ${Y(r)})`} className={selected && selected.f === f && selected.r === r ? 'xq-sel' : undefined}>
             <XqDisc p={p} piece={pc} lifted={Boolean(selected && selected.f === f && selected.r === r)} />
           </g>
@@ -108,6 +120,22 @@ function XiangqiBoard({ board, orientation = 'r', selected, targets = [], lastMo
         })()}
         {is3d && board.flatMap((row, r) => row.map((_, f) => <circle key={`h${f}-${r}`} data-pt={`${f},${r}`} cx={X(f)} cy={Y(r)} r={C * 0.5} fill="transparent" />))}
       </svg>
+      {is3d && (
+        // Góc 3D: quân là khối trụ gỗ thật — 6 lớp cạnh xếp chồng theo trục Z + mặt trên (dùng chung gradient của lớp SVG)
+        <div className="xq-p3s">
+          {board.flatMap((row, r) => row.map((pc, f) => {
+            if (!pc) return null;
+            const on = Boolean(selected && selected.f === f && selected.r === r);
+            return (
+              <div key={`${f}-${r}`} className={`xq-p3${on ? ' is-sel' : ''}`} data-pt={`${f},${r}`} style={{ left: `${(X(f) / W) * 100}%`, top: `${(Y(r) / H) * 100}%` }}>
+                <i className="xq-p3-sh" />
+                {[0, 1, 2, 3, 4, 5].map((z) => <i key={z} className="xq-p3-l" style={{ '--z': z } as React.CSSProperties} />)}
+                <svg className="xq-p3-top" viewBox="-37 -37 74 74"><XqDisc p={p} piece={pc} face /></svg>
+              </div>
+            );
+          }))}
+        </div>
+      )}
     </div>
   );
 }
