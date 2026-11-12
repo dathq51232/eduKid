@@ -158,13 +158,6 @@ export default async function ParentsPage() {
             <li><span className="ph-ic is-purple" aria-hidden="true">🎯</span><div><span>Luyện 7 ngày qua</span><b>{week.length ? `${week.length} bài` : <em>Chưa làm bài</em>}</b></div></li>
           </ul>
 
-          <div className="ph-utils-live" aria-label="Tiện ích gia đình">
-            <MiniCalendar href="/phu-huynh/tien-ich" />
-            <MoneyCard href="/phu-huynh/tien-ich?xem=thu-chi" title="Thu chi gia đình" />
-          </div>
-
-          <GalleryTeaser variant="parent" />
-
           <div className="ph-grid">
             <div className="ph-side">
             <section className="ph-card" aria-labelledby="ph-msg-title">
@@ -232,6 +225,14 @@ export default async function ParentsPage() {
               <FamilyInfo contacts={contacts} address={o?.address ?? null} className={cls?.name ?? null} />
             </div>
           </div>
+
+          <GalleryTeaser variant="parent" />
+
+          {/* Tiện ích gia đình (lịch, thu chi): việc riêng của gia đình, ít gấp → để cuối trang */}
+          <div className="ph-utils-live" aria-label="Tiện ích gia đình">
+            <MiniCalendar href="/phu-huynh/tien-ich" />
+            <MoneyCard href="/phu-huynh/tien-ich?xem=thu-chi" title="Thu chi gia đình" />
+          </div>
         </main>
       </>
     );
@@ -268,11 +269,6 @@ export default async function ParentsPage() {
           <div><p className="dash-kicker">Phụ huynh</p><h1>Chào {viewer.displayName}!</h1></div>
           <SignOutButton />
         </div>
-
-        <div className="ph-utils-live" aria-label="Tiện ích gia đình">
-            <MiniCalendar href="/phu-huynh/tien-ich" />
-            <MoneyCard href="/phu-huynh/tien-ich?xem=thu-chi" title="Thu chi gia đình" />
-          </div>
 
         {famErr ? <p className="adm-alert is-warn">Chưa bật “Học tại nhà”: hãy chạy <code>supabase/migrations/0047_family_accounts.sql</code> trên Supabase.</p>
           : <FamilyPanel kids={famKids} code={famCode} origin={origin} />}
@@ -312,6 +308,11 @@ export default async function ParentsPage() {
             </section>
           );
         })}
+        {/* Tiện ích gia đình (lịch, thu chi) để cuối trang */}
+        <div className="ph-utils-live" aria-label="Tiện ích gia đình">
+          <MiniCalendar href="/phu-huynh/tien-ich" />
+          <MoneyCard href="/phu-huynh/tien-ich?xem=thu-chi" title="Thu chi gia đình" />
+        </div>
       </main>
     </>
   );
