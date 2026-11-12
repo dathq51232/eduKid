@@ -1,6 +1,7 @@
 'use client';
 
-// Thẻ "Phòng triển lãm của lớp" trên trang học sinh / phụ huynh: số tác phẩm, số tác phẩm mới từ lần xem trước, lối vào Luyện chữ.
+// Thẻ "Phòng triển lãm của lớp" trên trang học sinh / phụ huynh: số tác phẩm, số tác phẩm mới từ lần xem trước,
+// lối vào Luyện chữ (chỉ học sinh — phụ huynh chỉ vào xem).
 // Máy chủ chưa chạy migration 0039 thì không hiện gì.
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -40,16 +41,18 @@ export default function GalleryTeaser({ variant = 'student' }: { variant?: 'stud
       <span className="gt-ic" aria-hidden="true"><GalleryHorizontalEnd /></span>
       <div className="gt-body">
         <h2 id="gt-h">Phòng triển lãm lớp {info.className}</h2>
-        <p>
-          {info.total ? `${info.total} tác phẩm trên tường` : 'Chưa có tác phẩm'}
-          {info.mine ? ` · ${variant === 'parent' ? 'của con' : 'của em'}: ${info.mine}` : ''}
-          {info.hearts ? ` · ${info.hearts} lượt khen` : ''}
+        {/* Mỗi cụm không bị ngắt giữa chừng khi thẻ nằm trong cột hẹp */}
+        <p className="gt-meta">
+          <span>{info.total ? `${info.total} tác phẩm trên tường` : 'Chưa có tác phẩm'}</span>
+          {info.mine > 0 && <span>{variant === 'parent' ? 'của con' : 'của em'}: {info.mine}</span>}
+          {info.hearts > 0 && <span>{info.hearts} lượt khen</span>}
         </p>
         {info.fresh > 0 && info.total > 0 && <p className="gt-new"><Sparkles aria-hidden="true" /> {info.fresh} tác phẩm mới</p>}
       </div>
       <div className="gt-act">
         <Link href="/trien-lam" className="btn btn-primary btn-sm">Vào xem</Link>
-        <Link href="/luyen-chu" className="btn btn-outline btn-sm"><PenLine aria-hidden="true" /> Luyện chữ</Link>
+        {/* Phụ huynh chỉ vào xem; luyện chữ là việc của học sinh */}
+        {variant === 'student' && <Link href="/luyen-chu" className="btn btn-outline btn-sm"><PenLine aria-hidden="true" /> Luyện chữ</Link>}
       </div>
     </section>
   );
