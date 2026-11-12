@@ -20,10 +20,10 @@ import { GROUPS, TOOLS, classIdOfPath, fold, groupOfTool, lastToolOf, rememberTo
 /** Biểu tượng 3D của từng công cụ (public/emoji/tool/<khoá>.webp) */
 export const TOOL_ICON: Record<ToolKey, IconComp> = Object.fromEntries(
   (['so-lop', 'goi-ten', 'ke-hoach', 'giao-bai', 'phieu-bai-tap', 'phieu-chinh-ta', 'lo-hong', 'de-kiem-tra', 'nhan-xet', 'ket-qua-truong', 'phieu-tien-bo',
-    'thu-khen', 'lop', 'nhom', 'thi-dua', 'hen-gio', 'danh-ba', 'bai-giang-3d', 'tin-nhan', 'trien-lam', 'luyen-chu', 'bang-trang'] as ToolKey[]).map((k) => [k, icon3d(k)]),
+    'thu-khen', 'lop', 'nhom', 'thi-dua', 'hen-gio', 'danh-ba', 'bai-giang-3d', 'tin-nhan', 'trien-lam', 'luyen-chu', 'bang-trang', 'lich', 'thu-chi', 'quy-lop'] as ToolKey[]).map((k) => [k, icon3d(k)]),
 ) as Record<ToolKey, IconComp>;
 /** Biểu tượng của nhóm công cụ (cột trái gọn) */
-export const GROUP_ICON: Record<string, IconComp> = { 'Trên lớp': icon3d('g-tren-lop'), 'Dạy học': icon3d('g-day-hoc'), 'Đánh giá': icon3d('g-danh-gia'), 'Phụ huynh': icon3d('g-phu-huynh'), Lớp: icon3d('lop') };
+export const GROUP_ICON: Record<string, IconComp> = { 'Trên lớp': icon3d('g-tren-lop'), 'Dạy học': icon3d('g-day-hoc'), 'Đánh giá': icon3d('g-danh-gia'), 'Phụ huynh': icon3d('g-phu-huynh'), 'Tiện ích': icon3d('g-tien-ich'), Lớp: icon3d('lop') };
 const MINI_KEY = 'gv-cot-trai-gon';
 export const USAGE_KEY = 'gv-dung-nhanh';
 

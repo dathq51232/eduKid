@@ -4,7 +4,8 @@ import { FEATURES } from '@/lib/features';
 export type ToolKey =
   | 'so-lop' | 'goi-ten' | 'ke-hoach' | 'giao-bai' | 'phieu-bai-tap' | 'phieu-chinh-ta'
   | 'lo-hong' | 'de-kiem-tra' | 'nhan-xet' | 'ket-qua-truong' | 'phieu-tien-bo' | 'thu-khen' | 'lop'
-  | 'nhom' | 'thi-dua' | 'hen-gio' | 'danh-ba' | 'bai-giang-3d' | 'tin-nhan' | 'trien-lam' | 'luyen-chu' | 'bang-trang';
+  | 'nhom' | 'thi-dua' | 'hen-gio' | 'danh-ba' | 'bai-giang-3d' | 'tin-nhan' | 'trien-lam' | 'luyen-chu' | 'bang-trang'
+  | 'lich' | 'thu-chi' | 'quy-lop';
 export type ToolTone = 'green' | 'yellow' | 'blue' | 'violet' | 'red' | 'coral';
 export type Tool = { key: ToolKey; label: string; desc: string; group: string; tone: ToolTone; path: string; keywords: string };
 
@@ -30,11 +31,14 @@ const ALL: Tool[] = [
   { key: 'phieu-tien-bo', label: 'Phiếu báo tiến bộ', desc: 'Lời nhắn cho phụ huynh', group: 'Phụ huynh', tone: 'coral', path: 'phieu-tien-bo', keywords: 'phieu bao tien bo phu huynh' },
   { key: 'trien-lam', label: 'Phòng triển lãm', desc: 'Phòng 3D: thư khen, tranh, nét chữ', group: 'Phụ huynh', tone: 'blue', path: 'trien-lam', keywords: 'phong trien lam 3d trung bay tac pham tranh ve my thuat net chu luyen chu thu khen phu huynh xem' },
   { key: 'thu-khen', label: 'Thư khen', desc: 'PDF, ảnh PNG, in', group: 'Phụ huynh', tone: 'violet', path: 'thu-khen', keywords: 'thu khen giay khen' },
+  { key: 'lich', label: 'Lịch âm dương', desc: 'Ngày âm, lễ, sinh nhật học sinh', group: 'Tiện ích', tone: 'yellow', path: 'lich', keywords: 'lich am duong am lich ngay le tet can chi doi ngay sinh nhat hoang dao' },
+  { key: 'thu-chi', label: 'Thu chi cá nhân', desc: 'Sổ tiền riêng, chỉ mình xem', group: 'Tiện ích', tone: 'green', path: 'thu-chi', keywords: 'thu chi ca nhan so tien luong chi tieu tiet kiem' },
+  { key: 'quy-lop', label: 'Quỹ lớp', desc: 'Khoản thu theo em, chi, tồn quỹ', group: 'Tiện ích', tone: 'coral', path: 'quy-lop', keywords: 'quy lop thu chi tien nop chua nop ton quy cong khai phu huynh' },
   { key: 'lop', label: 'Học sinh & mã lớp', desc: 'Thêm em, PIN, thẻ đăng nhập', group: 'Lớp', tone: 'blue', path: '', keywords: 'hoc sinh pin ma lop the dang nhap them em quan ly lop' },
 ];
 
 export const TOOLS: Tool[] = ALL.filter((t) => FEATURES.teacherRecords || (t.key !== 'nhan-xet' && t.key !== 'ket-qua-truong'));
-export const TOOL_GROUPS = ['Trên lớp', 'Dạy học', 'Đánh giá', 'Phụ huynh', 'Lớp'];
+export const TOOL_GROUPS = ['Trên lớp', 'Dạy học', 'Đánh giá', 'Phụ huynh', 'Tiện ích', 'Lớp'];
 /** Nhóm công cụ: cột trái chỉ hiện các nhóm, công cụ trong nhóm hiện thành hàng tab ngang ở đầu trang */
 export type ToolGroup = { key: string; label: string; short: string; tone: ToolTone };
 export const GROUPS: ToolGroup[] = [
@@ -42,6 +46,7 @@ export const GROUPS: ToolGroup[] = [
   { key: 'Dạy học', label: 'Dạy học', short: 'Dạy học', tone: 'violet' },
   { key: 'Đánh giá', label: 'Đánh giá', short: 'Đánh giá', tone: 'red' },
   { key: 'Phụ huynh', label: 'Phụ huynh', short: 'Phụ huynh', tone: 'coral' },
+  { key: 'Tiện ích', label: 'Tiện ích', short: 'Tiện ích', tone: 'yellow' },
   { key: 'Lớp', label: 'Lớp & học sinh', short: 'Lớp', tone: 'blue' },
 ];
 export const toolsOfGroup = (g: string) => TOOLS.filter((t) => t.group === g);
