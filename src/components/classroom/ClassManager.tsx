@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, KeyRound, Lock, LockOpen, Printer, RotateCcw, UserMinus, UserPlus, Users } from 'lucide-react';
+import { ChevronDown, Contact, Eye, EyeOff, KeyRound, Lock, LockOpen, Printer, RotateCcw, UserMinus, UserPlus, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { parsePastedNames } from '@/lib/classroom/names';
 import ContactAdmin from '@/components/ContactAdmin';
+import StudentProfiles from '@/components/classroom/StudentProfiles';
+import { birthIso, matchPaste, parseProfilePaste, parseRoll } from '@/lib/classroom/profiles';
 import { ADMIN_CONTACT, FREE_STUDENT_LIMIT } from '@/lib/contact';
 
 export type RosterRow = {
@@ -30,6 +32,7 @@ export type SummaryRow = {
 type Card = { id: string; name: string; pin: string };
 type Cls = { id: string; name: string; grade: number; join_code: string; status: string };
 
+const VIEW_KEY = 'gv-bang-hoc-sinh';
 const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '—');
 
 export type BillingRow = { student_id: string; active: boolean; reason: 'free' | 'paid' | 'trial' | 'expired'; until: string | null };
@@ -53,6 +56,10 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
   const [busy, setBusy] = useState<string | null>(null);
   const [showPins, setShowPins] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  // Bảng học sinh: "Tài khoản & học tập" hoặc "Hồ sơ" (ngày sinh, chỗ ở) — nhớ trên máy này
+  const [view, setView] = useState<'learn' | 'profile'>('learn');
+  useEffect(() => { try { if (localStorage.getItem(VIEW_KEY) === 'profile') setView('profile'); } catch { /* bỏ qua */ } }, []);
+  const pickView = (v: 'learn' | 'profile') => { setView(v); try { localStorage.setItem(VIEW_KEY, v); } catch { /* bỏ qua */ } };
   const active = roster.filter((r) => r.membership_status === 'active');
   // Còn thêm được bao nhiêu em: tối đa 40 / lớp và trong gói của giáo viên (tính trên mọi lớp)
   const room = Math.max(0, Math.min(40 - active.length, plan ? plan.limit - plan.used : 40));
@@ -96,6 +103,12 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
       setCards(made);
       setNames('');
       const failed = data.created.length - made.length;
+      // Dán kèm ngày sinh / chỗ ở (chép cả dòng từ file của trường) → lưu luôn vào hồ sơ; lỗi (chưa chạy 0050) thì bỏ qua
+      const prof = matchPaste(parseProfilePaste(names), (data.created as Card[]).map((c) => ({ id: c.id, name: c.name })))
+        .matched.filter((m) => m.row.birth || m.row.address || m.row.roll);
+      if (prof.length) {
+        await createClient().rpc('teacher_profiles_save', { p_class: cls.id, p_rows: prof.map((m) => ({ student_id: m.student.id, roll: parseRoll(m.row.roll), birth: birthIso(m.row.birth), address: m.row.address || null })) });
+      }
       setMsg({ kind: failed ? 'error' : 'ok', text: `Đã thêm ${data.created.length} học sinh${failed ? `, ${failed} bạn chưa tạo được tài khoản (bấm "Đặt PIN" để thử lại)` : ''}. Có thể in thẻ đăng nhập ngay; PIN cũng xem lại được ở bảng Học sinh.` });
       router.refresh();
     } catch {
@@ -165,8 +178,8 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
         </section>
       )}
 
-      <section className="dash-card no-print">
-        <h2><UserPlus aria-hidden="true" /> Thêm học sinh <span className="dash-muted">({capLabel})</span></h2>
+      <details className="dash-card no-print cm-add" open={active.length === 0 || undefined}>
+        <summary><h2><UserPlus aria-hidden="true" /> Thêm học sinh <span className="dash-muted">({capLabel})</span></h2><ChevronDown aria-hidden="true" className="cm-add-caret" /></summary>
         {room === 0 ? (
           active.length >= 40 ? <p className="adm-alert is-info">Lớp đã đủ 40 học sinh — số tối đa của một lớp.</p> : (
             <>
@@ -176,7 +189,7 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
           )
         ) : (
         <form className="dash-form" onSubmit={addStudents}>
-          <label className="adm-field"><span>Mỗi dòng một học sinh (tên gọi hoặc họ và tên). Có thể chép thẳng từ file vnEdu/Excel: chọn các dòng học sinh (từ cột STT đến cột họ tên hoặc hết dòng), Ctrl+C rồi dán vào đây — hệ thống chỉ lấy họ tên, bỏ qua số thứ tự, mã định danh, ngày sinh.</span>
+          <label className="adm-field"><span>Mỗi dòng một học sinh (tên gọi hoặc họ và tên). Có thể chép thẳng từ file vnEdu/Excel: chọn các dòng học sinh (từ cột STT đến cột họ tên hoặc hết dòng), Ctrl+C rồi dán vào đây — hệ thống tự lấy họ tên; nếu chép kèm STT, ngày sinh, chỗ ở thì lưu luôn vào Hồ sơ học sinh.</span>
             <textarea rows={6} value={names} onChange={(e) => setNames(e.target.value)} placeholder={'Nguyễn Văn An\nTrần Thị Bình\n(hoặc dán các dòng chép từ vnEdu)'} />
           </label>
           {pasted.length > 0 && (
@@ -195,12 +208,18 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
           )}
         </form>
         )}
-      </section>
+      </details>
 
       <section className="dash-section no-print">
         <div className="dash-card-head">
           <h2><Users aria-hidden="true" /> Học sinh ({active.length})</h2>
           {active.length > 0 && (
+            <div className="cm-views" role="tablist" aria-label="Xem bảng học sinh">
+              <button type="button" role="tab" aria-selected={view === 'learn'} className={view === 'learn' ? 'is-on' : ''} onClick={() => pickView('learn')}><KeyRound aria-hidden="true" /> Tài khoản & học tập</button>
+              <button type="button" role="tab" aria-selected={view === 'profile'} className={view === 'profile' ? 'is-on' : ''} onClick={() => pickView('profile')}><Contact aria-hidden="true" /> Hồ sơ (ngày sinh, chỗ ở)</button>
+            </div>
+          )}
+          {active.length > 0 && view === 'learn' && (
             <div className="row-actions">
               <button type="button" className="mini-btn" onClick={() => setShowPins((v) => !v)} aria-pressed={showPins}>
                 {showPins ? <><EyeOff aria-hidden="true" /> Ẩn PIN</> : <><Eye aria-hidden="true" /> Hiện PIN</>}
@@ -212,7 +231,9 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
             </div>
           )}
         </div>
-        {active.length === 0 ? <p className="dash-muted">Lớp chưa có học sinh.</p> : (
+        {active.length === 0 ? <p className="dash-muted">Lớp chưa có học sinh.</p> : view === 'profile' ? (
+          <StudentProfiles classId={cls.id} className={cls.name} students={active.map((r) => ({ id: r.student_id, name: r.display_name }))} />
+        ) : (
           <div className="table-scroll">
             <table className="roster-table">
               <thead>
