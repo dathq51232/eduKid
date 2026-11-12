@@ -7741,7 +7741,7 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
   .kh-side { position: static; display: flex; overflow-x: auto; padding: 6px; }
   .kh-side-k { display: none; }
   .kh-side button { width: auto; white-space: nowrap; }
-  .kb-grid { overflow-x: auto; grid-template-columns: 30px repeat(5, minmax(150px, 1fr)) !important; }
+  .kb-grid { grid-template-columns: 30px repeat(5, minmax(0, 1fr)) !important; }
 }
 
 /* Dòng thời gian hiệu ứng (soạn bài thao giảng) */
@@ -10216,3 +10216,53 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .wsb-frames svg { width: 100%; aspect-ratio: 210 / 297; height: auto; border-radius: 4px; box-shadow: 0 1px 4px rgb(15 23 42 / .15); background: #fff; }
 .wsb-frames b { font-size: 11.5px; font-weight: 700; line-height: 1.25; text-align: center; }
 .wsb-frame-none { display: grid; place-items: center; width: 100%; aspect-ratio: 210 / 297; border: 1px dashed var(--line-strong); border-radius: 4px; color: var(--muted); font-size: 22px; }
+
+/* ===== Responsive khu giáo viên: màn hình dọc, tablet, laptop nhỏ — không còn thanh kéo ngang ===== */
+/* Hàng tab công cụ: máy tính xuống dòng thay vì kéo ngang; điện thoại vẫn vuốt ngang nhưng ẩn thanh cuộn */
+@media (min-width: 901px) {
+  .tsh-gtabs { flex-wrap: wrap; overflow: visible; row-gap: 4px; padding-top: 8px; padding-bottom: 8px; }
+}
+@media (max-width: 1400px) { .tsh-gtab { padding: 4px 11px 4px 6px; font-size: 14px; gap: 6px; } }
+@media (max-width: 900px) {
+  .tsh-gtabs { scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .tsh-gtabs::-webkit-scrollbar { display: none; }
+}
+/* Nội dung không bao giờ rộng hơn màn hình */
+.tsh-main { overflow-x: clip; }
+.tsh-main > .dash.wrap, .tsh-main > main.wrap { max-width: 100%; }
+@media (max-width: 1199px) { .tsh-main > .dash.wrap, .tsh-main > main.wrap { padding-left: 18px; padding-right: 18px; } }
+@media (max-width: 600px) { .tsh-main > .dash.wrap, .tsh-main > main.wrap { padding-left: 12px; padding-right: 12px; } }
+
+/* Kế hoạch bài dạy: dưới 1400px menu bên trái thành hàng tab trên đầu → lịch tuần chiếm hết bề ngang */
+@media (max-width: 1400px) {
+  .kh { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .kh-side { position: static; display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; }
+  .kh-side-k { display: none; }
+  .kh-side button { width: auto; white-space: nowrap; }
+}
+/* Thẻ tiết hẹp: cờ trạng thái lên dòng riêng, chữ không bị vỡ từng từ */
+.kb-col { container-type: inline-size; }
+@container (max-width: 150px) {
+  .kb-card { padding: 6px 7px 6px 8px; }
+  .kb-card b { padding-right: 0; }
+  .kb-flags { position: static; order: -1; justify-self: end; }
+}
+.kb-card span { overflow-wrap: anywhere; }
+/* Điện thoại: bỏ lưới 5 cột, xem từng ngày xếp dọc */
+.kb-days { display: none; }
+@media (max-width: 640px) {
+  .kb-grid { display: none !important; }
+  .kb-days { display: grid; gap: 10px; }
+  .kb-day { padding: 10px 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+  .kb-day h4 { margin: 0 0 6px; font-size: 15px; }
+  .kb-day h4 small { color: var(--muted); font-weight: 600; }
+  .kb-day-ses { margin: 6px 0 4px; color: var(--muted); font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  .kb-day-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+  .kh-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+}
+/* thanh tab đáy điện thoại: chia đều theo số nhóm (6 nhóm sau khi thêm Tiện ích), chữ không xuống dòng */
+@media (max-width: 900px) {
+  .tsh-tabs { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); padding-left: 2px; padding-right: 2px; }
+  .tsh-tabs a, .tsh-tabs button { min-width: 0; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+@media (max-width: 380px) { .tsh-tabs a, .tsh-tabs button { font-size: 10px; } }

@@ -51,7 +51,22 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
   // cột trái thu gọn thành dải biểu tượng (nhớ trên máy này)
   const [mini, setMini] = useState(false);
   useEffect(() => { try { setMini(localStorage.getItem(MINI_KEY) === '1'); } catch { /* bỏ qua */ } }, []);
-  const toggleMini = () => setMini((v) => { try { localStorage.setItem(MINI_KEY, v ? '0' : '1'); } catch { /* bỏ qua */ } return !v; });
+  // Màn hình vừa (901–1199px: tablet ngang, màn hình dọc, laptop nhỏ): tự thu cột trái thành dải biểu tượng
+  // để nội dung đủ rộng; bấm "Mở rộng" thì mở tạm (không lưu). Màn hình rộng dùng lựa chọn đã nhớ.
+  const [narrow, setNarrow] = useState(false);
+  const [wideOnce, setWideOnce] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 901px) and (max-width: 1199px)');
+    const f = () => { setNarrow(mq.matches); setWideOnce(false); };
+    f();
+    mq.addEventListener('change', f);
+    return () => mq.removeEventListener('change', f);
+  }, []);
+  const isMini = narrow ? !wideOnce : mini;
+  const toggleMini = () => {
+    if (narrow) { setWideOnce((v) => !v); return; }
+    setMini((v) => { try { localStorage.setItem(MINI_KEY, v ? '0' : '1'); } catch { /* bỏ qua */ } return !v; });
+  };
   // bấm nhóm: mở công cụ dùng gần nhất trong nhóm
   const [lastHref, setLastHref] = useState<Record<string, ToolKey>>({});
   useEffect(() => { setLastHref(Object.fromEntries(GROUPS.map((g) => [g.key, lastToolOf(g.key)?.key]).filter(([, k]) => k)) as Record<string, ToolKey>); }, [pathname]);
@@ -146,7 +161,7 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
   // trình chiếu bài thao giảng: chiếm trọn màn hình, không có thanh công cụ
   if (/\/trinh-chieu(\/|$)/.test(pathname)) return <>{children}</>;
   return (
-    <div className={`tsh${mini ? ' is-mini' : ''}`}>
+    <div className={`tsh${isMini ? ' is-mini' : ''}`}>
       <aside className={`tsh-side${drawer ? ' is-open' : ''}`} aria-label="Công cụ giáo viên">
         <div className="tsh-brand">
           <Link href="/" aria-label="EduChain Kids - Trang chủ"><BrandLogo size={36} /></Link>
@@ -182,8 +197,8 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
         </button>
         <nav className="tsh-navs">
           {nav}
-          <button type="button" className="tsh-nav tsh-mini-btn" onClick={toggleMini} aria-label={mini ? 'Mở rộng cột trái' : 'Thu gọn cột trái'} title={mini ? 'Mở rộng cột trái' : 'Thu gọn cột trái'}>
-            <span className="tsh-ic">{mini ? <PanelLeftOpen aria-hidden="true" /> : <PanelLeftClose aria-hidden="true" />}</span><span className="tsh-nav-t">Thu gọn menu</span>
+          <button type="button" className="tsh-nav tsh-mini-btn" onClick={toggleMini} aria-label={isMini ? 'Mở rộng cột trái' : 'Thu gọn cột trái'} title={isMini ? 'Mở rộng cột trái' : 'Thu gọn cột trái'}>
+            <span className="tsh-ic">{isMini ? <PanelLeftOpen aria-hidden="true" /> : <PanelLeftClose aria-hidden="true" />}</span><span className="tsh-nav-t">Thu gọn menu</span>
           </button>
         </nav>
         <div className="tsh-me">

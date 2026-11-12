@@ -64,6 +64,15 @@ export default function PlanWeekBoard({ classId, week, setWeek, saved, details, 
   const cell = (date: string, pm: boolean) => cards.filter((c) => c.date === date && c.pm === pm);
   const pickCard = (c: Card) => { setSel(c.key === sel ? null : c.key); setTab('ga'); };
 
+  const card = (c: (typeof cards)[number]) => (
+    <button key={c.key} type="button" className={`kb-card${c.draft ? ' is-todo' : ''}${sel === c.key ? ' is-sel' : ''}`} style={{ '--c': colorOf(c.subject) } as React.CSSProperties}
+      onClick={() => pickCard(c)} aria-pressed={sel === c.key}>
+      <b>{c.period ? `T${c.period} · ` : ''}{c.label}{c.ppct ? ` · ${c.ppct}` : ''}</b>
+      <span>{c.title}</span>
+      <i className="kb-flags" aria-label={[c.draft ? 'chưa lưu' : 'đã có giáo án', c.kho ? 'từ kho' : '', c.deck ? 'có bài giảng' : ''].filter(Boolean).join(', ')}>{c.draft ? '✏️' : '✅'}{c.kho ? '📚' : ''}{c.deck ? '🎬' : ''}</i>
+    </button>
+  );
+
   return (
     <div className="kb">
       <div className="kb-bar">
@@ -91,17 +100,28 @@ export default function PlanWeekBoard({ classId, week, setWeek, saved, details, 
               {days.map((d) => (
                 <div key={d} className="kb-col">
                   {cell(d, pm).map((c) => (
-                    <button key={c.key} type="button" className={`kb-card${c.draft ? ' is-todo' : ''}${sel === c.key ? ' is-sel' : ''}`} style={{ '--c': colorOf(c.subject) } as React.CSSProperties}
-                      onClick={() => pickCard(c)} aria-pressed={sel === c.key}>
-                      <b>{c.period ? `T${c.period} · ` : ''}{c.label}{c.ppct ? ` · ${c.ppct}` : ''}</b>
-                      <span>{c.title}</span>
-                      <i className="kb-flags" aria-label={[c.draft ? 'chưa lưu' : 'đã có giáo án', c.kho ? 'từ kho' : '', c.deck ? 'có bài giảng' : ''].filter(Boolean).join(', ')}>{c.draft ? '✏️' : '✅'}{c.kho ? '📚' : ''}{c.deck ? '🎬' : ''}</i>
-                    </button>
+                    card(c)
                   ))}
                 </div>
               ))}
             </div>
           ))}
+        </div>
+      )}
+      {cards.length > 0 && (
+        // điện thoại: từng ngày xếp dọc (không phải kéo ngang lưới 5 cột)
+        <div className="kb-days">
+          {days.map((d) => {
+            const am = cell(d, false), pm = hasPm ? cell(d, true) : [];
+            if (!am.length && !pm.length) return null;
+            return (
+              <section key={d} className="kb-day">
+                <h4>{weekdayVi(d)} <small>{viDate(d).slice(0, -5)}</small></h4>
+                {am.length > 0 && <><p className="kb-day-ses">Sáng</p><div className="kb-day-cards">{am.map(card)}</div></>}
+                {pm.length > 0 && <><p className="kb-day-ses">Chiều</p><div className="kb-day-cards">{pm.map(card)}</div></>}
+              </section>
+            );
+          })}
         </div>
       )}
       {cards.length > 0 && <p className="kb-legend">✅ đã có giáo án · ✏️ chưa lưu (viền đứt) · 📚 giáo án từ kho · 🎬 có bài giảng — bấm một tiết để xem giáo án, bài giảng, phiếu của tiết đó</p>}
