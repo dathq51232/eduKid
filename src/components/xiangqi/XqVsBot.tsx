@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Bot, Flag, Handshake, Lightbulb, Play, RefreshCcw, RotateCcw, Undo2, User } from 'lucide-react';
 import XiangqiBoard, { XQ_VIET, XqDiscIcon } from './XiangqiBoard';
-import { CapturedRow, XQ_RULES, XQ_SIDE, XqMoveList, boardOf, capturedOf, idx, pt, vnHistory } from './xq-ui';
+import { CapturedRow, XQ_RULES, XQ_SIDE, boardOf, capturedOf, idx, pt, vnHistory } from './xq-ui';
 import { XqGame, kindOf, sqName, type XSide } from '@/lib/xiangqi/engine';
 import { xqEvaluate, xqPickMove } from '@/lib/xiangqi/bot';
 import { BOT_LEVELS, type BotLevel } from '@/lib/chess/bot';
@@ -227,8 +227,6 @@ export default function XqVsBot() {
       <aside className="chs-side">
         <p className={`chs-status${result ? ' is-end' : ''}`} role="status" aria-live="polite">{status || ' '}</p>
         {note && <p className="chs-note">{note}</p>}
-        <XqMoveList notes={notes} />
-        <p className="xq-legend">Ghi nước: <b>.</b> tiến · <b>/</b> thoái · <b>-</b> bình (đi ngang). Số cột đếm từ phải sang của mỗi bên.</p>
         <div className="chs-tools">
           <button type="button" className="btn btn-outline btn-sm" onClick={askHint} disabled={!!result || thinking || g.turn() !== me}><Lightbulb aria-hidden="true" /> Gợi ý</button>
           {!timed && <button type="button" className="btn btn-outline btn-sm" onClick={undo} disabled={thinking || g.ucis.length === 0}><Undo2 aria-hidden="true" /> Đi lại</button>}

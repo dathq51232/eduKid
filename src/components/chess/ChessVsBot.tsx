@@ -7,7 +7,7 @@ import { Chess, type Color, type PieceSymbol } from 'chess.js';
 import { Bot, Flag, Handshake, Lightbulb, Play, RefreshCcw, RotateCcw, Undo2, User } from 'lucide-react';
 import ChessBoard, { type BoardMove } from './ChessBoard';
 import { PIECE_NAME, PieceIcon } from './ChessPieces';
-import { BoardAlerts, LiveClock, MoveList, SoundButton, TurnBar } from './ChessParts';
+import { BoardAlerts, LiveClock, SoundButton, TurnBar } from './ChessParts';
 import { BOT_LEVELS, Board, pickMove, type BotLevel, type BotMove } from '@/lib/chess/bot';
 import { REASON_TEXT, SIDE_NAME, TIME_CONTROLS, boardResult, captured, fmtClock, timeoutResult, type GameResult } from '@/lib/chess/game';
 import { sfx } from '@/lib/chess/sound-pref';
@@ -230,7 +230,6 @@ export default function ChessVsBot() {
       <aside className="chs-side">
         <p className={`chs-status${result ? ' is-end' : ''}`} role="status" aria-live="polite">{status || ' '}</p>
         {note && <p className="chs-note">{note}</p>}
-        <MoveList sans={sans} />
         <div className="chs-tools">
           <button type="button" className="btn btn-outline btn-sm" onClick={askHint} disabled={!!result || thinking || g.turn() !== me}><Lightbulb aria-hidden="true" /> Gợi ý</button>
           {!timed && <button type="button" className="btn btn-outline btn-sm" onClick={undo} disabled={thinking || sans.length === 0}><Undo2 aria-hidden="true" /> Đi lại</button>}

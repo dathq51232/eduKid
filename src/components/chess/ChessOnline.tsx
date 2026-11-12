@@ -9,7 +9,7 @@ import { Chess, type Color } from 'chess.js';
 import { ArrowLeft, Flag, Handshake, Loader2, RefreshCcw, X } from 'lucide-react';
 import ChessBoard, { type BoardMove } from './ChessBoard';
 import { PIECE_NAME, PieceIcon } from './ChessPieces';
-import { BoardAlerts, LiveClock, MoveList, SoundButton, TurnBar } from './ChessParts';
+import { BoardAlerts, LiveClock, SoundButton, TurnBar } from './ChessParts';
 import { reasonText, SIDE_NAME, captured, fmtClock } from '@/lib/chess/game';
 import { EMOTES, ERROR_TEXT, replay } from '@/lib/chess/online-rules';
 import { notifyTurn, sfx } from '@/lib/chess/sound-pref';
@@ -41,7 +41,6 @@ export default function ChessOnline({ id, meId }: { id: string; meId: string }) 
     try { c.move({ from: pending.slice(0, 2), to: pending.slice(2, 4), promotion: pending[4] }); } catch { return game; }
     return c;
   }, [game, pending]);
-  const sans = useMemo(() => (g ? replay(g.moves).history() : []), [g]);
 
   // Âm thanh khi có nước mới / ván kết thúc; ván vừa kết thúc thì tải lại để có điểm Elo mới
   const prevStatus = useRef<string>('');
@@ -125,7 +124,6 @@ export default function ChessOnline({ id, meId }: { id: string; meId: string }) 
         )}
         {myOffer && <p className="chs-note">Em đã xin hòa, chờ bạn trả lời…</p>}
         {note && <p className="chs-note" role="alert">{note}</p>}
-        <MoveList sans={sans} />
         {active && (
           <>
             <div className="chs-emotes" aria-label="Gửi biểu cảm">{EMOTES.map((e) => <button key={e.code} type="button" onClick={() => void act({ action: 'emote', code: e.code })} title={e.text}>{e.text}</button>)}</div>

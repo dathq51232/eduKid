@@ -41,18 +41,6 @@ export function vnHistory(ucis: string[]): string[] {
   return out;
 }
 
-export function XqMoveList({ notes }: { notes: string[] }) {
-  const rows: [number, string, string?][] = [];
-  for (let i = 0; i < notes.length; i += 2) rows.push([i / 2 + 1, notes[i], notes[i + 1]]);
-  return (
-    <div className="chs-moves" aria-label="Các nước đã đi">
-      {rows.length === 0 ? <p className="dash-muted">Chưa có nước nào. Bên Đỏ đi trước.</p> : (
-        <ol>{rows.map(([n, a, b]) => <li key={n}><span>{n}.</span><b className="xq-mv is-r">{a}</b><b className="xq-mv">{b ?? ''}</b></li>)}</ol>
-      )}
-    </div>
-  );
-}
-
 export function CapturedRow({ kinds, side }: { kinds: XKind[]; side: 'r' | 'b' }) {
   return <span className="chs-caps xq-caps">{kinds.map((k, i) => <XqDiscIcon key={i} piece={{ side, kind: k }} size={22} />)}</span>;
 }

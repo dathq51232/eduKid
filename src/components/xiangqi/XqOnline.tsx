@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Flag, Handshake, Loader2, RefreshCcw, X } from 'lucide-react';
 import XiangqiBoard, { XQ_VIET, XqDiscIcon } from './XiangqiBoard';
-import { CapturedRow, XQ_SIDE, XqMoveList, boardOf, capturedOf, idx, pt, vnHistory } from './xq-ui';
+import { CapturedRow, XQ_SIDE, boardOf, capturedOf, idx, pt, vnHistory } from './xq-ui';
 import { useOnlineGame } from '@/components/chess/useOnlineGame';
 import { BoardAlerts, LiveClock, SoundButton, TurnBar } from '@/components/chess/ChessParts';
 import { XqGame, kindOf, sqName, type XSide } from '@/lib/xiangqi/engine';
@@ -129,7 +129,6 @@ export default function XqOnline({ id, meId }: { id: string; meId: string }) {
         )}
         {myOffer && <p className="chs-note">Em đã xin hòa, chờ bạn trả lời…</p>}
         {note && <p className="chs-note" role="alert">{note}</p>}
-        <XqMoveList notes={notes} />
         {active && (
           <>
             <div className="chs-emotes" aria-label="Gửi biểu cảm">{EMOTES.map((e) => <button key={e.code} type="button" onClick={() => void act({ action: 'emote', code: e.code })} title={e.text}>{e.text}</button>)}</div>

@@ -6,7 +6,6 @@
 import { memo, useId } from 'react';
 import { DiscDefs, WoodDefs, WoodFrame, WoodSurface } from '@/components/chess/Wood';
 import { XQ_GLYPHS } from '@/lib/xiangqi/glyphs';
-import { useBoardView } from '@/components/chess/BoardView';
 
 export type XqSide = 'r' | 'b';
 export type XqKind = 'k' | 'a' | 'e' | 'h' | 'r' | 'c' | 'p';
@@ -31,16 +30,15 @@ const INK = '#3a2210';
 /**
  * Quân cờ tướng gỗ tiện (tâm 0,0; bán kính ~36), theo kiểu quân gỗ vàng cam: cạnh dày, viền vát sáng,
  * vân gỗ vòng tròn, vòng khắc trong và chữ Hán khắc đỏ / đen. Không dùng bộ lọc SVG để máy yếu vẫn mượt.
- * face = chỉ vẽ mặt trên (góc 3D: cạnh dày dựng bằng các lớp HTML xếp chồng).
  */
-export function XqDisc({ p, piece, lifted = false, face = false }: { p: string; piece: XqPiece; lifted?: boolean; face?: boolean }) {
+export function XqDisc({ p, piece, lifted = false }: { p: string; piece: XqPiece; lifted?: boolean }) {
   const red = piece.side === 'r';
   const ink = red ? '#b81d14' : '#24170f';
   const ch = XQ_HAN[piece.side][piece.kind];
   return (
     <g>
-      {!face && <ellipse cx={lifted ? 3 : 1.5} cy={lifted ? 13 : 8} rx="37" ry="35" fill="#2a1607" opacity={lifted ? 0.26 : 0.34} />}
-      {!face && <circle cy="6" r="36" fill={`url(#${p}edge)`} />}
+      <ellipse cx={lifted ? 3 : 1.5} cy={lifted ? 13 : 8} rx="37" ry="35" fill="#2a1607" opacity={lifted ? 0.26 : 0.34} />
+      <circle cy="6" r="36" fill={`url(#${p}edge)`} />
       <circle r="36" fill={`url(#${p}disc)`} />
       {/* vân gỗ vòng */}
       <g fill="none" stroke="#b9732f" opacity=".22" strokeWidth="1.1">
@@ -71,16 +69,12 @@ type Props = {
 
 function XiangqiBoard({ board, orientation = 'r', selected, targets = [], lastMove, check, hint, onPoint, label }: Props) {
   const p = `xq${useId().replace(/:/g, '')}`;
-  const { is3d } = useBoardView();
   const flip = orientation === 'b';
   const X = (f: number) => GX + (flip ? 8 - f : f) * C;
   const Y = (r: number) => GY + (flip ? 9 - r : r) * C;
 
   const hit = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!onPoint) return;
-    // Góc 3D: bàn nghiêng → lấy điểm từ vùng chạm trình duyệt đã tính theo hình 3D
-    const hitPt = (e.target as Element).closest?.('[data-pt]')?.getAttribute('data-pt');
-    if (is3d) { if (hitPt) { const [f, r] = hitPt.split(',').map(Number); onPoint({ f, r }); } return; }
     const rect = (e.currentTarget.querySelector('.xq-fg') as SVGSVGElement).getBoundingClientRect();
     const sx = ((e.clientX - rect.left) / rect.width) * W, sy = ((e.clientY - rect.top) / rect.height) * H;
     const fv = Math.round((sx - GX) / C), rv = Math.round((sy - GY) / C);
@@ -100,7 +94,7 @@ function XiangqiBoard({ board, orientation = 'r', selected, targets = [], lastMo
           </g>
         ))}
         {check && <circle cx={X(check.f)} cy={Y(check.r)} r="44" className="xq-check" />}
-        {!is3d && board.flatMap((row, r) => row.map((pc, f) => pc && (
+        {board.flatMap((row, r) => row.map((pc, f) => pc && (
           <g key={`${f}-${r}`} transform={`translate(${X(f)} ${Y(r)})`} className={selected && selected.f === f && selected.r === r ? 'xq-sel' : undefined}>
             <XqDisc p={p} piece={pc} lifted={Boolean(selected && selected.f === f && selected.r === r)} />
           </g>
@@ -118,24 +112,7 @@ function XiangqiBoard({ board, orientation = 'r', selected, targets = [], lastMo
             <polygon points={`${x2 - ux * 4},${y2 - uy * 4} ${ex - uy * 22},${ey + ux * 22} ${ex + uy * 22},${ey - ux * 22}`} className="chs-arrow-head" />
           </g>;
         })()}
-        {is3d && board.flatMap((row, r) => row.map((_, f) => <circle key={`h${f}-${r}`} data-pt={`${f},${r}`} cx={X(f)} cy={Y(r)} r={C * 0.5} fill="transparent" />))}
       </svg>
-      {is3d && (
-        // Góc 3D: quân là khối trụ gỗ thật — 6 lớp cạnh xếp chồng theo trục Z + mặt trên (dùng chung gradient của lớp SVG)
-        <div className="xq-p3s">
-          {board.flatMap((row, r) => row.map((pc, f) => {
-            if (!pc) return null;
-            const on = Boolean(selected && selected.f === f && selected.r === r);
-            return (
-              <div key={`${f}-${r}`} className={`xq-p3${on ? ' is-sel' : ''}`} data-pt={`${f},${r}`} style={{ left: `${(X(f) / W) * 100}%`, top: `${(Y(r) / H) * 100}%` }}>
-                <i className="xq-p3-sh" />
-                {[0, 1, 2, 3, 4, 5].map((z) => <i key={z} className="xq-p3-l" style={{ '--z': z } as React.CSSProperties} />)}
-                <svg className="xq-p3-top" viewBox="-37 -37 74 74"><XqDisc p={p} piece={pc} face /></svg>
-              </div>
-            );
-          }))}
-        </div>
-      )}
     </div>
   );
 }
