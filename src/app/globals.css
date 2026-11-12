@@ -10022,6 +10022,61 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .chs-stars { color: #b45309; }
 :root[data-theme="dark"] .chs-stars { color: #fbbf24; }
 
+/* ===== Cờ vua / cờ tướng: góc nhìn 3D (góc nhìn thứ 3) + toàn màn hình ===== */
+.bv-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.bv-seg { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.bv-seg button, .bv-fs { display: inline-flex; align-items: center; gap: 5px; min-height: 36px; padding: 0 10px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+.bv-seg button svg, .bv-fs svg { width: 17px; height: 17px; flex: none; }
+.bv-seg button:hover:not(:disabled), .bv-fs:hover { background: var(--surface-2); color: var(--ink); }
+.bv-seg button[aria-pressed="true"] { background: var(--brand-blue); color: #fff; }
+.bv-seg button:disabled { opacity: .4; cursor: default; }
+.bv-fs { margin-left: auto; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+@media (max-width: 560px) { .bv-seg button span { display: none; } .bv-seg button, .bv-fs { padding: 0 9px; } }
+
+/* Sân khấu 3D: camera đặt sau lưng người chơi, nhìn chéo xuống bàn */
+.bv-stage { perspective: 1400px; perspective-origin: 50% 0%; }
+.bv-stage .chs-board, .bv-stage .xq-board { transform-origin: 50% 100%; transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+.bv-stage.is-3d .chs-board, .bv-stage.is-3d .xq-board {
+  /* nghiêng quanh mép GẦN người chơi (mép này giữ nguyên, phía xa thu nhỏ → không tràn), xoay camera quanh TÂM bàn */
+  transform: rotateX(var(--tilt)) translateY(-50%) rotateZ(var(--spin)) translateY(50%) scale(calc(var(--fit) * var(--fit-k, 1)));
+  transform-style: preserve-3d; overflow: visible; box-shadow: 0 46px 46px -18px rgb(42 22 7 / .5);
+}
+.bv-stage.is-3d .chs-bg, .bv-stage.is-3d .xq-bg { clip-path: inset(0 round 22px); }
+.chs-main { container-type: inline-size; }
+/* Bàn nghiêng thấp hơn bàn phẳng → kéo lên lấp khoảng trống phía trên (chừa chỗ cho hàng quân vua đứng ở xa) */
+.bv-stage.is-3d { transition: margin .5s cubic-bezier(.2, .8, .2, 1); }
+.bv-stage.is-3d.v-tp { margin-top: -14cqw; }
+.bv-stage.is-3d.v-close { margin-top: -30cqw; }
+.bv-bar { position: relative; z-index: 2; }
+/* Cờ tướng: bàn cao hơn (10 hàng) và quân là đĩa nằm phẳng → kéo lên nhiều hơn */
+.xq-play .bv-stage.is-3d.v-tp { margin-top: -16cqw; }
+.xq-play .bv-stage.is-3d.v-close { margin-top: -30cqw; }
+
+
+/* Quân cờ vua dựng đứng, luôn quay mặt về camera (huỷ đúng góc nghiêng & góc xoay của mặt bàn) */
+.chs-p3s { position: absolute; inset: 0; transform-style: preserve-3d; pointer-events: none; }
+.chs-p3 { position: absolute; transform-style: preserve-3d; }
+.chs-p3-sh { position: absolute; left: 20%; right: 20%; top: 52%; height: 24%; border-radius: 50%; background: rgb(42 22 7 / .4); }
+.chs-p3-pc { position: absolute; left: -6%; bottom: 26%; width: 112%; height: auto; overflow: visible; transform-origin: 50% 100%; transform: rotateZ(calc(var(--spin) * -1)) rotateX(calc(var(--tilt) * -1)); pointer-events: auto; cursor: pointer; }
+.chs-p3.is-ghost { opacity: .35; }
+.chs-p3.is-lift { pointer-events: none; }
+.chs-p3.is-lift .chs-p3-pc { pointer-events: none; transform: rotateZ(calc(var(--spin) * -1)) rotateX(calc(var(--tilt) * -1)) translateY(-14%); }
+.chs-p3.is-lift .chs-p3-sh { background: rgb(36 87 197 / .45); }
+.chs-p3.is-moved { animation: chs-slide3 .26s ease-out; }
+@keyframes chs-slide3 { from { transform: translate(var(--mx), var(--my)); } to { transform: translate(0, 0); } }
+@media (prefers-reduced-motion: reduce) { .bv-stage .chs-board, .bv-stage .xq-board { transition: none; } .chs-p3.is-moved { animation: none; } }
+
+/* Toàn màn hình: cả khu chơi phủ kín, bàn cờ cao bằng màn hình */
+.chs-play.is-fs { position: fixed; inset: 0; z-index: 200; margin: 0; padding: 14px 18px; overflow: auto; background: var(--paper);
+  grid-template-columns: minmax(0, min(calc(100svh - 150px), calc(100vw - 400px))) minmax(260px, 340px); justify-content: center; align-content: start; }
+.chs-play.is-fs.xq-play { grid-template-columns: minmax(0, min(calc((100svh - 150px) * .913), calc(100vw - 400px))) minmax(260px, 340px); }
+.chs-play.is-fs .chs-side { position: static; max-height: calc(100svh - 28px); overflow: auto; }
+.chs-play:fullscreen { width: 100vw; height: 100vh; }
+@media (max-width: 900px) {
+  .chs-play.is-fs, .chs-play.is-fs.xq-play { grid-template-columns: minmax(0, min(100%, calc(100svh - 190px))); padding: 10px; }
+  .chs-play.is-fs .chs-side { max-height: none; }
+}
+
 /* ===== Chế độ tối: làm dịu nền sáng còn sót (sinh tự động từ các khối nền trắng/pastel chưa có bản tối — chế độ sáng giữ nguyên) ===== */
 :root[data-theme="dark"] .balance-facts li { background: var(--surface-2); }
 :root[data-theme="dark"] .balance-main { background: var(--surface-2); }

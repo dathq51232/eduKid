@@ -6,6 +6,7 @@ import { memo, useId, useMemo, useRef, useState } from 'react';
 import { Chess, type Color, type PieceSymbol, type Square } from 'chess.js';
 import { PieceShape, PIECE_NAME } from './ChessPieces';
 import { WoodDefs, WoodFrame } from './Wood';
+import { useBoardView } from './BoardView';
 
 export type BoardMove = { from: string; to: string; promotion?: string };
 type Props = {
@@ -24,12 +25,13 @@ const T = 44; // khung gỗ
 const VB = 800 + 2 * T;
 
 function ChessBoard({ fen, orientation, movable, lastMove, hint, onMove, label }: Props) {
+  const { is3d } = useBoardView();
   const game = useMemo(() => new Chess(fen), [fen]);
   const board = game.board();
   const turn = game.turn();
   const canMove = movable !== null && movable === turn && !game.isGameOver();
   const [sel, setSel] = useState<string | null>(null);
-  const [drag, setDrag] = useState<{ sq: string; x: number; y: number } | null>(null);
+  const [drag, setDrag] = useState<{ sq: string; x: number; y: number; over?: string | null } | null>(null);
   const [promo, setPromo] = useState<{ from: string; to: string } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const draggedRef = useRef<string | null>(null);
@@ -46,6 +48,8 @@ function ChessBoard({ fen, orientation, movable, lastMove, hint, onMove, label }
     return orientation === 'w' ? { x: f * S, y: (8 - r) * S } : { x: (7 - f) * S, y: (r - 1) * S };
   };
   const sqAt = (clientX: number, clientY: number): string | null => {
+    // Góc 3D: bàn bị nghiêng → hỏi trình duyệt phần tử nằm dưới ngón tay (ô / quân đứng có data-sq)
+    if (is3d) return (document.elementFromPoint(clientX, clientY)?.closest('[data-sq]') as HTMLElement | SVGElement | null)?.dataset.sq ?? null;
     const el = svgRef.current; if (!el) return null;
     const r = el.getBoundingClientRect();
     const c = Math.floor((((clientX - r.left) / r.width) * VB - T) / S); const rw = Math.floor((((clientY - r.top) / r.height) * VB - T) / S);
@@ -77,7 +81,11 @@ function ChessBoard({ fen, orientation, movable, lastMove, hint, onMove, label }
       (e.currentTarget as Element).setPointerCapture(e.pointerId);
     } else setSel(null);
   };
-  const move = (e: React.PointerEvent) => { if (!drag) return; const pt = svgPoint(e.clientX, e.clientY); setDrag({ ...drag, x: pt.x, y: pt.y }); };
+  const move = (e: React.PointerEvent) => {
+    if (!drag) return;
+    if (is3d) { const over = sqAt(e.clientX, e.clientY); if (over !== drag.over) setDrag({ ...drag, over }); return; } // 3D: quân bám theo ô, chỉ cập nhật khi đổi ô
+    const pt = svgPoint(e.clientX, e.clientY); setDrag({ ...drag, x: pt.x, y: pt.y });
+  };
   const up = (e: React.PointerEvent) => {
     if (!drag) return;
     const to = sqAt(e.clientX, e.clientY);
@@ -92,15 +100,16 @@ function ChessBoard({ fen, orientation, movable, lastMove, hint, onMove, label }
   const animTo = lastMove && draggedRef.current !== lastMove.to ? lastMove : null;
 
   return (
-    <div className="chs-board" onKeyDown={key}>
+    <>
+    <div className="chs-board" onKeyDown={key} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={() => setDrag(null)} style={{ touchAction: 'none' }}>
       <ChessBackdrop orientation={orientation} />
-      <svg ref={svgRef} className="chs-fg" viewBox={`0 0 ${VB} ${VB}`} role="img" aria-label={label ?? 'Bàn cờ vua'} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={() => setDrag(null)} style={{ touchAction: 'none' }}>
+      <svg ref={svgRef} className="chs-fg" viewBox={`0 0 ${VB} ${VB}`} role="img" aria-label={label ?? 'Bàn cờ vua'}>
         <g transform={`translate(${T} ${T})`}>
         {lastMove && [lastMove.from, lastMove.to].map((s) => { const p = pos(s); return <rect key={`l${s}`} x={p.x} y={p.y} width={S} height={S} className="chs-last" />; })}
         {hint && (() => { const p = pos(hint.from); return <rect x={p.x} y={p.y} width={S} height={S} className="chs-hint" />; })()}
         {sel && (() => { const p = pos(sel); return <rect x={p.x} y={p.y} width={S} height={S} className="chs-sel" />; })()}
         {checkSq && (() => { const p = pos(checkSq); return <circle cx={p.x + 50} cy={p.y + 50} r="48" className="chs-check" />; })()}
-        {board.flat().map((c) => {
+        {!is3d && board.flat().map((c) => {
           if (!c) return null;
           const p = pos(c.square);
           const dragging = drag?.sq === c.square;
@@ -123,9 +132,24 @@ function ChessBoard({ fen, orientation, movable, lastMove, hint, onMove, label }
             <polygon points={`${x2 - ux * 6},${y2 - uy * 6} ${ex - uy * 24 - ux * 6},${ey + ux * 24 - uy * 6} ${ex + uy * 24 - ux * 6},${ey - ux * 24 - uy * 6}`} className="chs-arrow-head" />
           </g>;
         })()}
-        {drag && (() => { const c = pieceAt(drag.sq); if (!c) return null; return <g className="chs-drag" transform={`translate(${drag.x - 55} ${drag.y - 60}) scale(${110 / 45})`}><PieceShape type={c.type} color={c.color} /></g>; })()}
+        {/* Ô chạm trong suốt (góc 3D cần để biết ngón tay đang ở ô nào) */}
+        {is3d && Array.from({ length: 64 }, (_, i) => { const sq = FILES[i % 8] + (8 - Math.floor(i / 8)); const p = pos(sq); return <rect key={`h${sq}`} data-sq={sq} x={p.x} y={p.y} width={S} height={S} fill="transparent" />; })}
+        {!is3d && drag && (() => { const c = pieceAt(drag.sq); if (!c) return null; return <g className="chs-drag" transform={`translate(${drag.x - 55} ${drag.y - 60}) scale(${110 / 45})`}><PieceShape type={c.type} color={c.color} /></g>; })()}
         </g>
       </svg>
+      {is3d && (
+        // Góc nhìn thứ 3: quân cờ dựng đứng, luôn quay mặt về camera (lớp HTML nằm trên mặt bàn nghiêng)
+        <div className="chs-p3s">
+          {board.flat().map((c) => {
+            if (!c) return null;
+            const p = pos(c.square);
+            const anim = animTo && animTo.to === c.square ? (() => { const f = pos(animTo.from); return { dx: (f.x - p.x) / S, dy: (f.y - p.y) / S }; })() : null;
+            return <Piece3 key={`${c.square}${anim ? `-${fen}` : ''}`} sq={c.square} x={p.x} y={p.y} type={c.type} color={c.color} ghost={drag?.sq === c.square && Boolean(drag.over)} anim={anim} />;
+          })}
+          {drag?.over && drag.over !== drag.sq && (() => { const c = pieceAt(drag.sq); if (!c) return null; const p = pos(drag.over); return <Piece3 sq={drag.over} x={p.x} y={p.y} type={c.type} color={c.color} lift />; })()}
+        </div>
+      )}
+    </div>
       {promo && (
         <div className="chs-promo" role="dialog" aria-label="Chọn quân phong cấp">
           <p>Tốt được phong thành quân nào?</p>
@@ -140,6 +164,18 @@ function ChessBoard({ fen, orientation, movable, lastMove, hint, onMove, label }
           <button type="button" className="ct-link" onClick={() => setPromo(null)}>Thôi</button>
         </div>
       )}
+    </>
+  );
+}
+
+/** Một quân cờ vua dựng đứng ở góc 3D (đặt theo toạ độ ô trên mặt bàn, đơn vị % để co giãn theo bàn) */
+function Piece3({ sq, x, y, type, color, ghost, lift, anim }: { sq: string; x: number; y: number; type: PieceSymbol; color: Color; ghost?: boolean; lift?: boolean; anim?: { dx: number; dy: number } | null }) {
+  const pc = (v: number) => `${(v / VB) * 100}%`;
+  const style = { left: pc(T + x), top: pc(T + y), width: pc(S), height: pc(S), ...(anim ? { '--mx': `${anim.dx * 100}%`, '--my': `${anim.dy * 100}%` } : {}) } as React.CSSProperties;
+  return (
+    <div className={`chs-p3${ghost ? ' is-ghost' : ''}${lift ? ' is-lift' : ''}${anim ? ' is-moved' : ''}`} style={style} data-sq={lift ? undefined : sq}>
+      <i className="chs-p3-sh" />
+      <svg className="chs-p3-pc" viewBox="0 0 45 45" data-sq={lift ? undefined : sq}><PieceShape type={type} color={color} /></svg>
     </div>
   );
 }

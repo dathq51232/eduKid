@@ -13,6 +13,7 @@ import { BoardAlerts, LiveClock, MoveList, SoundButton, TurnBar } from './ChessP
 import { reasonText, SIDE_NAME, captured, fmtClock } from '@/lib/chess/game';
 import { EMOTES, ERROR_TEXT, replay } from '@/lib/chess/online-rules';
 import { notifyTurn, sfx } from '@/lib/chess/sound-pref';
+import BoardStage from './BoardView';
 
 const other = (c: Color): Color => (c === 'w' ? 'b' : 'w');
 
@@ -107,10 +108,10 @@ export default function ChessOnline({ id, meId }: { id: string; meId: string }) 
       <div className="chs-main">
         {card(other(orientation))}
         <TurnBar tone={turnTone} title={turnTitle} sub={lastText ?? `Em cầm quân ${SIDE_NAME[me]}${me === 'w' ? ', được đi trước' : ''}`} />
-        <div className="chs-boardwrap">
+        <BoardStage>
           <ChessBoard fen={shown.fen()} orientation={orientation} movable={active && !pending ? me : null} lastMove={lastV ? { from: lastV.from, to: lastV.to } : null} onMove={(m) => void onMove(m)} label={`Bàn cờ, em cầm quân ${SIDE_NAME[me]}`} />
           <BoardAlerts moveKey={plyNow} moveText={lastText} checkKey={inCheck ? plyNow : null} checkTitle={result?.reason === 'checkmate' ? 'CHIẾU HẾT!' : 'CHIẾU!'} checkSub={result ? undefined : turn === me ? 'Vua của em đang bị chiếu — hãy cứu Vua!' : `Em đang chiếu Vua của ${pl.players[other(me)].name}`} />
-        </div>
+        </BoardStage>
         {card(orientation)}
       </div>
       <aside className="chs-side">

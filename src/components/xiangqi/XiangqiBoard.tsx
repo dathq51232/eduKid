@@ -6,6 +6,7 @@
 import { memo, useId } from 'react';
 import { DiscDefs, WoodDefs, WoodFrame, WoodSurface } from '@/components/chess/Wood';
 import { XQ_GLYPHS } from '@/lib/xiangqi/glyphs';
+import { useBoardView } from '@/components/chess/BoardView';
 
 export type XqSide = 'r' | 'b';
 export type XqKind = 'k' | 'a' | 'e' | 'h' | 'r' | 'c' | 'p';
@@ -58,12 +59,16 @@ type Props = {
 
 function XiangqiBoard({ board, orientation = 'r', selected, targets = [], lastMove, check, hint, onPoint, label }: Props) {
   const p = `xq${useId().replace(/:/g, '')}`;
+  const { is3d } = useBoardView();
   const flip = orientation === 'b';
   const X = (f: number) => GX + (flip ? 8 - f : f) * C;
   const Y = (r: number) => GY + (flip ? 9 - r : r) * C;
 
   const hit = (e: React.PointerEvent<SVGSVGElement>) => {
     if (!onPoint) return;
+    // Góc 3D: bàn nghiêng → lấy điểm từ vùng chạm trình duyệt đã tính theo hình 3D
+    const hitPt = (e.target as Element).closest?.('[data-pt]')?.getAttribute('data-pt');
+    if (is3d) { if (hitPt) { const [f, r] = hitPt.split(',').map(Number); onPoint({ f, r }); } return; }
     const rect = e.currentTarget.getBoundingClientRect();
     const sx = ((e.clientX - rect.left) / rect.width) * W, sy = ((e.clientY - rect.top) / rect.height) * H;
     const fv = Math.round((sx - GX) / C), rv = Math.round((sy - GY) / C);
@@ -101,6 +106,7 @@ function XiangqiBoard({ board, orientation = 'r', selected, targets = [], lastMo
             <polygon points={`${x2 - ux * 4},${y2 - uy * 4} ${ex - uy * 22},${ey + ux * 22} ${ex + uy * 22},${ey - ux * 22}`} className="chs-arrow-head" />
           </g>;
         })()}
+        {is3d && board.flatMap((row, r) => row.map((_, f) => <circle key={`h${f}-${r}`} data-pt={`${f},${r}`} cx={X(f)} cy={Y(r)} r={C * 0.5} fill="transparent" />))}
       </svg>
     </div>
   );

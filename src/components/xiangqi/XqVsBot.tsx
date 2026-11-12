@@ -12,6 +12,7 @@ import { BOT_LEVELS, type BotLevel } from '@/lib/chess/bot';
 import { TIME_CONTROLS, fmtClock, reasonText } from '@/lib/chess/game';
 import { sfx } from '@/lib/chess/sound-pref';
 import { BoardAlerts, LiveClock, SoundButton, TurnBar } from '@/components/chess/ChessParts';
+import BoardStage from '@/components/chess/BoardView';
 
 type Pick = 'w' | 'b' | 'x';
 type Setup = { pick: Pick; level: BotLevel; tc: string };
@@ -217,10 +218,10 @@ export default function XqVsBot() {
       <div className="chs-main">
         {card(other(orientation))}
         <TurnBar tone={turnTone} title={turnTitle} sub={lastText ?? `Em cầm quân ${XQ_SIDE[me]}${me === 'w' ? ', được đi trước' : ''}`} />
-        <div className="chs-boardwrap">
+        <BoardStage>
           <XiangqiBoard board={board} orientation={orientation === 'w' ? 'r' : 'b'} selected={sel !== null ? pt(sel) : null} targets={targets} lastMove={last} check={checkPt} hint={hint ? { from: pt(hint.from), to: pt(hint.to) } : null} onPoint={onPoint} label={`Bàn cờ tướng, em cầm quân ${XQ_SIDE[me]}`} />
           <BoardAlerts moveKey={g.ucis.length} moveText={lastText} checkKey={checkKey} checkTitle={result?.reason === 'checkmate' ? 'CHIẾU BÍ!' : 'CHIẾU TƯỚNG!'} checkSub={result ? undefined : g.turn() === me ? 'Tướng của em đang bị chiếu — hãy cứu Tướng!' : 'Em đang chiếu Tướng của máy'} />
-        </div>
+        </BoardStage>
         {card(orientation)}
       </div>
       <aside className="chs-side">

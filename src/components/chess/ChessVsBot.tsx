@@ -11,6 +11,7 @@ import { BoardAlerts, LiveClock, MoveList, SoundButton, TurnBar } from './ChessP
 import { BOT_LEVELS, Board, pickMove, type BotLevel, type BotMove } from '@/lib/chess/bot';
 import { REASON_TEXT, SIDE_NAME, TIME_CONTROLS, boardResult, captured, fmtClock, timeoutResult, type GameResult } from '@/lib/chess/game';
 import { sfx } from '@/lib/chess/sound-pref';
+import BoardStage from './BoardView';
 
 type Pick = 'w' | 'b' | 'r';
 type Setup = { pick: Pick; level: BotLevel; tc: string };
@@ -220,10 +221,10 @@ export default function ChessVsBot() {
       <div className="chs-main">
         {card(orientation === 'w' ? 'b' : 'w')}
         <TurnBar tone={turnTone} title={turnTitle} sub={lastText ?? `Em cầm quân ${SIDE_NAME[me]}${me === 'w' ? ', được đi trước' : ''}`} />
-        <div className="chs-boardwrap">
+        <BoardStage>
           <ChessBoard fen={fen} orientation={orientation} movable={result || thinking ? null : me} lastMove={last} hint={hint} onMove={(m) => { apply(m); }} label={`Bàn cờ, em cầm quân ${SIDE_NAME[me]}`} />
           <BoardAlerts moveKey={sans.length} moveText={lastText} checkKey={checkKey} checkTitle={result?.reason === 'checkmate' ? 'CHIẾU HẾT!' : 'CHIẾU!'} checkSub={result ? undefined : g.turn() === me ? 'Vua của em đang bị chiếu — hãy cứu Vua!' : 'Em đang chiếu Vua của máy'} />
-        </div>
+        </BoardStage>
         {card(orientation)}
       </div>
       <aside className="chs-side">

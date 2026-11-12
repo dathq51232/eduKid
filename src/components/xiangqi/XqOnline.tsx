@@ -13,6 +13,7 @@ import { XqGame, kindOf, sqName, type XSide } from '@/lib/xiangqi/engine';
 import { fmtClock, reasonText } from '@/lib/chess/game';
 import { EMOTES, ERROR_TEXT } from '@/lib/chess/online-rules';
 import { notifyTurn, sfx } from '@/lib/chess/sound-pref';
+import BoardStage from '@/components/chess/BoardView';
 
 const other = (c: XSide): XSide => (c === 'w' ? 'b' : 'w');
 const ptOf = (s: string) => ({ f: s.charCodeAt(0) - 97, r: 9 - Number(s[1]) });
@@ -111,10 +112,10 @@ export default function XqOnline({ id, meId }: { id: string; meId: string }) {
       <div className="chs-main">
         {card(other(orientation))}
         <TurnBar tone={turnTone} title={turnTitle} sub={lastText ?? `Em cầm quân ${XQ_SIDE[me]}${me === 'w' ? ', được đi trước' : ''}`} />
-        <div className="chs-boardwrap">
+        <BoardStage>
           <XiangqiBoard board={boardOf(game.bd)} orientation={orientation === 'w' ? 'r' : 'b'} selected={sel !== null ? pt(sel) : null} targets={targets} lastMove={last} check={checkPt} onPoint={onPoint} label={`Bàn cờ tướng, em cầm quân ${XQ_SIDE[me]}`} />
           <BoardAlerts moveKey={plyNow} moveText={lastText} checkKey={inCheck ? plyNow : null} checkTitle={result?.reason === 'checkmate' ? 'CHIẾU BÍ!' : 'CHIẾU TƯỚNG!'} checkSub={result ? undefined : turn === me ? 'Tướng của em đang bị chiếu — hãy cứu Tướng!' : `Em đang chiếu Tướng của ${pl.players[other(me)].name}`} />
-        </div>
+        </BoardStage>
         {card(orientation)}
       </div>
       <aside className="chs-side">
