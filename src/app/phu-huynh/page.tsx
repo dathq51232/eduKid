@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element -- biểu tượng 3D có sẵn trong public */
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -7,6 +6,8 @@ import ParentHeader from '@/components/parent/ParentHeader';
 import FamilyInfo from '@/components/parent/FamilyInfo';
 import ParentMessages from '@/components/parent/ParentMessages';
 import GalleryTeaser from '@/components/gallery/GalleryTeaser';
+import MiniCalendar from '@/components/utils/MiniCalendar';
+import MoneyCard from '@/components/utils/MoneyCard';
 import type { ParentMsg } from '@/lib/classroom/messages';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import RedeemInviteForm from '@/components/classroom/RedeemInviteForm';
@@ -157,10 +158,10 @@ export default async function ParentsPage() {
             <li><span className="ph-ic is-purple" aria-hidden="true">🎯</span><div><span>Luyện 7 ngày qua</span><b>{week.length ? `${week.length} bài` : <em>Chưa làm bài</em>}</b></div></li>
           </ul>
 
-          <ul className="ph-utils" aria-label="Tiện ích gia đình">
-            <li><Link href="/phu-huynh/tien-ich" className="ph-util-tile"><img src="/emoji/tool/lich.webp" alt="" width={44} height={44} /><span><b>Lịch âm dương</b><small>Ngày âm, ngày lễ, đổi ngày</small></span></Link></li>
-            <li><Link href="/phu-huynh/tien-ich?xem=thu-chi" className="ph-util-tile"><img src="/emoji/tool/thu-chi.webp" alt="" width={44} height={44} /><span><b>Thu chi gia đình</b><small>Ghi nhanh 50k, 1tr2 · xem theo tháng</small></span></Link></li>
-          </ul>
+          <div className="ph-utils-live" aria-label="Tiện ích gia đình">
+            <MiniCalendar href="/phu-huynh/tien-ich" />
+            <MoneyCard href="/phu-huynh/tien-ich?xem=thu-chi" title="Thu chi gia đình" />
+          </div>
 
           <GalleryTeaser variant="parent" />
 
@@ -268,10 +269,10 @@ export default async function ParentsPage() {
           <SignOutButton />
         </div>
 
-        <ul className="ph-utils" aria-label="Tiện ích gia đình">
-          <li><Link href="/phu-huynh/tien-ich" className="ph-util-tile"><img src="/emoji/tool/lich.webp" alt="" width={44} height={44} /><span><b>Lịch âm dương</b><small>Ngày âm, ngày lễ, đổi ngày</small></span></Link></li>
-          <li><Link href="/phu-huynh/tien-ich?xem=thu-chi" className="ph-util-tile"><img src="/emoji/tool/thu-chi.webp" alt="" width={44} height={44} /><span><b>Thu chi gia đình</b><small>Ghi nhanh 50k, 1tr2 · xem theo tháng</small></span></Link></li>
-        </ul>
+        <div className="ph-utils-live" aria-label="Tiện ích gia đình">
+            <MiniCalendar href="/phu-huynh/tien-ich" />
+            <MoneyCard href="/phu-huynh/tien-ich?xem=thu-chi" title="Thu chi gia đình" />
+          </div>
 
         {famErr ? <p className="adm-alert is-warn">Chưa bật “Học tại nhà”: hãy chạy <code>supabase/migrations/0047_family_accounts.sql</code> trên Supabase.</p>
           : <FamilyPanel kids={famKids} code={famCode} origin={origin} />}

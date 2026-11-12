@@ -6,6 +6,8 @@ import { BookCheck, BookOpen, CalendarDays, Check, ChevronRight, Dices, School, 
 import { TodoList } from '@/components/classroom/TeacherToday';
 import TodaySchedule from '@/components/classroom/TodaySchedule';
 import ClassPulse, { type Birthday } from '@/components/classroom/ClassPulse';
+import MiniCalendar from '@/components/utils/MiniCalendar';
+import MoneyCard from '@/components/utils/MoneyCard';
 import LessonPlanAside from '@/components/classroom/LessonPlanAside';
 import { alertsOf, summarize, type RangeData } from '@/lib/classroom/diary';
 import LearnHeader from '@/components/LearnHeader';
@@ -260,9 +262,11 @@ export default async function TeacherHome() {
 
             <div className="tdy-stack">
               <LessonPlanAside classId={active.id} grade={active.grade} />
+              <MiniCalendar href={`${base}/lich`} />
               <ClassPulse base={base} births={births} birthsOn={birthsOn} watch={watch}
                 unread={inbox?.unread ?? 0} pendingLeave={inbox?.pending_leave ?? 0} recentMsgs={inbox?.items.length ?? 0} contactGaps={contactGaps}
                 spark={k.spark} students={k.students} todayIso={todayIso} planText={planText} />
+              <MoneyCard href={`${base}/thu-chi`} title="Thu chi cá nhân" fundHref={`${base}/quy-lop`} classId={active.id} />
             </div>
           </div>
         </>
