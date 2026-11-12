@@ -10,6 +10,7 @@ import SheetPageSvg, { MOTIFS, Motif, type UserDeco } from './SheetPageSvg';
 import { assetError, assetUsage, deleteAsset, fmtMB, listAssets, uploadAsset, type TeacherAsset } from '@/lib/assets/client';
 import { IMAGE_ACCEPT, baseName, prepareDeco } from '@/lib/assets/image';
 import { FLORALS, Floral, FloralScope } from './floral';
+import { FRAMES, PageFrame } from './frames';
 import { STICKERS } from '@/lib/stickers';
 import { CORNER_POS0, DEFAULT_CORNER_POS, DEFAULT_SHEET, FALLBACK_FONT, LINE_COLORS, PAGE_SIZES, TAP_FONTS, fallbackScale, pageDims, textSegments, fontFamily, layoutSheet, loadTapFont, normalizeSheet, type Corner, type CornerPos, type SheetSettings } from '@/lib/writing/sheet';
 import { VERSE_GROUPS } from '@/lib/writing/verses';
@@ -365,7 +366,27 @@ export default function WritingSheetBuilder({ classId, className, grade }: { cla
           <summary>4. Trang trí</summary>
           <label className="wsb-check"><input type="checkbox" checked={s.header} onChange={(e) => set('header', e.target.checked)} /> Dòng Họ tên · Lớp · Ngày</label>
           <label className="wsb-check"><input type="checkbox" checked={s.headerEvery} onChange={(e) => set('headerEvery', e.target.checked)} /> Lặp tiêu đề ở mọi trang</label>
-          <div className="wsb-presets">{DECO_PRESETS.map((p) => <button key={p.label} type="button" className="mini-btn" onClick={() => setS((o) => ({ ...o, ...p.v, cornerPos: DEFAULT_CORNER_POS }))}>{p.label}</button>)}</div>
+          <div className="wsb-f">
+            <span>Khung trang theo chủ đề <small>(vẽ ở lề giấy, không đè ô li)</small></span>
+            <div className="wsb-frames" role="radiogroup" aria-label="Khung trang">
+              <button type="button" role="radio" aria-checked={s.frame === 'none'} className={s.frame === 'none' ? 'is-on' : ''} onClick={() => set('frame', 'none')}>
+                <span className="wsb-frame-none" aria-hidden="true">∅</span><b>Không khung</b>
+              </button>
+              {FRAMES.map((f) => (
+                <button key={f.id} type="button" role="radio" aria-checked={s.frame === f.id} className={s.frame === f.id ? 'is-on' : ''} title={f.hint}
+                  onClick={() => setS((o) => ({ ...o, frame: f.id, border: 'none', corners: { tl: 'none', tr: 'none', bl: 'none', br: 'none' }, cornerPos: DEFAULT_CORNER_POS }))}>
+                  <svg viewBox="0 0 210 297" aria-hidden="true">
+                    <rect width="210" height="297" fill="#fff" />
+                    {Array.from({ length: 22 }, (_, i) => <line key={i} x1="14" x2="196" y1={38 + i * 11} y2={38 + i * 11} stroke="#c4b5fd" strokeWidth="0.8" />)}
+                    <PageFrame id={f.id} W={210} H={297} />
+                  </svg>
+                  <b>{f.label}</b>
+                </button>
+              ))}
+            </div>
+            {s.frame !== 'none' && <small>Khung đã thay cho hoạ tiết góc và viền trang; vẫn thêm được hoạ tiết góc ở bên dưới nếu muốn.</small>}
+          </div>
+          <div className="wsb-presets">{DECO_PRESETS.map((p) => <button key={p.label} type="button" className="mini-btn" onClick={() => setS((o) => ({ ...o, ...p.v, frame: 'none', cornerPos: DEFAULT_CORNER_POS }))}>{p.label}</button>)}</div>
           <div className="wsb-corners">
             <div className="wsb-cpage" role="tablist" aria-label="Chọn góc vở">
               {CORNERS.map((c) => (

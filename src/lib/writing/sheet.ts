@@ -86,6 +86,8 @@ export function cornerBox(s: Pick<SheetSettings, 'decoSize' | 'cornerPos'>, c: C
   return { x: Math.min(W - size, Math.max(0, x)), y: Math.min(H - size, Math.max(0, y)), size };
 }
 export type BorderStyle = 'none' | 'don' | 'doi' | 'cham' | 'song';
+/** Khung trang theo chủ đề (vẽ ở src/components/writing/frames.tsx) */
+export const FRAME_IDS = ['pastel', 'hoc-tap', 'hoa-dao', 'mua-dong', 'con-vat', 'caro-xanh', 'caro-do', 'toi-gian'] as const;
 
 export type SheetSettings = {
   title: string;
@@ -116,6 +118,8 @@ export type SheetSettings = {
   decoColor: string;
   border: BorderStyle;
   borderColor: string;
+  /** khung trang theo chủ đề: 'none' hoặc một id trong FRAME_IDS */
+  frame: string;
   /** khung ô li: 'auto' = tự vừa trang; 'fixed' = giáo viên khoá số hàng × số cột ô lớn (hoạ tiết góc không làm đổi khung) */
   gridMode: 'auto' | 'fixed';
   rows: number; // số ô lớn theo chiều dọc (khi khoá)
@@ -134,7 +138,7 @@ export const DEFAULT_SHEET: SheetSettings = {
   lineColor: '#8b5cf6', grid: 'vuong', pageSize: 'a4', vertical: true, margin: true, marginColor: '#ef4444',
   ink: '#1e3a8a', sample: 1, trace: 2, blank: 2, traceStyle: 'mo', traceColor: '#94a3b8',
   corners: { tl: 'f:hong', tr: 'none', bl: 'none', br: 'f:hong' }, decoSize: 34, cornerPos: DEFAULT_CORNER_POS, decoColor: '#ec4899',
-  border: 'none', borderColor: '#8b5cf6',
+  border: 'none', borderColor: '#8b5cf6', frame: 'none',
   gridMode: 'auto', rows: 0, cols: 0,
 };
 
@@ -164,6 +168,7 @@ export function normalizeSheet(raw: unknown): SheetSettings {
     decoColor: color(r.decoColor, d.decoColor),
     border: (['none', 'don', 'doi', 'cham', 'song'] as BorderStyle[]).includes(r.border as BorderStyle) ? (r.border as BorderStyle) : 'none',
     borderColor: color(r.borderColor, d.borderColor),
+    frame: (FRAME_IDS as readonly string[]).includes(r.frame as string) ? (r.frame as string) : 'none',
     gridMode: r.gridMode === 'fixed' ? 'fixed' : 'auto', rows: Math.round(num(r.rows, 0, 200, 0)), cols: Math.round(num(r.cols, 0, 200, 0)),
   };
 }

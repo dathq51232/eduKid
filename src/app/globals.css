@@ -10207,3 +10207,12 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
   .tdy-kpis b { font-size: 17px; }
 }
 .tdy-done .ct-link, .tdy-later .ct-link { font-size: 14px; }
+
+/* Luyện chữ — chọn khung trang theo chủ đề */
+.wsb-frames { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.wsb-frames button { display: grid; gap: 4px; justify-items: center; padding: 6px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
+.wsb-frames button:hover { border-color: var(--line-strong); }
+.wsb-frames button.is-on { border-color: var(--brand-blue); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-blue) 30%, transparent); }
+.wsb-frames svg { width: 100%; aspect-ratio: 210 / 297; height: auto; border-radius: 4px; box-shadow: 0 1px 4px rgb(15 23 42 / .15); background: #fff; }
+.wsb-frames b { font-size: 11.5px; font-weight: 700; line-height: 1.25; text-align: center; }
+.wsb-frame-none { display: grid; place-items: center; width: 100%; aspect-ratio: 210 / 297; border: 1px dashed var(--line-strong); border-radius: 4px; color: var(--muted); font-size: 22px; }

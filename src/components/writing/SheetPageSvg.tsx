@@ -4,6 +4,7 @@
 // Cùng một SVG dùng để xem trước trên màn hình và để in (trình duyệt in đúng 210 x 297 mm).
 import { Fragment } from 'react';
 import { FloralScope, Floral } from './floral';
+import { PageFrame } from './frames';
 import { cornerBox, cornerSize, FALLBACK_FONT, fallbackScale, fontFamily, textSegments, type Corner, type FontId, type SheetLayout, type SheetPage, type SheetSettings } from '@/lib/writing/sheet';
 
 export const MOTIFS: { id: string; label: string }[] = [
@@ -273,6 +274,8 @@ export default function SheetPageSvg({ s, layout, page, index, className, user, 
       <FloralScope>
       <rect width={W} height={H} fill="#fff" />
       <Border s={s} W={W} H={H} />
+      {/* khung trang theo chủ đề: vẽ trước lưới để đường kẻ nằm trên hoạ tiết */}
+      {s.frame !== 'none' && <PageFrame id={s.frame} W={W} H={H} />}
       {page.header && <Header s={s} page={page} W={W} />}
       <Grid s={s} page={page} li={layout.li} sq={layout.sq} />
       {/* hoạ tiết góc vẽ sau dòng kẻ: kéo vào trong trang vẫn nhìn rõ */}
