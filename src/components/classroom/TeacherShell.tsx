@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  PanelLeftClose, PanelLeftOpen, BookCheck, ChevronDown, Home, LayoutGrid, LogOut, Menu, MessageSquareHeart, Search, Users, X,
+  PanelLeftClose, PanelLeftOpen, BookCheck, Check, ChevronDown, Copy, Home, LayoutGrid, LogOut, Menu, MessageSquareHeart, Search, Users, X,
 } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import { icon3d, type IconComp } from '@/components/classroom/tool-icons';
@@ -27,7 +27,7 @@ export const GROUP_ICON: Record<string, IconComp> = { 'Trên lớp': icon3d('g-t
 const MINI_KEY = 'gv-cot-trai-gon';
 export const USAGE_KEY = 'gv-dung-nhanh';
 
-type ShellClass = { id: string; name: string; grade: number; status: string; students: number };
+type ShellClass = { id: string; name: string; grade: number; status: string; students: number; join_code?: string | null };
 type Props = { classes: ShellClass[]; teacherName: string; schoolName: string; children: React.ReactNode };
 
 const initials = (name: string) => name.trim().split(/\s+/).slice(-1)[0]?.charAt(0).toUpperCase() ?? '?';
@@ -42,6 +42,11 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
   const [palette, setPalette] = useState(false);
   const [unread, setUnread] = useState(0); // tin nhắn phụ huynh chưa đọc (migration 0037)
   const [switcher, setSwitcher] = useState(false);
+  // bấm mã lớp ở thẻ lớp: chép để gửi phụ huynh / học sinh
+  const [codeCopied, setCodeCopied] = useState(false);
+  const copyCode = async (code: string) => {
+    try { await navigator.clipboard.writeText(code); setCodeCopied(true); window.setTimeout(() => setCodeCopied(false), 1600); } catch { /* trình duyệt chặn: vẫn đọc được mã */ }
+  };
   const curGroup = groupOfTool(current);
   // cột trái thu gọn thành dải biểu tượng (nhớ trên máy này)
   const [mini, setMini] = useState(false);
@@ -154,6 +159,15 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
               <span className="tsh-class-txt"><b>Lớp {active.name}</b><span>{active.students} học sinh · Khối {active.grade}{active.status !== 'active' ? ' · đã lưu trữ' : ''}</span></span>
               {classes.length > 1 && <ChevronDown aria-hidden="true" />}
             </button>
+            {active.join_code && (
+              <div className="tsh-code">
+                <button type="button" onClick={() => copyCode(active.join_code as string)} title="Chép mã lớp" aria-label={`Mã lớp ${active.join_code}, bấm để chép`}>
+                  <span>Mã lớp</span> <b>{active.join_code}</b> {codeCopied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+                </button>
+                <Link href={`/giao-vien/lop/${active.id}`} className="tsh-code-link">Học sinh</Link>
+                <span className="sr-only" role="status">{codeCopied ? 'Đã chép mã lớp' : ''}</span>
+              </div>
+            )}
             {switcher && (
               <ul className="tsh-class-menu">
                 {classes.map((c) => (

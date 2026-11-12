@@ -3,14 +3,15 @@
 // Các ô có tương tác của trang "Hôm nay": việc cần làm (tích được, nhớ trên máy) và "Dùng nhanh" (tự sắp theo số lần dùng).
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check } from 'lucide-react';
+import { Check, ListTodo, Undo2 } from 'lucide-react';
 import { TOOLS, quickTools, toolHref, type ToolKey } from '@/lib/classroom/teacher-nav';
 import { TOOL_ICON, USAGE_KEY } from '@/components/classroom/TeacherShell';
 import type { TodayItem } from '@/lib/classroom/today';
 
 const TONE_TAG: Record<TodayItem['tone'], string | null> = { urgent: 'Gấp', soon: 'Nên làm', info: null, done: null };
 
-export function TodoList({ items, day }: { items: TodayItem[]; day: string }) {
+/** "Việc hôm nay": tiêu đề kèm tiến độ (x/y xong); mỗi việc một nút hành động, nút ✓ nhỏ để tự đánh dấu xong */
+export function TodoList({ items, day, headingId }: { items: TodayItem[]; day: string; headingId?: string }) {
   const key = `gv-viec:${day}`;
   const [done, setDone] = useState<string[]>([]);
   useEffect(() => { try { setDone(JSON.parse(localStorage.getItem(key) ?? '[]')); } catch { /* bỏ qua */ } }, [key]);
@@ -28,21 +29,27 @@ export function TodoList({ items, day }: { items: TodayItem[]; day: string }) {
     const d = isDone(t); const tag = TONE_TAG[t.tone];
     return (
       <li key={t.title} className={`tdy-task is-${t.tone}${d ? ' is-done' : ''}`}>
-        <button type="button" className="tdy-check" role="checkbox" aria-checked={d} aria-label={d ? `Bỏ đánh dấu xong: ${t.title}` : `Đánh dấu xong: ${t.title}`} onClick={() => t.tone !== 'done' && toggle(t.title)}>
-          {d && <Check aria-hidden="true" />}
-        </button>
         <div className="tdy-task-txt">
-          <b>{t.title}{tag && !d && <span className={`tdy-tag is-${t.tone}`}>{tag}</span>}</b>
+          <b>{d && <Check aria-hidden="true" className="tdy-task-ok" />}{t.title}{tag && !d && <span className={`tdy-tag is-${t.tone}`}>{tag}</span>}</b>
           <span>{t.detail}</span>
         </div>
         {!d && <Link href={t.href} className="tdy-go">{t.cta}</Link>}
+        {t.tone !== 'done' && (
+          <button type="button" className="tdy-mark" onClick={() => toggle(t.title)} title={d ? 'Đưa lại vào việc cần làm' : 'Đánh dấu đã xong'} aria-label={d ? `Bỏ đánh dấu xong: ${t.title}` : `Đánh dấu xong: ${t.title}`}>
+            {d ? <Undo2 aria-hidden="true" /> : <Check aria-hidden="true" />}
+          </button>
+        )}
       </li>
     );
   };
   return (
     <>
+      <h2 id={headingId}>
+        <ListTodo aria-hidden="true" /> Việc hôm nay
+        {items.length > 0 && <span className={`tdy-prog${pending.length ? '' : ' is-all'}`}>{finished.length}/{items.length} xong</span>}
+      </h2>
       {pending.length === 0
-        ? <p className="dash-muted tdy-empty">Không còn việc gấp. Bài giao, giáo án và điểm danh đều ổn. 🎉</p>
+        ? <p className="dash-muted tdy-empty">Xong hết việc hôm nay. 🎉</p>
         : <ul className="tdy-tasks">{pending.map(row)}</ul>}
       {finished.length > 0 && (
         <div className="tdy-done">

@@ -58,7 +58,11 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   // Bảng học sinh: "Tài khoản & học tập" hoặc "Hồ sơ" (ngày sinh, chỗ ở) — nhớ trên máy này
   const [view, setView] = useState<'learn' | 'profile'>('learn');
-  useEffect(() => { try { if (localStorage.getItem(VIEW_KEY) === 'profile') setView('profile'); } catch { /* bỏ qua */ } }, []);
+  useEffect(() => {
+    // ?xem=ho-so (từ việc "Hồ sơ còn thiếu" ở trang Hôm nay) → mở thẳng bảng Hồ sơ
+    if (new URLSearchParams(window.location.search).get('xem') === 'ho-so') { setView('profile'); return; }
+    try { if (localStorage.getItem(VIEW_KEY) === 'profile') setView('profile'); } catch { /* bỏ qua */ }
+  }, []);
   const pickView = (v: 'learn' | 'profile') => { setView(v); try { localStorage.setItem(VIEW_KEY, v); } catch { /* bỏ qua */ } };
   const active = roster.filter((r) => r.membership_status === 'active');
   // Còn thêm được bao nhiêu em: tối đa 40 / lớp và trong gói của giáo viên (tính trên mọi lớp)
