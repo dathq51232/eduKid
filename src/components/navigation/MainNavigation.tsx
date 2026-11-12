@@ -17,7 +17,8 @@ type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: '/chon-bai', label: 'Học tập', icon: 'hoc-tap', match: ['/chon-bai', '/lam-bai', '/ket-qua'] },
-  { href: '/tieng-anh', label: 'Phản xạ tiếng Anh', short: 'Tiếng Anh', iconSrc: '/emoji/f3d/open-book.webp', match: ['/tieng-anh'] },
+  // Phát triển kỹ năng: 6 nhóm; Phản xạ tiếng Anh (English Journey, /tieng-anh) nằm trong nhóm Ngôn ngữ & giao tiếp
+  { href: '/ky-nang', label: 'Phát triển kỹ năng', short: 'Kỹ năng', iconSrc: '/emoji/f3d/sports-medal.webp', match: ['/ky-nang', '/tieng-anh'] },
   { href: '/tro-choi', label: 'Game trí tuệ', short: 'Game', icon: 'game', match: ['/tro-choi'] },
   { href: '/co', label: 'Đấu cờ', icon: 'dau-co', match: ['/co'] },
   { href: '/thanh-tich', label: 'Thành tích', icon: 'thanh-tich', match: ['/thanh-tich'] },
