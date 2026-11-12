@@ -12,7 +12,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { AlarmClock, ArrowLeft, ArrowRight, Check, Clock, Dices, Flag, House, Lightbulb, Play, RefreshCw, Settings2, SkipForward, Sparkles, Star, Volume2, VolumeX, X } from 'lucide-react';
+import { AlarmClock, ArrowLeft, ArrowRight, Check, Clock, Dices, Flag, House, Lightbulb, Minus, Play, Plus, RefreshCw, Settings2, SkipForward, Sparkles, Star, Timer, Volume2, VolumeX, X } from 'lucide-react';
 import { LogoMark, BrandWord } from '@/components/brand/BrandLogo';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import { QuizBackdrop, QuizSideProps, StudentPill } from '@/components/learn/QuizScene';
@@ -43,6 +43,7 @@ import { isPracticeId, newSeed } from '@/lib/practice/core';
 import { lastShownSet, rememberShownSet } from '@/lib/set-history';
 import { getVoiceStatus, questionSegments, segmentsFor, speakSegments, stopSpeaking } from '@/lib/speech';
 import type { AnswerRecord, AnswerValue, Question } from '@/lib/types';
+import { MAX_MINUTES, TIME_PRESETS, applyTime, readTimeSetting, saveTimeSetting, timeLabel, type TimeSetting } from '@/lib/quiz-time';
 
 type ItemStatus = 'todo' | 'skipped' | 'correct' | 'wrong' | 'timeout';
 type Item = {
@@ -117,7 +118,16 @@ function LamBaiContent() {
   // Câu dễ trước, câu khó sau (sắp ổn định: cùng cấp độ giữ thứ tự của bài)
   const questionSet = useMemo(() => getQuestionSet(lessonId, seed, muc, truParam), [lessonId, seed, muc, truParam]);
   const setNote = questionSet.note;
-  const baseOrder = useMemo<Question[]>(() => [...questionSet.questions].sort((a, b) => a.level - b.level), [questionSet]);
+  const rawOrder = useMemo<Question[]>(() => [...questionSet.questions].sort((a, b) => a.level - b.level), [questionSet]);
+  // Thời lượng tuỳ chỉnh (hệ số hoặc tổng số phút theo quy định của trường), chia cho từng câu theo độ khó.
+  // Chỉ đổi được ở màn chuẩn bị (đổi là bắt đầu lại lượt làm).
+  const [timeSet, setTimeSet] = useState<TimeSetting>({ scale: 1 });
+  useEffect(() => setTimeSet(readTimeSetting()), []);
+  const chooseTime = (t: TimeSetting) => setTimeSet(saveTimeSetting(t));
+  const baseOrder = useMemo<Question[]>(() => {
+    const lim = applyTime(rawOrder.map((x) => x.timeLimit), timeSet);
+    return rawOrder.map((x, i) => ({ ...x, timeLimit: lim[i] }));
+  }, [rawOrder, timeSet]);
   // Danh sách câu của lượt làm (nút "Đổi câu" thay một câu bằng câu khác cùng cấp độ)
   const [order, setOrder] = useState<Question[]>(baseOrder);
   const [swapsLeft, setSwapsLeft] = useState(MAX_SWAPS);
@@ -439,7 +449,8 @@ function LamBaiContent() {
     const x = order[currentRef.current];
     const it = x ? itemsRef.current[x.id] : undefined;
     if (!x || !it || isDone(it.status) || swapsLeft <= 0 || feedback || isChecking) return;
-    const repl = getReplacement(lessonId, x, usedRef.current.map((u) => u.id), usedRef.current);
+    const found = getReplacement(lessonId, x, usedRef.current.map((u) => u.id), usedRef.current);
+    const repl = found ? { ...found, timeLimit: x.timeLimit } : null; // câu thay giữ nguyên thời gian của câu cũ
     if (!repl) {
       setSwapNote('Bài này không còn câu khác cùng cấp độ để đổi.');
       return;
@@ -539,7 +550,13 @@ function LamBaiContent() {
                 <h1>Sẵn sàng chưa nào?</h1>
                 <ul className="intro-facts">
                   <li><strong>{order.length}</strong> câu hỏi</li>
-                  <li><Clock size={18} aria-hidden="true" /> tối đa <strong>{formatDuration(totalLimitSec * 1000)}</strong></li>
+                  <li className="intro-time">
+                    <Clock size={18} aria-hidden="true" /> tối đa <strong>{formatDuration(totalLimitSec * 1000)}</strong>
+                    <span className="intro-time-step">
+                      <button type="button" onClick={() => chooseTime({ minutes: Math.ceil(totalLimitSec / 60) - 1 })} disabled={totalLimitSec <= 60} aria-label="Bớt 1 phút" title="Bớt 1 phút"><Minus aria-hidden="true" /></button>
+                      <button type="button" onClick={() => chooseTime({ minutes: Math.floor(totalLimitSec / 60) + 1 })} disabled={totalLimitSec >= MAX_MINUTES * 60} aria-label="Thêm 1 phút" title="Thêm 1 phút"><Plus aria-hidden="true" /></button>
+                    </span>
+                  </li>
                   <li>🎯 Mức: <strong>{MUC[muc].name}</strong></li>
                   <li>{rank.icon} Em đang có <strong>{startTotal}</strong> điểm</li>
                 </ul>
@@ -570,8 +587,8 @@ function LamBaiContent() {
               <summary className="intro-settings-summary">
                 <Settings2 size={20} aria-hidden="true" />
                 <div>
-                  <strong>Tuỳ chỉnh Mức độ, Âm thanh đồng hồ &amp; Cách tính điểm</strong>
-                  <small>Đang bật: Mức {MUC[muc].name} · Âm thanh: {activeSoundLabel} · +{SPEED_BONUS} điểm thưởng làm nhanh</small>
+                  <strong>Tuỳ chỉnh Mức độ, Thời gian, Âm thanh đồng hồ &amp; Cách tính điểm</strong>
+                  <small>Đang bật: Mức {MUC[muc].name} · Thời gian: {timeLabel(timeSet)} · Âm thanh: {activeSoundLabel} · +{SPEED_BONUS} điểm thưởng làm nhanh</small>
                 </div>
               </summary>
               <div className="intro-settings-body">
@@ -610,6 +627,30 @@ function LamBaiContent() {
                   </p>
                   {setNote && <p className="set-note">{setNote}</p>}
                 </div>
+                <fieldset className="time-scale">
+                  <legend><Timer size={18} aria-hidden="true" /> Thời gian làm bài</legend>
+                  <p className="time-scale-hint">Tăng thời gian nếu em cần đọc kỹ, giảm để luyện tốc độ — hoặc nhập đúng số phút theo quy định đề kiểm tra của trường. Thời gian chia cho từng câu theo độ khó.</p>
+                  <div className="time-scale-presets" role="radiogroup" aria-label="Chọn mức thời gian">
+                    {TIME_PRESETS.map((t) => (
+                      <button key={t.scale} type="button" role="radio" aria-checked={'scale' in timeSet && timeSet.scale === t.scale} onClick={() => chooseTime({ scale: t.scale })}>
+                        <strong>{t.label}</strong>
+                        <small>{formatDuration(applyTime(rawOrder.map((x) => x.timeLimit), { scale: t.scale }).reduce((a, b) => a + b, 0) * 1000)}</small>
+                      </button>
+                    ))}
+                  </div>
+                  <label className="time-scale-total">
+                    Đặt tổng thời gian
+                    <input
+                      key={totalLimitSec}
+                      type="number" inputMode="numeric" min={1} max={MAX_MINUTES}
+                      defaultValue={Math.round(totalLimitSec / 60)}
+                      aria-label="Tổng thời gian làm bài (phút)"
+                      onBlur={(e) => { const m = Number(e.target.value); if (m > 0 && m !== totalLimitSec / 60) chooseTime({ minutes: m }); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                    />
+                    phút
+                  </label>
+                </fieldset>
                 <fieldset className="timer-sound">
                   <legend><Volume2 size={18} aria-hidden="true" /> Âm thanh đồng hồ</legend>
                   <div className="timer-sound-options">
