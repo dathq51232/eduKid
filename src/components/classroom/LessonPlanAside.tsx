@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ClipboardList, MonitorPlay, Pencil, X } from 'lucide-react';
 import { PICK_EVENT, loadPick, planOf } from '@/lib/plans/idea-bank';
-import { deckFromIdeas } from '@/lib/deck/fromIdeas';
 import { createClient } from '@/lib/supabase/client';
 
 type Cur = { subject: string; title: string };
@@ -39,6 +38,8 @@ export default function LessonPlanAside({ classId, grade }: { classId: string; g
     if (!supabase || !cur || !pick) return;
     if (total < pick.dur && !window.confirm(`Mới chọn hoạt động cho ${total}/${pick.dur} phút (còn ${pick.dur - total} phút trống).\nVẫn tạo slide? Bấm “Huỷ” rồi “Sửa gợi ý” để chọn thêm.`)) return;
     setBusy(true); setErr('');
+    // Bộ sinh slide khá nặng (cảnh, hình 3D, mẫu trang) → chỉ tải khi bấm, không làm chậm dashboard
+    const { deckFromIdeas } = await import('@/lib/deck/fromIdeas');
     const D = await deckFromIdeas(cur.subject, cur.title, pick, grade);
     const { data, error } = await supabase.from('slide_decks').insert({ title: D.title.slice(0, 120), grade: D.grade, class_id: classId, data: D }).select('id').single();
     setBusy(false);
