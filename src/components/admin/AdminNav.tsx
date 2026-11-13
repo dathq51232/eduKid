@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, BookOpen, CreditCard, LayoutDashboard, LineChart, ListTree, ScrollText, UserCheck, Users } from 'lucide-react';
+import { Bell, BookOpen, CreditCard, LayoutDashboard, LineChart, ListTree, Megaphone, ScrollText, UserCheck, Users } from 'lucide-react';
 import { useAdminUser } from './AdminContext';
 import { FEATURES } from '@/lib/features';
 import type { NavCounts } from '@/lib/admin/insights';
@@ -15,6 +15,7 @@ export default function AdminNav({ counts }: { counts?: NavCounts | null }) {
     { href: '/quan-tri', label: 'Tổng quan', icon: LayoutDashboard, exact: true, show: true },
     { href: '/quan-tri/thong-bao', label: 'Thông báo', icon: Bell, exact: false, show: isAdmin, n: counts?.unread },
     { href: '/quan-tri/truy-cap', label: 'Truy cập', icon: LineChart, exact: false, show: isAdmin },
+    { href: '/quan-tri/marketing', label: 'Marketing', icon: Megaphone, exact: false, show: isAdmin },
     { sep: true, show: isAdmin },
     { href: '/quan-tri/nguoi-dung', label: 'Người dùng', icon: Users, exact: false, show: isAdmin },
     { href: '/quan-tri/duyet-giao-vien', label: 'Duyệt giáo viên', icon: UserCheck, exact: false, show: isAdmin, n: counts?.teachers_pending },

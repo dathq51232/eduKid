@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
   if (!rateLimit(`trk:${vid}`, 240, 3600_000) || !rateLimit(`trkip:${ip}`, 1500, 3600_000)) return res;
 
-  const body = (await request.json().catch(() => ({}))) as { p?: unknown; v?: unknown };
+  const body = (await request.json().catch(() => ({}))) as { p?: unknown; v?: unknown; u?: { s?: unknown; c?: unknown; k?: unknown } };
   const path = normalizePath(typeof body.p === 'string' ? body.p : '/');
   if (path.startsWith('/api')) return res;
   const ua = request.headers.get('user-agent') ?? '';
@@ -34,6 +34,11 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     await supabase.rpc('track_visit', { p_vid: hashed, p_path: path, p_device: device, p_view: body.v !== 0 });
+    // Link marketing (UTM): lượt bấm link / lượt vào trang đăng ký — cùng mã khách đã băm, đếm mỗi khách 1 lần / ngày
+    const u = body.u;
+    if (u && typeof u.s === 'string' && typeof u.c === 'string' && (u.k === 'click' || u.k === 'signup_page')) {
+      await supabase.rpc('track_campaign', { p_vid: hashed, p_source: u.s.slice(0, 20), p_campaign: u.c.slice(0, 40), p_kind: u.k });
+    }
   } catch {
     // thống kê lỗi không được ảnh hưởng người dùng
   }

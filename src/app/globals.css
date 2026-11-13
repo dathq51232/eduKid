@@ -10069,6 +10069,86 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
   .chs-play.is-fs .chs-side { max-height: none; overflow: visible; }
 }
 
+/* ===== Quản trị › Marketing (mk-): soạn một lần → 3 bản Fanpage / TikTok / Zalo ===== */
+.mk .btn svg { width: 16px; height: 16px; }
+.mk h2 { margin: 0; font-size: 18px; }
+.mk h2 small { color: var(--muted); font-size: 13.5px; font-weight: 600; }
+.mk-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.mk-head h1 { margin: 0 0 4px; }
+.mk-head .adm-muted { max-width: 760px; margin: 0; }
+.mk-note { position: sticky; top: 8px; z-index: 5; margin: 0; padding: 10px 14px; border-radius: 12px; font-weight: 600; box-shadow: var(--shadow-sm); }
+.mk-note.is-ok { background: color-mix(in srgb, #16a34a 14%, var(--surface)); color: #15803d; }
+.mk-note.is-bad { background: color-mix(in srgb, #dc2626 12%, var(--surface)); color: #b91c1c; }
+:root[data-theme="dark"] .mk-note.is-ok { color: #86efac; }
+:root[data-theme="dark"] .mk-note.is-bad { color: #fca5a5; }
+.mk-row-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.mk-tpl { display: flex; flex-wrap: wrap; gap: 6px; }
+.mk-tpl button { min-height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface-2); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.mk-tpl button:hover { border-color: var(--brand-blue); color: var(--brand-blue); }
+.mk-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mk-fields > label { display: grid; gap: 4px; font-size: 14px; font-weight: 700; }
+.mk-fields small { color: var(--muted); font-weight: 500; }
+.mk-wide { grid-column: 1 / -1; }
+.mk input:not([type="checkbox"]), .mk textarea { width: 100%; min-height: 40px; padding: 8px 10px; border: 1.5px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 500; line-height: 1.5; }
+.mk textarea { resize: vertical; }
+.mk-media { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.mk-pick { cursor: pointer; }
+.mk-files { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.mk-files button { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: var(--surface-2); color: var(--ink); cursor: pointer; }
+.mk-files svg { width: 14px; height: 14px; }
+.mk-consent { display: flex; align-items: flex-start; gap: 6px; font-size: 13.5px; font-weight: 600; }
+.mk-consent input { margin-top: 3px; }
+.mk-media > small { flex-basis: 100%; }
+.mk-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.mk-out { display: grid; gap: 12px; }
+.mk-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 14px; align-items: start; }
+.mk-card { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--line); border-top: 4px solid var(--mk-c, var(--line)); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.mk-card.is-facebook { --mk-c: #1d6fe0; }
+.mk-card.is-tiktok { --mk-c: #18181b; }
+.mk-card.is-zalo { --mk-c: #0068ff; }
+:root[data-theme="dark"] .mk-card.is-tiktok { --mk-c: #a1a1aa; }
+.mk-card header { display: flex; align-items: center; gap: 8px; }
+.mk-count { margin-left: auto; color: var(--muted); font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.mk-count.is-over { color: #b91c1c; }
+:root[data-theme="dark"] .mk-count.is-over { color: #fca5a5; }
+.mk-hint { margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+.mk-card textarea { font-size: 14px; }
+.mk-bio { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0; font-size: 12.5px; color: var(--muted); }
+.mk-bio code { padding: 2px 6px; border-radius: 6px; background: var(--surface-2); color: var(--ink); overflow-wrap: anywhere; }
+.mk-bio button { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.mk-bio svg { width: 13px; height: 13px; }
+.mk-card-act { display: flex; flex-wrap: wrap; gap: 6px; }
+.mk-done { display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 0 10px; border: 1px dashed var(--line-strong); border-radius: 10px; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.mk-done svg { width: 15px; height: 15px; }
+.mk-done.is-on { border-style: solid; border-color: #16a34a; background: color-mix(in srgb, #16a34a 12%, var(--surface)); color: #15803d; }
+:root[data-theme="dark"] .mk-done.is-on { color: #86efac; }
+
+/* Nhãn kênh: luôn có chữ viết tắt (không phân biệt chỉ bằng màu) */
+.mk-pf { display: inline-grid; place-items: center; min-width: 34px; height: 24px; padding: 0 6px; border-radius: 7px; background: #64748b; color: #fff; font-size: 11.5px; font-weight: 800; }
+.is-facebook .mk-pf, .mk-pf.is-facebook { background: #1d6fe0; }
+.is-tiktok .mk-pf, .mk-pf.is-tiktok { background: #18181b; }
+.is-zalo .mk-pf, .mk-pf.is-zalo { background: #0068ff; }
+:root[data-theme="dark"] .is-tiktok .mk-pf, :root[data-theme="dark"] .mk-pf.is-tiktok { background: #3f3f46; }
+.mk-pf.is-off { background: var(--surface-2); color: var(--muted); }
+
+.mk-table-wrap { overflow-x: auto; }
+.mk-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.mk-table th, .mk-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.mk-table th { color: var(--muted); font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.mk-table td small { display: block; color: var(--muted); font-size: 12px; }
+.mk-table .is-n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mk-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.mk-list li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 12px; }
+.mk-list li.is-cur { border-color: var(--brand-blue); background: color-mix(in srgb, var(--brand-blue) 6%, var(--surface)); }
+.mk-list-main { display: grid; flex: 1; min-width: 0; padding: 4px; border: 0; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.mk-list-main b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mk-list-main small { color: var(--muted); font-size: 12.5px; }
+.mk-list-ch { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.mk-del { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: #b91c1c; cursor: pointer; }
+.mk-del svg { width: 16px; height: 16px; }
+@media (max-width: 640px) { .mk-fields { grid-template-columns: minmax(0, 1fr); } .mk-list li { flex-wrap: wrap; } }
+
 /* ===== Chế độ tối: làm dịu nền sáng còn sót (sinh tự động từ các khối nền trắng/pastel chưa có bản tối — chế độ sáng giữ nguyên) ===== */
 :root[data-theme="dark"] .balance-facts li { background: var(--surface-2); }
 :root[data-theme="dark"] .balance-main { background: var(--surface-2); }
