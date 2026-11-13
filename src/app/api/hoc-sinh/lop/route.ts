@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { hasStudentLoginConfig, normalizeClassCode } from '@/lib/auth/student-credentials';
-import { clientIp, rateLimit } from '@/lib/rate-limit';
+import { clientIp, rateLimitShared } from '@/lib/rate-limit';
 
 // Bước 1 của đăng nhập học sinh: nhập mã lớp -> danh sách TÊN GỌI các bạn trong lớp (không trả gì khác).
+const MISS_LIMIT = 20;
+
 export async function POST(request: Request) {
   if (!hasStudentLoginConfig()) return NextResponse.json({ error: 'not_configured' }, { status: 503 });
   // Cả lớp thường dùng chung một mạng wifi (cùng IP) nên giới hạn theo IP phải đủ rộng cho ~40 học sinh.
-  if (!rateLimit(`lop:${clientIp(request.headers)}`, 150, 10 * 60_000)) {
+  // Đếm chung mọi bản máy chủ (database). Thêm khoá riêng cho lần nhập SAI mã: người dò mã lớp (để lấy tên học sinh)
+  // bị chặn sau MISS_LIMIT lần sai, còn cả lớp nhập đúng mã thì không ảnh hưởng.
+  const ip = clientIp(request.headers);
+  if (!(await rateLimitShared(`lop:${ip}`, 150, 10 * 60_000)) || !(await rateLimitShared(`lopsai:${ip}`, MISS_LIMIT, 30 * 60_000, { peek: true }))) {
     return NextResponse.json({ error: 'too_many_requests' }, { status: 429 });
   }
   const body = (await request.json().catch(() => ({}))) as { code?: unknown };
@@ -21,7 +26,10 @@ export async function POST(request: Request) {
     console.error('[hoc-sinh/lop] classes query failed:', clsErr.code, clsErr.message);
     return NextResponse.json({ error: 'server_error' }, { status: 500 });
   }
-  if (!cls) return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  if (!cls) {
+    await rateLimitShared(`lopsai:${ip}`, MISS_LIMIT, 30 * 60_000);
+    return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  }
   // Lớp có thật nhưng giáo viên đã lưu trữ: báo rõ để giáo viên bấm "Mở lại lớp" (không lộ thêm thông tin gì).
   if (cls.status !== 'active') return NextResponse.json({ error: 'class_archived' }, { status: 403 });
 

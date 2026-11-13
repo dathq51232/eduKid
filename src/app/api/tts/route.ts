@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientIp, rateLimitShared } from '@/lib/rate-limit';
 
 const MAX_TEXT_LENGTH = 1500;
 const CHUNK_MAX = 180;
@@ -73,6 +74,12 @@ async function synthesizeNeuralRpc(text: string, tl: 'en' | 'vi', slow = false):
 }
 
 export async function GET(req: NextRequest) {
+  // Chỉ phục vụ chính trang EduChain Kids: trang web khác gọi sang (trình duyệt gắn Sec-Fetch-Site: cross-site) bị từ chối.
+  if (req.headers.get('sec-fetch-site') === 'cross-site') return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  // Giới hạn theo IP, đếm chung mọi bản máy chủ. Cả lớp dùng chung wifi nên mức đủ rộng; câu giống nhau đã có CDN giữ sẵn.
+  if (!(await rateLimitShared(`tts:${clientIp(req.headers)}`, 600, 10 * 60_000))) {
+    return NextResponse.json({ error: 'too_many_requests' }, { status: 429, headers: { 'Retry-After': '120' } });
+  }
   const { searchParams } = new URL(req.url);
   const rawLang = (searchParams.get('lang') ?? 'vi').toLowerCase();
   const tl: 'en' | 'vi' = rawLang.startsWith('en') ? 'en' : 'vi';

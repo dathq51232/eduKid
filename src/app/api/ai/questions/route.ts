@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getVerifiedViewer } from '@/lib/auth/viewer';
 import { hasServiceRole } from '@/lib/supabase/admin';
-import { rateLimit } from '@/lib/rate-limit';
+import { rateLimitShared } from '@/lib/rate-limit';
 import { countTodayUsage, loadTeacherAiConfig, logAiUsage } from '@/lib/ai/teacher-keys';
 import { chatCompletion, isRetryable, type ProviderId } from '@/lib/ai/providers';
 
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
   if (viewer.state !== 'ok') return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });
   if (!viewer.isTeacher && !viewer.isAdmin) return NextResponse.json({ error: 'Chỉ dành cho giáo viên.' }, { status: 403 });
   if (!hasServiceRole()) return NextResponse.json({ error: 'Máy chủ chưa cấu hình đầy đủ cho AI (xem docs/tro-ly-ai.md).' }, { status: 503 });
-  if (!rateLimit(`aiq:${viewer.userId}`, 6, 60_000)) return NextResponse.json({ error: 'Sinh câu nhanh quá — đợi một phút rồi thử lại nhé.' }, { status: 429 });
+  if (!(await rateLimitShared(`aiq:${viewer.userId}`, 6, 60_000))) return NextResponse.json({ error: 'Sinh câu nhanh quá — đợi một phút rồi thử lại nhé.' }, { status: 429 });
 
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Yêu cầu không hợp lệ.' }, { status: 400 });

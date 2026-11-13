@@ -4,14 +4,14 @@ import { createClient } from '@/lib/supabase/server';
 import {
   LOCK_MINUTES, MAX_PIN_FAILS, hasStudentLoginConfig, isPin, isUuid, normalizeClassCode, studentEmail, studentPassword,
 } from '@/lib/auth/student-credentials';
-import { clientIp, rateLimit } from '@/lib/rate-limit';
+import { clientIp, rateLimitShared } from '@/lib/rate-limit';
 
 // Bước cuối của đăng nhập học sinh: mã lớp + học sinh đã chọn + PIN.
 // Sai PIN quá MAX_PIN_FAILS lần trong cửa sổ LOCK_MINUTES phút -> khóa tạm, giáo viên có thể mở sớm.
 export async function POST(request: Request) {
   if (!hasStudentLoginConfig()) return NextResponse.json({ error: 'not_configured' }, { status: 503 });
   // Cả lớp dùng chung IP: giới hạn rộng; chống dò PIN thật sự là bộ đếm sai PIN theo từng học sinh trong database.
-  if (!rateLimit(`pin:${clientIp(request.headers)}`, 300, 10 * 60_000)) {
+  if (!(await rateLimitShared(`pin:${clientIp(request.headers)}`, 300, 10 * 60_000))) {
     return NextResponse.json({ error: 'too_many_requests' }, { status: 429 });
   }
   const body = (await request.json().catch(() => ({}))) as { code?: unknown; studentId?: unknown; pin?: unknown };

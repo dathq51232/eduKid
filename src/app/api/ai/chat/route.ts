@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getVerifiedViewer } from '@/lib/auth/viewer';
 import { hasServiceRole } from '@/lib/supabase/admin';
-import { rateLimit } from '@/lib/rate-limit';
+import { rateLimitShared } from '@/lib/rate-limit';
 import { countTodayUsage, loadTeacherAiConfig, logAiUsage, saveTeacherAiKeys } from '@/lib/ai/teacher-keys';
 import { chatCompletion, isRetryable, streamChatCompletion, type ProviderId } from '@/lib/ai/providers';
 import { TEACHER_ASSISTANT_SYSTEM, trimHistory } from '@/lib/ai/prompt';
@@ -18,11 +18,11 @@ export async function POST(request: Request) {
   if (viewer.state !== 'ok') return NextResponse.json({ error: 'Bạn cần đăng nhập.' }, { status: 401 });
   if (!viewer.isTeacher && !viewer.isAdmin) return NextResponse.json({ error: 'Chỉ dành cho giáo viên.' }, { status: 403 });
   if (!hasServiceRole()) return NextResponse.json({ error: 'Máy chủ chưa cấu hình đầy đủ (xem docs/tro-ly-ai.md).' }, { status: 503 });
-  if (!rateLimit(`aichat:${viewer.userId}`, 12, 5 * 60_000)) {
+  if (!(await rateLimitShared(`aichat:${viewer.userId}`, 12, 5 * 60_000))) {
     return NextResponse.json({ error: 'Bạn hỏi nhanh quá — đợi khoảng một phút rồi tiếp tục nhé.' }, { status: 429 });
   }
   // Van chặn theo phút: gói miễn phí Gemini chỉ nhận ~10 lượt/phút — chặn giật liên tục trước khi Google chặn.
-  if (!rateLimit(`aichat-rpm:${viewer.userId}`, 8, 60_000)) {
+  if (!(await rateLimitShared(`aichat-rpm:${viewer.userId}`, 8, 60_000))) {
     return NextResponse.json({ error: 'Hỏi chậm thôi thầy cô — gói miễn phí của Gemini chỉ nhận khoảng 10 lượt mỗi phút, nghỉ chút rồi hỏi tiếp nhé.' }, { status: 429 });
   }
 
