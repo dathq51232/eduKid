@@ -42,6 +42,7 @@ export default function MarketingStudio({ posts, report }: { posts: MPost[]; rep
   const [posted, setPosted] = useState<Partial<Record<Channel, string>>>({});
   const [files, setFiles] = useState<File[]>([]);
   const [consent, setConsent] = useState(false);
+  const [mediaTip, setMediaTip] = useState('');
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -59,7 +60,7 @@ export default function MarketingStudio({ posts, report }: { posts: MPost[]; rep
   };
   const applyTemplate = (t: (typeof TEMPLATES)[number]) => {
     if ((body.trim() || hasV) && !window.confirm('Thay nội dung đang soạn bằng mẫu này?')) return;
-    setTitle(t.title); setBody(t.body); setHashtags(t.hashtags); setV(EMPTY);
+    setTitle(t.title); setBody(t.body); setHashtags(t.hashtags); setV(EMPTY); setMediaTip(t.media ?? '');
     if (!campEdited) setCampaign('');
   };
   const generate = () => {
@@ -156,6 +157,7 @@ export default function MarketingStudio({ posts, report }: { posts: MPost[]; rep
                 <label className="mk-consent"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /> Ảnh / video có học sinh đã được phụ huynh đồng ý cho đăng (hoặc không có học sinh)</label>
               </>
             )}
+            {mediaTip && <p className="mk-tip"><ImagePlus aria-hidden="true" /> <span><b>Ảnh / video nên kèm:</b> {mediaTip}</span></p>}
             <small className="adm-muted">Tệp chỉ nằm trên máy này để chia sẻ (điện thoại: chọn app Zalo / TikTok / Facebook), không tải lên máy chủ.</small>
           </div>
         </div>
@@ -178,7 +180,7 @@ export default function MarketingStudio({ posts, report }: { posts: MPost[]; rep
                     <span className={`mk-count${over ? ' is-over' : ''}`}>{n.toLocaleString('vi-VN')}/{CH[c].limit.toLocaleString('vi-VN')}</span>
                   </header>
                   <p className="mk-hint">{CH[c].hint}</p>
-                  <textarea value={v[c]} onChange={(e) => setV({ ...v, [c]: e.target.value })} rows={10} aria-label={`Nội dung ${CH[c].name}`} />
+                  <textarea value={v[c]} onChange={(e) => setV({ ...v, [c]: e.target.value })} rows={Math.min(22, Math.max(8, v[c].split('\n').length + Math.ceil(v[c].length / 60)))} aria-label={`Nội dung ${CH[c].name}`} />
                   {c === 'tiktok' && target && (
                     <p className="mk-bio">Link đặt ở bio: <code>{withUtm(target, 'tiktok', camp)}</code> <button type="button" onClick={async () => flash(await copyText(withUtm(target, 'tiktok', camp)), 'Đã chép link bio TikTok.')}><Copy aria-hidden="true" /> Chép</button></p>
                   )}

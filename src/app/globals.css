@@ -10102,8 +10102,9 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .mk-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .mk-out { display: grid; gap: 12px; }
-.mk-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 14px; align-items: start; }
-.mk-card { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--line); border-top: 4px solid var(--mk-c, var(--line)); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.mk-cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+@media (min-width: 1280px) { .mk-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.mk-card { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 14px; border: 1px solid var(--line); border-top: 4px solid var(--mk-c, var(--line)); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-sm); }
 .mk-card.is-facebook { --mk-c: #1d6fe0; }
 .mk-card.is-tiktok { --mk-c: #18181b; }
 .mk-card.is-zalo { --mk-c: #0068ff; }
@@ -10113,12 +10114,15 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .mk-count.is-over { color: #b91c1c; }
 :root[data-theme="dark"] .mk-count.is-over { color: #fca5a5; }
 .mk-hint { margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
-.mk-card textarea { font-size: 14px; }
+.mk-card textarea { flex: 1; min-height: 180px; max-height: 70vh; font-size: 14px; field-sizing: content; }
+.mk-tip { display: flex; align-items: flex-start; gap: 6px; flex-basis: 100%; margin: 0; padding: 8px 12px; border-radius: 10px; background: color-mix(in srgb, var(--brand-blue) 9%, var(--surface)); font-size: 13.5px; line-height: 1.45; }
+.mk-tip svg { flex: none; width: 16px; height: 16px; margin-top: 2px; color: var(--brand-blue); }
 .mk-bio { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0; font-size: 12.5px; color: var(--muted); }
 .mk-bio code { padding: 2px 6px; border-radius: 6px; background: var(--surface-2); color: var(--ink); overflow-wrap: anywhere; }
 .mk-bio button { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
 .mk-bio svg { width: 13px; height: 13px; }
-.mk-card-act { display: flex; flex-wrap: wrap; gap: 6px; }
+.mk-card-act { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: auto; padding-top: 4px; }
+.mk-card-act .mk-done { margin-left: auto; }
 .mk-done { display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 0 10px; border: 1px dashed var(--line-strong); border-radius: 10px; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 .mk-done svg { width: 15px; height: 15px; }
 .mk-done.is-on { border-style: solid; border-color: #16a34a; background: color-mix(in srgb, #16a34a 12%, var(--surface)); color: #15803d; }

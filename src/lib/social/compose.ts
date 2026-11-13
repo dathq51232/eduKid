@@ -10,8 +10,8 @@ export const CH: Record<Channel, { name: string; short: string; limit: number; h
 };
 
 const L = (...lines: string[]) => lines.join('\n');
-/** Mẫu bài theo mùa (điền sẵn tiêu đề, nội dung gốc, hashtag — sửa lại cho phù hợp) */
-export const TEMPLATES: { id: string; label: string; title: string; body: string; hashtags: string }[] = [
+/** Mẫu bài theo mùa (điền sẵn tiêu đề, nội dung gốc, hashtag — sửa lại cho phù hợp). media = gợi ý ảnh / video nên kèm */
+export const TEMPLATES: { id: string; label: string; title: string; body: string; hashtags: string; media?: string }[] = [
   {
     id: 'gioi-thieu', label: 'Giới thiệu app', title: 'Giới thiệu EduChain Kids', hashtags: 'EduChainKids, học vui mỗi ngày, tiểu học, phụ huynh',
     body: L('Mỗi ngày 10 phút cùng EduChain Kids 🦉', '',
@@ -37,8 +37,24 @@ export const TEMPLATES: { id: string; label: string; title: string; body: string
       'EduChain Kids có đề luyện theo từng bài và đề kiểm tra tổng hợp, chỉnh được thời gian làm bài theo đúng quy định của trường. Con làm xong biết ngay đúng sai và lời giải.'),
   },
   {
-    id: 'tinh-nang', label: 'Tính năng mới', title: 'Tính năng mới', hashtags: 'EduChainKids, tính năng mới',
-    body: L('✨ Tính năng mới trên EduChain Kids: …', '', 'Dùng thế nào: …', '', 'Ai dùng được: học sinh / phụ huynh / giáo viên.'),
+    id: 'trinh-chieu', label: 'Trình chiếu bài giảng', title: 'Trình chiếu bài giảng – bút laser', hashtags: 'EduChainKids, giáo viên tiểu học, thao giảng, bài giảng điện tử',
+    media: 'Ảnh 1: màn hình trình chiếu toàn màn hình (thanh công cụ bên phải). Ảnh 2: cận cảnh bút laser đang chỉ vào bài. Video quay màn hình 15–30 giây sẽ hợp TikTok.',
+    body: L('Thầy cô thao giảng nhẹ tay hơn với chế độ Trình chiếu của EduChain Kids 🎯', '',
+      '✅ Chiếu toàn màn hình, kéo cửa sổ sang tivi / máy chiếu, máy cô vẫn xem trang tiếp theo và ghi chú',
+      '✅ Bút laser đỏ chỉ đúng chỗ cần giảng, cả lớp nhìn theo dễ dàng',
+      '✅ Bút vẽ, đèn chiếu, che màn hình, gọi tên ngẫu nhiên, đếm ngược, cộng sao cho đội',
+      '✅ Soạn bài kiểu kéo thả, có sẵn bộ mẫu theo chủ đề', '',
+      'Miễn phí cho giáo viên. Thử ngay với bài dạy tuần này!'),
+  },
+  {
+    id: 'tinh-nang', label: 'Tính năng mới', title: 'Tính năng mới – Thế giới của em', hashtags: 'EduChainKids, học vui mỗi ngày, tiểu học, phụ huynh',
+    media: 'Ảnh chụp trang Của em với chủ đề Vũ trụ / Đại dương, bản đồ phiêu lưu ở trang Chọn bài, khoảnh khắc mở rương quà.',
+    body: L('✨ Mới trên EduChain Kids: Thế giới của em!', '',
+      '🚀 Con tự chọn khung cảnh mình thích: Vũ trụ, Rừng xanh, Đại dương, Vương quốc kẹo',
+      '🗺️ Bài học thành bản đồ phiêu lưu, mỗi bài là một hòn đảo, học xong cắm cờ',
+      '🎁 Mỗi ngày học xong 1 bài được mở rương quà, sưu tầm sticker',
+      '🔥 Trả lời đúng liên tiếp có khen thưởng riêng', '',
+      'Không xếp hạng, không so sánh với bạn: chỉ để con thấy học vui và muốn học mỗi ngày.'),
   },
 ];
 
