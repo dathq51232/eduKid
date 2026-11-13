@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Ảnh quảng cáo EduChain Kids</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --blue: #2457c5; --blue-d: #173a8a; --yellow: #ffc83d; --green: #22c55e; --ink: #13224a; --cream: #fff8e8; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #ddd; font-family: Quicksand, sans-serif; color: var(--ink); }
+  .board { position: relative; overflow: hidden; display: none; }
+  .board.on { display: block; }
+  h1, h2, .big { font-family: 'Baloo 2', sans-serif; line-height: 1.02; letter-spacing: -.5px; }
+  .logo { height: 64px; }
+  .url { font-family: 'Baloo 2'; font-weight: 700; }
+  .chk { display: flex; gap: 18px; align-items: flex-start; font-weight: 700; }
+  .chk i { flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--green); color: #fff; font-style: normal; font-weight: 800; }
+  .cta { display: inline-flex; align-items: center; gap: 14px; border-radius: 999px; background: var(--yellow); color: var(--ink); font-family: 'Baloo 2'; font-weight: 800; box-shadow: 0 8px 0 #d99a00; }
+  .blob { position: absolute; border-radius: 50%; }
+  .f3d { position: absolute; filter: drop-shadow(0 10px 12px rgb(0 0 0 / .18)); }
+  .chip { display: inline-block; padding: 10px 22px; border-radius: 999px; font-weight: 700; font-family: 'Baloo 2'; }
+
+  /* 1. Vuông 1080: bài đăng Facebook / Zalo */
+  #b1 { width: 1080px; height: 1080px; background: linear-gradient(160deg, #3a74e6 0%, var(--blue) 55%, var(--blue-d) 100%); color: #fff; }
+  #b1 .top { position: absolute; left: 70px; top: 60px; display: flex; align-items: center; gap: 16px; padding: 12px 22px; border-radius: 22px; background: #fff; }
+  #b1 h1 { position: absolute; left: 70px; top: 200px; width: 640px; font-size: 112px; font-weight: 800; }
+  #b1 .sub { position: absolute; left: 74px; top: 430px; font-family: 'Baloo 2'; font-size: 46px; font-weight: 700; opacity: .95; }
+  #b1 h1 span { color: var(--yellow); }
+  #b1 .list { position: absolute; left: 70px; top: 545px; width: 560px; display: grid; gap: 22px; font-size: 31px; line-height: 1.3; }
+  #b1 .chk i { width: 44px; height: 44px; font-size: 26px; margin-top: 2px; }
+  #b1 .cta { position: absolute; left: 70px; bottom: 82px; padding: 22px 40px; font-size: 40px; }
+  #b1 .url { position: absolute; right: 70px; bottom: 100px; font-size: 32px; opacity: .9; }
+  #b1 .milo { position: absolute; right: -10px; top: 250px; width: 470px; }
+  #b1 .halo { right: 10px; top: 260px; width: 440px; height: 440px; background: radial-gradient(circle, rgb(255 200 61 / .55), rgb(255 200 61 / 0) 70%); }
+
+  /* 2. Dọc 1080x1350: câu dễ trước, câu khó sau */
+  #b2 { width: 1080px; height: 1350px; background: var(--cream); }
+  #b2 .top { position: absolute; left: 70px; top: 64px; }
+  #b2 h1 { position: absolute; left: 70px; top: 170px; font-size: 96px; font-weight: 800; color: var(--blue); }
+  #b2 h1 span { color: #f08a00; }
+  #b2 .sub { position: absolute; left: 74px; top: 390px; width: 900px; font-size: 34px; font-weight: 700; line-height: 1.35; color: #3b4a72; }
+  #b2 .stairs { position: absolute; left: 70px; right: 70px; bottom: 260px; height: 420px; }
+  #b2 .step { position: absolute; bottom: 0; width: 170px; border-radius: 26px 26px 10px 10px; display: flex; flex-direction: column; align-items: center; padding-top: 18px; color: #fff; font-family: 'Baloo 2'; font-weight: 800; font-size: 44px; box-shadow: inset 0 -12px 0 rgb(0 0 0 / .12); }
+  #b2 .step small { display: block; font-size: 22px; font-weight: 700; opacity: .92; margin-top: -4px; text-align: center; }
+  #b2 .milo { position: absolute; width: 270px; }
+  #b2 .subj { position: absolute; left: 70px; bottom: 150px; display: flex; gap: 14px; font-size: 30px; }
+  #b2 .foot { position: absolute; left: 0; right: 0; bottom: 0; height: 110px; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 70px; }
+  #b2 .foot .cta { padding: 12px 30px; font-size: 32px; box-shadow: 0 6px 0 #d99a00; }
+  #b2 .foot .url { font-size: 34px; }
+
+  /* 3. Ngang 1200x628: ảnh link / quảng cáo, phụ huynh theo dõi */
+  #b3 { width: 1200px; height: 628px; background: linear-gradient(120deg, #fff 0%, #eef4ff 100%); }
+  #b3 .left { position: absolute; left: 60px; top: 44px; width: 470px; }
+  #b3 h1 { font-size: 62px; font-weight: 800; color: var(--blue); margin-top: 26px; }
+  #b3 h1 span { color: #16a34a; }
+  #b3 p { margin-top: 16px; font-size: 23px; font-weight: 700; line-height: 1.4; color: #3b4a72; }
+  #b3 .cta { margin-top: 28px; padding: 14px 30px; font-size: 30px; box-shadow: 0 6px 0 #d99a00; }
+  #b3 .url { display: block; margin-top: 18px; font-size: 24px; color: var(--blue); }
+  #b3 .card { position: absolute; right: 60px; top: 60px; width: 470px; padding: 26px 28px; border-radius: 28px; background: #fff; box-shadow: 0 24px 50px rgb(36 87 197 / .18); }
+  #b3 .card h3 { font-family: 'Baloo 2'; font-size: 28px; display: flex; justify-content: space-between; align-items: center; }
+  #b3 .card h3 em { font-style: normal; font-size: 18px; color: #6b7aa0; font-family: Quicksand; }
+  #b3 .row { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-top: 1px solid #e7ecf7; font-size: 21px; font-weight: 700; }
+  #b3 .row:first-of-type { margin-top: 12px; }
+  #b3 .row img { width: 40px; }
+  #b3 .row b { flex: 1; }
+  #b3 .dot { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 17px; font-weight: 800; }
+  #b3 .ok { background: var(--green); } #b3 .no { background: #ef4444; }
+  #b3 .dots { display: flex; gap: 6px; }
+  #b3 .tag { position: absolute; right: 70px; bottom: 34px; font-size: 15px; color: #8a96b8; font-weight: 700; }
+  #b3 .owl { position: absolute; left: 500px; bottom: -14px; width: 190px; }
+
+  /* 4. Story 1080x1920 */
+  #b4 { width: 1080px; height: 1920px; background: linear-gradient(180deg, #ffe7a3 0%, var(--cream) 38%, #dfe9ff 100%); }
+  #b4 .top { position: absolute; left: 0; right: 0; top: 120px; text-align: center; }
+  #b4 .top img { height: 84px; }
+  #b4 h1 { position: absolute; left: 60px; right: 60px; top: 270px; text-align: center; font-size: 118px; font-weight: 800; color: var(--blue); }
+  #b4 h1 span { display: block; color: #f08a00; font-size: 150px; }
+  #b4 .milo { position: absolute; left: 50%; top: 600px; width: 450px; transform: translateX(-50%); }
+  #b4 .list { position: absolute; left: 80px; right: 80px; top: 1090px; display: grid; gap: 22px; }
+  #b4 .chk { padding: 26px 30px; border-radius: 28px; background: #fff; box-shadow: 0 10px 26px rgb(36 87 197 / .12); font-size: 36px; line-height: 1.3; align-items: center; }
+  #b4 .chk i { width: 56px; height: 56px; font-size: 32px; }
+  #b4 .cta { position: absolute; left: 50%; bottom: 190px; transform: translateX(-50%); padding: 28px 54px; font-size: 50px; white-space: nowrap; }
+  #b4 .url { position: absolute; left: 0; right: 0; bottom: 100px; text-align: center; font-size: 40px; color: var(--blue); }
+</style>
+</head>
+<body>
+<!-- Đường dẫn ảnh trỏ về public/ của dự án -->
+<section class="board" id="b1">
+  <div class="top"><img class="logo" src="../../../public/brand/logo-full.webp" alt="EduChain Kids"></div>
+  <span class="blob halo"></span>
+  <img class="milo" src="../../../public/brand/milo.webp" alt="">
+  <img class="f3d" src="../../../public/emoji/f3d/alarm-clock.webp" style="left:490px;top:315px;width:110px;transform:rotate(-12deg)" alt="">
+  <img class="f3d" src="../../../public/emoji/f3d/star.webp" style="right:60px;top:110px;width:96px;transform:rotate(14deg)" alt="">
+  <img class="f3d" src="../../../public/emoji/f3d/books.webp" style="right:340px;top:640px;width:130px" alt="">
+  <h1>Mỗi ngày<br><span>10 phút</span></h1>
+  <p class="sub">cùng EduChain Kids</p>
+  <div class="list">
+    <div class="chk"><i>✓</i><span>Toán, Tiếng Việt, Tiếng Anh theo đúng chương trình lớp 1–5</span></div>
+    <div class="chk"><i>✓</i><span>Câu dễ trước, câu khó sau, con tự tin hơn mỗi ngày</span></div>
+    <div class="chk"><i>✓</i><span>Phụ huynh xem được con học gì, đúng sai ở đâu</span></div>
+  </div>
+  <span class="cta">Học thử miễn phí 7 ngày →</span>
+  <span class="url">educhainkids.com</span>
+</section>
+
+<section class="board" id="b2">
+  <div class="top"><img class="logo" src="../../../public/brand/logo-full.webp" alt="EduChain Kids"></div>
+  <h1>Câu dễ trước,<br><span>câu khó sau</span></h1>
+  <p class="sub">Mỗi bài đi từ mức 1 đến mức 5. Con làm đúng thì lên bậc, sai thì Milo gợi ý lại cho hiểu.</p>
+  <div class="stairs">
+    <div class="step" style="left:0;height:130px;background:#22c55e">1<small>Nhận biết</small></div>
+    <div class="step" style="left:190px;height:200px;background:#16a3a3">2<small>Hiểu</small></div>
+    <div class="step" style="left:380px;height:270px;background:#2f6be0">3<small>Vận dụng</small></div>
+    <div class="step" style="left:570px;height:340px;background:#7c4ddb">4<small>Nâng cao</small></div>
+    <div class="step" style="left:760px;height:410px;background:#f08a00">5<small>Thử thách</small></div>
+    <img class="milo" src="../../../public/brand/milo-astronaut.webp" style="left:575px;bottom:335px;width:200px" alt="">
+    <img class="f3d" src="../../../public/emoji/f3d/star.webp" style="left:810px;bottom:420px;width:100px" alt="">
+  </div>
+  <div class="subj">
+    <span class="chip" style="background:#dbe7ff;color:#1d4bb0">Toán</span>
+    <span class="chip" style="background:#dcfce7;color:#166534">Tiếng Việt</span>
+    <span class="chip" style="background:#ffe8cc;color:#9a4a00">Tiếng Anh</span>
+    <span class="chip" style="background:#f1e6ff;color:#6b2fc0">Lớp 1–5</span>
+  </div>
+  <div class="foot"><span class="url">educhainkids.com</span><span class="cta">Học thử miễn phí 7 ngày</span></div>
+</section>
+
+<section class="board" id="b3">
+  <div class="left">
+    <img class="logo" src="../../../public/brand/logo-full.webp" alt="EduChain Kids" style="height:52px">
+    <h1>Biết con học gì,<br><span>đúng sai ở đâu</span></h1>
+    <p>Mỗi ngày 10 phút luyện Toán, Tiếng Việt, Tiếng Anh lớp 1–5. Phụ huynh xem lại từng bài con đã làm.</p>
+    <div><span class="cta">Học thử 7 ngày</span><span class="url">educhainkids.com</span></div>
+  </div>
+  <img class="owl f3d" src="../../../public/brand/milo-professor.webp" alt="">
+  <div class="card">
+    <h3>Hôm nay con đã học <em>Ảnh minh hoạ</em></h3>
+    <div class="row"><img src="../../../public/emoji/f3d/abacus.webp" alt=""><b>Toán: Phép cộng trong phạm vi 10</b><span class="dots"><span class="dot ok">✓</span><span class="dot ok">✓</span><span class="dot no">✕</span></span></div>
+    <div class="row"><img src="../../../public/emoji/f3d/open-book.webp" alt=""><b>Tiếng Việt: Vần an, at</b><span class="dots"><span class="dot ok">✓</span><span class="dot ok">✓</span><span class="dot ok">✓</span></span></div>
+    <div class="row"><img src="../../../public/emoji/f3d/blue-book.webp" alt=""><b>Tiếng Anh: Colours</b><span class="dots"><span class="dot ok">✓</span><span class="dot no">✕</span><span class="dot ok">✓</span></span></div>
+    <div class="row" style="color:#b3261e"><img src="../../../public/emoji/f3d/light-bulb.webp" alt=""><b>Câu cần ôn lại: 2 + 7 = ?</b></div>
+  </div>
+</section>
+
+<section class="board" id="b4">
+  <div class="top"><img src="../../../public/brand/logo-full.webp" alt="EduChain Kids"></div>
+  <h1>Mỗi ngày<span>10 phút</span></h1>
+  <img class="milo" src="../../../public/brand/milo.webp" alt="">
+  <img class="f3d" src="../../../public/emoji/f3d/pencil.webp" style="left:110px;top:720px;width:140px;transform:rotate(-20deg)" alt="">
+  <img class="f3d" src="../../../public/emoji/f3d/star.webp" style="right:120px;top:700px;width:130px;transform:rotate(12deg)" alt="">
+  <img class="f3d" src="../../../public/emoji/f3d/books.webp" style="right:110px;top:920px;width:140px" alt="">
+  <div class="list">
+    <div class="chk"><i>✓</i><span>Toán, Tiếng Việt, Tiếng Anh đúng chương trình lớp 1–5</span></div>
+    <div class="chk"><i>✓</i><span>Câu dễ trước, câu khó sau, con tự tin hơn mỗi ngày</span></div>
+    <div class="chk"><i>✓</i><span>Phụ huynh xem được con học gì, đúng sai ở đâu</span></div>
+  </div>
+  <span class="cta">Học thử miễn phí 7 ngày</span>
+  <span class="url">educhainkids.com</span>
+</section>
+<script>
+  const b = new URLSearchParams(location.search).get('b') || '1';
+  document.getElementById('b' + b).classList.add('on');
+</script>
+</body>
+</html>
