@@ -2,6 +2,8 @@
 /* eslint-disable @next/next/no-img-element -- hình dán / biểu tượng nhỏ có sẵn trong dự án */
 
 // Tab "Bài thao giảng" trong trang Bài giảng 3D: bài của tôi + tạo bài trống / từ mẫu hoạt động.
+import OfflineSaveButton from '@/components/offline/OfflineSaveButton';
+import { saveDeckOfflineById } from '@/lib/offline/save';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -92,6 +94,7 @@ export default function DeckHome({ classId, grade, decks, missing, openPlan }: {
             </Link>
             <span className="s3h-card-act">
               <Link className="ct-link" href={`/giao-vien/lop/${classId}/bai-giang-3d/thao-giang/${r.id}/trinh-chieu`}><MonitorPlay aria-hidden="true" /> Chiếu</Link>
+              <OfflineSaveButton kind="deck" id={r.id} className="ct-link" run={(pg) => saveDeckOfflineById(r.id, classId, pg)} />
               <button type="button" className="ct-link" disabled={!!busy} onClick={() => void duplicate(r)}><Copy aria-hidden="true" /> Nhân bản</button>
               {confirmDel === r.id
                 ? <><button type="button" className="ct-link is-danger" onClick={() => void remove(r.id)}>Xóa hẳn?</button><button type="button" className="ct-link" onClick={() => setConfirmDel(null)}>Thôi</button></>

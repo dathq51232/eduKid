@@ -2,8 +2,8 @@
 // 1. Bật bộ nhớ đệm (public/sw.js); 2. tải ảnh / âm thanh / mô hình riêng của cô (đường dẫn ký) về thành Blob;
 // 3. ghi vào IndexedDB; 4. mở trang /chieu-offline ẩn để trình duyệt giữ sẵn mã chạy, mô hình 3D, hình có sẵn của app.
 import { createClient } from '@/lib/supabase/client';
-import type { Deck } from '@/lib/deck/types';
-import type { Lesson3D } from '@/lib/lesson3d/types';
+import { normalizeDeck, type Deck } from '@/lib/deck/types';
+import { normalizeLesson, type Lesson3D } from '@/lib/lesson3d/types';
 import type { TeacherAsset } from '@/lib/assets/client';
 import { offlineKey, putOffline, type OfflineItem } from './store';
 
@@ -115,4 +115,20 @@ export async function saveLesson3DOffline(a: { lesson: Lesson3D; lessonId: strin
     savedAt: Date.now(), bytes: size(blobs, a.lesson), lesson: a.lesson, assets: rows, blobs };
   await finishSave(item, [], progress);
   return item;
+}
+
+/** Lưu từ danh sách bài (chưa mở bài): đọc bài từ máy chủ rồi lưu */
+export async function saveDeckOfflineById(deckId: string, classId: string, progress: Progress) {
+  progress('Đang đọc bài…');
+  const { data, error } = await createClient().from('slide_decks').select('id, title, data').eq('id', deckId).maybeSingle();
+  if (error || !data) throw new Error('Chưa đọc được bài. Kiểm tra mạng rồi thử lại.');
+  const row = data as { title: string; data: unknown };
+  return saveDeckOffline({ deck: normalizeDeck(row.data, row.title), deckId, classId }, progress);
+}
+export async function saveLesson3DOfflineById(lessonId: string, classId: string, progress: Progress) {
+  progress('Đang đọc bài…');
+  const { data, error } = await createClient().from('lessons3d').select('id, title, data').eq('id', lessonId).maybeSingle();
+  if (error || !data) throw new Error('Chưa đọc được bài. Kiểm tra mạng rồi thử lại.');
+  const row = data as { title: string; data: unknown };
+  return saveLesson3DOffline({ lesson: normalizeLesson(row.data, row.title), lessonId, classId }, progress);
 }

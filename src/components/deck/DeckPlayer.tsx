@@ -5,6 +5,8 @@
 //    che màn, gọi tên, đếm ngược, cộng sao).
 //  - Màn hình chiếu (?man=chieu): cửa sổ riêng để kéo sang tivi / máy chiếu, đồng bộ với máy cô qua BroadcastChannel.
 /* eslint-disable @next/next/no-img-element -- biểu tượng công cụ nhỏ có sẵn trong dự án */
+import OfflineSaveButton from '@/components/offline/OfflineSaveButton';
+import { saveDeckOffline } from '@/lib/offline/save';
 import TeamAvatar from '@/components/classroom/TeamAvatar';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -374,6 +376,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
         <Link href={offline?.exitHref ?? `/giao-vien/lop/${classId}/bai-giang-3d/thao-giang/${deckId}`} className="dp-exit"><ArrowLeft aria-hidden="true" /> Thoát</Link>
         <b className="dp-title">▶ {deck.title}</b>
         <span className="dp-pg">Trang {show.slide + 1} / {n}{left > 0 ? ` · còn ${left} hiệu ứng` : ''}</span>
+        {!offline && <OfflineSaveButton kind="deck" id={deckId} className="dp-btn" run={(pg) => saveDeckOffline({ deck, deckId, classId }, pg)} />}
         <button type="button" className="dp-btn is-main" onClick={openAudience}><MonitorUp aria-hidden="true" /> Mở màn hình chiếu</button>
         <button type="button" className="dp-btn" onClick={fullStage}><Expand aria-hidden="true" /> Toàn màn hình trang</button>
         <label className="dp-vol"><Volume2 aria-hidden="true" /><input type="range" min={0} max={1} step={0.05} value={vol} onChange={(e) => { setVol(Number(e.target.value)); setVolume(Number(e.target.value)); }} aria-label="Âm lượng" /></label>

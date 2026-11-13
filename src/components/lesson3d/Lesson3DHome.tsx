@@ -2,6 +2,8 @@
 
 // Trang "Bài giảng 3D & thao giảng": bài 3D của tôi · bài thao giảng (trình chiếu kiểu PowerPoint) · bài mẫu dựng sẵn ·
 // 76 bài STEM lớp 1–5 (tạo bài 3D từ khung STEM 5 bước).
+import OfflineSaveButton from '@/components/offline/OfflineSaveButton';
+import { saveLesson3DOfflineById } from '@/lib/offline/save';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -92,6 +94,7 @@ export default function Lesson3DHome({ classId, className, grade, lessons, missi
               <small>Sửa lần cuối {new Date(r.updated_at).toLocaleDateString('vi-VN')}</small>
             </Link>
             <span className="s3h-card-act">
+              <OfflineSaveButton kind="l3d" id={r.id} className="ct-link" run={(pg) => saveLesson3DOfflineById(r.id, classId, pg)} />
               <button type="button" className="ct-link" disabled={!!busy} onClick={() => void duplicate(r)}><Copy aria-hidden="true" /> Nhân bản</button>
               {confirmDel === r.id
                 ? <><button type="button" className="ct-link is-danger" onClick={() => void remove(r.id)}>Xóa hẳn?</button><button type="button" className="ct-link" onClick={() => setConfirmDel(null)}>Thôi</button></>
