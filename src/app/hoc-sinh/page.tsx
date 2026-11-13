@@ -4,7 +4,8 @@ import { redirect } from 'next/navigation';
 import { BookOpen, CheckCircle2, ChevronRight, ClipboardList, Clock, Crown, CreditCard, Flame, Gamepad2, Lock, PenLine, Rocket, RotateCcw, Sparkles, Star, Trophy, Users } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import GalleryTeaser from '@/components/gallery/GalleryTeaser';
-import MiloMascot from '@/components/mascot/MiloMascot';
+import KidWorld, { KidThemeSection, ThemedMilo } from '@/components/learn/KidWorld';
+import { DailyChest, StickerShelf } from '@/components/learn/KidRewards';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import SignOutButton from '@/components/classroom/SignOutButton';
 import { getViewer } from '@/lib/auth/viewer';
@@ -73,6 +74,7 @@ export default async function StudentHome() {
   return (
     <>
       <LearnHeader />
+      <KidWorld />
       <main className="dash wrap sd">
         {gate.reason === 'plan_locked' && (
           <p id="tam-khoa" className="adm-alert is-warn tuition-banner" role="status"><Lock aria-hidden="true" /> Tài khoản của em đang tạm khoá vì lớp đã hết thời gian dùng thử. Bài em đã làm vẫn được giữ nguyên — khi thầy cô mở thêm chỗ, em học tiếp được ngay.</p>
@@ -88,7 +90,7 @@ export default async function StudentHome() {
         )}
 
         <section className="sd-hero">
-          <span className="sd-hero-av"><MiloMascot size={84} /></span>
+          <span className="sd-hero-av"><ThemedMilo size={84} /></span>
           <div className="sd-hero-txt">
             <p className="dash-kicker">{cls ? `Lớp ${(cls as { name: string }).name}` : `Lớp ${grade}`}</p>
             <h1>Chào {firstName}!</h1>
@@ -167,6 +169,13 @@ export default async function StudentHome() {
             {st.weekDays >= WEEK_GOAL && <p className="sd-goal-ok">Em đã đạt mục tiêu tuần này! ⭐</p>}
           </section>
         </div>
+
+        <div className="sd-fun">
+          <DailyChest day={st.today} studied={st.studiedToday} />
+          <StickerShelf />
+        </div>
+
+        <KidThemeSection />
 
         <ul className="stat-row sd-stats">
           <li className="stat-tile tone-blue"><span>Bài đã làm</span><strong>{best.size}</strong></li>

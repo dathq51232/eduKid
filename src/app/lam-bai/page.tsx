@@ -24,6 +24,8 @@ import GradeGate from '@/components/learn/GradeGate';
 import QuestionRenderer from '@/components/questions/QuestionRenderer';
 import VoiceHelp from '@/components/VoiceHelp';
 import Confetti from '@/components/learn/Confetti';
+import { KidScene } from '@/components/learn/KidWorld';
+import { kidTheme, useKidTheme } from '@/lib/kid-theme';
 import LessonDecor from '@/components/learn/LessonDecor';
 import MiloTrail from '@/components/learn/MiloTrail';
 import SolutionSteps from '@/components/learn/SolutionSteps';
@@ -57,7 +59,9 @@ type Item = {
   points: number;
   speedBonus: number;
 };
-type Feedback = { id: string; kind: 'correct' | 'wrong' | 'timeout'; points: number; speedBonus: number };
+type Feedback = { id: string; kind: 'correct' | 'wrong' | 'timeout'; points: number; speedBonus: number; combo: number };
+/** Mốc chuỗi đúng liên tiếp được khen to (3, 5, 7, 10, 15…) */
+const isComboMilestone = (n: number) => n === 3 || n === 5 || n === 7 || (n >= 10 && n % 5 === 0);
 type Dialog = null | 'submit' | 'exit';
 
 const isDone = (s: ItemStatus) => s === 'correct' || s === 'wrong' || s === 'timeout';
@@ -142,6 +146,10 @@ function LamBaiContent() {
   const currentRef = useRef(0);
   currentRef.current = current;
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  // Chuỗi câu đúng liên tiếp trong lượt làm bài này (sai / hết giờ thì về 0)
+  const comboRef = useRef(0);
+  const kid = useKidTheme();
+  const milo = kidTheme(kid).milo ?? SUBJECT_MASCOT[subjectCode];
   const [holdAdvance, setHoldAdvance] = useState(false);
   const [advanceLeft, setAdvanceLeft] = useState(0);
   const [showSolution, setShowSolution] = useState(false);
@@ -199,6 +207,7 @@ function LamBaiContent() {
     setCurrent(0);
     setPhase('intro');
     setFeedback(null);
+    comboRef.current = 0;
     finishedRef.current = false;
   }, [baseOrder]);
 
@@ -353,8 +362,10 @@ function LamBaiContent() {
         const isWrongOrTimeout = kind !== 'correct';
         setShowSolution(isWrongOrTimeout);
         setHoldAdvance(isWrongOrTimeout);
-        setFeedback({ id, kind, points: pts.base + pts.speed, speedBonus: pts.speed });
-        playIf(kind === 'correct' ? 'correct' : kind === 'timeout' ? 'timeout' : 'wrong');
+        comboRef.current = kind === 'correct' ? comboRef.current + 1 : 0;
+        const combo = comboRef.current;
+        setFeedback({ id, kind, points: pts.base + pts.speed, speedBonus: pts.speed, combo });
+        playIf(kind === 'correct' ? (isComboMilestone(combo) ? 'complete' : 'correct') : kind === 'timeout' ? 'timeout' : 'wrong');
       } finally {
         setIsChecking(false);
       }
@@ -577,7 +588,7 @@ function LamBaiContent() {
                 </div>
               </div>
               <div className="intro-hero-milo" aria-hidden="true">
-                <MiloMascot variant={SUBJECT_MASCOT[subjectCode]} size={112} />
+                <MiloMascot variant={milo} size={112} />
               </div>
             </div>
 
@@ -707,11 +718,12 @@ function LamBaiContent() {
     st === 'correct' ? 'đã làm đúng' : st === 'wrong' ? 'đã làm sai' : st === 'timeout' ? 'hết giờ' : st === 'skipped' ? 'để sau' : 'chưa làm';
 
   const trailMood = fb && motion ? (fb.kind === 'correct' ? 'jump' : 'tilt') : 'idle';
-  const trailMessage = fb ? (fb.kind === 'correct' ? 'Giỏi quá!' : 'Cố lên, câu sau nhé!') : undefined;
+  const comboHit = fb?.kind === 'correct' && isComboMilestone(fb.combo) ? fb.combo : 0;
+  const trailMessage = fb ? (fb.kind === 'correct' ? (comboHit ? `${comboHit} câu liền! 🔥` : 'Giỏi quá!') : 'Không sao, thử câu sau nhé!') : undefined;
 
   return (
     <div className={`qz${motion ? ' is-live' : ''}`}>
-      <QuizBackdrop motion={motion} />
+      {kid === 'meadow' ? <QuizBackdrop motion={motion} /> : <KidScene theme={kid} motion={motion} />}
       <QuizSideProps subject={subjectCode} />
 
       <div className="quiz-bar qz-hud">
@@ -769,8 +781,13 @@ function LamBaiContent() {
 
       <main className={`learn-main${motion ? ' fx-on' : ''}`} style={{ paddingBottom: 240 }}>
         <section className="question-card qz-board">
-          {motion && fb?.kind === 'correct' && <Confetti burst={fb.id} />}
-          <MiloTrail statuses={order.map((x) => items[x.id]?.status ?? 'todo')} current={current} mood={trailMood} message={trailMessage} variant={SUBJECT_MASCOT[subjectCode]} />
+          {motion && fb?.kind === 'correct' && <Confetti burst={fb.id} big={comboHit > 0} />}
+          {comboHit > 0 && (
+            <p className={`qz-combo${motion ? ' is-pop' : ''}`} key={`combo-${fb?.id}`} role="status">
+              <span aria-hidden="true">🔥</span> <b>{comboHit}</b> câu đúng liên tiếp!{comboHit >= 5 ? ' Siêu quá!' : ' Tuyệt vời!'}
+            </p>
+          )}
+          <MiloTrail statuses={order.map((x) => items[x.id]?.status ?? 'todo')} current={current} mood={trailMood} message={trailMessage} variant={milo} />
           <div className="question-top">
             <div className="question-meta">
               <span className="lesson-tag">Câu {current + 1}/{order.length}</span>

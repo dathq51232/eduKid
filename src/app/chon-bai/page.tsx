@@ -3,9 +3,11 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ArrowRight, BookOpen, Check, Clock, Dices, Gauge, ListChecks, Map as MapIcon, Play, Rocket, RotateCcw, Star, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Check, Clock, Dices, Gauge, List, ListChecks, Map as MapIcon, Play, Rocket, RotateCcw, Star, Trophy } from 'lucide-react';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import Sticker from '@/components/learn/Sticker';
+import KidWorld, { KidThemeButton, ThemedMilo } from '@/components/learn/KidWorld';
+import LessonMap, { type MapGroup } from '@/components/learn/LessonMap';
 import { SUBJECT_MASCOT } from '@/lib/mascots';
 import type { StickerId } from '@/lib/stickers';
 import LearnHeader from '@/components/LearnHeader';
@@ -26,6 +28,8 @@ const HERO_STICKERS: Record<SubjectCode, StickerId[]> = {
   'tieng-anh': ['rainbow', 'whale', 'sun'],
 };
 const TOPIC_STICKERS: StickerId[] = ['dino', 'whale', 'cat', 'turtle', 'goldfish', 'apple', 'icecream', 'car', 'boat', 'kite', 'tree', 'house', 'cactus', 'moon', 'cloud', 'crown', 'lucky'];
+
+const VIEW_KEY = 'edukid:cb-view';
 
 function Stars({ count }: { count: number }) {
   return (
@@ -66,7 +70,14 @@ function ChonBaiContent() {
   const [best, setBest] = useState<BestMap>({});
   const [mucStore, setMucStore] = useState<MucStore>({ all: 1, lessons: {} });
   const [points, setPoints] = useState(0);
+  // Kiểu xem: Bản đồ phiêu lưu (mặc định) hoặc Danh sách (có chọn mức độ / đổi bộ câu từng bài)
+  const [view, setView] = useState<'map' | 'list'>('map');
+  const chooseView = (v: 'map' | 'list') => {
+    setView(v);
+    try { localStorage.setItem(VIEW_KEY, v); } catch { /* bỏ qua */ }
+  };
   useEffect(() => {
+    try { if (localStorage.getItem(VIEW_KEY) === 'list') setView('list'); } catch { /* bỏ qua */ }
     setBest(readBest());
     setPoints(readTotalPoints());
     setMucStore(readMucStore());
@@ -119,12 +130,24 @@ function ChonBaiContent() {
     : doneCount * 2 < lessons.length ? `Em đã học ${doneCount} bài rồi. Cố lên!`
     : `Sắp về đích rồi! Còn ${lessons.length - doneCount} bài.`;
 
+  const mapGroups: MapGroup[] = groups.map((g, gi) => ({
+    key: g.key,
+    title: g.title,
+    sticker: TOPIC_STICKERS[gi % TOPIC_STICKERS.length],
+    items: g.list.map((l) => {
+      const [no, label] = lessonBadge(l.title, lessons.indexOf(l) + 1);
+      const r = best[l.id];
+      return { id: l.id, no, label, title: l.title, done: !!r, stars: r ? starsFor(r.score, r.total) : 0, next: nextLesson?.id === l.id, href: startHrefFor(l) };
+    }),
+  }));
+
   const ncq = advMode ? '&nc=1' : '';
   const go = (code: string, g: number, nc = advMode) => router.replace(`/chon-bai?subject=${code}&grade=${g}${nc ? '&nc=1' : ''}`, { scroll: false });
 
   return (
     <>
       <LearnHeader />
+      <KidWorld />
       <div className="chon-layout">
       {lessons.length > 0 && <LessonToc groups={tocGroups} subjectName={`${subject.name} lớp ${grade}`} />}
       <main className="learn-main chon-main">
@@ -206,7 +229,7 @@ function ChonBaiContent() {
           </div>
           <div className="cb-milo" aria-hidden="true">
             <p className="cb-bubble">{bubble}</p>
-            <MiloMascot variant={SUBJECT_MASCOT[subjectCode]} size={150} />
+            <ThemedMilo fallback={SUBJECT_MASCOT[subjectCode]} size={150} />
           </div>
         </section>
 
@@ -241,7 +264,16 @@ function ChonBaiContent() {
           </p>
         </section>
 
-        <h2 className="learn-heading cb-heading"><MapIcon size={24} aria-hidden="true" /> Hành trình bài học</h2>
+        <div className="cb-heading-row">
+          <h2 className="learn-heading cb-heading"><MapIcon size={24} aria-hidden="true" /> Hành trình bài học</h2>
+          {lessons.length > 0 && (
+            <div className="cb-view" role="group" aria-label="Kiểu xem">
+              <button type="button" aria-pressed={view === 'map'} onClick={() => chooseView('map')}><MapIcon aria-hidden="true" /> Bản đồ</button>
+              <button type="button" aria-pressed={view === 'list'} onClick={() => chooseView('list')}><List aria-hidden="true" /> Danh sách</button>
+            </div>
+          )}
+          <KidThemeButton />
+        </div>
         {book && <p className="book-note">Theo trình tự sách {subject.name} {grade} — bộ {book}. Câu hỏi do EduChain Kids biên soạn.</p>}
         {advMode && <p className="book-note">Dạng bài tư duy, bồi dưỡng học sinh giỏi, vẫn trong phạm vi kiến thức lớp {grade}. Mỗi lần “Đổi bộ câu hỏi” là một đề mới, có lời giải từng bước của Milo.</p>}
 
@@ -250,6 +282,11 @@ function ChonBaiContent() {
             <h1>Bài học đang được soạn</h1>
             <p>{subject.name} lớp {grade} sắp có bài mới. Em thử lớp 1 hoặc môn khác nhé.</p>
           </div>
+        ) : view === 'map' ? (
+          <>
+            <p className="book-note lm-note">Bấm vào một hòn đảo để học. Muốn chọn mức độ riêng hoặc đổi bộ câu hỏi từng bài, chọn kiểu xem <b>Danh sách</b>.</p>
+            <div className={subject.tone}><LessonMap groups={mapGroups} milo={SUBJECT_MASCOT[subjectCode]} /></div>
+          </>
         ) : (
           <div className={`topic-groups cb-groups ${subject.tone}`}>
             {groups.map(({ key, title, description, list }, gi) => {

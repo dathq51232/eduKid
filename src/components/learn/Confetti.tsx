@@ -1,13 +1,14 @@
 // Pháo giấy nhỏ bung khoảng 1 giây khi trả lời đúng. Chỉ hiện khi bật hiệu ứng (lớp CSS tự tắt khi máy giảm chuyển động).
 const COLORS = ['#e2483d', '#2f6fed', '#ffc83d', '#1f9d6b', '#8b5cf6', '#f08a24'];
 
-export default function Confetti({ burst }: { burst: string }) {
+export default function Confetti({ burst, big = false }: { burst: string; big?: boolean }) {
+  const n = big ? 40 : 22;
   // Vị trí cố định theo chỉ số (không ngẫu nhiên lúc vẽ) để kết quả ổn định
   return (
     <div className="confetti" key={burst} aria-hidden="true">
-      {Array.from({ length: 22 }, (_, i) => {
-        const ang = (i / 22) * Math.PI * 2;
-        const dist = 90 + (i % 4) * 28;
+      {Array.from({ length: n }, (_, i) => {
+        const ang = (i / n) * Math.PI * 2;
+        const dist = (big ? 120 : 90) + (i % 4) * 28;
         return (
           <span
             key={i}

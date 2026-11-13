@@ -102,3 +102,45 @@ export const prefersReducedMotion = () => {
     return false;
   }
 };
+
+/** Sticker gần nhất em nhận được (mới nhất trước) */
+export const readRecentStickers = (n: number): StickerId[] => read().owned.slice(-n).reverse().map((o) => o.id);
+
+/* ---------------- Rương quà mỗi ngày (trang Của em) ---------------- */
+// Học xong ít nhất 1 bài trong ngày thì mở được 1 rương; rương có 1 sticker chưa có (đủ bộ thì là ngôi sao chăm chỉ).
+const CHEST_KEY = 'edukid:ruong';
+/** Sự kiện báo bộ sưu tập vừa đổi (kệ sticker cập nhật ngay) */
+export const STICKER_EVT = 'edukid-stickers';
+export type ChestOpen = { day: string; id: StickerId | null };
+
+export function readChest(): ChestOpen | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(CHEST_KEY) ?? 'null') as ChestOpen | null;
+    return v && typeof v.day === 'string' ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Mở rương của ngày `day` (gọi lại trong cùng ngày trả về đúng quà đã mở) */
+export function openChest(day: string, rand: () => number = Math.random): ChestOpen {
+  const prev = readChest();
+  if (prev?.day === day) return prev;
+  const s = read();
+  const have = new Set(s.owned.map((o) => o.id));
+  const left = STICKERS.filter((x) => !have.has(x.id));
+  let id: StickerId | null = null;
+  if (left.length) {
+    id = left[Math.floor(rand() * left.length)].id;
+    s.owned.push({ id, at: new Date().toISOString(), lesson: `ruong-${day}` });
+    write(s);
+  }
+  const res = { day, id };
+  window.dispatchEvent(new Event(STICKER_EVT));
+  try {
+    localStorage.setItem(CHEST_KEY, JSON.stringify(res));
+  } catch {
+    /* bỏ qua */
+  }
+  return res;
+}
