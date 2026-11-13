@@ -10068,6 +10068,17 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
   .chs-play.is-fs.xq-play .chs-main > .bv { width: min(100%, calc((100svh - 250px) * .913)); }
   .chs-play.is-fs .chs-side { max-height: none; overflow: visible; }
 }
+/* Màn hình dọc (máy tính bảng dọc, màn hình xoay dọc): xếp chồng — đối thủ trên, bàn cờ rộng hết bề ngang, em + lượt đi dưới, nút ở cuối */
+@media (orientation: portrait) and (min-width: 600px) {
+  .chs-play.is-fs { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 12px; padding: 12px 16px; }
+  .chs-play.is-fs .chs-main { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; gap: 10px 14px; min-height: auto; }
+  .chs-play.is-fs .chs-main > .chs-card:first-child { grid-column: 1 / -1 !important; grid-row: 1 !important; }
+  .chs-play.is-fs .chs-main > .bv { grid-column: 1 / -1 !important; grid-row: 2 !important; justify-self: center; width: min(100%, calc(100svh - 440px)); }
+  .chs-play.is-fs.xq-play .chs-main > .bv { width: min(100%, calc((100svh - 440px) * .913)); }
+  .chs-play.is-fs .chs-main > .chs-card:last-child { grid-column: 1 !important; grid-row: 3 !important; }
+  .chs-play.is-fs .chs-main > .chs-turn { grid-column: 2 !important; grid-row: 3 !important; }
+  .chs-play.is-fs .chs-side { max-height: none; overflow: visible; }
+}
 
 /* ===== Quản trị › Marketing (mk-): soạn một lần → 3 bản Fanpage / TikTok / Zalo ===== */
 .mk .btn svg { width: 16px; height: 16px; }
