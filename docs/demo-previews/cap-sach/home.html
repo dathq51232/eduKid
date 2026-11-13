@@ -1,0 +1,71 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="kit.css">
+<style>
+.page { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 34px 0 60px; }
+.hello { display: flex; align-items: baseline; gap: 14px; margin: 0 0 26px; }
+.hello h1 { margin: 0; font-size: 44px; font-weight: 800; color: var(--purple); line-height: 1; }
+.hello p { margin: 0; font-family: 'Mali'; font-size: 19px; color: var(--muted); }
+.grid { display: grid; grid-template-columns: 7fr 5fr; gap: 34px; align-items: start; }
+.side { display: grid; gap: 30px; }
+.bag { margin-top: 44px; }
+@media (max-width: 760px) {
+  .top nav, .top .lg { display: none; } .top { padding: 12px 16px; }
+  .page { padding-top: 22px; } .grid { grid-template-columns: 1fr; gap: 28px; }
+  .hello { flex-direction: column; gap: 4px; } .hello h1 { font-size: 36px; }
+  .slate { padding: 20px 18px; border-width: 10px; } .slate h2 { font-size: 31px; padding-right: 64px; } .slate .milo { width: 92px; top: -40px; right: 6px; }
+  .slate .go { font-size: 22px; width: 100%; justify-content: center; }
+  .day { width: 38px; height: 50px; } .day .tick { width: 24px; height: 24px; } .gift img { width: 46px; }
+  .books { gap: 10px; } .book { height: 150px; } .book .label b { font-size: 18px; } .book .label span { font-size: 12px; } .book .art { width: 46px; }
+  .tool { width: 70px; font-size: 14px; } .bag { margin-top: 34px; }
+}
+</style></head><body>
+<header class="top"><span class="logo">EduChain<b>Kids</b></span>
+<nav><span class="on">Của em</span><span>Học bài</span><span>Game</span><span>Đấu cờ</span><span>Thành tích</span></nav>
+<span class="sp"></span><span class="chip">🔥 5 ngày</span><span class="chip lg">Góc phụ huynh</span></header>
+<main class="page">
+  <div class="hello"><h1>Chào Na!</h1><p>Hôm nay mình học một bài nhỏ nhé.</p></div>
+  <div class="grid">
+    <section class="slate" aria-label="Bài hôm nay">
+      <img class="milo" src="../../../public/brand/milo-professor-sm.webp" alt="">
+      <p class="k">Hôm nay em học:</p>
+      <h2>Phép cộng trong phạm vi 10</h2>
+      <p class="meta">10 câu, khoảng 8 phút. Bài cô Bích giao.</p>
+      <a class="go"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg> Vào học</a>
+      <span class="more">Còn 2 bài cô giao nữa</span>
+      <span class="chalk-stick"></span>
+    </section>
+    <div class="side">
+      <section>
+        <h2 class="margin-h">Tuần của em</h2>
+        <div class="week">
+          <span class="day"><svg class="tick" viewBox="0 0 30 30"><path d="M4 16 Q9 19 12 25 Q17 12 27 4" fill="none" stroke="#E0312B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><small>T2</small></span><span class="day"><svg class="tick" viewBox="0 0 30 30"><path d="M4 16 Q9 19 12 25 Q17 12 27 4" fill="none" stroke="#E0312B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><small>T3</small></span><span class="day"><svg class="tick" viewBox="0 0 30 30"><path d="M4 16 Q9 19 12 25 Q17 12 27 4" fill="none" stroke="#E0312B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><small>T4</small></span>
+          <span class="day today"><small>T5</small></span><span class="day future"><small>T6</small></span><span class="day future"><small>T7</small></span><span class="day future"><small>CN</small></span>
+          <span class="gift"><img src="../../../public/emoji/f3d/wrapped-gift.webp" alt="Rương quà"><i class="dot"></i></span>
+        </div>
+        <p class="note-red">Học xong bài hôm nay là mở được quà!</p>
+      </section>
+      <section>
+        <h2 class="margin-h">Sticker của em</h2>
+        <div class="stk">
+          <span class="stk-count">9<small>/24</small></span>
+          <span class="s"><img src="../../../public/stickers/whale.webp" alt=""></span><span class="s"><img src="../../../public/stickers/rocket.webp" alt=""></span><span class="s"><img src="../../../public/stickers/dino.webp" alt=""></span>
+          <span class="s ghost"><img src="../../../public/stickers/crown.webp" alt=""><b>?</b></span><span class="s ghost"><img src="../../../public/stickers/turtle.webp" alt=""><b>?</b></span>
+        </div>
+      </section>
+    </div>
+  </div>
+  <section class="bag">
+    <h2 class="margin-h">Cặp sách</h2>
+    <div class="books">
+      <a class="book t"><img class="art" src="../../../public/emoji/f3d/abacus.webp" alt=""><span class="label"><b>Toán</b><span>Na, lớp 1</span></span><span class="prog"><i style="width:34%"></i></span></a>
+      <a class="book v"><img class="art" src="../../../public/emoji/f3d/pencil.webp" alt=""><span class="label"><b>Tiếng Việt</b><span>Na, lớp 1</span></span><span class="prog"><i style="width:18%"></i></span></a>
+      <a class="book a"><img class="art" src="../../../public/emoji/f3d/speech-balloon.webp" alt=""><span class="label"><b>Tiếng Anh</b><span>Na, lớp 1</span></span><span class="prog"><i style="width:52%"></i></span></a>
+    </div>
+    <div class="tools">
+      <a class="tool"><img src="../../../public/emoji/f3d/puzzle-piece.webp" alt="">Game</a>
+      <a class="tool"><img src="../../../public/emoji/f3d/chess-pawn.webp" alt="">Đấu cờ</a>
+      <a class="tool"><img src="../../../public/emoji/f3d/writing-hand.webp" alt="">Luyện chữ</a>
+      <a class="tool"><img src="../../../public/emoji/f3d/framed-picture.webp" alt="">Triển lãm</a>
+      <a class="tool"><img src="../../../public/emoji/f3d/sports-medal.webp" alt="">Thành tích</a>
+    </div>
+  </section>
+</main></body></html>

@@ -1,0 +1,31 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="kit.css"><style>
+body { min-height: 100vh; }
+.bar { display: flex; align-items: center; gap: 10px; padding: 14px 16px; }
+.x { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--ink); background: #fff; display: grid; place-items: center; font-weight: 800; }
+.cells { flex: 1; display: grid; grid-template-columns: repeat(10, 1fr); border: 2px solid var(--ink); border-radius: 8px; background: #fff; overflow: hidden; height: 34px; }
+.cells i { border-right: 1px solid var(--rule-2); display: grid; place-items: center; }
+.cells i:last-child { border: 0; }
+.cells i.now { background: #fff6cf; }
+.cells svg { width: 22px; height: 22px; }
+.timer { flex: none; font-weight: 800; font-size: 18px; padding: 2px 12px; border-radius: 999px; background: var(--ink); color: #fff; }
+.q { margin: 10px 16px 0; padding: 20px 18px 24px; background: #fff; border-radius: 6px 18px 18px 6px; border-left: 4px solid var(--red); box-shadow: 0 10px 24px rgb(30 40 80 / .12); }
+.q .n { display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: var(--muted); }
+.speak { display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; border-radius: 999px; background: var(--purple); color: #fff; font-weight: 800; font-size: 15px; }
+.apples { display: flex; justify-content: center; gap: 10px; margin: 18px 0 6px; }
+.apples img { width: 64px; }
+.q h1 { margin: 0; text-align: center; font-size: 36px; font-weight: 800; line-height: 1.15; }
+.ans { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 22px 16px 0; }
+.a { position: relative; height: 92px; display: grid; place-items: center; border-radius: 18px; background: #fff; border: 3px solid var(--ink); box-shadow: 0 6px 0 var(--ink); font-size: 44px; font-weight: 800; }
+.a.right { border-color: var(--red); color: var(--red); box-shadow: 0 2px 0 var(--red); transform: translateY(4px); }
+.a.right svg { position: absolute; right: -8px; top: -30px; width: 74px; height: 74px; }
+.a.dim { opacity: .45; }
+.praise { margin: 30px 16px 0; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--slate); color: var(--chalk); border: 6px solid var(--wood); }
+.praise img { width: 74px; margin: -30px 0 -10px; }
+.praise p { margin: 0; font-family: 'Mali'; font-size: 22px; font-weight: 700; line-height: 1.2; }
+.praise small { display: block; font-size: 15px; opacity: .85; font-weight: 500; }
+.combo { margin: 16px 16px 0; text-align: center; font-family: 'Mali'; color: var(--red); font-weight: 700; font-size: 19px; transform: rotate(-1.5deg); }
+.next { margin: 18px 16px 0; display: grid; place-items: center; height: 60px; border-radius: 16px; background: var(--ink); color: #fff; font-weight: 800; font-size: 22px; }</style></head><body><div class="bar"><span class="x">✕</span><span class="cells"><i><svg viewBox="0 0 30 30"><path d="M4 16 Q9 19 12 25 Q17 12 27 4" fill="none" stroke="#E0312B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></i><i><svg viewBox="0 0 30 30"><path d="M4 16 Q9 19 12 25 Q17 12 27 4" fill="none" stroke="#E0312B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></i><i><svg viewBox="0 0 30 30"><path d="M4 16 Q9 19 12 25 Q17 12 27 4" fill="none" stroke="#E0312B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></i><i class="now"><svg viewBox="0 0 30 30"><path d="M4 16 Q9 19 12 25 Q17 12 27 4" fill="none" stroke="#E0312B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="timer">0:21</span></div>
+<section class="q"><div class="n"><span>Câu 4 trên 10</span><span class="speak">🔊 Nghe đề</span></div><div class="apples"><img src="../../../public/emoji/f3d/red-apple.webp" alt=""><img src="../../../public/emoji/f3d/red-apple.webp" alt=""><img src="../../../public/emoji/f3d/red-apple.webp" alt=""></div><h1>Có mấy quả táo?</h1></section>
+<div class="ans"><span class="a dim">2</span><span class="a right">3<svg viewBox="0 0 70 70"><path d="M8 38 Q20 44 27 60 Q40 26 64 8" fill="none" stroke="#E0312B" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="a dim">4</span><span class="a dim">5</span></div>
+<div class="praise"><img src="../../../public/brand/milo-professor-sm.webp" alt=""><p>Đúng rồi, giỏi quá!<small>Đếm từng quả: 1, 2, 3.</small></p></div>
+<p class="combo">4 câu đúng liền nhau!</p><div class="next">Câu tiếp theo</div></body></html>

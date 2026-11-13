@@ -1,13 +1,16 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { BookOpen, CheckCircle2, ChevronRight, ClipboardList, Clock, Crown, CreditCard, Flame, Gamepad2, Lock, PenLine, Rocket, RotateCcw, Sparkles, Star, Trophy, Users } from 'lucide-react';
+import {
+  BookOpen, CheckCircle2, ChevronDown, ChevronRight, ClipboardList,
+  Clock, CreditCard, Crown, Gamepad2, Lock, PenLine, Settings,
+  Star, Trophy,
+} from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
-import GalleryTeaser from '@/components/gallery/GalleryTeaser';
 import KidWorld, { KidThemeSection, ThemedMilo } from '@/components/learn/KidWorld';
-import { DailyChest, StickerShelf } from '@/components/learn/KidRewards';
+import { StickerShelf } from '@/components/learn/KidRewards';
 import NotConfigured from '@/components/classroom/NotConfigured';
-import SignOutButton from '@/components/classroom/SignOutButton';
 import { getViewer } from '@/lib/auth/viewer';
 import { learningGate } from '@/lib/auth/gate';
 import { fmtDay } from '@/lib/billing';
@@ -20,8 +23,6 @@ export const metadata: Metadata = { title: 'Trang của em · EduChain Kids' };
 export const dynamic = 'force-dynamic';
 
 type Result = { id: string; lesson_title: string | null; lesson_code: string; subject_code: SubjectCode | null; grade: number | null; muc: number | null; score: number; total: number; points: number; created_at: string };
-/** Mục tiêu mỗi tuần: số ngày có học */
-const WEEK_GOAL = 5;
 
 export default async function StudentHome() {
   const viewer = await getViewer();
@@ -30,16 +31,14 @@ export default async function StudentHome() {
   if (!viewer.isStudent || !viewer.studentId) redirect('/sau-dang-nhap');
 
   const supabase = await createClient();
-  // RLS chỉ trả dữ liệu của chính học sinh đang đăng nhập
   const [{ data: me }, { data: cls }, { data: results }, { data: gameRows, count: games }, { data: assigned }] = await Promise.all([
     supabase.from('students').select('display_name, grade').eq('id', viewer.studentId).maybeSingle(),
     supabase.from('classes').select('name, grade').eq('status', 'active').order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('lesson_results').select('id, lesson_title, lesson_code, subject_code, grade, muc, score, total, points, created_at').order('created_at', { ascending: false }).limit(300),
     supabase.from('game_results').select('created_at', { count: 'exact' }).order('created_at', { ascending: false }).limit(200),
-    // Bài thầy cô giao (migration 0017). Chưa chạy migration thì bỏ qua, trang vẫn hiện bình thường.
     supabase.rpc('student_my_assignments'),
   ]);
-  // Học phí (migration 0018): hết hạn thì mọi nút học dẫn tới trang đóng phí (máy chủ cũng chặn ở middleware + API)
+
   const gate = await learningGate(supabase, viewer.userId);
   const locked = gate.is_student && !gate.active;
   const PAY = gate.reason === 'plan_locked' ? '/hoc-sinh#tam-khoa' : '/hoc-sinh/dong-phi';
@@ -50,23 +49,15 @@ export default async function StudentHome() {
   const list = (results ?? []) as Result[];
   const best = new Map<string, number>();
   for (const r of list) best.set(r.lesson_code, Math.max(best.get(r.lesson_code) ?? 0, r.points));
-  const points = [...best.values()].reduce((a, b) => a + b, 0);
-  // Khối theo lớp em đang học (năm sau lên lớp thì theo lớp mới), không có lớp thì theo hồ sơ học sinh
   const grade = (cls as { grade?: number } | null)?.grade ?? (me as { grade?: number } | null)?.grade ?? 1;
   const name = (me as { display_name?: string } | null)?.display_name ?? 'em';
   const firstName = name.trim().split(/\s+/).slice(-1)[0];
 
-  // Chuỗi ngày học: tính cả làm bài và chơi game trí tuệ
   const st = learningStreak([...list.map((r) => r.created_at), ...((gameRows ?? []) as { created_at: string }[]).map((g) => g.created_at)]);
-  const todayCount = list.filter((r) => r.created_at && new Date(r.created_at).getTime() + 7 * 3600_000 >= Date.parse(`${st.today}T00:00:00Z`)).length;
 
-  // Gợi ý ôn: bài gần đây em làm đúng dưới 80% và chưa làm lại tốt hơn
   const bestRatio = new Map<string, number>();
   for (const r of list) bestRatio.set(r.lesson_code, Math.max(bestRatio.get(r.lesson_code) ?? 0, r.score / r.total));
-  const review = list.find((r) => r.subject_code && (bestRatio.get(r.lesson_code) ?? 1) < 0.8);
-  const reviewHref = review?.subject_code ? lessonHref(review.lesson_code, review.subject_code, review.grade ?? grade, review.muc) : null;
 
-  // Việc nên làm bây giờ: bài cô giao gần hạn nhất → bài cần ôn → bài mới
   const next = todo[0];
   const nextHref = next ? (locked ? PAY : next.kind === 'exam' ? `/hoc-sinh/de/${next.id}` : next.lesson_code && next.subject ? lessonHref(next.lesson_code, next.subject, next.grade, next.muc) : null) : null;
   const nextDue = next ? dueInfo(next.due_at) : null;
@@ -75,7 +66,8 @@ export default async function StudentHome() {
     <>
       <LearnHeader />
       <KidWorld />
-      <main className="dash wrap sd">
+      <main className="sd-game">
+        {/* === Thông báo học phí === */}
         {gate.reason === 'plan_locked' && (
           <p id="tam-khoa" className="adm-alert is-warn tuition-banner" role="status"><Lock aria-hidden="true" /> Tài khoản của em đang tạm khoá vì lớp đã hết thời gian dùng thử. Bài em đã làm vẫn được giữ nguyên — khi thầy cô mở thêm chỗ, em học tiếp được ngay.</p>
         )}
@@ -89,102 +81,118 @@ export default async function StudentHome() {
           <p className="dash-muted tuition-banner">Đã đóng học phí — học đến hết {fmtDay(gate.until)}. <Link href={PAY}>Học phí</Link></p>
         )}
 
-        <section className="sd-hero">
-          <span className="sd-hero-av"><ThemedMilo size={84} /></span>
-          <div className="sd-hero-txt">
-            <p className="dash-kicker">{cls ? `Lớp ${(cls as { name: string }).name}` : `Lớp ${grade}`}</p>
-            <h1>Chào {firstName}!</h1>
-            <p>{st.studiedToday ? `Hôm nay em đã học ${todayCount || 1} bài rồi, giỏi quá! 🎉` : st.streak > 0 ? `Học một bài nhỏ để giữ chuỗi ${st.streak} ngày nhé! 🔥` : 'Hôm nay mình học một bài nhỏ nhé.'}</p>
-          </div>
-          <div className="sd-hero-actions">
-            <Link href="/phu-huynh" className="btn btn-outline btn-sm sd-parent-switch"><Users aria-hidden="true" /> Mở Góc Phụ huynh</Link>
-            <SignOutButton className="sd-signout" />
-          </div>
-        </section>
+        {/* === LAYOUT GAME === */}
+        <div className="sdg-wrap">
 
-        <div className="sd-top">
-          <section className="sd-next" aria-labelledby="sd-next-t">
-            <h2 id="sd-next-t"><Sparkles aria-hidden="true" /> Hôm nay em làm gì?</h2>
-            {locked ? (
-              <div className="sd-next-card is-lock">
-                <div><b>Nhờ bố mẹ đóng học phí</b><span>để học tiếp các bài mới nhé.</span></div>
-                <Link href={PAY} className="btn btn-yellow"><Lock aria-hidden="true" /> Đóng học phí</Link>
-              </div>
-            ) : next && nextHref ? (
-              <div className={`sd-next-card${nextDue?.overdue ? ' is-over' : ''}`}>
-                <span className="sd-next-ic" aria-hidden="true"><ClipboardList /></span>
-                <div>
-                  <small>Bài cô giao{todo.length > 1 ? ` · còn ${todo.length} bài` : ''}</small>
-                  <b>{next.title}</b>
-                  <span>{next.kind === 'exam' ? `Đề ${next.n_questions} câu · ${next.minutes ?? 30} phút` : `Luyện tập${next.muc ? ` · mức ${MUC_NAME[next.muc]}` : ''}`}{next.subject ? ` · ${SUBJECT_NAME[next.subject]}` : ''} · Hạn {nextDue?.label}{nextDue?.overdue ? ' (quá hạn)' : ''}</span>
-                </div>
-                <Link href={nextHref} className="btn btn-yellow">{next.kind === 'exam' ? 'Làm đề' : 'Làm bài'} <ChevronRight aria-hidden="true" /></Link>
-              </div>
-            ) : review && reviewHref ? (
-              <div className="sd-next-card is-review">
-                <span className="sd-next-ic" aria-hidden="true"><RotateCcw /></span>
-                <div>
-                  <small>Ôn lại cho chắc</small>
-                  <b>{review.lesson_title ?? review.lesson_code}</b>
-                  <span>Lần trước em đúng {review.score}/{review.total} câu. Thử lại để được nhiều sao hơn nhé!</span>
-                </div>
-                <Link href={reviewHref} className="btn btn-yellow">Ôn lại <ChevronRight aria-hidden="true" /></Link>
-              </div>
-            ) : (
-              <div className="sd-next-card is-new">
-                <span className="sd-next-ic" aria-hidden="true"><BookOpen /></span>
-                <div><small>Bài mới</small><b>Chọn một bài em thích</b><span>Toán, Tiếng Việt hay Tiếng Anh, mỗi bài chỉ vài phút.</span></div>
-                <Link href={`/chon-bai?grade=${grade}`} className="btn btn-yellow">Vào học <ChevronRight aria-hidden="true" /></Link>
-              </div>
-            )}
-            {!locked && (
-              <div className="sd-quick">
-                <Link href={`/chon-bai?grade=${grade}`}><BookOpen aria-hidden="true" /> Học bài khác</Link>
-                <Link href={`/chon-bai?grade=${grade}&nc=1`}><Rocket aria-hidden="true" /> Chuyên đề nâng cao</Link>
-                <Link href="/tieng-anh"><BookOpen aria-hidden="true" /> English Journey</Link>
-                <Link href="/tro-choi"><Gamepad2 aria-hidden="true" /> Game trí tuệ</Link>
-                <Link href="/co"><Crown aria-hidden="true" /> Đấu cờ</Link>
-                <Link href="/thanh-tich"><Trophy aria-hidden="true" /> Thành tích</Link>
-                <Link href="/luyen-chu"><PenLine aria-hidden="true" /> Luyện chữ</Link>
-              </div>
-            )}
-          </section>
-
-          <GalleryTeaser />
-
-          <section className="sd-week" aria-labelledby="sd-week-t">
-            <h2 id="sd-week-t"><Flame aria-hidden="true" /> Chuỗi ngày học</h2>
-            <p className="sd-streak"><b>{st.streak}</b> ngày liên tiếp</p>
-            <ol className="sd-dots" aria-label={`Tuần này em học ${st.weekDays} ngày`}>
-              {st.week.map((w) => (
-                <li key={w.day} className={`${w.done ? 'is-done' : ''}${w.today ? ' is-today' : ''}${w.future ? ' is-future' : ''}`}>
-                  <span aria-hidden="true">{w.done ? '🔥' : ''}</span><small>{w.label}</small>
-                </li>
-              ))}
-            </ol>
-            <div className="sd-goal">
-              <span>Mục tiêu tuần: học {WEEK_GOAL} ngày</span><b>{Math.min(st.weekDays, WEEK_GOAL)}/{WEEK_GOAL}</b>
-              <i aria-hidden="true"><i style={{ width: `${Math.min(100, (st.weekDays / WEEK_GOAL) * 100)}%` }} /></i>
+          {/* ---- Panel trái: bảng đen ---- */}
+          <div className="sdg-left">
+            {/* Header logo + streak + settings */}
+            <div className="sdg-topbar">
+              <span className="sdg-logo">
+                <Image src="/brand/logo.svg" alt="EduChain Kids" width={120} height={40} />
+              </span>
+              <span className="sdg-streak">🔥 {st.streak} ngày</span>
+              <Link href="/hoc-sinh/cai-dat" className="sdg-settings" aria-label="Cài đặt">
+                <Settings />
+              </Link>
             </div>
-            {st.weekDays >= WEEK_GOAL && <p className="sd-goal-ok">Em đã đạt mục tiêu tuần này! ⭐</p>}
-          </section>
+
+            {/* Bảng đen lớn */}
+            <div className="sdg-board">
+              {/* Nhân vật cô bé bên trái bảng (dùng ThemedMilo vì không có milo-girl.webp) */}
+              <div className="sdg-girl" aria-hidden="true">
+                <ThemedMilo size={180} />
+              </div>
+
+              {/* Cú Milo góc trên */}
+              <div className="sdg-owl" aria-hidden="true">
+                <div className="sdg-owl-bubble">Chào {firstName}! ♥</div>
+                <ThemedMilo size={72} />
+              </div>
+
+              {/* Nội dung bảng phấn */}
+              <div className="sdg-chalk">
+                <span className="sdg-chalk-sub">Hôm nay:</span>
+                <h1 className="sdg-chalk-title">
+                  {next ? next.title : 'Chọn một bài em thích'}
+                </h1>
+                <p className="sdg-chalk-meta">
+                  <Clock size={16} />
+                  {next
+                    ? `${(next as MyAssignment & { n_questions?: number }).n_questions ?? 10} câu · khoảng ${(next as MyAssignment & { minutes?: number }).minutes ?? 8} phút`
+                    : 'Toán, Tiếng Việt hay Tiếng Anh'}
+                </p>
+                <Link
+                  href={nextHref ?? (locked ? PAY : `/chon-bai?grade=${grade}`)}
+                  className="sdg-btn-play"
+                  aria-label="Vào học"
+                >
+                  ▶ Vào học
+                </Link>
+                {todo.length > 0 && (
+                  <Link href="#bai-giao" className="sdg-more-tasks">
+                    <BookOpen size={14} /> còn {todo.length} bài cô giao <ChevronDown size={14} />
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ---- Panel phải: 3 card ---- */}
+          <div className="sdg-right">
+
+            {/* Card 1: Tuần của em */}
+            <div className="sdg-card sdg-week-card">
+              <div className="sdg-card-head">
+                <h2>Tuần của em</h2>
+                <span className="sdg-gift">🎁</span>
+              </div>
+              <ol className="sdg-week-row">
+                {st.week.map((w) => (
+                  <li key={w.day} className={`${w.done ? 'is-done' : ''}${w.today ? ' is-today' : ''}${w.future ? ' is-future' : ''}`}>
+                    <span>{w.done ? '✓' : ''}</span>
+                    <small>{w.label}</small>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            {/* Card 2: Cặp sách */}
+            <div className="sdg-card sdg-bag-card">
+              <div className="sdg-card-head">
+                <span className="sdg-bag-icon">🎒</span>
+                <h2>Cặp sách</h2>
+              </div>
+              <div className="sdg-books">
+                <Link href={`/chon-bai?grade=${grade}&subject=toan`} className="sdg-book is-blue">
+                  <span>++</span><b>Toán</b>
+                </Link>
+                <Link href={`/chon-bai?grade=${grade}&subject=tieng-viet`} className="sdg-book is-red">
+                  <BookOpen size={28} /><b>T.Việt</b>
+                </Link>
+                <Link href="/tieng-anh" className="sdg-book is-green">
+                  <span>🇬🇧</span><b>T.Anh</b>
+                </Link>
+              </div>
+              <div className="sdg-quick-icons">
+                <Link href="/tro-choi"><Gamepad2 size={22} /><span>Game</span></Link>
+                <Link href="/co"><Crown size={22} /><span>Cờ</span></Link>
+                <Link href="/luyen-chu"><PenLine size={22} /><span>Luyện chữ</span></Link>
+                <Link href="/thanh-tich"><Trophy size={22} /><span>Thành tích</span></Link>
+              </div>
+            </div>
+
+            {/* Card 3: Sticker */}
+            <div className="sdg-card sdg-sticker-card">
+              <StickerShelf />
+            </div>
+
+          </div>
         </div>
 
-        <div className="sd-fun">
-          <DailyChest day={st.today} studied={st.studiedToday} />
-          <StickerShelf />
-        </div>
-
-        <KidThemeSection />
-
-        <ul className="stat-row sd-stats">
-          <li className="stat-tile tone-blue"><span>Bài đã làm</span><strong>{best.size}</strong></li>
-          <li className="stat-tile tone-yellow"><span>⭐ Sao tích luỹ</span><strong>{points}</strong></li>
-          <li className="stat-tile tone-green"><span>Lượt chơi game</span><strong>{games ?? 0}</strong></li>
-        </ul>
-
+        {/* Bài thầy cô giao */}
         {tasks.length > 0 && (
-          <section className="dash-section student-tasks" id="bai-giao" aria-label="Bài thầy cô giao">
+          <section className="dash-section student-tasks sdg-history" id="bai-giao" aria-label="Bài thầy cô giao">
             <h2><ClipboardList aria-hidden="true" /> Bài thầy cô giao{todo.length ? ` · còn ${todo.length} bài` : ' · đã làm hết 🎉'}</h2>
             <ul className="task-list">
               {tasks.map((t) => {
@@ -212,9 +220,10 @@ export default async function StudentHome() {
           </section>
         )}
 
-        <section className="dash-section">
+        {/* Bài đã làm gần đây */}
+        <section className="dash-section sdg-history" aria-label="Bài em làm gần đây">
           <h2>Bài em làm gần đây</h2>
-          {list.length === 0 ? <p className="dash-muted">Em chưa làm bài nào. Bấm “Vào học” để bắt đầu nhé!</p> : (
+          {list.length === 0 ? <p className="dash-muted">Em chưa làm bài nào. Bấm &quot;Vào học&quot; để bắt đầu nhé!</p> : (
             <ul className="result-list">
               {list.slice(0, 8).map((r) => {
                 const pct = Math.round((r.score / r.total) * 100);
@@ -230,6 +239,8 @@ export default async function StudentHome() {
             </ul>
           )}
         </section>
+
+        <KidThemeSection />
       </main>
     </>
   );
