@@ -6,6 +6,10 @@ import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import ClassManager, { type BillingRow, type RosterRow, type SummaryRow } from '@/components/classroom/ClassManager';
 import ClassProgress from '@/components/classroom/ClassProgress';
+import ClassBento from '@/components/classroom/ClassBento';
+import { buildBento } from '@/lib/classroom/bento';
+import type { AssignmentRow } from '@/lib/classroom/assignments';
+import type { Inbox } from '@/lib/classroom/messages';
 import { ClassLeaderboard } from '@/components/achievements/LiveAchievements';
 import type { LessonResult } from '@/lib/classroom/progress';
 import { getViewer } from '@/lib/auth/viewer';
@@ -31,7 +35,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   const { data: cls } = await supabase.from('classes').select('id, name, grade, join_code, status').eq('id', id).maybeSingle();
   if (!cls) notFound(); // lớp không tồn tại HOẶC không được phân công — trả cùng một kết quả
 
-  const [{ data: roster }, { data: summary }, { data: pinRows, error: pinErr }, { data: billing }, { data: planRows }] = await Promise.all([
+  const [{ data: roster }, { data: summary }, { data: pinRows, error: pinErr }, { data: billing }, { data: planRows }, assignRes, inboxRes] = await Promise.all([
     classRoster(id),
     supabase.rpc('class_results_summary', { p_class: id }),
     // PIN học sinh (migration 0009) — chỉ giáo viên của lớp đọc được; lỗi (chưa chạy migration) thì coi như chưa có PIN
@@ -40,6 +44,9 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
     supabase.rpc('teacher_class_billing', { p_class: id }),
     // Gói của giáo viên (migration 0019): giới hạn học sinh; quản trị xem lớp thì không giới hạn
     supabase.rpc('teacher_my_plan'),
+    // Ô tổng quan (bento): bài đã giao (0017) và hộp thư phụ huynh (0037); lỗi thì ẩn ô tương ứng
+    supabase.rpc('teacher_list_assignments', { p_class: id }),
+    supabase.rpc('teacher_messages', { p_class: id, p_limit: 5 }),
   ]);
   // em đang tạm khoá vì hết chỗ trong gói (migration 0045); chưa chạy migration thì bỏ qua
   const { data: lockedRows } = await supabase.rpc('teacher_locked_students', { p_class: id });
@@ -59,6 +66,13 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
         .limit(5000)
     : { data: [] };
 
+  const bento = buildBento({
+    students: active.map((r) => ({ id: r.student_id, name: r.display_name })),
+    results: (results ?? []) as LessonResult[],
+    assignments: assignRes.error ? null : ((assignRes.data ?? []) as AssignmentRow[]),
+    inbox: inboxRes.error || !inboxRes.data ? null : (inboxRes.data as Inbox),
+  });
+
   return (
     <>
       <LearnHeader />
@@ -69,6 +83,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
             Chưa đọc được PIN đã lưu (thường do chưa chạy <code>supabase/migrations/0009_teacher_view_pin.sql</code> trên Supabase). Chạy file đó, rồi bấm <strong>Đặt PIN mới</strong> cho từng em để PIN hiện ở cột PIN.
           </p>
         )}
+        <ClassBento classId={id} className={(cls as { name: string }).name} teacher={viewer.displayName} data={bento} />
         <ClassManager
           cls={cls as { id: string; name: string; grade: number; join_code: string; status: string }}
           roster={rosterRows}
