@@ -10363,6 +10363,55 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
   .class-manager .cm-add > summary h2 { font-size: 16px; }
 }
 
+/* ===== Trang chủ 11/2026: thanh trên dày hơn + nút Dùng thử, hàng "Tôi là", tiêu đề một kiểu, FAQ mở/đóng, bìa vở vuốt ngang trên điện thoại ===== */
+@media (min-width: 901px) {
+  .learn-top-inner { min-height: 84px; }
+  .learn-top .main-nav-link { padding-block: 8px; }
+}
+.account-cta { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border-radius: 14px; background: var(--brand-yellow); color: #3b2a00; font-size: 15px; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 0 #d9a21f; }
+.account-cta:hover { filter: brightness(1.04); }
+.account-cta:focus-visible { outline: 3px solid var(--brand-blue); outline-offset: 3px; }
+@media (max-width: 1199px) { .account-cta { display: none; } }
+
+.home-roles { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
+.home-roles > span { color: var(--ink); font-size: 15px; font-weight: 700; }
+.home-roles a { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border: 1.5px solid rgb(30 50 90 / .18); border-radius: 999px; background: rgb(255 255 255 / .92); color: var(--ink); font-size: 15px; font-weight: 700; text-decoration: none; }
+.home-roles a:hover { border-color: var(--brand-blue); color: var(--brand-blue); }
+.home-roles svg { width: 17px; height: 17px; flex: none; }
+:root[data-theme="dark"] .home-roles a { background: rgb(20 30 55 / .85); color: #eef3ff; border-color: rgb(255 255 255 / .2); }
+
+/* Tiêu đề mục: một kiểu duy nhất (canh trái, không nhãn chữ in hoa phía trên) */
+.home-safety { grid-template-columns: minmax(0, 1fr) auto; }
+.home-faq-list { display: grid; gap: 10px; max-width: none; margin-top: 22px; }
+.home-faq-card { display: block; padding: 0; }
+.home-faq-card summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; cursor: pointer; list-style: none; }
+.home-faq-card summary::-webkit-details-marker { display: none; }
+.home-faq-card summary::after { content: "+"; flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--blue-soft); color: var(--brand-blue); font-size: 20px; font-weight: 700; line-height: 1; }
+.home-faq-card[open] summary::after { content: "−"; }
+.home-faq-card summary:focus-visible { outline: 3px solid var(--brand-yellow); outline-offset: -3px; border-radius: 18px; }
+.home-faq-card h3 { margin: 0; font-size: 17px; }
+.home-faq-card p { margin: 0; padding: 0 20px 18px; font-size: 15px; line-height: 1.6; }
+.home-final-cta h2 { margin-top: 0; }
+.home-section.home-faq { max-width: none; }
+.home-faq-list { max-width: 900px; }
+@media (min-width: 901px) {
+  .learn-top-inner.wrap { width: min(1320px, calc(100% - 40px)); }
+}
+@media (min-width: 901px) and (max-width: 1499px) {
+  .learn-top .parent-top-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+
+/* Điện thoại: bong bóng Milo không đè nhãn, bìa vở vuốt ngang */
+@media (max-width: 700px) {
+  .home-hero .hero-bubble { top: auto; bottom: 22%; right: 4%; }
+  .notebooks { display: flex; gap: 14px; margin-inline: -16px; padding: 4px 16px 14px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .notebooks::-webkit-scrollbar { display: none; }
+  .notebooks > li { flex: 0 0 min(78%, 300px); scroll-snap-align: start; }
+  .home-roles > span { flex-basis: 100%; }
+  .home-roles a { flex: 1 1 0; justify-content: center; gap: 4px; padding-inline: 6px; font-size: 14px; white-space: nowrap; }
+  .home-roles svg { width: 15px; height: 15px; }
+}
+
 /* ===== Chế độ tối: làm dịu nền sáng còn sót (sinh tự động từ các khối nền trắng/pastel chưa có bản tối — chế độ sáng giữ nguyên) ===== */
 :root[data-theme="dark"] .balance-facts li { background: var(--surface-2); }
 :root[data-theme="dark"] .balance-main { background: var(--surface-2); }

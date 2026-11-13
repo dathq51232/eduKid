@@ -32,5 +32,10 @@ export default function AccountLink({ variant = 'button' }: { variant?: 'button'
   if (signedIn === null) return <span className="account-link is-loading" aria-hidden="true" />;
   return signedIn
     ? <Link href="/sau-dang-nhap" className="account-link"><UserRound aria-hidden="true" /> <span>Trang của tôi</span></Link>
-    : <Link href="/dang-nhap" className="account-link"><LogIn aria-hidden="true" /> <span>Đăng nhập</span></Link>;
+    : (
+      <>
+        <Link href="/dang-nhap" className="account-link"><LogIn aria-hidden="true" /> <span>Đăng nhập</span></Link>
+        <Link href="/dang-ky?vai=phu-huynh" className="account-cta">Dùng thử miễn phí</Link>
+      </>
+    );
 }
