@@ -14,6 +14,8 @@ import { stemByKey } from '@/lib/lesson3d/templates';
 import { FIT_LABEL } from '@/lib/lesson3d/stem-catalog';
 import { MAX_OBJECTS, uid, type BaseType, type Control3D, type FxType, type Lesson3D, type Link3D, type Obj3D, type Quiz3D } from '@/lib/lesson3d/types';
 import { fold } from '@/lib/classroom/teacher-nav';
+import OfflineSaveButton from '@/components/offline/OfflineSaveButton';
+import { saveLesson3DOffline } from '@/lib/offline/save';
 
 const SWATCH = ['#ef4444', '#f59e0b', '#facc15', '#22c55e', '#2f8f4e', '#2aa7e0', '#2457c5', '#8b5cf6', '#ec4899', '#ffffff', '#9aa3ad', '#7a5232'];
 const FX: { id: FxType; icon: string; name: string }[] = [
@@ -34,8 +36,11 @@ function newObj(type: string, x: number, z: number): Obj3D {
 }
 const r1 = (v: number) => Math.round(v * 10) / 10;
 
-export default function Lesson3DStudio({ classId, lessonId, initial }: { classId: string; lessonId: string; initial: Lesson3D }) {
-  const supabase = useMemo(() => { try { return createClient(); } catch { return null; } }, []);
+/** Chiếu khi mất mạng (trang /chieu-offline): chỉ trình chiếu, vật thể của cô lấy từ tệp đã lưu trên máy, không lưu lên máy chủ */
+export type Lesson3DOffline = { assets: TeacherAsset[]; exitHref: string };
+
+export default function Lesson3DStudio({ classId, lessonId, initial, offline }: { classId: string; lessonId: string; initial: Lesson3D; offline?: Lesson3DOffline }) {
+  const supabase = useMemo(() => { if (offline) return null; try { return createClient(); } catch { return null; } }, [offline]);
   const stageRef = useRef<HTMLDivElement>(null);
   const engRef = useRef<Stage3D | null>(null);
   const [L, setL] = useState<Lesson3D>(initial);
@@ -58,6 +63,8 @@ export default function Lesson3DStudio({ classId, lessonId, initial }: { classId
   const fileRef = useRef<HTMLInputElement>(null);
   const ref = useRef({ L, placing, play, tab });
   ref.current = { L, placing, play, tab };
+  const offlineRef = useRef(offline); offlineRef.current = offline;
+  const startPlayRef = useRef<() => void>(() => {});
 
   /* ---------- sửa dữ liệu ---------- */
   const update = useCallback((fn: (d: Lesson3D) => Lesson3D) => setL((d) => fn(structuredClone(d))), []);
@@ -81,6 +88,7 @@ export default function Lesson3DStudio({ classId, lessonId, initial }: { classId
       });
       engRef.current = eng; eng.setLesson(ref.current.L);
       setThumbs(makeThumbs(ASSETS.map((a) => a.id)));
+      if (offlineRef.current) startPlayRef.current();
     });
     return () => { alive = false; engRef.current?.dispose(); engRef.current = null; };
   }, [addObj, updObj]);
@@ -92,11 +100,12 @@ export default function Lesson3DStudio({ classId, lessonId, initial }: { classId
     engRef.current?.setLesson(ref.current.L); // dựng các vật thể của tôi đã có trong bài
   }, []);
   useEffect(() => {
+    if (offline) { void applyMine(offline.assets); return; }
     let live = true;
     void listAssets(['model', 'image']).then((l) => { if (live) void applyMine(l); }, (e) => { if (live) { setMine([]); setMineMsg({ kind: 'info', text: assetError(e) }); } });
     void assetUsage().then((u) => { if (live && u) setUsage(u); });
     return () => { live = false; };
-  }, [applyMine]);
+  }, [applyMine, offline]);
   const onUpload = async (file: File) => {
     setMineMsg(null);
     try {
@@ -141,7 +150,7 @@ export default function Lesson3DStudio({ classId, lessonId, initial }: { classId
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).matches('input, textarea, select')) return;
-      if (e.key === 'Escape') { if (ref.current.placing) setPlacing(null); else if (ref.current.play) stopPlay(); else setSel(null); }
+      if (e.key === 'Escape') { if (ref.current.placing) setPlacing(null); else if (ref.current.play) { if (!offlineRef.current) stopPlay(); } else setSel(null); }
       if (e.key === 'Delete' && sel && !ref.current.play) removeObj(sel);
     };
     addEventListener('keydown', onKey); return () => removeEventListener('keydown', onKey);
@@ -167,6 +176,7 @@ export default function Lesson3DStudio({ classId, lessonId, initial }: { classId
     eng.playScene = 0; eng.quizMode = false;
     setPlay({ i: 0, quiz: L.scenes.length ? null : { i: 0, score: 0, fb: null }, card: null });
   };
+  startPlayRef.current = startPlay;
   const stopPlay = () => { const eng = engRef.current; if (eng) { eng.playScene = null; eng.quizMode = false; eng.refreshVisibility(); eng.highlight(null); } setPlay(null); setRt({}); };
   useEffect(() => {
     const eng = engRef.current; if (!eng || !play) return;
@@ -211,7 +221,7 @@ export default function Lesson3DStudio({ classId, lessonId, initial }: { classId
   return (
     <div className={`s3d${play ? ' is-play' : ''}`}>
       <header className="s3d-top">
-        <Link href={`/giao-vien/lop/${classId}/bai-giang-3d`} className="s3d-btn" aria-label="Về danh sách bài giảng 3D"><ArrowLeft aria-hidden="true" /></Link>
+        <Link href={offline?.exitHref ?? `/giao-vien/lop/${classId}/bai-giang-3d`} className="s3d-btn" aria-label={offline ? 'Về danh sách bài đã lưu offline' : 'Về danh sách bài giảng 3D'}><ArrowLeft aria-hidden="true" /></Link>
         <label className="s3d-ttl"><small>Xưởng bài giảng 3D · Lớp {L.grade}{stem ? ` · STEM bài ${stem.no}` : ''}</small>
           <input value={L.title} maxLength={120} onChange={(e) => { const v = e.target.value; update((d) => { d.title = v; return d; }); }} aria-label="Tên bài giảng" /></label>
         {!play && <>
@@ -223,8 +233,12 @@ export default function Lesson3DStudio({ classId, lessonId, initial }: { classId
         </>}
         {play ? <>
           <button type="button" className="s3d-btn" onClick={fullscreen}><Maximize aria-hidden="true" /> <span>Toàn màn hình</span></button>
-          <button type="button" className="s3d-btn is-pri" onClick={stopPlay}><Pause aria-hidden="true" /> Quay lại soạn</button>
-        </> : <button type="button" className="s3d-btn is-pri" onClick={startPlay}><Play aria-hidden="true" /> Trình chiếu</button>}
+          {offline ? <button type="button" className="s3d-btn is-pri" onClick={startPlay}><Play aria-hidden="true" /> Chiếu lại từ đầu</button>
+            : <button type="button" className="s3d-btn is-pri" onClick={stopPlay}><Pause aria-hidden="true" /> Quay lại soạn</button>}
+        </> : <>
+          {!offline && <OfflineSaveButton kind="l3d" id={lessonId} className="s3d-btn" run={(pg) => saveLesson3DOffline({ lesson: L, lessonId, classId }, pg)} />}
+          <button type="button" className="s3d-btn is-pri" onClick={startPlay}><Play aria-hidden="true" /> Trình chiếu</button>
+        </>}
       </header>
 
       <div className="s3d-main">
@@ -260,7 +274,7 @@ export default function Lesson3DStudio({ classId, lessonId, initial }: { classId
           <div className="s3d-stage" ref={stageRef} aria-label="Sa bàn 3D" />
           {!play && <div className="s3d-stats">{L.objects.length} đồ vật · {L.scenes.length} cảnh · {L.quiz.length} câu hỏi · {kb} KB</div>}
           {!play && <div className="s3d-tip">{placing ? <span className="is-place">Bấm lên sa bàn để đặt {ASSET_BY_ID[placing]?.name} · Esc để thôi</span> : <span>Kéo nền để xoay · cuộn để phóng to · bấm đồ vật để chọn, kéo để di chuyển</span>}</div>}
-          {play && <PlayLayer L={L} play={play} setPlay={setPlay} speak={speak} stopPlay={stopPlay} ctlVal={ctlVal} setCtl={setCtl} restart={startPlay} />}
+          {play && <PlayLayer L={L} play={play} setPlay={setPlay} speak={speak} stopPlay={stopPlay} ctlVal={ctlVal} setCtl={setCtl} restart={startPlay} exitHref={offline?.exitHref} />}
         </section>
 
         {!play && (
@@ -396,9 +410,10 @@ function QuizPanel({ L, update, objOptions, sel }: { L: Lesson3D; update: (fn: (
   );
 }
 
-function PlayLayer({ L, play, setPlay, speak, stopPlay, ctlVal, setCtl, restart }: {
+function PlayLayer({ L, play, setPlay, speak, stopPlay, ctlVal, setCtl, restart, exitHref }: {
   L: Lesson3D; play: Play; setPlay: (p: Play) => void; speak: (t: string) => void; stopPlay: () => void; restart: () => void;
   ctlVal: (c: Control3D) => number | boolean; setCtl: (c: Control3D, v: number | boolean) => void;
+  /** chiếu khi mất mạng: thay nút Quay lại soạn bằng Về danh sách bài */ exitHref?: string;
 }) {
   const card = play.card ? L.objects.find((o) => o.id === play.card) : null;
   const Z = play.quiz;
@@ -440,7 +455,7 @@ function PlayLayer({ L, play, setPlay, speak, stopPlay, ctlVal, setCtl, restart 
         })() : Z.i >= total ? <>
           <div className="s3d-play-h"><span>Kết quả</span><span className="s3d-stars">{'★'.repeat(Z.score)}{'☆'.repeat(total - Z.score)}</span></div>
           <p>Đúng {Z.score}/{total} câu. {Z.score === total ? 'Giỏi quá!' : 'Cố gắng lần sau nhé!'}</p>
-          <div className="s3d-row is-end"><button type="button" className="s3d-btn" onClick={restart}>Xem lại từ đầu</button><button type="button" className="s3d-btn is-pri" onClick={stopPlay}>Quay lại soạn</button></div>
+          <div className="s3d-row is-end"><button type="button" className="s3d-btn" onClick={restart}>Xem lại từ đầu</button>{exitHref ? <a className="s3d-btn is-pri" href={exitHref}>Về danh sách bài</a> : <button type="button" className="s3d-btn is-pri" onClick={stopPlay}>Quay lại soạn</button>}</div>
         </> : (() => {
           const qq = L.quiz[Z.i];
           return <>

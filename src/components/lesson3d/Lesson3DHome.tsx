@@ -5,7 +5,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { Box, Copy, Plus, Search, Sparkles, Trash2 } from 'lucide-react';
+import { Box, Copy, Plus, Search, Sparkles, Trash2, CloudDownload } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { STEM_LESSONS, FIT_LABEL, stemKey, type StemLesson } from '@/lib/lesson3d/stem-catalog';
 import { TEMPLATES, lessonFromStem } from '@/lib/lesson3d/templates';
@@ -64,6 +64,7 @@ export default function Lesson3DHome({ classId, className, grade, lessons, missi
       <div className="ct-head">
         <div>{embedded ? <h2 className="s3h-h2">Bài giảng & 3D</h2> : <><p className="ct-sub">Lớp {className} · Dạy học</p><h1>Bài giảng 3D & thao giảng</h1></>}</div>
         <div className="ct-actions">
+          <a href="/chieu-offline" className="btn btn-outline" title="Bài đã lưu trên máy này để chiếu khi mất mạng"><CloudDownload aria-hidden="true" /> Bài đã lưu offline</a>
           {tab !== 'tg' && <button type="button" className="btn btn-primary" disabled={missing || !!busy} onClick={() => void create(emptyLesson(grade), 'new')}><Plus aria-hidden="true" /> Bài 3D trống</button>}
         </div>
       </div>

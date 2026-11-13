@@ -42,7 +42,12 @@ function noise(c: AudioContext, t: number, dur: number, g = 0.3, hp = 800, lp = 
 
 const audios = new Set<HTMLAudioElement>();
 const signed = new Map<string, string>();
+/** Chiếu khi mất mạng: âm thanh của cô lấy từ tệp đã lưu trên máy thay vì đường dẫn ký */
+let localResolver: ((path: string) => string | undefined) | null = null;
+export function setLocalSoundResolver(fn: ((path: string) => string | undefined) | null) { localResolver = fn; }
 async function urlOf(path: string): Promise<string | null> {
+  const local = localResolver?.(path);
+  if (local) return local;
   if (signed.has(path)) return signed.get(path)!;
   const { data } = await createClient().storage.from('teacher-assets').createSignedUrl(path, 3600);
   if (data?.signedUrl) signed.set(path, data.signedUrl);

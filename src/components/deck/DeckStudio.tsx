@@ -3,6 +3,8 @@
 // Soạn bài giảng / thao giảng (11/2026) — giao diện kiểu Canva: cột biểu tượng + bảng công cụ bên trái (Mẫu, Thành phần, Chữ,
 // Tương tác, Nền, Âm thanh, Tải lên, Hiệu ứng, Lớp), thanh công cụ theo vật đang chọn, thanh nổi trên vật (khoá · nhân bản · xoá · ẩn),
 // dải trang + Thời lượng · Ghi chú · Hẹn giờ · thu phóng · xem lưới ở đáy. Bài tự lưu vào bảng slide_decks (0046).
+import OfflineSaveButton from '@/components/offline/OfflineSaveButton';
+import { saveDeckOffline } from '@/lib/offline/save';
 import Link from 'next/link';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
@@ -511,6 +513,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
         <span className={`cv-saved is-${saved}`}>{saved === 'saved' ? '✓ Đã lưu' : saved === 'saving' ? 'Đang lưu…' : '⚠ Chưa lưu được'}</span>
         <span className="cv-grow" />
         <button type="button" className="cv-btn" onClick={() => setPreview(true)}><Play aria-hidden="true" /> Xem thử trang</button>
+        <OfflineSaveButton kind="deck" id={deckId} className="cv-btn" run={async (pg) => { await flush(); return saveDeckOffline({ deck: deckRef.current, deckId, classId }, pg); }} />
         <a className="cv-btn" href={showHref(cur)} onClick={() => { void flush(); }}><Play aria-hidden="true" /> Chiếu từ trang này</a>
         <a className="cv-btn is-w" href={showHref(0)} onClick={() => { void flush(); }}><MonitorPlay aria-hidden="true" /> Trình chiếu</a>
       </header>

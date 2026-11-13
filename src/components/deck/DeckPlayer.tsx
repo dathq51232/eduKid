@@ -33,8 +33,11 @@ type Msg =
 const INK = ['#ef4444', '#facc15', '#22c55e', '#3b82f6', '#ec4899', '#ffffff', '#111827'];
 const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-export default function DeckPlayer({ classId, deckId, deck, students, start = 0, audience = false }: {
-  classId: string; deckId: string; deck: Deck; students: { id: string; name: string }[]; start?: number; audience?: boolean;
+/** Chiếu khi mất mạng (trang /chieu-offline): ảnh / âm thanh của cô đã tải về máy, không gọi máy chủ */
+export type DeckOffline = { urls: Map<string, string>; exitHref: string; audienceHref: (page: number) => string };
+
+export default function DeckPlayer({ classId, deckId, deck, students, start = 0, audience = false, offline }: {
+  classId: string; deckId: string; deck: Deck; students: { id: string; name: string }[]; start?: number; audience?: boolean; offline?: DeckOffline;
 }) {
   const n = deck.slides.length;
   const [show, setShow] = useState<Show>({ slide: Math.min(Math.max(0, start), n - 1), step: 0, nonce: 0, black: '', spot: null, laser: null, ink: {}, name: null, timer: null, stars: 0, teams: null, ask: null, bump: null });
@@ -58,9 +61,9 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
   const [, force] = useState(0);
   const slide = deck.slides[show.slide];
 
-  useEffect(() => { void listAssets(['image', 'audio']).then(setMine, () => setMine([])); }, []);
+  useEffect(() => { if (offline) return; void listAssets(['image', 'audio']).then(setMine, () => setMine([])); }, [offline]);
   useEffect(() => { void loadPraiseFonts(); }, []); // phông chữ tròn / chữ viết tay dùng trên trang
-  const urls = useMemo(() => new Map(mine.filter((a) => a.url).map((a) => [a.path, a.url!])), [mine]);
+  const urls = useMemo(() => offline?.urls ?? new Map(mine.filter((a) => a.url).map((a) => [a.path, a.url!])), [mine, offline]);
   const assetUrl = useCallback((p: string) => urls.get(p), [urls]);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 500); return () => clearInterval(t); }, []);
   useEffect(() => { setPageAt((p) => (p.slide === show.slide ? p : { slide: show.slide, at: Date.now() })); }, [show.slide]);
@@ -264,7 +267,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
   /* ---------- thi đua tổ (điểm lưu vào Thi đua tổ của lớp, lý do ghi nguồn "📽 Thao giảng") ---------- */
   const [tErr, setTErr] = useState('');
   useEffect(() => {
-    if (audience) return;
+    if (audience || offline) return; // mất mạng: dùng Cộng sao, không đọc điểm tổ
     let off = false;
     void (async () => {
       try {
@@ -285,6 +288,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
     playSound(delta > 0 ? 'star' : 'wrong');
     publish({ ...cur, ask: null, bump: delta > 0 ? i : null, teams: cur.teams.map((t, k) => (k === i ? { ...t, score: t.score + delta } : t)) });
     window.setTimeout(() => { if (showRef.current.bump === i) publish({ ...showRef.current, bump: null }); }, 1200);
+    if (offline) return;
     const reason = `${SOURCE.tg.prefix}${why} · ${deck.title}`.slice(0, 80);
     const { error } = await createClient().rpc('teacher_team_point', { p_class: classId, p_team: i + 1, p_delta: delta, p_reason: reason });
     if (error) { setTErr('Chưa lưu được điểm tổ (kiểm tra mạng).'); publish({ ...showRef.current, teams: (showRef.current.teams ?? []).map((t, k) => (k === i ? { ...t, score: t.score - delta } : t)) }); }
@@ -293,7 +297,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
   const addStar = () => { playSound('star'); publish({ ...showRef.current, stars: showRef.current.stars + 1 }); };
 
   const openAudience = () => {
-    const u = `/giao-vien/lop/${classId}/bai-giang-3d/thao-giang/${deckId}/trinh-chieu?man=chieu&trang=${show.slide + 1}`;
+    const u = offline ? offline.audienceHref(show.slide + 1) : `/giao-vien/lop/${classId}/bai-giang-3d/thao-giang/${deckId}/trinh-chieu?man=chieu&trang=${show.slide + 1}`;
     window.open(u, `edukid-chieu-${deckId}`, 'popup,width=1280,height=760');
   };
   const fullStage = () => { const el = audience ? document.documentElement : stageRef.current?.closest('.dp-stagebox'); if (document.fullscreenElement) void document.exitFullscreen(); else void (el as HTMLElement | null)?.requestFullscreen?.(); };
@@ -367,7 +371,7 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
   return (
     <div className="dp">
       <header className="dp-top">
-        <Link href={`/giao-vien/lop/${classId}/bai-giang-3d/thao-giang/${deckId}`} className="dp-exit"><ArrowLeft aria-hidden="true" /> Thoát</Link>
+        <Link href={offline?.exitHref ?? `/giao-vien/lop/${classId}/bai-giang-3d/thao-giang/${deckId}`} className="dp-exit"><ArrowLeft aria-hidden="true" /> Thoát</Link>
         <b className="dp-title">▶ {deck.title}</b>
         <span className="dp-pg">Trang {show.slide + 1} / {n}{left > 0 ? ` · còn ${left} hiệu ứng` : ''}</span>
         <button type="button" className="dp-btn is-main" onClick={openAudience}><MonitorUp aria-hidden="true" /> Mở màn hình chiếu</button>
