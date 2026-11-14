@@ -7,6 +7,7 @@ import { ArrowLeft, Delete, GraduationCap, LogIn, Presentation, Users } from 'lu
 import BrandLogo, { BrandWord } from '@/components/brand/BrandLogo';
 import { createClient } from '@/lib/supabase/client';
 import { safeNext } from '@/lib/auth/safe-next';
+import PasswordInput from '@/components/PasswordInput';
 
 type Tab = 'student' | 'parent' | 'adult';
 type Classmate = { id: string; name: string };
@@ -50,7 +51,7 @@ function AdultLogin({ next, configured, parentEmailMode = false }: { next: strin
       </label>
       <label className="adm-field">
         <span>Mật khẩu</span>
-        <input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordInput autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
       </label>
       {error && <p className="adm-alert is-error" role="alert">{error}</p>}
       <button type="submit" className="btn btn-primary auth-submit" disabled={busy || !configured}>

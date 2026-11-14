@@ -10997,3 +10997,13 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 }
 .gt-head-btns { display: flex; align-items: center; gap: 8px; }
 @media (max-width: 640px) { .ph-top button.ph-ghost[data-tour="huong-dan"] span, .gt-head-btns .gt-help span { display: none; } }
+
+/* ====================================================================== pw- ô mật khẩu có nút hiện / ẩn (PasswordInput) */
+.pw-field { position: relative; display: block; }
+.adm-field .pw-field input { padding-right: 48px; }
+.pw-eye { position: absolute; top: 50%; right: 4px; transform: translateY(-50%); display: grid; place-items: center; width: 40px; height: 36px;
+  border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+.pw-eye:hover { color: var(--ink); background: var(--surface-2); }
+.pw-eye:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.pw-eye svg { width: 20px; height: 20px; }
+.pw-field input::-ms-reveal, .pw-field input::-ms-clear { display: none; } /* Edge: bỏ nút con mắt riêng để không bị hai nút */

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { KeyRound } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import PasswordInput from '@/components/PasswordInput';
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -39,10 +40,10 @@ export default function ResetPasswordForm() {
   return (
     <form className="auth-form" onSubmit={submit}>
       <label className="adm-field"><span>Mật khẩu mới (ít nhất 8 ký tự)</span>
-        <input type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordInput autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
       </label>
       <label className="adm-field"><span>Nhập lại mật khẩu mới</span>
-        <input type="password" autoComplete="new-password" required minLength={8} value={again} onChange={(e) => setAgain(e.target.value)} />
+        <PasswordInput autoComplete="new-password" required minLength={8} value={again} onChange={(e) => setAgain(e.target.value)} />
       </label>
       {error && <p className="adm-alert is-error" role="alert">{error}</p>}
       <button type="submit" className="btn btn-primary auth-submit" disabled={busy}>

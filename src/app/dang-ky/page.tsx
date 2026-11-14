@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import PasswordInput from '@/components/PasswordInput';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, UserPlus } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
@@ -95,7 +96,7 @@ export default function SignupPage() {
               <input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </label>
             <label className="adm-field"><span>Mật khẩu (ít nhất 8 ký tự)</span>
-              <input type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+              <PasswordInput autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
             </label>
             {role === 'teacher' && (
               <label className="adm-field"><span>Trường đang dạy</span>
