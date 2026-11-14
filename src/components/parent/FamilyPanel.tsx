@@ -70,7 +70,7 @@ export default function FamilyPanel({ kids, code, origin }: { kids: FamilyChild[
   const copyCode = async () => { try { await navigator.clipboard.writeText(famCode ?? ''); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* bỏ qua */ } };
 
   return (
-    <section className="fam" aria-labelledby="fam-title">
+    <section className="fam" aria-labelledby="fam-title" data-tour="hoc-tai-nha">
       <div className="fam-head">
         <div>
           <p className="fam-kicker">HỌC TẠI NHÀ</p>

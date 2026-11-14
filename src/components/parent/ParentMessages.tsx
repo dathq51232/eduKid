@@ -56,7 +56,7 @@ export default function ParentMessages({ people, teacher, childName, initial }: 
       : ['Cảm ơn cô đã quan tâm cháu ạ.'];
 
   return (
-    <section className="ph-card pm" aria-labelledby="pm-title">
+    <section className="ph-card pm" aria-labelledby="pm-title" data-tour="nhan-co">
       <div className="ph-card-hd">
         <div><h2 id="pm-title"><Send aria-hidden="true" /> Nhắn {co}</h2><p className="ph-sub">Xin phép cho con nghỉ học hoặc hỏi han {co}. {co[0].toUpperCase() + co.slice(1)} thấy tin ngay trên trang làm việc.</p></div>
       </div>

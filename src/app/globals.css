@@ -10955,3 +10955,45 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
   .sdg-books { gap: 7px; }
   .sdg-book { padding: 10px 5px; }
 }
+
+/* ====================================================================== gt- hướng dẫn từng bước (GuidedTour) */
+.gt { position: fixed; inset: 0; z-index: 9000; pointer-events: none; }
+.gt-veil { position: absolute; inset: 0; pointer-events: auto; background: transparent; transition: background-color .25s ease; }
+.gt-veil.is-dim { background: rgb(15 23 42 / .58); }
+.gt-spot { position: absolute; top: 0; left: 0; width: 0; height: 0; border-radius: 14px; opacity: 0; pointer-events: none;
+  box-shadow: 0 0 0 4px rgb(255 200 61 / .95), 0 0 0 9999px rgb(15 23 42 / .58); }
+.gt-spot[data-on] { transition: transform .3s cubic-bezier(.2,.8,.2,1), width .3s cubic-bezier(.2,.8,.2,1), height .3s cubic-bezier(.2,.8,.2,1), opacity .2s ease; }
+.gt-card { position: absolute; top: 0; left: 0; width: min(360px, calc(100vw - 24px)); pointer-events: auto;
+  padding: 18px 18px 14px; border-radius: 18px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow-lg), 0 0 0 1px var(--line); }
+.gt-card[data-on] { transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+.gt-card h2 { margin: 2px 32px 6px 0; font-size: 1.12rem; line-height: 1.3; }
+.gt-body { margin: 0; color: var(--muted); font-size: .95rem; line-height: 1.5; }
+.gt-count { margin: 0; font-size: .78rem; font-weight: 700; letter-spacing: .02em; color: var(--blue); }
+.gt-badge { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 10px; border-radius: 14px; background: var(--brand-yellow); color: #5a3d00; }
+.gt-badge svg { width: 24px; height: 24px; }
+.gt-x { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; }
+.gt-x:hover { background: var(--surface-2); color: var(--ink); }
+.gt-x svg { width: 18px; height: 18px; }
+.gt-dots { display: flex; gap: 5px; margin-top: 12px; }
+.gt-dots i { width: 8px; height: 8px; border-radius: 99px; background: var(--line-strong); transition: width .2s ease, background-color .2s ease; }
+.gt-dots i.is-done { background: var(--blue-soft); box-shadow: inset 0 0 0 1px var(--blue); }
+.gt-dots i.is-on { width: 22px; background: var(--blue); }
+.gt-btns { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+.gt-sp { flex: 1; }
+.gt-btns button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 12px; font: inherit; font-weight: 700; cursor: pointer; }
+.gt-next { background: var(--blue); color: var(--on-brand); }
+.gt-next:hover { background: var(--blue-deep); }
+.gt-ghost { background: var(--surface-2); color: var(--ink); }
+.gt-skip { padding: 0 6px !important; background: transparent; color: var(--muted); }
+.gt-skip:hover { color: var(--ink); text-decoration: underline; }
+.gt-btns > .gt-ghost:first-child { margin-right: auto; }
+.gt-card button:focus-visible { outline: 3px solid var(--brand-yellow); outline-offset: 2px; }
+.gt-help { display: inline-grid; grid-auto-flow: column; place-items: center; gap: 6px; min-width: 40px; height: 40px; padding: 0 10px; border: 0; border-radius: 10px;
+  background: var(--surface-2); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.gt-help svg { width: 20px; height: 20px; }
+.gt-help:hover { background: var(--blue-soft); color: var(--blue); }
+@media (prefers-reduced-motion: reduce) {
+  .gt-spot[data-on], .gt-card[data-on], .gt-veil, .gt-dots i { transition: none; }
+}
+.gt-head-btns { display: flex; align-items: center; gap: 8px; }
+@media (max-width: 640px) { .ph-top button.ph-ghost[data-tour="huong-dan"] span, .gt-head-btns .gt-help span { display: none; } }

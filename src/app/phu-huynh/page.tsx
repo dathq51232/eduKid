@@ -17,6 +17,7 @@ import SignOutButton from '@/components/classroom/SignOutButton';
 import { STATUS_LABEL } from '@/lib/classroom/diary';
 import type { Contact } from '@/lib/classroom/class-tools';
 import { getViewer } from '@/lib/auth/viewer';
+import GuidedTour, { TourHelpButton } from '@/components/tour/GuidedTour';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Phụ huynh · EduChain Kids' };
@@ -124,6 +125,7 @@ export default async function ParentsPage() {
       <>
         <ParentHeader childCorner />
         <main className="ph wrap">
+          <GuidedTour id="ph-con-v1" />
           {ovErr && <p className="adm-alert is-warn">Một số mục chưa bật: hãy chạy <code>supabase/migrations/0033_parent_family.sql</code> trên Supabase.</p>}
           <section className="ph-hero">
             <span className="ph-hero-av"><MiloMascot variant="artist" size={80} /></span>
@@ -136,7 +138,7 @@ export default async function ParentsPage() {
                 {!cls && <span>Con chưa vào lớp nào</span>}
               </div>
             </div>
-            <div className="ph-today">
+            <div className="ph-today" data-tour="hom-nay">
               <span>Hôm nay · {fmtLong(today?.day)}</span>
               {today?.recorded ? (
                 <>
@@ -151,7 +153,7 @@ export default async function ParentsPage() {
             <a href="#pm-title" className="ph-alert"><Bell aria-hidden="true" /> <span><b>{cls?.teacher ? `Cô ${cls.teacher.trim().split(/\s+/).slice(-1)[0]}` : 'Cô'} vừa trả lời {newReplies} tin nhắn</b> của gia đình · Xem ngay</span></a>
           )}
 
-          <ul className="ph-tiles">
+          <ul className="ph-tiles" data-tour="thang-nay">
             <li><span className="ph-ic is-green" aria-hidden="true">📅</span><div><span>Đi học {monthName}</span><b>{month?.days ? `${month.present}/${month.days} ngày` : <em>Cô chưa ghi</em>}</b></div></li>
             <li><span className="ph-ic is-yellow" aria-hidden="true">⭐</span><div><span>Cô khen</span><b>{month ? `${month.praise} lần` : <em>Chưa có</em>}</b></div></li>
             <li><span className="ph-ic is-red" aria-hidden="true">🔔</span><div><span>Cô nhắc nhở</span><b>{month ? `${month.remind} lần` : <em>Chưa có</em>}</b></div></li>
@@ -160,7 +162,7 @@ export default async function ParentsPage() {
 
           <div className="ph-grid">
             <div className="ph-side">
-            <section className="ph-card" aria-labelledby="ph-msg-title">
+            <section className="ph-card" aria-labelledby="ph-msg-title" data-tour="tin-tu-co">
               <div className="ph-card-hd">
                 <div><h2 id="ph-msg-title"><MessageCircle aria-hidden="true" /> Tin nhắn từ cô</h2><p className="ph-sub">Thông báo của lớp và nhận xét hằng ngày dành cho con</p></div>
                 {cls?.zalo_group && <a className="btn btn-sm ph-zalo" href={cls.zalo_group} target="_blank" rel="noopener noreferrer">Nhóm Zalo lớp</a>}
@@ -189,7 +191,7 @@ export default async function ParentsPage() {
               )}
             </section>
 
-              <section className="ph-card" aria-labelledby="ph-res-title">
+              <section className="ph-card" aria-labelledby="ph-res-title" data-tour="luyen-tap">
                 <div className="ph-card-hd"><div><h2 id="ph-res-title"><TrendingUp aria-hidden="true" /> Con luyện tập</h2><p className="ph-sub">{list.length ? `${lessons} bài · đúng trung bình ${avg}% (${list.length} lượt gần nhất)` : 'Con chưa làm bài nào'}</p></div></div>
                 {list.length === 0 ? <p className="dash-muted">Kết quả sẽ hiện ở đây sau mỗi bài con luyện tập. Gia đình nhắc con học một bài nhỏ mỗi ngày nhé!</p> : (
                   <>
@@ -229,7 +231,7 @@ export default async function ParentsPage() {
           <GalleryTeaser variant="parent" />
 
           {/* Tiện ích gia đình (lịch, thu chi): việc riêng của gia đình, ít gấp → để cuối trang */}
-          <div className="ph-utils-live" aria-label="Tiện ích gia đình">
+          <div className="ph-utils-live" aria-label="Tiện ích gia đình" data-tour="tien-ich">
             <MiniCalendar href="/phu-huynh/tien-ich" />
             <MoneyCard href="/phu-huynh/tien-ich?xem=thu-chi" title="Thu chi gia đình" />
           </div>
@@ -267,19 +269,20 @@ export default async function ParentsPage() {
       <main className="dash wrap">
         <div className="dash-head">
           <div><p className="dash-kicker">Phụ huynh</p><h1>Chào {viewer.displayName}!</h1></div>
-          <SignOutButton />
+          <div className="gt-head-btns"><TourHelpButton label="Hướng dẫn" /><SignOutButton /></div>
         </div>
+        <GuidedTour id="ph-tai-khoan-v1" />
 
         {famErr ? <p className="adm-alert is-warn">Chưa bật “Học tại nhà”: hãy chạy <code>supabase/migrations/0047_family_accounts.sql</code> trên Supabase.</p>
           : <FamilyPanel kids={famKids} code={famCode} origin={origin} />}
 
-        <section className="dash-card">
+        <section className="dash-card" data-tour="ma-moi">
           <h2>Con học ở trường có dùng EduChain Kids?</h2>
           <p className="dash-muted">Nhập mã mời do thầy cô chủ nhiệm cấp để xem tiến độ của con ở lớp. Bạn chỉ xem được tiến độ của con đã liên kết.</p>
           <RedeemInviteForm />
         </section>
 
-        {children.length > 0 && <h2 className="fam-progress-h">Tiến độ học tập</h2>}
+        {children.length > 0 && <h2 className="fam-progress-h" data-tour="tien-do">Tiến độ học tập</h2>}
         {children.map((c) => {
           const mine = all.filter((r) => r.student_id === c.id);
           const best = new Map<string, number>();
@@ -309,7 +312,7 @@ export default async function ParentsPage() {
           );
         })}
         {/* Tiện ích gia đình (lịch, thu chi) để cuối trang */}
-        <div className="ph-utils-live" aria-label="Tiện ích gia đình">
+        <div className="ph-utils-live" aria-label="Tiện ích gia đình" data-tour="tien-ich">
           <MiniCalendar href="/phu-huynh/tien-ich" />
           <MoneyCard href="/phu-huynh/tien-ich?xem=thu-chi" title="Thu chi gia đình" />
         </div>

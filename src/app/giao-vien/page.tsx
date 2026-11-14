@@ -193,7 +193,7 @@ export default async function TeacherHome() {
           <h1>Chào {firstName} <span aria-hidden="true">👋</span></h1>
         </div>
         {active && (
-          <div className="tdy-actions">
+          <div className="tdy-actions" data-tour="viec-nhanh">
             <Link href={`${base}/goi-ten`} className="tdy-btn"><Dices aria-hidden="true" /> Gọi tên</Link>
             <Link href={`${base}/giao-bai`} className="tdy-btn"><Send aria-hidden="true" /> Giao bài</Link>
             {k?.attendanceSaved
@@ -204,7 +204,7 @@ export default async function TeacherHome() {
       </header>
 
       {!active && (
-        <section className="tdy-card tdy-create">
+        <section className="tdy-card tdy-create" data-tour="tao-lop">
           <h2>Tạo lớp đầu tiên</h2>
           <p className="dash-muted">Mỗi giáo viên phụ trách 1 lớp{planText ? ` · ${planText}` : ', tối đa 40 học sinh'}. Tạo lớp rồi thêm học sinh và in thẻ đăng nhập.</p>
           <CreateClassForm />
