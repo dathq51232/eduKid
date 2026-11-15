@@ -37,19 +37,19 @@ export default function GalleryTeaser({ variant = 'student' }: { variant?: 'stud
   }, []);
   if (!info) return null;
   return (
-    <section className={`gt is-${variant}`} aria-labelledby="gt-h">
-      <span className="gt-ic" aria-hidden="true"><GalleryHorizontalEnd /></span>
-      <div className="gt-body">
+    <section className={`glt is-${variant}`} aria-labelledby="gt-h">
+      <span className="glt-ic" aria-hidden="true"><GalleryHorizontalEnd /></span>
+      <div className="glt-body">
         <h2 id="gt-h">Phòng triển lãm lớp {info.className}</h2>
         {/* Mỗi cụm không bị ngắt giữa chừng khi thẻ nằm trong cột hẹp */}
-        <p className="gt-meta">
+        <p className="glt-meta">
           <span>{info.total ? `${info.total} tác phẩm trên tường` : 'Chưa có tác phẩm'}</span>
           {info.mine > 0 && <span>{variant === 'parent' ? 'của con' : 'của em'}: {info.mine}</span>}
           {info.hearts > 0 && <span>{info.hearts} lượt khen</span>}
         </p>
-        {info.fresh > 0 && info.total > 0 && <p className="gt-new"><Sparkles aria-hidden="true" /> {info.fresh} tác phẩm mới</p>}
+        {info.fresh > 0 && info.total > 0 && <p className="glt-new"><Sparkles aria-hidden="true" /> {info.fresh} tác phẩm mới</p>}
       </div>
-      <div className="gt-act">
+      <div className="glt-act">
         <Link href="/trien-lam" className="btn btn-primary btn-sm">Vào xem</Link>
         {/* Phụ huynh chỉ vào xem; luyện chữ là việc của học sinh */}
         {variant === 'student' && <Link href="/luyen-chu" className="btn btn-outline btn-sm"><PenLine aria-hidden="true" /> Luyện chữ</Link>}
