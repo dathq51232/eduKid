@@ -33,7 +33,7 @@ type Card = { id: string; name: string; pin: string };
 type Cls = { id: string; name: string; grade: number; join_code: string; status: string };
 
 const VIEW_KEY = 'gv-bang-hoc-sinh';
-const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : '—');
+const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }).replace(/-/g, '/') : '—');
 
 export type BillingRow = { student_id: string; active: boolean; reason: 'free' | 'paid' | 'trial' | 'expired'; until: string | null };
 const fmtDay = (s: string | null) => (s ? new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/-/g, '/') : '');
@@ -241,15 +241,16 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
           <div className="table-scroll">
             <table className="roster-table">
               <thead>
-                <tr><th>Học sinh</th><th>PIN</th><th>Trạng thái</th>{showBilling && <th>Học phí</th>}<th>Bài đã làm</th><th>Đúng TB</th><th>Điểm</th><th>Gần nhất</th><th><span className="sr-only">Thao tác</span></th></tr>
+                <tr><th className="roster-no" scope="col">STT</th><th>Học sinh</th><th>PIN</th><th>Trạng thái</th>{showBilling && <th>Học phí</th>}<th>Bài đã làm</th><th>Đúng TB</th><th>Điểm</th><th>Gần nhất</th><th><span className="sr-only">Thao tác</span></th></tr>
               </thead>
               <tbody>
-                {active.map((r) => {
+                {active.map((r, i) => {
                   const st = statusOf(r);
                   const s = byId.get(r.student_id);
                   const locked = r.locked_until && Date.parse(r.locked_until) > Date.now();
                   return (
                     <tr key={r.student_id}>
+                      <td className="roster-no">{i + 1}</td>
                       <th scope="row"><Link href={`/giao-vien/lop/${cls.id}/hoc-sinh/${r.student_id}`} className="student-link" title="Xem tiến độ chi tiết">{r.display_name}</Link></th>
                       <td className="pin-cell">{pins[r.student_id] ? (showPins ? <b className="pin-value">{pins[r.student_id]}</b> : <span aria-label="PIN đang ẩn">••••••</span>) : <span className="dash-muted" title="PIN tạo trước khi bật lưu PIN — bấm “Đặt PIN mới” để có PIN xem lại được">Chưa lưu</span>}</td>
                       <td><span className={`status-chip tone-${st.tone}`}>{st.label}</span>{lockedIds.includes(r.student_id) && <> <span className="status-chip tone-coral" title="Hết thời gian dùng thử: em nằm ngoài số chỗ của gói — liên hệ quản trị để mở">Tạm khoá (gói)</span></>}</td>
@@ -260,18 +261,18 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
                       <td>{fmtDate(s?.last_activity ?? null)}</td>
                       <td>
                         <div className="row-actions">
-                          <button type="button" className="mini-btn" disabled={busy !== null} onClick={() => resetPin(r)} title={r.has_account ? 'Đặt PIN mới' : 'Đặt PIN'}><KeyRound aria-hidden="true" /> {r.has_account ? 'Đặt PIN mới' : 'Đặt PIN'}</button>
-                          {locked && <button type="button" className="mini-btn" disabled={busy !== null} onClick={() => rpc(`r-${r.student_id}`, 'teacher_manage_student', { p_class: cls.id, p_student: r.student_id, p_action: 'reset_attempts' }, `Đã mở khóa nhập sai cho ${r.display_name}.`)} title="Mở khóa nhập sai"><RotateCcw aria-hidden="true" /> Mở khóa</button>}
+                          <button type="button" className="mini-btn" disabled={busy !== null} onClick={() => resetPin(r)} title={r.has_account ? 'Đặt PIN mới' : 'Đặt PIN'}><KeyRound aria-hidden="true" /> <span className="mb-full">{r.has_account ? 'Đặt PIN mới' : 'Đặt PIN'}</span><span className="mb-short" aria-hidden="true">PIN</span></button>
+                          {locked && <button type="button" className="mini-btn" disabled={busy !== null} onClick={() => rpc(`r-${r.student_id}`, 'teacher_manage_student', { p_class: cls.id, p_student: r.student_id, p_action: 'reset_attempts' }, `Đã mở khóa nhập sai cho ${r.display_name}.`)} title="Mở khóa nhập sai"><RotateCcw aria-hidden="true" /> <span className="mb-full">Mở khóa</span><span className="mb-short" aria-hidden="true">Mở khóa</span></button>}
                           {r.student_status === 'active'
-                            ? <button type="button" className="mini-btn" disabled={busy !== null} onClick={() => rpc(`l-${r.student_id}`, 'teacher_manage_student', { p_class: cls.id, p_student: r.student_id, p_action: 'lock' }, `Đã khóa tài khoản ${r.display_name}.`)} title="Khóa tài khoản"><Lock aria-hidden="true" /> Khóa</button>
-                            : <button type="button" className="mini-btn" disabled={busy !== null} onClick={() => rpc(`u-${r.student_id}`, 'teacher_manage_student', { p_class: cls.id, p_student: r.student_id, p_action: 'unlock' }, `Đã mở tài khoản ${r.display_name}.`)} title="Mở tài khoản"><LockOpen aria-hidden="true" /> Mở</button>}
+                            ? <button type="button" className="mini-btn" disabled={busy !== null} onClick={() => rpc(`l-${r.student_id}`, 'teacher_manage_student', { p_class: cls.id, p_student: r.student_id, p_action: 'lock' }, `Đã khóa tài khoản ${r.display_name}.`)} title="Khóa tài khoản"><Lock aria-hidden="true" /> <span className="mb-full">Khóa</span><span className="mb-short" aria-hidden="true">Khóa</span></button>
+                            : <button type="button" className="mini-btn" disabled={busy !== null} onClick={() => rpc(`u-${r.student_id}`, 'teacher_manage_student', { p_class: cls.id, p_student: r.student_id, p_action: 'unlock' }, `Đã mở tài khoản ${r.display_name}.`)} title="Mở tài khoản"><LockOpen aria-hidden="true" /> <span className="mb-full">Mở</span><span className="mb-short" aria-hidden="true">Mở</span></button>}
                           {confirmRemove === r.student_id ? (
                             <>
                               <button type="button" className="mini-btn is-danger" onClick={() => { setConfirmRemove(null); void rpc(`x-${r.student_id}`, 'teacher_manage_student', { p_class: cls.id, p_student: r.student_id, p_action: 'remove' }, `${r.display_name} đã rời lớp.`); }}>Xác nhận</button>
                               <button type="button" className="mini-btn" onClick={() => setConfirmRemove(null)}>Thôi</button>
                             </>
                           ) : (
-                            <button type="button" className="mini-btn" disabled={busy !== null} onClick={() => setConfirmRemove(r.student_id)} title="Rời lớp"><UserMinus aria-hidden="true" /> Rời lớp</button>
+                            <button type="button" className="mini-btn" disabled={busy !== null} onClick={() => setConfirmRemove(r.student_id)} title="Rời lớp"><UserMinus aria-hidden="true" /> <span className="mb-full">Rời lớp</span><span className="mb-short" aria-hidden="true">Rời lớp</span></button>
                           )}
                         </div>
                       </td>

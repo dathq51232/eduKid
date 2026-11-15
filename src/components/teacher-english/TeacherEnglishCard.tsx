@@ -1,18 +1,23 @@
 'use client';
 
 // Khối "Tiếng Anh sư phạm" trên dashboard giáo viên (mục "Của tôi"): tiến độ lộ trình 24 tuần, bài tiếp theo,
-// một mẫu câu Classroom English mỗi ngày (nghe được) và lối vào ngân hàng mẫu câu.
+// số thẻ cần ôn hôm nay (Ôn mỗi ngày), một mẫu câu Classroom English mỗi ngày (nghe được) và lối vào ngân hàng mẫu câu.
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Volume2 } from 'lucide-react';
+import { ChevronRight, Layers, Volume2 } from 'lucide-react';
 import { LESSONS, SECTIONS } from '@/lib/teacher-english/roadmap';
 import { PHRASES } from '@/lib/teacher-english/classroom-bank';
 import { useTeacherEnglish } from '@/lib/teacher-english/progress';
+import { buildDeck, todayQueue, useReview } from '@/lib/teacher-english/review';
 import { f3dSrc, phraseImage } from '@/lib/teacher-english/phrase-images';
 import { speakSegments, stopSpeaking } from '@/lib/speech';
 
 export default function TeacherEnglishCard({ href, grade, day }: { href: string; grade?: number; day: string }) {
-  const { progress, sync } = useTeacherEnglish();
+  const { progress, saved, sync } = useTeacherEnglish();
+  // Ôn mỗi ngày: số thẻ đến hạn + thẻ mới hôm nay (cùng cách tính với tab Ôn mỗi ngày)
+  const review = useReview();
+  const deck = useMemo(() => buildDeck(progress, saved), [progress, saved]);
+  const toReview = useMemo(() => todayQueue(deck, review.map, review.newToday).queue.length, [deck, review.map, review.newToday]);
   const [playing, setPlaying] = useState(false);
   useEffect(() => () => stopSpeaking(), []);
 
@@ -44,6 +49,14 @@ export default function TeacherEnglishCard({ href, grade, day }: { href: string;
         <Link href={`${href}#${next.id}`} className="te-dash-next">
           <span>Tuần {next.week} · {next.title[1]}</span>
           <small lang="en">{next.title[0]}</small>
+          <ChevronRight aria-hidden="true" />
+        </Link>
+      )}
+      {review.sync !== 'loading' && (
+        <Link href={`${href}#on-tap`} className={`te-dash-review${toReview ? ' is-due' : ''}`}>
+          <Layers aria-hidden="true" />
+          <span>{toReview ? <><b>{toReview} thẻ</b> cần ôn hôm nay</> : 'Hôm nay đã ôn xong 🎉'}<small>{toReview ? `Ôn mỗi ngày · khoảng ${Math.max(1, Math.round(toReview / 3))} phút` : 'Ôn mỗi ngày · mai có thẻ mới'}</small></span>
+          {toReview > 0 && <em>Ôn ngay</em>}
           <ChevronRight aria-hidden="true" />
         </Link>
       )}

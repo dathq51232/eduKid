@@ -87,8 +87,8 @@ export default function ClassPulse({ base, births, birthsOn, watch, unread, pend
           </li>
           {contactGaps !== null && (
             <li>
-              <Link href={`${base}/danh-ba`}>
-                {contactGaps ? <><b>{contactGaps}/{students}</b>&nbsp;em chưa có số điện thoại</> : 'Đủ số điện thoại cả lớp ✓'}
+              <Link href={contactGaps ? `${base}/danh-ba?dan=excel` : `${base}/danh-ba`} title={contactGaps ? 'Dán số điện thoại cả lớp từ Excel' : undefined}>
+                {contactGaps ? <><b className={contactGaps * 2 >= students ? 'is-warn' : undefined}>{contactGaps}/{students}</b>&nbsp;em chưa có số điện thoại · <u>Dán từ Excel</u></> : 'Đủ số điện thoại cả lớp ✓'}
                 <ChevronRight aria-hidden="true" />
               </Link>
             </li>

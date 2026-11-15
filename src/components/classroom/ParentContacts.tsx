@@ -37,6 +37,8 @@ export default function ParentContacts({ classId, className, students }: Props) 
   const [msgTo, setMsgTo] = useState<ToolStudent | null>(null);
 
   useEffect(() => { try { setHide(localStorage.getItem(HIDE_KEY) === '1'); } catch { /* bỏ qua */ } }, []);
+  // Mở sẵn hộp "Dán từ Excel" khi đến từ lời nhắc trên trang tổng quan (?dan=excel)
+  useEffect(() => { try { if (new URLSearchParams(window.location.search).get('dan') === 'excel') setPaste(true); } catch { /* bỏ qua */ } }, []);
   const toggleHide = () => setHide((h) => { try { localStorage.setItem(HIDE_KEY, h ? '0' : '1'); } catch { /* bỏ qua */ } return !h; });
 
   const load = useCallback(async () => {

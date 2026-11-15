@@ -4074,6 +4074,13 @@ button.diary-pill { cursor: pointer; }
 .diary-st-name { display: flex; align-items: center; gap: 7px; font-size: 15px; font-weight: 700; }
 .diary-st-name em { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--blue-soft); color: var(--brand-blue); font-size: 12px; font-style: normal; }
 .diary-st-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+/* 11/2026: thẻ tên gọn hơn — cao vừa đủ tên (52px), ô nhãn trống không chiếm chỗ, xếp được 3 cột trên laptop */
+@media (min-width: 641px) {
+  .diary-roster { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; }
+  .diary-st-main { min-height: 52px; gap: 4px; padding: 7px 10px; justify-content: center; }
+}
+.diary-st-tags:empty { display: none; }
+.diary-st-name { font-size: 14.5px; line-height: 1.25; }
 .diary-tag, .diary-ab { padding: 1px 8px; border-radius: 99px; font-size: 13px; font-weight: 700; white-space: nowrap; }
 .diary-tag.is-praise { background: #ddf7e7; color: #116b33; }
 .diary-tag.is-remind { background: #fff3d1; color: #7a4d00; }
@@ -10421,10 +10428,16 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .class-manager .roster-table .mini-btn { min-height: 32px; padding: 3px 9px; font-size: 13px; }
 .class-manager .roster-table .mini-btn svg { width: 15px; height: 15px; }
 /* Màn hình hẹp: nút thao tác chỉ còn biểu tượng (tên nút vẫn đọc được cho trình đọc màn hình, rê chuột hiện chú thích) */
+/* 11/2026: thay vì chỉ còn biểu tượng, nút xếp biểu tượng trên + chữ ngắn dưới (PIN · Khóa · Rời lớp) để dễ đoán nghĩa */
+.class-manager .roster-table .mb-short { display: none; }
 @media (max-width: 1279px) {
-  .class-manager .roster-table .mini-btn:has(svg) { gap: 0; width: 34px; padding: 0; justify-content: center; font-size: 0; }
-  .class-manager .roster-table .mini-btn:has(svg) svg { width: 16px; height: 16px; }
+  .class-manager .roster-table .mini-btn:has(svg) { flex-direction: column; gap: 1px; min-width: 46px; min-height: 40px; padding: 3px 6px; justify-content: center; font-size: 11px; line-height: 1.1; }
+  .class-manager .roster-table .mini-btn:has(svg) svg { width: 15px; height: 15px; }
+  .class-manager .roster-table .mini-btn .mb-full { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .class-manager .roster-table .mini-btn .mb-short { display: block; white-space: nowrap; }
 }
+/* Cột số thứ tự */
+.class-manager .roster-table .roster-no { width: 1%; padding-right: 2px; color: var(--muted); font-size: 13px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 640px) {
   .dash.wrap:has(> .class-manager) { width: calc(100% - 24px); }
   .class-manager .join-code-box { justify-content: flex-start; text-align: left; }
@@ -11273,6 +11286,17 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .te-dash-next { position: relative; display: grid; gap: 1px; padding: 10px 40px 10px 12px; border-radius: 14px; background: var(--blue-soft); color: var(--ink); text-decoration: none; }
 .te-dash-next span { font-weight: 700; }
 .te-dash-next small { color: var(--muted); font-size: 13px; }
+/* Dashboard: dòng "X thẻ cần ôn hôm nay" (Ôn mỗi ngày) */
+.te-dash-review { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 12px; border-radius: 14px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); text-decoration: none; }
+.te-dash-review > svg:first-child { flex: none; width: 22px; height: 22px; color: var(--brand-blue); }
+.te-dash-review > svg:last-child { flex: none; width: 18px; height: 18px; color: var(--muted); }
+.te-dash-review span { display: grid; flex: 1; min-width: 0; font-weight: 600; }
+.te-dash-review span small { color: var(--muted); font-size: 12.5px; font-weight: 600; }
+.te-dash-review em { flex: none; padding: 4px 10px; border-radius: 999px; background: var(--brand-blue); color: #fff; font-style: normal; font-size: 13px; font-weight: 800; }
+.te-dash-review.is-due { box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.te-dash-review.is-due b { color: #ef4444; }
+:root[data-theme="dark"] .te-dash-review.is-due b { color: #fca5a5; }
+.te-dash-review:hover { background: var(--blue-soft); }
 .te-dash-next svg { position: absolute; right: 12px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); color: var(--brand-blue); }
 .te-dash-phrase { display: grid; gap: 4px; }
 .te-dash-phrase > div { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1.5px dashed var(--line-strong); border-radius: 14px; }

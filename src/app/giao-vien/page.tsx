@@ -156,7 +156,13 @@ export default async function TeacherHome() {
     if (today0.length) todo.unshift({ tone: 'soon', title: `Hôm nay sinh nhật ${today0.map((b) => b.short).join(', ')} 🎂`, detail: 'Cả lớp hát mừng sinh nhật, hoặc gửi em một thư khen nhỏ.', href: `/giao-vien/lop/${active.id}/thu-khen`, cta: 'Viết thư khen' });
     if (noAccount) todo.push({ tone: 'soon', title: `${noAccount} em chưa có PIN đăng nhập`, detail: 'Đặt PIN rồi in thẻ để các em vào luyện bài ở nhà.', href: `/giao-vien/lop/${active.id}`, cta: 'Đặt PIN' });
     if (prof && profileLack) todo.push({ tone: 'info', title: `Hồ sơ còn thiếu ${profileLack} em`, detail: 'Chưa có ngày sinh hoặc chỗ ở — dán một lần từ file danh sách của trường.', href: `/giao-vien/lop/${active.id}?xem=ho-so`, cta: 'Bổ sung', later: true });
-    if (contactGaps) todo.push({ tone: 'info', title: `${contactGaps} em chưa có số điện thoại phụ huynh`, detail: 'Cần khi nhắn tin, báo vắng; phụ huynh cũng tự thêm được ở Góc phụ huynh.', href: `/giao-vien/lop/${active.id}/danh-ba`, cta: 'Thêm số', later: true });
+    // Thiếu số điện thoại phụ huynh: thiếu từ một nửa lớp trở lên thì đưa lên "Nên làm", mở sẵn hộp Dán từ Excel
+    if (contactGaps) {
+      const many = contactGaps * 2 >= students.length;
+      todo.push(many
+        ? { tone: 'soon', title: `${contactGaps}/${students.length} em chưa có số điện thoại phụ huynh`, detail: 'Dán cả lớp một lần từ file Excel của trường (tên em + số điện thoại). Trong lúc chưa có số, vẫn nhắn được phụ huynh ngay trong app ở Danh bạ.', href: `/giao-vien/lop/${active.id}/danh-ba?dan=excel`, cta: 'Dán từ Excel' }
+        : { tone: 'info', title: `${contactGaps} em chưa có số điện thoại phụ huynh`, detail: 'Cần khi nhắn tin, báo vắng; phụ huynh cũng tự thêm được ở Góc phụ huynh.', href: `/giao-vien/lop/${active.id}/danh-ba`, cta: 'Thêm số', later: true });
+    }
     if (inbox?.unread) {
       todo.unshift({ tone: 'urgent', title: `${inbox.unread} tin nhắn phụ huynh chưa đọc`, detail: inbox.pending_leave ? `Có ${inbox.pending_leave} tin xin phép nghỉ đang chờ cô đồng ý.` : 'Phụ huynh hỏi han, nhắn cô.', href: `/giao-vien/lop/${active.id}/tin-nhan`, cta: 'Đọc tin' });
     } else if (inbox?.items.length) {
