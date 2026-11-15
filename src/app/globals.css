@@ -11438,8 +11438,9 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 #dk-print .dkp-notes { margin-top: 5mm; font-size: 13pt; line-height: 1.5; }
 #dk-print .dkp-notes p { margin: 2mm 0 0; white-space: pre-wrap; }
 @media print {
-  body > *:not(#dk-print) { display: none !important; }
-  html, body { background: #fff !important; }
+  /* chỉ khi đang mở hộp Tải về / In của bài giảng (#dk-print có trong trang) — các trang in khác giữ nguyên */
+  body:has(> #dk-print) > *:not(#dk-print) { display: none !important; }
+  html:has(body > #dk-print), body:has(> #dk-print) { background: #fff !important; }
   #dk-print { position: static; left: auto; width: auto; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   #dk-print .dkp-frame, #dk-print .dkp-item { break-inside: avoid; page-break-inside: avoid; }
   /* khung trang là khối liền (inline-block) để trình duyệt không cắt nội dung slide khi chia trang in */
