@@ -8,6 +8,7 @@ import { ChevronRight, Volume2 } from 'lucide-react';
 import { LESSONS, SECTIONS } from '@/lib/teacher-english/roadmap';
 import { PHRASES } from '@/lib/teacher-english/classroom-bank';
 import { useTeacherEnglish } from '@/lib/teacher-english/progress';
+import { f3dSrc, phraseImage } from '@/lib/teacher-english/phrase-images';
 import { speakSegments, stopSpeaking } from '@/lib/speech';
 
 export default function TeacherEnglishCard({ href, grade, day }: { href: string; grade?: number; day: string }) {
@@ -49,6 +50,8 @@ export default function TeacherEnglishCard({ href, grade, day }: { href: string;
       <div className="te-dash-phrase">
         <p className="uw-muted">💬 Câu của ngày · Phrase of the day</p>
         <div>
+          {/* eslint-disable-next-line @next/next/no-img-element -- hình 3D webp nhỏ đã tối ưu sẵn */}
+          <img className="te-phrase-img" src={f3dSrc(phraseImage(phrase))} width={48} height={48} alt="" aria-hidden="true" decoding="async" />
           <span><b lang="en">{phrase.en}</b><small>{phrase.vi}</small></span>
           <button type="button" className={`te-ic${playing ? ' is-on' : ''}`} onClick={listen} aria-label={`Nghe: ${phrase.en}`}><Volume2 aria-hidden="true" /></button>
         </div>

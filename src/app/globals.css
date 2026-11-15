@@ -11173,6 +11173,8 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .te-count { color: var(--muted); font-weight: 700; font-size: 14px; }
 .te-phrases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .te-phrase { display: flex; gap: 10px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface); }
+.te-phrase-img { flex: none; width: 56px; height: 56px; padding: 6px; border-radius: 14px; background: var(--surface-2); object-fit: contain; }
+.te-dash-phrase .te-phrase-img { width: 48px; height: 48px; padding: 4px; }
 .te-phrase-main { display: grid; align-content: start; gap: 4px; flex: 1; min-width: 0; }
 .te-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
 .te-phrase-act { display: flex; flex-direction: column; gap: 4px; flex: none; }

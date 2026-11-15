@@ -18,6 +18,7 @@ import {
   type Bi, type Lesson, type SectionKey,
 } from '@/lib/teacher-english/roadmap';
 import { PHRASES, SITUATIONS, TEXTBOOK_UNITS, TOPICS, situationOf, topicOf, unitOf, type Phrase, type SituationKey, type TopicKey } from '@/lib/teacher-english/classroom-bank';
+import { f3dSrc, phraseImage } from '@/lib/teacher-english/phrase-images';
 import { emptyProgress, useTeacherEnglish, type LessonProgress, type ProgressMap } from '@/lib/teacher-english/progress';
 import { fold } from '@/lib/classroom/teacher-nav';
 
@@ -454,6 +455,8 @@ function PhraseBank({ sp, hideVi, saved, toggleSaved, defaultGrade }: { sp: Spea
             const on = savedSet.has(p.id);
             return (
               <li key={p.id} className="te-phrase">
+                {/* eslint-disable-next-line @next/next/no-img-element -- hình 3D webp nhỏ đã tối ưu sẵn */}
+                <img className="te-phrase-img" src={f3dSrc(phraseImage(p))} width={56} height={56} alt="" aria-hidden="true" loading="lazy" decoding="async" />
                 <div className="te-phrase-main">
                   <p className="te-en" lang="en">{p.en}</p>
                   <p className={`te-vi${hideVi ? ' is-hidden' : ''}`} lang="vi">{p.vi}</p>
