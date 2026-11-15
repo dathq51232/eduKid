@@ -9,6 +9,7 @@ import { LUNAR_MONTH_NAME, canChiYear, solarToLunar } from '@/lib/utils/lunar';
 import ClassPulse, { type Birthday } from '@/components/classroom/ClassPulse';
 import MiniCalendar from '@/components/utils/MiniCalendar';
 import MoneyCard from '@/components/utils/MoneyCard';
+import TeacherEnglishCard from '@/components/teacher-english/TeacherEnglishCard';
 import LessonPlanAside from '@/components/classroom/LessonPlanAside';
 import { alertsOf, summarize, type RangeData } from '@/lib/classroom/diary';
 import LearnHeader from '@/components/LearnHeader';
@@ -254,6 +255,7 @@ export default async function TeacherHome() {
             <div className="tdy-mine-grid">
               <MiniCalendar href={`${base}/lich`} compact title="📅 Tuần này" />
               <MoneyCard href={`${base}/thu-chi`} title="Thu chi cá nhân" fundHref={`${base}/quy-lop`} classId={active.id} />
+              <TeacherEnglishCard href={`${base}/tieng-anh`} grade={active.grade} day={todayIso} />
             </div>
           </section>
         </>

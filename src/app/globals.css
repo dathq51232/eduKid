@@ -11199,6 +11199,15 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 .te-scale small, .te-weights small { color: var(--muted); }
 .te-weights li { display: flex; justify-content: space-between; gap: 10px; padding-bottom: 6px; border-bottom: 1px dashed var(--line); }
 .te-weights b { color: var(--brand-blue); }
+/* Thẻ trên dashboard giáo viên (TeacherEnglishCard) */
+.te-dash-next { position: relative; display: grid; gap: 1px; padding: 10px 40px 10px 12px; border-radius: 14px; background: var(--blue-soft); color: var(--ink); text-decoration: none; }
+.te-dash-next span { font-weight: 700; }
+.te-dash-next small { color: var(--muted); font-size: 13px; }
+.te-dash-next svg { position: absolute; right: 12px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); color: var(--brand-blue); }
+.te-dash-phrase { display: grid; gap: 4px; }
+.te-dash-phrase > div { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1.5px dashed var(--line-strong); border-radius: 14px; }
+.te-dash-phrase > div > span { display: grid; flex: 1; min-width: 0; }
+.te-dash-phrase small { color: var(--muted); font-size: 13.5px; }
 @media (max-width: 1100px) {
   .te-stages { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .te-phrases { grid-template-columns: 1fr; }
