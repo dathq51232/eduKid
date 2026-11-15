@@ -11,6 +11,7 @@ import type { LessonResult } from '@/lib/classroom/progress';
 import { getViewer } from '@/lib/auth/viewer';
 import { createClient } from '@/lib/supabase/server';
 import { classRoster, warmClass } from '@/lib/classroom/class-page';
+import { compareViName } from '@/lib/classroom/names';
 import { FEATURES } from '@/lib/features';
 
 export const metadata: Metadata = { title: 'Quản lý lớp · EduChain Kids' };
@@ -47,7 +48,8 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   const planRow = ((planRows ?? []) as { student_limit: number; students_used: number }[])[0];
   const plan = planRow ? { limit: planRow.student_limit, used: planRow.students_used } : null;
   const pins: Record<string, string> = Object.fromEntries(((pinRows ?? []) as { student_id: string; pin: string }[]).map((p) => [p.student_id, p.pin]));
-  const rosterRows = (roster ?? []) as RosterRow[];
+  // Xếp theo tên tiếng Việt A–Z (tên → họ đệm), cùng thứ tự với Sổ lớp, Danh bạ…
+  const rosterRows = ((roster ?? []) as RosterRow[]).slice().sort((x, y) => compareViName(x.display_name, y.display_name));
   const active = rosterRows.filter((r) => r.membership_status === 'active');
   const names = new Map(active.map((r) => [r.student_id, r.display_name]));
   // RLS chỉ trả kết quả của học sinh thuộc lớp giáo viên được phân công
