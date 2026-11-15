@@ -100,10 +100,10 @@ export default function ClassPulse({ base, births, birthsOn, watch, unread, pend
         <h3>📈 Luyện bài 7 ngày <small>{total ? `${total} lượt em` : 'chưa em nào luyện'}</small></h3>
         {total > 0 && <div className="tdy-bars" role="img" aria-label={`Số em luyện bài mỗi ngày (cũ → mới): ${spark.join(', ')}`}>
           {spark.map((n, i) => (
-            <div key={i} className={`tdy-bar${i === 6 ? ' is-today' : ''}`} title={`${DOW[dowOf(i - 6)]}: ${n}/${students} em luyện bài`}>
-              <span className="tdy-bar-n">{n || ''}</span>
+            <div key={i} className={`tdy-col${i === 6 ? ' is-today' : ''}`} title={`${DOW[dowOf(i - 6)]}: ${n}/${students} em luyện bài`}>
+              <span className="tdy-col-n">{n || ''}</span>
               <i style={{ height: `${n ? 8 + (n / max) * 92 : 3}%` }} />
-              <span className="tdy-bar-d">{i === 6 ? 'Nay' : DOW[dowOf(i - 6)]}</span>
+              <span className="tdy-col-d">{i === 6 ? 'Nay' : DOW[dowOf(i - 6)]}</span>
             </div>
           ))}
         </div>}

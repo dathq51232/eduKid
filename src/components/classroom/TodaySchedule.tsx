@@ -39,7 +39,8 @@ function groupsOf(saved: SavedSlot[], local: SchedSlot[]): { groups: Group[]; un
   const have = new Set(saved.map((p) => `${p.period ?? 0}|${norm(p.title)}`));
   const haveTitle = new Set(saved.map((p) => norm(p.title)));
   const rows: Row[] = [
-    ...saved.map((p) => ({ key: p.id, period: p.period ?? 0, pm: false, subject: SUBJECT_NAMES[p.subject as keyof typeof SUBJECT_NAMES] ?? p.subject, title: p.title, saved: true })),
+    // Giáo án đã lưu không ghi buổi: lấy buổi (sáng/chiều) từ lịch báo giảng cùng tên bài, để tiết chiều không gộp vào tiết sáng
+    ...saved.map((p) => ({ key: p.id, period: p.period ?? 0, pm: isPm((local.find((s) => norm(s.title) === norm(p.title) && s.period === (p.period ?? 0)) ?? local.find((s) => norm(s.title) === norm(p.title)))?.session), subject: SUBJECT_NAMES[p.subject as keyof typeof SUBJECT_NAMES] ?? p.subject, title: p.title, saved: true })),
     ...local.filter((s) => !have.has(`${s.period}|${norm(s.title)}`) && !haveTitle.has(norm(s.title)))
       .map((s, i) => ({ key: `l${i}`, period: s.period, pm: isPm(s.session), subject: s.label || SUBJECT_NAMES[s.subject as keyof typeof SUBJECT_NAMES] || s.subject, title: s.title, saved: false })),
   ].sort((a, b) => Number(a.pm) - Number(b.pm) || (a.period || 99) - (b.period || 99));
@@ -51,6 +52,9 @@ function groupsOf(saved: SavedSlot[], local: SchedSlot[]): { groups: Group[]; un
   }
   return { groups, unsaved: rows.filter((r) => !r.saved).length };
 }
+
+/** "còn 45 phút" / "còn 6 giờ 53 phút" — dễ đọc hơn số phút lớn */
+const leftLabel = (m: number) => (m < 60 ? `${m} phút` : `${Math.floor(m / 60)} giờ${m % 60 ? ` ${m % 60} phút` : ''}`);
 
 /** Lịch hôm nay + ngày mai (máy chủ + lịch báo giảng trên máy) và phút hiện tại (đổi mỗi phút) */
 function useSlots(classId: string, day: string, tomorrow: string, saved: SavedSlot[], savedTomorrow: SavedSlot[]) {
@@ -86,7 +90,7 @@ export function NowBar(p: Props) {
       <section className={`tdy-now-bar${now ? ' is-live' : ''}`} aria-label="Bây giờ">
         <span className="tdy-now-ic">{now ? <span className="tdy-live-dot" aria-hidden="true" /> : <Clock3 aria-hidden="true" />}</span>
         <div className="tdy-now-txt">
-          <small>{now ? `Đang dạy · ${periodLabel(g)} · còn ${left} phút` : `Tiết kế tiếp · ${periodLabel(g)} lúc ${hhmm(t[0])} · còn ${left} phút`}</small>
+          <small>{now ? `Đang dạy · ${periodLabel(g)} · còn ${left} phút` : `Tiết kế tiếp · ${periodLabel(g)} lúc ${hhmm(t[0])} · còn ${leftLabel(left)}`}</small>
           <b title={desc(g)}>{desc(g)}</b>
         </div>
         <div className="tdy-now-acts">
