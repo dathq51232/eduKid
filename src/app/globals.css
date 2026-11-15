@@ -5141,6 +5141,23 @@ img.auth-hero-word { height: clamp(46px, 6vw, 76px); width: auto; max-width: 100
 .pc-name { display: grid; gap: 2px; align-content: start; min-width: 0; }
 .pc-addr { display: inline-flex; align-items: flex-start; gap: 4px; padding: 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 500; text-align: left; cursor: pointer; }
 .pc-addr svg { flex: none; width: 13px; height: 13px; margin-top: 2px; color: var(--red); }
+/* Danh bạ — nút Nhắn tin riêng phụ huynh từng em (0059) */
+.pc-msg { justify-self: start; display: inline-flex; align-items: center; gap: 5px; margin: 4px 0 2px; padding: 5px 11px; border: 0; border-radius: 999px; background: var(--brand-blue); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.pc-msg svg { width: 15px; height: 15px; }
+.pc-msg:hover { filter: brightness(1.08); }
+.pc-msg:focus-visible { outline: 3px solid var(--brand-blue); outline-offset: 2px; }
+.mp { width: min(620px, 100%); }
+.mp textarea { width: 100%; padding: 10px 12px; border: 2px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; resize: vertical; }
+.mp textarea:focus-visible { outline: 3px solid var(--brand-blue); outline-offset: 1px; }
+.mp-hist { display: grid; gap: 8px; max-height: 260px; overflow-y: auto; margin: 0; padding: 10px; list-style: none; border-radius: 14px; background: var(--surface-2); }
+.mp-hist li { justify-self: start; max-width: 85%; padding: 8px 12px; border-radius: 14px 14px 14px 4px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.mp-hist li.is-me { justify-self: end; border-radius: 14px 14px 4px 14px; background: var(--blue-soft); }
+.mp-hist small { color: var(--muted); font-size: 12px; font-weight: 600; }
+.mp-hist p { margin: 2px 0 0; white-space: pre-wrap; font-size: 14.5px; }
+.mp-reply { color: var(--muted); }
+.mp-seen { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.mp-seen svg { width: 13px; height: 13px; }
+.mp-seen.is-seen { color: var(--green, #16a34a); }
 .pc-addr.is-empty { color: var(--link); opacity: .8; }
 .pc-addr:hover { color: var(--ink); }
 .pc-addr-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -5616,6 +5633,7 @@ a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); bo
 .pm-hist h3 { font-size: 16px; margin-bottom: 8px; }
 .pm-hist ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .pm-hist li { padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface-2); }
+.pm-hist li.is-teacher { border-left: 4px solid var(--brand-blue); }
 .pm-hist p { margin: 4px 0; }
 .pm-hist small { color: var(--muted); font-weight: 600; }
 .pm-hd { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; }

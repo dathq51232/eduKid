@@ -2,7 +2,7 @@
 
 // Phụ huynh nhắn cô giáo: xin phép nghỉ (chọn ngày), hỏi han, nhắn khác. Chọn người gửi từ danh bạ gia đình
 // (Bố/Mẹ/…), tin hiện ngay trên trang "Hôm nay" của cô kèm tên con. Bên dưới là các tin đã gửi và lời trả lời của cô.
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, MessageCircle, Send, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { KIND_ICON, KIND_LABEL, SEND_ERROR, STATUS_TEXT, ago, isMissing, leaveRange, senderLabel, type MsgKind, type ParentMsg } from '@/lib/classroom/messages';
@@ -32,6 +32,9 @@ export default function ParentMessages({ people, teacher, childName, initial }: 
   const [all, setAll] = useState(false);
   const start = (k: MsgKind) => { setKind(k); setOpen(true); setSent(false); setErr(initial === null ? SEND_ERROR.missing : ''); };
   const fresh = (iso: string | null) => !!iso && Date.now() - Date.parse(iso) < 3 * 86400_000;
+  // Tin cô gửi riêng (0059): gia đình mở trang là coi như đã xem — báo lại cho cô (giữ nhãn "Mới" trong lần xem này)
+  const [unseen] = useState(() => new Set((initial ?? []).filter((m) => m.from_teacher && !m.parent_read_at).map((m) => m.id)));
+  useEffect(() => { if (supabase && unseen.size) void supabase.rpc('parent_messages_seen'); }, [supabase, unseen]);
   const co = teacher ? `cô ${teacher.trim().split(/\s+/).slice(-1)[0]}` : 'cô';
 
   const send = async () => {
@@ -113,8 +116,14 @@ export default function ParentMessages({ people, teacher, childName, initial }: 
 
       {list.length > 0 && (
         <div className="pm-hist">
-          <h3>Tin đã gửi &amp; lời cô trả lời</h3>
-          <ul>{list.slice(0, all ? 20 : 3).map((m) => (
+          <h3>Tin nhắn với {co}</h3>
+          <ul>{list.slice(0, all ? 20 : 3).map((m) => m.from_teacher ? (
+            <li key={m.id} className={`is-teacher${unseen.has(m.id) ? ' is-fresh' : ''}`}>
+              <div className="pm-hd"><b>📩 {co[0].toUpperCase() + co.slice(1)} nhắn gia đình</b>{unseen.has(m.id) && <span className="pm-new">Mới</span>}</div>
+              <p>{m.body}</p>
+              <small>{ago(m.created_at)}</small>
+            </li>
+          ) : (
             <li key={m.id} className={`is-${m.status}${m.reply && fresh(m.replied_at) ? ' is-fresh' : ''}`}>
               <div className="pm-hd"><b>{KIND_ICON[m.kind]} {KIND_LABEL[m.kind]}{m.kind === 'leave' && ` · ${leaveRange(m)}`}</b><span className={`pm-st is-${m.status}`}>{STATUS_TEXT[m.status]}</span></div>
               <p>{m.body}</p>

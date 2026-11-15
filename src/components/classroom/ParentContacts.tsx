@@ -3,9 +3,10 @@
 // Danh bạ phụ huynh: số điện thoại từng em (tối đa 3 người), bấm Gọi / Zalo / Chép, dán cả danh sách từ Excel,
 // ẩn số khi chiếu màn hình. DỮ LIỆU CÁ NHÂN: chỉ giáo viên của lớp xem được, mọi lần xem/sửa có nhật ký (migration 0028).
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ClipboardPaste, Copy, Eye, EyeOff, MapPin, MessageCircle, Pencil, Phone, Plus, Search, Trash2, X } from 'lucide-react';
+import { ClipboardPaste, Copy, Eye, EyeOff, MapPin, MessageCircle, MessageSquareText, Pencil, Phone, Plus, Search, Trash2, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import ZaloGroupLink from '@/components/classroom/ZaloGroupLink';
+import MessageParentDialog from '@/components/classroom/MessageParentDialog';
 import { fold } from '@/lib/classroom/teacher-nav';
 import {
   RELATIONS, formatPhone, maskPhone, normalizePhone, parseContactPaste, telHref, zaloHref, type Contact, type ToolStudent,
@@ -32,6 +33,8 @@ export default function ParentContacts({ classId, className, students }: Props) 
   const [addr, setAddr] = useState<Record<string, string>>({});
   const [addrOk, setAddrOk] = useState(false);
   const [addrEdit, setAddrEdit] = useState<{ student_id: string; text: string } | null>(null);
+  // Nhắn riêng phụ huynh một em ngay trong app (migration 0059)
+  const [msgTo, setMsgTo] = useState<ToolStudent | null>(null);
 
   useEffect(() => { try { setHide(localStorage.getItem(HIDE_KEY) === '1'); } catch { /* bỏ qua */ } }, []);
   const toggleHide = () => setHide((h) => { try { localStorage.setItem(HIDE_KEY, h ? '0' : '1'); } catch { /* bỏ qua */ } return !h; });
@@ -142,6 +145,7 @@ export default function ParentContacts({ classId, className, students }: Props) 
                 <span className="pc-no">{students.indexOf(s) + 1}</span>
                 <div className="pc-name">
                   <b>{s.name}</b>
+                  <button type="button" className="pc-msg" onClick={() => { setErr(''); setMsgTo(s); }} aria-label={`Nhắn tin cho phụ huynh em ${s.name}`}><MessageSquareText aria-hidden="true" /> Nhắn tin</button>
                   {addrOk && (addrEdit?.student_id === s.id ? (
                     <form className="pc-addr-form" onSubmit={(e) => { e.preventDefault(); void saveAddr(); }}>
                       <input value={addrEdit.text} maxLength={200} autoFocus placeholder="Địa chỉ nhà" aria-label={`Địa chỉ nhà của ${s.name}`} onChange={(e) => setAddrEdit({ ...addrEdit, text: e.target.value })} />
@@ -178,7 +182,9 @@ export default function ParentContacts({ classId, className, students }: Props) 
           {!shown.length && <p className="dash-muted">Không tìm thấy “{q}”.</p>}
         </section>
       )}
-      <p className="ct-hint">💡 Bấm “Zalo” mở Zalo đúng số phụ huynh (trên máy tính cần cài Zalo PC). Tin nhắn soạn sẵn trong Sổ lớp cũng có nút Zalo cho từng em.</p>
+      <p className="ct-hint">💡 Bấm “Nhắn tin” để gửi riêng cho phụ huynh từng em ngay trong app (phụ huynh xem ở trang Phụ huynh). Bấm “Zalo” mở Zalo đúng số phụ huynh (trên máy tính cần cài Zalo PC). Tin nhắn soạn sẵn trong Sổ lớp cũng có nút Zalo cho từng em.</p>
+      {msgTo && <MessageParentDialog classId={classId} student={msgTo} zalo={(byStudent[msgTo.id] ?? []).map((c) => c.zalo || c.phone)[0] ?? null}
+        onClose={() => setMsgTo(null)} onSent={(m) => setOk(m)} />}
       {paste && <PasteDialog students={students} onClose={() => setPaste(false)} onSave={async (rows) => {
         if (!supabase) return 'Chưa kết nối.';
         const { data, error } = await supabase.rpc('teacher_contacts_import', { p_class: classId, p_rows: rows });

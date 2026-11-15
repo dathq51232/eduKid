@@ -5,6 +5,7 @@ export type ParentMsg = {
   id: string; kind: MsgKind; sender_name: string; sender_relation: string | null;
   leave_from: string | null; leave_to: string | null; body: string;
   status: MsgStatus; reply: string | null; replied_at: string | null; created_at: string;
+  /** tin cô gửi phụ huynh (0059) */ from_teacher?: boolean; /** lúc gia đình đã xem tin cô gửi (0059) */ parent_read_at?: string | null;
 };
 export type TeacherMsg = ParentMsg & { student_id: string; student_name: string };
 export type Inbox = { unread: number; pending_leave: number; items: TeacherMsg[] };
@@ -44,4 +45,13 @@ export const SEND_ERROR: Record<string, string> = {
   too_many: 'Hôm nay gia đình đã gửi 10 tin. Vui lòng gọi điện hoặc nhắn Zalo cho cô nếu cần gấp.',
   missing: 'Chưa bật tính năng nhắn tin: cần chạy migration 0037_parent_messages.sql trên Supabase.',
 };
+
+/** Lỗi khi cô gửi tin cho phụ huynh (migration 0059) */
+export function teacherSendError(msg: string): string {
+  if (isMissing(msg)) return 'Chưa bật nhắn tin cho phụ huynh: chạy supabase/migrations/0059_teacher_message_parent.sql trên Supabase.';
+  if (/too_many/.test(msg)) return 'Hôm nay đã gửi 30 tin cho phụ huynh em này. Thử lại vào ngày mai nhé.';
+  if (/need_body/.test(msg)) return 'Nhập nội dung tin nhắn trước nhé.';
+  if (/not_in_class/.test(msg)) return 'Em này không còn trong lớp.';
+  return 'Chưa gửi được. Kiểm tra mạng rồi thử lại.';
+}
 export const isMissing = (msg?: string) => /function|does not exist|schema cache|Could not find/i.test(msg ?? '');

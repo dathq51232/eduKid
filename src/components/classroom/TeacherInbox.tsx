@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Check, CheckCheck, MessageSquareReply, Trash2, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import MessageParentDialog from '@/components/classroom/MessageParentDialog';
 import { KIND_ICON, KIND_LABEL, ago, isMissing, leaveRange, senderLabel, type Inbox, type MsgStatus, type TeacherMsg } from '@/lib/classroom/messages';
 
 type Filter = 'all' | 'new' | 'leave';
@@ -19,6 +20,7 @@ export default function TeacherInbox({ classId, className, initial, missing }: {
   const [reply, setReply] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState('');
   const [note, setNote] = useState('');
+  const [msgTo, setMsgTo] = useState<{ id: string; name: string } | null>(null);
   const [keep, setKeep] = useState<Set<string>>(new Set()); // tin đã mở trong lần này: vẫn giữ trong danh sách đang lọc
 
   const reload = async () => {
@@ -66,7 +68,7 @@ export default function TeacherInbox({ classId, className, initial, missing }: {
       <div className="ct-head">
         <div><p className="ct-sub">Lớp {className} · Phụ huynh</p><h1>Tin nhắn phụ huynh</h1></div>
       </div>
-      <p className="s3h-lead">Phụ huynh nhắn từ trang Phụ huynh (đăng nhập bằng tài khoản của con). Mỗi tin ghi rõ người gửi và là phụ huynh của em nào. Đồng ý xin phép sẽ tự ghi <b>Vắng có phép</b> vào Sổ lớp.</p>
+      <p className="s3h-lead">Phụ huynh nhắn từ trang Phụ huynh (đăng nhập bằng tài khoản của con). Cô nhắn riêng phụ huynh từng em bằng nút <b>Nhắn tin</b> ở Danh bạ phụ huynh. Mỗi tin ghi rõ người gửi và là phụ huynh của em nào. Đồng ý xin phép sẽ tự ghi <b>Vắng có phép</b> vào Sổ lớp.</p>
       {missing && <p className="adm-alert is-warn">Chưa bật: chạy <code>supabase/migrations/0037_parent_messages.sql</code> trên Supabase.</p>}
       {note && <p className="adm-alert is-ok" role="status">{note}</p>}
 
@@ -88,15 +90,27 @@ export default function TeacherInbox({ classId, className, initial, missing }: {
             return (
               <li key={m.id} className={`inb-item is-${m.status}${isOpen ? ' is-open' : ''}`}>
                 <button type="button" className="inb-sum" onClick={() => toggle(m)} aria-expanded={isOpen}>
-                  <span className={`inb-kind is-${m.kind}`} aria-hidden="true">{KIND_ICON[m.kind]}</span>
+                  <span className={`inb-kind is-${m.kind}`} aria-hidden="true">{m.from_teacher ? '📤' : KIND_ICON[m.kind]}</span>
                   <span className="inb-who">
-                    <b>{senderLabel(m)}</b>
-                    <small>Phụ huynh em <strong>{m.student_name}</strong> · {KIND_LABEL[m.kind]}{m.kind === 'leave' ? ` · ${leaveRange(m)}` : ''}</small>
+                    {m.from_teacher ? (
+                      <><b>Cô đã nhắn phụ huynh</b><small>Gửi phụ huynh em <strong>{m.student_name}</strong></small></>
+                    ) : (
+                      <><b>{senderLabel(m)}</b><small>Phụ huynh em <strong>{m.student_name}</strong> · {KIND_LABEL[m.kind]}{m.kind === 'leave' ? ` · ${leaveRange(m)}` : ''}</small></>
+                    )}
                     {!isOpen && <span className="inb-snip">{m.body}</span>}
                   </span>
-                  <span className="inb-meta"><span className={`inb-st is-${m.status}`}>{ST_LABEL[m.status]}</span><small>{ago(m.created_at)}</small></span>
+                  <span className="inb-meta">{m.from_teacher ? <span className={`inb-st ${m.parent_read_at ? 'is-answered' : 'is-read'}`}>{m.parent_read_at ? 'PH đã xem' : 'PH chưa xem'}</span> : <span className={`inb-st is-${m.status}`}>{ST_LABEL[m.status]}</span>}<small>{ago(m.created_at)}</small></span>
                 </button>
-                {isOpen && (
+                {isOpen && m.from_teacher && (
+                  <div className="inb-body">
+                    <p className="inb-text">{m.body}</p>
+                    <div className="inb-act">
+                      <button type="button" className="btn btn-primary btn-sm" onClick={() => setMsgTo({ id: m.student_id, name: m.student_name })}><MessageSquareReply aria-hidden="true" /> Nhắn tiếp</button>
+                      <button type="button" className="btn btn-outline btn-sm inb-del" disabled={busy === 'xoa'} onClick={() => void remove([m.id], 'Xoá tin cô đã gửi khỏi hộp thư? Gia đình vẫn xem được tin này.')}><Trash2 aria-hidden="true" /> Xoá tin</button>
+                    </div>
+                  </div>
+                )}
+                {isOpen && !m.from_teacher && (
                   <div className="inb-body">
                     <p className="inb-text">{m.body}</p>
                     {m.reply && <p className="inb-replied"><CheckCheck aria-hidden="true" /> Cô đã trả lời: {m.reply}</p>}
@@ -111,6 +125,7 @@ export default function TeacherInbox({ classId, className, initial, missing }: {
                       ) : (
                         <button type="button" className="btn btn-primary btn-sm" disabled={busy === m.id || !(reply[m.id] ?? '').trim()} onClick={() => void act(m, 'answered')}><MessageSquareReply aria-hidden="true" /> Gửi trả lời</button>
                       )}
+                      <button type="button" className="btn btn-outline btn-sm" onClick={() => setMsgTo({ id: m.student_id, name: m.student_name })}>Nhắn riêng</button>
                       <Link href={`/giao-vien/lop/${classId}/danh-ba`} className="ct-link">Danh bạ phụ huynh</Link>
                       <button type="button" className="btn btn-outline btn-sm inb-del" disabled={busy === 'xoa'}
                         onClick={() => void remove([m.id], pending ? `Tin xin phép của ${senderLabel(m)} CHƯA được duyệt. Vẫn xoá khỏi hộp thư?` : `Xoá tin của ${senderLabel(m)} khỏi hộp thư?`)}>
@@ -124,6 +139,7 @@ export default function TeacherInbox({ classId, className, initial, missing }: {
           })}
         </ul>
       )}
+      {msgTo && <MessageParentDialog classId={classId} student={msgTo} onClose={() => setMsgTo(null)} onSent={(t) => { setNote(t); void reload(); }} />}
     </div>
   );
 }
