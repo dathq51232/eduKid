@@ -35,7 +35,9 @@ export type TextEl = ElBase & { kind: 'text'; text: string; size: number; color:
   /** viền chữ (chữ tiêu đề kiểu trang trí) và đổ bóng */
   stroke?: string; strokeW?: number; shadow?: boolean };
 export type ImgEl = ElBase & { kind: 'img'; src: string; /** ảnh trong Kho của tôi (đường dẫn kho, cần ký khi hiện) */ asset?: boolean; name?: string;
-  /** bo góc 0–100 (% bán kính tối đa) · đổ bóng mềm */ rad?: number; shadow?: boolean };
+  /** bo góc 0–100 (% bán kính tối đa) · đổ bóng mềm */ rad?: number; shadow?: boolean;
+  /** cắt ảnh: phần giữ lại của ảnh gốc (tỉ lệ 0–1 theo bề ngang / bề cao ảnh) */ crop?: Crop };
+export type Crop = { x: number; y: number; w: number; h: number };
 export type ShapeEl = ElBase & { kind: 'shape'; shape: ShapeKind; fill: string; stroke: string; sw: number; text?: string; color?: string; size?: number;
   /** bo góc 0–100 (% bán kính tối đa, hình chữ nhật / thẻ) · đổ bóng mềm · kiểu nét viền */ rad?: number; shadow?: boolean; dash?: 'solid' | 'dash' | 'dot' };
 export type QuizOpt = { text: string; img?: string; imageAsset?: boolean; accent?: string };

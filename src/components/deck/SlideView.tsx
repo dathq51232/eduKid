@@ -517,8 +517,17 @@ function ElBody({ e, mode, assetUrl, pick, onPick, sort, onTile, board }: { e: E
         ...(e.rad ? { borderRadius: `${e.rad / 2}%`, objectFit: 'cover' } : {}),
         filter: e.shadow ? 'drop-shadow(0 14px 22px rgba(15,23,42,.26))' : 'drop-shadow(0 8px 14px rgba(15,23,42,.15))',
       };
+      if (!src) return <div className="dk-img-wait">🖼</div>;
+      // ảnh đã cắt: khung giữ phần được chọn, ảnh gốc phóng to và dời cho phần đó lấp kín khung
+      const c = e.crop;
+      if (c && c.w > 0 && c.h > 0) return (
+        <div className="dk-img dk-imgc" style={{ ...st, ...(e.rad ? { borderRadius: `${e.rad / 2}%` } : {}) }}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- ảnh của cô đã cắt */}
+          <img src={src} alt={e.name ?? ''} draggable={false} style={{ width: `${100 / c.w}%`, height: `${100 / c.h}%`, left: `${(-c.x / c.w) * 100}%`, top: `${(-c.y / c.h) * 100}%` }} />
+        </div>
+      );
       // eslint-disable-next-line @next/next/no-img-element -- hình dán / ảnh của cô, kích thước tự do
-      return src ? <img className="dk-img" src={src} alt={e.name ?? ''} draggable={false} style={st} /> : <div className="dk-img-wait">🖼</div>;
+      return <img className="dk-img" src={src} alt={e.name ?? ''} draggable={false} style={st} />;
     }
     case 'shape': return (
       <>
@@ -1007,7 +1016,7 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
             style={{ left: p?.x ?? e.x, top: p?.y ?? e.y, width: e.w, height: e.h, transform: e.rot ? `rotate(${e.rot}deg)` : undefined, visibility: (play && hidden.has(e.id)) || (e.hide && mode !== 'edit') ? 'hidden' : undefined, zIndex: play && playDrag.current?.id === e.id ? 50 : undefined }}
             onPointerDown={(ev) => onElDown(e, ev)} onPointerMove={onElMove} onPointerUp={() => onElUp(e)}
             onClick={(ev) => { if (play && !e.drag && clickable) { ev.stopPropagation(); click(e); } }}
-            onDoubleClick={() => { if (mode === 'edit' && (e.kind === 'text' || e.kind === 'shape' || e.kind === 'quiz' || e.kind === 'sort')) onEditText?.(e.id); }}>
+            onDoubleClick={() => { if (mode === 'edit' && (e.kind === 'text' || e.kind === 'shape' || e.kind === 'quiz' || e.kind === 'sort' || (e.kind === 'img' && !e.lock))) onEditText?.(e.id); }}>
             <div className="dk-a" style={e.op != null && e.op < 1 ? { opacity: e.op } : undefined}><ElBody e={e} mode={mode} assetUrl={assetUrl} pick={picks[e.id]} onPick={(i) => { const a: PlayAction = { t: 'quiz', el: e.id, i }; apply(a); onAction?.(a); }}
               board={board} sort={sorts[e.id]} onTile={(tile) => { const a: PlayAction = { t: 'sort', el: e.id, tile }; if (apply(a)) onAction?.(a); }} /></div>
             {mode === 'edit' && editing === e.id && (e.kind === 'text' || e.kind === 'shape') && <InlineText e={e} onText={(t, done) => onChange?.(e.id, done ? {} : { text: t }, done)} onDone={() => onEditText?.('')} />}

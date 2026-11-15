@@ -8,7 +8,7 @@ import { saveDeckOffline } from '@/lib/offline/save';
 import Link from 'next/link';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
-import { ArrowDown, ArrowDownToLine, ArrowLeft, ArrowUp, ArrowUpToLine, Blend, Clock, Copy, Eye, EyeOff, FlipHorizontal, Grid2x2, Italic, Layers as LayersIcon, LayoutTemplate, Lock, Maximize, Mic, Minus, MonitorPlay, MoreHorizontal, MousePointerClick, Music, Paintbrush, Palette, Play, Plus, Redo2, Shapes, Sparkles, Square, StickyNote, Timer, Trash2, Type, Undo2, Unlock, Upload, X } from 'lucide-react';
+import { Crop as CropIcon, MessageSquare, FileDown, PanelLeftClose, PanelLeftOpen, ArrowDown, ArrowDownToLine, ArrowLeft, ArrowUp, ArrowUpToLine, Blend, Clock, Copy, Eye, EyeOff, FlipHorizontal, Grid2x2, Italic, Layers as LayersIcon, LayoutTemplate, Lock, Maximize, Mic, Minus, MonitorPlay, MoreHorizontal, MousePointerClick, Music, Paintbrush, Palette, Play, Plus, Redo2, Shapes, Sparkles, Square, StickyNote, Timer, Trash2, Type, Undo2, Unlock, Upload, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { assetError, listAssets, uploadAsset, type TeacherAsset } from '@/lib/assets/client';
 import { baseName, IMAGE_ACCEPT, prepareBoard } from '@/lib/assets/image';
@@ -25,6 +25,10 @@ import { SCENES, SCENES_SORTED, SCENE_VARIANTS, accentOf, sceneGroups } from '@/
 import { WORK_MODES, applyTheme, badgeEl, cardEl, dividerSlide, modeEl, setContentOf, type WorkMode } from '@/lib/deck/fromLesson';
 import SlideView, { ShapeSvg, SlideFrame, type PlayApi } from './SlideView';
 import AnimTimeline from './AnimTimeline';
+import DeckPrint from './DeckPrint';
+import ImageCrop from './ImageCrop';
+import DeckComments from './DeckComments';
+import { ownerComments } from '@/lib/deck/review';
 import { TEXT_STYLES, stickerName } from '@/lib/deck/sticker-names';
 import { F3D_CATS, F3D_VI, f3dSrc } from '@/lib/deck/f3d-catalog';
 import { ALL_FLUENT_CDN_ITEMS, FLUENT_CDN_GROUPS, fluentCdnFallbackUrl, fluentCdnUrl } from '@/lib/deck/fluent-cdn';
@@ -32,7 +36,7 @@ import { STEP_COLOR, THEME_SETS, applySet, isBlankDeck, makeSet, type SetContent
 import { fold } from '@/lib/classroom/teacher-nav';
 
 /** bảng bên trái (kiểu Canva): mở từ cột biểu tượng hoặc từ thanh công cụ ngữ cảnh */
-type Panel = 'tpl' | 'el' | 'text' | 'act' | 'bg' | 'sound' | 'up' | 'anim' | 'pos' | 'edit';
+type Panel = 'tpl' | 'el' | 'text' | 'act' | 'bg' | 'sound' | 'up' | 'anim' | 'pos' | 'edit' | 'cmt';
 const RAIL: [Panel, string, React.ComponentType<{ 'aria-hidden'?: boolean }>][] = [
   ['tpl', 'Mẫu', LayoutTemplate], ['el', 'Thành phần', Shapes], ['text', 'Chữ', Type], ['act', 'Tương tác', MousePointerClick],
   ['bg', 'Nền', Palette], ['sound', 'Âm thanh', Music], ['up', 'Tải lên', Upload], ['anim', 'Hiệu ứng', Sparkles], ['pos', 'Lớp', LayersIcon],
@@ -82,6 +86,29 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   // chọn nhiều vật (Shift + bấm, kéo khung chọn, nhóm)
   const [multi, setMulti] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
+  // Tải về / In (PDF, bản phát tay, kèm ghi chú)
+  const [printing, setPrinting] = useState(false);
+  // cắt ảnh: id ảnh đang cắt
+  const [cropping, setCropping] = useState<string | null>(null);
+  // chế độ soạn tập trung: ẩn menu giáo viên (cột trái, hàng tab) để trang soạn rộng hết màn hình — nhớ trên máy này
+  const [focus, setFocus] = useState(true);
+  useEffect(() => { try { if (localStorage.getItem('edukid:deck-focus') === '0') setFocus(false); } catch { /* bỏ qua */ } }, []);
+  useEffect(() => {
+    const r = document.documentElement;
+    r.classList.toggle('dk-focus', focus);
+    window.dispatchEvent(new Event('resize'));
+    return () => r.classList.remove('dk-focus');
+  }, [focus]);
+  // số góp ý chưa sửa theo trang (bảng Góp ý, migration 0061) — hiện trên nút Góp ý và dải trang
+  const [cmtCount, setCmtCount] = useState<Record<string, number>>({});
+  useEffect(() => {
+    if (!supabase) return;
+    let live = true;
+    ownerComments(supabase, deckId).then((l) => { if (!live) return; const m: Record<string, number> = {}; for (const c of l) if (!c.resolved) m[c.slide_id] = (m[c.slide_id] ?? 0) + 1; setCmtCount(m); }, () => { /* chưa chạy 0061: bỏ qua */ });
+    return () => { live = false; };
+  }, [supabase, deckId]);
+  const cmtTotal = Object.values(cmtCount).reduce((a, b) => a + b, 0);
+  const toggleFocus = () => { const v = !focus; setFocus(v); try { localStorage.setItem('edukid:deck-focus', v ? '1' : '0'); } catch { /* bỏ qua */ } };
   const [ctx, setCtx] = useState<{ x: number; y: number } | null>(null);
   const [styleCopy, setStyleCopy] = useState<Partial<El> | null>(null);
   const [q, setQ] = useState('');
@@ -384,6 +411,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
     if (!id) { setInline(null); return; }
     const k = slide.els.find((e) => e.id === id)?.kind;
     if (k === 'text' || k === 'shape') { setSel(id); setMulti([id]); setInline(id); return; }
+    if (k === 'img') { setSel(id); setMulti([id]); setCropping(id); return; }
     setSel(id); setPanel('edit'); setTimeout(() => { textRef.current?.focus(); textRef.current?.select(); }, 30); };
   const showHref = (from: number) => `/giao-vien/lop/${classId}/bai-giang-3d/thao-giang/${deckId}/trinh-chieu?trang=${from + 1}`;
   const flush = async () => { if (supabase) await supabase.from('slide_decks').update({ title: deck.title.slice(0, 120) || 'Bài thao giảng', grade: deck.grade, data: deckRef.current }).eq('id', deckId); };
@@ -474,6 +502,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
     </>;
     if (e.kind === 'img') return <>
       <button type="button" className={`cv-c${replace ? ' is-on' : ''}`} onClick={() => { setReplace(!replace); setPanel('el'); }}>Thay hình</button>
+      <button type="button" className={`cv-c${e.crop ? ' is-on' : ''}`} title="Cắt ảnh (hoặc bấm đúp vào ảnh)" onClick={() => setCropping(e.id)}><CropIcon aria-hidden="true" /> Cắt</button>
       <button type="button" className={`cv-c${e.flip ? ' is-on' : ''}`} onClick={() => patchEl(e.id, { flip: !e.flip })}><FlipHorizontal aria-hidden="true" /> Lật</button>
       {radius(e.rad, e.id)}
       <button type="button" className={`cv-c${e.shadow ? ' is-on' : ''}`} title="Đổ bóng mềm" onClick={() => patchEl(e.id, { shadow: !e.shadow })}>Bóng</button>
@@ -512,11 +541,30 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
         <span className="cv-sep" />
         <span className={`cv-saved is-${saved}`}>{saved === 'saved' ? '✓ Đã lưu' : saved === 'saving' ? 'Đang lưu…' : '⚠ Chưa lưu được'}</span>
         <span className="cv-grow" />
+        <button type="button" className="cv-tb" onClick={toggleFocus} aria-pressed={focus} title={focus ? 'Hiện menu giáo viên' : 'Soạn tập trung: ẩn menu giáo viên cho trang soạn rộng hơn'} aria-label={focus ? 'Hiện menu giáo viên' : 'Soạn tập trung'}>{focus ? <PanelLeftOpen aria-hidden="true" /> : <PanelLeftClose aria-hidden="true" />}</button>
+        <button type="button" className={`cv-btn${panel === 'cmt' ? ' is-on' : ''}`} onClick={() => setPanel(panel === 'cmt' ? null : 'cmt')} title="Góp ý theo trang của tổ chuyên môn"><MessageSquare aria-hidden="true" /> Góp ý{cmtTotal > 0 && <span className="cv-badge">{cmtTotal}</span>}</button>
+        <button type="button" className="cv-btn" onClick={() => setPrinting(true)} title="Lưu PDF, in bản phát tay hoặc kèm ghi chú"><FileDown aria-hidden="true" /> Tải về / In</button>
         <button type="button" className="cv-btn" onClick={() => setPreview(true)}><Play aria-hidden="true" /> Xem thử trang</button>
         <OfflineSaveButton kind="deck" id={deckId} className="cv-btn" run={async (pg) => { await flush(); return saveDeckOffline({ deck: deckRef.current, deckId, classId }, pg); }} />
         <a className="cv-btn" href={showHref(cur)} onClick={() => { void flush(); }}><Play aria-hidden="true" /> Chiếu từ trang này</a>
         <a className="cv-btn is-w" href={showHref(0)} onClick={() => { void flush(); }}><MonitorPlay aria-hidden="true" /> Trình chiếu</a>
       </header>
+      {cropping && (() => {
+        const ce = slide.els.find((x) => x.id === cropping);
+        if (!ce || ce.kind !== 'img') return null;
+        const src = ce.asset ? assetUrl(ce.src) : ce.src;
+        if (!src) return null;
+        return <ImageCrop src={src} initial={ce.crop} onClose={() => setCropping(null)} onApply={(c, nat) => {
+          // khung ảnh theo đúng tỉ lệ phần giữ lại (giữ bề ngang và tâm), không vượt quá trang
+          const ar = (nat.w * (c?.w ?? 1)) / (nat.h * (c?.h ?? 1));
+          let w = ce.w, h = w / ar;
+          if (h > SH) { h = SH; w = h * ar; }
+          const cx = ce.x + ce.w / 2, cy = ce.y + ce.h / 2;
+          patchEl(ce.id, { crop: c, w: Math.round(w), h: Math.round(h), x: Math.round(cx - w / 2), y: Math.round(cy - h / 2) });
+          setCropping(null); setMsg({ kind: 'ok', text: c ? 'Đã cắt ảnh — bấm đúp vào ảnh để cắt lại.' : 'Đã bỏ cắt, ảnh về như cũ.' });
+        }} />;
+      })()}
+      {printing && <DeckPrint deck={deck} assetUrl={assetUrl} onClose={() => setPrinting(false)} beforePrint={async () => { await flush(); }} />}
 
       <div className="cv-main">
         <nav className="cv-rail" aria-label="Công cụ">
@@ -742,6 +790,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
               <AnimList slide={slide} sel={animSel} setSel={(id) => { setAnimSel(id); const a = slide.anims.find((x) => x.id === id); if (a) setSel(a.el); }}
                 patch={patchAnim} move={moveAnim} del={(id) => setSlide((s) => ({ ...s, anims: s.anims.filter((a) => a.id !== id) }))} myAudio={myAudio} />
             </>}
+            {panel === 'cmt' && <DeckComments sb={supabase} deckId={deckId} slides={deck.slides} cur={Math.min(cur, deck.slides.length - 1)} onGo={(i) => { setCur(i); setSel(null); setMulti([]); }} onCount={setCmtCount} />}
             {panel === 'pos' && <>
               {selEls.length > 0 && <>
                 <p className="cv-ph">Sắp xếp</p>
@@ -827,6 +876,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
                   onClick={() => { setCur(i); setSel(null); setMulti([]); setAnimSel(null); }} aria-label={`Trang ${i + 1}`} aria-current={i === cur}>
                   <SlideFrame>{(k) => <SlideView slide={s} mode="thumb" scale={k} assetUrl={assetUrl} />}</SlideFrame>
                   <span className="cv-th-n">{i + 1}</span>
+                  {cmtCount[s.id] ? <span className="cv-th-cmt" title={`${cmtCount[s.id]} góp ý chưa sửa`}><MessageSquare aria-hidden="true" />{cmtCount[s.id]}</span> : null}
                   {s.phase && !s.els.some((e) => e.role === 'step') && <i className="cv-tag" style={{ background: STEP_COLOR[s.phase] ?? '#7c3aed' }}>{s.phase}</i>}
                   <span className="cv-th-ic">{s.anims.length > 0 && '✨'}{s.anims.some((a) => a.trigger) && '🎯'}{(s.sound || s.anims.some((a) => a.sound)) && '🔊'}</span>
                 </button>
