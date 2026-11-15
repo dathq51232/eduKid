@@ -239,6 +239,7 @@ export default function ClassDiary({ classId, className, students, initialTab = 
               <div className="diary-panel-empty">
                 <p className="dash-muted">Bấm tên một em để điểm danh và ghi chú.</p>
                 <AnnouncementList value={announcement} onChange={changeAnnouncement} />
+                <AnnouncementHistory supabase={supabase} classId={classId} day={day} />
               </div>
             ) : (
               <>
@@ -330,6 +331,7 @@ export default function ClassDiary({ classId, className, students, initialTab = 
             <h2>Gửi cả lớp</h2>
             <p className="dash-muted">Thông báo chung cho nhóm Zalo lớp. Mỗi việc một dòng; việc hết hạn bấm 🗑 để xoá.</p>
             <AnnouncementList value={announcement} onChange={changeAnnouncement} />
+            <AnnouncementHistory supabase={supabase} classId={classId} day={day} />
             <pre className="diary-sample">{classNotice}</pre>
             <button type="button" className="btn btn-primary diary-wide" onClick={() => void copyText(classNotice).then((ok) => setFlash(ok ? 'Đã sao chép thông báo cả lớp.' : 'Trình duyệt chặn sao chép.'))}><Copy aria-hidden="true" /> Sao chép thông báo</button>
             <ZaloGroupLink classId={classId} className={className} notice={classNotice} onCopied={(ok) => setFlash(ok ? 'Đã chép thông báo — dán (Ctrl+V) vào nhóm Zalo vừa mở rồi gửi.' : 'Trình duyệt chặn sao chép.')} />
@@ -442,5 +444,78 @@ function AnnouncementList({ value, onChange }: { value: string; onChange: (v: st
         <p className="diary-ann-undo" role="status">{undo.label} <button type="button" className="mini-btn" onClick={() => { onChange(undo.value); setUndo(null); }}><RotateCcw aria-hidden="true" /> Hoàn tác</button></p>
       )}
     </div>
+  );
+}
+
+/* ---------------------------------------------------------- Thông báo đã gửi (những ngày trước) */
+// Liệt kê thông báo cả lớp của 60 ngày gần nhất (trừ ngày đang xem). Việc nào hết hạn bấm 🗑 xoá từng dòng,
+// hoặc "Xoá cả ngày". Lưu qua teacher_diary_set_announcement (migration 0058) — không đụng điểm danh.
+type OldNotice = { day: string; announcement: string };
+function AnnouncementHistory({ supabase, classId, day }: { supabase: ReturnType<typeof createClient>; classId: string; day: string }) {
+  const [list, setList] = useState<OldNotice[] | null>(null);
+  const [err, setErr] = useState('');
+  const [undo, setUndo] = useState<OldNotice | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    const today = todayIso();
+    void supabase.rpc('teacher_diary_range', { p_class: classId, p_from: shiftDay(today, -60), p_to: shiftDay(today, 1) }).then(({ data, error: e }) => {
+      if (!alive) return;
+      if (e) { setList([]); return; }
+      const days = ((data as RangeData | null)?.days ?? []) as { day: string; announcement: string | null }[];
+      setList(days.filter((d) => d.day !== day && d.announcement?.trim()).map((d) => ({ day: d.day, announcement: d.announcement ?? '' })).reverse());
+    });
+    return () => { alive = false; };
+  }, [supabase, classId, day]);
+
+  const write = async (d: string, text: string, before: OldNotice) => {
+    setErr('');
+    setList((l) => (l ?? []).map((x) => (x.day === d ? { ...x, announcement: text } : x)).filter((x) => x.announcement.trim()));
+    setUndo(before);
+    const { error: e } = await supabase.rpc('teacher_diary_set_announcement', { p_class: classId, p_day: d, p_text: text });
+    if (e) {
+      setList((l) => [...(l ?? []).filter((x) => x.day !== d), before].sort((a, b) => b.day.localeCompare(a.day)));
+      setUndo(null);
+      setErr(/function|schema cache/i.test(e.message) ? 'Chưa xoá được: hãy chạy supabase/migrations/0058_diary_announcement_edit.sql trên Supabase.' : 'Chưa xoá được. Kiểm tra mạng rồi thử lại.');
+    }
+  };
+  const restore = async () => {
+    if (!undo) return;
+    const u = undo; setUndo(null);
+    setList((l) => [...(l ?? []).filter((x) => x.day !== u.day), u].sort((a, b) => b.day.localeCompare(a.day)));
+    const { error: e } = await supabase.rpc('teacher_diary_set_announcement', { p_class: classId, p_day: u.day, p_text: u.announcement });
+    if (e) setErr('Chưa hoàn tác được. Kiểm tra mạng rồi thử lại.');
+  };
+
+  if (!list) return null;
+  return (
+    <details className="diary-hist">
+      <summary>Thông báo đã gửi <span>({list.length})</span></summary>
+      {err && <p className="adm-alert is-error" role="alert">{err}</p>}
+      {undo && <p className="diary-ann-undo" role="status">Đã xoá. <button type="button" className="mini-btn" onClick={() => void restore()}><RotateCcw aria-hidden="true" /> Hoàn tác</button></p>}
+      {list.length === 0 ? <p className="dash-muted">Chưa có thông báo nào trong 60 ngày qua.</p> : (
+        <ul className="diary-hist-list">
+          {list.map((n) => {
+            const lines = n.announcement.split('\n').filter((l) => l.trim());
+            return (
+              <li key={n.day}>
+                <div className="diary-hist-day">
+                  <b>{dayLabel(n.day)}</b>
+                  <button type="button" className="mini-btn is-danger" title="Xoá toàn bộ thông báo ngày này (đã hết hạn)" onClick={() => void write(n.day, '', n)}><Trash2 aria-hidden="true" /> Xoá cả ngày</button>
+                </div>
+                <ul>
+                  {lines.map((l, i) => (
+                    <li key={i}>
+                      <span>{l}</span>
+                      {lines.length > 1 && <button type="button" className="diary-ann-del" aria-label={`Xoá việc: ${l}`} title="Xoá việc này (đã hết hạn)" onClick={() => void write(n.day, lines.filter((_, k) => k !== i).join('\n'), n)}><Trash2 aria-hidden="true" /></button>}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </details>
   );
 }

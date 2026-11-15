@@ -4105,6 +4105,17 @@ button.diary-pill { cursor: pointer; }
 .diary-ann-del:hover { background: #fde8e6; color: #b3261e; }
 :root[data-theme="dark"] .diary-ann-del:hover { background: #3d1d22; color: #ff9a9a; }
 .diary-ann-add { display: flex; gap: 6px; }
+.diary-hist { margin-top: 4px; padding: 10px 12px; border-radius: 14px; border: 2px dashed var(--line); }
+.diary-hist summary { cursor: pointer; font-size: 14px; font-weight: 700; color: var(--ink); }
+.diary-hist summary span { color: var(--muted); font-weight: 600; }
+.diary-hist[open] summary { margin-bottom: 10px; }
+.diary-hist-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; max-height: 340px; overflow-y: auto; }
+.diary-hist-list > li { padding: 8px 10px; border-radius: 12px; background: var(--surface-2); }
+.diary-hist-day { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; }
+.diary-hist-list ul { display: grid; gap: 2px; margin: 6px 0 0; padding: 0; list-style: none; }
+.diary-hist-list ul li { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 14px; font-weight: 500; color: var(--ink); }
+.diary-hist-list ul li span::before { content: "• "; color: var(--muted); }
+.diary-hist-list .diary-ann-del { width: 30px; height: 30px; }
 .diary-ann-undo { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 600; color: var(--ink); }
 .diary-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .diary-seg button, .diary-quick button { min-height: 48px; padding: 4px; border: 2px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--muted); font: inherit; font-size: 14px; font-weight: 700; line-height: 1.2; cursor: pointer; }
