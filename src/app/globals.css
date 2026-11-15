@@ -5025,6 +5025,24 @@ img.auth-hero-word { height: clamp(46px, 6vw, 76px); width: auto; max-width: 100
 .ph-ghost:hover { border-color: var(--line-strong); background: var(--surface-2); }
 .ph-ghost svg { width: 16px; height: 16px; }
 .ph-ghost { white-space: nowrap; }
+/* Thanh trên Góc phụ huynh (11/2026): máy tính cao 76px (bằng thanh menu chính), nút 48px chữ 15px;
+   điện thoại cao 60px, một hàng, logo thu gọn còn biểu tượng, nút chỉ icon 44×44px */
+@media (min-width: 641px) {
+  .ph-top-in { min-height: 76px; padding-block: 8px; gap: 14px; }
+  .ph-pill { padding: 9px 16px; font-size: 15px; }
+  .ph-pill svg { width: 18px; height: 18px; }
+  .ph-top .ph-ghost { min-height: 48px; padding: 0 16px; border-radius: 14px; font-size: 15px; }
+  .ph-top .ph-ghost svg { width: 18px; height: 18px; }
+}
+@media (max-width: 640px) {
+  .ph-top-in.wrap { width: calc(100% - 24px); }
+  .ph-top-in { min-height: 60px; gap: 6px; flex-wrap: nowrap; }
+  .ph-top .brand .logo-word { display: none; }
+  .ph-top .theme-switch-label { display: none; }
+  .ph-top .ph-ghost { width: 44px; min-height: 44px; padding: 0; gap: 0; justify-content: center; font-size: 0; }
+  .ph-top .ph-ghost span { display: none; }
+  .ph-top .ph-ghost svg { width: 20px; height: 20px; }
+}
 .ph { display: grid; gap: 18px; padding-block: 22px 56px; }
 .ph-hero { position: relative; overflow: hidden; display: grid; grid-template-columns: auto 1fr auto; gap: 22px; align-items: center; padding: 24px 28px; border-radius: 24px; color: #fff; background: linear-gradient(120deg, #2457c5, #4f7fe8 55%, #7c4ddf); }
 .ph-hero::after { content: ""; position: absolute; right: -60px; top: -60px; width: 240px; height: 240px; border-radius: 50%; background: rgb(255 255 255 / .08); pointer-events: none; }
@@ -5132,7 +5150,7 @@ img.auth-hero-word { height: clamp(46px, 6vw, 76px); width: auto; max-width: 100
   .ph-hero { padding: 18px; gap: 14px; }
   .ph-hero-av { width: 64px; height: 64px; border-radius: 18px; }
   .ph-pill { display: none; }
-  .ph-top form .ph-ghost { font-size: 0; gap: 0; width: 40px; justify-content: center; padding: 0; }
+  .ph-top form .ph-ghost { font-size: 0; gap: 0; width: 44px; justify-content: center; padding: 0; }
   .ph-row, .ph-row.is-4 { grid-template-columns: 1fr; }
   .ph-card { padding: 16px; }
   .ph-tl li { grid-template-columns: 52px 1fr; }
@@ -10413,7 +10431,7 @@ h1 > img.ic3d-title { display: inline-block; width: 1.05em; height: 1.05em; vert
 
 /* ===== Trang chủ 11/2026: thanh trên dày hơn + nút Dùng thử, hàng "Tôi là", tiêu đề một kiểu, FAQ mở/đóng, bìa vở vuốt ngang trên điện thoại ===== */
 @media (min-width: 901px) {
-  .learn-top-inner { min-height: 84px; }
+  .learn-top-inner { min-height: 76px; } /* 11/2026: 84 → 76px, bằng thanh Góc phụ huynh */
   .learn-top .main-nav-link { padding-block: 8px; }
 }
 .account-cta { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border-radius: 14px; background: var(--brand-yellow); color: #3b2a00; font-size: 15px; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 0 #d9a21f; }
