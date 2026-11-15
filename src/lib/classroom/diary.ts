@@ -2,7 +2,7 @@
 import { XS, range, type XSheet } from '@/lib/xlsx';
 
 export type Status = 'present' | 'excused' | 'unexcused';
-export type Entry = { status: Status; tags: string[]; note: string; copied?: boolean };
+export type Entry = { status: Status; tags: string[]; note: string; copied?: boolean; /** tin nhắn thầy cô đã sửa tay (0057) */ msgText?: string | null; /** đã xoá tin nhắn của em trong ngày (0057) */ hidden?: boolean };
 export type Student = { id: string; name: string };
 export type Pronoun = 'co' | 'thay';
 

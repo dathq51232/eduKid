@@ -4093,6 +4093,19 @@ button.diary-pill { cursor: pointer; }
 .diary-panel-top .callon-close { position: static; }
 .diary-panel-empty { display: grid; gap: 10px; }
 .diary-ann { display: grid; gap: 6px; font-size: 14px; font-weight: 700; color: var(--muted); }
+.diary-ann-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.diary-ann-head small { font-weight: 600; }
+.diary-ann-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; counter-reset: ann; }
+.diary-ann-list li { display: flex; align-items: center; gap: 6px; counter-increment: ann; }
+.diary-ann-list li::before { content: counter(ann); flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--blue-soft); color: var(--brand-blue); font-size: 12px; }
+.diary-ann-list input, .diary-ann-add input { flex: 1; min-width: 0; min-height: 38px; padding: 6px 10px; border: 2px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; font-weight: 500; }
+.diary-ann-list input:focus-visible, .diary-ann-add input:focus-visible { outline: 3px solid var(--brand-blue); outline-offset: 1px; }
+.diary-ann-del { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; }
+.diary-ann-del svg { width: 17px; height: 17px; }
+.diary-ann-del:hover { background: #fde8e6; color: #b3261e; }
+:root[data-theme="dark"] .diary-ann-del:hover { background: #3d1d22; color: #ff9a9a; }
+.diary-ann-add { display: flex; gap: 6px; }
+.diary-ann-undo { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 600; color: var(--ink); }
 .diary-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .diary-seg button, .diary-quick button { min-height: 48px; padding: 4px; border: 2px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--muted); font: inherit; font-size: 14px; font-weight: 700; line-height: 1.2; cursor: pointer; }
 .diary-seg .q-present[aria-pressed="true"], .diary-quick .q-present[aria-pressed="true"] { background: #ddf7e7; border-color: #9fdcbc; color: #116b33; }
@@ -4124,6 +4137,12 @@ button.diary-pill { cursor: pointer; }
 .diary-wide { width: 100%; }
 .diary-tone { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; font-weight: 700; }
 .diary-empty { padding: 24px 0; text-align: center; }
+/* Sổ lớp — tin nhắn đã sửa / đã xoá (0057) */
+.diary-msg-who .diary-msg-badge { display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 999px; background: var(--blue-soft); color: var(--brand-blue); font-size: 12px; font-weight: 700; }
+.diary-hidden { margin-top: 12px; padding: 10px 14px; border-radius: 14px; border: 2px dashed var(--line); color: var(--muted); }
+.diary-hidden summary { cursor: pointer; font-weight: 700; }
+.diary-hidden ul { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.diary-hidden li { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--ink); font-weight: 600; }
 /* tháng */
 .diary-xlsx { margin-left: auto; }
 .diary-legend-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 6px 0 0; color: var(--muted); font-size: 14px; font-weight: 600; }
@@ -4147,7 +4166,7 @@ button.diary-pill { cursor: pointer; }
   .diary-grid { grid-template-columns: minmax(0, 1fr); }
   .diary-panel { position: static; }
   .diary-msg { grid-template-columns: 1fr; gap: 8px; }
-  .diary-msg-act { grid-auto-flow: column; justify-content: start; }
+  .diary-msg-act { display: flex; flex-wrap: wrap; justify-content: start; }
 }
 /* điện thoại: mỗi em một hàng với ✓ / P / K; bấm tên mở bảng ghi chú từ dưới lên */
 @media (max-width: 640px) {

@@ -3,7 +3,7 @@
 // Sổ lớp hằng ngày: điểm danh + ghi chú nhanh từng em, tin nhắn phụ huynh soạn sẵn (sao chép dán Zalo), tổng hợp tháng.
 // Lưu lên Supabase qua các hàm teacher_diary_* (migration 0026); tự lưu sau mỗi thay đổi.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Copy, Download, MessageCircle, Pencil, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, Download, MessageCircle, Pencil, RefreshCw, RotateCcw, Trash2, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { downloadXlsx } from '@/lib/xlsx';
 import { zaloHref } from '@/lib/classroom/class-tools';
@@ -14,9 +14,10 @@ import {
 } from '@/lib/classroom/diary';
 
 type Tab = 'day' | 'msg' | 'month';
-type DayData = { saved_at: string | null; announcement: string | null; entries: { student_id: string; status: Status; tags: string[]; note: string | null; copied: boolean }[] };
+type DayData = { saved_at: string | null; announcement: string | null; entries: { student_id: string; status: Status; tags: string[]; note: string | null; copied: boolean; msg_text?: string | null; hidden?: boolean }[] };
 
 const MISSING = 'Chưa bật Sổ lớp: hãy chạy supabase/migrations/0026_class_diary.sql trên Supabase.';
+const MISSING_MSG = 'Chưa lưu được tin nhắn đã sửa / xoá: hãy chạy supabase/migrations/0057_diary_msg_edit.sql trên Supabase.';
 const errText = (m: string) => (/function|schema cache/i.test(m) ? MISSING : /invalid_day/.test(m) ? 'Không lưu được ngày này (chỉ lưu đến ngày mai).' : 'Chưa lưu được. Kiểm tra mạng rồi thử lại.');
 const hhmm = (iso: string) => { const d = new Date(iso); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 
@@ -40,15 +41,15 @@ export default function ClassDiary({ classId, className, students, initialTab = 
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<string | null>(initialSelected && students.some((x) => x.id === initialSelected) ? initialSelected : null);
   const [pronoun, setPronoun] = useState<Pronoun>('co');
-  const [edited, setEdited] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<string | null>(null);
+  const [draft, setDraft] = useState('');
   const [filter, setFilter] = useState<'all' | MessageKind>('all');
   const [flash, setFlash] = useState('');
   // số Zalo phụ huynh (Danh bạ phụ huynh, migration 0028) — chỉ tải khi mở thẻ Tin nhắn; chưa có migration thì bỏ qua
   const [phones, setPhones] = useState<Record<string, string> | null>(null);
 
   useEffect(() => { try { const p = localStorage.getItem('so-lop:xung-ho'); if (p === 'thay' || p === 'co') setPronoun(p); } catch { /* bỏ qua */ } }, []);
-  const choosePronoun = (p: Pronoun) => { setPronoun(p); setEdited({}); try { localStorage.setItem('so-lop:xung-ho', p); } catch { /* bỏ qua */ } };
+  const choosePronoun = (p: Pronoun) => { setPronoun(p); try { localStorage.setItem('so-lop:xung-ho', p); } catch { /* bỏ qua */ } };
 
   useEffect(() => {
     if (tab !== 'msg' || phones) return;
@@ -62,11 +63,11 @@ export default function ClassDiary({ classId, className, students, initialTab = 
 
   /* ---------------------------------------------------------- đọc một ngày */
   const load = useCallback(async (d: string) => {
-    setState('loading'); setError(''); setEdited({});
+    setState('loading'); setError(''); setEditing(null);
     const { data, error: e } = await supabase.rpc('teacher_diary_day', { p_class: classId, p_day: d });
     if (e) { setError(errText(e.message)); setEntries({}); setSavedAt(null); setAnnouncement(''); setState('idle'); return; }
     const v = data as DayData;
-    setEntries(Object.fromEntries(v.entries.map((x) => [x.student_id, { status: x.status, tags: x.tags ?? [], note: x.note ?? '', copied: x.copied }])));
+    setEntries(Object.fromEntries(v.entries.map((x) => [x.student_id, { status: x.status, tags: x.tags ?? [], note: x.note ?? '', copied: x.copied, msgText: x.msg_text ?? null, hidden: !!x.hidden }])));
     setAnnouncement(v.announcement ?? '');
     setSavedAt(v.saved_at);
     setState('idle');
@@ -90,7 +91,8 @@ export default function ClassDiary({ classId, className, students, initialTab = 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   const goDay = async (d: string) => { if (state === 'dirty') await save(); setSelected(null); setDay(d); };
 
-  const update = (id: string, f: (e: Entry) => Entry) => { setEntries((x) => ({ ...x, [id]: f(x[id] ?? emptyEntry()) })); setEdited((x) => { const n = { ...x }; delete n[id]; return n; }); touch(); };
+  const changeAnnouncement = (v: string) => { setAnnouncement(v); touch(); };
+  const update = (id: string, f: (e: Entry) => Entry) => { setEntries((x) => ({ ...x, [id]: f(x[id] ?? emptyEntry()) })); touch(); };
   const setStatus = (id: string, status: Status) => update(id, (e) => ({ ...e, status }));
   const toggleTag = (id: string, t: string) => update(id, (e) => ({ ...e, tags: e.tags.includes(t) ? e.tags.filter((x) => x !== t) : [...e.tags, t] }));
 
@@ -103,8 +105,33 @@ export default function ClassDiary({ classId, className, students, initialTab = 
   const selEntry = sel ? entries[sel.id] ?? emptyEntry() : null;
 
   /* ---------------------------------------------------------- tin nhắn */
-  const messages = students.map((s) => ({ s, e: entries[s.id], text: edited[s.id] ?? messageFor(s, entries[s.id], day, pronoun), kinds: kindsOf(entries[s.id]) })).filter((m) => m.text);
+  // Tin nhắn = bản thầy cô đã sửa (nếu có), không thì bản app tự viết. Em không có điểm danh / ghi chú thì không có tin.
+  const allMsgs = students.map((s) => {
+    const e = entries[s.id];
+    const auto = messageFor(s, e, day, pronoun);
+    return { s, e, auto, text: auto ? e?.msgText || auto : null, custom: !!(auto && e?.msgText), kinds: kindsOf(e) };
+  }).filter((m) => m.text);
+  const messages = allMsgs.filter((m) => !m.e?.hidden);
+  const hiddenMsgs = allMsgs.filter((m) => m.e?.hidden);
   const shown = filter === 'all' ? messages : messages.filter((m) => m.kinds.includes(filter));
+  /** Lưu tin đã sửa / xoá / khôi phục của một em (migration 0057). Cập nhật giao diện trước, lỗi thì báo. */
+  const setMsg = async (id: string, text: string | null, hidden: boolean, ok: string) => {
+    const prev = entries[id];
+    const clean = text?.trim() || null;
+    setEntries((x) => {
+      const cur = x[id] ?? emptyEntry();
+      return { ...x, [id]: { ...cur, msgText: clean, hidden, copied: (cur.msgText ?? null) !== clean ? false : cur.copied } };
+    });
+    setFlash(ok);
+    const { error: e } = await supabase.rpc('teacher_diary_msg', { p_class: classId, p_day: day, p_student: id, p_text: clean, p_hidden: hidden });
+    if (e) {
+      setEntries((x) => ({ ...x, [id]: prev ?? emptyEntry() }));
+      setFlash('');
+      setError(/function|schema cache|column/i.test(e.message) ? MISSING_MSG : errText(e.message));
+    }
+  };
+  const startEdit = (id: string, text: string) => { setEditing(id); setDraft(text); };
+  const saveEdit = (id: string, auto: string) => { setEditing(null); void setMsg(id, draft.trim() === auto.trim() ? null : draft, false, 'Đã lưu tin nhắn đã sửa.'); };
   const count = (k: MessageKind) => messages.filter((m) => m.kinds.includes(k)).length;
   const copyOne = async (id: string, text: string) => {
     if (!(await copyText(text))) { setFlash('Trình duyệt chặn sao chép — bôi đen tin nhắn rồi bấm Ctrl+C.'); return; }
@@ -211,9 +238,7 @@ export default function ClassDiary({ classId, className, students, initialTab = 
             {!sel || !selEntry ? (
               <div className="diary-panel-empty">
                 <p className="dash-muted">Bấm tên một em để điểm danh và ghi chú.</p>
-                <label className="diary-ann">Việc chung hôm nay (đưa vào thông báo cả lớp)
-                  <textarea rows={4} maxLength={1500} value={announcement} placeholder={'Bài về nhà: Toán trang 34 bài 1, 2\nThứ Hai mang bút màu'} onChange={(e) => { setAnnouncement(e.target.value); touch(); }} />
-                </label>
+                <AnnouncementList value={announcement} onChange={changeAnnouncement} />
               </div>
             ) : (
               <>
@@ -260,26 +285,51 @@ export default function ClassDiary({ classId, className, students, initialTab = 
             </div>
             {shown.length === 0 ? <p className="dash-muted diary-empty">Chưa có tin nhắn nào. Điểm danh và ghi chú ở thẻ đầu, tin nhắn sẽ hiện ở đây.</p> : (
               <ul className="diary-msgs">
-                {shown.map(({ s, e, text }) => (
+                {shown.map(({ s, e, text, auto, custom }) => (
                   <li key={s.id} className="diary-msg">
-                    <div className="diary-msg-who"><b>{s.name}</b><span>{[e && e.status !== 'present' ? STATUS_LABEL[e.status] : '', ...(e?.tags ?? [])].filter(Boolean).join(' · ') || 'Ghi chú'}</span></div>
+                    <div className="diary-msg-who"><b>{s.name}</b><span>{[e && e.status !== 'present' ? STATUS_LABEL[e.status] : '', ...(e?.tags ?? [])].filter(Boolean).join(' · ') || 'Ghi chú'}</span>{custom && <span className="diary-msg-badge">✎ Đã sửa</span>}</div>
                     {editing === s.id ? (
-                      <textarea className="diary-msg-edit" rows={4} value={text ?? ''} onChange={(ev) => setEdited((x) => ({ ...x, [s.id]: ev.target.value }))} aria-label={`Sửa tin nhắn cho phụ huynh ${s.name}`} />
-                    ) : <p className="diary-bubble">{text}</p>}
-                    <div className="diary-msg-act">
-                      <button type="button" className={`mini-btn${e?.copied ? ' is-copied' : ''}`} onClick={() => void copyOne(s.id, text ?? '')}><Copy aria-hidden="true" /> {e?.copied ? 'Đã chép' : 'Sao chép'}</button>
-                      {phones?.[s.id] && <a className="mini-btn is-zalo" href={zaloHref(phones[s.id])} target="_blank" rel="noopener noreferrer" onClick={() => void copyOne(s.id, text ?? '')} title="Chép tin nhắn rồi mở Zalo của phụ huynh"><MessageCircle aria-hidden="true" /> Chép & mở Zalo</a>}
-                      <button type="button" className="mini-btn" onClick={() => setEditing(editing === s.id ? null : s.id)}><Pencil aria-hidden="true" /> {editing === s.id ? 'Xong' : 'Sửa'}</button>
-                    </div>
+                      <>
+                        <textarea className="diary-msg-edit" rows={5} maxLength={1500} value={draft} autoFocus onChange={(ev) => setDraft(ev.target.value)} aria-label={`Sửa tin nhắn cho phụ huynh ${s.name}`} />
+                        <div className="diary-msg-act">
+                          <button type="button" className="mini-btn is-primary" disabled={!draft.trim()} onClick={() => saveEdit(s.id, auto ?? '')}>✓ Lưu</button>
+                          <button type="button" className="mini-btn" onClick={() => setEditing(null)}>Huỷ</button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="diary-bubble">{text}</p>
+                        <div className="diary-msg-act">
+                          <button type="button" className={`mini-btn${e?.copied ? ' is-copied' : ''}`} onClick={() => void copyOne(s.id, text ?? '')}><Copy aria-hidden="true" /> {e?.copied ? 'Đã chép' : 'Sao chép'}</button>
+                          {phones?.[s.id] && <a className="mini-btn is-zalo" href={zaloHref(phones[s.id])} target="_blank" rel="noopener noreferrer" onClick={() => void copyOne(s.id, text ?? '')} title="Chép tin nhắn rồi mở Zalo của phụ huynh"><MessageCircle aria-hidden="true" /> Chép & mở Zalo</a>}
+                          <button type="button" className="mini-btn" onClick={() => startEdit(s.id, text ?? '')}><Pencil aria-hidden="true" /> Sửa</button>
+                          {custom && <button type="button" className="mini-btn" title="Viết lại tin nhắn theo điểm danh & ghi chú mới nhất (bỏ bản đã sửa)" onClick={() => void setMsg(s.id, null, false, 'Đã cập nhật tin nhắn theo ghi chú mới nhất.')}><RefreshCw aria-hidden="true" /> Cập nhật lại</button>}
+                          <button type="button" className="mini-btn is-danger" onClick={() => void setMsg(s.id, e?.msgText ?? null, true, `Đã xoá tin nhắn của ${s.name}. Khôi phục ở cuối danh sách.`)}><Trash2 aria-hidden="true" /> Xoá</button>
+                        </div>
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>
             )}
+            {hiddenMsgs.length > 0 && (
+              <details className="diary-hidden">
+                <summary>Đã xoá {hiddenMsgs.length} tin nhắn</summary>
+                <ul>
+                  {hiddenMsgs.map(({ s, e }) => (
+                    <li key={s.id}>
+                      <span>{s.name}</span>
+                      <button type="button" className="mini-btn" onClick={() => void setMsg(s.id, e?.msgText ?? null, false, `Đã khôi phục tin nhắn của ${s.name}.`)}><RotateCcw aria-hidden="true" /> Khôi phục</button>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
           </section>
           <aside className="dash-card diary-side">
             <h2>Gửi cả lớp</h2>
-            <p className="dash-muted">Thông báo chung cho nhóm Zalo lớp. Việc chung gõ ở ô dưới (mỗi dòng một ý).</p>
-            <textarea className="diary-note" rows={3} maxLength={1500} value={announcement} placeholder={'Bài về nhà: Toán trang 34 bài 1, 2\nThứ Hai mang bút màu'} onChange={(e) => { setAnnouncement(e.target.value); touch(); }} aria-label="Việc chung hôm nay" />
+            <p className="dash-muted">Thông báo chung cho nhóm Zalo lớp. Mỗi việc một dòng; việc hết hạn bấm 🗑 để xoá.</p>
+            <AnnouncementList value={announcement} onChange={changeAnnouncement} />
             <pre className="diary-sample">{classNotice}</pre>
             <button type="button" className="btn btn-primary diary-wide" onClick={() => void copyText(classNotice).then((ok) => setFlash(ok ? 'Đã sao chép thông báo cả lớp.' : 'Trình duyệt chặn sao chép.'))}><Copy aria-hidden="true" /> Sao chép thông báo</button>
             <ZaloGroupLink classId={classId} className={className} notice={classNotice} onCopied={(ok) => setFlash(ok ? 'Đã chép thông báo — dán (Ctrl+V) vào nhóm Zalo vừa mở rồi gửi.' : 'Trình duyệt chặn sao chép.')} />
@@ -342,6 +392,54 @@ export default function ClassDiary({ classId, className, students, initialTab = 
             </aside>
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------- Việc chung hôm nay (thông báo cả lớp) */
+// Mỗi việc một dòng (lưu chung trong cột announcement, ngăn bằng xuống dòng). Sửa thẳng trên dòng, 🗑 xoá việc đã hết hạn,
+// "Xoá hết" khi cả thông báo đã hết hạn; có Hoàn tác cho lần xoá gần nhất.
+const ANN_MAX = 1500;
+function AnnouncementList({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const items = value ? value.split('\n') : [];
+  const [draft, setDraft] = useState('');
+  const [undo, setUndo] = useState<{ value: string; label: string } | null>(null);
+  const set = (next: string[]) => onChange(next.join('\n'));
+  const add = () => {
+    const t = draft.trim();
+    if (!t || value.length + t.length + 1 > ANN_MAX) return;
+    set([...items.filter((x) => x.trim()), t]); setDraft(''); setUndo(null);
+  };
+  const remove = (i: number) => { setUndo({ value, label: 'Đã xoá 1 việc.' }); set(items.filter((_, k) => k !== i)); };
+  const clearAll = () => { setUndo({ value, label: 'Đã xoá toàn bộ thông báo.' }); onChange(''); };
+  const filled = items.filter((x) => x.trim()).length;
+
+  return (
+    <div className="diary-ann">
+      <div className="diary-ann-head">
+        <span>Việc chung hôm nay <small>(đưa vào thông báo cả lớp)</small></span>
+        {filled > 1 && <button type="button" className="mini-btn is-danger" onClick={clearAll}><Trash2 aria-hidden="true" /> Xoá hết</button>}
+      </div>
+      {items.length > 0 && (
+        <ol className="diary-ann-list">
+          {items.map((t, i) => (
+            <li key={i}>
+              <input value={t} maxLength={ANN_MAX} aria-label={`Việc ${i + 1}`}
+                onChange={(e) => set(items.map((x, k) => (k === i ? e.target.value.replace(/\n/g, ' ') : x)))}
+                onBlur={() => { if (!t.trim()) set(items.filter((_, k) => k !== i)); }} />
+              <button type="button" className="diary-ann-del" aria-label={`Xoá việc: ${t || 'dòng trống'}`} title="Xoá việc này (đã hết hạn)" onClick={() => remove(i)}><Trash2 aria-hidden="true" /></button>
+            </li>
+          ))}
+        </ol>
+      )}
+      <div className="diary-ann-add">
+        <input value={draft} maxLength={300} placeholder={filled ? 'Thêm việc khác…' : 'Vd: Bài về nhà: Toán trang 34 bài 1, 2'} aria-label="Thêm việc chung"
+          onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } }} />
+        <button type="button" className="mini-btn is-primary" disabled={!draft.trim()} onClick={add}>+ Thêm</button>
+      </div>
+      {undo && (
+        <p className="diary-ann-undo" role="status">{undo.label} <button type="button" className="mini-btn" onClick={() => { onChange(undo.value); setUndo(null); }}><RotateCcw aria-hidden="true" /> Hoàn tác</button></p>
       )}
     </div>
   );
