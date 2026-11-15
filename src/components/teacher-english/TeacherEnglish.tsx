@@ -4,12 +4,13 @@
 //   • Lộ trình 24 tuần — 6 giai đoạn, mỗi bài: Objectives → Warm-up → Vocabulary → Useful Expressions →
 //     Listening → Speaking/AI role-play → Teaching Challenge → Review. Đánh dấu từng phần, tự đánh giá 1–4.
 //   • Ngân hàng mẫu câu Classroom English: lọc theo khối 1–5 (bám Unit sách Global Success), tình huống, chủ đề.
+//   • Ôn mỗi ngày: thẻ lật từ vựng / mẫu câu theo lịch nhắc lại (src/lib/teacher-english/review.ts, migration 0060).
 //   • Tiến độ: tỉ lệ hoàn thành, mốc đánh giá, lỗi cần cải thiện.
 // Toàn bộ song ngữ Anh–Việt; nghe mẫu bằng giọng đọc của trình duyệt (src/lib/speech.ts, tự chuyển /api/tts khi thiếu giọng).
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft, ArrowRight, BookOpenCheck, Check, ChevronDown, Cloud, Copy, Flag, HardDrive, Languages, ListChecks,
-  MessagesSquare, Search, Snail, Star, Target, TrendingUp, Volume2, X,
+  Layers, MessagesSquare, Search, Snail, Star, Target, TrendingUp, Volume2, X,
 } from 'lucide-react';
 import { ToolIcon } from '@/components/classroom/tool-icons';
 import { speakSegments, stopSpeaking } from '@/lib/speech';
@@ -21,10 +22,13 @@ import { PHRASES, SITUATIONS, TEXTBOOK_UNITS, TOPICS, situationOf, topicOf, unit
 import { f3dSrc, phraseImage } from '@/lib/teacher-english/phrase-images';
 import { emptyProgress, useTeacherEnglish, type LessonProgress, type ProgressMap } from '@/lib/teacher-english/progress';
 import { fold } from '@/lib/classroom/teacher-nav';
+import { buildDeck, todayQueue, useReview } from '@/lib/teacher-english/review';
+import DailyReview from '@/components/teacher-english/DailyReview';
 
-type Tab = 'lo-trinh' | 'mau-cau' | 'tien-do';
+type Tab = 'lo-trinh' | 'on-tap' | 'mau-cau' | 'tien-do';
 const TABS: { key: Tab; en: string; vi: string; Icon: typeof Flag }[] = [
-  { key: 'lo-trinh', en: '24-week roadmap', vi: 'Lộ trình 24 tuần', Icon: Flag },
+  { key: 'lo-trinh', en: 'Roadmap', vi: 'Lộ trình', Icon: Flag },
+  { key: 'on-tap', en: 'Daily review', vi: 'Ôn mỗi ngày', Icon: Layers },
   { key: 'mau-cau', en: 'Classroom English', vi: 'Ngân hàng mẫu câu', Icon: MessagesSquare },
   { key: 'tien-do', en: 'Progress', vi: 'Tiến độ', Icon: TrendingUp },
 ];
@@ -78,12 +82,16 @@ export default function TeacherEnglish({ grade }: { grade?: number }) {
   const [hideVi, setHideVi] = useState(false);
   const [openLesson, setOpenLesson] = useState<string | null>(null);
   const store = useTeacherEnglish();
+  // Ôn mỗi ngày: bộ thẻ từ các bài đã bắt đầu + Câu của tôi; số trên tab = thẻ cần ôn hôm nay
+  const review = useReview();
+  const deck = useMemo(() => buildDeck(store.progress, store.saved), [store.progress, store.saved]);
+  const dueCount = useMemo(() => todayQueue(deck, review.map, review.newToday).queue.length, [deck, review.map, review.newToday]);
   const sp = useSpeaker();
 
   useEffect(() => {
     try { setHideVi(localStorage.getItem(VI_KEY) === '1'); } catch { /* bỏ qua */ }
     const h = window.location.hash.slice(1);
-    if (h === 'mau-cau' || h === 'tien-do' || h === 'lo-trinh') setTab(h);
+    if (h === 'mau-cau' || h === 'tien-do' || h === 'lo-trinh' || h === 'on-tap') setTab(h);
     else if (/^w\d{2}$/.test(h)) setOpenLesson(h);
   }, []);
   const go = (t: Tab) => { setTab(t); setOpenLesson(null); stopSpeaking(); try { history.replaceState(null, '', `#${t}`); } catch { /* bỏ qua */ } };
@@ -120,6 +128,7 @@ export default function TeacherEnglish({ grade }: { grade?: number }) {
           <button key={key} type="button" className={tab === key ? 'is-on' : ''} aria-current={tab === key ? 'page' : undefined} onClick={() => go(key)}>
             <Icon aria-hidden="true" /><span><b>{vi}</b><small lang="en">{en}</small></span>
             {key === 'tien-do' && <em className="te-badge">{overall}%</em>}
+            {key === 'on-tap' && dueCount > 0 && <em className="te-badge is-due" aria-label={`${dueCount} thẻ cần ôn hôm nay`}>{dueCount}</em>}
           </button>
         ))}
       </nav>
@@ -127,6 +136,7 @@ export default function TeacherEnglish({ grade }: { grade?: number }) {
       {tab === 'lo-trinh' && (lesson
         ? <LessonView lesson={lesson} store={store} sp={sp} hideVi={hideVi} onOpen={open} />
         : <Roadmap progress={store.progress} onOpen={open} />)}
+      {tab === 'on-tap' && <DailyReview deck={deck} review={review} />}
       {tab === 'mau-cau' && <PhraseBank sp={sp} hideVi={hideVi} saved={store.saved} toggleSaved={store.toggleSaved} defaultGrade={grade} />}
       {tab === 'tien-do' && <ProgressView progress={store.progress} onOpen={open} />}
     </div>

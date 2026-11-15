@@ -38,8 +38,8 @@ export default function TeacherEnglishCard({ href, grade, day }: { href: string;
         <h2 id="uw-te-h">🎓 Tiếng Anh sư phạm</h2>
         <Link href={href} className="uw-more">Mở <ChevronRight aria-hidden="true" /></Link>
       </div>
-      <div className="uw-meter" role="img" aria-label={`Đã học ${pct}% lộ trình 24 tuần`}><i style={{ width: `${pct}%` }} /></div>
-      <p className="uw-muted">{sync === 'loading' ? 'Đang tải…' : `Lộ trình 24 tuần · đã học ${pct}%`}</p>
+      <div className="uw-meter" role="img" aria-label={`Đã học ${pct}% lộ trình`}><i style={{ width: `${pct}%` }} /></div>
+      <p className="uw-muted">{sync === 'loading' ? 'Đang tải…' : `Lộ trình · đã học ${pct}%`}</p>
       {next && (
         <Link href={`${href}#${next.id}`} className="te-dash-next">
           <span>Tuần {next.week} · {next.title[1]}</span>
