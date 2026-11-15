@@ -339,6 +339,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
               <label className="adm-field"><span>Mẫu</span><select value={wopts.layout} onChange={(e) => setWo({ layout: e.target.value as WeekOpts['layout'] })}><option value="school">Mẫu trường (A4 dọc, 8 cột)</option><option value="land">Trang ngang có quốc hiệu</option></select></label>
               <label className="adm-field"><span>ND tích hợp</span><select value={wopts.short} onChange={(e) => setWo({ short: e.target.value as WeekOpts['short'] })}><option value="auto">Rút gọn khi cần (vừa 1 trang)</option><option value="full">Đầy đủ</option></select></label>
               <label className="pv-chk kh-chk"><input type="checkbox" checked={wopts.stretch} onChange={(e) => setWo({ stretch: e.target.checked })} /> Tuần ít tiết: giãn hàng cho đầy trang</label>
+              <label className="pv-chk kh-chk" title="Tắt: các giáo án chạy liền nhau, không để nửa trang trắng"><input type="checkbox" checked={wopts.newPage} onChange={(e) => setWo({ newPage: e.target.checked })} /> Mỗi giáo án sang trang mới</label>
             </div>
             <div className="planner-actions">
               <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => void exportWeek(false)}><FileDown aria-hidden="true" /> Xem trước lịch tuần {viDate(week)}</button>
@@ -422,6 +423,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
               <label>Mẫu <select value={wopts.layout} onChange={(e) => setWo({ layout: e.target.value as WeekOpts['layout'] })}><option value="school">Mẫu trường (A4 dọc)</option><option value="land">Trang ngang có quốc hiệu</option></select></label>
               <label>ND tích hợp <select value={wopts.short} onChange={(e) => setWo({ short: e.target.value as WeekOpts['short'] })}><option value="auto">Rút gọn khi cần</option><option value="full">Đầy đủ</option></select></label>
               <label className="pv-chk"><input type="checkbox" checked={wopts.stretch} onChange={(e) => setWo({ stretch: e.target.checked })} /> Giãn hàng cho đầy trang</label>
+              {preview.week?.withPlans && <label className="pv-chk" title="Tắt: các giáo án chạy liền nhau, không để nửa trang trắng"><input type="checkbox" checked={wopts.newPage} onChange={(e) => setWo({ newPage: e.target.checked })} /> Mỗi giáo án sang trang mới</label>}
               <span className={`pv-fit${weekBuilt.bad ? ' is-bad' : ''}`}>{weekBuilt.bad ? '⚠️' : '✅'} {weekBuilt.note}</span>
               <span className="planner-spacer" />
               <button type="button" className="btn btn-outline btn-sm" onClick={() => preview.week && downloadXlsx(`${preview.filename}.xlsx`, [weekSheet(preview.week, wopts)])}><FileSpreadsheet aria-hidden="true" /> Tải Excel lịch báo giảng</button>

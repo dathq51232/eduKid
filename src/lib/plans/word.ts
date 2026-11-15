@@ -27,6 +27,8 @@ table { border-collapse: collapse; width: 100%; } td, th { vertical-align: top; 
 
 /** ngắt trang — dạng Word và LibreOffice đều nhận */
 const BREAK = '<p style="page-break-before:always;margin:0">&nbsp;</p>';
+/** Giữa hai giáo án khi không ép sang trang mới: hai dòng trống (bài sau chạy tiếp, không để nửa trang trắng) */
+const GAP = '<p style="margin:0">&nbsp;</p><p style="margin:0">&nbsp;</p>';
 const sessionRank = (s?: string) => (/chi/i.test(s ?? '') ? 1 : 0);
 
 const doc = (title: string, body: string) =>
@@ -119,6 +121,8 @@ export type WeekDocOpts = {
   short?: boolean;
   /** chiều cao tối thiểu mỗi hàng (pt) — giãn cho đầy trang khi tuần ít tiết */
   rowPt?: number;
+  /** mỗi giáo án bắt đầu ở trang mới (mặc định: không — các bài chạy liền nhau, không để trang trống) */
+  newPage?: boolean;
 };
 
 /** Lịch báo giảng tuần (bảng) + các giáo án của tuần phía sau. `skipped`: tiết chữ đỏ (tiết trống) — vẫn ghi trong bảng (chữ đỏ), không soạn giáo án */
@@ -164,6 +168,6 @@ export function weekDocument(monday: string, plans: LessonPlan[], school: string
     ${head}
     <table class="grid" width="100%" border="1" cellspacing="0" cellpadding="4">${cellFont(`<tr>${[['8%', 'Thứ,<br/>ngày'], ['6%', 'Buổi'], ['5%', 'Tiết<br/>TKB'], ['10%', 'Môn học'], ['5%', 'Tiết<br/>PPCT'], ['', 'Tên bài dạy'], ['21%', 'ND tích hợp / ĐDDH'], ['9%', 'Điều chỉnh<br/>KH tuần']].map(([w, t]) => `<th${w ? ` width="${w}"` : ''}>${fs(t)}</th>`).join('')}</tr>${rows}`)}</table>${red}</div>`;
   }
-  const rest = withPlans ? inSchoolOrder(plans).map((p, i) => `${i ? BREAK : ''}${planBody(p, school)}`).join('') : '';
+  const rest = withPlans ? inSchoolOrder(plans).map((p, i) => `${i ? (opts.newPage ? BREAK : GAP) : ''}${planBody(p, school)}`).join('') : '';
   return doc(`Kế hoạch dạy học tuần ${viDate(days[0])}`, table + (rest ? `<div class="Port">${rest}</div>` : ''));
 }

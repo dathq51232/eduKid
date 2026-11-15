@@ -8,8 +8,9 @@ import { SCHOOL_COLS, WEEK_HEAD, dayName, sessionSpan, shortIntegration, weekDoc
 import { XS, range, type XCell, type XSheet } from '../xlsx';
 
 export type WeekArgs = { monday: string; plans: LessonPlan[]; school: string; className: string; withPlans: boolean; skipped?: ScheduleRow[] };
-export type WeekOpts = { layout: 'school' | 'land'; short: 'auto' | 'full'; stretch: boolean };
-export const DEFAULT_WEEK_OPTS: WeekOpts = { layout: 'school', short: 'auto', stretch: true };
+/** newPage: mỗi giáo án sang trang mới (tắt: các bài chạy liền nhau, không để nửa trang trắng) */
+export type WeekOpts = { layout: 'school' | 'land'; short: 'auto' | 'full'; stretch: boolean; newPage: boolean };
+export const DEFAULT_WEEK_OPTS: WeekOpts = { layout: 'school', short: 'auto', stretch: true, newPage: false };
 
 const KEY = 'edukid:week-opts';
 export function loadWeekOpts(): WeekOpts {
@@ -33,7 +34,7 @@ export function weekExport(a: WeekArgs, o: WeekOpts): { html: string; note: stri
     const r2 = fit(true);
     if (r2 && (r2.font > r.font || (r2.fits && !r.fits) || (!r.fits && !r2.fits))) { r = r2; short = true; }
   }
-  const html = weekDocument(a.monday, a.plans, a.school, a.className, a.withPlans, skipped, { font: r?.font, layout: o.layout, short, rowPt: r?.rowPt });
+  const html = weekDocument(a.monday, a.plans, a.school, a.className, a.withPlans, skipped, { font: r?.font, layout: o.layout, short, rowPt: r?.rowPt, newPage: o.newPage });
   if (!r) return { html, note: '', bad: false };
   const note = r.fits
     ? `Lịch vừa 1 trang${o.layout === 'school' ? ' A4 dọc' : ' ngang'} · cỡ chữ ${num(r.font)}${short ? ` · rút gọn ${longCells} ô tích hợp (bản đầy đủ vẫn ở giáo án)` : ''}${r.rowPt ? ' · đã giãn hàng cho đầy trang' : ''}`

@@ -66,7 +66,7 @@ const x = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(
 // ------------------------------------------------------------------ định dạng
 
 type RP = { b?: boolean; i?: boolean; u?: boolean; strike?: boolean; color?: string; sz?: number; bg?: string; caps?: boolean; va?: 'superscript' | 'subscript' };
-type PP = { jc?: string; before?: number; after?: number; left?: number; first?: number; line?: number; pbb?: boolean };
+type PP = { jc?: string; before?: number; after?: number; left?: number; first?: number; line?: number; pbb?: boolean; /** giữ cùng trang với đoạn sau (tiêu đề) */ keep?: boolean };
 
 /** các lớp CSS app dùng trong văn bản (doc-style.ts, plans/word.ts) */
 const CLASS: Record<string, { r?: RP; p?: PP }> = {
@@ -141,6 +141,7 @@ const JC: Record<string, string> = { center: 'center', right: 'right', justify: 
 const tw = (p: number) => Math.round(p * 20);
 function pPrXml(p: PP, pbb: boolean, extra = '') {
   const o: string[] = [];
+  if (p.keep) o.push('<w:keepNext/>');
   if (pbb || p.pbb) o.push('<w:pageBreakBefore/>');
   const sp = [`w:before="${tw(p.before ?? 0)}"`, `w:after="${tw(p.after ?? 0)}"`];
   sp.push(`w:line="${Math.round((p.line ?? 1.15) * 240)}" w:lineRule="auto"`);
@@ -234,7 +235,7 @@ function blocks(nodes: Node[], r: RP, p: PP, ctx: Ctx): string[] {
     if (s['page-break-before'] === 'always' && el.tag !== 'p') ctx.pendingBreak = true;
     if (el.tag === 'table') { out.push(...table(el, r, ctx)); continue; }
     if (el.tag === 'p' || /^h[1-6]$/.test(el.tag) || el.tag === 'li') {
-      const rr = runFrom(el, r), pp = { ...p, ...paraFrom(el) };
+      const rr = runFrom(el, r), pp: PP = { ...p, ...paraFrom(el), keep: /^h[1-6]$/.test(el.tag) || undefined };
       if (el.tag === 'p' && !('margin' in s) && !('margin-bottom' in s) && pp.after === undefined) pp.after = 6;
       // đoạn chỉ chứa ngắt trang
       const onlyBreak = el.kids.every((k) => isEl(k) ? false : !k.text.replace(/ /g, '').trim()) && pp.pbb;
