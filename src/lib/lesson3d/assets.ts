@@ -258,4 +258,15 @@ export const ASSETS: Asset[] = [
 ASSETS.push(...MODEL_ASSETS);
 
 export const ASSET_BY_ID: Record<string, Asset> = Object.fromEntries(ASSETS.map((a) => [a.id, a]));
-export const ASSET_CATS = [...new Set(ASSETS.map((a) => a.cat))];
+/** Mẫu cũ không giống thật hoặc trùng với mẫu đẹp hơn: ẩn khỏi thư viện (bài đã soạn vẫn hiện bình thường);
+ *  bài mẫu và khung bài STEM tạo mới dùng mẫu thay thế bên phải. */
+export const PREFER: Record<string, string> = {
+  pine: 'q-pine-trees-4', rock: 'q-rocks-2', dog: 'q-shiba-inu', cow: 'q-cow', pig: 'q-pig', fox: 'q-fox', fish: 'q-clownfish',
+  car: 'q-normal-car1', boat: 'q-boat', train: 'q-locomotive-front', spoon: 'q-spoon', 'q-bread': 'q-bread-slice',
+};
+const HIDDEN = new Set([...Object.keys(PREFER), 'q-shark', 'q-tuna', 'q-small-barn', 'k-house-type05', 'k-house-type08']);
+/** đồ vật hiện trong thư viện của Xưởng bài giảng 3D */
+export const LIB_ASSETS = ASSETS.filter((a) => !HIDDEN.has(a.id));
+/** mẫu nên dùng khi tạo đồ vật mới (thay mẫu đã ẩn) */
+export const preferId = (id: string) => PREFER[id] ?? id;
+export const ASSET_CATS = [...new Set(LIB_ASSETS.map((a) => a.cat))];

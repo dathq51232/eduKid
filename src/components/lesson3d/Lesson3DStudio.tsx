@@ -8,7 +8,7 @@ import { ArrowLeft, Copy, Eye, Grid3x3, Maximize, Pause, Play, Plus, Trash2, Upl
 import { assetError, assetUsage, deleteAsset, fmtMB, listAssets, uploadAsset, type TeacherAsset } from '@/lib/assets/client';
 import { baseName, prepareBoard } from '@/lib/assets/image';
 import { createClient } from '@/lib/supabase/client';
-import { ASSETS, ASSET_BY_ID, ASSET_CATS } from '@/lib/lesson3d/assets';
+import { ASSET_BY_ID, ASSET_CATS, LIB_ASSETS } from '@/lib/lesson3d/assets';
 import type { Runtime, Stage3D } from '@/lib/lesson3d/engine';
 import { stemByKey } from '@/lib/lesson3d/templates';
 import { FIT_LABEL } from '@/lib/lesson3d/stem-catalog';
@@ -88,7 +88,7 @@ export default function Lesson3DStudio({ classId, lessonId, initial, offline }: 
         onPick: (id) => pickRef.current(id),
       });
       engRef.current = eng; eng.setLesson(ref.current.L);
-      setThumbs(makeThumbs(ASSETS.map((a) => a.id)));
+      setThumbs(makeThumbs(LIB_ASSETS.map((a) => a.id)));
       if (offlineRef.current) startPlayRef.current();
     });
     return () => { alive = false; engRef.current?.dispose(); engRef.current = null; };
@@ -203,7 +203,7 @@ export default function Lesson3DStudio({ classId, lessonId, initial, offline }: 
 
   /* ---------- thư viện ---------- */
   const f = fold(q);
-  const libCats = ASSET_CATS.map((c) => ({ c, items: ASSETS.filter((a) => a.cat === c && (!f || fold(`${a.name} ${a.kw ?? ''} ${c}`).includes(f))) })).filter((x) => x.items.length);
+  const libCats = ASSET_CATS.map((c) => ({ c, items: LIB_ASSETS.filter((a) => a.cat === c && (!f || fold(`${a.name} ${a.kw ?? ''} ${c}`).includes(f))) })).filter((x) => x.items.length);
   const stem = stemByKey(L.stem);
   const suggested = stem?.assets.filter((a) => ASSET_BY_ID[a]) ?? [];
   const selObj = sel ? L.objects.find((o) => o.id === sel) ?? null : null;
@@ -245,7 +245,7 @@ export default function Lesson3DStudio({ classId, lessonId, initial, offline }: 
       <div className="s3d-main">
         {!play && (
           <aside className="s3d-pane s3d-lib" aria-label="Thư viện đồ vật 3D">
-            <div className="s3d-pane-h"><h2>Thư viện 3D <small>{ASSETS.length} đồ vật</small></h2>
+            <div className="s3d-pane-h"><h2>Thư viện 3D <small>{LIB_ASSETS.length} đồ vật</small></h2>
               <input className="s3d-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm: cây, đèn, khối, pin…" aria-label="Tìm đồ vật" /></div>
             <div className="s3d-lib-list">
               <section className="s3d-mine">

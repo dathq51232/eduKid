@@ -1,9 +1,11 @@
 // Bài mẫu 3D dựng sẵn (lời giảng, câu hỏi do EduChain Kids tự viết) + khung bài STEM 5 bước cho các bài còn lại.
-import { ASSET_BY_ID } from './assets';
+import { ASSET_BY_ID, preferId } from './assets';
 import { STEM_LESSONS, stemKey, type StemLesson } from './stem-catalog';
 import { emptyLesson, uid, type Lesson3D, type Obj3D, type Scene3D } from './types';
 
-function o(type: string, x: number, z: number, extra: Partial<Obj3D> = {}): Obj3D {
+function o(type0: string, x: number, z: number, extra: Partial<Obj3D> = {}): Obj3D {
+  // mẫu đã ẩn khỏi thư viện: dùng mẫu thay thế giống thật hơn
+  const type = ASSET_BY_ID[preferId(type0)] ? preferId(type0) : type0;
   const a = ASSET_BY_ID[type];
   return { id: uid(), type, x, y: a?.y ?? 0, z, ry: 0, s: 1, color: a?.color ?? '#999999', name: a?.name ?? type, spot: { on: false, title: '', text: '' }, fx: { type: '', speed: 1 }, ...extra };
 }
@@ -135,7 +137,7 @@ export const TEMPLATE_BY_ID: Record<string, Template> = Object.fromEntries(TEMPL
 
 /** Khung bài 3D theo quy trình STEM 5 bước, đặt sẵn đồ vật gợi ý — giáo viên chỉ cần viết lời giảng */
 export function stemSkeleton(s: StemLesson): Lesson3D {
-  const ids = s.assets.filter((a) => ASSET_BY_ID[a]).slice(0, 8);
+  const ids = [...new Set(s.assets.map(preferId))].filter((a) => ASSET_BY_ID[a]).slice(0, 8);
   const n = ids.length;
   const objs = ids.map((t, i) => {
     const ang = n > 1 ? Math.PI * (0.15 + (0.7 * i) / (n - 1)) : Math.PI / 2;
