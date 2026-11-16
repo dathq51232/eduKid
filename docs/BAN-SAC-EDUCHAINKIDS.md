@@ -165,7 +165,7 @@ Thay cho mô hình vòng loại toàn quốc, EduChain Kids tổ chức **theo m
 | **Ai tạo** | Giáo viên chủ nhiệm (hoặc giáo viên bộ môn được gán lớp) |
 | **Đề** | Cô chọn bài / chủ đề (hoặc ma trận). Hệ thống **sinh đề riêng cho từng em** cùng ma trận, trộn câu và trộn phương án |
 | **Cấu trúc mặc định** | Lớp 1–2: 10 câu, 15 phút · Lớp 3–5: 20 câu, 25 phút · Ma trận 40% L1–L2, 30% L3, 20% L4, 10% L5 · Cô sửa được số câu, thời gian, tỉ lệ mức |
-| **Vào phòng** | Em đăng nhập → nhập **mã phòng** (6 ký tự) hoặc bấm vào bài cô giao; chỉ vào được trong **giờ mở – đóng** cô đặt |
+| **Vào phòng** | Em đăng nhập → **bắt buộc nhập đúng mã phòng** (6 ký tự) mới bắt đầu được (máy chủ kiểm tra, migration 0063); phòng hiện sẵn ở trang của em nhưng vẫn phải nhập mã; chỉ trong **giờ mở – đóng** cô đặt |
 | **Số lần làm** | **1 lần.** Em gặp sự cố (mất mạng, tắt máy, hết pin) → cô bấm **“Cho làm lại”**, em nhận đề mới cùng ma trận; lần cũ ghi lại để cô xem |
 | **Trong lúc làm** | Có nhãn đồ nghề, nghe đọc đề; **không hiện đúng/sai từng câu**; đồng hồ đếm lùi nhẹ nhàng; hết giờ máy tự nộp phần đã làm |
 | **Điều kiện vào** | **Không bắt buộc** hoàn thành Ươm mầm (em nào cũng được kiểm tra cùng lớp); em đã có 🦉 Cú Chăm thì hiện kèm trong kết quả |

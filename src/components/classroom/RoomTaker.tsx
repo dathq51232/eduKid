@@ -45,6 +45,7 @@ export default function RoomTaker({ id }: { id: string }) {
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
+  const [code, setCode] = useState('');
   const sentRef = useRef(false);
   const leavesRef = useRef(0);
   const kAns = `edukid:phong:${id}:ans`, kLeave = `edukid:phong:${id}:leave`;
@@ -56,6 +57,7 @@ export default function RoomTaker({ id }: { id: string }) {
     setSkew(new Date(row.server_now).getTime() - Date.now());
     setRoom(row);
     if (row.done) return;
+    try { const v = sessionStorage.getItem(`edukid:phong:${id}:code`); if (v) setCode(v); } catch { /* bỏ qua */ }
     try { const a = JSON.parse(store.get(kAns) ?? '[]'); if (Array.isArray(a)) setAnswers(a); } catch { /* bỏ qua */ }
     leavesRef.current = Number(store.get(kLeave)) || 0;
   }, [id, kAns, kLeave]);
@@ -98,9 +100,12 @@ export default function RoomTaker({ id }: { id: string }) {
 
   useEffect(() => { if (running && left === 0 && endAt) void submit(); }, [running, left, endAt, submit]);
 
-  const start = async () => {
+  const start = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const c = code.replace(/\s/g, '').toUpperCase();
+    if (c.length !== 6) return setErr('Em nhập mã phòng 6 ký tự cô đọc để bắt đầu nhé.');
     setBusy(true); setErr('');
-    const { data, error } = await createClient().rpc('student_start_room', { p_room: id });
+    const { data, error } = await createClient().rpc('student_start_room', { p_room: id, p_code: c });
     setBusy(false);
     if (error) return setErr(roomError(error.message));
     setRoom((r) => (r ? { ...r, started_at: data as string } : r));
@@ -177,7 +182,12 @@ export default function RoomTaker({ id }: { id: string }) {
             <>
               <p>Đề của em có <strong>{room.questions.length} câu</strong>, làm trong <strong>{room.minutes} phút</strong>. Mỗi bạn một đề riêng, nên em cứ tự tin làm theo cách của mình nhé!</p>
               <p>Em làm <strong>một lần</strong>. Có thể quay lại sửa câu trước khi nộp; hết giờ máy tự nộp phần em đã làm.</p>
-              <button type="button" className="btn btn-yellow" onClick={start} disabled={busy}>{busy ? 'Đang mở đề…' : 'Bắt đầu làm bài'}</button>
+              <form className="room-join room-start" onSubmit={start}>
+                <label htmlFor="room-start-code">Mã phòng cô đọc</label>
+                <input id="room-start-code" value={code} onChange={(ev) => setCode(ev.target.value.toUpperCase().slice(0, 8))} placeholder="Mã phòng"
+                  autoComplete="off" autoCapitalize="characters" spellCheck={false} required />
+                <button type="submit" className="btn btn-yellow" disabled={busy}>{busy ? 'Đang mở đề…' : 'Bắt đầu làm bài'}</button>
+              </form>
             </>
           ) : <p className="adm-alert is-info">{before ? `Phòng thi mở lúc ${whenLabel(room.opens_at)}. Em quay lại đúng giờ nhé!` : 'Phòng thi đã đóng. Nếu em chưa kịp làm, nhờ cô bấm “Cho làm lại”.'}</p>}
           {err && <p className="adm-alert is-error" role="alert">{err}</p>}

@@ -3,7 +3,10 @@
 .room-join label { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--blue-deep); }
 .room-join label svg { width: 20px; height: 20px; }
 .room-join input { width: 150px; min-height: 42px; padding: 4px 12px; border: 2px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: 700 20px/1 var(--font-display, 'Quicksand'), sans-serif; letter-spacing: .18em; text-align: center; text-transform: uppercase; }
+.room-join input { width: 170px; }
+.room-join input::placeholder { letter-spacing: normal; text-transform: none; font-size: 16px; font-weight: 600; color: var(--muted); }
 .room-join-err { flex-basis: 100%; margin: 0; color: #b91c1c; font-size: 14px; }
+.room-start { margin-top: 4px; }
 .student-rooms .task-list { margin-top: 10px; }
 
 .room-create h2 { margin: 0; }

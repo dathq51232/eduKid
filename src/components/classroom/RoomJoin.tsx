@@ -22,13 +22,15 @@ export default function RoomJoin() {
     const { data, error } = await createClient().rpc('student_join_room', { p_code: c });
     setBusy(false);
     if (error || !data) return setErr(roomError(error?.message ?? ''));
+    // nhớ mã vừa nhập (trong phiên) để màn Bắt đầu điền sẵn — máy chủ vẫn kiểm tra mã khi bắt đầu
+    try { sessionStorage.setItem(`edukid:phong:${data as string}:code`, c); } catch { /* bỏ qua */ }
     router.push(`/hoc-sinh/phong-thi/${data as string}`);
   };
 
   return (
     <form className="room-join" onSubmit={go}>
       <label htmlFor="room-code"><DoorOpen aria-hidden="true" /> Vào phòng thi</label>
-      <input id="room-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 8))} placeholder="Mã 6 ký tự"
+      <input id="room-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 8))} placeholder="Mã phòng"
         autoComplete="off" autoCapitalize="characters" spellCheck={false} inputMode="text" aria-describedby={err ? 'room-err' : undefined} />
       <button type="submit" className="btn btn-yellow btn-sm" disabled={busy}>{busy ? 'Đang vào…' : 'Vào phòng'}</button>
       {err && <p id="room-err" className="room-join-err" role="alert">{err}</p>}

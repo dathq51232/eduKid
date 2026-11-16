@@ -78,6 +78,7 @@ export function roomError(msg: string): string {
   if (msg.includes('not_in_class')) return 'Phòng thi này không phải của lớp em.';
   if (msg.includes('no_paper')) return 'Em chưa có đề trong phòng này — nhờ cô bấm “Tạo đề cho em”.';
   if (msg.includes('room_closed')) return 'Phòng thi chưa mở hoặc đã đóng.';
+  if (msg.includes('wrong_code')) return 'Mã phòng chưa đúng. Em nhập đúng mã cô đọc nhé.';
   if (msg.includes('does not exist') || msg.includes('Could not find')) return 'Máy chủ chưa cập nhật (cần chạy migration 0062).';
   return 'Có lỗi, thử lại sau.';
 }
