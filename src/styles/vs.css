@@ -1,0 +1,100 @@
+/* vs-: Xưởng video stickman (src/components/video-studio) */
+.vs { --vs-r: 14px; }
+.vs-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.vs-tabs button { flex: none; min-height: 44px; padding: 8px 16px; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.vs-tabs button.is-on { border-color: var(--brand-blue); background: var(--blue-soft); color: var(--brand-blue); }
+.vs-msg { padding: 10px 14px; border-radius: 12px; background: var(--blue-soft); color: var(--ink); font-weight: 600; }
+.vs-warn { padding: 10px 14px; border-radius: 12px; background: color-mix(in srgb, var(--brand-yellow) 22%, var(--surface)); color: var(--ink); font-size: 14.5px; }
+.vs-muted { color: var(--muted); font-size: 13.5px; line-height: 1.45; }
+.vs-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+.vs-main, .vs-side, .vs-stack, .vs-lib, .vs-projects { display: grid; gap: 14px; min-width: 0; }
+.vs-side { position: sticky; top: 12px; }
+.vs-box { display: grid; gap: 12px; padding: 16px; border: 1.5px solid var(--line); border-radius: 18px; background: var(--surface); min-width: 0; }
+.vs-box h2 { font-size: 18px; }
+.vs-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.vs-row > .vs-field { flex: 1 1 200px; }
+.vs-row > .vs-field.is-wide { flex: 2 1 280px; }
+.vs-field { display: grid; gap: 4px; min-width: 0; align-content: start; }
+.vs-field > span { color: var(--muted); font-size: 13px; font-weight: 800; }
+.vs-field input, .vs-field select, .vs-field textarea, .vs-lesson select {
+  width: 100%; min-height: 42px; padding: 8px 11px; border: 2px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 15px;
+}
+.vs-field textarea { resize: vertical; line-height: 1.45; }
+.vs-seg { display: inline-flex; border: 2px solid var(--line-strong); border-radius: 12px; overflow: hidden; }
+.vs-seg button { min-height: 38px; padding: 6px 12px; border: 0; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.vs-seg button.is-on { background: var(--brand-blue); color: #fff; }
+.vs-count { display: inline-flex; align-items: center; gap: 8px; }
+.vs-count button, .vs-icon { display: inline-grid; place-items: center; width: 36px; height: 36px; border: 1.5px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.vs-count button svg, .vs-icon svg { width: 16px; height: 16px; }
+.vs-count b { font-size: 20px; min-width: 24px; text-align: center; }
+.vs-icon:disabled { opacity: .4; cursor: default; }
+.vs-icon.is-danger:hover:not(:disabled) { color: #c2410c; border-color: #c2410c; }
+.vs-lesson { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border-radius: 14px; background: var(--surface-2); }
+.vs-lesson > svg { width: 20px; height: 20px; color: var(--brand-blue); }
+.vs-lesson select { width: auto; min-height: 40px; font-size: 14.5px; }
+.vs-lesson .vs-grow { flex: 1 1 220px; }
+.vs-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.vs-mini { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 4px 11px; border: 1.5px solid var(--line-strong); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+.vs-mini svg { width: 15px; height: 15px; }
+.vs-mini:disabled { opacity: .5; cursor: default; }
+.vs-mini.is-danger { color: #c2410c; }
+.vs-check { display: flex; align-items: center; gap: 8px; font-size: 14.5px; }
+.vs-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.vs-chips button { display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 4px 12px; border: 1.5px solid var(--line-strong); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.vs-chips button svg { width: 14px; height: 14px; }
+.vs-chips button.is-on { border-color: var(--brand-blue); background: var(--blue-soft); color: var(--brand-blue); }
+/* phân cảnh */
+.vs-clips { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.vs-clip { display: grid; gap: 10px; padding: 14px; border: 1.5px solid var(--line); border-left: 5px solid var(--brand-blue); border-radius: 16px; background: var(--surface); }
+.vs-clip > header { display: flex; align-items: center; gap: 10px; }
+.vs-clip > header b { font-size: 16.5px; }
+.vs-clip-tools { display: flex; gap: 4px; margin-left: auto; }
+.vs-beats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.vs-out { display: grid; gap: 10px; padding: 12px; border-radius: 14px; background: var(--surface-2); }
+.vs-prompt { max-height: 360px; overflow: auto; margin: 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); white-space: pre-wrap; font: 13px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; color: var(--ink); }
+.vs-checks { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.vs-checks li { display: flex; gap: 8px; align-items: flex-start; line-height: 1.4; }
+.vs-checks svg { flex: none; width: 18px; height: 18px; margin-top: 1px; }
+.vs-checks .is-ok svg { color: var(--green-solid); }
+.vs-checks .is-bad svg { color: #c58a00; }
+.vs-howto ol { display: grid; gap: 6px; margin: 0; padding-left: 20px; font-size: 14px; color: var(--muted); }
+/* ảnh tham chiếu */
+.vs-refs { display: flex; flex-wrap: wrap; gap: 8px; }
+.vs-ref { position: relative; display: grid; justify-items: center; gap: 2px; width: 96px; color: var(--ink); text-decoration: none; }
+.vs-ref img, .vs-ref-ph { width: 96px; height: 96px; object-fit: cover; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface-2); display: grid; place-items: center; }
+.vs-ref small { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--muted); }
+.vs-ref button { position: absolute; top: 4px; right: 4px; display: grid; place-items: center; width: 24px; height: 24px; border: 0; border-radius: 50%; background: rgb(0 0 0 / .6); color: #fff; cursor: pointer; }
+.vs-ref button svg { width: 14px; height: 14px; }
+.vs-ref-add { place-content: center; height: 96px; border: 2px dashed var(--line-strong); border-radius: 12px; color: var(--brand-blue); font-size: 13px; font-weight: 700; cursor: pointer; }
+.vs-ref-add svg { width: 22px; height: 22px; }
+/* thư viện */
+.vs-lib-hd { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.vs-lib-hd .vs-muted { flex: 1 1 320px; }
+.vs-form { display: grid; gap: 10px; padding: 16px; border: 2px solid var(--brand-blue); border-radius: 18px; background: var(--surface); }
+.vs-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.vs-card { display: flex; gap: 12px; padding: 12px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface); min-width: 0; }
+.vs-card-imgs { display: grid; gap: 4px; flex: none; }
+.vs-card-imgs img, .vs-card-imgs .vs-ref-ph { width: 76px; height: 76px; object-fit: cover; border-radius: 12px; border: 1px solid var(--line); }
+.vs-noimg { display: grid; place-items: center; width: 76px; height: 76px; border-radius: 12px; background: var(--surface-2); font-size: 28px; }
+.vs-noimg small { font-size: 10.5px; color: var(--muted); }
+.vs-card-body { display: grid; gap: 4px; min-width: 0; align-content: start; }
+.vs-card-name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-weight: 800; }
+.vs-tag { display: inline-flex; align-items: center; gap: 3px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 700; }
+.vs-tag svg { width: 12px; height: 12px; }
+.vs-tag.is-shared { background: var(--blue-soft); color: var(--brand-blue); }
+.vs-card summary { cursor: pointer; color: var(--brand-blue); font-size: 13.5px; font-weight: 700; }
+.vs-anchor { margin-top: 4px; font-size: 13px; line-height: 1.45; color: var(--muted); }
+/* dự án */
+.vs-plist { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.vs-plist li { display: flex; align-items: center; gap: 8px; }
+.vs-plink { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1; min-width: 0; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.vs-plink svg { width: 18px; height: 18px; color: var(--brand-blue); }
+.vs-plink small { width: 100%; color: var(--muted); font-size: 12.5px; }
+@media (max-width: 1100px) {
+  .vs-grid { grid-template-columns: 1fr; }
+  .vs-side { position: static; }
+}
+@media (max-width: 720px) {
+  .vs-beats { grid-template-columns: 1fr; }
+  .vs-lesson select { width: 100%; }
+}
