@@ -4,6 +4,7 @@
 //  parts: các bộ phận tách rời được; beam: đòn cân; hands: kim đồng hồ.
 import * as THREE from 'three';
 import { MODEL_ASSETS } from './models';
+import * as N from './nature';
 
 export type AssetOpts = { color: string; name: string; on?: boolean };
 export type Asset = {
@@ -88,29 +89,22 @@ function animal(body: string, head: string, o: { ears?: 'up' | 'round'; tail?: b
 export const ASSETS: Asset[] = [
   // ---------- Tự nhiên ----------
   { id: 'pine', cat: 'Tự nhiên', name: 'Cây thông', color: LEAF, b: ({ color }) => grp(mesh(cyl(0.18, 0.24, 1, 6), M(TRUNK), 0, 0.5), mesh(cone(1.1, 1.8, 7), M(color), 0, 1.7), mesh(cone(0.8, 1.4, 7), M(color), 0, 2.6)) },
-  { id: 'tree', cat: 'Tự nhiên', name: 'Cây tán tròn', color: '#43a35a', b: ({ color }) => grp(mesh(cyl(0.2, 0.28, 1.4, 6), M(TRUNK), 0, 0.7), mesh(new THREE.IcosahedronGeometry(1.25, 1), M(color), 0, 2.2)) },
-  { id: 'fruit-tree', cat: 'Tự nhiên', name: 'Cây ăn quả', color: '#43a35a', kw: 'qua cam xoai', b: ({ color }) => { const g = grp(mesh(cyl(0.2, 0.28, 1.4, 6), M(TRUNK), 0, 0.7), mesh(new THREE.IcosahedronGeometry(1.25, 1), M(color), 0, 2.2)); [[0.9, 2.2, 0.5], [-0.7, 2.6, 0.7], [0.3, 1.7, 1], [-0.5, 1.9, -0.9], [0.8, 2.7, -0.5]].forEach(([x, y, z]) => g.add(mesh(sph(0.18, 8, 6), M('#f97316'), x, y, z))); return g; } },
+  { id: 'tree', cat: 'Tự nhiên', name: 'Cây tán tròn', color: '#43a35a', b: ({ color }) => N.roundTree(color) },
+  { id: 'fruit-tree', cat: 'Tự nhiên', name: 'Cây ăn quả', color: '#43a35a', kw: 'qua cam xoai', b: ({ color }) => N.fruitTree(color) },
   { id: 'plant-parts', cat: 'Tự nhiên', name: 'Cây (tách bộ phận)', color: '#3f9a4f', split: true, kw: 're than la hoa qua bo phan thuc vat', b: ({ color }) => {
-    const root = grp(...[[-0.3, -0.5], [0.3, -0.5], [0, -0.7], [-0.15, -0.35], [0.2, -0.3]].map(([x, l]) => { const r = mesh(cyl(0.03, 0.06, Math.abs(l) * 1.6, 5), M('#c79a5a'), x, l * 0.8, 0); r.rotation.z = x * 0.8; return r; }));
-    root.position.y = 0.6;
-    const stem = mesh(cyl(0.09, 0.12, 2.2, 7), M(color), 0, 1.7, 0);
-    const leafG = grp(...[[-0.55, 1.6, 0.6], [0.55, 2.1, -0.6], [-0.5, 2.5, -0.3]].map(([x, y, r]) => { const l = mesh(sph(0.4, 8, 6), M('#4cb35e'), x, y, 0); l.scale.set(1, 0.25, 0.55); l.rotation.z = r; return l; }));
-    const flower = grp(mesh(sph(0.16, 8, 6), M('#facc15'), 0, 2.95, 0), ...Array.from({ length: 6 }, (_, i) => { const a = (i / 6) * Math.PI * 2; return mesh(sph(0.15, 6, 5), M('#ec4899'), Math.cos(a) * 0.24, 2.95, Math.sin(a) * 0.24); }));
-    const fruit = mesh(sph(0.22, 10, 8), M('#ef4444'), 0.45, 2.55, 0.35);
-    const soil = mesh(cyl(1.1, 1.1, 0.2, 16), M('#8a5a3b'), 0, 0.1, 0);
-    const g = grp(soil, root, stem, leafG, flower, fruit);
-    return withParts(g, [[root, 0, -0.9, 0.9], [stem, 0, 0, 0], [leafG, -1.2, 0, 0.4], [flower, 0, 1, 0], [fruit, 1.2, 0, 0.6]]);
+    const { soil, root, stem, leafG, flower, fruit } = N.plantParts(color);
+    return withParts(grp(soil, root, stem, leafG, flower, fruit), [[root, 0, -0.9, 0.9], [stem, 0, 0, 0], [leafG, -1.2, 0, 0.4], [flower, 0, 1, 0], [fruit, 1.2, 0, 0.6]]);
   } },
-  { id: 'flower', cat: 'Tự nhiên', name: 'Hoa', color: '#ec4899', b: ({ color }) => { const g = grp(mesh(cyl(0.04, 0.05, 0.8, 5), M('#3f9a4f'), 0, 0.4), mesh(sph(0.13, 8, 6), M('#facc15'), 0, 0.85)); for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; g.add(mesh(sph(0.13, 6, 5), M(color), Math.cos(a) * 0.2, 0.85, Math.sin(a) * 0.2)); } return g; } },
-  { id: 'pot-plant', cat: 'Tự nhiên', name: 'Chậu cây cảnh', color: '#c2410c', kw: 'chau hoa', b: ({ color }) => grp(mesh(cyl(0.45, 0.32, 0.6, 12), M(color), 0, 0.3), mesh(cyl(0.42, 0.42, 0.05, 12), M('#6b4a2b'), 0, 0.58), mesh(new THREE.IcosahedronGeometry(0.45, 1), M('#3fa45b'), 0, 1.1), mesh(cyl(0.04, 0.05, 0.4, 5), M('#3f9a4f'), 0, 0.75)) },
-  { id: 'grass', cat: 'Tự nhiên', name: 'Bụi cỏ', color: '#5fb34f', b: ({ color }) => grp(...[[-0.2, 0], [0.15, 0.1], [0, -0.15], [0.25, -0.1], [-0.1, 0.2]].map(([x, z]) => mesh(cone(0.08, 0.5, 4), M(color), x, 0.25, z))) },
-  { id: 'mountain', cat: 'Tự nhiên', name: 'Núi', color: '#7b8a74', b: ({ color }) => grp(mesh(cone(2.6, 4.4, 7), M(color), 0, 2.2), mesh(cone(0.95, 1.4, 7), M('#ffffff'), 0, 3.72)) },
-  { id: 'hill', cat: 'Tự nhiên', name: 'Đồi', color: '#79ad55', b: ({ color }) => { const m = mesh(new THREE.SphereGeometry(1.8, 9, 6, 0, Math.PI * 2, 0, Math.PI / 2), M(color)); m.scale.y = 0.55; return grp(m); } },
-  { id: 'plain', cat: 'Tự nhiên', name: 'Đồng bằng', color: '#9ccc65', b: ({ color }) => grp(mesh(box(3.2, 0.12, 2.4), M(color), 0, 0.06)) },
+  { id: 'flower', cat: 'Tự nhiên', name: 'Hoa', color: '#ec4899', b: ({ color }) => N.flower(color) },
+  { id: 'pot-plant', cat: 'Tự nhiên', name: 'Chậu cây cảnh', color: '#c2410c', kw: 'chau hoa', b: ({ color }) => N.potPlant(color) },
+  { id: 'grass', cat: 'Tự nhiên', name: 'Bụi cỏ', color: '#5fb34f', b: ({ color }) => N.grassTuft(color) },
+  { id: 'mountain', cat: 'Tự nhiên', name: 'Núi', color: '#7b8a74', b: ({ color }) => N.mountain(color) },
+  { id: 'hill', cat: 'Tự nhiên', name: 'Đồi', color: '#79ad55', b: ({ color }) => N.hill(color) },
+  { id: 'plain', cat: 'Tự nhiên', name: 'Đồng bằng', color: '#9ccc65', b: ({ color }) => N.plain(color) },
   { id: 'rock', cat: 'Tự nhiên', name: 'Tảng đá', color: METAL, b: ({ color }) => grp(mesh(new THREE.DodecahedronGeometry(0.6, 0), M(color), 0, 0.4)) },
-  { id: 'cloud', cat: 'Tự nhiên', name: 'Mây', color: '#ffffff', y: 5.5, b: ({ color }) => grp(...[[0, 0, 0, 0.9], [0.9, -0.1, 0.2, 0.7], [-0.9, -0.15, -0.1, 0.68], [0.4, 0.4, -0.2, 0.6], [-0.4, 0.35, 0.3, 0.58]].map(([x, y, z, r]) => mesh(new THREE.IcosahedronGeometry(r, 1), M(color, { roughness: 1 }), x, y, z))) },
-  { id: 'lake', cat: 'Tự nhiên', name: 'Hồ nước', color: '#2aa7e0', kw: 'ao', b: ({ color }) => grp(mesh(cyl(2, 2.1, 0.12, 20), M(color, { roughness: 0.3 }), 0, 0.06)) },
-  { id: 'river', cat: 'Tự nhiên', name: 'Dòng sông', color: '#34b4ec', kw: 'suoi', b: ({ color }) => { const c = new THREE.CatmullRomCurve3([new THREE.Vector3(-3, 0.05, -1), new THREE.Vector3(-1, 0.05, 0.6), new THREE.Vector3(1, 0.05, -0.4), new THREE.Vector3(3, 0.05, 0.8)]); const m = mesh(new THREE.TubeGeometry(c, 40, 0.35, 6), M(color, { roughness: 0.3 })); m.scale.y = 0.3; return grp(m); } },
+  { id: 'cloud', cat: 'Tự nhiên', name: 'Mây', color: '#ffffff', y: 5.5, b: ({ color }) => N.cloud(color) },
+  { id: 'lake', cat: 'Tự nhiên', name: 'Hồ nước', color: '#2aa7e0', kw: 'ao', b: ({ color }) => N.lake(color) },
+  { id: 'river', cat: 'Tự nhiên', name: 'Dòng sông', color: '#34b4ec', kw: 'suoi', b: ({ color }) => N.river(color) },
   { id: 'sea', cat: 'Tự nhiên', name: 'Biển', color: '#1d8fd1', kw: 'nuoc bien dai duong', b: ({ color }) => grp(mesh(box(5, 0.2, 4), M(color, { roughness: 0.25, transparent: true, opacity: 0.92 }), 0, 0.1)) },
   { id: 'ice', cat: 'Tự nhiên', name: 'Nước đá', color: '#cdeefd', kw: 'da bang ran', b: ({ color }) => grp(mesh(box(0.7, 0.7, 0.7), M(color, { transparent: true, opacity: 0.85, roughness: 0.2 }), 0, 0.35), mesh(box(0.55, 0.55, 0.55), M(color, { transparent: true, opacity: 0.85, roughness: 0.2 }), 0.5, 0.28, 0.4)) },
   // ---------- Bầu trời & thời tiết ----------
