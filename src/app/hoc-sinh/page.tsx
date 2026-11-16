@@ -8,10 +8,12 @@ import KidWorld, { KidThemeSection, ThemedMilo } from '@/components/learn/KidWor
 import { DailyChest, StickerShelf } from '@/components/learn/KidRewards';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import SignOutButton from '@/components/classroom/SignOutButton';
+import RoomJoin from '@/components/classroom/RoomJoin';
 import { getViewer } from '@/lib/auth/viewer';
 import { learningGate } from '@/lib/auth/gate';
 import { fmtDay } from '@/lib/billing';
 import { MUC_NAME, SUBJECT_NAME, dueInfo, lessonHref, type MyAssignment } from '@/lib/classroom/assignments';
+import { owlOf, whenLabel, type MyRoom } from '@/lib/classroom/rooms';
 import { createClient } from '@/lib/supabase/server';
 import { learningStreak } from '@/lib/streak';
 import type { SubjectCode } from '@/lib/types';
@@ -38,14 +40,18 @@ export default async function StudentHome() {
 
   const supabase = await createClient();
   // RLS chỉ trả dữ liệu của chính học sinh đang đăng nhập
-  const [{ data: me }, { data: cls }, { data: results }, { data: gameRows, count: games }, { data: assigned }] = await Promise.all([
+  const [{ data: me }, { data: cls }, { data: results }, { data: gameRows, count: games }, { data: assigned }, { data: roomRows }] = await Promise.all([
     supabase.from('students').select('display_name, grade').eq('id', viewer.studentId).maybeSingle(),
     supabase.from('classes').select('name, grade').eq('status', 'active').order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('lesson_results').select('id, lesson_title, lesson_code, subject_code, grade, muc, score, total, points, created_at').order('created_at', { ascending: false }).limit(300),
     supabase.from('game_results').select('created_at', { count: 'exact' }).order('created_at', { ascending: false }).limit(200),
     // Bài thầy cô giao (migration 0017). Chưa chạy migration thì bỏ qua, trang vẫn hiện bình thường.
     supabase.rpc('student_my_assignments'),
+    // Phòng thi lớp (migration 0062). Chưa chạy migration thì danh sách rỗng.
+    supabase.rpc('student_my_rooms'),
   ]);
+  const rooms = ((roomRows ?? []) as MyRoom[]);
+  const nowMs = Date.now();
   // Học phí (migration 0018): hết hạn thì mọi nút học dẫn tới trang đóng phí (máy chủ cũng chặn ở middleware + API)
   const gate = await learningGate(supabase, viewer.userId);
   const locked = gate.is_student && !gate.active;
@@ -189,6 +195,30 @@ export default async function StudentHome() {
           <li className="stat-tile tone-yellow"><span>⭐ Sao tích luỹ</span><strong>{points}</strong></li>
           <li className="stat-tile tone-green"><span>Lượt chơi game</span><strong>{games ?? 0}</strong></li>
         </ul>
+
+        <section className="dash-section student-rooms" id="phong-thi" aria-label="Phòng thi lớp">
+          <h2>🌼 Phòng thi lớp</h2>
+          {!locked && <RoomJoin />}
+          {rooms.length > 0 && (
+            <ul className="task-list">
+              {rooms.map((r) => {
+                const open = r.status === 'open' && nowMs >= new Date(r.opens_at).getTime() && nowMs < new Date(r.closes_at).getTime();
+                const soon = r.status === 'open' && nowMs < new Date(r.opens_at).getTime();
+                return (
+                  <li key={r.id} className={`task-item${r.done ? ' is-done' : ''}`}>
+                    <span className="task-icon" aria-hidden="true">{r.done ? <CheckCircle2 /> : <Clock />}</span>
+                    <div className="task-info">
+                      <strong>{r.title}</strong>
+                      <span>{SUBJECT_NAME[r.subject]} · {r.n_questions} câu · {r.minutes} phút · {soon ? `mở ${whenLabel(r.opens_at)}` : open ? `đóng ${whenLabel(r.closes_at)}` : 'đã đóng'}</span>
+                      {r.done && r.score !== null && <span className="task-done">Đã nộp: {String(Number(r.score)).replace('.', ',')}/10 · {owlOf(Number(r.score)).name} · ⭐ {r.stars}</span>}
+                    </div>
+                    {!locked && (r.done || open) && <Link href={`/hoc-sinh/phong-thi/${r.id}`} className={`btn btn-sm ${r.done ? 'btn-outline' : 'btn-yellow'}`}>{r.done ? 'Xem kết quả' : 'Vào thi'}</Link>}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
 
         {tasks.length > 0 && (
           <section className="dash-section student-tasks" id="bai-giao" aria-label="Bài thầy cô giao">

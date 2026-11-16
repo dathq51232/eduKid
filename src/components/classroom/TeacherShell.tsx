@@ -22,7 +22,7 @@ import '@/styles/tone.css';
 
 /** Biểu tượng 3D của từng công cụ (public/emoji/tool/<khoá>.webp) */
 export const TOOL_ICON: Record<ToolKey, IconComp> = Object.fromEntries(
-  (['so-lop', 'goi-ten', 'ke-hoach', 'giao-bai', 'phieu-bai-tap', 'phieu-chinh-ta', 'lo-hong', 'de-kiem-tra', 'nhan-xet', 'ket-qua-truong', 'phieu-tien-bo',
+  (['so-lop', 'goi-ten', 'ke-hoach', 'giao-bai', 'phieu-bai-tap', 'phieu-chinh-ta', 'lo-hong', 'de-kiem-tra', 'phong-thi', 'nhan-xet', 'ket-qua-truong', 'phieu-tien-bo',
     'thu-khen', 'lop', 'nhom', 'thi-dua', 'hen-gio', 'danh-ba', 'bai-giang-3d', 'tin-nhan', 'trien-lam', 'luyen-chu', 'bang-trang', 'lich', 'thu-chi', 'quy-lop', 'tieng-anh'] as ToolKey[]).map((k) => [k, icon3d(k)]),
 ) as Record<ToolKey, IconComp>;
 /** Biểu tượng của nhóm công cụ (cột trái gọn) */

@@ -105,7 +105,7 @@ Quy tắc dùng:
 
 - **5 mức câu hỏi** (gần thang Bloom, `src/lib/levels.ts`):
   L1 *Làm quen* (nhận biết) · L2 *Cơ bản* (thông hiểu) · L3 *Vận dụng* · L4 *Thử thách* (kết hợp kỹ năng) · L5 *Mở rộng* (tình huống mới).
-  Thời gian gợi ý 30 / 40 / 50 / 60 / 75 giây; sao ⭐ tối đa mỗi câu: L1–L2 = 1, L3–L4 = 2, L5 = 3.
+  Thời gian gợi ý 30 / 40 / 50 / 60 / 75 giây; sao ⭐ mỗi câu đúng theo mức đề kiểm tra (Thông tư 27): Mức 1 (L1–L2) = 1 sao, Mức 2 (L3) = 2 sao, Mức 3 (L4–L5) = 3 sao.
 - **3 mức bộ bài** cho em tự chọn (`src/lib/basics.ts`): *Cơ bản* (L1→L5), *Khá* (L2→L5), *Giỏi* (L3→L5).
 - **Một bộ = 10 câu.** Không lặp câu của bộ vừa làm.
 - **Thành thạo một mắt xích:** đạt **≥ 8/10 câu** ở mức Cơ bản (hoặc ≥ 7/10 ở mức Khá/Giỏi) trong **2 lần khác ngày** → mắt xích kỹ năng sáng lên.
@@ -137,8 +137,8 @@ Thay cho mô hình vòng loại toàn quốc, EduChain Kids tổ chức **theo m
 | Chặng | Tên | Ai tổ chức | Cách tham gia | Hoàn thành khi |
 |---|---|---|---|---|
 | 1 | 🌱 **Gieo hạt** | Tự học | Luyện tự do các bộ 10 câu, làm bao nhiêu lần cũng được | Không bắt buộc |
-| 2 | 🌿 **Ươm mầm** | Tự học | Làm các bộ **mắt xích bắt buộc** của mùa (mỗi tuần một chủ đề) | Mỗi bộ đạt ≥ 8/10 câu (làm lại không giới hạn, mỗi lần đề mới) |
-| 3 | 🌼 **Ra hoa** | **Cô giáo** tạo phòng thi cho lớp (mã phòng, giờ mở – đóng) | Bài 20 câu, 25 phút, làm tại lớp hoặc ở nhà theo cô chọn | Có kết quả |
+| 2 | 🌿 **Ươm mầm** | Tự học | Làm các bộ **mắt xích** của mùa (mỗi tuần một chủ đề). **Khuyến khích, không phải điều kiện** để vào Ra hoa | Mỗi bộ đạt ≥ 8/10 câu (làm lại không giới hạn, mỗi lần đề mới) → huy hiệu 🦉 **Cú Chăm** |
+| 3 | 🌼 **Ra hoa** | **Cô giáo** tạo phòng thi cho lớp (mã phòng, giờ mở – đóng) | Lớp 1–2: **10 câu / 15 phút**; lớp 3–5: **20 câu / 25 phút** (cô sửa được). Làm tại lớp hoặc ở nhà theo cô chọn. Thể thức chi tiết: mục 8.1 | Có kết quả |
 | 4 | 🍎 **Kết trái** | **Nhà trường** (gom các lớp cùng khối) | Bài 30 câu, 35 phút, làm tại trường | Có kết quả |
 | 5 | 🌳 **Mùa vàng** *(tùy chọn)* | EduChain Kids | Giao lưu liên trường, trực tuyến; có phần “Nói – kể” và “Viết đoạn ngắn” cho lớp 4–5 | Có kết quả |
 
@@ -148,13 +148,32 @@ Thay cho mô hình vòng loại toàn quốc, EduChain Kids tổ chức **theo m
   🦉 **Cú Vàng** ≥ 9 · 🦉 **Cú Bạc** ≥ 8 · 🦉 **Cú Đồng** ≥ 7 · 🦉 **Cú Chăm** (hoàn thành chặng, khen sự cố gắng).
 - **Thi đua theo lớp/nhóm** (trang Thi đua `td-`): cộng sao của cả nhóm, khen nhóm tiến bộ nhiều nhất — không chỉ nhóm điểm cao nhất.
 - **Lớp 1–3 không xét thời gian** khi bằng điểm (cùng huy hiệu). Lớp 4–5 chỉ xét thời gian ở chặng Kết trái / Mùa vàng.
-- **Lớp 1–2 không hiện bảng xếp hạng cá nhân** cho học sinh; giáo viên vẫn xem được đầy đủ.
+- **Không có bảng xếp hạng cá nhân cho học sinh** ở mọi lớp: em chỉ thấy kết quả của mình, phụ huynh thấy của con, **giáo viên xem được cả lớp**.
 - Giấy khen / thư khen tự động in được (trang Thư khen), có **lời nhận xét theo kỹ năng**.
 
 **Công bằng (thay cho “Hội đồng giám sát”)**
 - Đề **sinh riêng cho từng em**, trộn câu và trộn phương án.
 - Phòng thi có **mã do cô giáo phát**, giờ mở – đóng rõ ràng; cô có nút **cho làm lại** khi em gặp sự cố.
 - Bài làm quá nhanh mà điểm tuyệt đối, hay đổi tab nhiều lần → **gắn cờ để cô xem lại**, hệ thống **không tự hủy** kết quả của trẻ.
+
+### 8.1 Phòng thi lớp (chặng Ra hoa) — thể thức đã chốt (11/2026)
+
+Đây là tầng làm **đầu tiên**. Kỳ thi chung toàn hệ thống (Mùa vàng) chỉ mở khi đã có nhiều trường dùng; dữ liệu vẫn thiết kế theo khung **Mùa → Chặng → Phòng thi** với phạm vi lớp / trường / toàn hệ thống để mở rộng sau không phải làm lại.
+
+| Mục | Quy định |
+|---|---|
+| **Ai tạo** | Giáo viên chủ nhiệm (hoặc giáo viên bộ môn được gán lớp) |
+| **Đề** | Cô chọn bài / chủ đề (hoặc ma trận). Hệ thống **sinh đề riêng cho từng em** cùng ma trận, trộn câu và trộn phương án |
+| **Cấu trúc mặc định** | Lớp 1–2: 10 câu, 15 phút · Lớp 3–5: 20 câu, 25 phút · Ma trận 40% L1–L2, 30% L3, 20% L4, 10% L5 · Cô sửa được số câu, thời gian, tỉ lệ mức |
+| **Vào phòng** | Em đăng nhập → nhập **mã phòng** (6 ký tự) hoặc bấm vào bài cô giao; chỉ vào được trong **giờ mở – đóng** cô đặt |
+| **Số lần làm** | **1 lần.** Em gặp sự cố (mất mạng, tắt máy, hết pin) → cô bấm **“Cho làm lại”**, em nhận đề mới cùng ma trận; lần cũ ghi lại để cô xem |
+| **Trong lúc làm** | Có nhãn đồ nghề, nghe đọc đề; **không hiện đúng/sai từng câu**; đồng hồ đếm lùi nhẹ nhàng; hết giờ máy tự nộp phần đã làm |
+| **Điều kiện vào** | **Không bắt buộc** hoàn thành Ươm mầm (em nào cũng được kiểm tra cùng lớp); em đã có 🦉 Cú Chăm thì hiện kèm trong kết quả |
+| **Chấm** | Thang **10** (làm tròn 0,5) + số **sao ⭐** (mỗi câu đúng: Mức 1 = 1, Mức 2 = 2, Mức 3 = 3 sao) + **huy hiệu Cú** theo mốc (mục 8) |
+| **Sau khi nộp** | Em thấy: điểm, số sao, huy hiệu, lời Milo theo kỹ năng (“Em đã vững… / Em cần luyện thêm…”), xem lại từng câu kèm lời giải **sau khi phòng đóng** |
+| **Ai thấy kết quả** | Em thấy của mình · phụ huynh thấy của con · **chỉ cô xem bảng cả lớp**. Không bảng xếp hạng cho học sinh |
+| **Cô nhận được** | Bảng điểm lớp, phổ điểm, **kỹ năng cả lớp còn yếu** (gom theo `skill_code`), danh sách bài bị gắn cờ, nút in **thư khen / giấy khen** theo huy hiệu, đưa điểm vào **sổ lớp** |
+| **Tự động gắn cờ** | Điểm 10 mà thời gian < 30% thời lượng; rời trang / đổi tab ≥ 3 lần. Cờ chỉ để cô xem lại, không tự trừ điểm hay hủy bài |
 
 ---
 
@@ -183,6 +202,6 @@ Thay cho mô hình vòng loại toàn quốc, EduChain Kids tổ chức **theo m
 | 1 | Áp **giọng Milo** cho lời khen / gợi ý sai (`lam-bai`) | Theo mục 3 |
 | 2 | Dạng mới **🎨 Hộp màu** (`grouping`) và **🧩 Mảnh ghép** (`pair_grid`) | Thêm vào `QuestionType`, bộ sinh câu `src/lib/practice/*`, máy chấm |
 | 2 | **Mắt xích kỹ năng**: tính thành thạo theo mục 6, hiện trên bản đồ bài | Dựa trên `skill_code` |
-| 3 | **Mùa Mắt Xích**: phòng thi do cô tạo (mã phòng), huy hiệu Cú, gắn cờ bất thường | Mở rộng Đề kiểm tra / Giao bài |
+| 3 | **Mùa Mắt Xích**: ✅ Phòng thi lớp (chặng Ra hoa) — mã phòng, đề riêng, huy hiệu Cú, gắn cờ (11/2026, migration 0062, trang `giao-vien/lop/[id]/phong-thi`) | Còn: chặng Ươm mầm, Kết trái, Mùa vàng; đưa điểm phòng thi vào sổ lớp / thư khen |
 | 3 | **🎧 Tai nghe** (câu có âm thanh) và **📿 Chuỗi hạt**, **🖼️ Khung tranh** | Tiếng Việt lớp 1–2 và Tiếng Anh dùng nhiều |
 | 4 | Ngân hàng **ca dao – tục ngữ – câu đố** theo lớp, có giải nghĩa | Dùng chung cho Tiếng Việt và thư khen |
