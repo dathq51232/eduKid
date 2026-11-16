@@ -1,7 +1,7 @@
 // Định dạng một bài giảng 3D (lưu trong cột data jsonb của bảng lessons3d — migration 0034).
 // Chỉ lưu danh sách đồ vật, cảnh, đường nối, điều khiển, câu hỏi: một bài thường chỉ vài KB.
 
-export type FxType = '' | 'up' | 'rain' | 'snow' | 'wind' | 'spin' | 'pulse' | 'orbit' | 'bob' | 'blink' | 'traffic' | 'wave' | 'heat' | 'tilt' | 'clock';
+export type FxType = '' | 'up' | 'rain' | 'snow' | 'wind' | 'spin' | 'pulse' | 'orbit' | 'bob' | 'blink' | 'traffic' | 'wave' | 'heat' | 'tilt' | 'clock' | 'patrol';
 export type BaseType = 'grass' | 'desk' | 'space' | 'water' | 'road';
 
 export type Obj3D = {
@@ -13,7 +13,8 @@ export type Obj3D = {
   /** Tên hiện cho học sinh; với bảng chữ / thẻ số là chữ in trên mặt */
   name: string;
   spot: { on: boolean; title: string; text: string };
-  fx: { type: FxType; speed: number };
+  /** to: điểm B [x, z] của hiệu ứng “Đi lại A ↔ B” (A là vị trí đặt đồ vật) */
+  fx: { type: FxType; speed: number; to?: number[] };
   /** Bật/tắt (bóng đèn sáng, đèn giao thông chạy…) */
   on?: boolean;
   /** Tách rời các bộ phận (đồ vật có nhiều bộ phận) */

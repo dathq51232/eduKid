@@ -11553,3 +11553,8 @@ html.dk-focus .tsh-main { padding-bottom: 0; }
   .cv-foot > button { font-size: 0; gap: 0; padding: 6px 8px; }
   .cv-foot > button svg { width: 17px; height: 17px; }
 }
+/* Bài giảng 3D: hiệu ứng Đi lại A ↔ B */
+.s3d-path { display: grid; gap: 6px; border-color: #fdba74; background: #fff7ed; }
+.s3d-path > b { color: #c2410c; font-size: 14px; }
+.s3d-note.is-hl { color: #c2410c; font-weight: 700; }
+:root[data-theme="dark"] .s3d-path { background: #2a1a0e; border-color: #9a3412; }

@@ -6,7 +6,8 @@ import { ASSET_BY_ID, type Part } from './assets';
 import { MODEL_EVENT, type ModelAnim } from './models';
 import type { BaseType, Lesson3D, Link3D, Obj3D } from './types';
 
-type Node = { root: THREE.Group; body: THREE.Group; key: string; pts?: THREE.Points; seeds?: number[][]; ang: number; rad: number; t0: number };
+type Node = { root: THREE.Group; body: THREE.Group; key: string; pts?: THREE.Points; seeds?: number[][]; ang: number; rad: number; t0: number;
+  /** Đi lại A ↔ B: thời gian đã đi (giây) và hướng mặt hiện tại */ pt?: number; head?: number };
 export type Runtime = Record<string, { on?: boolean; speed?: number; split?: boolean; hidden?: boolean; clip?: string }>;
 export type EngineEvents = {
   onSelect?: (id: string | null) => void;
@@ -37,6 +38,9 @@ export class Stage3D {
   private runtime: Runtime = {};
   private slab = new THREE.Group();
   private linkGroup = new THREE.Group();
+  /** dấu điểm B + đường đi của đồ vật đang chọn (chỉ khi soạn) */
+  private pathGroup = new THREE.Group();
+  private pickCb: ((x: number, z: number) => void) | null = null;
   private stars: THREE.Points;
   private selB = new THREE.Box3();
   private selBox = new THREE.Box3Helper(this.selB, 0xf59e0b);
@@ -77,7 +81,7 @@ export class Stage3D {
     this.scene.add(new THREE.HemisphereLight(0xeaf4ff, 0x6b7f5a, 1.1));
     const dl = new THREE.DirectionalLight(0xfff2dc, 1.5); dl.position.set(8, 14, 6); dl.castShadow = true; dl.shadow.mapSize.set(1024, 1024); dl.shadow.normalBias = 0.03;
     Object.assign(dl.shadow.camera, { left: -16, right: 16, top: 12, bottom: -12 }); this.scene.add(dl);
-    this.scene.add(this.slab, this.linkGroup);
+    this.scene.add(this.slab, this.linkGroup, this.pathGroup);
     this.selBox.visible = false; this.scene.add(this.selBox);
     const sg = new THREE.BufferGeometry(); const a: number[] = [];
     for (let i = 0; i < 500; i++) { const v = new THREE.Vector3().randomDirection().multiplyScalar(60 + Math.random() * 30); if (v.y < -5) v.y = -v.y; a.push(v.x, v.y, v.z); }
@@ -122,7 +126,7 @@ export class Stage3D {
     L.objects.forEach((o) => { keep.add(o.id); this.syncNode(o); });
     [...this.nodes.keys()].forEach((id) => { if (!keep.has(id)) { this.scene.remove(this.nodes.get(id)!.root); this.nodes.delete(id); } });
     if (this.sel && !keep.has(this.sel)) this.select(null, false);
-    this.buildLinks(); this.syncPins();
+    this.buildLinks(); this.syncPins(); this.buildPath();
   }
   setRuntime(rt: Runtime) { this.runtime = rt; this.lesson?.objects.forEach((o) => this.syncNode(o)); this.buildLinks(); }
   private eff(o: Obj3D): Obj3D & { hidden?: boolean; speedMul: number } {
@@ -216,7 +220,26 @@ export class Stage3D {
   /* ---------------- chọn, đặt, kéo ---------------- */
   select(id: string | null, notify = true) {
     this.sel = id; this.selBox.visible = !!id && this.nodes.has(id);
+    this.buildPath();
     if (notify) this.ev.onSelect?.(id);
+  }
+  /** chọn một điểm trên sa bàn (điểm B của “Đi lại A ↔ B”); null = huỷ */
+  pickPoint(cb: ((x: number, z: number) => void) | null) {
+    this.pickCb = cb; this.renderer.domElement.style.cursor = cb ? 'crosshair' : '';
+  }
+  /** vẽ điểm B (vòng tròn + cờ) và đường đi nét đứt cho đồ vật đang chọn khi soạn */
+  private buildPath() {
+    this.pathGroup.clear();
+    const o = this.sel ? this.lesson?.objects.find((x) => x.id === this.sel) : null;
+    if (!o || this.playScene !== null || o.fx.type !== 'patrol' || o.fx.to?.length !== 2) return;
+    const [bx, bz] = o.fx.to;
+    const m = new THREE.MeshBasicMaterial({ color: 0xf97316 });
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.06, 6, 32), m); ring.rotation.x = Math.PI / 2; ring.position.set(bx, 0.05, bz);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.1, 6), new THREE.MeshBasicMaterial({ color: 0x475569 })); pole.position.set(bx, 0.55, bz);
+    const flag = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.45, 3), m); flag.rotation.z = -Math.PI / 2; flag.position.set(bx + 0.22, 0.95, bz);
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(o.x, 0.06, o.z), new THREE.Vector3(bx, 0.06, bz)]), new THREE.LineDashedMaterial({ color: 0xf97316, dashSize: 0.3, gapSize: 0.2 }));
+    line.computeLineDistances();
+    [ring, pole, flag, line].forEach((x) => { x.raycast = () => {}; this.pathGroup.add(x); });
   }
   highlight(id: string | null) { this.sel = id; this.selBox.visible = !!id && this.nodes.has(id); }
   startPlacing(type: string | null) {
@@ -248,7 +271,7 @@ export class Stage3D {
   };
   private onDown = (e: PointerEvent) => {
     this.down = [e.clientX, e.clientY];
-    if (this.placing || this.playScene !== null) return;
+    if (this.placing || this.pickCb || this.playScene !== null) return;
     const id = this.pickAt(e);
     if (id && id === this.sel) { const p = this.groundAt(e); const n = this.nodes.get(id); if (p && n) { this.drag = { id, dx: n.root.position.x - p.x, dz: n.root.position.z - p.z }; this.controls.enabled = false; this.renderer.domElement.setPointerCapture(e.pointerId); } }
   };
@@ -256,6 +279,7 @@ export class Stage3D {
     const moved = this.down && Math.hypot(e.clientX - this.down[0], e.clientY - this.down[1]) > 5;
     if (this.drag) { const n = this.nodes.get(this.drag.id); const id = this.drag.id; this.drag = null; this.controls.enabled = true; if (n && moved) this.ev.onMoved?.(id, r1(n.root.position.x), r1(n.root.position.z)); return; }
     if (moved) return;
+    if (this.pickCb) { const p = this.groundAt(e); if (p) { const cb = this.pickCb; this.pickPoint(null); cb(this.clampX(this.snapV(p.x)), this.clampZ(this.snapV(p.z))); } return; }
     if (this.placing) { const p = this.groundAt(e); if (p) this.ev.onPlace?.(this.placing, this.clampX(this.snapV(p.x)), this.clampZ(this.snapV(p.z))); return; }
     const id = this.pickAt(e);
     if (this.playScene !== null) { if (id) this.ev.onPick?.(id); return; }
@@ -268,7 +292,7 @@ export class Stage3D {
   flyTo(cam: number[], tgt: number[]) { if (cam?.length !== 3 || tgt?.length !== 3) return; this.fly = { p0: this.camera.position.clone(), t0: this.controls.target.clone(), p1: new THREE.Vector3(cam[0], cam[1], cam[2]), t1: new THREE.Vector3(tgt[0], tgt[1], tgt[2]), u: 0 }; }
   home() { this.flyTo([13, 9, 15], [0, 1.5, 0]); }
   camNow() { return { cam: this.camera.position.toArray().map(r1), tgt: this.controls.target.toArray().map(r1) }; }
-  refreshVisibility() { this.lesson?.objects.forEach((o) => this.syncNode(o)); this.buildLinks(); }
+  refreshVisibility() { this.lesson?.objects.forEach((o) => this.syncNode(o)); this.buildLinks(); this.buildPath(); }
 
   /* ---------------- vòng vẽ ---------------- */
   private v = new THREE.Vector3();
@@ -280,7 +304,9 @@ export class Stage3D {
       const an = n.body.userData.anim as ModelAnim | undefined;
       if (an && n.root.visible) {
         // động tác: nút điều khiển khi chiếu > hoạt động đã đặt > động tác đầu tiên của mô hình
-        const want = this.runtime[o.id]?.clip ?? o.anim ?? Object.keys(an.actions)[0] ?? 'none';
+        // đang di chuyển (đi lại A ↔ B, quay quanh tâm) mà cô chưa chọn hoạt động: tự đi bộ
+        const moving = fx === 'patrol' || fx === 'orbit';
+        const want = this.runtime[o.id]?.clip ?? o.anim ?? (moving && an.actions.walk ? 'walk' : Object.keys(an.actions)[0]) ?? 'none';
         if (want !== an.cur) {
           // 'none' (đứng yên): giữ dáng đầu của động tác đầu tiên, không chạy
           const first = Object.keys(an.actions)[0];
@@ -296,6 +322,7 @@ export class Stage3D {
       }
       const rotor = n.body.getObjectByName('rotor');
       const active = sp > 0.01 && (ASSET_BY_ID[o.type]?.onoff ? e.on !== false : true);
+      if (fx === 'patrol' && o.fx.to?.length === 2) this.patrol(o, n, active ? dt * sp : 0, dt);
       if (fx === 'spin' && active) { if (rotor) rotor.rotation.x += dt * sp * 6; else n.root.rotation.y += dt * sp * 1.2; }
       if (fx === 'pulse') n.root.scale.setScalar(o.s * (1 + Math.sin(t * 2.4 * sp) * 0.12));
       if (fx === 'bob') n.root.position.y = o.y + Math.sin(t * 2 * sp) * 0.15;
@@ -323,6 +350,26 @@ export class Stage3D {
     this.controls.update(); this.renderer.render(this.scene, this.camera); this.placeOverlay();
     this.raf = requestAnimationFrame(this.frame);
   };
+  /** Đi lại A ↔ B: đi thẳng tới B, dừng quay đầu, đi về A, dừng quay đầu — lặp lại. Mặt hướng theo chiều đi. */
+  private patrol(o: Obj3D, n: Node, step: number, dt: number) {
+    const [bx, bz] = o.fx.to as number[];
+    const dx = bx - o.x, dz = bz - o.z, d = Math.hypot(dx, dz);
+    if (d < 0.05) return;
+    const leg = d / 1.4, rest = 0.7, cyc = 2 * (leg + rest);
+    // đang soạn và cô đang chọn đồ vật này: đứng ở A, nhìn về B — dễ kéo A và đặt điểm B
+    const hold = this.playScene === null && this.sel === o.id;
+    n.pt = hold ? 0 : ((n.pt ?? 0) + step) % cyc;
+    const t = n.pt;
+    // k: vị trí trên đoạn A→B (0 = A, 1 = B); dir: hướng cần nhìn (1 = về phía B)
+    let k: number, dir: number;
+    if (t < leg) { k = t / leg; dir = 1; } else if (t < leg + rest) { k = 1; dir = -1; } else if (t < 2 * leg + rest) { k = 1 - (t - leg - rest) / leg; dir = -1; } else { k = 0; dir = 1; }
+    n.root.position.x = o.x + dx * k; n.root.position.z = o.z + dz * k;
+    const want = Math.atan2(dx * dir, dz * dir) + o.ry;
+    const cur = n.head ?? want;
+    const diff = ((((want - cur + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) - Math.PI;
+    n.head = cur + diff * Math.min(1, dt * 7);
+    n.root.rotation.y = n.head;
+  }
   private placeOverlay() {
     const w = this.el.clientWidth, h = this.el.clientHeight;
     const put = (el: HTMLElement, p: THREE.Vector3) => { this.v.copy(p).project(this.camera); el.style.display = this.v.z < 1 ? '' : 'none'; el.style.left = `${(this.v.x * 0.5 + 0.5) * w}px`; el.style.top = `${(-this.v.y * 0.5 + 0.5) * h}px`; };

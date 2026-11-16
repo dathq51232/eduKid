@@ -20,7 +20,7 @@ import { saveLesson3DOffline } from '@/lib/offline/save';
 const SWATCH = ['#ef4444', '#f59e0b', '#facc15', '#22c55e', '#2f8f4e', '#2aa7e0', '#2457c5', '#8b5cf6', '#ec4899', '#ffffff', '#9aa3ad', '#7a5232'];
 const FX: { id: FxType; icon: string; name: string }[] = [
   { id: '', icon: '○', name: 'Không' }, { id: 'up', icon: '⇡', name: 'Hơi bay lên' }, { id: 'rain', icon: '☔', name: 'Mưa rơi' }, { id: 'snow', icon: '❄', name: 'Tuyết rơi' },
-  { id: 'wind', icon: '≋', name: 'Gió thổi' }, { id: 'spin', icon: '⟳', name: 'Tự quay' }, { id: 'orbit', icon: '◌', name: 'Quay quanh tâm' }, { id: 'pulse', icon: '◎', name: 'Lớn – nhỏ' },
+  { id: 'wind', icon: '≋', name: 'Gió thổi' }, { id: 'spin', icon: '⟳', name: 'Tự quay' }, { id: 'orbit', icon: '◌', name: 'Quay quanh tâm' }, { id: 'patrol', icon: '⇄', name: 'Đi lại A ↔ B' }, { id: 'pulse', icon: '◎', name: 'Lớn – nhỏ' },
   { id: 'bob', icon: '≈', name: 'Nhấp nhô' }, { id: 'blink', icon: '✦', name: 'Nhấp nháy' }, { id: 'traffic', icon: '🚦', name: 'Đèn đổi màu' }, { id: 'wave', icon: '◖', name: 'Sóng âm' },
   { id: 'heat', icon: '♨', name: 'Nóng lên' }, { id: 'tilt', icon: '⚖', name: 'Cân nghiêng' }, { id: 'clock', icon: '🕒', name: 'Kim chạy' },
 ];
@@ -198,6 +198,16 @@ export default function Lesson3DStudio({ classId, lessonId, initial, offline }: 
   };
   const speak = (text: string) => { try { const s = window.speechSynthesis; s.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'vi-VN'; u.rate = 0.92; const v = s.getVoices().find((x) => x.lang?.toLowerCase().startsWith('vi')); if (v) u.voice = v; s.speak(u); } catch { /* máy không có giọng đọc */ } };
   const fullscreen = () => { const el = stageRef.current?.parentElement; if (!el) return; const p = document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen?.(); p?.catch?.(() => {}); };
+  // chọn điểm B của "Đi lại A ↔ B": bấm lên sa bàn
+  const [picking, setPicking] = useState(false);
+  const pickB = (id: string | null) => {
+    const e = engRef.current; if (!e) return;
+    if (!id) { e.pickPoint(null); setPicking(false); return; }
+    setPicking(true);
+    e.pickPoint((x, z) => { setPicking(false); updObj(id, (o) => { o.fx.to = [x, z]; }); });
+  };
+  // đổi đồ vật đang chọn: huỷ việc chọn điểm B đang dở
+  useEffect(() => { engRef.current?.pickPoint(null); setPicking(false); }, [sel]);
   const ctlVal = (c: Control3D) => { const r = rt[c.targets[0]] ?? {}; return c.action === 'anim' ? r.clip !== undefined && r.clip === c.clip : c.action === 'speed' ? r.speed ?? 1 : c.action === 'on' ? r.on ?? (L.objects.find((o) => o.id === c.targets[0])?.on ?? true) : c.action === 'split' ? r.split ?? false : !(r.hidden ?? false); };
   const setCtl = (c: Control3D, v: number | boolean) => setRt((cur) => { const n = { ...cur }; c.targets.forEach((t) => { const x = { ...(n[t] ?? {}) }; if (c.action === 'speed') x.speed = Number(v); if (c.action === 'on') x.on = Boolean(v); if (c.action === 'split') x.split = Boolean(v); if (c.action === 'show') x.hidden = !v; if (c.action === 'anim') x.clip = v ? c.clip : undefined; n[t] = x; }); return n; });
 
@@ -290,7 +300,7 @@ export default function Lesson3DStudio({ classId, lessonId, initial, offline }: 
                   {stem && <div className="s3d-box s3d-stem"><b>Bài STEM gốc: Lớp {stem.g} · Bài {stem.no}</b><span>{stem.title}</span><span className="s3d-note">{stem.lead}{stem.integrated.length ? ` · tích hợp ${stem.integrated.join(', ')}` : ''} · {FIT_LABEL[stem.fit]}</span>{stem.materials.length > 0 && <details><summary>Vật liệu ({stem.materials.length})</summary><ul>{stem.materials.map((m) => <li key={m}>{m}</li>)}</ul></details>}</div>}
                 </>
               ) : (
-                <ObjPanel o={selObj} L={L} updObj={updObj} remove={() => removeObj(selObj.id)} dup={() => { const c = { ...structuredClone(selObj), id: uid(), x: r1(Math.min(10.5, selObj.x + 1.5)), z: r1(Math.min(7.5, selObj.z + 1)) }; update((d) => { d.objects.push(c); return d; }); setSel(c.id); }} />
+                <ObjPanel o={selObj} L={L} updObj={updObj} picking={picking} pickB={pickB} remove={() => removeObj(selObj.id)} dup={() => { const c = { ...structuredClone(selObj), id: uid(), x: r1(Math.min(10.5, selObj.x + 1.5)), z: r1(Math.min(7.5, selObj.z + 1)) }; update((d) => { d.objects.push(c); return d; }); setSel(c.id); }} />
               ))}
               {tab === 'scene' && (
                 <>
@@ -324,9 +334,11 @@ export default function Lesson3DStudio({ classId, lessonId, initial, offline }: 
   );
 }
 
-function ObjPanel({ o, L, updObj, remove, dup }: { o: Obj3D; L: Lesson3D; updObj: (id: string, fn: (o: Obj3D) => void) => void; remove: () => void; dup: () => void }) {
+function ObjPanel({ o, L, updObj, remove, dup, picking, pickB }: { o: Obj3D; L: Lesson3D; updObj: (id: string, fn: (o: Obj3D) => void) => void; remove: () => void; dup: () => void; picking: boolean; pickB: (id: string | null) => void }) {
   const a = ASSET_BY_ID[o.type];
   const set = (fn: (x: Obj3D) => void) => updObj(o.id, fn);
+  // động tác mặc định (giống sân khấu 3D): đang di chuyển thì đi bộ, không thì động tác đầu tiên
+  const defClip = (o.fx.type === 'patrol' || o.fx.type === 'orbit') && a?.clips?.includes('walk') ? 'walk' : a?.clips?.[0];
   return (
     <>
       <h3 className="s3d-h3">{a?.name ?? o.type}</h3>
@@ -352,10 +364,17 @@ function ObjPanel({ o, L, updObj, remove, dup }: { o: Obj3D; L: Lesson3D; updObj
           <label className="s3d-fld"><span>Lời giảng khi học sinh bấm vào</span><textarea value={o.spot.text} maxLength={500} placeholder="1–3 câu ngắn, dễ hiểu" onChange={(e) => { const v = e.target.value; set((x) => { x.spot.text = v; }); }} /></label>
         </> : <span className="s3d-note">Học sinh bấm vào ghim số sẽ thấy tiêu đề, lời giảng và nghe đọc.</span>}
       </div>
-      {a?.clips?.length ? <div className="s3d-fld"><span>Hoạt động</span><div className="s3d-fx">{[...a.clips, 'none'].map((k, i) => (
-        <button key={k} type="button" aria-pressed={(o.anim ?? a.clips![0]) === k} onClick={() => set((y) => { y.anim = i === 0 ? undefined : k; })}><b>{CLIP_ICON[k] ?? '•'}</b>{clipLabel(k, a.clips)}</button>
-      ))}</div>{o.fx.type !== 'orbit' && o.anim && /^(walk|run|swim)$/.test(o.anim) ? <span className="s3d-note">Mẹo: chọn thêm hiệu ứng “Quay quanh tâm” để con vật di chuyển vòng quanh sa bàn.</span> : null}</div> : null}
-      <div className="s3d-fld"><span>Hiệu ứng</span><div className="s3d-fx">{FX.map((x) => <button key={x.id || 'none'} type="button" aria-pressed={o.fx.type === x.id} onClick={() => set((y) => { y.fx.type = x.id; })}><b>{x.icon}</b>{x.name}</button>)}</div></div>
+      {a?.clips?.length ? <div className="s3d-fld"><span>Hoạt động</span><div className="s3d-fx">{[...a.clips, 'none'].map((k) => (
+        <button key={k} type="button" aria-pressed={(o.anim ?? defClip) === k} onClick={() => set((y) => { y.anim = k === defClip ? undefined : k; })}><b>{CLIP_ICON[k] ?? '•'}</b>{clipLabel(k, a.clips)}</button>
+      ))}</div>{o.fx.type !== 'orbit' && o.fx.type !== 'patrol' && o.anim && /^(walk|run|swim)$/.test(o.anim) ? <span className="s3d-note">Mẹo: chọn thêm hiệu ứng “Đi lại A ↔ B” hoặc “Quay quanh tâm” để con vật di chuyển trên sa bàn.</span> : null}</div> : null}
+      <div className="s3d-fld"><span>Hiệu ứng</span><div className="s3d-fx">{FX.map((x) => <button key={x.id || 'none'} type="button" aria-pressed={o.fx.type === x.id} onClick={() => set((y) => { y.fx.type = x.id; if (x.id === 'patrol' && y.fx.to?.length !== 2) y.fx.to = [r1(Math.max(-10.5, Math.min(10.5, y.x + (y.x > 6 ? -5 : 5)))), y.z]; })}><b>{x.icon}</b>{x.name}</button>)}</div></div>
+      {o.fx.type === 'patrol' && <div className="s3d-box s3d-path">
+        <b>Đi lại A ↔ B</b>
+        <span className="s3d-note">A là chỗ đặt đồ vật (kéo để dời). B: cờ cam trên sa bàn. Đồ vật đi tới B, quay đầu, đi về A rồi lặp lại{a?.clips?.includes('walk') ? ' — con vật tự bước đi' : ''}.</span>
+        <div className="s3d-row">{picking
+          ? <><span className="s3d-note is-hl">Bấm một điểm trên sa bàn để đặt điểm B…</span><button type="button" className="s3d-btn sm" onClick={() => pickB(null)}>Huỷ</button></>
+          : <button type="button" className="s3d-btn sm is-pri" onClick={() => pickB(o.id)}>📍 Chọn điểm B trên sa bàn</button>}</div>
+      </div>}
       {o.fx.type && <label className="s3d-fld"><span>Tốc độ hiệu ứng</span><input type="range" min={0.2} max={2.5} step={0.1} value={o.fx.speed} onChange={(e) => { const v = Number(e.target.value); set((x) => { x.fx.speed = v; }); }} /></label>}
       <label className="s3d-fld"><span>Xuất hiện khi trình chiếu</span><select value={o.appear ?? 0} onChange={(e) => { const v = Number(e.target.value); set((x) => { x.appear = v || undefined; }); }}>
         <option value={0}>Luôn có</option>{L.scenes.map((_, i) => i > 0 && <option key={i} value={i + 1}>Từ cảnh {i + 1}</option>)}
