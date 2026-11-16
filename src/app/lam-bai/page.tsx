@@ -34,6 +34,7 @@ import { awardSticker, prefersReducedMotion, readFx, saveFx } from '@/lib/sticke
 import { SUBJECT_MASCOT } from '@/lib/mascots';
 import { getLesson, getQuestionSet, getReplacement, gradeAnswer, isSubjectCode, parseGrade } from '@/lib/data';
 import { isAnswered } from '@/lib/grading';
+import { miloLine, trailLine } from '@/lib/milo-tools';
 import { knowledgeFor } from '@/lib/content/knowledge';
 import { LEVELS, LEVEL_LIST, SPEED_BONUS, formatDuration, questionPoints, rankFor } from '@/lib/levels';
 import { addPoints, readTotalPoints, saveAttempt, saveMucLesson } from '@/lib/progress';
@@ -733,7 +734,7 @@ function LamBaiContent() {
 
   const trailMood = fb && motion ? (fb.kind === 'correct' ? 'jump' : 'tilt') : 'idle';
   const comboHit = fb?.kind === 'correct' && isComboMilestone(fb.combo) ? fb.combo : 0;
-  const trailMessage = fb ? (fb.kind === 'correct' ? (comboHit ? `${comboHit} câu liền! 🔥` : 'Giỏi quá!') : 'Không sao, thử câu sau nhé!') : undefined;
+  const trailMessage = fb ? (fb.kind === 'correct' ? (comboHit ? `${comboHit} câu liền! 🔥` : trailLine('correct', current)) : trailLine('wrong')) : undefined;
 
   return (
     <div className={`qz${motion ? ' is-live' : ''}`}>
@@ -916,7 +917,7 @@ function LamBaiContent() {
                 </span>
                 <div>
                   <h2>
-                    {item.status === 'correct' ? 'Đúng rồi, em giỏi quá!' : item.status === 'timeout' ? 'Hết giờ rồi!' : 'Tiếc quá, chưa đúng rồi!'}
+                    {miloLine(item.status === 'correct' ? 'correct' : item.status === 'timeout' ? 'timeout' : 'wrong', q.type, current)}
                     {item.points > 0 && <span className="points-pop">+{item.points} điểm{item.speedBonus > 0 ? ' (nhanh!)' : ''}</span>}
                   </h2>
                   {item.explanation && <p><EmojiText text={item.explanation} /></p>}

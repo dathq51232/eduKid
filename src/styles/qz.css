@@ -122,3 +122,11 @@
   .kw-fl, .kw-tw, .kw-bub, .kc-art, .kc-rays, .kc-prize, .lm-milo, .lm-node.is-next .lm-island::after, .qz-combo.is-pop { animation: none !important; }
   .kt-hero, .kt-side, .kc-lid { transition: none; }
 }
+/* “Đồ nghề của Milo”: nhãn dạng câu hỏi ngay trên phần trả lời (docs/BAN-SAC-EDUCHAINKIDS.md mục 5) */
+.qz-tool { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 12px; padding: 4px 12px 4px 6px; border-radius: 999px; background: var(--blue-soft); color: var(--blue-deep); font-size: 15px; line-height: 1.4; }
+.qz-tool-ic { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface); font-size: 17px; }
+.qz-tool-ic img { width: 20px; height: 20px; }
+.qz-tool b { font-family: var(--font-display, 'Quicksand'), sans-serif; font-weight: 700; }
+.qz-tool-hint { color: var(--muted); }
+.qz-tool-hint::before { content: '·'; margin-right: 6px; color: var(--muted); }
+:root[data-theme="dark"] .qz-tool { color: #c7d7ff; }

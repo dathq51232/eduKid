@@ -2,6 +2,7 @@
 
 - Next.js 15 App Router + React 19 + TypeScript, Supabase (RLS, migrations trong `supabase/migrations`), CSS theo tiền tố khu vực (`dk-`/`cv-` trình soạn bài giảng, `qz-` làm bài, `cb-` chọn bài, `td-` thi đua…): phần dùng chung ở `src/app/globals.css`, kiểu riêng mỗi khu vực ở `src/styles/<tiền tố>.css` và được `import '@/styles/<tiền tố>.css'` ngay trong component dùng lớp đó (trang nào cần mới tải). Thêm lớp mới của khu vực nào thì viết vào file khu vực đó, nhớ import ở component mới. Icon: lucide-react; hình 3D: `public/emoji/f3d` (`src/lib/deck/f3d-catalog.ts`, `src/lib/emoji-3d.ts`).
 - Trả lời người dùng bằng tiếng Việt, ngắn gọn; giao diện, chú thích code cũng bằng tiếng Việt.
+- Bản sắc & quy tắc sản phẩm: `docs/BAN-SAC-EDUCHAINKIDS.md` (giọng Milo, tên “Đồ nghề của Milo” cho dạng câu hỏi, mức L1–L5, Mùa Mắt Xích, huy hiệu Cú). Làm nội dung / giao diện / đề thi mới phải theo tài liệu này; không dùng tên khoa cử (thi Hương, Hội, Đình…) hay tên dạng bài theo con giáp.
 - Bản đồ nhanh:
   - Học sinh: `src/app/chon-bai`, `src/app/lam-bai` (câu hỏi `src/components/questions/*`), nội dung `src/lib/content/*` (rất lớn — đừng đọc cả file, dùng graphify / grep tên bài), bộ sinh câu `src/lib/practice/*`.
   - Giáo viên: `src/app/giao-vien/lop/[id]/*`; kế hoạch bài dạy `src/components/classroom/LessonPlanner.tsx`, `PlanWorkspace.tsx`, `src/lib/plans/*` (giáo án, lịch báo giảng, xuất Word `src/lib/docx-write.ts`).
