@@ -20,10 +20,17 @@ export type Obj3D = {
   split?: boolean;
   /** Xuất hiện từ cảnh số mấy khi trình chiếu (0 = luôn có) — dùng cho lắp ráp từng bước */
   appear?: number;
+  /** Hoạt động của mô hình cử động (con vật, cá, phi hành gia): khoá động tác; trống = động tác mặc định, 'none' = đứng yên */
+  anim?: string;
 };
 
 export type Link3D = { id: string; from: string; to: string; kind: 'arrow' | 'measure' | 'wire'; label: string };
-export type Control3D = { id: string; label: string; kind: 'switch' | 'slider'; action: 'on' | 'speed' | 'split' | 'show'; targets: string[] };
+export type Control3D = { id: string; label: string; kind: 'switch' | 'slider'; action: 'on' | 'speed' | 'split' | 'show' | 'anim'; targets: string[];
+  /** nút "Đổi hoạt động": bật thì các đồ vật chuyển sang động tác này (vd Ăn), tắt thì về hoạt động đã đặt */ clip?: string };
+
+/** tên tiếng Việt của các động tác (cá: "run" là bơi nhanh) */
+export const CLIP_LABEL: Record<string, string> = { idle: 'Đứng thở', walk: 'Đi', run: 'Chạy', eat: 'Ăn', jump: 'Nhảy', swim: 'Bơi', gasp: 'Mắc cạn (thiếu nước)', wave: 'Vẫy tay', yes: 'Gật đầu', none: 'Đứng yên' };
+export const clipLabel = (k: string, clips: string[] = []) => (k === 'run' && clips.includes('swim') ? 'Bơi nhanh' : CLIP_LABEL[k] ?? k);
 export type Scene3D = { caption: string; cam: number[]; tgt: number[]; focus: string;
   /** tự trình diễn: ở cảnh này bao nhiêu giây rồi tự sang cảnh sau (không có = 6 giây) */ sec?: number;
   /** đọc lời dẫn khi tự trình diễn */ say?: boolean };

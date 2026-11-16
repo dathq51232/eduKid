@@ -12,7 +12,7 @@ import { ASSETS, ASSET_BY_ID, ASSET_CATS } from '@/lib/lesson3d/assets';
 import type { Runtime, Stage3D } from '@/lib/lesson3d/engine';
 import { stemByKey } from '@/lib/lesson3d/templates';
 import { FIT_LABEL } from '@/lib/lesson3d/stem-catalog';
-import { MAX_OBJECTS, uid, type BaseType, type Control3D, type FxType, type Lesson3D, type Link3D, type Obj3D, type Quiz3D } from '@/lib/lesson3d/types';
+import { MAX_OBJECTS, clipLabel, uid, type BaseType, type Control3D, type FxType, type Lesson3D, type Link3D, type Obj3D, type Quiz3D } from '@/lib/lesson3d/types';
 import { fold } from '@/lib/classroom/teacher-nav';
 import OfflineSaveButton from '@/components/offline/OfflineSaveButton';
 import { saveLesson3DOffline } from '@/lib/offline/save';
@@ -26,7 +26,8 @@ const FX: { id: FxType; icon: string; name: string }[] = [
 ];
 const BASES: { id: BaseType; name: string }[] = [{ id: 'grass', name: '🌿 Đồng cỏ' }, { id: 'desk', name: '📐 Bàn học' }, { id: 'road', name: '🛣 Đường phố' }, { id: 'water', name: '🌊 Mặt nước' }, { id: 'space', name: '🌌 Vũ trụ' }];
 const LINK_KIND: Record<Link3D['kind'], string> = { arrow: 'Mũi tên', measure: 'Thước đo', wire: 'Dây điện' };
-const ACTION: Record<Control3D['action'], string> = { on: 'Bật / tắt', speed: 'Tốc độ hiệu ứng', split: 'Tách rời bộ phận', show: 'Hiện / ẩn' };
+const CLIP_ICON: Record<string, string> = { idle: '☺', walk: '🚶', run: '🏃', eat: '🌿', jump: '🦘', swim: '🐟', gasp: '💧', wave: '👋', yes: '👍', none: '⏸' };
+const ACTION: Record<Control3D['action'], string> = { on: 'Bật / tắt', speed: 'Tốc độ hiệu ứng', split: 'Tách rời bộ phận', show: 'Hiện / ẩn', anim: 'Đổi hoạt động (con vật cử động)' };
 type Tab = 'obj' | 'scene' | 'act' | 'quiz';
 type Play = { i: number; quiz: null | { i: number; score: number; fb: null | { ok: boolean; pick: number | string } }; card: string | null };
 
@@ -197,8 +198,8 @@ export default function Lesson3DStudio({ classId, lessonId, initial, offline }: 
   };
   const speak = (text: string) => { try { const s = window.speechSynthesis; s.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'vi-VN'; u.rate = 0.92; const v = s.getVoices().find((x) => x.lang?.toLowerCase().startsWith('vi')); if (v) u.voice = v; s.speak(u); } catch { /* máy không có giọng đọc */ } };
   const fullscreen = () => { const el = stageRef.current?.parentElement; if (!el) return; const p = document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen?.(); p?.catch?.(() => {}); };
-  const ctlVal = (c: Control3D) => { const r = rt[c.targets[0]] ?? {}; return c.action === 'speed' ? r.speed ?? 1 : c.action === 'on' ? r.on ?? (L.objects.find((o) => o.id === c.targets[0])?.on ?? true) : c.action === 'split' ? r.split ?? false : !(r.hidden ?? false); };
-  const setCtl = (c: Control3D, v: number | boolean) => setRt((cur) => { const n = { ...cur }; c.targets.forEach((t) => { const x = { ...(n[t] ?? {}) }; if (c.action === 'speed') x.speed = Number(v); if (c.action === 'on') x.on = Boolean(v); if (c.action === 'split') x.split = Boolean(v); if (c.action === 'show') x.hidden = !v; n[t] = x; }); return n; });
+  const ctlVal = (c: Control3D) => { const r = rt[c.targets[0]] ?? {}; return c.action === 'anim' ? r.clip !== undefined && r.clip === c.clip : c.action === 'speed' ? r.speed ?? 1 : c.action === 'on' ? r.on ?? (L.objects.find((o) => o.id === c.targets[0])?.on ?? true) : c.action === 'split' ? r.split ?? false : !(r.hidden ?? false); };
+  const setCtl = (c: Control3D, v: number | boolean) => setRt((cur) => { const n = { ...cur }; c.targets.forEach((t) => { const x = { ...(n[t] ?? {}) }; if (c.action === 'speed') x.speed = Number(v); if (c.action === 'on') x.on = Boolean(v); if (c.action === 'split') x.split = Boolean(v); if (c.action === 'show') x.hidden = !v; if (c.action === 'anim') x.clip = v ? c.clip : undefined; n[t] = x; }); return n; });
 
   /* ---------- thư viện ---------- */
   const f = fold(q);
@@ -351,6 +352,9 @@ function ObjPanel({ o, L, updObj, remove, dup }: { o: Obj3D; L: Lesson3D; updObj
           <label className="s3d-fld"><span>Lời giảng khi học sinh bấm vào</span><textarea value={o.spot.text} maxLength={500} placeholder="1–3 câu ngắn, dễ hiểu" onChange={(e) => { const v = e.target.value; set((x) => { x.spot.text = v; }); }} /></label>
         </> : <span className="s3d-note">Học sinh bấm vào ghim số sẽ thấy tiêu đề, lời giảng và nghe đọc.</span>}
       </div>
+      {a?.clips?.length ? <div className="s3d-fld"><span>Hoạt động</span><div className="s3d-fx">{[...a.clips, 'none'].map((k, i) => (
+        <button key={k} type="button" aria-pressed={(o.anim ?? a.clips![0]) === k} onClick={() => set((y) => { y.anim = i === 0 ? undefined : k; })}><b>{CLIP_ICON[k] ?? '•'}</b>{clipLabel(k, a.clips)}</button>
+      ))}</div>{o.fx.type !== 'orbit' && o.anim && /^(walk|run|swim)$/.test(o.anim) ? <span className="s3d-note">Mẹo: chọn thêm hiệu ứng “Quay quanh tâm” để con vật di chuyển vòng quanh sa bàn.</span> : null}</div> : null}
       <div className="s3d-fld"><span>Hiệu ứng</span><div className="s3d-fx">{FX.map((x) => <button key={x.id || 'none'} type="button" aria-pressed={o.fx.type === x.id} onClick={() => set((y) => { y.fx.type = x.id; })}><b>{x.icon}</b>{x.name}</button>)}</div></div>
       {o.fx.type && <label className="s3d-fld"><span>Tốc độ hiệu ứng</span><input type="range" min={0.2} max={2.5} step={0.1} value={o.fx.speed} onChange={(e) => { const v = Number(e.target.value); set((x) => { x.fx.speed = v; }); }} /></label>}
       <label className="s3d-fld"><span>Xuất hiện khi trình chiếu</span><select value={o.appear ?? 0} onChange={(e) => { const v = Number(e.target.value); set((x) => { x.appear = v || undefined; }); }}>
@@ -364,6 +368,10 @@ function ObjPanel({ o, L, updObj, remove, dup }: { o: Obj3D; L: Lesson3D; updObj
 function ActPanel({ L, update, objOptions, objName, sel }: { L: Lesson3D; update: (fn: (d: Lesson3D) => Lesson3D) => void; objOptions: (v: string, e?: string) => React.ReactNode; objName: (id: string) => string; sel: string | null }) {
   const [from, setFrom] = useState(sel ?? ''); const [to, setTo] = useState(''); const [kind, setKind] = useState<Link3D['kind']>('arrow'); const [label, setLabel] = useState('');
   const [cl, setCl] = useState(''); const [ck, setCk] = useState<Control3D['action']>('on'); const [ct, setCt] = useState<string[]>(sel ? [sel] : []);
+  const [cc, setCc] = useState('');
+  // động tác chung của các đồ vật đã chọn (nút "Đổi hoạt động")
+  const clipsOf = (id: string) => ASSET_BY_ID[L.objects.find((o) => o.id === id)?.type ?? '']?.clips ?? [];
+  const common = ct.length ? clipsOf(ct[0]).filter((k) => ct.every((id) => clipsOf(id).includes(k))) : [];
   return (
     <>
       <h3 className="s3d-h3">Đường nối</h3>
@@ -376,11 +384,14 @@ function ActPanel({ L, update, objOptions, objName, sel }: { L: Lesson3D; update
       </div>
       <h3 className="s3d-h3">Nút điều khiển khi trình chiếu</h3>
       <p className="s3d-note">Ví dụ: “Đóng công tắc” bật bóng đèn; thanh “Sức gió” làm cánh quạt quay nhanh hơn; “Tách bộ phận” để xem cấu tạo.</p>
-      <ul className="s3d-list">{L.controls.map((c) => <li key={c.id} className="s3d-card s3d-mini"><span><b>{c.label}</b> · {ACTION[c.action]} · {c.targets.map(objName).join(', ')}</span><button type="button" className="s3d-x" aria-label="Xóa nút" onClick={() => update((d) => { d.controls = d.controls.filter((x) => x.id !== c.id); return d; })}><X aria-hidden="true" /></button></li>)}</ul>
+      <ul className="s3d-list">{L.controls.map((c) => <li key={c.id} className="s3d-card s3d-mini"><span><b>{c.label}</b> · {c.action === 'anim' && c.clip ? `Chuyển sang “${clipLabel(c.clip, clipsOf(c.targets[0]))}”` : ACTION[c.action]} · {c.targets.map(objName).join(', ')}</span><button type="button" className="s3d-x" aria-label="Xóa nút" onClick={() => update((d) => { d.controls = d.controls.filter((x) => x.id !== c.id); return d; })}><X aria-hidden="true" /></button></li>)}</ul>
       <div className="s3d-box">
         <div className="s3d-row2"><input value={cl} maxLength={40} onChange={(e) => setCl(e.target.value)} placeholder="Tên nút, ví dụ: Sức gió" aria-label="Tên nút" /><select value={ck} onChange={(e) => setCk(e.target.value as Control3D['action'])} aria-label="Tác dụng">{Object.entries(ACTION).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
+        {ck === 'anim' && <label className="s3d-fld"><span>Khi bật nút, chuyển sang</span><select value={cc} onChange={(e) => setCc(e.target.value)} aria-label="Động tác">
+          <option value="">{ct.length ? (common.length ? 'Chọn động tác…' : 'Các đồ vật đã chọn không có động tác chung') : 'Chọn con vật bên dưới trước'}</option>
+          {common.map((k) => <option key={k} value={k}>{clipLabel(k, clipsOf(ct[0]))}</option>)}</select></label>}
         <div className="s3d-checks">{L.objects.map((o) => <label key={o.id} className="s3d-chk sm"><input type="checkbox" checked={ct.includes(o.id)} onChange={(e) => setCt((t) => (e.target.checked ? [...t, o.id] : t.filter((x) => x !== o.id)))} /> {(o.spot.on && o.spot.title) || o.name}</label>)}</div>
-        <button type="button" className="s3d-btn sm is-pri" disabled={!cl.trim() || !ct.length} onClick={() => { update((d) => { d.controls.push({ id: uid(), label: cl.trim(), kind: ck === 'speed' ? 'slider' : 'switch', action: ck, targets: ct }); return d; }); setCl(''); setCt([]); }}><Plus aria-hidden="true" /> Thêm nút điều khiển</button>
+        <button type="button" className="s3d-btn sm is-pri" disabled={!cl.trim() || !ct.length || (ck === 'anim' && !common.includes(cc))} onClick={() => { update((d) => { d.controls.push({ id: uid(), label: cl.trim(), kind: ck === 'speed' ? 'slider' : 'switch', action: ck, targets: ct, ...(ck === 'anim' ? { clip: cc } : {}) }); return d; }); setCl(''); setCt([]); setCc(''); }}><Plus aria-hidden="true" /> Thêm nút điều khiển</button>
       </div>
     </>
   );

@@ -3,9 +3,12 @@
 // Chỉ tải khi đồ vật xuất hiện trên sa bàn (lần đầu), sau đó dùng lại từ bộ nhớ; lúc đang tải hiện khối mờ giữ chỗ.
 import * as THREE from 'three';
 import type { Asset } from './assets';
-import { EXTRA_MODELS } from './model-list';
+import { EXTRA_MODELS, MODEL_CLIPS } from './model-list';
 
 export const MODEL_ROOT = '/models/';
+/** phiên bản bộ mô hình (đổi khi thay file cùng tên — tránh bộ nhớ đệm offline / trình duyệt giữ file cũ). 2: bản cử động 11/2026 */
+const VER: Record<string, string> = { quaternius: '2' };
+const ver = (path: string) => { const v = VER[path.split('/')[0]]; return v ? `?v=${v}` : ''; };
 /** Sân khấu nghe sự kiện này để vẽ lại đường nối / ghim khi mô hình vừa tải xong */
 export const MODEL_EVENT = 'l3d-model-loaded';
 
@@ -51,9 +54,11 @@ export function getLoader(): Promise<GltfLoader> {
     import('three/examples/jsm/libs/meshopt_decoder.module.js'),
   ]).then(([{ GLTFLoader }, { MeshoptDecoder }]) => {
     const l = new GLTFLoader(); l.setMeshoptDecoder(MeshoptDecoder);
+    // giữ các động tác kèm theo cảnh (mô hình cử động)
+    const withAnims = (g: { scene: THREE.Group; animations: THREE.AnimationClip[] }) => { g.scene.animations = g.animations; return g.scene; };
     return {
-      load: async (url: string) => (await l.loadAsync(url)).scene,
-      parse: async (buf: ArrayBuffer) => (await l.parseAsync(buf, '')).scene,
+      load: async (url: string) => withAnims(await l.loadAsync(url)),
+      parse: async (buf: ArrayBuffer) => withAnims(await l.parseAsync(buf, '')),
     };
   });
   return loader;
@@ -77,7 +82,7 @@ export function loadModelUrl(key: string, url: string): Promise<THREE.Group> {
 export function loadModel(path: string): Promise<THREE.Group> {
   let p = cache.get(path);
   if (!p) {
-    p = getLoader().then((l) => l.load(`${MODEL_ROOT}${path}.glb`)).then((g) => {
+    p = getLoader().then((l) => l.load(`${MODEL_ROOT}${path}.glb${ver(path)}`)).then((g) => {
       g.traverse((m) => {
         const mm = m as THREE.Mesh; if (!mm.isMesh) return;
         mm.castShadow = true; mm.receiveShadow = true;
@@ -98,8 +103,11 @@ function build(d: Def): THREE.Group {
   const ph = new THREE.Mesh(new THREE.BoxGeometry(w * d.s, Math.max(h, 0.05) * d.s, z * d.s), new THREE.MeshStandardMaterial({ color: '#cbd5e1', transparent: true, opacity: 0.35 }));
   ph.position.y = (Math.max(h, 0.05) * d.s) / 2; g.add(ph);
   if (typeof window === 'undefined') return g;
-  void loadModel(`${d.dir ?? 'kenney'}/${d.file}`).then((src) => {
-    const c = src.clone(true); c.scale.setScalar(d.s);
+  const moving = d.dir === 'quaternius' && !!MODEL_CLIPS[d.file];
+  void Promise.all([loadModel(`${d.dir ?? 'kenney'}/${d.file}`), moving ? loadSkel() : Promise.resolve(null)] as const).then(([src, skel]) => {
+    const anim = src.animations?.length ? src.animations : null;
+    // mô hình có khung xương: phải chép cả khung xương (clone thường làm hình bị kéo méo)
+    const c = (anim && skel ? skel.clone(src) : src.clone(true)) as THREE.Group; c.scale.setScalar(d.s);
     c.position.y = 0.02; // nhích khỏi mặt sa bàn, tránh nhấp nháy (z-fighting) ở mặt đường
     const id = g.userData.id as string | undefined; const ghost = !!g.userData.ghost;
     c.traverse((m) => {
@@ -112,10 +120,23 @@ function build(d: Def): THREE.Group {
       if (id) m.userData.id = id;
     });
     g.remove(ph); ph.geometry.dispose(); g.add(c);
+    if (anim) {
+      // bộ phát động tác: sân khấu 3D chọn động tác và cập nhật mỗi khung hình (engine.ts)
+      const mixer = new THREE.AnimationMixer(c);
+      const actions: Record<string, THREE.AnimationAction> = {};
+      anim.forEach((clip) => { actions[clip.name] = mixer.clipAction(clip); });
+      g.userData.anim = { mixer, actions, cur: '' } satisfies ModelAnim;
+    }
     window.dispatchEvent(new Event(MODEL_EVENT));
   }).catch(() => { (ph.material as THREE.MeshStandardMaterial).color.set('#fca5a5'); });
   return g;
 }
+
+/** bộ phát động tác gắn vào đồ vật (userData.anim của nhóm đồ vật) */
+export type ModelAnim = { mixer: THREE.AnimationMixer; actions: Record<string, THREE.AnimationAction>; cur: string };
+type SkelUtils = { clone: (o: THREE.Object3D) => THREE.Object3D };
+let skelP: Promise<SkelUtils> | null = null;
+const loadSkel = () => (skelP ??= import('three/examples/jsm/utils/SkeletonUtils.js') as Promise<SkelUtils>);
 
 const ALL: Def[] = [
   ...DEFS,
@@ -126,6 +147,6 @@ export const MODEL_ASSETS: Asset[] = ALL.map((d) => {
   const dir = d.dir ?? 'kenney';
   return {
     id: `${dir === 'kenney' ? 'k' : 'q'}-${d.file}`, cat: d.cat, name: d.name, color: '#ffffff', fixed: true, kw: `${d.kw ?? ''} ${dir}`,
-    y: d.y, thumb: `${MODEL_ROOT}${dir}/thumbs/${d.file}.webp`, b: () => build(d),
+    y: d.y, thumb: `${MODEL_ROOT}${dir}/thumbs/${d.file}.webp${ver(dir)}`, b: () => build(d), clips: dir === 'quaternius' ? MODEL_CLIPS[d.file] : undefined,
   };
 });

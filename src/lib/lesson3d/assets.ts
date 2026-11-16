@@ -20,6 +20,8 @@ export type Asset = {
   fixed?: boolean;
   /** ảnh nhỏ dựng sẵn (mô hình tải từ file .glb) */
   thumb?: string;
+  /** mô hình cử động: các động tác có sẵn (khoá trong CLIP_LABEL) */
+  clips?: string[];
   b: (o: AssetOpts) => THREE.Group;
 };
 

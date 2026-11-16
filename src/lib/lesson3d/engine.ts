@@ -3,11 +3,11 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { ASSET_BY_ID, type Part } from './assets';
-import { MODEL_EVENT } from './models';
+import { MODEL_EVENT, type ModelAnim } from './models';
 import type { BaseType, Lesson3D, Link3D, Obj3D } from './types';
 
 type Node = { root: THREE.Group; body: THREE.Group; key: string; pts?: THREE.Points; seeds?: number[][]; ang: number; rad: number; t0: number };
-export type Runtime = Record<string, { on?: boolean; speed?: number; split?: boolean; hidden?: boolean }>;
+export type Runtime = Record<string, { on?: boolean; speed?: number; split?: boolean; hidden?: boolean; clip?: string }>;
 export type EngineEvents = {
   onSelect?: (id: string | null) => void;
   onPick?: (id: string) => void;
@@ -277,6 +277,23 @@ export class Stage3D {
     (this.lesson?.objects ?? []).forEach((o) => {
       const n = this.nodes.get(o.id); if (!n || this.drag?.id === o.id) return;
       const e = this.eff(o); const sp = (o.fx.speed || 1) * e.speedMul; const fx = o.fx.type;
+      const an = n.body.userData.anim as ModelAnim | undefined;
+      if (an && n.root.visible) {
+        // động tác: nút điều khiển khi chiếu > hoạt động đã đặt > động tác đầu tiên của mô hình
+        const want = this.runtime[o.id]?.clip ?? o.anim ?? Object.keys(an.actions)[0] ?? 'none';
+        if (want !== an.cur) {
+          // 'none' (đứng yên): giữ dáng đầu của động tác đầu tiên, không chạy
+          const first = Object.keys(an.actions)[0];
+          const key = an.actions[want] ? want : first;
+          const next = an.actions[key], prev = an.actions[an.cur === 'none' ? first : an.cur];
+          if (next && next !== prev) { next.reset().play(); if (prev) next.crossFadeFrom(prev, 0.35, false); }
+          if (next) next.paused = want === 'none';
+          an.cur = want;
+        }
+        an.mixer.update(dt * e.speedMul);
+        // đi / chạy / bơi theo vòng tròn: quay mặt theo hướng di chuyển
+        if (fx === 'orbit' && /^(walk|run|swim)$/.test(want)) n.root.rotation.y = o.ry - n.ang;
+      }
       const rotor = n.body.getObjectByName('rotor');
       const active = sp > 0.01 && (ASSET_BY_ID[o.type]?.onoff ? e.on !== false : true);
       if (fx === 'spin' && active) { if (rotor) rotor.rotation.x += dt * sp * 6; else n.root.rotation.y += dt * sp * 1.2; }
