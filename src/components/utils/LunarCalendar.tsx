@@ -10,6 +10,7 @@ import {
   LUNAR_MONTH_NAME, WEEKDAYS, canChiDay, canChiMonth, canChiYear, conGiap, dayInfo, gioHoangDao, lunarToSolar, solarToLunar, tietKhi,
   type DayInfo,
 } from '@/lib/utils/lunar';
+import '@/styles/lg.css';
 
 type Student = { id: string; name: string };
 type Bday = { id: string; name: string; d: number; m: number; y: number };

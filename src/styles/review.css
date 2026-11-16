@@ -1,0 +1,27 @@
+/* Kiểu riêng khu vực "review-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.review-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.review-item { padding: 14px 18px; border: 2px solid var(--line-strong); border-left: 10px solid var(--red); border-radius: 6px 14px 14px 6px; background: var(--bg-ffffff); }
+.review-item h3 { font-size: 20px; }
+.review-item p { margin-top: 4px; color: var(--muted); font-size: 16px; line-height: 1.5; }
+.review-solution { margin-top: 6px; font-size: 16px; }
+.review-solution summary { cursor: pointer; font-weight: 600; color: var(--fg-11704c); }
+.review-solution p { margin-top: 4px; color: var(--ink); white-space: pre-line; }
+.review-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 15px; }
+.review-status { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; }
+.review-time { color: var(--muted); }
+.review-points { padding: 0 8px; border-radius: 999px; background: var(--yellow); font-weight: 700; }
+.review-item.is-correct { border-left-color: var(--green); }
+.review-item.is-correct .review-status { color: var(--fg-11704c); }
+.review-item.is-wrong .review-status { color: var(--fg-9c2a22); }
+.review-item.is-timeout { border-left-color: var(--bg-8d97a8); }
+.review-item.is-unanswered { border-left-color: var(--rule); }
+
+/* Chữ trên nền vàng / nền trắng mờ luôn màu mực đậm (kể cả chế độ tối) */
+.button-yellow, .top-cta, .sticker, .grade-chip:hover, .back-link:hover, .lesson-row.is-next .lesson-no,
+.icon-button:hover, .result-card, .order-no, .adm-qnum, .nav-dot.is-current:not(.is-wrong):not(.is-correct):not(.is-timeout), .points-pop, .review-points, .maze-btn,
+.toc-link.is-next .toc-no, .toc-fab, .points-chip { color: #1e2b4a; }
+
+/* Khối nội dung: viền mảnh 1px thay cho viền 2px, cùng một kiểu bóng nhẹ */
+.games-hero, .lesson, .lesson-row, .question-card, .intro-card, .score-box, .review-item, .empty-state,
+.points-card, .comment-card, .dialog-card, .back-link, .icon-button, .quiz-count,
+.game-filter, .game-grade select, .notebook { border-width: 1px; }

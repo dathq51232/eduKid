@@ -14,6 +14,9 @@ import {
   BLOCK_LABEL, EMOJIS, PALETTE, TEXT_PRESETS, VARS, adjOf, emptyDesign, shrinkImage, uid,
   type BlockAdj, type BlockKey, type DesignItem, type FontKey, type PraiseDesign, type ShapeItem, type ShapeKind, type TextItem,
 } from '@/lib/praise/design';
+import '@/styles/adm.css';
+import '@/styles/pe.css';
+import '@/styles/btn.css';
 
 type Sel = { kind: 'block'; key: BlockKey } | { kind: 'item'; id: string } | null;
 type Tab = 'text' | 'sticker' | 'emoji' | 'shape' | 'image';

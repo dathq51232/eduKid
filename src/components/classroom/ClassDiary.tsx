@@ -12,6 +12,12 @@ import {
   PRAISE_TAGS, REMIND_TAGS, STATUS_LABEL, alertsOf, dayLabel, emptyEntry, isMarked, isPraise, kindsOf, messageFor, monthSheet,
   shiftDay, summarize, todayIso, type Entry, type MessageKind, type Pronoun, type RangeData, type Status, type Student,
 } from '@/lib/classroom/diary';
+import '@/styles/adm.css';
+import '@/styles/callon.css';
+import '@/styles/diary.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
 
 type Tab = 'day' | 'msg' | 'month';
 type DayData = { saved_at: string | null; announcement: string | null; entries: { student_id: string; status: Status; tags: string[]; note: string | null; copied: boolean; msg_text?: string | null; hidden?: boolean }[] };

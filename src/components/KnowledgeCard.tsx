@@ -1,5 +1,6 @@
 import { Lightbulb } from 'lucide-react';
 import type { Knowledge } from '@/lib/content/knowledge';
+import '@/styles/knowledge.css';
 
 /** Ô "Kiến thức cần nhớ" ở màn hình bắt đầu làm bài (mở sẵn, có thể thu gọn) */
 export default function KnowledgeCard({ knowledge }: { knowledge: Knowledge }) {

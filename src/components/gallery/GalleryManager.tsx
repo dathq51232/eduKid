@@ -13,6 +13,12 @@ import { ArrangePanel, EditItemDialog } from './ArrangePanel';
 import { arrange, deleteItem, editItem, galleryError, loadGallery, saveSettings, updateItem, uploadFile } from '@/lib/gallery/client';
 import { sampleItems } from '@/lib/gallery/samples';
 import { KIND_LABEL, THEMES, autoSize, fmtDate, wallOrder, type GalleryData, type GalleryItem, type GalleryKind, type NameMode, type ThemeKey, type WallSizes } from '@/lib/gallery/types';
+import '@/styles/adm.css';
+import '@/styles/gm.css';
+import '@/styles/gv.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
 
 type Tab = 'phong' | 'them' | 'duyet' | 'quan-ly' | 'net-chu';
 type Student = { id: string; name: string };

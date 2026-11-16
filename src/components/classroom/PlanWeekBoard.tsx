@@ -8,6 +8,11 @@ import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, FileDown, MonitorPlay, Pencil, Trash2 } from 'lucide-react';
 import { SUBJECT_NAMES, addDays, viDate, weekdayVi, type LessonPlan, type PlanSubject } from '@/lib/plans/generate';
 import type { DeckRow } from '@/components/deck/DeckHome';
+import '@/styles/ct.css';
+import '@/styles/kb.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
 
 export type WeekSaved = { id: string; subject: PlanSubject; title: string; teach_date: string | null; period: number | null };
 

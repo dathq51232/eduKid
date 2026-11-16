@@ -4,6 +4,7 @@
 // phóng to cả khu chơi (bàn + thẻ người chơi + nút). Máy không hỗ trợ (iPhone) thì phủ kín cửa sổ, Esc để thoát.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
+import '@/styles/chs.css';
 
 export default function BoardStage({ children }: { children: React.ReactNode }) {
   const [fs, setFs] = useState(false);

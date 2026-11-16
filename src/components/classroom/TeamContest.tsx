@@ -13,6 +13,11 @@ import {
   DOW_LABEL, MINUS_REASONS, REASONS, TEAM_COLORS, TEAM_EMOJI, TEAM_ICONS, ddmm, defaultTeams, dowOf, normalizeSeating, normalizeTeams, ranking, shortName,
   SOURCE, sourceOf, sourceTotals, stripSource, teamTotals, teamsFromSeating, vnDay, weekOf, type Point, type PointSource, type TeamsState, type ToolStudent,
 } from '@/lib/classroom/class-tools';
+import '@/styles/adm.css';
+import '@/styles/ct.css';
+import '@/styles/td.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
 
 type Props = { classId: string; className: string; students: ToolStudent[] };
 const addDays = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * 86400_000).toISOString().slice(0, 10);

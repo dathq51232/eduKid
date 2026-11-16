@@ -14,6 +14,9 @@ import {
   fmtDateTime, fmtDuration, lessonsOfStudent, percent, studentTotals, subjectLabel,
   type GameResult, type LessonResult,
 } from '@/lib/classroom/progress';
+import '@/styles/dash.css';
+import '@/styles/score.css';
+import '@/styles/tone.css';
 
 export const metadata: Metadata = { title: 'Tiến độ học sinh · EduChain Kids' };
 export const dynamic = 'force-dynamic';

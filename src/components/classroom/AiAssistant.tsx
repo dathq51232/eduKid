@@ -5,6 +5,7 @@
 // key được máy chủ mã hoá lưu lại, không bao giờ trả về trình duyệt. Hội thoại chỉ giữ ở máy thầy cô.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Bot, ExternalLink, KeyRound, Loader2, Send, Sparkles, Trash2, X } from 'lucide-react';
+import '@/styles/aiw.css';
 
 type KeyStatus = { setupOk: boolean; hasOpenai: boolean; hasGemini: boolean; preferred: 'openai' | 'gemini' };
 type Msg = { role: 'user' | 'assistant'; content: string };

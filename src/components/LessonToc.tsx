@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Check, ListOrdered, X } from 'lucide-react';
+import '@/styles/lesson.css';
+import '@/styles/toc.css';
 
 export type TocItem = { id: string; no: string; label: string; title: string; done: boolean; next: boolean };
 export type TocGroup = { key: string; title?: string; items: TocItem[] };

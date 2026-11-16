@@ -8,6 +8,11 @@ import BrandLogo, { BrandWord } from '@/components/brand/BrandLogo';
 import { createClient } from '@/lib/supabase/client';
 import { safeNext } from '@/lib/auth/safe-next';
 import PasswordInput from '@/components/PasswordInput';
+import '@/styles/adm.css';
+import '@/styles/auth.css';
+import '@/styles/btn.css';
+import '@/styles/class.css';
+import '@/styles/parent.css';
 
 type Tab = 'student' | 'parent' | 'adult';
 type Classmate = { id: string; name: string };

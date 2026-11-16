@@ -5,6 +5,7 @@ import { ArrowRight, Eye, EyeOff, Lightbulb, Volume2 } from 'lucide-react';
 import SentenceIllustration from '@/components/english/SentenceIllustration';
 import { analyzeSentenceProsody } from '@/lib/english/prosody';
 import type { StepProps } from '@/components/english/steps/types';
+import '@/styles/en.css';
 
 /** Bước 1 — Sound-Image Imprint: nhìn tranh, nghe nhịp câu, mặc định ẩn nghĩa tiếng Việt. */
 export default function StepDiscover({ lesson, speaking, toggleSample, goStep }: StepProps) {

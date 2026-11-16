@@ -1,0 +1,77 @@
+/* Kiểu riêng khu vực "pc-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.ct .card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; box-shadow: 0 3px 0 rgb(var(--ink-rgb) / .06); min-width: 0; }
+.ct-link { display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: none; color: var(--link); font: inherit; font-weight: 700; cursor: pointer; }
+.ct-modal { display: grid; gap: 12px; width: min(760px, 100%); max-height: calc(100vh - 32px); overflow: auto; padding: 18px 20px; border-radius: 20px; background: var(--surface); color: var(--ink); box-shadow: 0 24px 60px rgb(15 23 42 / .35); }
+
+/* danh bạ phụ huynh */
+.pc-note { padding: 11px 14px; border-radius: 14px; background: var(--mint); color: var(--green); font-weight: 700; font-size: 13.5px; }
+.pc-search { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--muted); }
+.pc-search svg { width: 18px; height: 18px; }
+.pc-search input { width: 230px; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 14.5px; outline: none; }
+.pc-new h2 { font-size: 17px; margin-bottom: 8px; }
+.pc-list { padding: 4px 14px; }
+.pc-row, .pc-st { display: grid; grid-template-columns: 34px minmax(130px, 1fr) minmax(0, 4.4fr); gap: 10px; align-items: start; }
+.pc-th { grid-template-columns: 34px minmax(130px, 1fr) minmax(130px, 1.1fr) 120px 250px minmax(0, 1fr) 30px; padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12.5px; font-weight: 700; }
+.pc-st { padding: 9px 0; border-bottom: 1px solid var(--line); }
+.pc-st.is-missing { background: linear-gradient(90deg, rgb(255 200 61 / .1), transparent); }
+.pc-no { padding-top: 8px; color: var(--muted); font-weight: 700; }
+.pc-name { padding-top: 7px; }
+.pc-cs { display: grid; gap: 6px; min-width: 0; }
+.pc-c { display: grid; grid-template-columns: minmax(130px, 1.1fr) 120px 250px minmax(0, 1fr) 30px; gap: 10px; align-items: center; min-height: 40px; }
+.pc-c.is-edit { display: block; }
+.pc-pn { font-weight: 600; line-height: 1.2; }
+.pc-pn small { display: block; color: var(--muted); font-size: 12.5px; }
+.pc-phone { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pc-zalo-no { display: block; font-size: .78em; font-weight: 600; color: #0068ff; }
+
+.pc-act { display: flex; gap: 6px; flex-wrap: wrap; }
+.pc-btn { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 0 10px; border: 0; border-radius: 10px; background: var(--blue-soft); color: var(--blue); font: inherit; font-weight: 700; font-size: 13px; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.pc-btn svg { width: 15px; height: 15px; }
+.pc-btn.is-zalo { background: #e3f0ff; color: #0068ff; }
+.pc-memo { color: var(--muted); font-size: 13px; font-weight: 600; }
+.pc-miss { color: #b45309; font-weight: 700; }
+.pc-more { justify-self: start; font-size: 13.5px; }
+.pc-del { margin-top: 4px; color: var(--red); font-size: 13.5px; }
+.pc-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pc-form input, .pc-form select { min-height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font: inherit; font-size: 14.5px; min-width: 0; }
+.pc-form input { flex: 1 1 150px; }
+.pc-form .pc-rel { flex: 0 1 110px; }
+.pc-form .pc-phone-in { flex: 0 1 160px; border-color: var(--blue); }
+.pc-preview { max-height: 32vh; overflow: auto; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: 14px; }
+.pc-preview ul { display: grid; gap: 3px; padding-left: 18px; margin: 6px 0 0; }
+.pc-preview li.is-bad { color: #b4232a; }
+:root[data-theme="dark"] .pc-btn.is-zalo { background: #10284a; color: #7fb2ff; }
+:root[data-theme="dark"] .pc-miss { color: #f2c14e; }
+@media (max-width: 900px) {
+  .pc-th { display: none; }
+  .pc-st { grid-template-columns: 26px minmax(0, 1fr); }
+  .pc-cs { grid-column: 1 / -1; }
+  .pc-c { grid-template-columns: minmax(0, 1fr) auto; }
+  .pc-act { grid-column: 1 / -1; }
+  .pc-memo { grid-column: 1 / -1; }
+  .pc-search input { width: 150px; }
+}
+.pc-c.is-empty { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.pc-st.is-missing { background: linear-gradient(90deg, rgb(255 200 61 / .07), transparent 60%); }
+.pc-name { font-weight: 700; }
+.ct-radio .ct-link { margin-top: 4px; font-size: 13px; }
+/* Danh bạ giáo viên: địa chỉ nhà dưới tên em */
+.pc-name { display: grid; gap: 2px; align-content: start; min-width: 0; }
+.pc-addr { display: inline-flex; align-items: flex-start; gap: 4px; padding: 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 500; text-align: left; cursor: pointer; }
+.pc-addr svg { flex: none; width: 13px; height: 13px; margin-top: 2px; color: var(--red); }
+/* Danh bạ — nút Nhắn tin riêng phụ huynh từng em (0059) */
+.pc-msg { justify-self: start; display: inline-flex; align-items: center; gap: 5px; margin: 4px 0 2px; padding: 5px 11px; border: 0; border-radius: 999px; background: var(--brand-blue); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.pc-msg svg { width: 15px; height: 15px; }
+.pc-msg:hover { filter: brightness(1.08); }
+.pc-msg:focus-visible { outline: 3px solid var(--brand-blue); outline-offset: 2px; }
+.pc-addr.is-empty { color: var(--link); opacity: .8; }
+.pc-addr:hover { color: var(--ink); }
+.pc-addr-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pc-addr-form input { flex: 1 1 160px; min-height: 32px; padding: 4px 8px; border: 1.5px solid var(--blue); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; }
+.ct-link.is-danger { color: var(--red); }
+.chs-promo .ct-link { color: #fff; }
+.chs-side > .ct-link { display: inline-flex; align-items: center; gap: 4px; }
+.tdy-done .ct-link { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 700; }
+.kb-todo .ct-link { display: inline; padding: 0; margin-left: 4px; }
+.tdy-later .ct-link { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 700; text-align: left; }
+.tdy-done .ct-link, .tdy-later .ct-link { font-size: 14px; }

@@ -12,6 +12,12 @@ import {
   examKey, isScored, levelFromScore, parseScore, qualitiesFor, schoolSubjects, showScore,
   type Award, type AwardScope, type ExamCode, type QualityItem, type QualityLevel, type SchoolSubject, type SubjectLevel,
 } from '@/lib/classroom/school';
+import '@/styles/adm.css';
+import '@/styles/auth.css';
+import '@/styles/btn.css';
+import '@/styles/comments.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
 
 type Student = { id: string; name: string };
 type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;

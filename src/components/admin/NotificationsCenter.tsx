@@ -7,6 +7,7 @@ import { errorText } from '@/lib/admin/questions';
 import { NOTI_GROUPS, type AdminNotification } from '@/lib/admin/insights';
 import { NotificationList } from './NotificationBell';
 import { useAdminUser } from './AdminContext';
+import '@/styles/adm.css';
 
 /** Trang Thông báo: lọc theo loại / chưa đọc, gộp theo ngày, đánh dấu đã đọc. */
 export default function NotificationsCenter() {

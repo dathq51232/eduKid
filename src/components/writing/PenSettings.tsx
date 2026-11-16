@@ -4,6 +4,7 @@
 import { useMemo } from 'react';
 import { Eraser } from 'lucide-react';
 import { BRUSH, inkOutline, outlinePath, centerPath, type BrushKind, type InkPt } from '@/lib/writing/ink';
+import '@/styles/pen.css';
 
 export type PenState = { tool: 'pen' | 'erase'; brush: BrushKind; color: string; size: number; taperStart: number; taperEnd: number };
 export const DEFAULT_PEN: PenState = { tool: 'pen', brush: 'fountain', color: '#1e3a8a', size: 1, taperStart: 0, taperEnd: 18 };

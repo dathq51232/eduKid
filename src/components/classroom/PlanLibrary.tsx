@@ -7,6 +7,11 @@ import { readDocxFull } from '@/lib/docx-read';
 import { imageKeys, prepareImage, uploadImage } from '@/lib/plans/images';
 import { SUBJECT_NAMES, isPlan, type LessonPlan, type PlanSubject } from '@/lib/plans/generate';
 import { splitLessonPlans, type LibraryMeta } from '@/lib/plans/library';
+import '@/styles/adm.css';
+import '@/styles/planner.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
 
 type Row = { id: string; source: string; subject: PlanSubject; extra: boolean; grade: number; week: number | null; lesson_no: number | null; periods: number[] | null; ppct: number | null; title: string; topic: string };
 type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;

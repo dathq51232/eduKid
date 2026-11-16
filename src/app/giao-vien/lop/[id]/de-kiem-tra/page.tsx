@@ -8,6 +8,7 @@ import GradeReady from '@/components/learn/GradeReady';
 import ExamBuilder from '@/components/exams/ExamBuilder';
 import { getViewer } from '@/lib/auth/viewer';
 import { classRow, warmClass } from '@/lib/classroom/class-page';
+import '@/styles/dash.css';
 
 export const metadata: Metadata = { title: 'Ma trận và đề kiểm tra · EduChain Kids' };
 export const dynamic = 'force-dynamic';

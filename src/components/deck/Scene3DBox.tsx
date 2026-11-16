@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { normalizeLesson } from '@/lib/lesson3d/types';
+import '@/styles/dk.css';
 
 export default function Scene3DBox({ lessonId, title }: { lessonId: string; title: string }) {
   const el = useRef<HTMLDivElement>(null);

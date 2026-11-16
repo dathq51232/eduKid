@@ -6,6 +6,10 @@ import { downloadDocx } from '@/lib/doc-download';
 import { htmlToDocx, type DocImage } from '@/lib/docx-write';
 import { imageKeys, loadImages, type LoadedImage } from '@/lib/plans/images';
 import { WORD_LAND_CSS } from '@/lib/plans/fit';
+import '@/styles/planner.css';
+import '@/styles/btn.css';
+import '@/styles/mini.css';
+import '@/styles/pv.css';
 
 /** CSS chỉ dùng khi xem trên màn hình: giả lập trang A4, vạch ngắt trang */
 const SCREEN = `<style id="pv-screen">

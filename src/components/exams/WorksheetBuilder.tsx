@@ -12,6 +12,12 @@ import { bookLessons, buildPaper, defaultMatrix, replaceSlot, totals, type Matri
 import { answerText, examDocument } from '@/lib/exams/word';
 import type { SubjectCode } from '@/lib/types';
 import { ToolIcon } from '@/components/classroom/tool-icons';
+import '@/styles/adm.css';
+import '@/styles/exam.css';
+import '@/styles/btn.css';
+import '@/styles/comments.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
 
 const SUBJECT_NAME: Record<SubjectCode, string> = { toan: 'Toán', 'tieng-viet': 'Tiếng Việt', 'tieng-anh': 'Tiếng Anh' };
 const MIX = {

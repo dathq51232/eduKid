@@ -1,0 +1,49 @@
+/* Kiểu riêng khu vực "ach-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.ach-hero, .parent-status { display: flex; align-items: center; gap: 24px; padding: 28px; border: 2px solid var(--line-strong); border-radius: 20px; background: var(--bg-ffffff); box-shadow: var(--shadow-md); }
+.ach-section h2 { margin-bottom: 12px; font-size: 26px; }
+.ach-muted { margin-bottom: 12px; color: var(--muted); font-size: 15px; }
+.ach-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0; }
+.ach-stats div { padding: 16px 20px; border: 2px solid var(--line-strong); border-radius: 16px; background: var(--bg-ffffff); }
+.ach-stats dt { color: var(--muted); font-size: 15px; font-weight: 600; }
+.ach-stats dd { margin: 0; font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 40px; font-weight: 800; line-height: 1.1; }
+.ach-praise { padding: 20px 24px; border-left: 8px solid var(--green); border-radius: 8px 18px 18px 8px; background: var(--mint); }
+.ach-praise ul { margin: 0; padding-left: 20px; }
+.ach-praise li + li { margin-top: 6px; }
+.ach-progress { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0; padding: 0; list-style: none; }
+.ach-game { display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 2px solid var(--line-strong); border-radius: 16px; background: var(--bg-ffffff); }
+.ach-game-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.ach-game-head h3 { font-size: 20px; }
+.ach-game-head span { color: var(--muted); font-size: 14px; }
+.ach-game p { color: var(--muted); font-size: 15px; line-height: 1.5; }
+.ach-levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin: 0; padding: 0; list-style: none; }
+.ach-levels li { padding: 4px 0; border: 2px solid var(--rule); border-radius: 8px; background: var(--bg-f7faff); color: var(--muted); font-size: 13px; font-weight: 700; text-align: center; }
+.ach-levels li.is-done { border-color: var(--green); background: var(--green-solid); color: #ffffff; }
+.ach-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; margin: 0; padding: 0; list-style: none; }
+.ach-badges li { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 12px; border: 2px solid var(--line-strong); border-radius: 16px; background: var(--bg-ffffff); text-align: center; }
+.ach-badges li.is-locked { border-style: dashed; background: var(--bg-f7faff); }
+.ach-badges h3 { font-size: 17px; }
+.ach-badges p { color: var(--muted); font-size: 14px; line-height: 1.4; }
+
+@media (max-width: 900px) {
+  .game-grid, .ach-progress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .games-hero, .ach-hero, .parent-status, .game-finish, .game-empty { flex-direction: column; align-items: flex-start; padding: 22px; }
+  .game-grid, .ach-progress, .ach-stats { grid-template-columns: 1fr; }
+  .pattern-cell .shape-icon { width: 36px; height: 36px; }
+  .pattern-options.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .memory-front .shape-icon { width: 38px; height: 38px; }
+}
+
+/* ------------------------------------------------ Thành tích thật + bảng bạn điểm cao nhất trong lớp (0012) */
+.ach-stats.ach-stats-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 700px) {
+  .ach-stats.ach-stats-6 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.ach-levels li { font-size: 14px; color: var(--ink); }
+.ach-levels li.is-done { color: #ffffff; }
+
+/* Tủ quà EDKC (trang Thành tích) */
+.gift-shelf { padding: 22px; border: 2px solid var(--line-strong); border-radius: 20px; background: linear-gradient(180deg, color-mix(in srgb, #FFC107 10%, var(--surface)), var(--surface)); box-shadow: var(--shadow-md); }
+.gift-note { margin-top: 12px; }
+@media (max-width: 560px) { .gift-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .gift-next { flex-direction: column; text-align: center; } .gift-shelf { padding: 16px; } }

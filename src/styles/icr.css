@@ -1,0 +1,21 @@
+/* Kiểu riêng khu vực "icr-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.dash-muted { color: var(--muted); font-size: 15px; }
+.assign-paper-form .dash-muted { flex-basis: 100%; margin: 0; font-size: 13px; }
+.planner-editor.is-full > .dash-muted { display: none; }
+.kt-section .dash-muted { margin: -4px 0 12px; }
+.icr-ratios { display: flex; flex-wrap: wrap; gap: 6px; }
+.icr-ratios button { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 700 13px var(--font-display), sans-serif; cursor: pointer; }
+.icr-ratios button.is-on { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+.icr-stage { display: grid; place-items: center; margin-top: 12px; padding: 16px; overflow: hidden; border-radius: 12px; background: repeating-conic-gradient(#e5e7eb 0 25%, #f8fafc 0 50%) 0 0 / 20px 20px; }
+.icr-img { position: relative; max-width: 100%; max-height: min(58vh, 520px); touch-action: none; user-select: none; }
+.icr-img > img { display: block; max-width: 100%; max-height: min(58vh, 520px); width: auto; height: auto; pointer-events: none; }
+.icr-box { position: absolute; cursor: move; outline: 2px solid #fff; box-shadow: 0 0 0 9999px rgb(15 23 42 / .58); touch-action: none; }
+.icr-g { position: absolute; inset: 0; pointer-events: none; background:
+  linear-gradient(90deg, transparent calc(33.33% - .5px), rgb(255 255 255 / .55) calc(33.33% - .5px) calc(33.33% + .5px), transparent calc(33.33% + .5px) calc(66.66% - .5px), rgb(255 255 255 / .55) calc(66.66% - .5px) calc(66.66% + .5px), transparent calc(66.66% + .5px)),
+  linear-gradient(180deg, transparent calc(33.33% - .5px), rgb(255 255 255 / .55) calc(33.33% - .5px) calc(33.33% + .5px), transparent calc(33.33% + .5px) calc(66.66% - .5px), rgb(255 255 255 / .55) calc(66.66% - .5px) calc(66.66% + .5px), transparent calc(66.66% + .5px)); }
+.icr-h { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: #fff; border: 2px solid #7c3aed; box-shadow: 0 1px 4px rgb(0 0 0 / .3); }
+.icr-h.is-nw { left: 0; top: 0; cursor: nwse-resize; } .icr-h.is-n { left: 50%; top: 0; cursor: ns-resize; } .icr-h.is-ne { left: 100%; top: 0; cursor: nesw-resize; }
+.icr-h.is-e { left: 100%; top: 50%; cursor: ew-resize; } .icr-h.is-se { left: 100%; top: 100%; cursor: nwse-resize; } .icr-h.is-s { left: 50%; top: 100%; cursor: ns-resize; }
+.icr-h.is-sw { left: 0; top: 100%; cursor: nesw-resize; } .icr-h.is-w { left: 0; top: 50%; cursor: ew-resize; }
+.icr-tip { margin: 10px 0 0; font-size: 13px; }
+@media (pointer: coarse) { .icr-h { width: 24px; height: 24px; margin: -12px 0 0 -12px; } }

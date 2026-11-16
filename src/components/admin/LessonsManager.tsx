@@ -9,6 +9,7 @@ import { errorText } from '@/lib/admin/questions';
 import { BOOK_SERIES, STATUS_LABEL, type AdminLesson, type LessonStatus } from '@/lib/admin/types';
 import { useAdminUser } from './AdminContext';
 import StatusBadge from './StatusBadge';
+import '@/styles/adm.css';
 
 const SUBJECTS = [
   { code: 'toan', name: 'Toán' },

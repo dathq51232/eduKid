@@ -1,0 +1,77 @@
+/* Kiểu riêng khu vực "mini-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Nút bấm to, có cạnh dưới dày như nút thật */
+.button, .top-cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 12px 24px; border: 0; border-radius: 14px; border-bottom: 4px solid rgb(var(--ink-rgb) / .3); font: inherit; font-size: 17px; font-weight: 600; cursor: pointer; }
+.button:active, .top-cta:active { transform: translateY(2px); border-bottom-width: 2px; }
+.button:disabled { color: var(--muted); background: var(--bg-e6ebf3); border-bottom-color: var(--bg-c5cfdd); cursor: not-allowed; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  
+  .button:active, .top-cta:active { transform: none; }
+  .progress-fill { transition: none; }
+}
+
+/* Nút dùng chung */
+.button, .top-cta { border-radius: 999px; border-bottom: 0; box-shadow: var(--shadow-sm); font-weight: 700; }
+.button:active, .top-cta:active { transform: translateY(1px); }
+.button:disabled { box-shadow: none; }
+.pin-dots span.is-on { background: var(--brand-blue); box-shadow: none; }
+.role-pick label.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.mini-bar { display: block; height: 6px; margin-top: 4px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.mini-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--brand-blue); }
+.mini-btn { display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 4px 10px; border: 0; border-radius: 10px; background: var(--surface-2); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: inset 0 0 0 1px var(--line); }
+.mini-btn svg { width: 15px; height: 15px; }
+.mini-btn:hover:not(:disabled) { background: var(--blue-soft); color: var(--brand-blue); }
+.mini-btn:disabled { opacity: .55; cursor: default; }
+.mini-btn.is-danger { background: #fde8e6; color: #b3261e; }
+:root[data-theme="dark"] .mini-btn.is-danger { background: #3d1d22; color: #ff9a9a; }
+.sr-fill .mini-btn { min-height: 26px; padding: 2px 8px; }
+.gaps-periods .mini-btn { text-decoration: none; }
+.gaps-periods .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.plan-edit .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.fx-toggle.is-on { background: var(--bg-fff3d1); color: var(--fg-7a4d00); }
+.praise-name .praise-award { display: flex; margin-top: 4px; max-width: 220px; text-align: left; }
+.planner-import .mini-btn { white-space: nowrap; }
+@media print {
+  .nd30-head { width: 100%; border-collapse: collapse; margin-bottom: 6pt; }
+  .nd30-head td { border: 0; padding: 0; text-align: center; vertical-align: top; }
+  .nd30-org { font-size: 13pt; text-transform: uppercase; }
+  .nd30-nation { font-size: 12pt; font-weight: bold; }
+  .nd30-motto { font-size: 13pt; font-weight: bold; }
+  .nd30-rule { border-collapse: collapse; margin: 1pt auto 4pt; }
+  .nd30-rule td { border: 0; border-top: 1px solid #000; font-size: 2pt; line-height: 2pt; padding: 0; }
+  .nd30-place { font-size: 13pt; font-style: italic; }
+  .nd30-sign { width: 100%; border-collapse: collapse; margin-top: 12pt; }
+  .nd30-sign td { border: 0; padding: 0; vertical-align: top; }
+  .nd30-sign .role { font-size: 13pt; font-weight: bold; text-transform: uppercase; text-align: center; margin: 0; }
+  .nd30-sign .name { font-size: 14pt; font-weight: bold; text-align: center; }
+}
+.mini-btn { min-height: 40px; padding: 6px 12px; font-size: 14px; }
+@media (pointer: coarse) { .mini-btn { min-height: 44px; } }
+.mini-btn svg { width: 16px; height: 16px; }
+
+/* Quản trị: sửa tên giáo viên, tên trường */
+.teacher-info-open { margin-top: 8px; }
+.mini-btn.is-copied { background: #ddf7e7; color: #116b33; }
+.mini-btn.is-zalo { color: #0068ff; text-decoration: none; }
+:root[data-theme="dark"] .mini-btn.is-zalo { color: #7fb2ff; }
+.mini-btn.is-danger { color: #dc2626; }
+.wsb-tasks .mini-btn.is-active { color: #15803d; border-color: #86efac; }
+.wsb-pos-h .mini-btn { margin-left: auto; }
+.praise-spots .mini-btn.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.praise-ph-acts .mini-btn { padding: 2px 8px; font-size: 12px; }
+.qz-round.fx-toggle.is-on { background: radial-gradient(circle at 35% 30%, #ffb3e0, #d6409f 70%); box-shadow: 0 4px 0 #a32b78, 0 8px 16px rgb(120 20 80 / .25); }
+.pen-colors button.is-on, .wb-colors button.is-on { box-shadow: 0 0 0 3px #a78bfa; }
+.planner-kho-btn.is-on { background: #2457c5; color: #fff; }
+.sp-xlsx { margin-left: auto; }
+.mini-btn.is-primary { background: var(--brand-blue); color: #fff; box-shadow: none; }
+.mini-btn.is-primary:hover:not(:disabled) { background: var(--brand-blue); color: #fff; filter: brightness(1.08); }
+@media (max-width: 640px) { .sp-xlsx { margin-left: 0; } .sp-save { justify-self: stretch; } }
+.class-manager .roster-table .mini-btn { min-height: 32px; padding: 3px 9px; font-size: 13px; }
+@media (max-width: 1279px) {
+  .class-manager .roster-table .mini-btn:has(svg) { flex-direction: column; gap: 1px; min-width: 46px; min-height: 40px; padding: 3px 6px; justify-content: center; font-size: 11px; line-height: 1.1; }
+  .class-manager .roster-table .mini-btn:has(svg) svg { width: 15px; height: 15px; }
+  .class-manager .roster-table .mini-btn .mb-full { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .class-manager .roster-table .mini-btn .mb-short { display: block; white-space: nowrap; }
+}
+:root[data-theme="dark"] .mini-btn.is-copied { background: color-mix(in srgb, #116b33 24%, var(--surface)); color: color-mix(in srgb, #116b33 40%, #fff); }

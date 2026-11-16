@@ -3,6 +3,7 @@ import { memo } from 'react';
 import type React from 'react';
 import { SCENE_BY_ID } from '@/lib/deck/scenes';
 import type { SceneVariant } from '@/lib/deck/types';
+import '@/styles/dk.css';
 
 /** Đám mây đáy phẳng kiểu Canva */
 function FlatCloud({ x, y, w, op = 0.92 }: { x: number; y: number; w: number; op?: number }) {

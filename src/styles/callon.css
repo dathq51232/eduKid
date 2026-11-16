@@ -1,0 +1,286 @@
+/* Kiểu riêng khu vực "callon-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.wrap { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+
+@media (max-width: 900px) {
+  .wrap { width: min(100% - 40px, 680px); }
+  
+  
+  
+  .notebook { margin-right: 14px; }
+  
+  
+  
+  
+  .footer { flex-wrap: wrap; padding-block: 20px; }
+}
+@media (max-width: 520px) {
+  body { font-size: 17px; }
+  .wrap { width: calc(100% - 32px); }
+  .brand { font-size: 22px; }
+  .top-cta { padding: 10px 14px; font-size: 15px; }
+  
+  .notebook { padding-left: 62px; }
+  .notebook::before { left: 42px; }
+  .notebook p.line { font-size: 22px; }
+  .journey { padding-block: 64px; }
+  
+  
+  .answers { grid-template-columns: repeat(2, 1fr); }
+  
+  .footer { align-items: flex-start; flex-direction: column; }
+}
+.pin-dots span.is-on { background: var(--brand-blue); box-shadow: none; }
+.role-pick label.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+
+.dash { display: grid; gap: 22px; padding-block: 28px 64px; }
+.gaps-periods .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.plan-edit .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.fx-toggle.is-on { background: var(--bg-fff3d1); color: var(--fg-7a4d00); }
+
+/* ==========================================================================
+   GỌI TÊN – DÒ BÀI (chiếu lên màn hình lớp)
+   ========================================================================== */
+
+.callon-page { max-width: 1400px; min-width: 0; }
+.callon-bottom {
+  position: fixed;
+  left: max(16px, calc((100vw - 1120px) / 2));
+  right: max(16px, calc((100vw - 1120px) / 2));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 65;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--lift);
+}
+.callon.is-full .callon-stage { height: auto; }
+.callon-top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+.callon-title h1 { font-size: 24px; line-height: 1.15; }
+.callon-title p { color: var(--muted); font-size: 15px; font-weight: 600; }
+.callon-modes { display: flex; gap: 6px; padding: 4px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); }
+.callon-modes button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 6px 11px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.callon-modes button:hover { color: var(--ink); background: var(--surface-2); }
+.callon-modes button[aria-pressed="true"] { background: var(--blue); color: #fff; box-shadow: 0 3px 0 var(--blue-deep); }
+.callon-mode-icon { display: block; width: 38px; height: 38px; flex: none; object-fit: contain; }
+.callon-toggles { display: flex; gap: 8px; margin-left: auto; }
+.callon-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.callon-chip svg { width: 18px; height: 18px; }
+.callon-chip.is-on { background: #ddf7e7; border-color: #9fdcbc; color: #116b33; }
+:root[data-theme="dark"] .callon-chip.is-on { background: #12382a; color: #8ee0b5; border-color: #1f6b49; }
+
+.callon-lesson { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--muted); }
+.callon-subj { min-height: 40px; padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+.callon-subj.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--brand-blue); }
+.callon-lesson select { min-height: 40px; max-width: 330px; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; }
+.callon-notice { flex-basis: 100%; padding: 8px 12px; border-radius: 12px; background: #fff3d1; color: #7a4d00; }
+
+.callon-stage { position: relative; width: 100%; min-width: 0; height: max(500px, calc(100vh - 300px)); min-height: 500px; border-radius: 26px; background: var(--surface); border: 2px solid var(--line); box-shadow: var(--lift); overflow: hidden; }
+.callon-hint { position: absolute; left: 24px; top: 16px; z-index: 1; color: var(--muted); font-size: 16px; font-weight: 700; }
+.callon-hint b { color: var(--ink); }
+.ce-egg-stage .callon-hint { color: #35506a; text-shadow: 0 1px 0 rgb(255 255 255 / .75); }
+
+/* kết quả */
+.callon-result { position: absolute; right: 22px; bottom: 22px; z-index: 3; width: min(520px, calc(100% - 44px)); padding: 18px 20px 16px; border-radius: 24px; background: #fff; color: #1e2b4a; border: 3px solid var(--brand-yellow); box-shadow: 0 6px 0 #d39b12; animation: result-in .35s cubic-bezier(.2, .9, .3, 1.2); }
+.mode-race .callon-result { right: auto; left: 22px; }
+.callon-close { position: absolute; right: 10px; top: 10px; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 12px; background: #f1f5fc; color: #56627a; cursor: pointer; }
+.callon-close svg { width: 20px; height: 20px; }
+.callon-who { display: flex; align-items: center; gap: 12px; padding-right: 40px; }
+.callon-who .milo { width: 58px; height: auto; flex: none; }
+.callon-who p { color: #56627a; font-size: 15px; font-weight: 700; }
+.callon-who h2 { font-size: clamp(28px, 3vw, 38px); line-height: 1.1; }
+.callon-q { margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: #f5f8ff; border-left: 5px solid #2457c5; }
+.callon-q small { color: #2457c5; font-size: 14px; font-weight: 700; }
+.callon-q > p { margin-top: 2px; font-size: 21px; font-weight: 700; line-height: 1.35; }
+.callon-opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; margin: 8px 0 0; padding: 0; list-style: none; font-size: 18px; }
+.callon-st { margin: 6px 0 0; padding-left: 20px; font-size: 17px; }
+.callon-ans { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; margin-top: 8px; padding: 6px 12px; border: 1px dashed #b9c4d8; border-radius: 10px; background: #fff; color: #56627a; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+.callon-ans svg { width: 18px; height: 18px; }
+.callon-ans strong { color: #116b33; }
+.callon-marks { display: flex; gap: 8px; margin-top: 12px; }
+.callon-marks button { flex: 1; min-height: 52px; border: 0; border-radius: 14px; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: transform .1s; }
+.callon-marks button:active { transform: translateY(2px); }
+
+/* nút chính */
+.callon-bottom { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px; }
+.callon-progress { height: 12px; border-radius: 99px; background: var(--blue-soft); overflow: hidden; }
+.callon-progress span { display: block; height: 100%; border-radius: 99px; background: var(--green-solid, #1f9d6b); transition: width .4s; }
+.callon-go { display: inline-flex; align-items: center; gap: 10px; min-height: 64px; padding: 0 36px; border: 0; border-radius: 999px; background: var(--brand-yellow); color: #1e2b4a; font: inherit; font-size: 22px; font-weight: 700; box-shadow: 0 5px 0 #d39b12; cursor: pointer; }
+.callon-go:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 #d39b12; }
+.callon-go:disabled { opacity: .6; cursor: wait; }
+.callon-go kbd { padding: 3px 8px; border-radius: 8px; background: rgb(255 255 255 / .6); font: inherit; font-size: 13px; font-weight: 600; }
+
+/* danh sách lớp (ngăn kéo) */
+.callon-drawer-bg { position: fixed; inset: 0; z-index: 60; background: rgb(15 23 42 / .35); }
+.callon-drawer { position: absolute; right: 0; top: 0; bottom: 0; display: grid; grid-template-rows: auto auto auto 1fr auto; gap: 10px; width: min(380px, 92vw); padding: 18px; background: var(--surface); color: var(--ink); box-shadow: -6px 0 0 rgb(30 43 74 / .08); }
+.callon-drawer header { display: flex; align-items: center; justify-content: space-between; }
+.callon-drawer header .callon-close { position: static; }
+.callon-drawer .btn { justify-self: start; }
+.callon-drawer ul { overflow: auto; margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; align-content: start; }
+.callon-drawer li button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 6px 10px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; text-align: left; cursor: pointer; }
+.callon-drawer li button::before { content: ''; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); }
+.callon-drawer li button:hover { background: var(--surface-2); }
+.callon-drawer li .is-done .nm { color: var(--muted); text-decoration: line-through; }
+.callon-drawer li .is-done::before { background: var(--green-solid, #1f9d6b); }
+.callon-drawer li .is-off { color: var(--muted); }
+.callon-drawer li .is-off::before { background: transparent; border: 2px dashed var(--line-strong); }
+.callon-drawer li .is-now { background: #fff3d1; color: #1e2b4a; }
+.callon-drawer .tally { color: var(--muted); }
+@media (max-width: 900px) {
+  .callon-toggles { margin-left: 0; }
+  .callon-modes { min-width: 0; overflow-x: auto; max-width: 100%; }
+  .callon-result { position: relative; right: auto; bottom: auto; margin: 12px; width: auto; }
+  .callon-stage { min-height: 560px; }
+}
+@media (max-width: 640px) {
+  .callon-bottom { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .callon-go { justify-content: center; width: 100%; min-width: 0; padding-inline: 12px; font-size: clamp(17px, 5vw, 22px); }
+}
+@media (max-width: 900px) {
+  .callon-bottom {
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+  .callon.is-full .callon-bottom { bottom: max(8px, env(safe-area-inset-bottom)); }
+}
+.diary-panel-top .callon-close { position: static; }
+
+/* Gọi tên: thời gian quay, kim chậm dần, nổi bật em được chọn */
+.callon-time { gap: 4px; padding-right: 6px; }
+.callon-time select { min-height: 32px; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+.callon-lesson select { max-width: 280px; }
+
+.callon-spot { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; overflow: hidden; background: radial-gradient(circle at 50% 50%, rgb(255 200 61 / .25), rgb(15 23 42 / .62) 70%); animation: spot-in .3s ease-out; }
+.callon-spot::before { content: ''; position: absolute; width: 160vmax; height: 160vmax; left: 50%; top: 50%; translate: -50% -50%; background: repeating-conic-gradient(rgb(255 255 255 / .16) 0 8deg, transparent 8deg 20deg); animation: rays 6s linear infinite; }
+.callon-spot-card { position: relative; z-index: 1; display: grid; justify-items: center; gap: 4px; padding: 22px 46px 28px; border-radius: 30px; background: #fff; color: #1e2b4a; border: 5px solid #ffc83d; box-shadow: 0 10px 0 #d39b12; text-align: center; animation: spot-pop .7s cubic-bezier(.2, 1.6, .4, 1); }
+.callon-spot-card .milo { width: 110px; height: auto; margin-top: -70px; animation: spot-hop .6s ease .5s 2; }
+.callon-spot-card small { color: #56627a; font-size: 20px; font-weight: 700; }
+.callon-spot-card strong { font-size: clamp(40px, 6vw, 84px); line-height: 1.05; }
+.callon-burst { position: absolute; left: 50%; top: 50%; z-index: 2; pointer-events: none; }
+.callon-burst i { position: absolute; width: 12px; height: 18px; margin: -9px 0 0 -6px; border-radius: 3px; background: var(--c); opacity: 0; animation: burst 1.5s cubic-bezier(.1, .8, .3, 1) .15s forwards; }
+/* Gọi tên: thanh nút trên sân chơi, trộn thăm, xếp vị trí đua, đếm ngược */
+.callon-stagebar { position: absolute; left: 24px; right: 24px; top: 10px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.callon-stagebar .callon-hint { position: static; }
+.callon-stagebar .callon-chip:disabled { opacity: .5; cursor: default; }
+@media (max-width: 640px) {
+  .callon-stage .callon-stagebar { left: 12px; right: 12px; align-items: flex-start; justify-content: flex-start; flex-wrap: wrap; }
+  .callon-stage .callon-stagebar .callon-hint { flex: 1 0 100%; }
+  .callon-stage .cl, .callon-stage .cr { padding-top: 132px; }
+}
+.cd .callon-hint { background: rgb(255 255 255 / .9); padding: 6px 12px; border-radius: 999px; }
+
+/* ---------- Gọi tên – Dò bài: thẻ câu hỏi phóng to, ô tích đáp án ---------- */
+.callon-rtools { position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; z-index: 1; }
+.callon-rtools .callon-close { position: static; }
+.callon-result .callon-who { padding-right: 96px; }
+.callon-verdict { margin-left: auto; padding: 6px 14px; border-radius: 999px; font-size: 18px; font-weight: 800; white-space: nowrap; animation: result-in .35s cubic-bezier(.2, .9, .3, 1.2); }
+.callon-verdict.is-ok { background: #dcfce7; color: #15803d; }
+.callon-verdict.is-no { background: #fee2e2; color: #b91c1c; }
+.callon-result.is-ok { border-color: #22c55e; box-shadow: 0 6px 0 #15803d; }
+.callon-result.is-no { border-color: #f87171; box-shadow: 0 6px 0 #b91c1c; }
+.callon-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin-top: 10px; }
+.callon-choice { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; border: 2px solid #c9d4ea; border-radius: 14px; background: #fff; color: #1e2b4a; font: inherit; font-size: 18px; text-align: left; cursor: pointer; transition: transform .1s, background .15s, border-color .15s; }
+.callon-choice:hover:not(:disabled) { border-color: #2457c5; background: #f0f5ff; }
+.callon-choice:active:not(:disabled) { transform: translateY(2px); }
+.callon-choice:disabled { cursor: default; }
+.callon-choice b { color: #2457c5; }
+.callon-box { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border: 2.5px solid #9fb0d0; border-radius: 8px; background: #fff; }
+.callon-box svg { width: 22px; height: 22px; stroke-width: 3.5; }
+.callon-choice.is-on { border-color: #2457c5; background: #e8efff; }
+.callon-choice.is-on .callon-box { border-color: #2457c5; background: #2457c5; color: #fff; }
+.callon-choice.is-right { border-color: #22c55e; background: #dcfce7; }
+.callon-choice.is-right .callon-box { border-color: #16a34a; background: #16a34a; color: #fff; }
+.callon-choice.is-wrong { border-color: #f87171; background: #fee2e2; animation: callon-shake .4s; }
+.callon-choice.is-wrong .callon-box { border-color: #dc2626; background: #dc2626; color: #fff; }
+.callon-choice.is-dim { opacity: .55; }
+.callon-lock { grid-column: 1 / -1; justify-self: start; min-height: 46px; padding: 8px 18px; border: 0; border-radius: 12px; background: #2457c5; color: #fff; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer; }
+.callon-lock:disabled { opacity: .5; cursor: default; }
+.callon-diary { margin-top: 10px; padding: 8px 12px; border-radius: 12px; background: #fff8e1; color: #6b4e00; font-size: 14.5px; font-weight: 700; }
+/* phóng to: chiếm gần hết sân chơi, chữ to cho cả lớp đọc */
+.callon-result.is-big { left: 4%; right: 4%; top: 62px; bottom: 22px; width: auto; display: flex; flex-direction: column; padding: 24px 32px 22px; overflow: auto; }
+.mode-race .callon-result.is-big { left: 4%; right: 4%; }
+.callon-result.is-big .callon-who .milo { width: 84px; }
+.callon-result.is-big .callon-who p { font-size: 20px; }
+.callon-result.is-big .callon-who h2 { font-size: clamp(34px, 4vw, 56px); }
+.callon-result.is-big .callon-verdict { font-size: clamp(20px, 2.2vw, 30px); padding: 8px 20px; }
+.callon-result.is-big .callon-q { flex: 1; margin-top: 16px; padding: 18px 24px; border-left-width: 8px; }
+.callon-result.is-big .callon-q small { font-size: clamp(15px, 1.4vw, 19px); }
+.callon-result.is-big .callon-q > p { margin-top: 6px; font-size: clamp(28px, 3.2vw, 48px); line-height: 1.3; }
+.callon-result.is-big .callon-st, .callon-result.is-big .callon-opts { font-size: clamp(22px, 2.4vw, 34px); }
+.callon-result.is-big .callon-choices { gap: 14px 22px; margin-top: 18px; }
+.callon-result.is-big .callon-choice { min-height: 74px; padding: 12px 18px; border-width: 3px; border-radius: 18px; font-size: clamp(22px, 2.5vw, 36px); }
+.callon-result.is-big .callon-box { width: 44px; height: 44px; border-width: 3px; border-radius: 11px; }
+.callon-result.is-big .callon-box svg { width: 32px; height: 32px; }
+.callon-result.is-big .callon-lock { min-height: 60px; font-size: 22px; }
+.callon-result.is-big .callon-ans { min-height: 52px; font-size: 20px; }
+.callon-result.is-big .callon-diary { font-size: 18px; }
+.callon-result.is-big .callon-marks button { min-height: 66px; font-size: 22px; }
+.callon-result.is-big .callon-close { width: 48px; height: 48px; }
+.callon-result.is-big .callon-close svg { width: 24px; height: 24px; }
+@media (max-width: 700px) {
+  .callon-choices { grid-template-columns: 1fr; }
+  .callon-result.is-big { position: absolute; left: 10px; right: 10px; top: 10px; bottom: 10px; width: auto; max-height: none; margin: 0; overflow: auto; }
+}
+/* vừa màn hình thấp (máy chiếu 768p, cửa sổ có thanh bên): co chữ theo chiều cao */
+.callon-result.is-big { padding: 18px 26px 18px; }
+.callon-result.is-big .callon-who .milo { width: clamp(52px, 8vh, 84px); }
+.callon-result.is-big .callon-who p { font-size: clamp(15px, 2.2vh, 20px); }
+.callon-result.is-big .callon-who h2 { font-size: clamp(28px, min(4vw, 6.2vh), 56px); }
+.callon-result.is-big .callon-q { margin-top: 10px; padding: 14px 22px; }
+.callon-result.is-big .callon-q > p { font-size: clamp(22px, min(3.2vw, 4.8vh), 48px); }
+.callon-result.is-big .callon-choices { gap: clamp(8px, 1.4vh, 14px) 20px; margin-top: clamp(8px, 1.6vh, 18px); }
+.callon-result.is-big .callon-choice { min-height: clamp(50px, 7.4vh, 74px); padding: 8px 16px; font-size: clamp(20px, min(2.5vw, 3.8vh), 36px); }
+.callon-result.is-big .callon-box { width: clamp(32px, 4.6vh, 44px); height: clamp(32px, 4.6vh, 44px); }
+.callon-result.is-big .callon-marks button { min-height: clamp(48px, 7vh, 66px); font-size: clamp(17px, 2.4vh, 22px); }
+.callon-who { flex-wrap: wrap; }
+.callon-who > div { flex: 1; min-width: 0; }
+.callon-result:not(.is-big) .callon-verdict { flex-basis: 100%; margin-left: 0; text-align: center; font-size: 17px; }
+.callon-result.is-big .callon-q > p.is-long { font-size: clamp(20px, min(2.3vw, 3.5vh), 36px); }
+.callon-result.is-big .callon-q > p.is-xlong { font-size: clamp(18px, min(1.8vw, 2.8vh), 30px); line-height: 1.4; }
+.callon-result.is-big .callon-choice { line-height: 1.22; }
+.callon-result.is-big .callon-ans { min-height: 40px; margin-top: 8px; font-size: clamp(15px, 2vh, 20px); }
+.callon-result.is-big .callon-marks { margin-top: 10px; }
+.callon-comment { margin-top: 10px; padding: 10px 14px; border-radius: 14px; font-size: 17px; font-weight: 800; line-height: 1.35; animation: result-in .35s cubic-bezier(.2, .9, .3, 1.2); }
+.callon-comment.is-ok { background: #dcfce7; color: #166534; }
+.callon-comment.is-no { background: #fff1e6; color: #9a3412; }
+.callon-result.is-big .callon-comment { font-size: clamp(20px, 3vh, 30px); padding: 12px 20px; }
+.praise-spots .mini-btn.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.qz-round.fx-toggle.is-on { background: radial-gradient(circle at 35% 30%, #ffb3e0, #d6409f 70%); box-shadow: 0 4px 0 #a32b78, 0 8px 16px rgb(120 20 80 / .25); }
+
+/* Gọi tên: hàng điều khiển ở góc trên trái (nút Bắt vịt / Quay / Bốc… + tuỳ chọn), không phải cuộn chuột (11/2026) */
+.callon-ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; min-width: 0; }
+.callon-ctrl .callon-toggles { margin-left: 0; flex-wrap: wrap; }
+.callon-ctrl .callon-lesson { flex: 1 1 auto; justify-content: flex-start; }
+.callon-go.is-top { min-height: 52px; padding: 0 24px; font-size: 20px; box-shadow: 0 4px 0 #d39b12; }
+.callon-mini { display: grid; gap: 3px; width: 130px; margin: 0; }
+.callon-mini .callon-progress { height: 10px; }
+.callon-mini small { color: var(--muted); font-size: 12.5px; font-weight: 700; text-align: center; }
+.callon .callon-stage { height: max(420px, calc(100vh - 365px)); }
+.callon.is-full .callon-stage { height: calc(100vh - 170px); }
+@media (min-width: 901px) {
+  .callon-bottom { display: none !important; }
+}
+@media (max-width: 900px) {
+  .callon-go.is-top, .callon-mini { display: none; }
+}
+.pen-colors button.is-on, .wb-colors button.is-on { box-shadow: 0 0 0 3px #a78bfa; }
+.tsh-main > .dash.wrap:has(> .class-manager) { padding-top: 14px; }
+:root[data-theme="dark"] .callon-notice { background: color-mix(in srgb, #7a4d00 24%, var(--surface)); color: color-mix(in srgb, #7a4d00 40%, #fff); }
+:root[data-theme="dark"] .callon-result { background: var(--surface); color: var(--ink); }
+:root[data-theme="dark"] .callon-close { background: var(--surface-2); color: var(--ink); }
+:root[data-theme="dark"] .callon-q { background: var(--surface-2); }
+:root[data-theme="dark"] .callon-ans { background: var(--surface); color: var(--ink); border-color: color-mix(in srgb, #b9c4d8 35%, var(--surface)); }
+:root[data-theme="dark"] .callon-drawer li .is-now { background: color-mix(in srgb, #fff3d1 14%, var(--surface)); color: var(--ink); }
+:root[data-theme="dark"] .callon-spot-card { background: var(--surface); color: var(--ink); border-color: color-mix(in srgb, #ffc83d 35%, var(--surface)); }
+:root[data-theme="dark"] .callon-verdict.is-ok { background: color-mix(in srgb, #15803d 24%, var(--surface)); color: color-mix(in srgb, #15803d 40%, #fff); }
+:root[data-theme="dark"] .callon-verdict.is-no { background: color-mix(in srgb, #b91c1c 24%, var(--surface)); color: color-mix(in srgb, #b91c1c 40%, #fff); }
+:root[data-theme="dark"] .callon-choice { background: var(--surface); color: var(--ink); border-color: color-mix(in srgb, #c9d4ea 35%, var(--surface)); }
+:root[data-theme="dark"] .callon-choice:hover:not(:disabled) { background: color-mix(in srgb, #f0f5ff 14%, var(--surface)); }
+:root[data-theme="dark"] .callon-box { background: var(--surface); border-color: color-mix(in srgb, #9fb0d0 35%, var(--surface)); }
+:root[data-theme="dark"] .callon-choice.is-on { background: color-mix(in srgb, #e8efff 14%, var(--surface)); }
+:root[data-theme="dark"] .callon-choice.is-right { background: color-mix(in srgb, #dcfce7 14%, var(--surface)); }
+:root[data-theme="dark"] .callon-choice.is-wrong { background: color-mix(in srgb, #fee2e2 14%, var(--surface)); border-color: color-mix(in srgb, #f87171 35%, var(--surface)); }
+:root[data-theme="dark"] .callon-diary { background: color-mix(in srgb, #6b4e00 24%, var(--surface)); color: color-mix(in srgb, #6b4e00 40%, #fff); }
+:root[data-theme="dark"] .callon-comment.is-ok { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
+:root[data-theme="dark"] .callon-comment.is-no { background: color-mix(in srgb, #9a3412 24%, var(--surface)); color: color-mix(in srgb, #9a3412 40%, #fff); }

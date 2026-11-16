@@ -10,6 +10,9 @@ import ShapeIcon from './ShapeIcon';
 import type { GameLevel } from '@/lib/games/catalog';
 import { SHAPE_NAME, type Shape, type ShapeColor } from '@/lib/games/shapes';
 import { SUDOKU_LEVELS, findConflict, findHint, generateSudoku, isSolved, type Grid, type Sudoku } from '@/lib/games/sudoku';
+import '@/styles/game.css';
+import '@/styles/maze.css';
+import '@/styles/sudoku.css';
 
 const SYMBOLS: { shape: Shape; color: ShapeColor }[] = [
   { shape: 'circle', color: 'red' },

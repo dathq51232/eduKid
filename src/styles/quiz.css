@@ -1,0 +1,70 @@
+/* Kiểu riêng khu vực "quiz-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Nút bấm to, có cạnh dưới dày như nút thật */
+.button, .top-cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 12px 24px; border: 0; border-radius: 14px; border-bottom: 4px solid rgb(var(--ink-rgb) / .3); font: inherit; font-size: 17px; font-weight: 600; cursor: pointer; }
+.button:active, .top-cta:active { transform: translateY(2px); border-bottom-width: 2px; }
+.button-dark { color: #ffffff; background: var(--ink); }
+.button:disabled { color: var(--muted); background: var(--bg-e6ebf3); border-bottom-color: var(--bg-c5cfdd); cursor: not-allowed; transform: none; }
+
+/* Làm bài */
+.quiz-bar { position: sticky; top: var(--learn-top-h, 74px); z-index: 20; border-bottom: 3px solid var(--line-strong); background: var(--paper); }
+.quiz-bar-inner { width: min(760px, calc(100% - 32px)); margin-inline: auto; display: flex; align-items: center; gap: 12px; padding-block: 10px; }
+
+.quiz-count { flex: none; padding: 2px 14px; border: 2px solid var(--line-strong); border-radius: 999px; background: var(--bg-ffffff); font-weight: 600; font-size: 16px; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  
+  .button:active, .top-cta:active { transform: none; }
+  .progress-fill { transition: none; }
+}
+
+/* Thanh trên: nộp bài + hàng ô chọn câu */
+.quiz-submit { min-height: 48px; padding: 8px 14px; font-size: 16px; }
+.quiz-nav { width: min(760px, calc(100% - 32px)); margin-inline: auto; display: flex; gap: 6px; padding: 0 0 10px; overflow-x: auto; scrollbar-width: thin; }
+@media (max-width: 520px) {
+  .quiz-bar-inner { gap: 8px; }
+  .quiz-submit { padding: 8px 10px; }
+  .quiz-count { padding: 2px 8px; }
+}
+
+/* Nút dùng chung */
+.button, .top-cta { border-radius: 999px; border-bottom: 0; box-shadow: var(--shadow-sm); font-weight: 700; }
+.button:active, .top-cta:active { transform: translateY(1px); }
+.button-dark { color: #fff; background: var(--blue); }
+.button:disabled { box-shadow: none; }
+
+/* Khối nội dung: viền mảnh 1px thay cho viền 2px, cùng một kiểu bóng nhẹ */
+.games-hero, .lesson, .lesson-row, .question-card, .intro-card, .score-box, .review-item, .empty-state,
+.points-card, .comment-card, .dialog-card, .back-link, .icon-button, .quiz-count,
+.game-filter, .game-grade select, .notebook { border-width: 1px; }
+/* Điện thoại (thanh trên cùng xuống 2 dòng): thanh trên cùng cuộn theo trang để nhường chỗ cho nội dung;
+   chỉ thanh làm bài / làm đề dính ở đầu màn hình. Chiều cao thật được đo bởi HeaderOffset (--learn-top-h). */
+@media (max-width: 760px) {
+  .quiz-bar-inner { padding-block: 6px; }
+}
+/* Màn hình rất hẹp (iPhone SE, máy Android nhỏ ~320–380px) */
+@media (max-width: 380px) {
+  .quiz-bar-inner { gap: 6px; }
+  
+  .quiz-count { margin-right: auto; padding: 2px 10px; font-size: 15px; }
+  .quiz-submit { white-space: nowrap; padding-inline: 12px; min-height: 40px; }
+  .quiz-submit svg { display: none; }
+}
+@media (max-width: 760px) {
+  body:has(.quiz-bar) .quiz-bar { top: 0; }
+}
+/* thanh tiến độ bị ép còn một chấm tròn trên điện thoại: bỏ, đã có số câu và hàng ô số */
+@media (max-width: 560px) {  .quiz-count { margin-right: auto; } }
+
+/* thanh trên: biển gỗ thương hiệu, tiến độ, đồng hồ, nút tròn */
+.qz .quiz-bar { top: 0; padding-top: 10px; border: 0; background: transparent; }
+.qz .quiz-bar-inner { width: min(1240px, calc(100% - 24px)); gap: 10px; padding-block: 0 8px; }
+.qz .quiz-count { font-size: 22px; font-weight: 900; color: var(--qz-navy); white-space: nowrap; }
+.qz .quiz-submit { min-height: 52px; border-radius: 999px; box-shadow: 0 4px 0 #0c1630; }
+.qz .quiz-nav { width: fit-content; max-width: min(820px, calc(100% - 24px)); padding: 6px 8px; border-radius: 16px; background: rgb(255 255 255 / .6); backdrop-filter: blur(4px); }
+.qz .feedback-actions .button-yellow, .qz .feedback-actions .button-dark { border: 0; background: linear-gradient(180deg, #3b82f6, #1f5fd6); color: #fff; box-shadow: 0 4px 0 #1846a3; padding-inline: 26px; }
+/* màn hình nhỏ */
+@media (max-width: 900px) {
+  .qz .quiz-bar-inner { flex-wrap: wrap; }
+  .qz .quiz-submit { min-height: 44px; }
+}

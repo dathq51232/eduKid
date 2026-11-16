@@ -5,6 +5,7 @@ import NotConfigured from '@/components/classroom/NotConfigured';
 import Lesson3DStudio from '@/components/lesson3d/Lesson3DStudio';
 import { loadClassPage } from '@/lib/classroom/class-page';
 import { normalizeLesson } from '@/lib/lesson3d/types';
+import '@/styles/s3d.css';
 
 export const metadata: Metadata = { title: 'Xưởng bài giảng 3D · EduChain Kids' };
 export const dynamic = 'force-dynamic';

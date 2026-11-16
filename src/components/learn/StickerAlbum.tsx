@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Sticker from './Sticker';
 import { STICKERS, STICKER_MIN_RATE, readOwnedStickers, stickerName, type StickerId } from '@/lib/stickers';
+import '@/styles/sticker.css';
 
 /** Thẻ "Sticker mới!" (trang Kết quả) */
 export function NewSticker({ id }: { id: StickerId }) {

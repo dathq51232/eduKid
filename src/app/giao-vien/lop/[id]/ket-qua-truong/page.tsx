@@ -10,6 +10,7 @@ import { getViewer } from '@/lib/auth/viewer';
 import { compareViName } from '@/lib/classroom/names';
 import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
 import { FEATURES } from '@/lib/features';
+import '@/styles/dash.css';
 
 export const metadata: Metadata = { title: 'Kết quả học tập trên trường · EduChain Kids' };
 export const dynamic = 'force-dynamic';

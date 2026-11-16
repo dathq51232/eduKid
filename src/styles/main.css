@@ -1,0 +1,83 @@
+/* Kiểu riêng khu vực "main-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* ==================================================================
+   ĐIỀU HƯỚNG CHÍNH: Học tập · Game trí tuệ · Thành tích · Phụ huynh
+   Nằm trên nền xanh thương hiệu. Tab đang chọn: nền vàng + chữ mực (tương phản cao), có aria-current.
+   Hover: nhích lên 2px bằng transform (không đổi kích thước → không giật bố cục).
+================================================================== */
+.main-nav-list { display: flex; align-items: center; gap: 4px; margin: 0; padding: 4px; list-style: none; border-radius: 14px; background: rgba(255, 255, 255, .12); }
+.main-nav-link {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px;
+  border-radius: 10px; color: #ffffff; font-size: 16px; font-weight: 600; line-height: 1.2; white-space: nowrap;
+  transition: transform 180ms ease, background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+.main-nav-icon { width: 20px; height: 20px; flex: none; }
+.main-nav-link:hover { transform: translateY(-2px); background: rgba(255, 255, 255, .2); }
+.main-nav-link[aria-current="page"] { background: var(--yellow); color: var(--ink); box-shadow: 0 3px 0 rgb(var(--ink-rgb) / .45); }
+.main-nav-link[aria-current="page"]:hover { background: var(--bg-ffc94d); }
+.main-nav-link:focus-visible { outline: 3px solid var(--bg-ffffff); outline-offset: 2px; border-radius: 10px; }
+.main-nav-link[aria-current="page"]:focus-visible { outline-color: #ffffff; box-shadow: 0 0 0 6px var(--ink); }
+@media (max-width: 760px) {
+  .main-nav-learn { order: 3; width: 100%; }
+}
+@media (max-width: 900px) {
+  .main-nav-learn .main-nav-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .main-nav-learn .main-nav-link { justify-content: center; }
+}
+@media (max-width: 560px) {
+  .main-nav-learn .main-nav-list { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .main-nav-link { flex-direction: column; gap: 2px; width: 100%; min-height: 52px; padding: 6px 2px; font-size: 12.5px; text-align: center; line-height: 1.15; white-space: normal; overflow-wrap: anywhere; }
+  .main-nav-icon { width: 20px; height: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-nav-link, .game-filter, .game-card, .level-chip, .pattern-option, .memory-inner { transition: none; }
+  .main-nav-link:hover, .game-filter:hover, .game-card:hover, .level-option:hover .level-chip, .pattern-option:hover:not([aria-disabled="true"]) { transform: none; }
+  .maze-btn:active, .sudoku-key:active:not(:disabled) { transform: none; }
+}
+
+/* Điều hướng chính */
+.main-nav-list { background: transparent; gap: 6px; padding: 0; }
+.main-nav-link { position: relative; color: var(--muted); border-radius: 14px; font-weight: 600; }
+.main-nav-link:hover { background: var(--surface-2); color: var(--ink); transform: none; }
+.main-nav-link[aria-current="page"] { background: var(--blue-soft); color: var(--brand-blue); box-shadow: none; }
+.main-nav-link[aria-current="page"]::after { content: ''; position: absolute; left: 18%; right: 18%; bottom: -1px; height: 3px; border-radius: 3px; background: var(--brand-blue); }
+.main-nav-link[aria-current="page"]:hover { background: var(--blue-soft); }
+.main-nav-link:focus-visible { outline: 3px solid var(--brand-blue); }
+.main-nav-link[aria-current="page"]:focus-visible { outline-color: var(--brand-blue); box-shadow: none; }
+/* ==================================================================
+   RÀ SOÁT UX GIAO DIỆN HỌC SINH (10/2026) — ưu tiên điện thoại
+   1) Trang làm bài: nút "Bắt đầu làm bài" luôn trong tầm tay; khi đang làm câu hỏi, ẩn thanh điều hướng
+      chung để câu hỏi và các đáp án lên ngay màn hình đầu (thanh làm bài vẫn có nút ← quay lại).
+   2) Chọn bài: thẻ bài gọn hơn; chọn mức độ / đổi bộ câu chỉ hiện ở bài "Học tiếp" (các bài khác chọn
+      ngay ở màn hình bắt đầu của bài) → danh sách ngắn còn khoảng một nửa.
+   3) Chữ nhỏ trên điện thoại (nhãn menu, bong bóng lời Milo, mô tả mức độ) tăng lên tối thiểu 14px.
+================================================================== */
+@media (max-width: 560px) {
+  .main-nav-link { font-size: 14px; }
+}
+.main-nav-link { min-height: 44px; }
+.main-nav-link:hover { color: var(--ink); }
+@media (max-width: 760px) {
+  .main-nav-link span { white-space: nowrap; overflow-wrap: normal; }
+}
+
+/* Thanh điều hướng chính: biểu tượng 3D nhiều màu trên chữ (11/2026) */
+.main-nav-3d.main-nav-icon { width: 34px; height: 34px; object-fit: contain; filter: drop-shadow(0 2px 2px rgb(30 40 80 / .18)); transition: transform .18s ease; }
+
+@media (min-width: 900px) {
+  .main-nav-link { flex-direction: column; gap: 2px; padding: 4px 12px 6px; min-height: 58px; line-height: 1.1; font-size: 14px; }
+  
+  .main-nav-link[aria-current="page"]::after { bottom: 0; }
+}
+.main-nav-link:hover .main-nav-3d { transform: translateY(-2px) scale(1.08) rotate(-4deg); }
+@media (max-width: 899px) { .main-nav-3d.main-nav-icon { width: 28px; height: 28px; } }
+@media (prefers-reduced-motion: reduce) { .main-nav-link:hover .main-nav-3d { transform: none; } }
+@media (min-width: 761px) and (max-width: 1199px) {
+  .main-nav-learn { min-width: 0; }
+  .main-nav-learn .main-nav-list { gap: 2px; }
+  .main-nav-learn .main-nav-link { padding: 6px 8px; font-size: 13.5px; }
+}
+/* ===== Trang chủ 11/2026: thanh trên dày hơn + nút Dùng thử, hàng "Tôi là", tiêu đề một kiểu, FAQ mở/đóng, bìa vở vuốt ngang trên điện thoại ===== */
+@media (min-width: 901px) { /* 11/2026: 84 → 76px, bằng thanh Góc phụ huynh */
+  .learn-top .main-nav-link { padding-block: 8px; }
+}

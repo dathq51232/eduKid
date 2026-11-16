@@ -11,6 +11,10 @@ import { XqDiscIcon } from '@/components/xiangqi/XiangqiBoard';
 import type { Variant } from '@/lib/chess/online-rules';
 import { ERROR_TEXT, ONLINE_TCS } from '@/lib/chess/online-rules';
 import { reasonText } from '@/lib/chess/game';
+import '@/styles/chl.css';
+import '@/styles/chs.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
 
 type Who = { name: string; cls: string };
 type Lobby = {

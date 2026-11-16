@@ -12,6 +12,7 @@ import { SUBJECT_NAMES } from '@/lib/plans/generate';
 import { loadSched, type SchedSlot } from '@/lib/plans/sched-store';
 import LessonIdeas from './LessonIdeas';
 import { PICK_EVENT, loadPick } from '@/lib/plans/idea-bank';
+import '@/styles/tdy.css';
 
 export type SavedSlot = { id: string; subject: string; title: string; period: number | null };
 type Row = { key: string; period: number; pm: boolean; subject: string; title: string; saved: boolean };

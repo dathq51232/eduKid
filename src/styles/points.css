@@ -1,0 +1,29 @@
+/* Kiểu riêng khu vực "points-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.points-pop { display: inline-block; margin-left: 10px; padding: 2px 10px; border-radius: 999px; background: var(--yellow); color: var(--ink); font-size: 16px; animation: star-pop .45s ease; }
+.points-card, .comment-card { padding: 22px; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--bg-ffffff); }
+.points-rank { display: flex; align-items: center; gap: 16px; }
+.points-rank-icon { display: grid; flex: none; width: 64px; height: 64px; place-items: center; border: 2px solid var(--line-strong); border-radius: 50%; background: var(--bg-fff3d1); font-size: 34px; }
+.points-label { color: var(--muted); font-size: 15px; font-weight: 600; }
+.points-total { font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 36px; font-weight: 800; line-height: 1.1; }
+.points-total > span:first-child { font-size: 18px; }
+.points-plus { margin-left: 10px; padding: 2px 10px; border-radius: 999px; background: var(--green-solid); color: #ffffff; font-size: 18px; vertical-align: middle; }
+.points-rank-name { font-size: 16px; }
+.points-note { color: var(--muted); font-size: 15px; line-height: 1.5; }
+.points-breakdown { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.points-breakdown li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 2px dashed var(--rule); font-size: 16px; }
+.points-chip { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 4px 14px; border-radius: 999px; background: rgba(255, 255, 255, .92); color: var(--ink); font-weight: 700; font-size: 16px; }
+@media (prefers-reduced-motion: reduce) {
+  .points-pop { animation: none; }
+  
+}
+
+/* Chữ trên nền vàng / nền trắng mờ luôn màu mực đậm (kể cả chế độ tối) */
+.button-yellow, .top-cta, .sticker, .grade-chip:hover, .back-link:hover, .lesson-row.is-next .lesson-no,
+.icon-button:hover, .result-card, .order-no, .adm-qnum, .nav-dot.is-current:not(.is-wrong):not(.is-correct):not(.is-timeout), .points-pop, .review-points, .maze-btn,
+.toc-link.is-next .toc-no, .toc-fab, .points-chip { color: #1e2b4a; }
+
+/* Khối nội dung: viền mảnh 1px thay cho viền 2px, cùng một kiểu bóng nhẹ */
+.games-hero, .lesson, .lesson-row, .question-card, .intro-card, .score-box, .review-item, .empty-state,
+.points-card, .comment-card, .dialog-card, .back-link, .icon-button, .quiz-count,
+.game-filter, .game-grade select, .notebook { border-width: 1px; }
+.points-chip.cb-points { margin: 0; font-size: 15px; }

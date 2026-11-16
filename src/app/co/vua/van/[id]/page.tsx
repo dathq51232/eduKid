@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import LearnHeader from '@/components/LearnHeader';
 import ChessOnline from '@/components/chess/ChessOnline';
 import { getViewer } from '@/lib/auth/viewer';
+import '@/styles/chs.css';
 
 export const metadata: Metadata = { title: 'Ván cờ vua · EduChain Kids' };
 

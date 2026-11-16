@@ -5,6 +5,7 @@ import NotConfigured from '@/components/classroom/NotConfigured';
 import DeckStudio from '@/components/deck/DeckStudio';
 import { loadClassPage } from '@/lib/classroom/class-page';
 import { normalizeDeck } from '@/lib/deck/types';
+import '@/styles/dk.css';
 
 export const metadata: Metadata = { title: 'Soạn bài thao giảng · EduChain Kids', robots: { index: false } };
 export const dynamic = 'force-dynamic';

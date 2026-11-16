@@ -9,6 +9,7 @@ import { ThemedMilo } from './KidWorld';
 import { lessonAnchor } from '@/components/LessonToc';
 import type { MiloVariant } from '@/components/mascot/MiloMascot';
 import type { StickerId } from '@/lib/stickers';
+import '@/styles/lm.css';
 
 export type MapItem = { id: string; no: string; label: string; title: string; done: boolean; stars: number; next: boolean; href: string };
 export type MapGroup = { key: string; title?: string; sticker: StickerId; items: MapItem[] };

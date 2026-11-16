@@ -1,0 +1,46 @@
+/* Kiểu riêng khu vực "viz-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Biểu đồ (màu theo thứ tự cố định; chế độ tối dùng bước riêng, đã kiểm tra tương phản) */
+.adm-viz { --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --q0: #eef1f6; --q1: #cde2fb; --q2: #9ec5f4; --q3: #5598e7; --q4: #256abf; --q5: #104281; --viz-grid: #e6eaf1; }
+:root[data-theme="dark"] .adm-viz { --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --q0: #222a3d; --q1: #104281; --q2: #1c5cab; --q3: #2a78d6; --q4: #5598e7; --q5: #9ec5f4; --viz-grid: #2c3550; }
+.viz-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 10px; color: var(--muted); font-size: 13px; }
+.viz-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.viz-sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+.viz-sw.s1, .viz-seg.s1 { background: var(--s1); }
+.viz-sw.s2, .viz-seg.s2 { background: var(--s2); }
+.viz-sw.s3, .viz-seg.s3 { background: var(--s3); }
+.viz-sw.s4, .viz-seg.s4 { background: var(--s4); }
+.viz-cols { position: relative; display: flex; align-items: flex-end; gap: 4px; padding: 0 0 22px 44px; }
+.viz-grid { position: absolute; inset: 0 0 22px 0; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
+.viz-grid span { border-top: 1px solid var(--viz-grid); color: var(--muted); font-size: 11px; line-height: 1; padding-top: 2px; width: 100%; }
+.viz-col { position: relative; flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; outline: none; }
+.viz-col.is-hover, .viz-col:focus-visible { background: color-mix(in srgb, var(--s1) 8%, transparent); border-radius: 6px; }
+.viz-stack { position: relative; width: min(100%, 36px); display: flex; flex-direction: column-reverse; gap: 2px; min-height: 0; }
+.viz-seg { display: block; min-height: 2px; }
+.viz-stack .viz-seg:last-child { border-radius: 4px 4px 0 0; }
+.viz-x { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); color: var(--muted); font-size: 11px; white-space: nowrap; }
+.viz-tip { position: absolute; bottom: calc(100% - 8px); left: 50%; z-index: 5; display: grid; gap: 3px; min-width: 190px; padding: 10px 12px; border: 1px solid var(--adm-line); border-radius: 10px; background: var(--bg-ffffff); color: var(--ink); font-size: 13px; box-shadow: 0 10px 24px rgb(0 0 0 / .16); pointer-events: none; }
+.viz-tip.is-left { left: auto; right: 50%; }
+.viz-tip span { display: flex; align-items: center; gap: 6px; }
+.viz-tip-total { margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--adm-line); font-weight: 700; }
+.viz-table { margin-top: 10px; font-size: 14px; }
+.viz-table summary { color: var(--link); font-weight: 600; cursor: pointer; }
+.viz-heat { display: grid; grid-template-columns: 34px repeat(24, minmax(0, 1fr)); gap: 3px; }
+.viz-heat-row { display: contents; }
+.viz-heat-x, .viz-heat-y { color: var(--muted); font-size: 11px; }
+.viz-cell { display: block; aspect-ratio: 1; min-height: 10px; border-radius: 3px; background: var(--q0); }
+.viz-cell.l1 { background: var(--q1); }
+.viz-cell.l2 { background: var(--q2); }
+.viz-cell.l3 { background: var(--q3); }
+.viz-cell.l4 { background: var(--q4); }
+.viz-cell.l5 { background: var(--q5); }
+.viz-heat-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.viz-ramp { display: inline-flex; align-items: center; gap: 3px; color: var(--muted); font-size: 12px; }
+.viz-ramp .viz-cell { width: 12px; min-height: 12px; }
+.viz-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.viz-bars li { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(0, 2fr) auto; align-items: center; gap: 10px; font-size: 14px; }
+.viz-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.viz-bar-label small, .viz-bar-v small { color: var(--muted); }
+.viz-bar-track { height: 10px; border-radius: 999px; background: var(--q0); overflow: hidden; }
+.viz-bar { display: block; height: 100%; border-radius: 999px; background: var(--s1); }
+.viz-bar-v { font-variant-numeric: tabular-nums; font-weight: 700; }

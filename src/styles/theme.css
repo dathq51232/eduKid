@@ -1,0 +1,33 @@
+/* Kiểu riêng khu vực "theme-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Nút đổi chế độ sáng/tối */
+.theme-toggle { display: inline-grid; place-items: center; width: 44px; height: 44px; flex: none; border: 0; border-radius: 14px; background: var(--surface-2); color: var(--ink); cursor: pointer; box-shadow: inset 0 0 0 1px var(--line); transition: transform 160ms ease; }
+.theme-toggle:hover { transform: rotate(-12deg); }
+.theme-toggle svg { width: 22px; height: 22px; }
+@media (prefers-reduced-motion: reduce) {
+  .btn, .theme-toggle { transition: none; }
+}
+@media (max-width: 640px) {
+  .ph-top .brand .logo-word { display: none; }
+  .ph-top .theme-switch-label { display: none; }
+}
+/* nút chế độ tối dạng công tắc */
+.theme-toggle.theme-switch { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; width: auto; height: auto; min-height: 44px; padding: 4px 6px; border-radius: 14px; background: transparent; box-shadow: none; color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 700; }
+.theme-toggle.theme-switch:hover { transform: none; background: var(--surface-2); }
+.theme-switch-track { position: relative; display: block; width: 52px; height: 28px; border-radius: 999px; background: linear-gradient(180deg, #b9d8ff, #dfeeff); box-shadow: inset 0 2px 4px rgb(20 40 90 / .25), 0 1px 0 #fff; transition: background .2s ease; }
+.theme-switch.is-dark .theme-switch-track { background: linear-gradient(180deg, #1d2a52, #34477e); }
+.theme-switch-knob { position: absolute; top: 2px; left: 2px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgb(0 0 0 / .3); transition: left .2s ease; }
+.theme-switch.is-dark .theme-switch-knob { left: 26px; background: #f3f6ff; }
+.theme-switch-knob img { width: 20px; height: 20px; }
+@media (max-width: 899px) { .theme-switch-label { display: none; } }
+/* ===== Rà soát UI/UX 11/2026: tràn ngang, độ tương phản, trạng thái chưa rõ ===== */
+/* Header khu học tập: 761–1199px không còn đẩy nút Đăng nhập ra ngoài màn hình */
+@media (max-width: 1199px) {
+  .learn-tools .theme-switch-label { display: none; }
+}
+/* Điện thoại: logo + nút cùng một hàng, menu hàng dưới (bớt một hàng header) */
+@media (max-width: 560px) {
+  .learn-tools .theme-toggle.theme-switch { padding-inline: 2px; }
+  .learn-tools .account-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .learn-tools .account-link { padding-inline: 10px; }
+}

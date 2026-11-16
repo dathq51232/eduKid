@@ -1,0 +1,26 @@
+/* Kiểu riêng khu vực "kw-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+/* Lớp phủ dịu ở cột nội dung để chữ dễ đọc; hai mép màn hình vẫn rực rỡ */
+.kw-wash { position: absolute; inset: 0; --w: 70%; background: linear-gradient(90deg, color-mix(in srgb, var(--paper) calc(var(--w) - 40%), transparent) 0, color-mix(in srgb, var(--paper) var(--w), transparent) 16%, color-mix(in srgb, var(--paper) var(--w), transparent) 84%, color-mix(in srgb, var(--paper) calc(var(--w) - 40%), transparent) 100%); }
+.kw.is-space .kw-wash { --w: 84%; }
+.kw.is-candy .kw-wash, .kw.is-ocean .kw-wash { --w: 80%; }
+:root[data-theme="dark"] .kw-wash { --w: 82%; }
+:root[data-theme="dark"] .kw.is-space .kw-wash { --w: 62%; }
+@media (max-width: 900px) { .kw-wash { --w: 80%; } .kw.is-space .kw-wash { --w: 88%; } :root[data-theme="dark"] .kw-wash { --w: 86%; } }
+.kw-fl { position: absolute; height: auto; transform: translate(-50%, 0); filter: drop-shadow(0 10px 12px rgb(0 0 0 / .18)); will-change: transform; }
+.kw.is-live .kw-fl { animation: kwFloat var(--kw-d, 7s) ease-in-out var(--kw-delay, 0s) infinite; }
+.kw.is-page .kw-fl { opacity: .95; }
+@media (max-width: 1100px) { .kw.is-page .kw-fl:not(.is-keep) { display: none; } .kw.is-page .kw-fl.is-keep { width: 64px; opacity: .8; } }
+@media (max-width: 640px) { .kw.is-page .kw-fl { display: none; } }
+.kw:not(.is-page) .kw-fl:not(.is-keep) { display: none; }
+@media (min-width: 1440px) { .kw:not(.is-page) .kw-fl:not(.is-keep) { display: block; } }
+.kw-tw { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 10px 3px rgb(255 255 255 / .75); opacity: .5; }
+.kw.is-live .kw-tw { animation: kwTwinkle 3.4s ease-in-out infinite; }
+.kw-bub { position: absolute; bottom: -40px; border: 2px solid rgb(255 255 255 / .8); border-radius: 50%; background: rgb(255 255 255 / .18); opacity: 0; }
+.kw.is-live .kw-bub { animation: kwRise 9s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .kw-fl, .kw-tw, .kw-bub, .kc-art, .kc-rays, .kc-prize, .lm-milo, .lm-node.is-next .lm-island::after, .qz-combo.is-pop { animation: none !important; }
+  .kt-hero, .kt-side, .kc-lid { transition: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kw-bub { display: none; }
+}

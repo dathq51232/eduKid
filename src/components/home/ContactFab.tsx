@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Mail, MessageCircle, Phone, X } from 'lucide-react';
 import { SITE_CONTACT as C } from '@/lib/contact';
+import '@/styles/cfab.css';
 
 export default function ContactFab() {
   const [open, setOpen] = useState(false);

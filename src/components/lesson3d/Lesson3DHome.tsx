@@ -14,6 +14,11 @@ import { TEMPLATES, lessonFromStem } from '@/lib/lesson3d/templates';
 import { emptyLesson, type Lesson3D } from '@/lib/lesson3d/types';
 import { fold } from '@/lib/classroom/teacher-nav';
 import DeckHome, { type DeckRow } from '@/components/deck/DeckHome';
+import '@/styles/adm.css';
+import '@/styles/ct.css';
+import '@/styles/s3h.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
 
 export type Lesson3DRow = { id: string; title: string; grade: number; stem_ref: string | null; updated_at: string };
 type Tab = 'mine' | 'tg' | 'tpl' | 'stem';

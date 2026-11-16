@@ -6,6 +6,13 @@ import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Box, Heart, LayoutGrid, Maxi
 import ArtViewer from './ArtViewer';
 import { THEMES, KIND_LABEL, WALL_LABEL, fmtDate, wallOrder, type GalleryItem, type GalleryKind, type HeartEmoji, type ThemeKey, type WallSizes } from '@/lib/gallery/types';
 import type { GalleryScene, Layout, Pose, RoomItem } from '@/lib/gallery/room';
+import '@/styles/adm.css';
+import '@/styles/gm.css';
+import '@/styles/gv.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/gg.css';
+import '@/styles/gr.css';
 
 type Mode = '3d' | 'grid';
 const KINDS: GalleryKind[] = ['praise', 'art', 'writing'];

@@ -10,6 +10,13 @@ import ContactAdmin from '@/components/ContactAdmin';
 import StudentProfiles from '@/components/classroom/StudentProfiles';
 import { birthIso, matchPaste, parseProfilePaste, parseRoll } from '@/lib/classroom/profiles';
 import { ADMIN_CONTACT, FREE_STUDENT_LIMIT } from '@/lib/contact';
+import '@/styles/adm.css';
+import '@/styles/btn.css';
+import '@/styles/class.css';
+import '@/styles/cm.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
+import '@/styles/tone.css';
 
 export type RosterRow = {
   student_id: string;

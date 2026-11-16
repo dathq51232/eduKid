@@ -3,6 +3,7 @@ import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import TeamContest from '@/components/classroom/TeamContest';
 import { loadClassPage } from '@/lib/classroom/class-page';
+import '@/styles/ct.css';
 
 export const metadata: Metadata = { title: 'Thi đua tổ · EduChain Kids' };
 export const dynamic = 'force-dynamic';

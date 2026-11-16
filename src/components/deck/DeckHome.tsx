@@ -12,6 +12,11 @@ import { Copy, MonitorPlay, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { BGS, emptyDeck, type Deck } from '@/lib/deck/types';
 import { SLIDE_TEMPLATES, deckFromTemplate } from '@/lib/deck/templates';
+import '@/styles/adm.css';
+import '@/styles/ct.css';
+import '@/styles/dk.css';
+import '@/styles/s3h.css';
+import '@/styles/dh.css';
 
 const DeckFromLesson = dynamic(() => import('./DeckFromLesson'), { ssr: false, loading: () => <p className="dk-hint">Đang mở…</p> });
 

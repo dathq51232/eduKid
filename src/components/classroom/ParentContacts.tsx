@@ -11,6 +11,11 @@ import { fold } from '@/lib/classroom/teacher-nav';
 import {
   RELATIONS, formatPhone, maskPhone, normalizePhone, parseContactPaste, telHref, zaloHref, type Contact, type ToolStudent,
 } from '@/lib/classroom/class-tools';
+import '@/styles/adm.css';
+import '@/styles/ct.css';
+import '@/styles/pc.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
 
 type Props = { classId: string; className: string; students: ToolStudent[] };
 type Draft = { id: string | null; student_id: string; name: string; relation: string; phone: string; zalo: string; note: string; top?: boolean };

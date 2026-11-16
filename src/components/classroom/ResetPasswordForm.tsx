@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { KeyRound } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import PasswordInput from '@/components/PasswordInput';
+import '@/styles/adm.css';
+import '@/styles/auth.css';
+import '@/styles/btn.css';
 
 export default function ResetPasswordForm() {
   const router = useRouter();

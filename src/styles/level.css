@@ -1,0 +1,44 @@
+/* Kiểu riêng khu vực "level-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* ==================================================================
+   CẤP ĐỘ L1–L5, ĐỒNG HỒ ĐẾM NGƯỢC, CHUYỂN CÂU, ĐIỂM TÍCH LUỸ
+================================================================== */
+.level-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border: 2px solid currentColor; border-radius: 999px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.level-chip.is-l1 { color: var(--fg-0f5c3e); background: var(--bg-e2f5ec); }
+.level-chip.is-l2 { color: var(--link); background: var(--bg-e1ebff); }
+.level-chip.is-l3 { color: var(--fg-8c1d18); background: var(--bg-fde8e6); }
+.level-chip.is-l4 { color: var(--fg-7a4d00); background: var(--bg-fff0cc); }
+.level-chip.is-l5 { color: var(--fg-5321a8); background: var(--bg-efe4ff); }
+.level-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.level-table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.level-table th, .level-table td { padding: 6px 4px; text-align: left; }
+.level-table thead th { color: var(--muted); font-size: 14px; }
+.level-bar-cell { width: 45%; }
+.level-bar { display: block; height: 12px; overflow: hidden; border: 2px solid var(--line-strong); border-radius: 999px; background: var(--bg-ffffff); }
+.level-bar span { display: block; height: 100%; background: var(--green-solid); }
+
+.level-picker { margin: 0; padding: 16px 18px; border: 2px solid var(--line-strong); border-radius: 16px; background: var(--bg-ffffff); }
+.level-picker legend { padding: 0 6px; font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 18px; font-weight: 800; }
+.level-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.level-option { position: relative; }
+.level-option input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.level-chip { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 56px; padding: 4px; border: 2px solid var(--rule); border-radius: 12px; background: var(--bg-f7faff); font-size: 13px; line-height: 1.25; text-align: center; transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease; pointer-events: none; }
+.level-chip strong { font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 18px; }
+.level-option:hover .level-chip { transform: translateY(-2px); border-color: var(--line-strong); }
+.level-option input:checked + .level-chip { background: var(--blue-deep); border-color: var(--blue-deep); color: #ffffff; }
+.level-option input:focus-visible + .level-chip { outline: 3px solid var(--yellow); outline-offset: 3px; }
+.level-detail { margin-top: 10px; font-size: 15px; }
+.level-note { margin-top: 4px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+@media (max-width: 640px) {
+  .level-options { gap: 4px; }
+  .level-chip { min-height: 52px; font-size: 11px; }
+  .level-chip strong { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-nav-link, .game-filter, .game-card, .level-chip, .pattern-option, .memory-inner { transition: none; }
+  .main-nav-link:hover, .game-filter:hover, .game-card:hover, .level-option:hover .level-chip, .pattern-option:hover:not([aria-disabled="true"]) { transform: none; }
+  .maze-btn:active, .sudoku-key:active:not(:disabled) { transform: none; }
+}
+
+/* Làm bài: nhãn mức độ (L1 · Làm quen) là viên thuốc một hàng — trước đây bị kiểu ô cấp độ của trò chơi đè lên */
+.level-chip[class*="is-l"] { display: inline-flex; flex-direction: row; min-height: 0; padding: 2px 10px; border: 2px solid currentColor; border-radius: 999px; font-size: 14px; line-height: 1.5; pointer-events: auto; }

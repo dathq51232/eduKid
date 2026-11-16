@@ -17,6 +17,8 @@ import AiAssistant from '@/components/classroom/AiAssistant';
 import { FEATURES } from '@/lib/features';
 import GuidedTour, { TourHelpButton } from '@/components/tour/GuidedTour';
 import { GROUPS, TOOLS, classIdOfPath, fold, groupOfTool, lastToolOf, rememberTool, toolHref, toolOfPath, toolsOfGroup, type Tool, type ToolKey } from '@/lib/classroom/teacher-nav';
+import '@/styles/tsh.css';
+import '@/styles/tone.css';
 
 /** Biểu tượng 3D của từng công cụ (public/emoji/tool/<khoá>.webp) */
 export const TOOL_ICON: Record<ToolKey, IconComp> = Object.fromEntries(

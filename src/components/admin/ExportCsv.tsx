@@ -1,6 +1,7 @@
 'use client';
 
 import { Download } from 'lucide-react';
+import '@/styles/adm.css';
 
 /** Xuất bảng số liệu ra CSV (có BOM để Excel đọc đúng tiếng Việt) */
 export default function ExportCsv({ name, rows }: { name: string; rows: (string | number)[][] }) {

@@ -4,6 +4,8 @@
 // Dùng bên trong <label className="adm-field"> như ô nhập thường.
 import { useState, type InputHTMLAttributes } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import '@/styles/adm.css';
+import '@/styles/pw.css';
 
 type Props = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>;
 

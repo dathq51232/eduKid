@@ -6,6 +6,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Copy, Eye, EyeOff, KeyRound, Plus, Printer, UserPlus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import '@/styles/adm.css';
+import '@/styles/fam.css';
+import '@/styles/btn.css';
 
 export type FamilyChild = { student_id: string; display_name: string; grade: number; own: boolean; pin: string | null; has_login: boolean; access_reason: string | null; access_until: string | null };
 const AVATAR = ['#2563eb', '#22a447', '#f08a1c', '#7c4dd6', '#e2437f', '#0891b2'];

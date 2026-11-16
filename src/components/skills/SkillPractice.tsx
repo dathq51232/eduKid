@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { CheckCircle2, RotateCcw, Sparkles, XCircle } from 'lucide-react';
 import type { Scenario } from '@/lib/skills/hub';
+import '@/styles/kn.css';
 
 const DONE_KEY = 'educhain-skill-missions-v1';
 

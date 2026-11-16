@@ -3,6 +3,7 @@ import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import ClassTimer from '@/components/classroom/ClassTimer';
 import { loadClassPage } from '@/lib/classroom/class-page';
+import '@/styles/ct.css';
 
 export const metadata: Metadata = { title: 'Hẹn giờ · EduChain Kids' };
 export const dynamic = 'force-dynamic';

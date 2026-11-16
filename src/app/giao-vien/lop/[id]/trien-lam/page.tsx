@@ -3,6 +3,7 @@ import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import GalleryManager from '@/components/gallery/GalleryManager';
 import { loadClassPage } from '@/lib/classroom/class-page';
+import '@/styles/ct.css';
 
 export const metadata: Metadata = { title: 'Phòng triển lãm · EduChain Kids', robots: { index: false } };
 export const dynamic = 'force-dynamic';

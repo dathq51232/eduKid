@@ -3,6 +3,9 @@
 // Ghi âm lời giới thiệu tác phẩm (tối đa 20 giây) bằng micro của máy.
 import { useEffect, useRef, useState } from 'react';
 import { Mic, Square, Trash2 } from 'lucide-react';
+import '@/styles/adm.css';
+import '@/styles/btn.css';
+import '@/styles/mini.css';
 
 const MAX = 20;
 const pickType = () => {

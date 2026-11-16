@@ -9,6 +9,9 @@ import LiveAchievements from '@/components/achievements/LiveAchievements';
 import { getViewer } from '@/lib/auth/viewer';
 import StickerAlbum from '@/components/learn/StickerAlbum';
 import GiftShelf from '@/components/achievements/GiftShelf';
+import '@/styles/ach.css';
+import '@/styles/btn.css';
+import '@/styles/games.css';
 
 export const metadata: Metadata = { title: 'Thành tích · EduChain Kids' };
 

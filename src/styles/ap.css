@@ -1,0 +1,27 @@
+/* Kiểu riêng khu vực "ap-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.dash-muted { color: var(--muted); font-size: 15px; }
+.assign-paper-form .dash-muted { flex-basis: 100%; margin: 0; font-size: 13px; }
+.ap-head { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
+.ap-head h2 { margin: 0; font-size: 20px; }
+.ap-foot { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.ap-dirty { margin: 0; padding: 6px 10px; border-radius: 10px; background: #fef3c7; color: #92400e; font-weight: 700; font-size: 14px; }
+.ap-walls { display: grid; gap: 8px; }
+.ap-wall { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ap-wall > b { min-width: 170px; } .ap-wall small { color: var(--muted); font-weight: 600; }
+.ap-sizes { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line-strong); border-radius: 999px; overflow: hidden; }
+.ap-sizes button { padding: 6px 12px; border: 0; border-right: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+.ap-sizes button:last-child { border-right: 0; }
+.ap-sizes button.is-on { background: #06b6d4; color: #fff; }
+.ap-tip { margin: 0; font-size: 13px; }
+.ap-hint { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-weight: 600; }
+.ap-sel { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px; border-radius: 12px; background: #ecfeff; color: #0f172a; }
+.ap-sel img { width: 120px; max-height: 100px; object-fit: contain; border-radius: 8px; background: #fff; }
+.ap-sel-info { display: grid; gap: 6px; } .ap-sel-info small { color: #475569; }
+.ap-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ap-row input[type=range] { width: 140px; accent-color: #06b6d4; }
+.ap-add { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border-top: 1px dashed var(--line); padding-top: 10px; }
+@media (max-width: 560px) { .ap-sel { grid-template-columns: 1fr; } .ap-wall > b { min-width: 0; flex-basis: 100%; } }
+.planner-editor.is-full > .dash-muted { display: none; }
+.kt-section .dash-muted { margin: -4px 0 12px; }
+
+:root[data-theme="dark"] .ap-sel { background: color-mix(in srgb, #ecfeff 14%, var(--surface)); color: var(--ink); }

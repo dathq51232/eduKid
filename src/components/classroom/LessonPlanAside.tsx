@@ -7,6 +7,9 @@ import { useRouter } from 'next/navigation';
 import { ClipboardList, MonitorPlay, Pencil, X } from 'lucide-react';
 import { PICK_EVENT, loadPick, planOf } from '@/lib/plans/idea-bank';
 import { createClient } from '@/lib/supabase/client';
+import '@/styles/li.css';
+import '@/styles/tdy.css';
+import '@/styles/btn.css';
 
 type Cur = { subject: string; title: string };
 

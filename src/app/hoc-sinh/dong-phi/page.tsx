@@ -9,6 +9,8 @@ import { learningGate } from '@/lib/auth/gate';
 import { getViewer } from '@/lib/auth/viewer';
 import { PLAN_NAME, fmtDay, vnd, type BillingPublic, type PaymentRow } from '@/lib/billing';
 import { createClient } from '@/lib/supabase/server';
+import '@/styles/adm.css';
+import '@/styles/dash.css';
 
 export const metadata: Metadata = { title: 'Học phí · EduChain Kids' };
 export const dynamic = 'force-dynamic';

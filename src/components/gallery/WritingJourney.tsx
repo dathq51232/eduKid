@@ -4,6 +4,8 @@
 import { useMemo, useState } from 'react';
 import { PenLine, TrendingUp } from 'lucide-react';
 import { fmtDate, type GalleryItem } from '@/lib/gallery/types';
+import '@/styles/dash.css';
+import '@/styles/wj.css';
 
 export default function WritingJourney({ items, students, initial, onOpen }: {
   items: GalleryItem[]; students: { id: string; name: string }[]; initial?: string | null; onOpen?: (id: string) => void;

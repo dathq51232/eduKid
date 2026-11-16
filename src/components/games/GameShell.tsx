@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import type { GameInfo } from '@/lib/games/catalog';
+import '@/styles/game.css';
 
 /** Khung chung của một trang game: nút về danh mục, tên game, mô tả, rồi tới phần chơi */
 export default function GameShell({ game, children }: { game: GameInfo; children: React.ReactNode }) {

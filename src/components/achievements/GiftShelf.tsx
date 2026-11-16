@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Gift as GiftIcon, Lock, Sparkles, X } from 'lucide-react';
 import GiftArt from './GiftArt';
 import { GIFTS, giftHave, giftNeed, giftOpen, nextGift, readSeen, saveSeen, type Gift, type GiftStats } from '@/lib/gifts';
+import '@/styles/ach.css';
+import '@/styles/gift.css';
 
 export default function GiftShelf({ stats, demo = false }: { stats: GiftStats | null; demo?: boolean }) {
   const [seen, setSeen] = useState<Set<string> | null>(null);

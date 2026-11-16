@@ -16,6 +16,7 @@ import { MAX_OBJECTS, clipLabel, uid, type BaseType, type Control3D, type FxType
 import { fold } from '@/lib/classroom/teacher-nav';
 import OfflineSaveButton from '@/components/offline/OfflineSaveButton';
 import { saveLesson3DOffline } from '@/lib/offline/save';
+import '@/styles/s3d.css';
 
 const SWATCH = ['#ef4444', '#f59e0b', '#facc15', '#22c55e', '#2f8f4e', '#2aa7e0', '#2457c5', '#8b5cf6', '#ec4899', '#ffffff', '#9aa3ad', '#7a5232'];
 const FX: { id: FxType; icon: string; name: string }[] = [

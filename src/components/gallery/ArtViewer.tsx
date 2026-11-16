@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Volume2, X } from 'lucide-react';
 import { HEARTS, KIND_LABEL, fmtDate, type GalleryItem, type HeartEmoji } from '@/lib/gallery/types';
+import '@/styles/gv.css';
 
 export default function ArtViewer({ list, id, onClose, onGo, onHeart, canHeart }: {
   list: GalleryItem[]; id: string; onClose: () => void; onGo: (id: string) => void;

@@ -7,6 +7,8 @@ import { MonitorSmartphone, NotebookPen } from 'lucide-react';
 import HandwritingPractice from './HandwritingPractice';
 import WritingSheetBuilder from './WritingSheetBuilder';
 import { ToolIcon } from '@/components/classroom/tool-icons';
+import '@/styles/gm.css';
+import '@/styles/dash.css';
 
 export default function TeacherWriting({ classId, className, grade }: { classId: string; className: string; grade: number }) {
   const [tab, setTab] = useState<'vo' | 'man-hinh'>('vo');

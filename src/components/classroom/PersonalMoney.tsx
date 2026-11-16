@@ -9,6 +9,10 @@ import { downloadXlsx } from '@/lib/xlsx';
 import { ToolIcon } from '@/components/classroom/tool-icons';
 import { PERSONAL_CATS, catIcon, fmtMoney, ledgerSheet, parseMoney, todayVn, viDay, type Kind, type MoneyRow } from '@/lib/utils/money';
 import { WEEKDAYS } from '@/lib/utils/lunar';
+import '@/styles/adm.css';
+import '@/styles/ct.css';
+import '@/styles/mn.css';
+import '@/styles/btn.css';
 
 const MISSING = 'Chưa bật Sổ thu chi: hãy chạy supabase/migrations/0052_teacher_money.sql trên Supabase.';
 const HIDE_KEY = 'gv-an-tien';

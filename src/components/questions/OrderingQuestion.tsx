@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { shuffle } from '@/lib/shuffle';
 import type { AnswerValue, Question } from '@/lib/types';
+import '@/styles/question.css';
 
 type Props = {
   question: Question;

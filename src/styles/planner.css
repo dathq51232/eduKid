@@ -1,0 +1,135 @@
+/* Kiểu riêng khu vực "planner-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+.adm-field { display: grid; gap: 6px; font-size: 14px; font-weight: 600; }
+.adm-field.is-inline { grid-template-columns: auto; min-width: 160px; }
+.adm-field.is-wide { grid-column: 1 / -1; }
+.pin-dots span.is-on { background: var(--brand-blue); box-shadow: none; }
+.role-pick label.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.dash-section { display: grid; gap: 12px; }
+.dash-muted { color: var(--muted); font-size: 15px; }
+.roster-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.mini-btn { display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 4px 10px; border: 0; border-radius: 10px; background: var(--surface-2); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: inset 0 0 0 1px var(--line); }
+.mini-btn:hover:not(:disabled) { background: var(--blue-soft); color: var(--brand-blue); }
+.mini-btn:disabled { opacity: .55; cursor: default; }
+.mini-btn.is-danger { background: #fde8e6; color: #b3261e; }
+:root[data-theme="dark"] .mini-btn.is-danger { background: #3d1d22; color: #ff9a9a; }
+@media print {
+  body { background: #fff !important; }
+  .learn-top, .no-print, .back-link, .dash-head, .adm-alert, .login-cards-wrap .dash-card-head button { display: none !important; }
+  .login-cards-wrap { box-shadow: none; padding: 0; }
+  .login-card { border-color: #999; color: #000; }
+}
+.sr-fill .mini-btn { min-height: 26px; padding: 2px 8px; }
+.assign-paper-form .dash-muted { flex-basis: 100%; margin: 0; font-size: 13px; }
+.gaps-periods .mini-btn { text-decoration: none; }
+.gaps-periods .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.plan-edit .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.fx-toggle.is-on { background: var(--bg-fff3d1); color: var(--fg-7a4d00); }
+.planner-card { padding: 18px 20px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.planner-card h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; }
+.planner-card h2 svg { width: 22px; height: 22px; color: var(--blue); }
+.planner-card h3 { margin: 10px 0 0; font-size: 17px; color: var(--link); }
+.planner-new { display: grid; grid-template-columns: 170px minmax(0, 1fr) 170px 90px; gap: 12px; align-items: end; }
+.planner-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.planner-weak { margin: 0; font-size: 14px; }
+.planner-edit-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.planner-dirty { color: #b45309; font-size: 15px; font-weight: 700; }
+.planner-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.planner-wide { grid-column: 1 / -1; }
+.planner-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+
+.planner-min { width: 64px; min-height: 32px; margin-left: 8px; padding: 2px 6px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg-ffffff); color: var(--ink); font: inherit; }
+.planner-week { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.planner-spacer { flex: 1; }
+.planner-table td { white-space: normal; }
+.planner-table tr.is-on td { background: var(--blue-soft); }
+.planner-import-sum { margin: 10px 0 4px; font-size: 15px; }
+.planner-import td { font-size: 14px; vertical-align: top; }
+.planner-import input[type="checkbox"] { width: 18px; height: 18px; }
+.planner-import .mini-btn { white-space: nowrap; }
+.planner-act-title { font: inherit; font-weight: 700; border: 1px solid transparent; background: transparent; border-radius: 6px; padding: 2px 6px; min-width: 16ch; width: min(60ch, 70vw); }
+.planner-act-title:hover, .planner-act-title:focus { border-color: var(--line, #cfd6e0); background: var(--surface, #fff); }
+.planner-lib-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+.planner-lib-search { max-width: 520px; }
+.planner-lib-search span { display: inline-flex; align-items: center; gap: 6px; }
+.planner-lib-search svg { width: 16px; height: 16px; }
+.planner-lib-files { list-style: none; margin: 8px 0 0; padding: 0; max-height: 360px; overflow: auto; border: 1px solid var(--line, #e3e8ef); border-radius: 10px; }
+.planner-lib-files li { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-bottom: 1px solid var(--line, #eef1f5); font-size: 14px; }
+.planner-lib-files li span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.planner-lib-fails { margin: 6px 0; font-size: 14px; }
+.planner-lib-fails ul { margin: 6px 0 0 18px; }
+.planner-int { color: var(--muted, #667); font-size: 13px; }
+.planner-kind { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; background: #eef2f7; color: #334; }
+.planner-kind.is-app { background: #e3f4e8; color: #17603a; }
+.planner-kind.is-review { background: #fff1d6; color: #7a4b00; }
+.planner-title { font-weight: 700; min-width: 180px; }
+.planner-row-actions { display: flex; gap: 6px; }
+
+@media (max-width: 860px) {
+  .planner-new { grid-template-columns: 1fr 1fr; }
+  .planner-new .planner-lesson { grid-column: 1 / -1; }
+  .planner-grid { grid-template-columns: 1fr 1fr; }
+  .planner-two { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) { .planner-card { padding: 14px; } }
+.report-bar .adm-field { min-width: 200px; }
+.planner-orig { border: 1px solid #b7e0c4; background: #effaf2; border-radius: 10px; padding: 10px 12px; margin: 8px 0 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 14px; }
+.planner-orig p { margin: 0; flex-basis: 100%; }
+.planner-orig label { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Lịch báo giảng: tiêu đề nhóm môn theo mẫu nhà trường, tiết chữ đỏ bị bỏ qua */
+.planner-import .planner-group th { text-align: left; background: #eef4fb; color: #0d47a1; font-size: 13px; letter-spacing: .03em; padding: 6px 10px; }
+.planner-skipped { color: #b71c1c; }
+
+.roster-table { font-variant-numeric: tabular-nums; }
+.mini-btn { min-height: 40px; padding: 6px 12px; font-size: 14px; }
+@media (pointer: coarse) { .mini-btn { min-height: 44px; } }
+.callon.is-full { min-height: 100vh; padding: 16px 24px; background: var(--bg, #f5f8ff); }
+.mini-btn.is-copied { background: #ddf7e7; color: #116b33; }
+.tmr:fullscreen, .tmr.is-full { display: block; background: #0f1626; }
+.tmr.is-full:not(:fullscreen) { position: fixed; inset: 0; z-index: 95; }
+.mini-btn.is-zalo { color: #0068ff; text-decoration: none; }
+:root[data-theme="dark"] .mini-btn.is-zalo { color: #7fb2ff; }
+.mini-btn.is-danger { color: #dc2626; }
+.gv.is-full { position: fixed; inset: 0; z-index: 150; background: var(--paper, #fff); padding: 10px; display: flex; flex-direction: column; }
+.wsb-tasks .mini-btn.is-active { color: #15803d; border-color: #86efac; }
+.wsb-pos-h .mini-btn { margin-left: auto; }
+.praise-spots .mini-btn.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.praise-ph-acts .mini-btn { padding: 2px 8px; font-size: 12px; }
+.qz-round.fx-toggle.is-on { background: radial-gradient(circle at 35% 30%, #ffb3e0, #d6409f 70%); box-shadow: 0 4px 0 #a32b78, 0 8px 16px rgb(120 20 80 / .25); }
+.pen-colors button.is-on, .wb-colors button.is-on { box-shadow: 0 0 0 3px #a78bfa; }
+.wb.is-full { background: var(--bg, #f8fafc); padding: 10px; height: 100vh; grid-template-rows: auto 1fr; overflow: hidden; } .pw-act-h .planner-act-title { flex: 1; min-width: 12ch; width: auto; font-weight: 800; color: var(--ink); }
+.planner-editor.is-full { position: fixed; inset: 0; z-index: 80; margin: 0; border-radius: 0; padding: 10px 16px; display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.planner-editor.is-full .pw { height: auto; min-height: 0; margin-top: 6px; }
+.planner-editor.is-full .planner-edit-head h2 { font-size: 17px; }
+.planner-editor:not(.is-full) .pw-mid .planner-two { grid-template-columns: 1fr; }
+.planner-editor.is-full > .dash-muted { display: none; }
+
+.planner-norm { margin: 8px 0; padding: 10px 14px; border-radius: 12px; background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+.planner-norm p { margin: 0 0 4px; }
+.planner-norm ul { margin: 0 0 8px; padding-left: 20px; font-size: 14px; }
+
+/* Gợi ý giáo án từ kho trường cho từng tiết của lịch báo giảng */
+.planner-kho-cell { display: flex; flex-wrap: wrap; gap: 4px; }
+.planner-kho-btn.is-on { background: #2457c5; color: #fff; }
+.planner-kho-row > td { background: #f8fafc; padding: 10px 12px !important; }
+.kh-modal-box > .dash-section { margin: 0; }
+.adm-filters .adm-field { min-width: 160px; }
+.mini-btn.is-primary { background: var(--brand-blue); color: #fff; box-shadow: none; }
+.mini-btn.is-primary:hover:not(:disabled) { background: var(--brand-blue); color: #fff; filter: brightness(1.08); }
+.kt-section .dash-muted { margin: -4px 0 12px; }
+.class-manager .roster-table .mini-btn { min-height: 32px; padding: 3px 9px; font-size: 13px; }
+@media (max-width: 1279px) {
+  .class-manager .roster-table .mini-btn:has(svg) { flex-direction: column; gap: 1px; min-width: 46px; min-height: 40px; padding: 3px 6px; justify-content: center; font-size: 11px; line-height: 1.1; }
+  .class-manager .roster-table .mini-btn:has(svg) svg { width: 15px; height: 15px; }
+  .class-manager .roster-table .mini-btn .mb-full { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .class-manager .roster-table .mini-btn .mb-short { display: block; white-space: nowrap; }
+}
+:root[data-theme="dark"] .planner-kind { background: var(--surface-2); color: var(--ink); }
+:root[data-theme="dark"] .planner-kind.is-app { background: color-mix(in srgb, #17603a 24%, var(--surface)); color: color-mix(in srgb, #17603a 40%, #fff); }
+:root[data-theme="dark"] .planner-kind.is-review { background: color-mix(in srgb, #7a4b00 24%, var(--surface)); color: color-mix(in srgb, #7a4b00 40%, #fff); }
+:root[data-theme="dark"] .planner-orig { background: var(--surface-2); border-color: color-mix(in srgb, #b7e0c4 35%, var(--surface)); }
+:root[data-theme="dark"] .planner-import .planner-group th { background: color-mix(in srgb, #0d47a1 24%, var(--surface)); color: color-mix(in srgb, #0d47a1 40%, #fff); }
+:root[data-theme="dark"] .mini-btn.is-copied { background: color-mix(in srgb, #116b33 24%, var(--surface)); color: color-mix(in srgb, #116b33 40%, #fff); }
+:root[data-theme="dark"] .planner-norm { background: color-mix(in srgb, #065f46 24%, var(--surface)); color: color-mix(in srgb, #065f46 40%, #fff); border-color: color-mix(in srgb, #a7f3d0 35%, var(--surface)); }
+:root[data-theme="dark"] .planner-kho-row > td { background: var(--surface-2); }

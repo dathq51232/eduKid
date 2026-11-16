@@ -1,0 +1,54 @@
+/* Kiểu riêng khu vực "question-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+.question-card { padding: 28px; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--bg-ffffff); box-shadow: var(--shadow-lg); }
+.question-card > * + * { margin-top: 20px; }
+.question-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.question-prompt { font-size: clamp(24px, 4.6vw, 32px); line-height: 1.35; text-align: center; }
+@media (max-width: 520px) {
+  .question-card { padding: 20px; }
+}
+
+/* Chọn nhiều, sắp xếp, ghép cặp */
+.question-hint { color: var(--muted); font-size: 16px; text-align: center; }
+.adm-preview-card { box-shadow: var(--shadow-md); font-size: 18px; }
+
+/* Đề bài có thể có nhiều dòng: dòng hình để đếm, dòng câu hỏi */
+.question-prompt { white-space: pre-line; overflow-wrap: anywhere; }
+
+.question-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+/* Khối "Luyện tập ngẫu nhiên" trên trang chọn bài */
+
+/* Nút đổi câu */
+.question-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+
+/* Thẻ chung: bo tròn hơn, viền nhạt */
+.lesson-row, .question-card, .lesson, .auth-card, .intro-card { border-radius: 20px; }
+
+/* Khối nội dung: viền mảnh 1px thay cho viền 2px, cùng một kiểu bóng nhẹ */
+.games-hero, .lesson, .lesson-row, .question-card, .intro-card, .score-box, .review-item, .empty-state,
+.points-card, .comment-card, .dialog-card, .back-link, .icon-button, .quiz-count,
+.game-filter, .game-grade select, .notebook { border-width: 1px; }
+/* Màn hình rất hẹp (iPhone SE, máy Android nhỏ ~320–380px) */
+@media (max-width: 380px) {
+  .question-tools .button { white-space: nowrap; padding-inline: 14px; font-size: 16px; }
+}
+
+.question-card { position: relative; }
+@media (max-width: 760px) {
+  .question-card { padding: 16px 14px; }
+  .question-top { gap: 8px; }
+  /* "Nghe đọc đề" và "Đổi câu khác" chung một hàng, gọn */
+  .question-tools { flex-wrap: nowrap; gap: 8px; margin-top: 8px; }
+  .question-tools .button { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 6px 12px; font-size: 15px; gap: 6px; white-space: nowrap; }
+}
+.qz-board.question-card { position: relative; padding: 26px 30px 30px; border: 14px solid transparent; border-radius: 28px;
+  background: linear-gradient(180deg, #fffdf7, #fff6e3) padding-box, linear-gradient(150deg, #d79a5c 0%, #9b6232 35%, #c4834a 62%, #7d4c24 100%) border-box;
+  box-shadow: 0 0 0 3px #6e4420, inset 0 0 0 3px #f5dfb8, 0 20px 40px rgb(60 30 0 / .35); }
+.qz-board .question-prompt { color: var(--qz-navy); text-align: center; }
+/* màn hình nhỏ */
+@media (max-width: 900px) {
+  .qz-brand small, .qz-brand .brand-word { display: none; }
+  .qz-round.icon-button { width: 44px; height: 44px; }
+  .qz-board.question-card { padding: 18px 16px 20px; border-width: 10px; border-radius: 22px; }
+}

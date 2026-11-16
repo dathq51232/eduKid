@@ -1,0 +1,49 @@
+/* Kiểu riêng khu vực "brand-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Logo + chữ */
+.brand-logo { display: inline-flex; align-items: center; gap: 10px; line-height: 1; }
+.brand-word { font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; }
+.learn-top .brand-word { font-size: 22px; }
+
+/* Chân trang: dải sóng màu thương hiệu */
+.brand-footer { position: relative; margin-top: 72px; color: #fff; background: linear-gradient(100deg, #2457c5, #2f8de0 45%, #22c55e 80%, #ffc83d); }
+.brand-footer::before { content: ''; position: absolute; left: 0; right: 0; top: -36px; height: 40px; background: inherit; clip-path: path('M0 40 C 200 0 420 0 640 22 S 1100 50 1600 6 V 40 Z'); }
+:root[data-theme="dark"] .brand-footer { background: linear-gradient(100deg, #1a3f93, #1f63a8 45%, #157a43 80%, #a7801f); }
+@media (max-width: 600px) {
+  
+  .brand-word { font-size: 22px; }
+}
+
+/* ---------------- Chân trang: một màu, không dải cầu vồng ---------------- */
+.brand-footer { background: #1d47a8; border-top: 4px solid var(--brand-yellow); }
+.brand-footer::before { display: none; }
+:root[data-theme="dark"] .brand-footer { background: #122452; }
+/* Thanh trên trên điện thoại: luôn hiện logo (luật cũ ẩn nhầm cả logo) */
+@media (max-width: 760px) {
+  .learn-top .brand-word { font-size: 20px; }
+}
+.brand-word { font-family: var(--font-display, 'Quicksand'), sans-serif; font-weight: 700; letter-spacing: -.02em; }
+
+.brand-stack { display: grid; gap: 2px; }
+.brand-tag { font-size: 13px; font-weight: 700; color: var(--blue); letter-spacing: 0; }
+.ph-top .brand-word { font-size: 21px; }
+@media (max-width: 640px) {
+  .ph-top .brand .logo-word { display: none; }
+  .ph-top .theme-switch-label { display: none; }
+}
+.qz-brand .brand-word { height: 30px; width: auto; padding: 3px 8px; border-radius: 10px; background: #fffaf0; box-sizing: content-box; }
+/* màn hình nhỏ */
+@media (max-width: 900px) {
+  .qz-brand small, .qz-brand .brand-word { display: none; }
+  .qz-round.icon-button { width: 44px; height: 44px; }
+  .qz-board.question-card { padding: 18px 16px 20px; border-width: 10px; border-radius: 22px; }
+}
+
+/* Logo 11/2026: chữ thương hiệu là ảnh (EduChainKids nhiều màu) */
+img.logo-word { display: block; flex: none; width: auto; max-width: 100%; object-fit: contain; }
+.brand-logo { gap: 6px; flex: none; }
+.brand-logo img.logo-word { max-width: none; }
+
+/* ===== Footer trang chủ (11/2026): nền xanh đậm, logo trên thẻ trắng, màu mảnh ghép của logo ===== */
+.brand-footer.ft { position: relative; margin-top: 110px; padding: 0; color: #dbe5ff; background: #14307a; border-top: 0; }
+:root[data-theme="dark"] .brand-footer.ft { background: #0d1d4a; }

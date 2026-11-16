@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { Volume1, Volume2, VolumeX } from 'lucide-react';
 import { CHESS_SOUND_MODES, clockSoundFor, setChessSound, sfx, useChessSound } from '@/lib/chess/sound-pref';
+import '@/styles/chs.css';
 
 export type ChessTab = 'bot' | 'online' | 'cup';
 export function ChessTabs({ active, base = '/co/vua' }: { active: ChessTab; base?: string }) {

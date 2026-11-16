@@ -1,0 +1,31 @@
+/* Kiểu riêng khu vực "pv-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* ------------------------------------------------ Việc hôm nay (trang giáo viên) */
+
+/* Bản xem trước văn bản (DocPreview) */
+.pv-overlay { position: fixed; inset: 0; z-index: 90; background: rgba(15, 23, 42, .55); display: flex; padding: 16px; }
+.pv-panel { flex: 1; display: flex; flex-direction: column; background: var(--surface, #fff); border-radius: 14px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+.pv-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line, #e3e8ef); }
+.pv-title { font-size: 15px; max-width: 46ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-note { color: var(--muted, #667); font-size: 13px; }
+.pv-frame { flex: 1; width: 100%; border: 0; background: #e6eaf0; }
+.pv-loading { display: grid; place-items: center; color: #556; }
+@media (max-width: 640px) { .pv-overlay { padding: 0; } .pv-panel { border-radius: 0; } }
+
+/* Phiếu chính tả */
+.pv-inline { margin-top: 16px; }
+.pv-inline .pv-panel { border: 1px solid var(--line, #e3e8ef); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; background: var(--surface, #fff); }
+.pv-inline .pv-frame { flex: none; height: min(1150px, 85vh); }
+.pv-fit { font-size: 12.5px; font-weight: 700; color: #15803d; background: #dcfce7; border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+.pv-fit.is-bad { color: #92400e; background: #fef3c7; }
+.pv-opts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 14px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+.pv-opts label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: #334155; }
+.pv-opts select { font: inherit; font-weight: 500; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; }
+.pv-opts .pv-chk { font-weight: 500; }
+.pv-opts .pv-fit { white-space: normal; }
+.kh-chk { font-weight: 600; display: flex; gap: 6px; align-items: center; }
+.mn-amount small.is-bad, .fd-new small.is-bad, .mn-form > small.is-bad { color: #c2323a; }
+:root[data-theme="dark"] .pv-frame { background: var(--surface-2); }
+:root[data-theme="dark"] .pv-fit { background: color-mix(in srgb, #15803d 24%, var(--surface)); color: color-mix(in srgb, #15803d 40%, #fff); }
+:root[data-theme="dark"] .pv-opts { background: var(--surface-2); border-bottom-color: color-mix(in srgb, #e2e8f0 35%, var(--surface)); }
+:root[data-theme="dark"] .pv-opts select { background: var(--surface); border-color: color-mix(in srgb, #cbd5e1 35%, var(--surface)); }

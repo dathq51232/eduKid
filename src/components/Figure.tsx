@@ -2,6 +2,7 @@
 
 import type { BlockName, Figure as FigureData, ShapeName } from '@/lib/figures';
 import IllustrationIcon from '@/components/IllustrationIcon';
+import '@/styles/fig.css';
 
 const INK = '#1f2a44';
 

@@ -5,6 +5,8 @@
 
 import { useState } from 'react';
 import { ROLE_SERIES, fillSeries, fmt, roleValue, seriesLabel, type Period, type SeriesRow } from '@/lib/admin/insights';
+import '@/styles/adm.css';
+import '@/styles/viz.css';
 
 export function TrafficColumns({ rows, days, height = 200 }: { rows: SeriesRow[]; days: Period; height?: number }) {
   const data = fillSeries(rows, days);

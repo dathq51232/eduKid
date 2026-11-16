@@ -9,6 +9,12 @@ import { createClient } from '@/lib/supabase/client';
 import { downloadXlsx, XS, type XCell, type XSheet } from '@/lib/xlsx';
 import { ToolIcon } from '@/components/classroom/tool-icons';
 import { FUND_HINTS, fmtMoney, ledgerSheet, parseMoney, todayVn, viDay, type Kind, type MoneyRow } from '@/lib/utils/money';
+import '@/styles/adm.css';
+import '@/styles/ct.css';
+import '@/styles/mn.css';
+import '@/styles/btn.css';
+import '@/styles/fd.css';
+import '@/styles/mini.css';
 
 type Student = { id: string; name: string };
 type Collection = { id: string; title: string; amount_per: number; due_on: string | null; created_at: string };

@@ -3,6 +3,7 @@ import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import TeacherEnglish from '@/components/teacher-english/TeacherEnglish';
 import { loadClassPage } from '@/lib/classroom/class-page';
+import '@/styles/ct.css';
 
 export const metadata: Metadata = { title: 'Tiếng Anh sư phạm · EduChain Kids', robots: { index: false } };
 export const dynamic = 'force-dynamic';

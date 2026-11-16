@@ -1,0 +1,126 @@
+/* Kiểu riêng khu vực "exam-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.wrap { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+
+.answers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 22px 0 0; padding: 0; list-style: none; }
+
+@media (max-width: 900px) {
+  .wrap { width: min(100% - 40px, 680px); }
+  
+  
+  
+  .notebook { margin-right: 14px; }
+  
+  
+  
+  
+  .footer { flex-wrap: wrap; padding-block: 20px; }
+}
+@media (max-width: 520px) {
+  body { font-size: 17px; }
+  .wrap { width: calc(100% - 32px); }
+  .brand { font-size: 22px; }
+  .top-cta { padding: 10px 14px; font-size: 15px; }
+  
+  .notebook { padding-left: 62px; }
+  .notebook::before { left: 42px; }
+  .notebook p.line { font-size: 22px; }
+  .journey { padding-block: 64px; }
+  
+  
+  .answers { grid-template-columns: repeat(2, 1fr); }
+  
+  .footer { align-items: flex-start; flex-direction: column; }
+}
+
+.adm-field { display: grid; gap: 6px; font-size: 14px; font-weight: 600; }
+.adm-field.is-inline { grid-template-columns: auto; min-width: 160px; }
+.adm-field.is-wide { grid-column: 1 / -1; }
+
+/* Chữ trên nền vàng / nền trắng mờ luôn màu mực đậm (kể cả chế độ tối) */
+.button-yellow, .top-cta, .sticker, .grade-chip:hover, .back-link:hover, .lesson-row.is-next .lesson-no,
+.icon-button:hover, .result-card, .order-no, .adm-qnum, .nav-dot.is-current:not(.is-wrong):not(.is-correct):not(.is-timeout), .points-pop, .review-points, .maze-btn,
+.toc-link.is-next .toc-no, .toc-fab, .points-chip { color: #1e2b4a; }
+
+.dash { display: grid; gap: 22px; padding-block: 28px 64px; }
+.dash-card { display: grid; gap: 12px; padding: 22px; border-radius: 22px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.dash-section { display: grid; gap: 12px; }
+.roster-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+@media print {
+  body { background: #fff !important; }
+  .learn-top, .no-print, .back-link, .dash-head, .adm-alert, .login-cards-wrap .dash-card-head button { display: none !important; }
+  .login-cards-wrap { box-shadow: none; padding: 0; }
+  .login-card { border-color: #999; color: #000; }
+}
+
+/* ------------------------------------------------ Ma trận và đề kiểm tra (0015) */
+.exam-builder h1 { display: flex; align-items: center; gap: 10px; }
+.exam-builder h1 svg { width: 30px; height: 30px; }
+.exam-builder h2 { display: flex; align-items: center; gap: 8px; }
+.exam-builder h2 svg { width: 22px; height: 22px; }
+.exam-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.exam-form .exam-title { grid-column: span 2; }
+.exam-form select, .exam-form input { width: 100%; }
+.exam-saved { display: grid; gap: 8px; margin: 8px 0 0; padding: 0; list-style: none; }
+.exam-saved li { display: flex; align-items: center; gap: 8px; }
+.exam-saved li.is-on .exam-saved-open { box-shadow: inset 0 0 0 2px var(--blue); }
+.exam-saved-open { flex: 1; display: grid; gap: 2px; padding: 8px 12px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--bg-ffffff); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.exam-saved-open span { color: var(--muted); font-size: 13px; }
+.exam-matrix td, .exam-matrix th { text-align: center; vertical-align: middle; }
+.exam-matrix .exam-unit { text-align: left; font-weight: 700; }
+.exam-matrix .exam-unit span, .exam-avail { display: block; color: var(--muted); font-size: 12px; font-weight: 500; }
+.exam-matrix input { width: 64px; min-height: 34px; padding: 2px 6px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg-ffffff); color: var(--ink); font: inherit; text-align: center; }
+.exam-points th { font-weight: 600; color: var(--muted); font-size: 13px; }
+.exam-warn { color: #b45309; } .exam-ok { color: #15803d; }
+.exam-papers { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
+.exam-paper { padding: 14px 16px; border: 2px solid var(--line-strong); border-radius: 16px; background: var(--bg-ffffff); }
+.exam-paper h3 { margin: 0 0 8px; }
+.exam-paper ol { display: grid; gap: 10px; margin: 0; padding-left: 22px; }
+.exam-q-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.exam-q-lesson { flex: 1; color: var(--muted); font-size: 12px; }
+.exam-muc { padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+.exam-muc.m1 { background: #dcfce7; color: #166534; } .exam-muc.m2 { background: #dbeafe; color: #1e40af; } .exam-muc.m3 { background: #fde68a; color: #92400e; }
+.exam-q-prompt { margin: 4px 0 0; white-space: pre-line; }
+.exam-q-opts { margin: 2px 0 0; color: var(--ink); font-size: 14px; }
+.exam-q-ans { margin: 2px 0 0; color: #15803d; font-size: 13px; font-weight: 700; }
+@media (max-width: 900px) { .exam-form { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .exam-form { grid-template-columns: 1fr; } .exam-form .exam-title { grid-column: auto; } }
+.assign-items th .exam-muc { margin-left: 6px; }
+.exam-take-page { max-width: 860px; }
+.exam-taker { display: grid; gap: 14px; }
+.exam-bar { position: sticky; top: calc(var(--learn-top-h, 0px) + 6px); z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 14px; border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.exam-bar-title { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.exam-timer { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; font-weight: 800; font-size: 18px; }
+.exam-timer svg { width: 18px; height: 18px; }
+.exam-timer.is-low { color: var(--red); }
+.exam-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.exam-nav-btn { min-width: 38px; min-height: 38px; border-radius: 10px; border: 2px solid var(--line-strong); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.exam-nav-btn.is-answered { background: var(--blue-soft); border-color: var(--blue); }
+.exam-nav-btn.is-current { outline: 3px solid var(--brand-yellow); outline-offset: 1px; }
+.exam-actions { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.exam-submit-early { margin: 0; text-align: right; }
+.exam-start p, .exam-result p { margin: 0; }
+.exam-score { font-size: 20px; }
+.exam-score strong { font-size: 34px; color: var(--blue); }
+.exam-result-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.exam-result-list li { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-weight: 700; font-size: 14px; }
+.exam-result-list li svg { width: 16px; height: 16px; }
+.exam-result-list li.is-ok { background: var(--mint); color: var(--green); }
+.exam-result-list li.is-wrong { background: #fee2e2; color: #b91c1c; }
+.report-bar .adm-field { min-width: 200px; }
+
+/* ------------------------------------------------ Đề kiểm tra: chú thích mức + lọc YCCĐ */
+.exam-muc-legend { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: 14px; color: var(--muted); }
+.exam-outcomes { padding: 10px 14px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); }
+.exam-outcomes summary { cursor: pointer; font-weight: 800; }
+.exam-outcomes ul { display: grid; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; font-size: 15px; }
+.exam-outcomes label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.exam-outcomes input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--blue); flex: none; }
+
+.roster-table { font-variant-numeric: tabular-nums; }
+.diary-grid > .dash-card { margin: 0; }
+.kh-modal-box > .dash-section { margin: 0; }
+.adm-filters .adm-field { min-width: 160px; }
+.tsh-main > .dash.wrap:has(> .class-manager) { padding-top: 14px; }
+:root[data-theme="dark"] .exam-muc.m1 { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
+:root[data-theme="dark"] .exam-muc.m2 { background: color-mix(in srgb, #1e40af 24%, var(--surface)); color: color-mix(in srgb, #1e40af 40%, #fff); }
+:root[data-theme="dark"] .exam-result-list li.is-wrong { background: color-mix(in srgb, #b91c1c 24%, var(--surface)); color: color-mix(in srgb, #b91c1c 40%, #fff); }

@@ -7,6 +7,9 @@ import QrCode from '@/components/billing/QrCode';
 import { createClient } from '@/lib/supabase/client';
 import { BANKS, PLAN_NAME, billingError, fmtDay, vietQrPayload, vnd, type Plan } from '@/lib/billing';
 import { useAdminUser } from './AdminContext';
+import '@/styles/adm.css';
+import '@/styles/auth.css';
+import '@/styles/billing.css';
 
 type Settings = {
   enabled: boolean; enabled_at: string | null; price_month: number; price_year: number; trial_days: number;

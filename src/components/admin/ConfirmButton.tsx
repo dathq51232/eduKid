@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import '@/styles/adm.css';
 
 type Props = {
   onConfirm: () => void;

@@ -34,6 +34,10 @@ import { F3D_CATS, F3D_VI, f3dSrc } from '@/lib/deck/f3d-catalog';
 import { ALL_FLUENT_CDN_ITEMS, FLUENT_CDN_GROUPS, fluentCdnFallbackUrl, fluentCdnUrl } from '@/lib/deck/fluent-cdn';
 import { STEP_COLOR, THEME_SETS, applySet, isBlankDeck, makeSet, type SetContent, type SetId } from '@/lib/deck/theme-sets';
 import { fold } from '@/lib/classroom/teacher-nav';
+import '@/styles/cv.css';
+import '@/styles/dk.css';
+import '@/styles/btn.css';
+import '@/styles/pen.css';
 
 /** bảng bên trái (kiểu Canva): mở từ cột biểu tượng hoặc từ thanh công cụ ngữ cảnh */
 type Panel = 'tpl' | 'el' | 'text' | 'act' | 'bg' | 'sound' | 'up' | 'anim' | 'pos' | 'edit' | 'cmt';

@@ -1,0 +1,49 @@
+/* Kiểu riêng khu vực "feedback-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+.feedback-bar { position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; padding: 14px 0 max(14px, env(safe-area-inset-bottom)); border-top: 3px solid var(--line-strong); background: var(--bg-ffffff); }
+.feedback-bar.is-right { background: var(--mint); }
+.feedback-bar.is-wrong { background: var(--bg-ffe1de); }
+.feedback-inner { width: min(760px, calc(100% - 32px)); margin-inline: auto; display: flex; align-items: center; justify-content: space-between; gap: 14px 20px; flex-wrap: wrap; }
+.feedback-text { flex: 1 1 280px; display: flex; align-items: center; gap: 12px; }
+.feedback-text h2 { font-size: 22px; }
+.feedback-text p { font-size: 16px; line-height: 1.5; }
+.feedback-icon { display: grid; flex: none; width: 48px; height: 48px; place-items: center; border-radius: 50%; color: #ffffff; }
+.is-right .feedback-icon { background: var(--green-solid); }
+.is-wrong .feedback-icon { background: var(--red); }
+@media (max-width: 520px) {
+  .feedback-inner .button { width: 100%; }
+}
+
+/* Thanh phản hồi */
+.feedback-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.feedback-sub { display: block; margin-top: 2px; color: var(--muted); font-size: 15px; }
+@media (max-width: 520px) {
+  
+  
+  
+  .feedback-actions { width: 100%; }
+  .feedback-actions .button { flex: 1; }
+}
+/* Điện thoại (thanh trên cùng xuống 2 dòng): thanh trên cùng cuộn theo trang để nhường chỗ cho nội dung;
+   chỉ thanh làm bài / làm đề dính ở đầu màn hình. Chiều cao thật được đo bởi HeaderOffset (--learn-top-h). */
+@media (max-width: 760px) {
+  .feedback-bar { padding: 10px 0 max(10px, env(safe-area-inset-bottom)); }
+  .feedback-inner { gap: 8px 12px; }
+  .feedback-text h2 { font-size: 19px; }
+  .feedback-text p, .feedback-sub { font-size: 14px; }
+}
+
+/* thanh dưới: ô học sinh + lời nhắn + các nút */
+.qz .feedback-bar { padding: 10px 0 max(12px, env(safe-area-inset-bottom)); border: 0; background: linear-gradient(180deg, transparent, rgb(30 80 20 / .25)); }
+.qz .feedback-bar.is-right, .qz .feedback-bar.is-wrong { background: linear-gradient(180deg, transparent, rgb(30 80 20 / .25)); }
+.qz .feedback-inner { width: min(1240px, calc(100% - 24px)); align-items: stretch; }
+.qz .feedback-text { flex: 1 1 280px; display: flex; align-items: center; gap: 12px; min-width: 0; padding: 8px 18px; border: 3px solid #f6d58f; border-radius: 22px; background: var(--qz-cream); color: var(--qz-navy); box-shadow: 0 4px 0 #e6c071; }
+.qz .feedback-bar.is-right .feedback-text { border-color: #7bd88b; background: #effcf1; box-shadow: 0 4px 0 #3fb35a; }
+.qz .feedback-bar.is-wrong .feedback-text { border-color: #ffa79c; background: #fff3f1; box-shadow: 0 4px 0 #e5484d; }
+.qz .feedback-text p, .qz .feedback-text h2 { margin: 0; }
+.qz .feedback-actions { display: flex; align-items: center; gap: 6px; padding: 6px; border: 3px solid #f6d58f; border-radius: 999px; background: var(--qz-cream); box-shadow: 0 4px 0 #e6c071; }
+.qz .feedback-actions .button { min-height: 48px; border-radius: 999px; }
+/* màn hình nhỏ */
+@media (max-width: 900px) {
+  .qz .feedback-actions { flex: 1 1 100%; justify-content: flex-end; }
+}

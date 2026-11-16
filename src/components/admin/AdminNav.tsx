@@ -6,6 +6,7 @@ import { Bell, BookOpen, CreditCard, LayoutDashboard, LineChart, ListTree, Megap
 import { useAdminUser } from './AdminContext';
 import { FEATURES } from '@/lib/features';
 import type { NavCounts } from '@/lib/admin/insights';
+import '@/styles/adm.css';
 
 /** Menu quản trị (thanh bên trái; trên điện thoại nằm trong nút ☰). Số đỏ = việc chưa xử lý. */
 export default function AdminNav({ counts }: { counts?: NavCounts | null }) {

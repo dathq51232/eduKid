@@ -7,6 +7,9 @@ import { ChevronRight, Gift, Lock } from 'lucide-react';
 import Sticker from './Sticker';
 import { STICKERS, STICKER_EVT, openChest, readChest, readOwnedStickers, readRecentStickers, stickerName, type ChestOpen, type StickerId } from '@/lib/stickers';
 import { playSound } from '@/lib/sound';
+import '@/styles/btn.css';
+import '@/styles/kc.css';
+import '@/styles/ks.css';
 
 function ChestArt({ open }: { open: boolean }) {
   return (

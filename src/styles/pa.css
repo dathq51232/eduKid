@@ -1,0 +1,30 @@
+/* Kiểu riêng khu vực "pa-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.pin-dots span.is-on { background: var(--brand-blue); box-shadow: none; }
+.role-pick label.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.gaps-periods .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.plan-edit .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.fx-toggle.is-on { background: var(--bg-fff3d1); color: var(--fg-7a4d00); }
+.praise-spots .mini-btn.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.qz-round.fx-toggle.is-on { background: radial-gradient(circle at 35% 30%, #ffb3e0, #d6409f 70%); box-shadow: 0 4px 0 #a32b78, 0 8px 16px rgb(120 20 80 / .25); }
+.pen-colors button.is-on, .wb-colors button.is-on { box-shadow: 0 0 0 3px #a78bfa; }
+.pa-hint { margin: 0 0 10px; color: var(--muted); font-size: 12.5px; }
+.pa-warn { margin: 0 0 10px; font-size: 12.5px; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; border-radius: 8px; padding: 6px 8px; }
+.pa-grp { margin-bottom: 10px; }
+.pa-grp > b { display: block; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+.pa-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pa-chip { font: inherit; font-size: 13px; padding: 5px 11px; border-radius: 999px; border: 1px solid #cbd5e1; background: var(--surface); color: var(--ink); cursor: pointer; }
+.pa-chip:hover { border-color: #2457c5; }
+.pa-chip.is-hint { border-color: #f59e0b; }
+.pa-chip.is-on { background: #2457c5; border-color: #2457c5; color: #fff; }
+.pa-data { margin: 6px 0 0; font-size: 12px; background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; border-radius: 8px; padding: 5px 8px; }
+.pa-sug { border: 2px solid #a7f3d0; background: #f0fdf4; color: #1e293b; border-radius: 12px; padding: 10px 12px; margin-top: 6px; }
+.pa-sug h5 { margin: 0 0 2px; font-size: 14px; }
+.pa-where { margin: 0 0 6px; font-size: 12.5px; color: #475569; }
+.pa-cols { display: grid; grid-template-columns: 1.6fr 1fr; gap: 10px; font-size: 13.5px; }
+.pa-cols small { display: block; font-weight: 700; color: #64748b; font-size: 11.5px; }
+.pa-cols p { margin: 2px 0; }
+.pa-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pa-done { margin: 8px 0 0; font-size: 13px; color: #15803d; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+:root[data-theme="dark"] .pa-warn { background: color-mix(in srgb, #92400e 24%, var(--surface)); color: color-mix(in srgb, #92400e 40%, #fff); border-color: color-mix(in srgb, #fde68a 35%, var(--surface)); }
+:root[data-theme="dark"] .pa-data { background: color-mix(in srgb, #9a3412 24%, var(--surface)); color: color-mix(in srgb, #9a3412 40%, #fff); border-color: color-mix(in srgb, #fed7aa 35%, var(--surface)); }
+:root[data-theme="dark"] .pa-sug { background: color-mix(in srgb, #f0fdf4 14%, var(--surface)); color: var(--ink); border-color: color-mix(in srgb, #a7f3d0 35%, var(--surface)); }

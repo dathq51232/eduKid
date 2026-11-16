@@ -6,6 +6,10 @@ import NotConfigured from '@/components/classroom/NotConfigured';
 import FamilyGallery, { type FamilyClass } from '@/components/gallery/FamilyGallery';
 import { getViewer } from '@/lib/auth/viewer';
 import { createClient } from '@/lib/supabase/server';
+import '@/styles/ct.css';
+import '@/styles/gm.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
 
 export const metadata: Metadata = { title: 'Phòng triển lãm của lớp · EduChain Kids', robots: { index: false } };
 export const dynamic = 'force-dynamic';

@@ -7,6 +7,7 @@ import { getStaffContext } from '@/lib/auth/staff';
 import { createClient } from '@/lib/supabase/server';
 import { pathLabel } from '@/lib/analytics/path';
 import { ROLE_SERIES, SUBJECT_LABEL, delta, fillSeries, fmt, parsePeriod, roleValue, seriesLabel, type Insights } from '@/lib/admin/insights';
+import '@/styles/adm.css';
 
 export const metadata = { title: 'Truy cập — Quản trị EduChain Kids' };
 export const dynamic = 'force-dynamic';

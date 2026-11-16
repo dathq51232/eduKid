@@ -3,6 +3,7 @@
 import { Square } from 'lucide-react';
 import { REFLEX_TIER_META, type ReflexMetrics } from '@/lib/english/reflexEngine';
 import type { ReflexRound } from '@/components/english/useReflexRound';
+import '@/styles/en.css';
 
 /** Thanh âm lượng micro + ΔT trực tiếp. Độ dài thanh do hook ghi thẳng vào DOM. */
 export function VadMeter({ reflex, label, inline = false, showStop = false }: {

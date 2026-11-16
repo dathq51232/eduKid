@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Send } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import '@/styles/adm.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
 
 export function TeacherRequestForm({ schoolHint }: { schoolHint: string }) {
   const router = useRouter();

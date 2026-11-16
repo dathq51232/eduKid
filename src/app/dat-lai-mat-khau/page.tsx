@@ -5,6 +5,9 @@ import { ArrowLeft } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import ResetPasswordForm from '@/components/classroom/ResetPasswordForm';
 import { getViewer } from '@/lib/auth/viewer';
+import '@/styles/adm.css';
+import '@/styles/auth.css';
+import '@/styles/btn.css';
 
 export const metadata: Metadata = { title: 'Đặt mật khẩu mới · EduChain Kids' };
 export const dynamic = 'force-dynamic';

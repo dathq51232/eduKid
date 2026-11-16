@@ -5,6 +5,7 @@
 // Vịt và nhân vật dùng tài sản cục bộ; vị trí cập nhật trực tiếp qua ref nên không làm React vẽ lại mỗi khung hình.
 import { useEffect, useRef, useState } from 'react';
 import type { Student } from '@/lib/classroom/callon';
+import '@/styles/cd.css';
 
 type Sfx = { quack: () => void; step: (x?: number, heavy?: boolean) => void; whoosh: () => void; cheer: () => void; whistle: () => void };
 type P = { x: number; y: number; vx: number; vy: number; face: 1 | -1; miss: number };

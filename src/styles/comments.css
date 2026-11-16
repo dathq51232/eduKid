@@ -1,0 +1,37 @@
+/* Kiểu riêng khu vực "comments-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+.adm-field { display: grid; gap: 6px; font-size: 14px; font-weight: 600; }
+.adm-field.is-inline { grid-template-columns: auto; min-width: 160px; }
+.adm-field.is-wide { grid-column: 1 / -1; }
+.dash-section { display: grid; gap: 12px; }
+.roster-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+@media print {
+  body { background: #fff !important; }
+  .learn-top, .no-print, .back-link, .dash-head, .adm-alert, .login-cards-wrap .dash-card-head button { display: none !important; }
+  .login-cards-wrap { box-shadow: none; padding: 0; }
+  .login-card { border-color: #999; color: #000; }
+}
+
+/* ------------------------------------------------ Nhận xét học sinh (0013) */
+.comments-board h1 { display: flex; align-items: center; gap: 10px; }
+.comments-board h1 svg { width: 30px; height: 30px; }
+.comments-toolbar { display: grid; gap: 12px; }
+.comments-period select { min-width: 260px; }
+.comments-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.comments-actions .btn svg { width: 16px; height: 16px; }
+.comments-list { display: grid; gap: 14px; margin: 16px 0 0; padding: 0; list-style: none; }
+.comments-filters { display: flex; flex-wrap: wrap; gap: 10px; }
+.comments-table td { vertical-align: top; }
+.comments-table td textarea { width: 100%; min-width: 360px; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg-ffffff); color: var(--ink); font: inherit; font-size: 14px; resize: vertical; }
+.comments-table select { min-height: 32px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg-ffffff); color: var(--ink); font: inherit; font-size: 13px; }
+.assign-form .comments-actions, .assign-form .assign-pick { grid-column: 1 / -1; }
+.gap-body .comments-actions { margin-top: 6px; }
+.report-bar .adm-field { min-width: 200px; }
+@media print {
+  /* Bản in danh sách nhận xét cũng dùng Times New Roman */
+  .comments-board, .comments-board * { font-family: 'Times New Roman', Times, serif !important; }
+}
+
+.roster-table { font-variant-numeric: tabular-nums; }
+.kh-modal-box > .dash-section { margin: 0; }
+.adm-filters .adm-field { min-width: 160px; }

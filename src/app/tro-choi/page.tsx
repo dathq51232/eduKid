@@ -3,6 +3,7 @@ import LearnHeader from '@/components/LearnHeader';
 import GameCatalog from '@/components/games/GameCatalog';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import { FILTERS, GAMES, parseGrade, type GameFilter } from '@/lib/games/catalog';
+import '@/styles/games.css';
 
 export const metadata: Metadata = { title: 'Game trí tuệ · EduChain Kids' };
 

@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation';
 import LearnHeader from '@/components/LearnHeader';
 import DeckReview from '@/components/deck/DeckReview';
 import { getViewer } from '@/lib/auth/viewer';
+import '@/styles/dash.css';
+import '@/styles/rvw.css';
 
 export const metadata: Metadata = { title: 'Góp ý bài thao giảng · EduChain Kids', robots: { index: false } };
 export const dynamic = 'force-dynamic';

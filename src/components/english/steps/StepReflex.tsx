@@ -5,6 +5,7 @@ import { ArrowRight, Check, Zap } from 'lucide-react';
 import SentenceIllustration from '@/components/english/SentenceIllustration';
 import { EXAMPLE_ART } from '@/components/english/lesson';
 import type { StepProps } from '@/components/english/steps/types';
+import '@/styles/en.css';
 
 /** Bước 2 — Reflex Challenge: chọn mục đích đúng của hành động (có chế độ đếm ngược 3 giây). */
 export default function StepReflex({ lesson, state, dispatch, goStep }: StepProps) {

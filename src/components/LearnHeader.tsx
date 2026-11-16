@@ -4,6 +4,9 @@ import ThemeToggle from '@/components/brand/ThemeToggle';
 import AccountLink from '@/components/brand/AccountLink';
 import MainNavigation from '@/components/navigation/MainNavigation';
 import HeaderOffset from '@/components/navigation/HeaderOffset';
+import '@/styles/learn.css';
+import '@/styles/main.css';
+import '@/styles/parent.css';
 
 type Props = {
   studentName?: string;

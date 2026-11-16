@@ -14,6 +14,10 @@ import { reasonText, SIDE_NAME, captured, fmtClock } from '@/lib/chess/game';
 import { EMOTES, ERROR_TEXT, replay } from '@/lib/chess/online-rules';
 import { notifyTurn, sfx } from '@/lib/chess/sound-pref';
 import BoardStage from './BoardView';
+import '@/styles/chl.css';
+import '@/styles/chs.css';
+import '@/styles/ct.css';
+import '@/styles/btn.css';
 
 const other = (c: Color): Color => (c === 'w' ? 'b' : 'w');
 

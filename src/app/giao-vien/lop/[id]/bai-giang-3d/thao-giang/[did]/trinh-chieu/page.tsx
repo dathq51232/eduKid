@@ -5,6 +5,7 @@ import NotConfigured from '@/components/classroom/NotConfigured';
 import DeckPlayer from '@/components/deck/DeckPlayer';
 import { loadClassPage } from '@/lib/classroom/class-page';
 import { normalizeDeck } from '@/lib/deck/types';
+import '@/styles/dp.css';
 
 export const metadata: Metadata = { title: 'Trình chiếu · EduChain Kids', robots: { index: false } };
 export const dynamic = 'force-dynamic';

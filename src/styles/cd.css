@@ -1,0 +1,13 @@
+/* Kiểu riêng khu vực "cd-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.cd-svg { width: 100%; height: 100%; min-height: 0; display: block; font-family: var(--font-display, 'Quicksand'), sans-serif; }
+.cd-flip { transform: scaleX(var(--face, 1)); transform-origin: 0 0; }
+.cd-waddle { transform-origin: 0 0; }
+.cd-duck.is-move .cd-waddle { animation: cd-waddle .32s ease-in-out infinite alternate; }
+.cd-duck.is-caught .cd-waddle { animation: cd-flap .25s ease-in-out infinite alternate; }
+.cd-duck.is-got > g:last-of-type rect { fill: #fde047; stroke: #f59e0b; }
+.cd-duck.is-got .cd-waddle { animation: cd-flap .25s ease-in-out infinite alternate; }
+.cd-bubble { animation: cd-pop .18s ease-out both; }
+.cd-kid-art { transform-box: fill-box; transform-origin: center bottom; }
+.cd-kid.is-walk .cd-kid-art { animation: cd-kid-bob .3s ease-in-out infinite alternate; }
+.cd-kid.is-catch .cd-kid-art { animation: cd-kid-catch .4s ease-in-out 2 alternate; }
+@media (prefers-reduced-motion: reduce) { .cd-duck.is-move .cd-waddle, .cd-kid.is-walk .cd-kid-art, .cd-kid.is-catch .cd-kid-art { animation-duration: 1s; } }

@@ -1,0 +1,320 @@
+/* Kiểu riêng khu vực "home-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.wrap { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+
+@media (max-width: 900px) {
+  .wrap { width: min(100% - 40px, 680px); }
+  
+  
+  
+  .notebook { margin-right: 14px; }
+  
+  
+  
+  
+  .footer { flex-wrap: wrap; padding-block: 20px; }
+}
+@media (max-width: 520px) {
+  body { font-size: 17px; }
+  .wrap { width: calc(100% - 32px); }
+  .brand { font-size: 22px; }
+  .top-cta { padding: 10px 14px; font-size: 15px; }
+  
+  .notebook { padding-left: 62px; }
+  .notebook::before { left: 42px; }
+  .notebook p.line { font-size: 22px; }
+  .journey { padding-block: 64px; }
+  
+  
+  .answers { grid-template-columns: repeat(2, 1fr); }
+  
+  .footer { align-items: flex-start; flex-direction: column; }
+}
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 10px 24px; border: 0; border-radius: 999px; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: transform 160ms ease, box-shadow 160ms ease; }
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.home-hero { padding-top: 26px; }
+.home-hero-card { position: relative; display: grid; grid-template-columns: 1.05fr .95fr; align-items: center; gap: 24px; min-height: 440px; padding: 48px 48px 90px; overflow: hidden; border-radius: 32px; background: linear-gradient(160deg, var(--sky-1), var(--sky-2)); box-shadow: var(--shadow-md); }
+
+.home-hero-copy { position: relative; z-index: 2; }
+
+.home-hero h1 { margin-top: 8px; font-size: clamp(42px, 6vw, 72px); line-height: 1.05; color: var(--ink); }
+.home-lead { max-width: 460px; margin-top: 16px; color: var(--muted); font-size: 19px; line-height: 1.6; }
+.home-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+
+.home-section { margin-top: 64px; }
+.home-section-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 18px 32px; }
+.home-section h2 { font-size: clamp(30px, 4vw, 42px); }
+.home-section-head p { max-width: 520px; margin-top: 6px; color: var(--muted); font-size: 17px; }
+
+.home-how { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: clamp(28px, 6vw, 72px); }
+.home-steps { display: grid; gap: 18px; margin: 24px 0 0; padding: 0; list-style: none; }
+.home-steps li { display: grid; grid-template-columns: 48px 1fr; gap: 14px; }
+.home-step-no { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; background: var(--blue-soft); color: var(--brand-blue); font-size: 22px; font-weight: 700; }
+.home-steps li:nth-child(2) .home-step-no { background: color-mix(in srgb, var(--brand-yellow) 28%, var(--surface)); color: #a86b00; }
+.home-steps li:nth-child(3) .home-step-no { background: var(--mint); color: var(--green); }
+:root[data-theme="dark"] .home-steps li:nth-child(2) .home-step-no { color: var(--brand-yellow); }
+.home-steps h3 { font-size: 20px; }
+.home-steps p { margin-top: 2px; color: var(--muted); font-size: 16px; line-height: 1.6; }
+
+.home-sample { padding: 28px; border-radius: 26px; background: var(--surface); box-shadow: var(--shadow-md); }
+.home-sample h3 { margin-top: 14px; font-size: 22px; line-height: 1.4; }
+.home-answers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0 0; padding: 0; list-style: none; }
+.home-answers li { display: grid; place-items: center; height: 60px; border-radius: 18px; background: var(--surface-2); font-size: 26px; font-weight: 700; box-shadow: inset 0 0 0 1px var(--line-strong); }
+.home-answers li.is-right { background: var(--mint); color: var(--green); box-shadow: inset 0 0 0 2px var(--green); }
+.home-cheer { display: flex; align-items: center; gap: 14px; margin-top: 20px; padding: 12px 16px; border-radius: 20px; background: var(--surface-2); font-size: 16px; line-height: 1.5; }
+.home-safety { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 22px; padding: 26px 28px; border-radius: 26px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.home-safety h2 { font-size: 24px; }
+.home-safety p { max-width: 660px; margin-top: 6px; color: var(--muted); font-size: 15px; line-height: 1.65; }
+.home-proof { margin-top: 24px; padding: 18px; border: 1px solid var(--line); border-radius: 24px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.home-proof-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.home-proof-card { display: grid; justify-items: center; align-content: center; gap: 4px; min-height: 112px; padding: 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface-2); text-align: center; }
+.home-proof-card > svg { width: 20px; height: 20px; color: var(--brand-blue); }
+.home-proof-card > strong { color: var(--brand-blue); font-size: 27px; line-height: 1.1; }
+.home-proof-card > span:last-child { color: var(--muted); font-size: 12px; font-weight: 700; }
+.home-proof-card.is-rating > strong { color: var(--ink); font-size: 20px; }
+.home-proof-stars, .home-feedback-stars { color: #efa900; font-size: 15px; letter-spacing: .12em; }
+.home-parent-section { padding: 30px; border-radius: 28px; background: var(--surface-2); }
+.home-parent-kicker { color: var(--green); font-size: 12px; font-weight: 800; letter-spacing: .08em; }
+.home-parent-head { margin-bottom: 20px; }
+.home-parent-head h2 { margin-top: 8px; }
+.home-parent-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.home-parent-card { padding: 22px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+.home-parent-icon { display: grid; place-items: center; width: 46px; height: 46px; margin-bottom: 14px; border-radius: 15px; background: #e3f8ea; color: #15803d; }
+.home-parent-icon svg { width: 23px; height: 23px; }
+.home-parent-card.tone-blue .home-parent-icon { background: var(--blue-soft); color: var(--brand-blue); }
+.home-parent-card.tone-yellow .home-parent-icon { background: #fff2cc; color: #9a6700; }
+.home-parent-card h3 { font-size: 18px; }
+.home-parent-card p { margin-top: 6px; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.home-demo-label { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 99px; background: var(--blue-soft); color: var(--brand-blue); font-size: 12px; font-weight: 800; }
+.home-demo-label svg { width: 17px; height: 17px; }
+.home-feedback h2 { margin-top: 12px; font-size: clamp(26px, 3.2vw, 38px); line-height: 1.2; }
+.home-feedback-head > p { margin-top: 8px; color: var(--muted); font-size: 15px; line-height: 1.6; }
+.home-feedback { margin-top: 64px; }
+.home-feedback-head { max-width: 720px; margin: 0 auto 22px; text-align: center; }
+.home-feedback-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.home-feedback-card { display: grid; align-content: start; gap: 12px; min-height: 190px; padding: 22px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.home-feedback-card > svg { width: 23px; height: 23px; color: var(--brand-blue); }
+.home-feedback-card p { color: var(--ink); font-size: 16px; font-weight: 700; line-height: 1.5; }
+.home-feedback-card span { align-self: end; color: var(--muted); font-size: 13px; font-weight: 700; }
+.home-faq { max-width: 820px; }
+.home-faq-list { display: grid; gap: 12px; }
+.home-faq-card { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.home-faq-card > span { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; background: var(--blue-soft); color: var(--brand-blue); font-size: 13px; font-weight: 800; }
+.home-faq-card h3 { font-size: 17px; }
+.home-faq-card p { margin-top: 5px; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.home-final-cta { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 64px; padding: 30px 34px; border-radius: 26px; background: linear-gradient(110deg, #eaf2ff, #e8f8ee); box-shadow: var(--shadow-md); }
+.home-final-cta-kicker { color: var(--brand-blue); font-size: 12px; font-weight: 800; letter-spacing: .08em; }
+.home-final-cta h2 { margin-top: 7px; font-size: clamp(26px, 3vw, 36px); line-height: 1.2; }
+.home-final-cta p { margin-top: 6px; color: var(--muted); line-height: 1.5; }
+.home-final-cta-actions { display: flex; flex-wrap: wrap; flex: none; gap: 10px; }
+.home-final-cta-secondary { background: var(--surface); color: var(--brand-blue); border: 1px solid var(--line-strong); }
+:root[data-theme="dark"] .home-final-cta { background: linear-gradient(110deg, #15233f, #12302a); }
+:root[data-theme="dark"] .home-parent-icon { background: #12382a; color: #8ee0b5; }
+:root[data-theme="dark"] .home-parent-card.tone-blue .home-parent-icon { background: #1c3157; color: #a9c5ff; }
+:root[data-theme="dark"] .home-parent-card.tone-yellow .home-parent-icon { background: #3b2f12; color: #fde68a; }
+
+@media (max-width: 960px) {
+  .home-hero-card { grid-template-columns: 1fr; padding: 36px 24px 96px; }
+  
+  
+  .home-how { grid-template-columns: 1fr; }
+  .home-safety { grid-template-columns: auto 1fr; }
+  .home-safety .btn { grid-column: 1 / -1; justify-self: start; }
+  
+}
+@media (max-width: 600px) {
+  .home-hero-card { border-radius: 24px; }
+  .home-answers li { height: 52px; font-size: 22px; }
+  .home-proof-grid, .home-parent-grid, .home-feedback-grid { grid-template-columns: minmax(0, 1fr); }
+  .home-proof-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-parent-section { padding: 22px 16px; border-radius: 22px; }
+  .home-feedback-card { min-height: 0; }
+  .home-final-cta { align-items: stretch; flex-direction: column; padding: 24px 20px; }
+  .home-final-cta-actions { flex-direction: column; }
+  .home-final-cta-actions .btn { justify-content: center; }
+}
+
+.home-hero-card { position: relative; display: block; min-height: 0; height: clamp(420px, 42vw, 520px); padding: 0; overflow: hidden; border-radius: 28px; background: var(--gs-sky-2); box-shadow: var(--shadow-md); }
+
+.home-hero-copy { position: absolute; z-index: 3; left: clamp(24px, 4.5vw, 56px); top: clamp(36px, 7%, 64px); width: min(44%, 470px); }
+.home-hero h1 { margin: 0; color: var(--hero-title); font-size: clamp(40px, 5.4vw, 70px); font-weight: 700; line-height: 1.08; letter-spacing: -.01em; }
+.home-lead { max-width: 430px; margin-top: 16px; color: var(--hero-title); opacity: .85; font-size: clamp(16px, 1.6vw, 20px); font-weight: 600; line-height: 1.55; }
+.home-actions { margin-top: 26px; }
+@media (max-width: 960px) {
+  .home-hero-card { height: auto; min-height: 640px; }
+  .home-hero-copy { position: relative; left: auto; top: auto; width: auto; padding: 32px 24px 0; }
+}
+@media (max-width: 600px) {
+  .home-hero-card { min-height: 600px; }
+}
+
+/* ---------------- Hero dùng tranh nền chính thức (public/brand/hero-bg.webp) ---------------- */
+.home-hero-card { height: clamp(440px, 46vw, 580px); background: #cfe9fb; }
+.home-hero-card::after { /* làm dịu nền phía sau chữ */ content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(90deg, rgb(235 246 255 / .55) 0%, rgb(235 246 255 / .25) 34%, transparent 52%); }
+:root[data-theme="dark"] .home-hero-card::after { background: linear-gradient(90deg, rgb(10 18 40 / .78) 0%, rgb(10 18 40 / .45) 38%, rgb(10 18 40 / .1) 60%); }
+@media (max-width: 960px) {
+  .home-hero-card { height: auto; min-height: 620px; }
+  .home-hero-card::after { background: linear-gradient(180deg, rgb(235 246 255 / .7) 0%, rgb(235 246 255 / .35) 38%, transparent 55%); }
+  :root[data-theme="dark"] .home-hero-card::after { background: linear-gradient(180deg, rgb(10 18 40 / .82) 0%, rgb(10 18 40 / .5) 40%, rgb(10 18 40 / .1) 62%); }
+}
+@media (max-width: 960px) {
+  .home-hero-card { min-height: 660px; background: linear-gradient(180deg, #b9def8, #e2f2fd 60%); }
+  :root[data-theme="dark"] .home-hero-card { background: linear-gradient(180deg, #0f1d3f, #1a2b55 60%); }
+  .home-hero-card::after { display: none; }
+}
+
+/* Thanh trên giống nhau ở mọi trang (trang chủ dùng chung LearnHeader) */
+.home .home-hero { padding-top: 24px; }
+
+/* ---------------- Trang chủ: trang vở có lề đỏ ---------------- */
+.worksheet {
+  position: relative; padding: 26px 26px 26px 70px; border-radius: 20px;
+  background-color: var(--worksheet);
+  background-image:
+    linear-gradient(90deg, transparent 48px, var(--margin-red) 48px, var(--margin-red) 50px, transparent 50px),
+    linear-gradient(var(--oli-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--oli-major) 1px, transparent 1px);
+  background-size: 100% 100%, 22px 22px, 22px 22px;
+  box-shadow: var(--shadow-md);
+}
+.worksheet .home-answers li { background: var(--surface); }
+.worksheet .home-answers li.is-right { background: var(--mint); }
+.worksheet .home-cheer { background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.home-how h2 { font-size: clamp(28px, 3.2vw, 38px); }
+.home-steps { margin-top: 28px; gap: 22px; }
+
+/* ---------------- Trang chủ: phụ huynh (khối yên, không thẻ) ---------------- */
+.home-safety { grid-template-columns: auto 1fr auto; padding: 28px 0 0; border-radius: 0; background: transparent; box-shadow: none; border-top: 1px solid var(--line-strong); }
+.home-safety-icon { width: 40px; height: 40px; color: var(--green); }
+@media (max-width: 960px) {
+  .home-safety { grid-template-columns: auto 1fr; }
+}
+@media (max-width: 600px) {
+  .worksheet { padding: 22px 18px 22px 52px; background-image:
+    linear-gradient(90deg, transparent 34px, var(--margin-red) 34px, var(--margin-red) 36px, transparent 36px),
+    linear-gradient(var(--oli-major) 1px, transparent 1px), linear-gradient(90deg, var(--oli-major) 1px, transparent 1px); }
+}
+.sr-award-form .btn { justify-self: start; }
+
+/* Nút .btn bị tắt (vd chưa đủ điều kiện): nhìn rõ là đang tắt, cả nền sáng lẫn nền tối */
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; box-shadow: none; transform: none; filter: saturate(.4); }
+.home .btn { transition: transform 150ms ease, box-shadow 150ms ease; }
+.home .btn:hover { transform: translateY(-2px); }
+.home .btn:active { transform: translateY(2px); box-shadow: none; }
+.home-btn-ghost { min-height: 54px; padding: 12px 24px; border-radius: 999px; background: #fff; color: var(--ink); font-weight: 700; box-shadow: var(--lift); }
+.home-btn-ghost svg { width: 20px; height: 20px; }
+:root[data-theme="dark"] .home-btn-ghost { background: var(--surface); color: var(--ink); }
+.home .home-actions { align-items: center; }
+
+/* số liệu thật dưới nút bắt đầu */
+.home-facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 0; padding: 0; list-style: none; }
+.home-facts li { padding: 6px 14px; border-radius: 999px; background: rgb(255 255 255 / .9); color: var(--ink); font-size: 15px; font-weight: 600; }
+.home-facts strong { color: var(--brand-blue); font-weight: 700; }
+:root[data-theme="dark"] .home-facts li { background: rgb(15 25 52 / .85); }
+
+/* tiêu đề mục, đoạn dẫn: một cỡ cho cả trang */
+.home .home-section { margin-top: 88px; }
+.home .home-section h2 { font-size: clamp(28px, 3.4vw, 36px); letter-spacing: -.015em; }
+.home .home-section-head p { font-size: 17px; }
+.home .home-sample { box-shadow: var(--lift); }
+.home .home-answers li { box-shadow: var(--lift); font-weight: 700; }
+.home .home-answers li.is-right { box-shadow: inset 0 0 0 2px var(--green), 0 4px 0 color-mix(in srgb, var(--green) 45%, transparent); }
+.home .home-steps h3 { font-size: 22px; }
+.home .home-steps p { font-size: 17px; }
+
+/* dải trò chơi */
+.home-games { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; margin: 28px 0 0; padding: 0; list-style: none; }
+.home-game { display: flex; flex-direction: column; height: 100%; border-radius: 22px; overflow: hidden; background: var(--surface); color: var(--ink); text-decoration: none; box-shadow: var(--lift); transition: transform 150ms ease, box-shadow 150ms ease; }
+.home-game:hover { transform: translateY(-3px); box-shadow: var(--lift-hover); }
+.home-game:focus-visible { outline: 3px solid var(--brand-blue); outline-offset: 3px; }
+.home-game-art { display: block; }
+.home-game strong { padding: 12px 16px 16px; font-size: 17px; line-height: 1.3; }
+
+/* thầy cô: danh sách công cụ thay cho một đoạn chữ dài */
+.home .home-safety { align-items: start; }
+.home .home-safety p { font-size: 16px; }
+.home-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 24px; margin: 16px 0 0; padding: 0; list-style: none; }
+.home-tools li { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
+.home-tools svg { flex: none; width: 22px; height: 22px; color: var(--brand-blue); }
+.home .home-safety .btn { align-self: center; }
+
+@media (max-width: 900px) {
+  .home-games { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .home .home-section { margin-top: 64px; }
+  .home-actions .btn { flex: 1 1 100%; justify-content: center; }
+  .home-facts li { font-size: 14px; padding: 5px 12px; }
+  /* trò chơi: một hàng vuốt ngang, mỗi thẻ gần nửa màn hình */
+  .home-games { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; margin-inline: -16px; padding: 4px 16px 10px; scrollbar-width: none; }
+  .home-games::-webkit-scrollbar { display: none; }
+  .home-games li { flex: 0 0 46%; scroll-snap-align: start; }
+  .home-game strong { font-size: 16px; padding: 10px 12px 14px; }
+  .home-tools { grid-template-columns: 1fr; }
+  /* tranh Milo bắt đầu thấp hơn để bong bóng lời không đè lên hai nút */
+  .home .home-hero-card { min-height: 800px; }
+}
+
+/* nút */
+.btn { transition: transform 120ms ease, box-shadow 120ms ease, background-color 160ms ease; }
+.btn:active:not(:disabled) { transform: translateY(2px); }
+@media (prefers-reduced-motion: reduce) { .btn:hover, .btn:active:not(:disabled) { transform: none; } }
+/* công cụ trên lớp: nút gọn hơn để vừa một hàng */
+.ct .btn { min-height: 44px; padding: 8px 16px; font-size: 15px; }
+.home-connect { margin-top: 28px; }
+.home-connect-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: 28px; padding: 22px 32px; border-radius: 28px; background: linear-gradient(120deg, #eaf2ff, #e8f8ee); border: 1px solid var(--line); }
+.home-connect-img { width: 100%; max-width: 460px; height: auto; justify-self: center; }
+.home-connect-copy { display: grid; gap: 8px; }
+.home-connect-copy h2 { font-size: clamp(26px, 3vw, 36px); color: #1d47a8; line-height: 1.15; }
+.home-connect-sub { color: var(--green); font-weight: 700; font-size: 17px; }
+.home-connect-copy p:not(.home-connect-sub) { color: var(--muted); font-weight: 600; max-width: 520px; }
+:root[data-theme="dark"] .home-connect-card { background: linear-gradient(120deg, #15233f, #12302a); }
+:root[data-theme="dark"] .home-connect-copy h2 { color: #9cc2ff; }
+@media (max-width: 860px) {
+  .home-connect-card { grid-template-columns: minmax(0, 1fr); padding: 18px; text-align: center; }
+  .home-connect-copy p:not(.home-connect-sub) { margin: 0 auto; }
+}
+
+/* ---------- Trang chủ: dải chào khi đã đăng nhập, gọn trên điện thoại ---------- */
+.home-welcome { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-top: 14px; margin-bottom: -6px; padding: 12px 18px; border-radius: 18px; background: linear-gradient(120deg, #fff6d8, #ffeec2); color: #4a3305; box-shadow: inset 0 0 0 1.5px #f5d27a; }
+.home-welcome p { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0; }
+.home-welcome p span:last-child { color: #6b5420; font-size: 14.5px; }
+.home-welcome .btn svg { width: 16px; height: 16px; }
+:root[data-theme="dark"] .home-welcome { background: #3b2f12; color: #fde68a; box-shadow: inset 0 0 0 1.5px #7a5c14; }
+:root[data-theme="dark"] .home-welcome p span:last-child { color: #e9d38b; }
+@media (max-width: 700px) {
+  .home-connect-img { display: none; }
+  .home-sample { display: none; }
+  .home-welcome { margin-inline: 16px; }
+}
+/* Sao đánh giá: vàng đậm hơn để đọc được trên nền trắng / xanh nhạt */
+.home-proof-stars, .home-feedback-stars { color: #c47f00; }
+.tsh-main > .dash.wrap:has(> .class-manager) { padding-top: 14px; }
+
+.home-roles { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
+.home-roles > span { color: var(--ink); font-size: 15px; font-weight: 700; }
+.home-roles a { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border: 1.5px solid rgb(30 50 90 / .18); border-radius: 999px; background: rgb(255 255 255 / .92); color: var(--ink); font-size: 15px; font-weight: 700; text-decoration: none; }
+.home-roles a:hover { border-color: var(--brand-blue); color: var(--brand-blue); }
+.home-roles svg { width: 17px; height: 17px; flex: none; }
+:root[data-theme="dark"] .home-roles a { background: rgb(20 30 55 / .85); color: #eef3ff; border-color: rgb(255 255 255 / .2); }
+
+/* Tiêu đề mục: một kiểu duy nhất (canh trái, không nhãn chữ in hoa phía trên) */
+.home-safety { grid-template-columns: minmax(0, 1fr) auto; }
+.home-faq-list { display: grid; gap: 10px; max-width: none; margin-top: 22px; }
+.home-faq-card { display: block; padding: 0; }
+.home-faq-card summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; cursor: pointer; list-style: none; }
+.home-faq-card summary::-webkit-details-marker { display: none; }
+.home-faq-card summary::after { content: "+"; flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--blue-soft); color: var(--brand-blue); font-size: 20px; font-weight: 700; line-height: 1; }
+.home-faq-card[open] summary::after { content: "−"; }
+.home-faq-card summary:focus-visible { outline: 3px solid var(--brand-yellow); outline-offset: -3px; border-radius: 18px; }
+.home-faq-card h3 { margin: 0; font-size: 17px; }
+.home-faq-card p { margin: 0; padding: 0 20px 18px; font-size: 15px; line-height: 1.6; }
+.home-final-cta h2 { margin-top: 0; }
+.home-section.home-faq { max-width: none; }
+.home-faq-list { max-width: 900px; }
+/* Điện thoại: bong bóng Milo không đè nhãn, bìa vở vuốt ngang */
+@media (max-width: 700px) {
+  .home-roles > span { flex-basis: 100%; }
+  .home-roles a { flex: 1 1 0; justify-content: center; gap: 4px; padding-inline: 6px; font-size: 14px; white-space: nowrap; }
+  .home-roles svg { width: 15px; height: 15px; }
+}

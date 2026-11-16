@@ -5,6 +5,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { LessonPlan } from '@/lib/plans/generate';
 import { ASSIST_GROUPS, applySuggestion, removeSuggestion, integrationKinds, suggest, type AssistKind, type Suggestion } from '@/lib/plans/assistant';
+import '@/styles/btn.css';
+import '@/styles/mini.css';
+import '@/styles/pa.css';
 
 export default function PlanAssistant({ plan, edit, weak, active, onGo }: {
   plan: LessonPlan; edit: (fn: (p: LessonPlan) => LessonPlan) => void;

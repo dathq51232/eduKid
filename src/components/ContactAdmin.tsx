@@ -1,5 +1,6 @@
 import { Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import { ADMIN_CONTACT } from '@/lib/contact';
+import '@/styles/dash.css';
 
 /** Khung liên hệ quản trị (thêm học sinh vượt gói miễn phí, hỗ trợ…) */
 export default function ContactAdmin({ title = 'Liên hệ quản trị để thêm học sinh', note, compact = false }: { title?: string; note?: string; compact?: boolean }) {

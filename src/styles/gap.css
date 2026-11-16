@@ -1,0 +1,18 @@
+/* Kiểu riêng khu vực "gap-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.gap-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.gap-card { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 16px; padding: 16px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); border-left: 6px solid var(--line-strong); }
+.gap-card.is-low { border-left-color: var(--red); } .gap-card.is-mid { border-left-color: #f59e0b; }
+.gap-rate { display: grid; place-content: center; text-align: center; border-radius: 14px; background: var(--surface-2); }
+.gap-rate strong { font-size: 26px; line-height: 1.1; }
+.gap-card.is-low .gap-rate strong { color: var(--red); } .gap-card.is-mid .gap-rate strong { color: #b45309; }
+.gap-rate span { font-size: 13px; color: var(--muted); }
+.gap-body { display: grid; gap: 4px; min-width: 0; }
+.gap-body h3 { margin: 0; font-size: 17px; }
+.gap-body p { margin: 0; overflow-wrap: anywhere; }
+.gap-lesson { font-weight: 600; }
+.gap-weak { display: flex; gap: 6px; align-items: flex-start; font-size: 14px; }
+.gap-weak svg { flex: none; width: 16px; height: 16px; margin-top: 2px; color: var(--red); }
+.gap-pill { padding: 2px 8px; border-radius: 999px; font-weight: 700; font-size: 13px; background: var(--surface-2); }
+.gap-pill.is-low { background: #fee2e2; color: #b91c1c; } .gap-pill.is-mid { background: #fef3c7; color: #92400e; } .gap-pill.is-good { background: var(--mint); color: var(--green); }
+@media (max-width: 560px) { .gap-card { grid-template-columns: 1fr; } .gap-rate { justify-content: start; grid-auto-flow: column; gap: 6px; padding: 6px 10px; } }
+:root[data-theme="dark"] .gap-pill.is-low { background: color-mix(in srgb, #b91c1c 24%, var(--surface)); color: color-mix(in srgb, #b91c1c 40%, #fff); }

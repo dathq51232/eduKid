@@ -1,4 +1,5 @@
 import type { SubjectCode } from '@/lib/types';
+import '@/styles/lesson.css';
 
 // Nền trang làm bài theo môn: họa tiết mờ ở hai bên mép + viền nét đứt mờ quanh màn hình.
 // Nằm SAU nội dung (z-index âm, không nhận chạm), nên không bao giờ che câu hỏi.

@@ -10,6 +10,7 @@ import { getViewer } from '@/lib/auth/viewer';
 import { compareViName } from '@/lib/classroom/names';
 import { createClient } from '@/lib/supabase/server';
 import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
+import '@/styles/dash.css';
 
 export const metadata: Metadata = { title: 'Thư khen · EduChain Kids' };
 export const dynamic = 'force-dynamic';

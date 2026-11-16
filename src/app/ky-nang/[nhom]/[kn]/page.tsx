@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Lightbulb, Users } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import SkillPractice from '@/components/skills/SkillPractice';
 import { SKILL_GROUPS, groupById, skillById } from '@/lib/skills/hub';
+import '@/styles/kn.css';
 
 type Params = { params: Promise<{ nhom: string; kn: string }> };
 

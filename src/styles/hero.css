@@ -1,0 +1,63 @@
+/* Kiểu riêng khu vực "hero-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+.brand { display: inline-flex; align-items: center; gap: 12px; font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 26px; font-weight: 800; }
+@media (max-width: 520px) {
+  body { font-size: 17px; }
+  .wrap { width: calc(100% - 32px); }
+  .brand { font-size: 22px; }
+  .top-cta { padding: 10px 14px; font-size: 15px; }
+  
+  .notebook { padding-left: 62px; }
+  .notebook::before { left: 42px; }
+  .notebook p.line { font-size: 22px; }
+  .journey { padding-block: 64px; }
+  
+  
+  .answers { grid-template-columns: repeat(2, 1fr); }
+  
+  .footer { align-items: flex-start; flex-direction: column; }
+}
+
+ /* đủ đậm: 5,1:1 trên nền trắng (vàng cũ #eba000 chỉ 2,2:1) */
+
+.brand { color: var(--ink); }
+
+.hero-bubble { position: absolute; top: 4px; right: 4%; z-index: 2; padding: 12px 18px; border-radius: 22px; background: var(--surface); color: var(--ink); font-weight: 700; line-height: 1.3; text-align: center; box-shadow: var(--shadow-md); }
+.hero-bubble::after { content: ''; position: absolute; left: 18px; bottom: -10px; border: 10px solid transparent; border-top-color: var(--surface); border-bottom: 0; }
+
+.home-hero .hero-bubble { top: 21%; right: 3.5%; left: auto; z-index: 3; padding: 16px 22px; border-radius: 26px; background: #fff; color: #1b2a57; font-size: clamp(16px, 1.8vw, 22px); font-weight: 700; line-height: 1.25; box-shadow: 0 8px 22px rgb(30 50 90 / .16); }
+.home-hero .hero-bubble::after { left: 14px; bottom: -11px; border-top-color: #fff; transform: skewX(20deg); }
+:root[data-theme="dark"] .home-hero .hero-bubble { background: #22305a; color: #f1f5ff; }
+:root[data-theme="dark"] .home-hero .hero-bubble::after { border-top-color: #22305a; }
+@media (max-width: 960px) {
+  
+  
+  
+  .home-hero .hero-bubble { top: auto; bottom: 46%; right: 4%; }
+}
+@media (max-width: 600px) {
+  .home-hero .hero-bubble { font-size: 15px; padding: 10px 14px; bottom: 44%; }
+}
+.hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% 72%; }
+.home-hero .hero-bubble { top: 25%; right: 4%; }
+:root[data-theme="dark"] .hero-photo { filter: brightness(.62) saturate(.9) hue-rotate(-8deg); }
+@media (max-width: 960px) {
+  .hero-photo { object-position: 74% 100%; }
+}
+@media (max-width: 960px) {
+  .home-hero .hero-bubble { top: auto; bottom: 40%; right: 5%; }
+}
+@media (max-width: 960px) {
+  .hero-photo { top: auto; bottom: 0; height: min(430px, 66%); object-position: 71% 72%; -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 18%); mask-image: linear-gradient(180deg, transparent 0, #000 18%); }
+}
+@media (max-width: 960px) {
+  .home-hero .hero-bubble { bottom: auto; top: calc(100% - min(430px, 66%) + 6px); right: 4%; padding: 10px 14px; font-size: 15px; }
+}
+.learn-top .brand, .ph-top .brand, .tsh-brand > a, .tsh-mtop > a { flex: none; }
+/* Điện thoại: bong bóng Milo không đè nhãn, bìa vở vuốt ngang */
+@media (max-width: 700px) {
+  .home-hero .hero-bubble { top: auto; bottom: 22%; right: 4%; }
+  .notebooks { display: flex; gap: 14px; margin-inline: -16px; padding: 4px 16px 14px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .notebooks::-webkit-scrollbar { display: none; }
+  .notebooks > li { flex: 0 0 min(78%, 300px); scroll-snap-align: start; }
+}

@@ -11,6 +11,8 @@ import { useTeacherEnglish } from '@/lib/teacher-english/progress';
 import { buildDeck, todayQueue, useReview } from '@/lib/teacher-english/review';
 import { f3dSrc, phraseImage } from '@/lib/teacher-english/phrase-images';
 import { speakSegments, stopSpeaking } from '@/lib/speech';
+import '@/styles/te.css';
+import '@/styles/uw.css';
 
 export default function TeacherEnglishCard({ href, grade, day }: { href: string; grade?: number; day: string }) {
   const { progress, saved, sync } = useTeacherEnglish();

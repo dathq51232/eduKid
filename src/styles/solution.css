@@ -1,0 +1,62 @@
+/* Kiểu riêng khu vực "solution-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Nút bấm to, có cạnh dưới dày như nút thật */
+.button, .top-cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 12px 24px; border: 0; border-radius: 14px; border-bottom: 4px solid rgb(var(--ink-rgb) / .3); font: inherit; font-size: 17px; font-weight: 600; cursor: pointer; }
+.button:active, .top-cta:active { transform: translateY(2px); border-bottom-width: 2px; }
+.button-white { color: var(--ink); background: var(--bg-ffffff); border: 2px solid var(--line-strong); border-bottom-width: 4px; }
+.button-white:active { border-bottom-width: 2px; }
+.button:disabled { color: var(--muted); background: var(--bg-e6ebf3); border-bottom-color: var(--bg-c5cfdd); cursor: not-allowed; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  
+  .button:active, .top-cta:active { transform: none; }
+  .progress-fill { transition: none; }
+}
+
+/* Lời giải chi tiết */
+.solution-card { padding: 18px 20px; border: 2px dashed var(--green); border-radius: 18px; background: var(--bg-f2fbf6); }
+
+.solution-text { margin-top: 10px; font-size: 19px; line-height: 1.7; white-space: pre-line; }
+
+/* Nút dùng chung */
+.button, .top-cta { border-radius: 999px; border-bottom: 0; box-shadow: var(--shadow-sm); font-weight: 700; }
+.button:active, .top-cta:active { transform: translateY(1px); }
+.button-white { color: var(--brand-blue); background: var(--surface); border: 2px solid var(--brand-blue); }
+.button:disabled { box-shadow: none; }
+.cb-card:not(.is-done) .cb-go.button-white { color: var(--cover, var(--blue)); border-color: color-mix(in srgb, var(--cover, var(--blue)) 45%, transparent); }
+.qz .solution-card { border: 3px solid #f6d58f; border-radius: 20px; background: var(--qz-cream); box-shadow: 0 8px 18px rgb(60 40 0 / .15); }
+.qz .feedback-actions .button-white { border-color: transparent; background: transparent; box-shadow: none; color: var(--qz-navy); }
+
+.solution-card.is-open {
+  border-color: #f59e0b;
+  background: var(--bg-fffdf5);
+}
+.solution-milo-box {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.solution-milo-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1 1 320px;
+}
+.solution-milo-main h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 18px;
+  color: var(--fg-b5480f);
+  margin-bottom: 4px;
+}
+.solution-speak-btn { flex: none; }
+/* Lời giải mở từng bước (SolutionSteps) */
+.solution-steps { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.solution-step { display: flex; align-items: flex-start; gap: 10px; font-size: 19px; line-height: 1.6; animation: solution-step-in .28s ease-out both; }
+.solution-step-no { flex: none; display: inline-grid; place-items: center; width: 28px; height: 28px; margin-top: 2px; border-radius: 50%; background: #f59e0b; color: #fff; font-size: 15px; font-weight: 800; }
+.solution-steps-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+.solution-steps-hint { flex: 1 1 100%; margin: 0; font-size: 15px; color: var(--muted, #6b7280); }
+@media (prefers-reduced-motion: reduce) { .solution-step { animation: none; } }

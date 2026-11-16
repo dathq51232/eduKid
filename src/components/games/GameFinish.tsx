@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import MiloMascot, { type MiloVariant } from '@/components/mascot/MiloMascot';
 import { LEVEL_INFO, type GameId, type GameLevel } from '@/lib/games/catalog';
 import { syncGameResult } from '@/lib/progress-sync';
+import '@/styles/game.css';
 
 type Props = {
   title: string;

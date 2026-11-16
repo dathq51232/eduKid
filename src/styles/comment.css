@@ -1,0 +1,33 @@
+/* Kiểu riêng khu vực "comment-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.points-card, .comment-card { padding: 22px; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--bg-ffffff); }
+.comment-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.comment-head h2 { font-size: 24px; }
+.comment-card ul { display: grid; gap: 6px; margin: 0; padding-left: 22px; line-height: 1.5; }
+
+/* Khối nội dung: viền mảnh 1px thay cho viền 2px, cùng một kiểu bóng nhẹ */
+.games-hero, .lesson, .lesson-row, .question-card, .intro-card, .score-box, .review-item, .empty-state,
+.points-card, .comment-card, .dialog-card, .back-link, .icon-button, .quiz-count,
+.game-filter, .game-grade select, .notebook { border-width: 1px; }
+.comment-card { padding: 14px 16px; border: 2px solid var(--line-strong); border-radius: 16px; background: var(--bg-ffffff); break-inside: avoid; }
+.comment-card h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 18px; }
+.comment-no { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); font-size: 14px; }
+.comment-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.comment-cell { display: grid; gap: 6px; align-content: start; }
+.comment-cell.is-general { grid-column: 1 / -1; }
+.comment-cell-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.comment-cell-head label { font-weight: 800; }
+.comment-cell-head select { min-height: 32px; padding: 2px 6px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg-ffffff); color: var(--ink); font: inherit; font-size: 13px; }
+.comment-tag { margin-left: auto; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 700; }
+.comment-tag.is-saved { color: #15803d; }
+.comment-tag.is-dirty { color: #b45309; }
+.comment-stat { margin: 0; color: var(--muted); font-size: 13px; }
+.comment-cell textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--bg-ffffff); color: var(--ink); font: inherit; font-size: 14px; line-height: 1.45; resize: vertical; }
+@media (max-width: 900px) { .comment-grid { grid-template-columns: 1fr; } }
+@media print {
+  .comment-cell textarea { border: 0; padding: 0; resize: none; }
+  .comment-cell-head select { border: 0; appearance: none; }
+  .comment-tag, .comment-stat { display: none; }
+}
+.sr-input.is-dirty { border-color: #b45309; box-shadow: 0 0 0 1px #b45309; }
+.sr-wide td.is-dirty { box-shadow: inset 0 -3px 0 #b45309; }
+.comments-table .comment-stat { display: block; font-weight: 500; }

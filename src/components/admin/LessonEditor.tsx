@@ -15,6 +15,7 @@ import CsvImport from './CsvImport';
 import QuestionForm from './QuestionForm';
 import QuestionPreview from './QuestionPreview';
 import StatusBadge from './StatusBadge';
+import '@/styles/adm.css';
 
 const LESSON_SELECT = 'id,title,status,book_series,semester,sort_order,created_by,updated_at,published_at,topic_id,subjects(id,code,name,grade)';
 const QUESTION_SELECT = 'id,question_type,prompt,options,skill_code,difficulty,time_limit_sec,sort_order,status,form_id,outcome_id,question_keys(answer_key,explanation,solution)';

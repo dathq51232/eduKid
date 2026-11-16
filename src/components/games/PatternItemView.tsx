@@ -1,5 +1,6 @@
 import ShapeIcon, { ArrowIcon } from './ShapeIcon';
 import { itemName, type PatternItem } from '@/lib/games/patterns';
+import '@/styles/pattern.css';
 
 /** Vẽ một ô trong dãy quy luật: một hình, một nhóm nhiều hình (đếm), hoặc mũi tên */
 export default function PatternItemView({ item, size = 44, labelled = false }: { item: PatternItem; size?: number; labelled?: boolean }) {

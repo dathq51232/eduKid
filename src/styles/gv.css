@@ -1,0 +1,73 @@
+/* Kiểu riêng khu vực "gv-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Nút bấm to, có cạnh dưới dày như nút thật */
+.button, .top-cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 12px 24px; border: 0; border-radius: 14px; border-bottom: 4px solid rgb(var(--ink-rgb) / .3); font: inherit; font-size: 17px; font-weight: 600; cursor: pointer; }
+.button:active, .top-cta:active { transform: translateY(2px); border-bottom-width: 2px; }
+.button:disabled { color: var(--muted); background: var(--bg-e6ebf3); border-bottom-color: var(--bg-c5cfdd); cursor: not-allowed; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  
+  .button:active, .top-cta:active { transform: none; }
+  .progress-fill { transition: none; }
+}
+
+/* Nút dùng chung */
+.button, .top-cta { border-radius: 999px; border-bottom: 0; box-shadow: var(--shadow-sm); font-weight: 700; }
+.button:active, .top-cta:active { transform: translateY(1px); }
+.button:disabled { box-shadow: none; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 10px 24px; border: 0; border-radius: 999px; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: transform 160ms ease, box-shadow 160ms ease; }
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.btn-sm { min-height: 44px; padding: 8px 20px; font-size: 16px; }
+.btn-primary { color: #fff; background: var(--blue); box-shadow: var(--shadow-sm); }
+.sr-award-form .btn { justify-self: start; }
+.praise-dl .btn-primary { grid-column: 1 / -1; }
+.cb-list > .lesson-row.cb-card.is-next { border-color: #f5b82e; background: linear-gradient(180deg, color-mix(in srgb, #ffc83d 22%, var(--surface)), var(--surface) 70%); box-shadow: 0 5px 0 #e9ad15, 0 0 0 5px rgb(255 200 61 / .3); }
+
+/* Nút .btn bị tắt (vd chưa đủ điều kiện): nhìn rõ là đang tắt, cả nền sáng lẫn nền tối */
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; box-shadow: none; transform: none; filter: saturate(.4); }
+.home .btn { transition: transform 150ms ease, box-shadow 150ms ease; }
+.home .btn:hover { transform: translateY(-2px); }
+.home .btn:active { transform: translateY(2px); box-shadow: none; }
+
+/* nút */
+.btn { transition: transform 120ms ease, box-shadow 120ms ease, background-color 160ms ease; }
+.btn-primary { box-shadow: 0 4px 0 var(--blue-deep); }
+.btn-primary:hover { box-shadow: 0 6px 0 var(--blue-deep); }
+.btn:active:not(:disabled) { transform: translateY(2px); }
+.btn-primary:active:not(:disabled) { box-shadow: 0 2px 0 var(--blue-deep); }
+@media (prefers-reduced-motion: reduce) { .btn:hover, .btn:active:not(:disabled) { transform: none; } }
+/* công cụ trên lớp: nút gọn hơn để vừa một hàng */
+.ct .btn { min-height: 44px; padding: 8px 16px; font-size: 15px; }
+.ct .btn-sm { min-height: 38px; padding: 6px 14px; font-size: 14px; }
+.gv-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.gv-seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 999px; overflow: hidden; }
+.gv-seg button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 0; background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.gv-seg button svg { width: 18px; height: 18px; }
+.gv-seg button.is-on { background: var(--ink); color: var(--surface); }
+.gv-seg button:disabled { opacity: .45; }
+.gv-mine svg { fill: #facc15; color: #b45309; }
+.gv-icon { margin-left: auto; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+
+.gv-viewer { position: fixed; inset: 0; z-index: 220; background: rgb(15 23 42 / .82); display: grid; place-items: center; padding: 16px; }
+.gv-card { position: relative; width: min(1180px, 100%); max-height: calc(100vh - 32px); display: grid; grid-template-columns: minmax(0, 1fr) 320px; background: var(--surface); color: var(--ink); border-radius: 18px; overflow: hidden; box-shadow: 0 20px 60px rgb(0 0 0 / .4); }
+.gv-x { position: absolute; right: 10px; top: 10px; z-index: 2; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgb(255 255 255 / .92); color: #111; display: grid; place-items: center; cursor: pointer; }
+.gv-img { position: relative; background: #111827; display: grid; place-items: center; min-height: 300px; }
+.gv-img img { max-width: 100%; max-height: calc(100vh - 32px); object-fit: contain; display: block; }
+.gv-noimg { color: #fff; padding: 40px; }
+.gv-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 46px; height: 46px; border-radius: 50%; border: 0; background: rgb(255 255 255 / .85); color: #111; display: grid; place-items: center; cursor: pointer; }
+.gv-nav.is-prev { left: 10px; } .gv-nav.is-next { right: 10px; }
+.gv-info { padding: 22px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.gv-info h2 { margin: 4px 0 0; font-size: 24px; }
+.gv-title { margin: 0; font-weight: 700; font-size: 17px; }
+.gv-note { margin: 4px 0; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-style: italic; }
+.gv-date, .gv-count { margin: 0; color: var(--muted); font-size: 14px; }
+.gv-kind { align-self: flex-start; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; color: #fff; }
+.gv-kind.k-praise { background: #d97706; } .gv-kind.k-art { background: #db2777; } .gv-kind.k-writing { background: #2563eb; }
+.gv-pending { align-self: flex-start; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: #fef3c7; color: #92400e; }
+.gv-audio { display: flex; align-items: center; gap: 6px; } .gv-audio audio { width: 100%; height: 36px; }
+.gv-hearts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+.gv-hearts button { padding: 9px 8px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.gv-hearts button.is-on { background: #fce7f3; border-color: #db2777; color: #9d174d; }
+@media (max-width: 820px) { .gv-card { grid-template-columns: 1fr; overflow-y: auto; } .gv-img img { max-height: 60vh; } }
+.ap-sel-info .gv-kind { justify-self: start; }
+:root[data-theme="dark"] .gv-hearts button.is-on { background: color-mix(in srgb, #9d174d 24%, var(--surface)); color: color-mix(in srgb, #9d174d 40%, #fff); }

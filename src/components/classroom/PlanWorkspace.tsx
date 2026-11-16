@@ -8,6 +8,11 @@ import { GripVertical, Minus, Plus, X } from 'lucide-react';
 import type { ActivityKey, LessonPlan, PlanActivity } from '@/lib/plans/generate';
 import { plansDocument } from '@/lib/plans/word';
 import PlanAssistant from './PlanAssistant';
+import '@/styles/adm.css';
+import '@/styles/planner.css';
+import '@/styles/pw.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
 
 type Sec = 'info' | 'goals' | 'mat' | 'act-0' | 'act-1' | 'act-2' | 'act-3' | 'act-4' | 'act-5' | 'assess' | 'adjust';
 const ACT_COLOR: Record<string, string> = { 'khoi-dong': '#f59e0b', 'kham-pha': '#0ea5e9', 'luyen-tap': '#22c55e', 'van-dung': '#ec4899' };

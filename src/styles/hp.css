@@ -1,0 +1,95 @@
+/* Kiểu riêng khu vực "hp-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.stars { display: inline-flex; gap: 2px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 10px 24px; border: 0; border-radius: 999px; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: transform 160ms ease, box-shadow 160ms ease; }
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.btn-sm { min-height: 44px; padding: 8px 20px; font-size: 16px; }
+.btn-primary { color: #fff; background: var(--blue); box-shadow: var(--shadow-sm); }
+.btn-outline { color: var(--brand-blue); background: var(--surface); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.btn-outline:hover { box-shadow: inset 0 0 0 2px var(--brand-blue), var(--shadow-md); }
+.pin-dots span.is-on { background: var(--brand-blue); box-shadow: none; }
+.role-pick label.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.dash-muted { color: var(--muted); font-size: 15px; }
+.sr-award-form .btn { justify-self: start; }
+.assign-paper-form .dash-muted { flex-basis: 100%; margin: 0; font-size: 13px; }
+.gaps-periods .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.plan-edit .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.fx-toggle.is-on { background: var(--bg-fff3d1); color: var(--fg-7a4d00); }
+.praise-dl .btn-primary { grid-column: 1 / -1; }
+
+/* Nút .btn bị tắt (vd chưa đủ điều kiện): nhìn rõ là đang tắt, cả nền sáng lẫn nền tối */
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; box-shadow: none; transform: none; filter: saturate(.4); }
+.home .btn { transition: transform 150ms ease, box-shadow 150ms ease; }
+.home .btn:hover { transform: translateY(-2px); }
+.home .btn:active { transform: translateY(2px); box-shadow: none; }
+
+/* nút */
+.btn { transition: transform 120ms ease, box-shadow 120ms ease, background-color 160ms ease; }
+.btn-primary { box-shadow: 0 4px 0 var(--blue-deep); }
+.btn-primary:hover { box-shadow: 0 6px 0 var(--blue-deep); }
+.btn-outline { box-shadow: inset 0 0 0 2px var(--brand-blue), 0 4px 0 rgb(36 87 197 / .28); }
+.btn-outline:hover { box-shadow: inset 0 0 0 2px var(--brand-blue), 0 6px 0 rgb(36 87 197 / .28); }
+.btn:active:not(:disabled) { transform: translateY(2px); }
+.btn-primary:active:not(:disabled) { box-shadow: 0 2px 0 var(--blue-deep); }
+.btn-outline:active:not(:disabled) { box-shadow: inset 0 0 0 2px var(--brand-blue), 0 2px 0 rgb(36 87 197 / .28); }
+@media (prefers-reduced-motion: reduce) { .btn:hover, .btn:active:not(:disabled) { transform: none; } }
+/* công cụ trên lớp: nút gọn hơn để vừa một hàng */
+.ct .btn { min-height: 44px; padding: 8px 16px; font-size: 15px; }
+.ct .btn-sm { min-height: 38px; padding: 6px 14px; font-size: 14px; }
+
+/* ================= Luyện chữ (handwriting) ================= */
+.hp-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.hp-head h1 { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: clamp(22px, 3vw, 30px); }
+.hp-head p { margin: 0; }
+.hp-grade { font-weight: 800; } .hp-grade select { margin-left: 6px; font: inherit; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); }
+.hp-sets { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0 8px; }
+.hp-sets button { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.hp-sets button.is-on { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+.hp-items { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; max-height: 160px; overflow-y: auto; }
+.hp-chip { min-width: 46px; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; display: grid; justify-items: center; line-height: 1.1; }
+.hp-chip-t { font-family: PraiseScript, cursive; font-size: 24px; font-weight: 600; }
+.hp-chip.is-long .hp-chip-t { font-size: 17px; }
+.hp-chip-s { font-size: 10px; color: #f59e0b; letter-spacing: -1px; }
+.hp-chip.is-on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 0 0 2px #c4b5fd; color: #1f2937; }
+.hp-main { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
+.hp-paper { position: relative; width: 100%; max-width: 760px; justify-self: center; border-radius: 8px; overflow: hidden; box-shadow: var(--shadow-md); background: #fffefa; border: 1px solid #d5d9e2; }
+.hp-paper canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hp-ink { touch-action: none; cursor: crosshair; }
+.hp-side { display: grid; gap: 10px; }
+.hp-grid-options { display: grid; gap: 8px; padding: 11px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.hp-grid-options > strong { font-size: 14px; }
+.hp-grid-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.hp-grid-pick button { display: grid; gap: 2px; padding: 8px 6px; border: 1px solid var(--line-strong); border-radius: 9px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.hp-grid-pick button small { color: var(--muted); font-size: 11px; }
+.hp-grid-pick button.is-on { border-color: #7c3aed; background: #f5f3ff; color: #5b21b6; }
+.hp-cell-size { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 8px; font-size: 12px; font-weight: 700; }
+.hp-cell-size b { color: var(--muted); }
+.hp-cell-size input { grid-column: 1 / -1; width: 100%; accent-color: #7c3aed; }
+
+.hp-seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden; }
+.hp-seg button { padding: 9px; border: 0; background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.hp-seg button.is-on { background: #7c3aed; color: #fff; }
+
+.hp-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.hp-check { width: 100%; justify-content: center; font-size: 18px; }
+.hp-result { border-radius: 14px; padding: 12px; background: var(--surface); border: 2px solid var(--line); display: grid; gap: 6px; }
+.hp-result.s-3 { border-color: #22c55e; } .hp-result.s-2 { border-color: #f59e0b; } .hp-result.s-1, .hp-result.s-0 { border-color: #fb923c; }
+.hp-result ul { margin: 0; padding-left: 18px; font-size: 14px; }
+.hp-result b { font-size: 22px; }
+.hp-stars { display: flex; gap: 4px; }
+.hp-stars svg { width: 34px; height: 34px; color: #d1d5db; }
+.hp-stars svg.is-on { color: #f59e0b; fill: #facc15; animation: hp-pop .4s ease both; }
+.hp-stars svg.is-on:nth-child(2) { animation-delay: .12s; } .hp-stars svg.is-on:nth-child(3) { animation-delay: .24s; }
+@media (prefers-reduced-motion: reduce) { .hp-stars svg.is-on { animation: none; } }
+.hp-legend { margin: 0; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.hp-legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.hp-save { width: 100%; justify-content: center; }
+.hp-link { display: inline-flex; gap: 6px; align-items: center; font-weight: 700; }
+.hp-note { font-size: 13px; margin: 0; }
+@media (max-width: 900px) { .hp-main { grid-template-columns: 1fr; } .hp-paper { max-width: 620px; } }
+.praise-spots .mini-btn.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.qz-round.fx-toggle.is-on { background: radial-gradient(circle at 35% 30%, #ffb3e0, #d6409f 70%); box-shadow: 0 4px 0 #a32b78, 0 8px 16px rgb(120 20 80 / .25); }
+.pen-colors button.is-on, .wb-colors button.is-on { box-shadow: 0 0 0 3px #a78bfa; }
+.planner-editor.is-full > .dash-muted { display: none; }
+.kt-section .dash-muted { margin: -4px 0 12px; }
+:root[data-theme="dark"] .hp-chip.is-on { background: var(--surface-2); color: var(--ink); }
+:root[data-theme="dark"] .hp-grid-pick button.is-on { background: var(--surface-2); color: color-mix(in srgb, #5b21b6 40%, #fff); }

@@ -1,0 +1,17 @@
+/* Kiểu riêng khu vực "knowledge-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Kiến thức cần nhớ (màn hình bắt đầu làm bài) */
+.knowledge-card { margin-top: 16px; padding: 14px 18px; border: 2px solid var(--green); border-radius: 16px; background: var(--mint); text-align: left; }
+.knowledge-card summary { display: flex; align-items: center; gap: 8px; min-height: 32px; color: var(--fg-11704c); font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 20px; font-weight: 800; cursor: pointer; list-style: none; }
+.knowledge-card summary::-webkit-details-marker { display: none; }
+.knowledge-card summary::after { content: '▾'; margin-left: auto; font-size: 18px; transition: transform 180ms ease; }
+.knowledge-card:not([open]) summary::after { transform: rotate(-90deg); }
+.knowledge-card summary:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; border-radius: 8px; }
+.knowledge-card ul { margin: 8px 0 0; padding-left: 22px; font-size: 17px; line-height: 1.55; }
+.knowledge-card li + li { margin-top: 4px; }
+.knowledge-example { margin-top: 10px; padding: 10px 14px; border-radius: 12px; background: var(--bg-ffffff); }
+.knowledge-example-label { display: inline-block; margin-bottom: 4px; padding: 0 10px; border-radius: 999px; background: var(--bg-fff3d1); color: var(--fg-7a5300); font-size: 13px; font-weight: 800; }
+.knowledge-example pre { margin: 0; font-family: var(--font-body, 'Quicksand'), sans-serif; font-size: 18px; font-weight: 700; line-height: 1.45; white-space: pre-wrap; }
+.knowledge-note { margin-top: 6px; font-size: 16px; }
+.knowledge-example pre.is-column { font-family: ui-monospace, Consolas, 'Courier New', monospace; font-size: 20px; }
+@media (prefers-reduced-motion: reduce) { .knowledge-card summary::after { transition: none; } }

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ChevronRight, ListChecks } from 'lucide-react';
 import EmojiText from '@/components/EmojiText';
+import '@/styles/solution.css';
 
 /**
  * Lời giải của Milo: từ 3 dòng trở lên thì mở TỪNG BƯỚC (em đọc bước 1, thử nghĩ bước tiếp rồi mới bấm),

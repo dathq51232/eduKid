@@ -4,6 +4,7 @@ import NotConfigured from '@/components/classroom/NotConfigured';
 import Lesson3DHome, { type Lesson3DRow } from '@/components/lesson3d/Lesson3DHome';
 import type { DeckRow } from '@/components/deck/DeckHome';
 import { loadClassPage } from '@/lib/classroom/class-page';
+import '@/styles/ct.css';
 
 export const metadata: Metadata = { title: 'Bài giảng & 3D · EduChain Kids' };
 export const dynamic = 'force-dynamic';

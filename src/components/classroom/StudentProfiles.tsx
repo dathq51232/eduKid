@@ -12,6 +12,11 @@ import {
   EMPTY_PROFILE, birthIso, birthVi, byRoll, isBirthOk, isRollOk, matchPaste, parseBirth, parseProfilePaste, parseRoll, profileSheet,
   type Profile, type ProfileStudent,
 } from '@/lib/classroom/profiles';
+import '@/styles/adm.css';
+import '@/styles/sp.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
 
 type Col = 'roll' | 'birth' | 'address';
 const COLS: Col[] = ['roll', 'birth', 'address'];

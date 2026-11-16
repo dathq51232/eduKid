@@ -5,6 +5,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Sparkles, X } from 'lucide-react';
 import { PICK_EVENT, ideasFor, loadPick, savePick, type LessonIdea, type Phase } from '@/lib/plans/idea-bank';
+import '@/styles/li.css';
+import '@/styles/btn.css';
 
 const PHASES: { k: Phase; n: string; r: number; c: string }[] = [
   { k: 'kd', n: 'Khởi động', r: 0.14, c: '#ff9f43' },

@@ -6,6 +6,8 @@ import { memo, useId, useMemo, useRef, useState } from 'react';
 import { Chess, type Color, type PieceSymbol, type Square } from 'chess.js';
 import { PieceShape, PIECE_NAME } from './ChessPieces';
 import { WoodDefs, WoodFrame } from './Wood';
+import '@/styles/chs.css';
+import '@/styles/ct.css';
 
 export type BoardMove = { from: string; to: string; promotion?: string };
 type Props = {

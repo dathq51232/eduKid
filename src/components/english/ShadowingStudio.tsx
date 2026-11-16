@@ -9,6 +9,7 @@ import type { ReflexRound } from '@/components/english/useReflexRound';
 import type { CommunicationQuestion } from '@/lib/english/communicationBank';
 import { analyzeSentenceProsody, toProsodicSentence } from '@/lib/english/prosody';
 import { playRhythmCountIn } from '@/lib/english/reflexEngine';
+import '@/styles/en.css';
 
 type Mode = 'listen' | 'shadow' | 'read';
 const SHADOW_TAG = 'shadow';

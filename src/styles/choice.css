@@ -1,0 +1,14 @@
+/* Kiểu riêng khu vực "choice-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* ==================================================================
+   CÁC DẠNG CÂU HỎI: chọn đáp án, đúng/sai, điền đáp án
+================================================================== */
+.choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 0; padding: 0; list-style: none; }
+.choice-grid.is-pair { grid-template-columns: repeat(2, minmax(0, 220px)); justify-content: center; }
+@media (max-width: 520px) {
+  .choice-grid { gap: 10px; }
+}
+.choice-check { display: inline-grid; width: 26px; height: 26px; margin-right: 8px; place-items: center; border: 2px solid currentColor; border-radius: 7px; font-size: 18px; line-height: 1; vertical-align: middle; }
+.choice:has(.choice-check) { display: flex; align-items: center; justify-content: center; }
+.choice-figure { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.choice-caption { font-size: 18px; }

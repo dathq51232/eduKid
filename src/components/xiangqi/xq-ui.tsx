@@ -2,6 +2,8 @@
 // Mảnh giao diện dùng chung cho các trang cờ tướng: chuyển ván sang dữ liệu bàn cờ, quân bị ăn, danh sách nước kiểu Việt.
 import { XqBoard, XqGame, kindOf, sideOfCode, vnNotation, type XKind } from '@/lib/xiangqi/engine';
 import { XqDiscIcon, type XqPiece, type XqPoint } from './XiangqiBoard';
+import '@/styles/chs.css';
+import '@/styles/xq.css';
 
 export const pt = (i: number): XqPoint => ({ f: i % 9, r: (i / 9) | 0 });
 export const idx = (p: XqPoint) => p.r * 9 + p.f;

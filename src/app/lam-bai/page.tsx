@@ -46,6 +46,20 @@ import { lastShownSet, rememberShownSet } from '@/lib/set-history';
 import { getVoiceStatus, questionSegments, segmentsFor, speakSegments, stopSpeaking } from '@/lib/speech';
 import type { AnswerRecord, AnswerValue, Question } from '@/lib/types';
 import { MAX_MINUTES, TIME_PRESETS, applyTime, readTimeSetting, saveTimeSetting, timeLabel, type TimeSetting } from '@/lib/quiz-time';
+import '@/styles/feedback.css';
+import '@/styles/intro.css';
+import '@/styles/learn.css';
+import '@/styles/lesson.css';
+import '@/styles/level.css';
+import '@/styles/qz.css';
+import '@/styles/muc.css';
+import '@/styles/nav.css';
+import '@/styles/points.css';
+import '@/styles/question.css';
+import '@/styles/quiz.css';
+import '@/styles/solution.css';
+import '@/styles/time.css';
+import '@/styles/timer.css';
 
 type ItemStatus = 'todo' | 'skipped' | 'correct' | 'wrong' | 'timeout';
 type Item = {

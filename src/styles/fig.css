@@ -1,0 +1,46 @@
+/* Kiểu riêng khu vực "fig-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.fig-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 8px 10px; }
+.fig-row + .fig-row { padding-top: 10px; border-top: 2px dashed var(--rule); }
+.fig-emoji { display: block; width: 38px; height: 38px; object-fit: contain; font-size: 34px; line-height: 1.1; }
+.figure.is-compact .fig-emoji { font-size: 26px; }
+.figure.is-compact .fig-emoji { width: 30px; height: 30px; }
+.figure.is-compact .fig-row + .fig-row { padding-top: 4px; }
+.fig-compare-row { display: grid; gap: 0; justify-items: center; }
+.fig-compare-row + .fig-compare-row { padding-top: 8px; border-top: 2px dashed var(--rule); }
+.fig-svg { display: block; width: min(360px, 78vw); height: auto; }
+.fig-svg.is-sticks { width: min(300px, 70vw); }
+.fig-svg.is-lines { width: min(340px, 80vw); background: #fff; border-radius: 10px; }
+.fig-svg.is-bond { width: 220px; }
+.fig-svg.is-clock { width: 150px; }
+.figure.is-compact .fig-svg.is-clock { width: 96px; }
+.fig-clock-num { font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 14px; font-weight: 800; fill: var(--ink); }
+.fig-svg.is-tens, .fig-svg.is-ruler { max-width: 100%; }
+.fig-ruler-label { font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 17px; font-weight: 800; fill: var(--ink); }
+.fig-ruler-num { font-size: 15px; font-weight: 800; fill: var(--ink); }
+.fig-calendar { display: grid; justify-items: center; width: 150px; overflow: hidden; border: 2px solid var(--line-strong); border-radius: 12px; background: var(--bg-ffffff); box-shadow: var(--shadow-sm); }
+.fig-cal-month { width: 100%; padding: 4px 0; background: var(--red); color: #ffffff; font-weight: 800; text-align: center; }
+.fig-cal-day { font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 56px; font-weight: 800; line-height: 1.1; color: var(--link); }
+.fig-cal-weekday { padding-bottom: 8px; font-weight: 800; color: var(--red); }
+.fig-column { display: flex; align-items: center; gap: 6px; font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 32px; font-weight: 800; }
+.fig-col-op { align-self: center; margin-top: -40px; }
+.fig-col-rows { display: grid; gap: 4px; }
+.fig-col-row { display: grid; grid-template-columns: repeat(2, 40px); gap: 4px; }
+.fig-col-row.is-result { padding-top: 4px; border-top: 3px solid var(--line-strong); }
+.fig-col-cell { display: grid; height: 44px; place-items: center; }
+.fig-col-cell.is-ask { border: 2px dashed var(--blue-deep); border-radius: 8px; background: var(--bg-fff3d1); color: var(--link); }
+.fig-svg.is-blocks { width: auto; max-width: 100%; height: auto; max-height: 200px; }
+.figure.is-compact .fig-svg { width: min(130px, 34vw); }
+.figure.is-compact .fig-svg.is-blocks { max-height: 90px; }
+.fig-bond-text { font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 26px; font-weight: 800; fill: var(--ink); }
+.fig-pattern, .fig-grid { display: grid; gap: 6px; }
+.fig-cell { display: grid; width: 100%; aspect-ratio: 1; place-items: center; border: 2px solid var(--line-strong); border-radius: 10px; background: var(--bg-ffffff); }
+.fig-cell.is-ask, .fig-box.is-ask { background: var(--bg-fff3d1); color: var(--link); font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 30px; font-weight: 800; }
+.fig-sequence { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+.fig-box { display: grid; min-width: 44px; height: 48px; place-items: center; padding: 0 6px; border: 2px solid var(--line-strong); border-radius: 10px; background: var(--bg-ffffff); font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 26px; font-weight: 800; }
+.fig-grid { padding: 6px; border: 3px solid var(--bg-a0703c); border-radius: 8px; background: var(--bg-f3e2c7); }
+.fig-grid-cell { display: grid; width: 100%; height: 58px; place-items: center; border-bottom: 4px solid var(--bg-a0703c); font-size: clamp(24px, 7vw, 36px); }
+.fig-cell svg { width: 72%; height: auto; }
+@media (max-width: 520px) {
+  .fig-box { min-width: 40px; height: 44px; font-size: 22px; }
+  .fig-emoji { font-size: 30px; }
+}

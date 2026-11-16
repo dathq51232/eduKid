@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { errorText } from '@/lib/admin/questions';
 import { useAdminUser } from './AdminContext';
+import '@/styles/adm.css';
 
 type Log = {
   id: number;

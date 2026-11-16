@@ -7,6 +7,12 @@ import { createClient } from '@/lib/supabase/client';
 import { normalizeDeck, type Deck } from '@/lib/deck/types';
 import { addComment, deleteComment, reviewError, timeAgo, type DeckComment } from '@/lib/deck/review';
 import SlideView, { SlideFrame } from './SlideView';
+import '@/styles/cv.css';
+import '@/styles/dk.css';
+import '@/styles/dkc.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/rvw.css';
 
 type Info = { deckId: string; deck: Deck; owner: string; isOwner: boolean };
 

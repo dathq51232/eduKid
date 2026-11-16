@@ -8,6 +8,12 @@ import { Check, CheckCheck, MessageSquareReply, Trash2, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import MessageParentDialog from '@/components/classroom/MessageParentDialog';
 import { KIND_ICON, KIND_LABEL, ago, isMissing, leaveRange, senderLabel, type Inbox, type MsgStatus, type TeacherMsg } from '@/lib/classroom/messages';
+import '@/styles/adm.css';
+import '@/styles/ct.css';
+import '@/styles/s3h.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/inb.css';
 
 type Filter = 'all' | 'new' | 'leave';
 const ST_LABEL: Record<MsgStatus, string> = { new: 'Mới', read: 'Đã xem', approved: 'Đã đồng ý', declined: 'Không đồng ý', answered: 'Đã trả lời' };

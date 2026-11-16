@@ -5,6 +5,8 @@ import { useMemo, useState } from 'react';
 import { shuffle } from '@/lib/shuffle';
 import type { AnswerValue, Question } from '@/lib/types';
 import IllustrationIcon from '@/components/IllustrationIcon';
+import '@/styles/match.css';
+import '@/styles/question.css';
 
 type Props = {
   question: Question;

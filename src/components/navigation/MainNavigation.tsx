@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import '@/styles/main.css';
+import '@/styles/nav.css';
 
 type NavItem = {
   href: string;

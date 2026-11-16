@@ -1,0 +1,151 @@
+/* Kiểu riêng khu vực "game-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Nút bấm to, có cạnh dưới dày như nút thật */
+.button, .top-cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 12px 24px; border: 0; border-radius: 14px; border-bottom: 4px solid rgb(var(--ink-rgb) / .3); font: inherit; font-size: 17px; font-weight: 600; cursor: pointer; }
+.button:active, .top-cta:active { transform: translateY(2px); border-bottom-width: 2px; }
+.button-yellow, .top-cta { color: var(--ink); background: var(--yellow); }
+.button:disabled { color: var(--muted); background: var(--bg-e6ebf3); border-bottom-color: var(--bg-c5cfdd); cursor: not-allowed; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  
+  .button:active, .top-cta:active { transform: none; }
+  .progress-fill { transition: none; }
+}
+.choice.is-right { background: var(--mint); border-color: var(--green); color: var(--fg-11704c); }
+.fill-input.is-right { background: var(--mint); border-color: var(--green); }
+.blank-input.is-right { background: var(--mint); border-color: var(--green); }
+
+.game-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.game-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.game-filter { min-height: 44px; padding: 6px 18px; border: 2px solid var(--line-strong); border-radius: 999px; background: var(--bg-ffffff); color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 180ms ease, background-color 180ms ease, color 180ms ease; }
+.game-filter:hover { transform: translateY(-2px); background: var(--bg-fff3d1); }
+.game-filter[aria-pressed="true"] { background: var(--blue-deep); border-color: var(--blue-deep); color: #ffffff; }
+.game-filter[aria-pressed="true"]:hover { background: var(--bg-1f4fb8); }
+.game-filter:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+.game-grade { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; }
+.game-grade select { min-height: 44px; padding: 6px 36px 6px 14px; border: 2px solid var(--line-strong); border-radius: 12px; background: var(--bg-ffffff); color: var(--ink); font: inherit; font-size: 16px; }
+.game-grade select:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+.game-grade-note { padding: 14px 18px; border-left: 6px solid var(--yellow); border-radius: 6px 14px 14px 6px; background: var(--bg-ffffff); font-size: 16px; }
+.game-level-note { display: block; margin-top: 4px; color: var(--muted); font-size: 14px; }
+
+.game-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.game-card { display: flex; flex-direction: column; overflow: hidden; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--bg-ffffff); transition: transform 180ms ease, box-shadow 180ms ease; }
+.game-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.game-art { position: relative; border-bottom: 2px solid var(--line-strong); }
+.game-art-scene { display: block; width: 100%; height: auto; }
+.game-art-milo { position: absolute; top: 4px; right: 6px; }
+.game-card-body { display: flex; flex: 1; flex-direction: column; gap: 8px; padding: 18px 20px 20px; }
+.game-card-body h3 { font-size: 24px; }
+.game-card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.game-tag { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--bg-e1ebff); color: var(--link); font-size: 13px; font-weight: 700; line-height: 1.6; }
+.game-tag.is-beta { background: var(--bg-fff3d1); color: var(--fg-7a5300); border: 1px dashed var(--bg-c58a00); }
+.game-card-summary { color: var(--ink); font-size: 16px; line-height: 1.55; }
+.game-card-skills { color: var(--muted); font-size: 15px; font-weight: 600; }
+.game-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: auto; padding-top: 6px; color: var(--muted); font-size: 15px; }
+.game-card-level { padding: 1px 10px; border-radius: 999px; background: var(--mint); color: var(--fg-11704c); font-weight: 600; }
+.game-play { margin-top: 6px; width: 100%; }
+.game-empty { display: flex; align-items: center; gap: 24px; padding: 28px; border: 2px dashed var(--line-strong); border-radius: 18px; background: var(--bg-ffffff); }
+.game-empty h2 { font-size: 26px; }
+.game-empty p { margin-top: 8px; color: var(--muted); }
+.game-empty-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+
+/* ==================================================================
+   GAME TRÍ TUỆ: khung chơi chung
+================================================================== */
+.game-main { width: min(860px, calc(100% - 32px)); margin-inline: auto; padding-top: 28px; padding-bottom: 96px; }
+.game-main > * + * { margin-top: 20px; }
+.game-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.game-head h1 { font-size: clamp(30px, 5vw, 42px); }
+.game-head p { flex-basis: 100%; color: var(--muted); }
+
+.game-panel { padding: 22px; border: 2px solid var(--line-strong); border-radius: 20px; background: var(--bg-ffffff); box-shadow: var(--shadow-sm); }
+.game-panel-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+.game-progress { font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 20px; font-weight: 800; }
+.game-score { color: var(--muted); font-size: 16px; font-weight: 600; }
+.game-question { margin-top: 12px; font-size: clamp(24px, 4vw, 30px); }
+.game-question:focus, .game-finish h2:focus { outline: none; }
+.game-question:focus-visible, .game-finish h2:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; border-radius: 6px; }
+.game-bar { display: flex; flex-wrap: wrap; gap: 12px; }
+.game-loading { padding: 32px; color: var(--muted); text-align: center; }
+
+.game-feedback-slot { margin-top: 18px; }
+.game-feedback { display: flex; align-items: flex-start; gap: 16px; padding: 16px 18px; border: 2px solid; border-radius: 16px; }
+.game-feedback.is-right { border-color: var(--green); background: var(--mint); }
+.game-feedback.is-try { border-color: var(--bg-c58a00); background: var(--bg-fff3d1); }
+.game-feedback > div > * + * { margin-top: 8px; }
+.game-feedback-title { font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 22px; font-weight: 800; }
+.game-feedback .milo { flex: none; }
+
+.game-finish { display: flex; align-items: center; gap: 24px; padding: 28px; border: 2px solid var(--line-strong); border-radius: 20px; background: var(--bg-ffffff); box-shadow: var(--shadow-sm); }
+.game-finish .milo { flex: none; }
+.game-finish h2 { font-size: clamp(28px, 5vw, 38px); }
+.game-finish-body > * + * { margin-top: 12px; }
+.game-finish-actions { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 6px; }
+.game-stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; }
+.game-stats div { min-width: 120px; padding: 8px 16px; border-radius: 12px; background: var(--bg-f1f5fc); }
+.game-stats dt { color: var(--muted); font-size: 14px; }
+.game-stats dd { margin: 0; font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 26px; font-weight: 800; }
+
+@media (max-width: 900px) {
+  .game-grid, .ach-progress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .games-hero, .ach-hero, .parent-status, .game-finish, .game-empty { flex-direction: column; align-items: flex-start; padding: 22px; }
+  .game-grid, .ach-progress, .ach-stats { grid-template-columns: 1fr; }
+  .pattern-cell .shape-icon { width: 36px; height: 36px; }
+  .pattern-options.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .memory-front .shape-icon { width: 38px; height: 38px; }
+}
+@media (max-width: 640px) {
+  .game-toolbar { align-items: stretch; flex-direction: column; }
+  .game-grade select { flex: 1; }
+  .game-panel { padding: 16px; }
+  .game-feedback { flex-direction: column; }
+  .game-finish-actions .button, .game-bar .button { flex: 1 1 auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-nav-link, .game-filter, .game-card, .level-chip, .pattern-option, .memory-inner { transition: none; }
+  .main-nav-link:hover, .game-filter:hover, .game-card:hover, .level-option:hover .level-chip, .pattern-option:hover:not([aria-disabled="true"]) { transform: none; }
+  .maze-btn:active, .sudoku-key:active:not(:disabled) { transform: none; }
+}
+
+/* Nút dùng chung */
+.button, .top-cta { border-radius: 999px; border-bottom: 0; box-shadow: var(--shadow-sm); font-weight: 700; }
+.button:active, .top-cta:active { transform: translateY(1px); }
+.button-yellow, .top-cta { color: #1e2b4a; background: var(--brand-yellow); }
+.button:disabled { box-shadow: none; }
+
+/* Chữ trên nền vàng / nền trắng mờ luôn màu mực đậm (kể cả chế độ tối) */
+.button-yellow, .top-cta, .sticker, .grade-chip:hover, .back-link:hover, .lesson-row.is-next .lesson-no,
+.icon-button:hover, .result-card, .order-no, .adm-qnum, .nav-dot.is-current:not(.is-wrong):not(.is-correct):not(.is-timeout), .points-pop, .review-points, .maze-btn,
+.toc-link.is-next .toc-no, .toc-fab, .points-chip { color: #1e2b4a; }
+
+/* Khối nội dung: viền mảnh 1px thay cho viền 2px, cùng một kiểu bóng nhẹ */
+.games-hero, .lesson, .lesson-row, .question-card, .intro-card, .score-box, .review-item, .empty-state,
+.points-card, .comment-card, .dialog-card, .back-link, .icon-button, .quiz-count,
+.game-filter, .game-grade select, .notebook { border-width: 1px; }
+.fx-on .choice.is-right, .fx-on .question-card .is-right { animation: right-glow 1200ms ease-out; }
+.choice.is-right { box-shadow: 0 0 0 3px rgba(31, 157, 107, .2); }
+@media (prefers-reduced-motion: reduce) {
+  .lesson-decor-motif, .milo-trail-milo, .milo-trail-bubble, .fx-on .choice.is-right, .fx-on .question-card .is-right { animation: none !important; transition: none !important; }
+  .milo-trail-milo.is-tilt { transform: none; }
+  .confetti { display: none; }
+}
+/* ==================================================================
+   RÀ SOÁT UX GIAO DIỆN HỌC SINH (10/2026) — ưu tiên điện thoại
+   1) Trang làm bài: nút "Bắt đầu làm bài" luôn trong tầm tay; khi đang làm câu hỏi, ẩn thanh điều hướng
+      chung để câu hỏi và các đáp án lên ngay màn hình đầu (thanh làm bài vẫn có nút ← quay lại).
+   2) Chọn bài: thẻ bài gọn hơn; chọn mức độ / đổi bộ câu chỉ hiện ở bài "Học tiếp" (các bài khác chọn
+      ngay ở màn hình bắt đầu của bài) → danh sách ngắn còn khoảng một nửa.
+   3) Chữ nhỏ trên điện thoại (nhãn menu, bong bóng lời Milo, mô tả mức độ) tăng lên tối thiểu 14px.
+================================================================== */
+@media (max-width: 560px) {
+  .game-tag { font-size: 14px; }
+}
+.home-game-art .game-art { border-radius: 0; }
+
+/* Trò chơi: nhãn thể loại đủ 14px */
+.game-tag { font-size: 14px; }
+.qz .choice.is-right { border-color: #2fb34a; border-bottom-color: #198a33; background: linear-gradient(180deg, #f0fff2, #ccf3d4); color: #0f6a2c; }
+.qz .feedback-actions .button-yellow, .qz .feedback-actions .button-dark { border: 0; background: linear-gradient(180deg, #3b82f6, #1f5fd6); color: #fff; box-shadow: 0 4px 0 #1846a3; padding-inline: 26px; }
+.qz .feedback-actions .button-yellow:disabled { background: #b8c4dc; box-shadow: 0 4px 0 #8d9ab5; }

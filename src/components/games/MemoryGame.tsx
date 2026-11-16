@@ -9,6 +9,8 @@ import ShapeIcon from './ShapeIcon';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import type { GameLevel } from '@/lib/games/catalog';
 import { COLUMNS_BY_LEVEL, PAIRS_BY_LEVEL, flip, isDone, newGame, pairsFound, settle, type MemoryState } from '@/lib/games/memory';
+import '@/styles/game.css';
+import '@/styles/memory.css';
 
 /** Thời gian hai thẻ không trùng còn ngửa để em kịp nhìn (không phải đồng hồ tính giờ) */
 const PEEK_MS = 1100;

@@ -1,0 +1,24 @@
+/* Kiểu riêng khu vực "memory-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Nhà vô địch trí nhớ */
+.memory-status { display: flex; align-items: center; gap: 12px; min-height: 64px; margin-top: 12px; padding: 6px 14px; border-radius: 14px; background: var(--bg-f1f5fc); font-weight: 600; }
+.memory-status .milo { flex: none; }
+.memory-grid { display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 12px; max-width: 560px; margin: 18px auto 0; padding: 0; list-style: none; }
+.memory-card { display: block; width: 100%; aspect-ratio: 3 / 4; padding: 0; border: 0; background: none; cursor: pointer; perspective: 600px; }
+.memory-card[aria-disabled="true"] { cursor: default; }
+.memory-inner { position: relative; display: block; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 260ms ease; }
+.memory-card.is-up .memory-inner { transform: rotateY(180deg); }
+.memory-back, .memory-front { position: absolute; inset: 0; display: grid; place-items: center; border: 2px solid var(--line-strong); border-bottom-width: 5px; border-radius: 14px; backface-visibility: hidden; }
+.memory-back { background: var(--blue-deep); background-image: radial-gradient(rgba(255,255,255,.18) 2px, transparent 2px); background-size: 14px 14px; }
+.memory-front { background: var(--bg-ffffff); transform: rotateY(180deg); }
+.memory-card.is-matched .memory-front { border-color: var(--green); background: var(--mint); }
+.memory-card:not([aria-disabled="true"]):hover .memory-back { filter: brightness(1.12); }
+.memory-card:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; border-radius: 14px; }
+@media (max-width: 640px) {
+  .memory-grid { gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-nav-link, .game-filter, .game-card, .level-chip, .pattern-option, .memory-inner { transition: none; }
+  .main-nav-link:hover, .game-filter:hover, .game-card:hover, .level-option:hover .level-chip, .pattern-option:hover:not([aria-disabled="true"]) { transform: none; }
+  .maze-btn:active, .sudoku-key:active:not(:disabled) { transform: none; }
+}

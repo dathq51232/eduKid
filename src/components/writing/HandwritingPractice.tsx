@@ -14,6 +14,10 @@ import { BRUSH } from '@/lib/writing/ink';
 import { CW, PEN, buildSheet, drawStrokes, drawTemplate, resetFontCache, scoreWriting, type Result, type Sheet, type Stroke } from '@/lib/writing/score';
 import { addItem, canvasToImage } from '@/lib/gallery/client';
 import { ToolIcon } from '@/components/classroom/tool-icons';
+import '@/styles/adm.css';
+import '@/styles/hp.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
 
 const PROGRESS = 'edukid:luyen-chu';
 const A4_HEIGHT = Math.round(CW * 297 / 210);

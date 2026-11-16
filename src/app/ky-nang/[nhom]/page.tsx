@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import { SKILL_GROUPS, groupById } from '@/lib/skills/hub';
+import '@/styles/kn.css';
 
 type Params = { params: Promise<{ nhom: string }> };
 

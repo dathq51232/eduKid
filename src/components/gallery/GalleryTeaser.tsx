@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { GalleryHorizontalEnd, PenLine, Sparkles } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { SEEN_KEY } from '@/lib/gallery/types';
+import '@/styles/btn.css';
 
 type Info = { classId: string; className: string; total: number; mine: number; fresh: number; hearts: number };
 

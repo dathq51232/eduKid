@@ -20,6 +20,14 @@ import { mucFor, readBest, readMucStore, readTotalPoints, saveMucAll, saveMucLes
 import { TOPICS_BY_GRADE } from '@/lib/curriculum';
 import { ADV_BOOK } from '@/lib/content/knowledge-nc';
 import type { Lesson, SubjectCode } from '@/lib/types';
+import '@/styles/cb.css';
+import '@/styles/learn.css';
+import '@/styles/lesson.css';
+import '@/styles/lm.css';
+import '@/styles/grade.css';
+import '@/styles/muc.css';
+import '@/styles/points.css';
+import '@/styles/subject.css';
 
 /** Sticker 3D trang trí theo môn (ảnh có sẵn trong public/stickers) */
 const HERO_STICKERS: Record<SubjectCode, StickerId[]> = {

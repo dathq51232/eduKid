@@ -19,6 +19,12 @@ import { answerText, examDocument, printDoc } from '@/lib/exams/word';
 import { findOutcomeAny } from '@/lib/curriculum';
 import type { SubjectCode } from '@/lib/types';
 import { ToolIcon } from '@/components/classroom/tool-icons';
+import '@/styles/adm.css';
+import '@/styles/exam.css';
+import '@/styles/btn.css';
+import '@/styles/comments.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
 
 type Saved = { id: string; title: string; subject: SubjectCode; exam_code: string; updated_at: string };
 type ExamKind = ExamCode | 'khac';

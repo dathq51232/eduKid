@@ -1,0 +1,43 @@
+/* Kiểu riêng khu vực "dkp-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.dash-muted { color: var(--muted); font-size: 15px; }
+.assign-paper-form .dash-muted { flex-basis: 100%; margin: 0; font-size: 13px; }
+.planner-editor.is-full > .dash-muted { display: none; }
+.kt-section .dash-muted { margin: -4px 0 12px; }
+.dkp-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.dkp-modes button { display: grid; grid-template-columns: 56px 1fr; grid-template-rows: auto auto; column-gap: 12px; align-items: center; padding: 12px; border: 2px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.dkp-modes button.is-on { border-color: var(--brand-blue); background: var(--blue-soft); }
+.dkp-modes b { font-size: 15px; }
+.dkp-modes small { grid-column: 2; color: var(--muted); font-size: 12.5px; line-height: 1.35; }
+.dkp-ic { grid-row: 1 / span 2; display: grid; gap: 3px; width: 56px; height: 42px; padding: 4px; border-radius: 6px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.dkp-ic i { border-radius: 2px; background: color-mix(in srgb, var(--brand-blue) 55%, transparent); }
+.dkp-ic.is-slides i, .dkp-ic.is-notes i { min-height: 100%; }
+.dkp-ic.is-notes { width: 42px; height: 56px; justify-self: center; grid-template-rows: 1fr 1fr; }
+.dkp-ic.is-notes i { min-height: 0; }
+.dkp-ic.is-handout3 { width: 42px; height: 56px; justify-self: center; grid-template-rows: repeat(3, 1fr); }
+.dkp-ic.is-handout6 { width: 42px; height: 56px; justify-self: center; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); }
+.dkp-tip { margin: 0; }
+@media (max-width: 640px) { .dkp-modes { grid-template-columns: 1fr; } }
+#dk-print .dkp-frame { position: relative; overflow: hidden; border: 1px solid #c8ced8; background: #fff; }
+#dk-print .dkp-sheet { display: grid; align-content: start; gap: 6mm; break-after: page; page-break-after: always; }
+#dk-print .dkp-sheet:last-child { break-after: auto; page-break-after: auto; }
+#dk-print.is-slides .dkp-sheet { justify-items: center; }
+#dk-print.is-handout3 .dkp-item { display: grid; grid-template-columns: 380px 1fr; gap: 5mm; align-items: start; }
+#dk-print .dkp-lines { display: grid; gap: 9mm; padding-top: 2mm; }
+#dk-print .dkp-lines small { font-size: 9pt; color: #555; }
+#dk-print .dkp-lines i { display: block; border-bottom: 1px solid #9aa3b0; }
+#dk-print.is-handout6 .dkp-sheet { grid-template-columns: 340px 340px; justify-content: space-between; row-gap: 8mm; }
+#dk-print.is-handout6 .dkp-item { display: grid; gap: 1mm; }
+#dk-print .dkp-no { font-size: 9pt; color: #555; }
+#dk-print .dkp-ft { grid-column: 1 / -1; font-size: 9pt; color: #666; text-align: center; }
+#dk-print .dkp-hd { display: flex; justify-content: space-between; font-size: 11pt; border-bottom: 1px solid #999; padding-bottom: 2mm; }
+#dk-print .dkp-notes { margin-top: 5mm; font-size: 13pt; line-height: 1.5; }
+#dk-print .dkp-notes p { margin: 2mm 0 0; white-space: pre-wrap; }
+@media print {
+  #dk-print .dkp-frame, #dk-print .dkp-item { break-inside: avoid; page-break-inside: avoid; }
+  /* khung trang là khối liền (inline-block) để trình duyệt không cắt nội dung slide khi chia trang in */
+  #dk-print .dkp-frame { display: inline-block; vertical-align: top; }
+  #dk-print.is-slides .dkp-sheet, #dk-print.is-notes .dkp-sheet { display: block; }
+}
+.dkp-ic.is-pptx { place-items: center; background: #c2410c; box-shadow: none; }
+.dkp-ic.is-pptx b { color: #fff; font: 900 22px/1 var(--font-display), sans-serif; }
+.dkp-modes button:last-child:nth-child(odd) { grid-column: 1 / -1; }

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Clock } from 'lucide-react';
 import GameArt from './GameArt';
 import { CATEGORY_LABEL, LEVEL_INFO, gameHref, type GameInfo, type GameLevel } from '@/lib/games/catalog';
+import '@/styles/game.css';
 
 type Props = { game: GameInfo; suggested?: GameLevel };
 

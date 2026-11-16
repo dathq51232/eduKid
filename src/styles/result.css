@@ -1,0 +1,48 @@
+/* Kiểu riêng khu vực "result-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.stars { display: inline-flex; gap: 2px; }
+
+/* Kết quả */
+.result-card { padding: 32px 24px; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--yellow); box-shadow: var(--shadow-lg); text-align: center; }
+.result-card > * + * { margin-top: 20px; }
+.result-card h1 { font-size: clamp(30px, 6vw, 42px); }
+.result-stars { display: flex; justify-content: center; gap: 12px; }
+.result-star { display: grid; width: 72px; height: 72px; place-items: center; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--bg-ffffff); }
+.result-star.is-on { animation: star-pop .5s ease backwards; animation-delay: calc(var(--i) * .2s); }
+.result-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 520px) {
+  .result-actions { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .result-star.is-on { animation: none; }
+}
+
+/* Chữ trên nền vàng / nền trắng mờ luôn màu mực đậm (kể cả chế độ tối) */
+.button-yellow, .top-cta, .sticker, .grade-chip:hover, .back-link:hover, .lesson-row.is-next .lesson-no,
+.icon-button:hover, .result-card, .order-no, .adm-qnum, .nav-dot.is-current:not(.is-wrong):not(.is-correct):not(.is-timeout), .points-pop, .review-points, .maze-btn,
+.toc-link.is-next .toc-no, .toc-fab, .points-chip { color: #1e2b4a; }
+.result-card h1, .result-card h2, .result-card p { color: #1e2b4a; }
+:root[data-theme="dark"] .result-card { background: linear-gradient(170deg, #3a3017, #262a3d); color: var(--ink); box-shadow: var(--shadow-lg), inset 0 0 0 2px #6b5a22; }
+:root[data-theme="dark"] .result-card h1, :root[data-theme="dark"] .result-card h2, :root[data-theme="dark"] .result-card p { color: var(--ink); }
+.pin-dots span.is-on { background: var(--brand-blue); box-shadow: none; }
+.role-pick label.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.result-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.result-list li { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-sm); font-size: 15px; }
+.result-title { font-weight: 700; }
+.result-score { font-weight: 700; color: var(--link); }
+.result-points { display: inline-flex; align-items: center; gap: 4px; }
+.result-points svg { width: 16px; height: 16px; color: #f5a800; fill: #ffc83d; }
+.result-date { color: var(--muted); font-size: 13px; }
+@media (max-width: 700px) {
+  .result-list li { grid-template-columns: 1fr auto; }
+  .result-date, .result-points { display: none; }
+}
+.gaps-periods .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.plan-edit .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.fx-toggle.is-on { background: var(--bg-fff3d1); color: var(--fg-7a4d00); }
+
+.result-score.is-good { color: #15803d; }
+.result-score.is-mid { color: #b45309; }
+.result-score.is-low { color: #dc2626; }
+.praise-spots .mini-btn.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.qz-round.fx-toggle.is-on { background: radial-gradient(circle at 35% 30%, #ffb3e0, #d6409f 70%); box-shadow: 0 4px 0 #a32b78, 0 8px 16px rgb(120 20 80 / .25); }
+.pen-colors button.is-on, .wb-colors button.is-on { box-shadow: 0 0 0 3px #a78bfa; }

@@ -7,6 +7,7 @@ import NotConfigured from '@/components/classroom/NotConfigured';
 import SpellingSheets from '@/components/classroom/SpellingSheets';
 import { getViewer } from '@/lib/auth/viewer';
 import { classRow, warmClass } from '@/lib/classroom/class-page';
+import '@/styles/dash.css';
 
 export const metadata: Metadata = { title: 'Phiếu chính tả · EduChain Kids' };
 export const dynamic = 'force-dynamic';

@@ -1,4 +1,5 @@
 import type { StickerId } from '@/lib/stickers';
+import '@/styles/sticker.css';
 
 /** Sticker 3D (ảnh nền trong suốt trong public/stickers/<id>.webp, 200 × 200) */
 export default function Sticker({ id, size = 96, label }: { id: StickerId; size?: number; label?: string }) {

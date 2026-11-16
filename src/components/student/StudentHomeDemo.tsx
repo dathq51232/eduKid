@@ -5,6 +5,7 @@
 //  B. Lớp 3–5: thẻ học có tiến độ (mục tiêu ngày, học tiếp, bài cô giao, môn học, huy hiệu, thử thách tuần) + thanh tab.
 import { useEffect, useState } from 'react';
 import { BookOpen, ChevronRight, Gamepad2, Home, Settings, Trophy, User, Volume2 } from 'lucide-react';
+import '@/styles/hs2.css';
 
 const F = (n: string) => `/emoji/f3d/${n}.webp`;
 type Mode = 'nho' | 'lon';

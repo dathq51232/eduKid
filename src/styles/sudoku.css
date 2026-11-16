@@ -1,0 +1,37 @@
+/* Kiểu riêng khu vực "sudoku-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Robot lập trình */
+
+/* Sudoku mini */
+.sudoku-layout { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 20px; margin-top: 16px; }
+.sudoku-grid { display: grid; width: min(100%, calc(var(--n) * 68px)); overflow: hidden; border: 3px solid var(--ink); border-radius: 12px; background: var(--bg-ffffff); }
+.sudoku-row { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
+.sudoku-cell { display: grid; aspect-ratio: 1; place-items: center; padding: 0; border: 0; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: transparent; color: var(--link); font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: clamp(22px, 6vw, 30px); font-weight: 700; cursor: pointer; touch-action: manipulation; }
+.sudoku-row:last-child .sudoku-cell { border-bottom: 0; }
+.sudoku-cell:last-child { border-right: 0; }
+.sudoku-cell.box-r { border-right: 3px solid var(--ink); }
+.sudoku-cell.box-b { border-bottom: 3px solid var(--ink); }
+.sudoku-cell.is-given { color: var(--ink); font-weight: 800; background: var(--bg-f1f5fc); cursor: default; }
+.sudoku-cell.is-peer { background: var(--bg-f7faff); }
+.sudoku-cell.is-given.is-peer { background: var(--bg-e1ebff); }
+.sudoku-cell.is-sel { background: var(--bg-fff3d1); box-shadow: 0 0 0 3px var(--blue-deep) inset; }
+.sudoku-cell.is-wrong { color: #c2261c; background: var(--bg-fde8e6); text-decoration: underline wavy #e2483d; }
+.sudoku-cell.is-mark { box-shadow: 0 0 0 3px #e2483d inset; }
+.sudoku-cell:focus-visible { outline: 3px solid var(--yellow); outline-offset: -3px; }
+.sudoku-pad { display: grid; grid-template-columns: repeat(2, 64px); gap: 8px; }
+.sudoku-key { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60px; border: 2px solid var(--line-strong); border-bottom-width: 5px; border-radius: 14px; background: var(--bg-ffffff); color: var(--ink); font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 26px; font-weight: 800; cursor: pointer; touch-action: manipulation; }
+.sudoku-key.is-erase { grid-column: 1 / -1; min-height: 48px; flex-direction: row; gap: 6px; font-family: inherit; font-size: 15px; background: var(--bg-f1f5fc); }
+.sudoku-key.is-erase svg { width: 20px; height: 20px; }
+.sudoku-key:disabled { opacity: .5; cursor: default; }
+.sudoku-key:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 3px; }
+.sudoku-key:focus-visible { outline: 3px solid var(--blue-deep); outline-offset: 3px; }
+@media (max-width: 640px) {
+  .sudoku-pad { grid-template-columns: repeat(var(--keys, 5), minmax(0, 1fr)); width: 100%; }
+  .sudoku-key.is-erase { grid-column: auto; min-height: 60px; flex-direction: column; gap: 0; font-size: 12px; }
+  .sudoku-layout { flex-direction: column; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-nav-link, .game-filter, .game-card, .level-chip, .pattern-option, .memory-inner { transition: none; }
+  .main-nav-link:hover, .game-filter:hover, .game-card:hover, .level-option:hover .level-chip, .pattern-option:hover:not([aria-disabled="true"]) { transform: none; }
+  .maze-btn:active, .sudoku-key:active:not(:disabled) { transform: none; }
+}

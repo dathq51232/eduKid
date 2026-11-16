@@ -3,6 +3,7 @@
 import EmojiText from '@/components/EmojiText';
 import Figure from '@/components/Figure';
 import type { AnswerValue, Question } from '@/lib/types';
+import '@/styles/choice.css';
 
 type Props = {
   question: Question;

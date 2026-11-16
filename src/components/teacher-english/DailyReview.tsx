@@ -9,6 +9,12 @@ import { speakSegments, stopSpeaking } from '@/lib/speech';
 import {
   MASTERED_BOX, NEW_PER_DAY, addDays, nextGapLabel, todayQueue, todayVN, type Card, type Grade, type useReview,
 } from '@/lib/teacher-english/review';
+import '@/styles/adm.css';
+import '@/styles/ct.css';
+import '@/styles/rv.css';
+import '@/styles/te.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
 
 type Review = ReturnType<typeof useReview>;
 type Dir = 'en-vi' | 'vi-en';

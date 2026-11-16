@@ -4,6 +4,7 @@ import NotConfigured from '@/components/classroom/NotConfigured';
 import TeacherInbox from '@/components/classroom/TeacherInbox';
 import { loadClassPage } from '@/lib/classroom/class-page';
 import type { Inbox } from '@/lib/classroom/messages';
+import '@/styles/ct.css';
 
 export const metadata: Metadata = { title: 'Tin nhắn phụ huynh · EduChain Kids', robots: { index: false } };
 export const dynamic = 'force-dynamic';

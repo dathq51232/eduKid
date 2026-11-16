@@ -1,0 +1,96 @@
+/* Kiểu riêng khu vực "assign-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.wrap { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+
+@media (max-width: 900px) {
+  .wrap { width: min(100% - 40px, 680px); }
+  
+  
+  
+  .notebook { margin-right: 14px; }
+  
+  
+  
+  
+  .footer { flex-wrap: wrap; padding-block: 20px; }
+}
+@media (max-width: 520px) {
+  body { font-size: 17px; }
+  .wrap { width: calc(100% - 32px); }
+  .brand { font-size: 22px; }
+  .top-cta { padding: 10px 14px; font-size: 15px; }
+  
+  .notebook { padding-left: 62px; }
+  .notebook::before { left: 42px; }
+  .notebook p.line { font-size: 22px; }
+  .journey { padding-block: 64px; }
+  
+  
+  .answers { grid-template-columns: repeat(2, 1fr); }
+  
+  .footer { align-items: flex-start; flex-direction: column; }
+}
+
+.adm-field { display: grid; gap: 6px; font-size: 14px; font-weight: 600; }
+.adm-field.is-inline { grid-template-columns: auto; min-width: 160px; }
+.adm-field.is-wide { grid-column: 1 / -1; }
+
+.dash { display: grid; gap: 22px; padding-block: 28px 64px; }
+.roster-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+@media print {
+  body { background: #fff !important; }
+  .learn-top, .no-print, .back-link, .dash-head, .adm-alert, .login-cards-wrap .dash-card-head button { display: none !important; }
+  .login-cards-wrap { box-shadow: none; padding: 0; }
+  .login-card { border-color: #999; color: #000; }
+}
+
+/* Lối vào Ma trận và đề kiểm tra (đầu trang lớp) */
+
+/* ===== Công cụ giáo viên (trang lớp) ===== */
+
+   
+
+/* ===== Giao bài ===== */
+.assign-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end; }
+.assign-form .assign-lesson { grid-column: span 2; }
+.assign-form .comments-actions, .assign-form .assign-pick { grid-column: 1 / -1; }
+.assign-target { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 20px; border: 0; padding: 0; margin: 0; }
+.assign-target legend { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+.assign-pick ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 2px 12px; max-height: 280px; overflow: auto; }
+.assign-list { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 10px; }
+.assign-item { padding: 14px 16px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-sm); border-left: 5px solid var(--blue); }
+.assign-item.is-overdue { border-left-color: var(--red); }
+.assign-list.is-closed .assign-item { opacity: .8; border-left-color: var(--line-strong); }
+.assign-head { display: grid; grid-template-columns: minmax(0, 2fr) auto minmax(150px, 1fr) auto; gap: 8px 16px; align-items: center; }
+.assign-title { display: grid; gap: 2px; min-width: 0; }
+.assign-title strong { font-size: 16px; overflow-wrap: anywhere; }
+.assign-kind { justify-self: start; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 800; background: var(--blue-soft); color: var(--blue-deep); }
+.assign-kind.kind-exam { background: #fde68a; color: #92400e; }
+.assign-due { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; color: var(--muted); white-space: nowrap; }
+.assign-due svg { width: 16px; height: 16px; }
+.assign-due.is-soon { color: #b45309; font-weight: 700; } .assign-due.is-over { color: var(--red); font-weight: 700; }
+.assign-progress { display: grid; gap: 4px; font-size: 14px; }
+.assign-bar { display: block; height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; min-width: 60px; }
+.assign-bar > span { display: block; height: 100%; background: var(--green-solid); border-radius: inherit; }
+.assign-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.assign-detail { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line-strong); display: grid; gap: 10px; }
+.assign-detail h3 { margin: 6px 0 0; font-size: 16px; }
+.assign-summary { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 600; }
+.assign-summary svg { width: 18px; height: 18px; color: var(--green-solid); }
+.assign-table tr.is-missing th, .assign-table tr.is-missing td { color: var(--muted); }
+.assign-items td.assign-q { white-space: normal; min-width: 220px; max-width: 420px; }
+.assign-items tr.is-weak td, .assign-items tr.is-weak th { background: #fff4e5; }
+.assign-rate { display: inline-flex; align-items: center; gap: 8px; }
+.assign-rate .assign-bar { width: 70px; }
+.assign-paper { display: grid; gap: 8px; margin: 6px 0 10px; }
+.assign-paper-form { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+@media (max-width: 760px) {
+  .assign-head { grid-template-columns: 1fr; }
+  .assign-actions { justify-content: flex-start; }
+  .assign-form .assign-lesson { grid-column: 1 / -1; }
+}
+.report-bar .adm-field { min-width: 200px; }
+
+.roster-table { font-variant-numeric: tabular-nums; }
+.adm-filters .adm-field { min-width: 160px; }
+.tsh-main > .dash.wrap:has(> .class-manager) { padding-top: 14px; }
+:root[data-theme="dark"] .assign-items tr.is-weak td, :root[data-theme="dark"] .assign-items tr.is-weak th { background: color-mix(in srgb, #fff4e5 14%, var(--surface)); }

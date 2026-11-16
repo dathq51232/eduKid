@@ -1,6 +1,6 @@
 # EduChain Kids — ghi chú cho trợ lý AI (đọc trước, đỡ phải mở nhiều file)
 
-- Next.js 15 App Router + React 19 + TypeScript, Supabase (RLS, migrations trong `supabase/migrations`), CSS một file `src/app/globals.css` (tiền tố theo khu vực: `dk-`/`cv-` trình soạn bài giảng, `qz-` làm bài, `cb-` chọn bài, `td-` thi đua…). Icon: lucide-react; hình 3D: `public/emoji/f3d` (`src/lib/deck/f3d-catalog.ts`, `src/lib/emoji-3d.ts`).
+- Next.js 15 App Router + React 19 + TypeScript, Supabase (RLS, migrations trong `supabase/migrations`), CSS theo tiền tố khu vực (`dk-`/`cv-` trình soạn bài giảng, `qz-` làm bài, `cb-` chọn bài, `td-` thi đua…): phần dùng chung ở `src/app/globals.css`, kiểu riêng mỗi khu vực ở `src/styles/<tiền tố>.css` và được `import '@/styles/<tiền tố>.css'` ngay trong component dùng lớp đó (trang nào cần mới tải). Thêm lớp mới của khu vực nào thì viết vào file khu vực đó, nhớ import ở component mới. Icon: lucide-react; hình 3D: `public/emoji/f3d` (`src/lib/deck/f3d-catalog.ts`, `src/lib/emoji-3d.ts`).
 - Trả lời người dùng bằng tiếng Việt, ngắn gọn; giao diện, chú thích code cũng bằng tiếng Việt.
 - Bản đồ nhanh:
   - Học sinh: `src/app/chon-bai`, `src/app/lam-bai` (câu hỏi `src/components/questions/*`), nội dung `src/lib/content/*` (rất lớn — đừng đọc cả file, dùng graphify / grep tên bài), bộ sinh câu `src/lib/practice/*`.

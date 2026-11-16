@@ -20,6 +20,14 @@ import { SYNC_EVENT, readSyncStatus, type SyncStatus } from '@/lib/progress-sync
 import { buildComment, levelStats } from '@/lib/scoring';
 import { segmentsFor, speakSegments, stopSpeaking } from '@/lib/speech';
 import type { AnswerRecord, AttemptSummary } from '@/lib/types';
+import '@/styles/learn.css';
+import '@/styles/lesson.css';
+import '@/styles/level.css';
+import '@/styles/comment.css';
+import '@/styles/points.css';
+import '@/styles/result.css';
+import '@/styles/review.css';
+import '@/styles/score.css';
 
 function formatAnswer(value: AnswerRecord['userAnswer']) {
   if (value === null) return 'chưa trả lời';

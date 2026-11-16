@@ -7,6 +7,13 @@ import QuestionRenderer from '@/components/questions/QuestionRenderer';
 import { createClient } from '@/lib/supabase/client';
 import { dueInfo, toQuestion, type ExamItem } from '@/lib/classroom/assignments';
 import type { AnswerValue } from '@/lib/types';
+import '@/styles/adm.css';
+import '@/styles/exam.css';
+import '@/styles/lesson.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
+import '@/styles/question.css';
 
 type ExamRow = {
   id: string; title: string; subject: string | null; minutes: number | null; due_at: string; status: 'open' | 'closed';

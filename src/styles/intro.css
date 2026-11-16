@@ -1,0 +1,112 @@
+/* Kiểu riêng khu vực "intro-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Nút bấm to, có cạnh dưới dày như nút thật */
+.button, .top-cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 12px 24px; border: 0; border-radius: 14px; border-bottom: 4px solid rgb(var(--ink-rgb) / .3); font: inherit; font-size: 17px; font-weight: 600; cursor: pointer; }
+.button:active, .top-cta:active { transform: translateY(2px); border-bottom-width: 2px; }
+.button-yellow, .top-cta { color: var(--ink); background: var(--yellow); }
+.button:disabled { color: var(--muted); background: var(--bg-e6ebf3); border-bottom-color: var(--bg-c5cfdd); cursor: not-allowed; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  
+  .button:active, .top-cta:active { transform: none; }
+  .progress-fill { transition: none; }
+}
+
+/* Màn hình bắt đầu */
+.intro-card { padding: 28px 24px; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--bg-ffffff); box-shadow: var(--shadow-lg); }
+.intro-card > * + * { margin-top: 18px; }
+.intro-card h1 { font-size: clamp(30px, 6vw, 40px); }
+.intro-facts { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.intro-facts li { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 2px solid var(--line-strong); border-radius: 999px; background: var(--bg-fff3d1); font-size: 16px; }
+.intro-rules { display: grid; gap: 8px; margin-bottom: 0; padding-left: 22px; color: var(--ink); font-size: 17px; line-height: 1.5; }
+.intro-start { width: 100%; min-height: 60px; font-size: 20px; }
+.intro-seed { color: var(--muted); font-size: 14px; }
+/* Thời gian làm bài (tuỳ chỉnh): nút −/+ 1 phút trên dòng "tối đa" + các mức ×0.5 … ×3 + nhập tổng số phút */
+.intro-facts li.intro-time { padding-right: 5px; }
+.intro-time-step { display: inline-flex; gap: 3px; margin-left: 4px; }
+.intro-time-step button { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1.5px solid var(--line-strong); border-radius: 50%; background: var(--surface); color: var(--ink); cursor: pointer; }
+.intro-time-step button:hover:not(:disabled) { border-color: var(--blue-deep); color: var(--blue-deep); }
+.intro-time-step button:disabled { opacity: .4; cursor: default; }
+.intro-time-step svg { width: 16px; height: 16px; }
+
+/* Nút dùng chung */
+.button, .top-cta { border-radius: 999px; border-bottom: 0; box-shadow: var(--shadow-sm); font-weight: 700; }
+.button:active, .top-cta:active { transform: translateY(1px); }
+.button-yellow, .top-cta { color: #1e2b4a; background: var(--brand-yellow); }
+.button:disabled { box-shadow: none; }
+
+/* Thẻ chung: bo tròn hơn, viền nhạt */
+.lesson-row, .question-card, .lesson, .auth-card, .intro-card { border-radius: 20px; }
+
+/* Chữ trên nền vàng / nền trắng mờ luôn màu mực đậm (kể cả chế độ tối) */
+.button-yellow, .top-cta, .sticker, .grade-chip:hover, .back-link:hover, .lesson-row.is-next .lesson-no,
+.icon-button:hover, .result-card, .order-no, .adm-qnum, .nav-dot.is-current:not(.is-wrong):not(.is-correct):not(.is-timeout), .points-pop, .review-points, .maze-btn,
+.toc-link.is-next .toc-no, .toc-fab, .points-chip { color: #1e2b4a; }
+
+/* Khối nội dung: viền mảnh 1px thay cho viền 2px, cùng một kiểu bóng nhẹ */
+.games-hero, .lesson, .lesson-row, .question-card, .intro-card, .score-box, .review-item, .empty-state,
+.points-card, .comment-card, .dialog-card, .back-link, .icon-button, .quiz-count,
+.game-filter, .game-grade select, .notebook { border-width: 1px; }
+@media (max-width: 760px) {
+  /* --- 1. trang làm bài --- */
+  /* màn hình bắt đầu: nút bắt đầu dính đáy màn hình trong lúc em đọc phần giới thiệu */
+  .intro-start { position: sticky; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 6; box-shadow: 0 6px 18px rgb(31 42 68 / .28), 0 0 0 6px var(--surface); }
+}
+.qz .feedback-actions .button-yellow, .qz .feedback-actions .button-dark { border: 0; background: linear-gradient(180deg, #3b82f6, #1f5fd6); color: #fff; box-shadow: 0 4px 0 #1846a3; padding-inline: 26px; }
+.qz .feedback-actions .button-yellow:disabled { background: #b8c4dc; box-shadow: 0 4px 0 #8d9ab5; }
+
+.intro-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 22px;
+  border: 2px solid var(--line-strong);
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--blue-soft) 0%, var(--surface) 100%);
+}
+.intro-hero-copy { display: grid; gap: 12px; flex: 1; }
+.intro-hero-copy h1 { margin: 0; }
+.intro-hero-copy .intro-facts { margin: 0; }
+.intro-primary-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 4px; }
+.intro-primary-actions .intro-start { flex: 1 1 220px; margin: 0; }
+.intro-hero-milo { flex: none; display: grid; place-items: center; }
+@media (max-width: 600px) {
+  .intro-hero-top { flex-direction: column-reverse; text-align: center; padding: 16px; }
+  .intro-hero-copy .intro-facts { justify-content: center; }
+  .intro-primary-actions { justify-content: center; }
+}
+
+.intro-settings {
+  border: 2px solid var(--line-strong);
+  border-radius: 16px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.intro-settings-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.intro-settings-summary::-webkit-details-marker { display: none; }
+.intro-settings-summary > div { display: grid; gap: 2px; flex: 1; }
+.intro-settings-summary strong { font-size: 16px; color: var(--ink); }
+.intro-settings-summary small { font-size: 13.5px; color: var(--muted); font-weight: 600; }
+.intro-settings-summary::after {
+  content: 'Mở tuỳ chỉnh ▾';
+  padding: 6px 12px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.intro-settings[open] .intro-settings-summary { border-bottom: 1.5px solid var(--line-strong); }
+.intro-settings[open] .intro-settings-summary::after { content: 'Thu gọn ▴'; }
+.intro-settings-body { padding: 18px; display: grid; gap: 18px; background: var(--surface); }

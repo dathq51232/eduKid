@@ -5,16 +5,21 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { hasSessionCookie } from '@/lib/supabase/session-hint';
+import '@/styles/home.css';
+import '@/styles/btn.css';
 
 const configured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 export default function HomeWelcome() {
   const [on, setOn] = useState(false);
   useEffect(() => {
-    if (!configured) return;
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data }) => setOn(Boolean(data.session))).catch(() => undefined);
+    // chưa đăng nhập: không tải thư viện Supabase cho trang chủ
+    if (!configured || !hasSessionCookie()) return;
+    let alive = true;
+    void import('@/lib/supabase/client').then(({ createClient }) => createClient().auth.getSession())
+      .then(({ data }) => { if (alive) setOn(Boolean(data.session)); }).catch(() => undefined);
+    return () => { alive = false; };
   }, []);
   if (!on) return null;
   return (

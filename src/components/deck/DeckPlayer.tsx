@@ -20,6 +20,8 @@ import { getVolume, playSound, setVolume, stopSounds } from '@/lib/deck/sounds';
 import { createClient } from '@/lib/supabase/client';
 import { SOURCE, TEAM_COLORS, normalizeTeams, teamTotals, vnDay, weekOf, type Point, type TeamsState } from '@/lib/classroom/class-tools';
 import SlideView, { SlideFrame, type BoardTeam, type PlayAction, type PlayApi } from './SlideView';
+import '@/styles/dp.css';
+import '@/styles/td.css';
 
 type Tool = '' | 'pen' | 'spot' | 'laser';
 type Stroke = { c: string; w?: number; p: number[] };

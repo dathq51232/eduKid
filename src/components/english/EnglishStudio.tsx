@@ -18,6 +18,7 @@ import { STEPS, STEP_ART, TOPICS, TOPIC_ART, buildLesson, initialLesson, lessonR
 import { createClient } from '@/lib/supabase/client';
 import { ENGLISH_COMMUNICATION_BANK, ENGLISH_COMMUNICATION_STORIES } from '@/lib/english/communicationBank';
 import { toProsodicSentence } from '@/lib/english/prosody';
+import '@/styles/en.css';
 
 const PROGRESS_KEY = 'educhain-english-progress-v1';
 

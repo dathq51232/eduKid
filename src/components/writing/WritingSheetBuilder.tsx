@@ -15,6 +15,12 @@ import { STICKERS } from '@/lib/stickers';
 import { CORNER_POS0, DEFAULT_CORNER_POS, DEFAULT_SHEET, FALLBACK_FONT, LINE_COLORS, PAGE_SIZES, TAP_FONTS, fallbackScale, pageDims, textSegments, fontFamily, layoutSheet, loadTapFont, normalizeSheet, type Corner, type CornerPos, type SheetSettings } from '@/lib/writing/sheet';
 import { VERSE_GROUPS } from '@/lib/writing/verses';
 import { deleteTask, listTasks, saveTask, setTaskActive, taskError, type WritingTask } from '@/lib/writing/tasks';
+import '@/styles/adm.css';
+import '@/styles/wsb.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
+import '@/styles/ws.css';
 
 const STORE = 'edukid:trang-vo';
 const CORNERS: { k: Corner; label: string }[] = [{ k: 'tl', label: 'Góc trên trái' }, { k: 'tr', label: 'Góc trên phải' }, { k: 'bl', label: 'Góc dưới trái' }, { k: 'br', label: 'Góc dưới phải' }];

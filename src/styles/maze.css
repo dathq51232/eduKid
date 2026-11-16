@@ -1,0 +1,27 @@
+/* Kiểu riêng khu vực "maze-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Mê cung phiêu lưu */
+.maze-help { margin-top: 6px; color: var(--muted); font-size: 15px; }
+.maze-layout { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 24px; margin-top: 16px; }
+.maze-board { display: block; width: 100%; max-width: 520px; height: auto; margin-inline: auto; border-radius: 10px; background: var(--bg-ffffff); }
+.maze-pad { display: grid; grid-template-areas: ". up ." "left . right" ". down ."; grid-template-columns: repeat(3, 72px); grid-template-rows: repeat(3, 72px); gap: 6px; }
+.maze-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; border: 2px solid var(--line-strong); border-bottom-width: 5px; border-radius: 16px; background: var(--yellow); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; touch-action: manipulation; }
+.maze-btn svg { width: 28px; height: 28px; }
+.maze-btn:active { transform: translateY(2px); border-bottom-width: 3px; }
+.maze-btn:focus-visible { outline: 3px solid var(--blue-deep); outline-offset: 3px; }
+.maze-btn.is-up { grid-area: up; } .maze-btn.is-down { grid-area: down; } .maze-btn.is-left { grid-area: left; } .maze-btn.is-right { grid-area: right; }
+.maze-note { min-height: 30px; margin-top: 14px; padding: 8px 14px; border-radius: 12px; background: var(--bg-f1f5fc); font-weight: 600; }
+@media (max-width: 640px) {
+  .maze-layout { grid-template-columns: 1fr; justify-items: center; }
+  .maze-pad { grid-template-columns: repeat(3, 76px); grid-template-rows: repeat(3, 64px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-nav-link, .game-filter, .game-card, .level-chip, .pattern-option, .memory-inner { transition: none; }
+  .main-nav-link:hover, .game-filter:hover, .game-card:hover, .level-option:hover .level-chip, .pattern-option:hover:not([aria-disabled="true"]) { transform: none; }
+  .maze-btn:active, .sudoku-key:active:not(:disabled) { transform: none; }
+}
+
+/* Chữ trên nền vàng / nền trắng mờ luôn màu mực đậm (kể cả chế độ tối) */
+.button-yellow, .top-cta, .sticker, .grade-chip:hover, .back-link:hover, .lesson-row.is-next .lesson-no,
+.icon-button:hover, .result-card, .order-no, .adm-qnum, .nav-dot.is-current:not(.is-wrong):not(.is-correct):not(.is-timeout), .points-pop, .review-points, .maze-btn,
+.toc-link.is-next .toc-no, .toc-fab, .points-chip { color: #1e2b4a; }

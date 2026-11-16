@@ -11,6 +11,10 @@ import {
   TICK_MODES, TIMER_BELLS, TIMER_KEY, shouldTick, type TickMode, TIMER_LABELS, TIMER_LOOKS, TIMER_PRESETS, addTime, defaultTimer, fmtClock, parseTimer, pauseTimer, resetTimer,
   startTimer, timerLeft, timerPhase, type TimerBell, type TimerLook, type TimerState,
 } from '@/lib/classroom/class-tools';
+import '@/styles/tmr.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/tf.css';
 
 /* ====================================================================== âm thanh (tự tạo bằng Web Audio, không tải file) */
 let audio: AudioContext | null = null;

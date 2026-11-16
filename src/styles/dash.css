@@ -1,0 +1,122 @@
+/* Kiểu riêng khu vực "dash-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.dash-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.dash-head h1 { font-size: clamp(28px, 4vw, 40px); }
+.dash-kicker { display: inline-flex; align-items: center; gap: 6px; color: var(--link); font-size: 15px; font-weight: 700; }
+.dash-kicker svg { width: 18px; height: 18px; }
+.dash-card { display: grid; gap: 12px; padding: 22px; border-radius: 22px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.dash-card h2, .dash-section h2 { display: flex; align-items: center; gap: 8px; font-size: 22px; }
+.dash-card h2 svg, .dash-section h2 svg { width: 22px; height: 22px; color: var(--brand-blue); }
+.dash-card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+
+.dash-form { display: grid; gap: 12px; }
+.dash-form.is-row { grid-template-columns: minmax(160px, 1fr) auto auto; align-items: end; }
+.dash-section { display: grid; gap: 12px; }
+.dash-muted { color: var(--muted); font-size: 15px; }
+.dash-empty { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; padding: 24px; border-radius: 26px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.dash-empty h1 { font-size: clamp(26px, 4vw, 38px); }
+.dash-empty p { margin-top: 6px; color: var(--muted); }
+.class-progress .dash-card-head { margin-bottom: 12px; }
+.student-progress .dash-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.child-block { padding-top: 6px; }
+@media (max-width: 700px) {
+  .dash-form.is-row { grid-template-columns: 1fr; }
+}
+@media print {
+  body { background: #fff !important; }
+  .learn-top, .no-print, .back-link, .dash-head, .adm-alert, .login-cards-wrap .dash-card-head button { display: none !important; }
+  .login-cards-wrap { box-shadow: none; padding: 0; }
+  .login-card { border-color: #999; color: #000; }
+}
+.dash-form > .btn { justify-self: start; }
+.dash-back { display: inline-flex; align-items: center; gap: 6px; justify-self: start; color: var(--link); font-weight: 700; }
+.dash-back svg { width: 18px; height: 18px; }
+@media print { .dash-back { display: none !important; } }
+.comments-toolbar { display: grid; gap: 12px; }
+.assign-paper-form .dash-muted { flex-basis: 100%; margin: 0; font-size: 13px; }
+.tuition-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.praise-card { padding: 18px 20px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.praise-note { margin: 0; font-size: 14px; }
+@media (max-width: 560px) {
+  .praise-row2 { grid-template-columns: 1fr; }
+  .praise-card { padding: 14px; }
+  .praise-dl { grid-template-columns: 1fr; }
+  .praise-tpls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.planner-card { padding: 18px 20px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.planner-weak { margin: 0; font-size: 14px; }
+@media (max-width: 520px) { .planner-card { padding: 14px; } }
+.planner-skipped { color: #b71c1c; }
+
+/* ==========================================================================
+   D4 — GÓC THẦY CÔ (làm mới 10/2026): bảng tính điềm tĩnh, số thẳng cột, nút đủ to, ô công cụ có biểu tượng trên nền màu nhạt
+   ========================================================================== */
+.dash-back { min-height: 44px; }
+
+/* lưu trữ lớp: việc làm một lần mỗi năm, không cần nút to nhất trang */
+.dash-archive { display: flex; justify-content: flex-start; }
+.dash-archive .btn { color: var(--muted); box-shadow: inset 0 0 0 2px var(--line-strong), 0 4px 0 rgb(var(--ink-rgb) / .08); }
+.dash-archive .btn:hover { color: var(--ink); }
+.callon.is-full { min-height: 100vh; padding: 16px 24px; background: var(--bg, #f5f8ff); }
+.diary-grid > .dash-card { margin: 0; }
+.diary-legend { display: none; }
+.diary-panel { position: sticky; top: 90px; display: grid; gap: 8px; }
+.diary-side { display: grid; gap: 10px; }
+.diary-empty { padding: 24px 0; text-align: center; }
+
+@media (max-width: 980px) {
+  .diary-grid { grid-template-columns: minmax(0, 1fr); }
+  .diary-panel { position: static; }
+  .diary-msg { grid-template-columns: 1fr; gap: 8px; }
+  .diary-msg-act { display: flex; flex-wrap: wrap; justify-content: start; }
+}
+/* điện thoại: mỗi em một hàng với ✓ / P / K; bấm tên mở bảng ghi chú từ dưới lên */
+@media (max-width: 640px) {
+  .diary-head h1 { font-size: 24px; }
+  .diary-tabs { margin-left: 0; }
+  .diary-saved { margin-left: 0; flex-basis: 100%; }
+  .diary-date b { font-size: 14px; }
+  .diary-roster { grid-template-columns: 1fr; gap: 6px; }
+  .diary-st { display: flex; align-items: center; }
+  .diary-st-main { width: auto; min-height: 56px; flex: 1; min-width: 0; padding: 8px 10px; }
+  .diary-st-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .diary-quick { display: flex; gap: 4px; padding-right: 8px; }
+  .diary-quick button { width: 42px; min-height: 40px; font-size: 14px; }
+  .diary-legend { display: block; margin-top: 10px; }
+  .diary-panel { display: none; }
+  .diary-panel.is-open { display: grid; position: fixed; left: 0; right: 0; bottom: 0; z-index: 70; max-height: 82vh; overflow-y: auto; margin: 0; border-radius: 22px 22px 0 0; box-shadow: 0 -6px 0 rgb(30 43 74 / .08); }
+  .diary-roster-card { padding-bottom: 80px; }
+  .diary-mobile-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; padding: 10px 16px; background: var(--surface); border-top: 1px solid var(--line); }
+  .diary-mobile-bar .btn { min-height: 48px; font-size: 16px; padding: 0 12px; }
+  .diary-xlsx { margin-left: 0; }
+}
+@media (max-width: 640px) { .diary-panel.is-open ~ .diary-mobile-bar { display: none; } .diary-panel.is-open { top: auto; padding-bottom: 24px; } }
+.tdy-empty { display: grid; gap: 10px; justify-items: start; padding: 10px 0; }
+.tmr:fullscreen, .tmr.is-full { display: block; background: #0f1626; }
+.tmr.is-full:not(:fullscreen) { position: fixed; inset: 0; z-index: 95; }
+.inb-empty { padding: 24px 0; }
+.gm-note { margin-top: 12px; font-size: 14px; }
+.gv.is-full { position: fixed; inset: 0; z-index: 150; background: var(--paper, #fff); padding: 10px; display: flex; flex-direction: column; }
+.su-tip { margin: 0 0 8px; }
+.hp-note { font-size: 13px; margin: 0; }
+.ap-tip { margin: 0; font-size: 13px; }
+.wsb-tip { width: 100%; max-width: 760px; margin: -6px 0 0; font-size: 12.5px; }
+
+/* Ngân hàng của tôi: nạp tài liệu, sinh câu AI, duyệt câu (Ra đề / Phiếu bài tập) */
+.mybank-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 16px; border: 1.5px dashed color-mix(in srgb, var(--brand-blue) 40%, var(--line)); border-radius: 14px; background: color-mix(in srgb, var(--brand-blue) 5%, var(--surface)); }
+.mb-note { font-size: 12.5px; }
+.praise-drag-hint { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
+.praise-preview .praise-card { display: grid; gap: 12px; }
+.wb.is-full { background: var(--bg, #f8fafc); padding: 10px; height: 100vh; grid-template-rows: auto 1fr; overflow: hidden; }
+.planner-editor.is-full { position: fixed; inset: 0; z-index: 80; margin: 0; border-radius: 0; padding: 10px 16px; display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.planner-editor.is-full > .dash-muted { display: none; }
+.kho-note { margin: 8px 0 0; font-size: 12.5px; }
+.kh-lead { margin: 4px 0 0; }
+.kh-modal-box > .dash-section { margin: 0; }
+.sp-hint { margin: 0; font-size: 13px; }
+.ph-util .dash-back { justify-self: start; }
+.kt-section .dash-muted { margin: -4px 0 12px; }
+.class-manager > .dash-head { align-items: center; }
+.class-manager .cm-add { padding: 12px 18px; }
+.rv-empty, .rv-src { margin: 0; }
+.dkp-tip { margin: 0; }
+.icr-tip { margin: 10px 0 0; font-size: 13px; }

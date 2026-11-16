@@ -12,6 +12,12 @@ import { isPlan } from '@/lib/plans/generate';
 import { weekSheet, loadWeekOpts, type WeekArgs } from '@/lib/plans/week-export';
 import type { SubjectCode } from '@/lib/types';
 import { saveSched } from '@/lib/plans/sched-store';
+import '@/styles/adm.css';
+import '@/styles/planner.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/kho.css';
+import '@/styles/mini.css';
 
 type SavedLite = { teach_date: string | null; period: number | null; title: string };
 type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;

@@ -1,0 +1,51 @@
+/* Kiểu riêng khu vực "rvw-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.wrap { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+
+@media (max-width: 900px) {
+  .wrap { width: min(100% - 40px, 680px); }
+  
+  
+  
+  .notebook { margin-right: 14px; }
+  
+  
+  
+  
+  .footer { flex-wrap: wrap; padding-block: 20px; }
+}
+@media (max-width: 520px) {
+  body { font-size: 17px; }
+  .wrap { width: calc(100% - 32px); }
+  .brand { font-size: 22px; }
+  .top-cta { padding: 10px 14px; font-size: 15px; }
+  
+  .notebook { padding-left: 62px; }
+  .notebook::before { left: 42px; }
+  .notebook p.line { font-size: 22px; }
+  .journey { padding-block: 64px; }
+  
+  
+  .answers { grid-template-columns: repeat(2, 1fr); }
+  
+  .footer { align-items: flex-start; flex-direction: column; }
+}
+
+.dash { display: grid; gap: 22px; padding-block: 28px 64px; }
+.tsh-main > .dash.wrap:has(> .class-manager) { padding-top: 14px; }
+.rvw-page { padding-top: 18px; padding-bottom: 40px; }
+.rvw-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.rvw-head h1 { margin: 0; font-size: clamp(22px, 3vw, 30px); }
+.rvw-head p { margin: 4px 0 0; }
+.rvw-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: #fff1f2; color: #be123c; font-weight: 800; font-size: 14px; }
+.rvw-badge svg { width: 16px; height: 16px; }
+.rvw-main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.rvw-stage { min-width: 0; }
+.rvw-frame { width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 24px rgb(15 23 42 / .14); }
+.rvw-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; }
+.rvw-notes { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: #fefce8; border: 1px solid #fde68a; font-size: 14px; white-space: pre-wrap; }
+.rvw-side { display: flex; flex-direction: column; gap: 9px; padding: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+.rvw-side h2 { margin: 0; font-size: 18px; }
+.rvw-strip { display: flex; gap: 10px; overflow-x: auto; margin-top: 16px; padding: 4px 2px 10px; }
+.rvw-strip button { position: relative; flex: none; width: 150px; padding: 0; border: 2px solid transparent; border-radius: 9px; background: none; cursor: pointer; }
+.rvw-strip button.is-on { border-color: #7c3aed; }
+@media (max-width: 900px) { .rvw-main { grid-template-columns: minmax(0, 1fr); } .rvw-strip button { width: 120px; } }

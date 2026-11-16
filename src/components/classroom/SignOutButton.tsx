@@ -1,4 +1,5 @@
 import { LogOut } from 'lucide-react';
+import '@/styles/btn.css';
 
 // Đăng xuất bằng POST (không dùng link GET để tránh bị đăng xuất ngoài ý muốn)
 export default function SignOutButton({ className = 'btn btn-outline btn-sm' }: { className?: string }) {

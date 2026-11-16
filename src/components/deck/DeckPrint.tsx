@@ -13,6 +13,11 @@ import type { Deck, ShapeEl } from '@/lib/deck/types';
 import { buildPptx } from '@/lib/deck/pptx';
 import { rasterize, toPng } from '@/lib/deck/raster';
 import SlideView, { ShapeSvg, SlideFrame } from './SlideView';
+import '@/styles/ct.css';
+import '@/styles/dk.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/dkp.css';
 
 type Mode = 'slides' | 'handout3' | 'handout6' | 'notes' | 'pptx';
 const MODES: { k: Mode; label: string; sub: string }[] = [

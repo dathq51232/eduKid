@@ -7,6 +7,10 @@ import { CalendarDays, MessageCircle, Send, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { KIND_ICON, KIND_LABEL, SEND_ERROR, STATUS_TEXT, ago, isMissing, leaveRange, senderLabel, type MsgKind, type ParentMsg } from '@/lib/classroom/messages';
 import { RELATIONS } from '@/lib/classroom/class-tools';
+import '@/styles/adm.css';
+import '@/styles/ph.css';
+import '@/styles/pm.css';
+import '@/styles/btn.css';
 
 type Person = { name: string; relation: string };
 const vnToday = () => new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);

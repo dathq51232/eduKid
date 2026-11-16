@@ -5,6 +5,7 @@ import Link from 'next/link';
 import GameCard from './GameCard';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import { FILTERS, GRADES, LEVEL_NOTE, SUGGESTED_LEVEL, filterGames, type GameFilter, type Grade } from '@/lib/games/catalog';
+import '@/styles/game.css';
 
 type Props = { initialGrade: Grade | null; initialFilter: GameFilter };
 

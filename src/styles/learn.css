@@ -1,0 +1,125 @@
+/* Kiểu riêng khu vực "learn-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.wrap { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+
+/* ==================================================================
+   CÁC TRANG HỌC: chọn bài, làm bài, kết quả (cùng phong cách vở ô li)
+================================================================== */
+
+/* Thanh trên cùng gọn: dải xanh + viền vàng, giống phần hero */
+.learn-top { position: sticky; top: 0; z-index: 30; color: #ffffff; background: var(--blue-deep); border-bottom: 6px solid var(--yellow); }
+.learn-top-inner { min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.learn-top .brand { font-size: 22px; }
+
+.learn-user { display: inline-flex; align-items: center; gap: 10px; padding: 4px 16px 4px 6px; border-radius: 999px; background: rgba(255, 255, 255, .16); font-size: 16px; font-weight: 600; }
+.learn-avatar { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; background: var(--bg-ffffff); font-size: 22px; line-height: 1; }
+
+.learn-main { width: min(760px, calc(100% - 32px)); margin-inline: auto; padding-top: 32px; padding-bottom: 96px; }
+.learn-main > * + * { margin-top: 24px; }
+
+.learn-heading { font-size: 28px; }
+
+@media (max-width: 900px) {
+  .wrap { width: min(100% - 40px, 680px); }
+  
+  
+  
+  .notebook { margin-right: 14px; }
+  
+  
+  
+  
+  .footer { flex-wrap: wrap; padding-block: 20px; }
+}
+@media (max-width: 520px) {
+  body { font-size: 17px; }
+  .wrap { width: calc(100% - 32px); }
+  .brand { font-size: 22px; }
+  .top-cta { padding: 10px 14px; font-size: 15px; }
+  
+  .notebook { padding-left: 62px; }
+  .notebook::before { left: 42px; }
+  .notebook p.line { font-size: 22px; }
+  .journey { padding-block: 64px; }
+  
+  
+  .answers { grid-template-columns: repeat(2, 1fr); }
+  
+  .footer { align-items: flex-start; flex-direction: column; }
+}
+@media (max-width: 760px) {
+  .learn-top-inner { flex-wrap: wrap; row-gap: 6px; padding-block: 8px; min-height: 0; }
+}
+@media (min-width: 1100px) {
+  .chon-layout { display: grid; grid-template-columns: 270px minmax(0, 760px); justify-content: center; gap: 28px; width: min(1100px, calc(100% - 48px)); margin-inline: auto; }
+  .chon-layout .learn-main { width: 100%; margin-inline: 0; }
+}
+
+/* Thanh trên: trang chủ + trang học */
+.learn-top { position: sticky; top: 0; z-index: 30; color: var(--ink); background: var(--surface); border-bottom: 1px solid var(--line); box-shadow: var(--shadow-sm); }
+
+.learn-top { border-bottom: 1px solid var(--line); }
+.learn-user { background: var(--surface-2); color: var(--ink); }
+
+.learn-tools { display: flex; align-items: center; gap: 8px; }
+@media print {
+  body { background: #fff !important; }
+  .learn-top, .no-print, .back-link, .dash-head, .adm-alert, .login-cards-wrap .dash-card-head button { display: none !important; }
+  .login-cards-wrap { box-shadow: none; padding: 0; }
+  .login-card { border-color: #999; color: #000; }
+}
+/* Điện thoại (thanh trên cùng xuống 2 dòng): thanh trên cùng cuộn theo trang để nhường chỗ cho nội dung;
+   chỉ thanh làm bài / làm đề dính ở đầu màn hình. Chiều cao thật được đo bởi HeaderOffset (--learn-top-h). */
+@media (max-width: 760px) {
+  .learn-top { position: relative; }
+}
+
+.learn-heading.cb-heading { display: flex; align-items: center; gap: 10px; }
+@media (max-width: 760px) {
+  /* đang làm câu hỏi: ẩn menu chung, thanh làm bài lên sát đầu màn hình */
+  body:has(.quiz-bar) .learn-top { display: none; }
+  .milo-trail { margin: -10px -6px 0; }
+  .milo-trail svg { max-height: 58px; }
+  .question-tools .swap-count { padding: 0 6px; font-size: 13px; }
+
+  /* --- 2. chọn bài --- */
+  .cb-list > .lesson-row.cb-card { gap: 6px; padding: 12px 14px; }
+  .cb-card .lesson-no { width: 42px; height: 42px; font-size: 20px; font-weight: 800; }
+  .cb-card .lesson-info { padding: 2px 0 0 54px; min-height: 42px; }
+  .cb-card .lesson-info h3 { font-size: 17px; padding-right: 78px; }
+  .cb-card .lesson-info p { -webkit-line-clamp: 1; font-size: 14px; }
+  .cb-card .lesson-info .lesson-meta { margin-top: 2px; font-size: 14px; }
+  .lesson-actions.cb-actions { padding-top: 8px; gap: 6px; }
+  .lesson-actions.cb-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .cb-tools .muc-select select { min-height: 44px; }
+}
+
+/* thanh đầu trang: chỉ một đường kẻ mảnh, không đổ bóng */
+.learn-top { box-shadow: none; }
+
+/* chân trang: liên kết đủ to để ngón tay bấm */
+
+.learn-top .brand { display: inline-flex; align-items: center; min-height: 44px; }
+.tsh .learn-top { display: none; }
+
+/* bảng câu hỏi: khung gỗ, nền kem */
+.qz .learn-main { width: min(860px, calc(100% - 24px)); padding-top: 14px; }
+/* ===== Rà soát UI/UX 11/2026: tràn ngang, độ tương phản, trạng thái chưa rõ ===== */
+/* Header khu học tập: 761–1199px không còn đẩy nút Đăng nhập ra ngoài màn hình */
+@media (max-width: 1199px) {
+  .learn-top-inner { gap: 10px; }
+  .learn-tools { gap: 4px; flex: none; }
+}
+/* Điện thoại: logo + nút cùng một hàng, menu hàng dưới (bớt một hàng header) */
+@media (max-width: 560px) {
+  .learn-top-inner { column-gap: 6px; }
+  .learn-tools { margin-left: auto; gap: 2px; }
+}
+.cb-heading-row .learn-heading { margin: 0; }
+.tsh-main > .dash.wrap:has(> .class-manager) { padding-top: 14px; }
+/* ===== Trang chủ 11/2026: thanh trên dày hơn + nút Dùng thử, hàng "Tôi là", tiêu đề một kiểu, FAQ mở/đóng, bìa vở vuốt ngang trên điện thoại ===== */
+@media (min-width: 901px) {
+  .learn-top-inner { min-height: 76px; }
+}
+@media (min-width: 901px) {
+  .learn-top-inner.wrap { width: min(1320px, calc(100% - 40px)); }
+}

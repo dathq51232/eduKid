@@ -1,5 +1,6 @@
 import BillingAdmin from '@/components/admin/BillingAdmin';
 import { FEATURES } from '@/lib/features';
+import '@/styles/adm.css';
 
 // Thu phí học sinh (migration 0018) — đang ẩn khỏi menu; bật: NEXT_PUBLIC_FEATURE_THU_PHI=on rồi Redeploy.
 export default function BillingPage() {

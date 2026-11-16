@@ -14,6 +14,11 @@ import { fmtClock, reasonText } from '@/lib/chess/game';
 import { EMOTES, ERROR_TEXT } from '@/lib/chess/online-rules';
 import { notifyTurn, sfx } from '@/lib/chess/sound-pref';
 import BoardStage from '@/components/chess/BoardView';
+import '@/styles/chl.css';
+import '@/styles/chs.css';
+import '@/styles/ct.css';
+import '@/styles/btn.css';
+import '@/styles/xq.css';
 
 const other = (c: XSide): XSide => (c === 'w' ? 'b' : 'w');
 const ptOf = (s: string) => ({ f: s.charCodeAt(0) - 97, r: 9 - Number(s[1]) });

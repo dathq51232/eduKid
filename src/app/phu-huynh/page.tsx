@@ -19,6 +19,16 @@ import type { Contact } from '@/lib/classroom/class-tools';
 import { getViewer } from '@/lib/auth/viewer';
 import GuidedTour, { TourHelpButton } from '@/components/tour/GuidedTour';
 import { createClient } from '@/lib/supabase/server';
+import '@/styles/adm.css';
+import '@/styles/fam.css';
+import '@/styles/gt.css';
+import '@/styles/ph.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/games.css';
+import '@/styles/parent.css';
+import '@/styles/result.css';
+import '@/styles/tone.css';
 
 export const metadata: Metadata = { title: 'Phụ huynh · EduChain Kids' };
 export const dynamic = 'force-dynamic';

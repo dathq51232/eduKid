@@ -6,6 +6,10 @@ import { Check, Copy, QrCode as QrIcon } from 'lucide-react';
 import QrCode from '@/components/billing/QrCode';
 import { createClient } from '@/lib/supabase/client';
 import { PLAN_NAME, billingError, fmtDay, vietQrPayload, vnd, type BillingPublic, type Plan } from '@/lib/billing';
+import '@/styles/adm.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
+import '@/styles/pay.css';
 
 type Req = { id: string; code: string; plan: Plan; amount: number; created_at: string };
 

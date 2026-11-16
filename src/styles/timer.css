@@ -1,0 +1,19 @@
+/* Kiểu riêng khu vực "timer-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Chọn âm thanh đồng hồ đếm ngược (màn hình bắt đầu làm bài) */
+.timer-sound { margin: 0; padding: 12px 14px; border: 2px solid var(--rule); border-radius: 14px; background: var(--bg-f7faff); }
+.timer-sound legend { display: inline-flex; align-items: center; gap: 6px; padding: 0 6px; font-weight: 800; }
+.timer-sound-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.timer-sound-option { position: relative; display: block; cursor: pointer; }
+.timer-sound-option input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.timer-sound-option > span { display: grid; gap: 2px; height: 100%; padding: 8px 10px; border: 2px solid var(--rule); border-radius: 12px; background: var(--bg-ffffff); line-height: 1.3; }
+.timer-sound-option small { color: var(--muted); font-size: 13px; }
+.timer-sound-option input:checked + span { border-color: var(--blue-deep); background: var(--bg-e1ebff); box-shadow: inset 0 0 0 1px var(--blue-deep); }
+.timer-sound-option input:focus-visible + span { outline: 3px solid var(--yellow); outline-offset: 2px; }
+@media (max-width: 560px) { .timer-sound-options { grid-template-columns: 1fr; } }
+@media (max-width: 760px) {
+  /* âm thanh đồng hồ: ba lựa chọn nằm một hàng, bỏ dòng giải thích dài */
+  .timer-sound-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .timer-sound-option small { display: none; }
+  .timer-sound-option span { min-height: 48px; display: grid; place-items: center; text-align: center; }
+}

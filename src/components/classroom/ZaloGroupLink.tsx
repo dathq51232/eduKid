@@ -9,6 +9,13 @@ import { Copy, Link2, MessageCircle, Pencil, Printer, QrCode as QrIcon, X } from
 import { createClient } from '@/lib/supabase/client';
 import QrCode from '@/components/billing/QrCode';
 import { normalizeZaloGroup } from '@/lib/classroom/class-tools';
+import '@/styles/adm.css';
+import '@/styles/ct.css';
+import '@/styles/diary.css';
+import '@/styles/pc.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/zg.css';
 
 type Props = { classId: string; className: string; /** có thì nút chính là "Chép thông báo & mở nhóm" */ notice?: string; onCopied?: (ok: boolean) => void; variant?: 'diary' | 'contacts' };
 

@@ -9,6 +9,8 @@ import { createClient } from '@/lib/supabase/server';
 import type { NavCounts } from '@/lib/admin/insights';
 import { AdminProvider } from '@/components/admin/AdminContext';
 import { getStaffContext } from '@/lib/auth/staff';
+import '@/styles/adm.css';
+import '@/styles/auth.css';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Quản trị — EduChain Kids', robots: { index: false, follow: false } };

@@ -7,6 +7,8 @@ import { answerKeyOf, learnerQuestionOf } from '@/lib/admin/questions';
 import { gradeLocal, isAnswered } from '@/lib/grading';
 import type { AnswerValue } from '@/lib/types';
 import type { QuestionDraft } from '@/lib/admin/types';
+import '@/styles/adm.css';
+import '@/styles/question.css';
 
 // Xem câu hỏi đúng như học sinh thấy và thử trả lời (chấm tại chỗ, không lưu gì).
 export default function QuestionPreview({ draft, onClose }: { draft: QuestionDraft; onClose: () => void }) {

@@ -6,6 +6,10 @@ import { useEffect, useRef, useState } from 'react';
 import type React from 'react';
 import { Crop as CropIcon, X } from 'lucide-react';
 import type { Crop } from '@/lib/deck/types';
+import '@/styles/ct.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/icr.css';
 
 const RATIOS: { k: string; label: string; r: number | null }[] = [
   { k: 'free', label: 'Tự do', r: null }, { k: '1', label: 'Vuông 1:1', r: 1 }, { k: '43', label: '4:3', r: 4 / 3 },

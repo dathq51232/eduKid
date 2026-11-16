@@ -1,0 +1,47 @@
+/* Kiểu riêng khu vực "s3h-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* ===== Xưởng bài giảng 3D (0034): danh sách bài (s3h-) và trình soạn / trình chiếu (s3d-) ===== */
+.s3h-lead { margin: 6px 0 14px; max-width: 70ch; color: var(--muted); }
+.s3h-tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 5px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); width: fit-content; max-width: 100%; }
+.s3h-tabs button { min-height: 38px; padding: 0 14px; border: 0; border-radius: 10px; background: none; color: var(--muted); font: inherit; font-weight: 700; cursor: pointer; }
+.s3h-tabs button span { margin-left: 4px; padding: 1px 7px; border-radius: 999px; background: var(--line); font-size: 12px; }
+.s3h-tabs button[aria-selected="true"] { background: var(--surface); color: var(--blue); box-shadow: 0 2px 8px rgb(20 40 80 / .08); }
+.s3h-empty { margin-top: 14px; display: grid; justify-items: center; gap: 6px; padding: 32px 16px; border: 1.5px dashed var(--line-strong); border-radius: 18px; text-align: center; color: var(--muted); }
+.s3h-empty svg { width: 36px; height: 36px; color: var(--blue); }
+.s3h-empty b { color: var(--ink); font-size: 17px; }
+.s3h-cards { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.s3h-card { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.s3h-card-main { display: grid; gap: 4px; color: var(--ink); text-decoration: none; }
+.s3h-card-main b { font-size: 16.5px; }
+.s3h-card-main small { color: var(--muted); }
+.s3h-card-act { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.s3h-badge { justify-self: start; padding: 2px 10px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 12.5px; font-weight: 700; }
+.s3h-filter { margin: 14px 0 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.s3h-grades { display: flex; flex-wrap: wrap; gap: 6px; }
+.s3h-grades button { min-height: 36px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.s3h-grades button span { color: var(--muted); font-weight: 500; font-size: 12px; }
+.s3h-grades button[aria-pressed="true"] { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.s3h-search { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); flex: 1 1 180px; max-width: 280px; }
+.s3h-search svg { width: 16px; height: 16px; color: var(--muted); }
+.s3h-search input { border: 0; background: none; color: var(--ink); font: inherit; min-width: 0; width: 100%; outline: none; }
+.s3h-filter select { min-height: 36px; padding: 0 8px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; }
+.s3h-chk { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; }
+.s3h-note { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; max-width: 90ch; }
+.s3h-stems { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.s3h-stem { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.s3h-stem.fit-thap { opacity: .8; }
+.s3h-no { display: grid; place-items: center; min-height: 40px; border-radius: 12px; background: var(--blue-soft); color: var(--blue); font-weight: 700; font-size: 13px; }
+.s3h-stem-main { display: grid; gap: 3px; min-width: 0; }
+.s3h-stem-main b { font-size: 15.5px; }
+.s3h-meta { color: var(--muted); font-size: 13px; }
+.s3h-meta i { font-style: normal; opacity: .8; }
+.s3h-stem details { font-size: 13px; color: var(--muted); }
+.s3h-stem details summary { cursor: pointer; font-weight: 600; color: var(--link); }
+.s3h-stem details ul { margin: 4px 0 0; padding-left: 18px; columns: 2; }
+.s3h-stem-act { display: grid; justify-items: end; gap: 8px; }
+.s3h-fit { padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.s3h-fit.is-cao { background: rgb(34 197 94 / .15); color: var(--green); }
+.s3h-fit.is-vua { background: rgb(245 158 11 / .18); color: #a16207; }
+.s3h-fit.is-thap { background: var(--surface-2); color: var(--muted); }
+@media (max-width: 640px) { .s3h-stem { grid-template-columns: 1fr; } .s3h-no { justify-self: start; padding: 0 10px; } .s3h-stem-act { justify-items: start; } .s3h-stem details ul { columns: 1; } }
+.s3h.is-embedded .s3h-h2 { margin: 0; font-size: 20px; }

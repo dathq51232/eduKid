@@ -13,6 +13,10 @@ import { TIME_CONTROLS, fmtClock, reasonText } from '@/lib/chess/game';
 import { sfx } from '@/lib/chess/sound-pref';
 import { BoardAlerts, LiveClock, SoundButton, TurnBar } from '@/components/chess/ChessParts';
 import BoardStage from '@/components/chess/BoardView';
+import '@/styles/chs.css';
+import '@/styles/ct.css';
+import '@/styles/btn.css';
+import '@/styles/xq.css';
 
 type Pick = 'w' | 'b' | 'x';
 type Setup = { pick: Pick; level: BotLevel; tc: string };

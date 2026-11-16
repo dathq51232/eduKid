@@ -7,6 +7,10 @@ import { Check, Coffee, ListTodo, Undo2 } from 'lucide-react';
 import { TOOLS, quickTools, toolHref, type ToolKey } from '@/lib/classroom/teacher-nav';
 import { TOOL_ICON, USAGE_KEY } from '@/components/classroom/TeacherShell';
 import type { TodayItem } from '@/lib/classroom/today';
+import '@/styles/ct.css';
+import '@/styles/tdy.css';
+import '@/styles/tsh.css';
+import '@/styles/dash.css';
 
 const TONE_TAG: Record<TodayItem['tone'], string | null> = { urgent: 'Gấp', soon: 'Nên làm', info: null, done: null };
 

@@ -5,6 +5,7 @@ import { FileUp } from 'lucide-react';
 import { csvToDrafts, type CsvItem } from '@/lib/admin/csv';
 import { describeAnswer } from '@/lib/admin/questions';
 import { TYPE_LABEL, type CatalogForm, type CatalogOutcome, type QuestionDraft } from '@/lib/admin/types';
+import '@/styles/adm.css';
 
 type Props = {
   forms: CatalogForm[];

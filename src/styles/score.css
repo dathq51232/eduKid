@@ -1,0 +1,23 @@
+/* Kiểu riêng khu vực "score-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.score-box { display: flex; justify-content: space-around; gap: 16px; max-width: 420px; margin-inline: auto; padding: 14px; border: 2px solid var(--line-strong); border-radius: 14px; background: var(--bg-ffffff); }
+.score-box dt { color: var(--muted); font-size: 15px; }
+.score-box dd { margin: 0; font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 34px; font-weight: 800; line-height: 1.2; }
+
+/* Kết quả: điểm, nhận xét, cấp độ */
+.score-box-3 { max-width: 560px; }
+.score-box dd.is-time { font-size: 22px; line-height: 1.6; }
+@media (max-width: 520px) {
+  .score-box-3 { flex-wrap: wrap; }
+}
+.score-chip { display: inline-block; min-width: 52px; padding: 2px 10px; border-radius: 999px; background: var(--tile-bg); color: var(--tile-fg); font-size: 14px; font-weight: 700; text-align: center; }
+.score-chip.is-good { --tile-bg: #ddf7e7; --tile-fg: #15803d; }
+.score-chip.is-mid { --tile-bg: #fff3d0; --tile-fg: #8a5800; }
+.score-chip.is-low { --tile-bg: #ffe5e5; --tile-fg: #c22f35; }
+:root[data-theme="dark"] .score-chip.is-good { --tile-bg: #12372a; --tile-fg: #6ee7a8; }
+:root[data-theme="dark"] .score-chip.is-mid { --tile-bg: #3a3017; --tile-fg: #ffd66b; }
+:root[data-theme="dark"] .score-chip.is-low { --tile-bg: #3d1d22; --tile-fg: #ff9a9a; }
+
+/* Khối nội dung: viền mảnh 1px thay cho viền 2px, cùng một kiểu bóng nhẹ */
+.games-hero, .lesson, .lesson-row, .question-card, .intro-card, .score-box, .review-item, .empty-state,
+.points-card, .comment-card, .dialog-card, .back-link, .icon-button, .quiz-count,
+.game-filter, .game-grade select, .notebook { border-width: 1px; }

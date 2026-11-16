@@ -1,0 +1,112 @@
+/* Kiểu riêng khu vực "mk-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.sync-note.is-ok { color: #15803d; }
+.adm-card { display: grid; gap: 16px; padding: 20px; border: 1px solid var(--adm-line); border-radius: 14px; background: var(--bg-ffffff); box-shadow: 0 1px 2px rgb(var(--ink-rgb) / .05); }
+.adm-card .adm-card { box-shadow: none; background: var(--bg-fbfcfe); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 10px 24px; border: 0; border-radius: 999px; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: transform 160ms ease, box-shadow 160ms ease; }
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.btn-sm { min-height: 44px; padding: 8px 20px; font-size: 16px; }
+.btn-outline { color: var(--brand-blue); background: var(--surface); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.btn-outline:hover { box-shadow: inset 0 0 0 2px var(--brand-blue), var(--shadow-md); }
+.pin-dots span.is-on { background: var(--brand-blue); box-shadow: none; }
+.role-pick label.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.sr-award-form .btn { justify-self: start; }
+.gaps-periods .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.plan-edit .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.fx-toggle.is-on { background: var(--bg-fff3d1); color: var(--fg-7a4d00); }
+
+/* Nút .btn bị tắt (vd chưa đủ điều kiện): nhìn rõ là đang tắt, cả nền sáng lẫn nền tối */
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; box-shadow: none; transform: none; filter: saturate(.4); }
+.home .btn { transition: transform 150ms ease, box-shadow 150ms ease; }
+.home .btn:hover { transform: translateY(-2px); }
+.home .btn:active { transform: translateY(2px); box-shadow: none; }
+
+/* nút */
+.btn { transition: transform 120ms ease, box-shadow 120ms ease, background-color 160ms ease; }
+.btn-outline { box-shadow: inset 0 0 0 2px var(--brand-blue), 0 4px 0 rgb(36 87 197 / .28); }
+.btn-outline:hover { box-shadow: inset 0 0 0 2px var(--brand-blue), 0 6px 0 rgb(36 87 197 / .28); }
+.btn:active:not(:disabled) { transform: translateY(2px); }
+.btn-outline:active:not(:disabled) { box-shadow: inset 0 0 0 2px var(--brand-blue), 0 2px 0 rgb(36 87 197 / .28); }
+@media (prefers-reduced-motion: reduce) { .btn:hover, .btn:active:not(:disabled) { transform: none; } }
+/* công cụ trên lớp: nút gọn hơn để vừa một hàng */
+.ct .btn { min-height: 44px; padding: 8px 16px; font-size: 15px; }
+.ct .btn-sm { min-height: 38px; padding: 6px 14px; font-size: 14px; }
+.praise-spots .mini-btn.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.qz-round.fx-toggle.is-on { background: radial-gradient(circle at 35% 30%, #ffb3e0, #d6409f 70%); box-shadow: 0 4px 0 #a32b78, 0 8px 16px rgb(120 20 80 / .25); }
+.pen-colors button.is-on, .wb-colors button.is-on { box-shadow: 0 0 0 3px #a78bfa; }
+.mn-amount small.is-bad, .fd-new small.is-bad, .mn-form > small.is-bad { color: #c2323a; }
+.mk-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.mk-head h1 { margin: 0 0 4px; }
+.mk-note { position: sticky; top: 8px; z-index: 5; margin: 0; padding: 10px 14px; border-radius: 12px; font-weight: 600; box-shadow: var(--shadow-sm); }
+.mk-note.is-ok { background: color-mix(in srgb, #16a34a 14%, var(--surface)); color: #15803d; }
+.mk-note.is-bad { background: color-mix(in srgb, #dc2626 12%, var(--surface)); color: #b91c1c; }
+:root[data-theme="dark"] .mk-note.is-ok { color: #86efac; }
+:root[data-theme="dark"] .mk-note.is-bad { color: #fca5a5; }
+.mk-row-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.mk-tpl { display: flex; flex-wrap: wrap; gap: 6px; }
+.mk-tpl button { min-height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface-2); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.mk-tpl button:hover { border-color: var(--brand-blue); color: var(--brand-blue); }
+.mk-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mk-fields > label { display: grid; gap: 4px; font-size: 14px; font-weight: 700; }
+.mk-fields small { color: var(--muted); font-weight: 500; }
+.mk-wide { grid-column: 1 / -1; }
+.mk-media { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.mk-pick { cursor: pointer; }
+.mk-files { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.mk-files button { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: var(--surface-2); color: var(--ink); cursor: pointer; }
+.mk-files svg { width: 14px; height: 14px; }
+.mk-consent { display: flex; align-items: flex-start; gap: 6px; font-size: 13.5px; font-weight: 600; }
+.mk-consent input { margin-top: 3px; }
+.mk-media > small { flex-basis: 100%; }
+.mk-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.mk-out { display: grid; gap: 12px; }
+.mk-cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+@media (min-width: 1280px) { .mk-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.mk-card { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 14px; border: 1px solid var(--line); border-top: 4px solid var(--mk-c, var(--line)); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.mk-card.is-facebook { --mk-c: #1d6fe0; }
+.mk-card.is-tiktok { --mk-c: #18181b; }
+.mk-card.is-zalo { --mk-c: #0068ff; }
+:root[data-theme="dark"] .mk-card.is-tiktok { --mk-c: #a1a1aa; }
+.mk-card header { display: flex; align-items: center; gap: 8px; }
+.mk-count { margin-left: auto; color: var(--muted); font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.mk-count.is-over { color: #b91c1c; }
+:root[data-theme="dark"] .mk-count.is-over { color: #fca5a5; }
+.mk-hint { margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+.mk-card textarea { flex: 1; min-height: 180px; max-height: 70vh; font-size: 14px; field-sizing: content; }
+.mk-tip { display: flex; align-items: flex-start; gap: 6px; flex-basis: 100%; margin: 0; padding: 8px 12px; border-radius: 10px; background: color-mix(in srgb, var(--brand-blue) 9%, var(--surface)); font-size: 13.5px; line-height: 1.45; }
+.mk-tip svg { flex: none; width: 16px; height: 16px; margin-top: 2px; color: var(--brand-blue); }
+.mk-bio { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0; font-size: 12.5px; color: var(--muted); }
+.mk-bio code { padding: 2px 6px; border-radius: 6px; background: var(--surface-2); color: var(--ink); overflow-wrap: anywhere; }
+.mk-bio button { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.mk-bio svg { width: 13px; height: 13px; }
+.mk-card-act { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: auto; padding-top: 4px; }
+.mk-card-act .mk-done { margin-left: auto; }
+.mk-done { display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 0 10px; border: 1px dashed var(--line-strong); border-radius: 10px; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.mk-done svg { width: 15px; height: 15px; }
+.mk-done.is-on { border-style: solid; border-color: #16a34a; background: color-mix(in srgb, #16a34a 12%, var(--surface)); color: #15803d; }
+:root[data-theme="dark"] .mk-done.is-on { color: #86efac; }
+
+/* Nhãn kênh: luôn có chữ viết tắt (không phân biệt chỉ bằng màu) */
+.mk-pf { display: inline-grid; place-items: center; min-width: 34px; height: 24px; padding: 0 6px; border-radius: 7px; background: #64748b; color: #fff; font-size: 11.5px; font-weight: 800; }
+.is-facebook .mk-pf, .mk-pf.is-facebook { background: #1d6fe0; }
+.is-tiktok .mk-pf, .mk-pf.is-tiktok { background: #18181b; }
+.is-zalo .mk-pf, .mk-pf.is-zalo { background: #0068ff; }
+:root[data-theme="dark"] .is-tiktok .mk-pf, :root[data-theme="dark"] .mk-pf.is-tiktok { background: #3f3f46; }
+.mk-pf.is-off { background: var(--surface-2); color: var(--muted); }
+
+.mk-table-wrap { overflow-x: auto; }
+.mk-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.mk-table th, .mk-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.mk-table th { color: var(--muted); font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.mk-table td small { display: block; color: var(--muted); font-size: 12px; }
+.mk-table .is-n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mk-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.mk-list li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 12px; }
+.mk-list li.is-cur { border-color: var(--brand-blue); background: color-mix(in srgb, var(--brand-blue) 6%, var(--surface)); }
+.mk-list-main { display: grid; flex: 1; min-width: 0; padding: 4px; border: 0; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.mk-list-main b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mk-list-main small { color: var(--muted); font-size: 12.5px; }
+.mk-list-ch { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.mk-del { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: #b91c1c; cursor: pointer; }
+.mk-del svg { width: 16px; height: 16px; }
+@media (max-width: 640px) { .mk-fields { grid-template-columns: minmax(0, 1fr); } .mk-list li { flex-wrap: wrap; } }

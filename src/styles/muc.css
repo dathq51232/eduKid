@@ -1,0 +1,23 @@
+/* Kiểu riêng khu vực "muc-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.muc-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.muc-option { display: grid; gap: 4px; padding: 10px; border: 2px solid var(--line-strong); border-bottom-width: 4px; border-radius: 12px; background: var(--bg-ffffff); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.muc-option strong { font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 20px; }
+.muc-option small { color: var(--muted); font-size: 13px; line-height: 1.35; }
+.muc-option[aria-checked="true"] { background: var(--bg-e1ebff); box-shadow: 0 0 0 3px var(--blue) inset; }
+.muc-option.is-m1 strong { color: var(--green); }
+.muc-option.is-m2 strong { color: var(--link); }
+.muc-option.is-m3 strong { color: var(--fg-b5480f); }
+@media (max-width: 520px) { .muc-picker { grid-template-columns: 1fr; } .muc-option { grid-template-columns: 90px 1fr; align-items: center; } }
+
+/* Mức độ trên trang chọn bài */
+.muc-all { margin: 28px 0 8px; padding: 20px; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--bg-ffffff); box-shadow: var(--shadow-md); }
+.muc-all h2 { margin: 0; font-size: 24px; }
+.muc-all > p { margin: 8px 0 14px; color: var(--muted); font-size: 16px; line-height: 1.5; }
+.muc-all .muc-all-note { margin: 14px 0 0; font-size: 15px; }
+.muc-select { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
+.muc-select select { min-height: 44px; padding: 6px 10px; border: 2px solid var(--line-strong); border-radius: 10px; background: var(--bg-ffffff); color: var(--ink); font: inherit; font-weight: 600; }
+.muc-all-note svg { display: inline-block; vertical-align: -3px; }
+
+.muc-all.cb-muc { margin: 20px 0 6px; padding: 16px 18px; border-radius: 22px; }
+.cb-muc-picker .muc-option { border-radius: 16px; }
+.cb-tools .muc-select { flex: 1 1 140px; min-width: 0; }

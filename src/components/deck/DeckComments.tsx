@@ -7,6 +7,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { Check, Copy, Link2, MessageSquare, RotateCcw, Send, Trash2 } from 'lucide-react';
 import type { Slide } from '@/lib/deck/types';
 import { addComment, deleteComment, ownerComments, reviewError, reviewHref, reviewToken, setResolved, setReviewLink, timeAgo, type DeckComment } from '@/lib/deck/review';
+import '@/styles/cv.css';
+import '@/styles/dk.css';
+import '@/styles/dkc.css';
+import '@/styles/btn.css';
 
 export default function DeckComments({ sb, deckId, slides, cur, onGo, onCount }: {
   sb: SupabaseClient | null; deckId: string; slides: Slide[]; cur: number; onGo: (i: number) => void; onCount?: (byslide: Record<string, number>) => void;

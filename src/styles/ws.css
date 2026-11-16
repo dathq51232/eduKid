@@ -1,0 +1,50 @@
+/* Kiểu riêng khu vực "ws-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+.adm-field { display: grid; gap: 6px; font-size: 14px; font-weight: 600; }
+.adm-field.is-inline { grid-template-columns: auto; min-width: 160px; }
+.adm-field.is-wide { grid-column: 1 / -1; }
+.pin-dots span.is-on { background: var(--brand-blue); box-shadow: none; }
+.role-pick label.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.gaps-periods .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.plan-edit .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.fx-toggle.is-on { background: var(--bg-fff3d1); color: var(--fg-7a4d00); }
+.report-bar .adm-field { min-width: 200px; }
+.ws-pairs { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
+.ws-pair { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1.5px solid var(--line, #d6dde6); border-radius: 999px; cursor: pointer; font-size: 15px; }
+.ws-pair.is-on { border-color: #1e88e5; background: #e3f2fd; color: #0d47a1; }
+.ws-pair input { width: 16px; height: 16px; }
+.ws-check { flex-direction: row !important; align-items: center; gap: 8px; }
+.ws-check input { width: 20px !important; height: 20px; flex: none; min-height: 0; padding: 0; }
+.ws-check { align-self: end; padding-bottom: 10px; }
+.ws-pair small { font-size: 12px; opacity: .8; }
+.ws-pair.is-locked { cursor: not-allowed; opacity: .55; border-style: dashed; }
+.ws-pair.is-locked svg { width: 14px; height: 14px; }
+.ws-pair .ws-new { background: #43a047; color: #fff; border-radius: 999px; padding: 0 7px; opacity: 1; font-weight: 700; }
+.ws-notes { margin: 0 0 12px; padding: 10px 14px 10px 30px; border: 1px dashed #ffb300; border-radius: 10px; background: #fff8e1; color: #6d4c00; font-size: 14px; }
+.ws-notes li + li { margin-top: 2px; }
+.ws-drag { cursor: grab; touch-action: none; }
+.ws-drag:active { cursor: grabbing; }
+.ws-drag-box { fill: transparent; stroke: transparent; stroke-width: .5; stroke-dasharray: 1.5 1; }
+.ws-drag:hover .ws-drag-box, .ws-drag.is-on .ws-drag-box { stroke: #3b82f6; }
+/* in: chỉ in các trang vở, đúng khổ A4 */
+.ws-print-root { display: none; }
+@media print {
+  body.ws-printing > *:not(.ws-print-root) { display: none !important; }
+  body.ws-printing { background: #fff !important; margin: 0 !important; }
+  body.ws-printing .ws-print-root { display: block; }
+  html:has(body.ws-printing), body.ws-printing { margin: 0 !important; padding: 0 !important; height: auto !important; min-height: 0 !important; overflow: visible !important; }
+  /* co trang vở vừa đúng vùng in (kể cả khi máy in tự thêm lề) để không tràn sang trang sau */
+  .ws-print-page { display: block; width: auto; height: calc(100vh - 0.6mm); max-width: 100%; margin: 0 auto; break-after: page; break-inside: avoid; overflow: hidden; }
+  .ws-print-page:last-child { break-after: auto; }
+}
+.praise-spots .mini-btn.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.qz-round.fx-toggle.is-on { background: radial-gradient(circle at 35% 30%, #ffb3e0, #d6409f 70%); box-shadow: 0 4px 0 #a32b78, 0 8px 16px rgb(120 20 80 / .25); }
+.pen-colors button.is-on, .wb-colors button.is-on { box-shadow: 0 0 0 3px #a78bfa; }
+.ws-warn { margin: 0; padding: 8px 12px; border-radius: 10px; background: #fee2e2; color: #991b1b; font-size: 14px; font-weight: 600; }
+.ws-count { display: flex; align-items: center; gap: 8px; }
+.ws-count input[type="range"] { flex: 1; accent-color: #7c3aed; }
+.ws-count input[type="number"] { width: 72px; }
+.adm-filters .adm-field { min-width: 160px; }
+:root[data-theme="dark"] .ws-pair.is-on { background: color-mix(in srgb, #0d47a1 24%, var(--surface)); color: color-mix(in srgb, #0d47a1 40%, #fff); }
+:root[data-theme="dark"] .ws-notes { background: color-mix(in srgb, #6d4c00 24%, var(--surface)); color: color-mix(in srgb, #6d4c00 40%, #fff); }
+:root[data-theme="dark"] .ws-warn { background: color-mix(in srgb, #991b1b 24%, var(--surface)); color: color-mix(in srgb, #991b1b 40%, #fff); }

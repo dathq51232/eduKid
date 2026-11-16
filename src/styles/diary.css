@@ -1,0 +1,297 @@
+/* Kiểu riêng khu vực "diary-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.wrap { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+
+/* Nút bấm to, có cạnh dưới dày như nút thật */
+.button, .top-cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 12px 24px; border: 0; border-radius: 14px; border-bottom: 4px solid rgb(var(--ink-rgb) / .3); font: inherit; font-size: 17px; font-weight: 600; cursor: pointer; }
+.button:active, .top-cta:active { transform: translateY(2px); border-bottom-width: 2px; }
+.button:disabled { color: var(--muted); background: var(--bg-e6ebf3); border-bottom-color: var(--bg-c5cfdd); cursor: not-allowed; transform: none; }
+.progress-fill.is-green { background: var(--green-solid); }
+
+@media (max-width: 900px) {
+  .wrap { width: min(100% - 40px, 680px); }
+  
+  
+  
+  .notebook { margin-right: 14px; }
+  
+  
+  
+  
+  .footer { flex-wrap: wrap; padding-block: 20px; }
+}
+@media (max-width: 520px) {
+  body { font-size: 17px; }
+  .wrap { width: calc(100% - 32px); }
+  .brand { font-size: 22px; }
+  .top-cta { padding: 10px 14px; font-size: 15px; }
+  
+  .notebook { padding-left: 62px; }
+  .notebook::before { left: 42px; }
+  .notebook p.line { font-size: 22px; }
+  .journey { padding-block: 64px; }
+  
+  
+  .answers { grid-template-columns: repeat(2, 1fr); }
+  
+  .footer { align-items: flex-start; flex-direction: column; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  
+  .button:active, .top-cta:active { transform: none; }
+  .progress-fill { transition: none; }
+}
+
+/* Nút dùng chung */
+.button, .top-cta { border-radius: 999px; border-bottom: 0; box-shadow: var(--shadow-sm); font-weight: 700; }
+.button:active, .top-cta:active { transform: translateY(1px); }
+.button:disabled { box-shadow: none; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 10px 24px; border: 0; border-radius: 999px; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: transform 160ms ease, box-shadow 160ms ease; }
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.btn-sm { min-height: 44px; padding: 8px 20px; font-size: 16px; }
+.btn-primary { color: #fff; background: var(--blue); box-shadow: var(--shadow-sm); }
+.btn-yellow { color: #1e2b4a; background: var(--brand-yellow); box-shadow: 0 4px 0 #e0a800; }
+.home-actions .btn-yellow { min-height: 54px; padding: 12px 30px; font-size: 18px; box-shadow: 0 6px 16px rgb(224 168 0 / .35); }
+
+.dash { display: grid; gap: 22px; padding-block: 28px 64px; }
+.dash-card { display: grid; gap: 12px; padding: 22px; border-radius: 22px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.dash-muted { color: var(--muted); font-size: 15px; }
+.roster-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.sr-input.is-dirty { border-color: #b45309; box-shadow: 0 0 0 1px #b45309; }
+.sr-award-form .btn { justify-self: start; }
+.sr-wide td.is-dirty { box-shadow: inset 0 -3px 0 #b45309; }
+.assign-paper-form .dash-muted { flex-basis: 100%; margin: 0; font-size: 13px; }
+.praise-dl .btn-primary { grid-column: 1 / -1; }
+@media print {
+  .nd30-head { width: 100%; border-collapse: collapse; margin-bottom: 6pt; }
+  .nd30-head td { border: 0; padding: 0; text-align: center; vertical-align: top; }
+  .nd30-org { font-size: 13pt; text-transform: uppercase; }
+  .nd30-nation { font-size: 12pt; font-weight: bold; }
+  .nd30-motto { font-size: 13pt; font-weight: bold; }
+  .nd30-rule { border-collapse: collapse; margin: 1pt auto 4pt; }
+  .nd30-rule td { border: 0; border-top: 1px solid #000; font-size: 2pt; line-height: 2pt; padding: 0; }
+  .nd30-place { font-size: 13pt; font-style: italic; }
+  .nd30-sign { width: 100%; border-collapse: collapse; margin-top: 12pt; }
+  .nd30-sign td { border: 0; padding: 0; vertical-align: top; }
+  .nd30-sign .role { font-size: 13pt; font-weight: bold; text-transform: uppercase; text-align: center; margin: 0; }
+  .nd30-sign .name { font-size: 14pt; font-weight: bold; text-align: center; }
+}
+
+/* Nút .btn bị tắt (vd chưa đủ điều kiện): nhìn rõ là đang tắt, cả nền sáng lẫn nền tối */
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; box-shadow: none; transform: none; filter: saturate(.4); }
+.home .btn { transition: transform 150ms ease, box-shadow 150ms ease; }
+.home .btn:hover { transform: translateY(-2px); }
+.home .btn:active { transform: translateY(2px); box-shadow: none; }
+.home .home-actions .btn-yellow, .home .btn-yellow { box-shadow: 0 4px 0 #d39b12; }
+
+/* nút */
+.btn { transition: transform 120ms ease, box-shadow 120ms ease, background-color 160ms ease; }
+.btn-primary { box-shadow: 0 4px 0 var(--blue-deep); }
+.btn-primary:hover { box-shadow: 0 6px 0 var(--blue-deep); }
+.btn-yellow { box-shadow: 0 4px 0 #d39b12; }
+.btn-yellow:hover { box-shadow: 0 6px 0 #d39b12; }
+.btn:active:not(:disabled) { transform: translateY(2px); }
+.btn-primary:active:not(:disabled) { box-shadow: 0 2px 0 var(--blue-deep); }
+.btn-yellow:active:not(:disabled) { box-shadow: 0 2px 0 #d39b12; }
+@media (prefers-reduced-motion: reduce) { .btn:hover, .btn:active:not(:disabled) { transform: none; } }
+
+.roster-table { font-variant-numeric: tabular-nums; }
+
+/* Gọi tên – Dò bài: KHÔNG tắt hiệu ứng theo prefers-reduced-motion — Windows tắt "Animation effects" làm vòng quay,
+   đua thú, trứng nở mất chuyển động; đây là trò chơi thầy cô chủ động bật trên màn chiếu. */
+
+/* ==========================================================================
+   SỔ LỚP HẰNG NGÀY — điểm danh, ghi chú, tin nhắn phụ huynh, tổng hợp tháng
+   ========================================================================== */
+.diary-page { max-width: 1320px; }
+.diary-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 18px; }
+.diary-head h1 { font-size: 30px; line-height: 1.15; }
+.diary-head p { color: var(--muted); font-weight: 600; }
+.diary-tabs { display: flex; gap: 6px; margin-left: auto; padding: 4px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); overflow-x: auto; max-width: 100%; }
+.diary-tabs button { min-height: 44px; padding: 8px 14px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); font: inherit; font-size: 15px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.diary-tabs button:hover { color: var(--ink); background: var(--surface-2); }
+.diary-tabs button[aria-pressed="true"] { background: var(--blue); color: #fff; box-shadow: 0 3px 0 var(--blue-deep); }
+.diary-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.diary-date { display: flex; align-items: center; gap: 6px; padding: 5px 6px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+.diary-date b { padding: 0 4px; font-size: 16px; white-space: nowrap; }
+.diary-date button { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 10px; background: var(--surface-2); color: var(--ink); cursor: pointer; }
+.diary-date button:disabled { opacity: .35; cursor: default; }
+.diary-date button svg { width: 20px; height: 20px; }
+.diary-date input { width: 40px; height: 40px; padding: 0; border: 0; border-radius: 10px; background: var(--surface-2); color: transparent; cursor: pointer; font: inherit; }
+.diary-date input::-webkit-calendar-picker-indicator { margin: 0 auto; cursor: pointer; }
+.diary-pill { display: inline-flex; align-items: center; min-height: 40px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; white-space: nowrap; }
+button.diary-pill { cursor: pointer; }
+.diary-pill.is-green { background: #ddf7e7; border-color: #9fdcbc; color: #116b33; }
+.diary-pill.is-red { background: #ffe5e5; border-color: #f3b3b5; color: #a8282e; }
+.diary-pill.is-amber { background: #fff3d1; border-color: #f0cf75; color: #7a4d00; }
+.diary-pill[aria-pressed="true"] { background: var(--blue); border-color: var(--blue); color: #fff; }
+.diary-saved { margin-left: auto; color: var(--muted); font-weight: 700; font-size: 15px; }
+.diary-saved.is-dirty { color: #7a4d00; }
+.diary-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; }
+.diary-grid > .dash-card { margin: 0; }
+.diary-grid h2 { font-size: 20px; }
+.diary-allin { margin-top: 10px; }
+.diary-roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.diary-st { position: relative; border-radius: 14px; border: 2px solid var(--line); background: var(--surface); }
+.diary-st-main { display: flex; flex-direction: column; gap: 6px; width: 100%; min-height: 72px; padding: 9px 10px 8px; border: 0; border-radius: 12px; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.diary-st-main:hover { background: var(--surface-2); }
+.diary-st-name { display: flex; align-items: center; gap: 7px; font-size: 15px; font-weight: 700; }
+.diary-st-name em { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--blue-soft); color: var(--brand-blue); font-size: 12px; font-style: normal; }
+.diary-st-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+/* 11/2026: thẻ tên gọn hơn — cao vừa đủ tên (52px), ô nhãn trống không chiếm chỗ, xếp được 3 cột trên laptop */
+@media (min-width: 641px) {
+  .diary-roster { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; }
+  .diary-st-main { min-height: 52px; gap: 4px; padding: 7px 10px; justify-content: center; }
+}
+.diary-st-tags:empty { display: none; }
+.diary-st-name { font-size: 14.5px; line-height: 1.25; }
+.diary-tag, .diary-ab { padding: 1px 8px; border-radius: 99px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.diary-tag.is-praise { background: #ddf7e7; color: #116b33; }
+.diary-tag.is-remind { background: #fff3d1; color: #7a4d00; }
+.diary-tag.is-note { background: var(--surface-2); color: var(--muted); }
+.diary-ab.is-unexcused { background: #ffe5e5; color: #a8282e; }
+.diary-ab.is-excused { background: #eee7ff; color: #5321a8; }
+.diary-st.is-unexcused, .diary-st.is-excused { background: #fff7f7; border-color: #f3b3b5; }
+.diary-st.is-excused { background: #faf7ff; border-color: #cdbcf5; }
+.diary-st.is-unexcused .diary-st-name { color: #a8282e; }
+.diary-st.is-sel { border-color: var(--blue); box-shadow: 0 0 0 3px rgb(36 87 197 / .18); }
+:root[data-theme="dark"] .diary-st.is-unexcused, :root[data-theme="dark"] .diary-st.is-excused { background: var(--surface); }
+.diary-quick { display: none; }
+.diary-legend { display: none; }
+.diary-panel { position: sticky; top: 90px; display: grid; gap: 8px; }
+.diary-panel-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.diary-panel-top h3 { font-size: 22px; }
+.diary-panel-empty { display: grid; gap: 10px; }
+.diary-ann { display: grid; gap: 6px; font-size: 14px; font-weight: 700; color: var(--muted); }
+.diary-ann-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.diary-ann-head small { font-weight: 600; }
+.diary-ann-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; counter-reset: ann; }
+.diary-ann-list li { display: flex; align-items: center; gap: 6px; counter-increment: ann; }
+.diary-ann-list li::before { content: counter(ann); flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--blue-soft); color: var(--brand-blue); font-size: 12px; }
+.diary-ann-list input, .diary-ann-add input { flex: 1; min-width: 0; min-height: 38px; padding: 6px 10px; border: 2px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; font-weight: 500; }
+.diary-ann-list input:focus-visible, .diary-ann-add input:focus-visible { outline: 3px solid var(--brand-blue); outline-offset: 1px; }
+.diary-ann-del { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; }
+.diary-ann-del svg { width: 17px; height: 17px; }
+.diary-ann-del:hover { background: #fde8e6; color: #b3261e; }
+:root[data-theme="dark"] .diary-ann-del:hover { background: #3d1d22; color: #ff9a9a; }
+.diary-ann-add { display: flex; gap: 6px; }
+.diary-hist { margin-top: 4px; padding: 10px 12px; border-radius: 14px; border: 2px dashed var(--line); }
+.diary-hist summary { cursor: pointer; font-size: 14px; font-weight: 700; color: var(--ink); }
+.diary-hist summary span { color: var(--muted); font-weight: 600; }
+.diary-hist[open] summary { margin-bottom: 10px; }
+.diary-hist-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; max-height: 340px; overflow-y: auto; }
+.diary-hist-list > li { padding: 8px 10px; border-radius: 12px; background: var(--surface-2); }
+.diary-hist-day { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; }
+.diary-hist-list ul { display: grid; gap: 2px; margin: 6px 0 0; padding: 0; list-style: none; }
+.diary-hist-list ul li { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 14px; font-weight: 500; color: var(--ink); }
+.diary-hist-list ul li span::before { content: "• "; color: var(--muted); }
+.diary-hist-list .diary-ann-del { width: 30px; height: 30px; }
+.diary-ann-undo { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 600; color: var(--ink); }
+.diary-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.diary-seg button, .diary-quick button { min-height: 48px; padding: 4px; border: 2px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--muted); font: inherit; font-size: 14px; font-weight: 700; line-height: 1.2; cursor: pointer; }
+.diary-sec { margin-top: 6px; color: var(--muted); font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.diary-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.diary-chip { min-height: 40px; padding: 6px 12px; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.diary-chip.is-praise { border-color: #9fdcbc; }
+.diary-chip.is-remind { border-color: #f0cf75; }
+.diary-chip.is-praise[aria-pressed="true"] { background: #ddf7e7; color: #116b33; }
+.diary-chip.is-remind[aria-pressed="true"] { background: #fff3d1; color: #7a4d00; }
+.diary-note, .diary-ann textarea, .diary-msg-edit { width: 100%; padding: 10px 12px; border: 2px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; font-weight: 500; resize: vertical; }
+.diary-note:focus-visible, .diary-ann textarea:focus-visible, .diary-msg-edit:focus-visible { outline: 3px solid var(--brand-blue); outline-offset: 1px; }
+.diary-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+.diary-mobile-bar { display: none; }
+/* tin nhắn */
+.diary-filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.diary-msgs { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.diary-msg { display: grid; grid-template-columns: 190px minmax(0, 1fr) auto; gap: 14px; align-items: start; padding: 12px 14px; border-radius: 16px; border: 2px solid var(--line); background: var(--surface); }
+.diary-msg-who b { display: block; font-size: 16px; }
+.diary-msg-who span { color: var(--muted); font-size: 13px; font-weight: 600; }
+.diary-bubble { padding: 10px 14px; border-radius: 4px 16px 16px 16px; background: #eef4ff; color: #1e2b4a; font-size: 15px; line-height: 1.55; }
+:root[data-theme="dark"] .diary-bubble { background: #1c2b4f; color: var(--ink); }
+.diary-msg-act { display: grid; gap: 6px; }
+.diary-side { display: grid; gap: 10px; }
+.diary-sample { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); color: var(--ink); font: inherit; font-size: 14px; line-height: 1.55; white-space: pre-wrap; }
+.diary-wide { width: 100%; }
+.diary-tone { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; font-weight: 700; }
+.diary-empty { padding: 24px 0; text-align: center; }
+/* Sổ lớp — tin nhắn đã sửa / đã xoá (0057) */
+.diary-msg-who .diary-msg-badge { display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 999px; background: var(--blue-soft); color: var(--brand-blue); font-size: 12px; font-weight: 700; }
+.diary-hidden { margin-top: 12px; padding: 10px 14px; border-radius: 14px; border: 2px dashed var(--line); color: var(--muted); }
+.diary-hidden summary { cursor: pointer; font-weight: 700; }
+.diary-hidden ul { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.diary-hidden li { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--ink); font-weight: 600; }
+/* tháng */
+.diary-xlsx { margin-left: auto; }
+.diary-legend-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 6px 0 0; color: var(--muted); font-size: 14px; font-weight: 600; }
+.diary-legend-row i { display: inline-block; width: 10px; height: 14px; margin-right: 5px; border-radius: 3px; vertical-align: -2px; }
+.diary-table-wrap { overflow-x: auto; margin-top: 8px; }
+.diary-table th, .diary-table td { text-align: center; }
+.diary-table th:first-child { text-align: left; }
+.diary-table td.is-bad { color: #a8282e; font-weight: 700; }
+.diary-table td.is-good { color: #116b33; font-weight: 700; }
+.diary-dots { display: inline-flex; gap: 2px; }
+.diary-dots i, .diary-legend-row i { display: inline-block; width: 9px; height: 18px; border-radius: 3px; background: #dfe7f4; }
+.diary-dots i.is-excused, .diary-legend-row i.is-excused { background: #9b7be8; }
+.diary-dots i.is-unexcused, .diary-legend-row i.is-unexcused { background: #e86a6f; }
+:root[data-theme="dark"] .diary-dots i.is-present, :root[data-theme="dark"] .diary-legend-row i.is-present { background: #34405e; }
+.diary-alerts { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.diary-alerts li { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 14px; font-size: 14px; font-weight: 600; line-height: 1.45; }
+.diary-alerts li.is-warn { background: #fff3d1; color: #7a4d00; }
+.diary-alerts li.is-good { background: #ddf7e7; color: #116b33; }
+
+@media (max-width: 980px) {
+  .diary-grid { grid-template-columns: minmax(0, 1fr); }
+  .diary-panel { position: static; }
+  .diary-msg { grid-template-columns: 1fr; gap: 8px; }
+  .diary-msg-act { display: flex; flex-wrap: wrap; justify-content: start; }
+}
+/* điện thoại: mỗi em một hàng với ✓ / P / K; bấm tên mở bảng ghi chú từ dưới lên */
+@media (max-width: 640px) {
+  .diary-head h1 { font-size: 24px; }
+  .diary-tabs { margin-left: 0; }
+  .diary-saved { margin-left: 0; flex-basis: 100%; }
+  .diary-date b { font-size: 14px; }
+  .diary-roster { grid-template-columns: 1fr; gap: 6px; }
+  .diary-st { display: flex; align-items: center; }
+  .diary-st-main { width: auto; min-height: 56px; flex: 1; min-width: 0; padding: 8px 10px; }
+  .diary-st-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .diary-quick { display: flex; gap: 4px; padding-right: 8px; }
+  .diary-quick button { width: 42px; min-height: 40px; font-size: 14px; }
+  .diary-legend { display: block; margin-top: 10px; }
+  .diary-panel { display: none; }
+  .diary-panel.is-open { display: grid; position: fixed; left: 0; right: 0; bottom: 0; z-index: 70; max-height: 82vh; overflow-y: auto; margin: 0; border-radius: 22px 22px 0 0; box-shadow: 0 -6px 0 rgb(30 43 74 / .08); }
+  .diary-roster-card { padding-bottom: 80px; }
+  .diary-mobile-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; padding: 10px 16px; background: var(--surface); border-top: 1px solid var(--line); }
+  .diary-mobile-bar .btn { min-height: 48px; font-size: 16px; padding: 0 12px; }
+  .diary-xlsx { margin-left: 0; }
+}
+.diary-table th, .diary-table td { padding: 9px 7px; }
+.diary-dots { gap: 1px; }
+.diary-dots i { width: 7px; }
+@media (max-width: 640px) { .diary-panel.is-open ~ .diary-mobile-bar { display: none; } .diary-panel.is-open { top: auto; padding-bottom: 24px; } }
+/* máy tính bảng & điện thoại: thanh bên thành ngăn kéo; thanh trên gọn; tab dưới đáy */
+@media (max-width: 900px) {
+  
+  .tsh .diary-mobile-bar { bottom: 80px; }
+}
+/* công cụ trên lớp: nút gọn hơn để vừa một hàng */
+.ct .btn { min-height: 44px; padding: 8px 16px; font-size: 15px; }
+.ct .btn-sm { min-height: 38px; padding: 6px 14px; font-size: 14px; }
+.zg-open { justify-content: center; background: #0068ff; color: #fff; text-decoration: none; box-shadow: 0 4px 0 #0050c4; }
+.zg-open:hover { background: #1a78ff; color: #fff; }
+.planner-editor.is-full > .dash-muted { display: none; }
+.kt-section .dash-muted { margin: -4px 0 12px; }
+.tsh-main > .dash.wrap:has(> .class-manager) { padding-top: 14px; }
+:root[data-theme="dark"] .diary-pill.is-green { background: color-mix(in srgb, #116b33 24%, var(--surface)); color: color-mix(in srgb, #116b33 40%, #fff); border-color: color-mix(in srgb, #9fdcbc 35%, var(--surface)); }
+:root[data-theme="dark"] .diary-pill.is-red { background: color-mix(in srgb, #a8282e 24%, var(--surface)); color: color-mix(in srgb, #a8282e 40%, #fff); border-color: color-mix(in srgb, #f3b3b5 35%, var(--surface)); }
+:root[data-theme="dark"] .diary-pill.is-amber { background: color-mix(in srgb, #7a4d00 24%, var(--surface)); color: color-mix(in srgb, #7a4d00 40%, #fff); border-color: color-mix(in srgb, #f0cf75 35%, var(--surface)); }
+:root[data-theme="dark"] .diary-tag.is-praise { background: color-mix(in srgb, #116b33 24%, var(--surface)); color: color-mix(in srgb, #116b33 40%, #fff); }
+:root[data-theme="dark"] .diary-tag.is-remind { background: color-mix(in srgb, #7a4d00 24%, var(--surface)); color: color-mix(in srgb, #7a4d00 40%, #fff); }
+:root[data-theme="dark"] .diary-ab.is-unexcused { background: color-mix(in srgb, #a8282e 24%, var(--surface)); color: color-mix(in srgb, #a8282e 40%, #fff); }
+:root[data-theme="dark"] .diary-ab.is-excused { background: color-mix(in srgb, #5321a8 24%, var(--surface)); color: color-mix(in srgb, #5321a8 40%, #fff); }
+:root[data-theme="dark"] .diary-chip.is-praise[aria-pressed="true"] { background: color-mix(in srgb, #116b33 24%, var(--surface)); color: color-mix(in srgb, #116b33 40%, #fff); }
+:root[data-theme="dark"] .diary-chip.is-remind[aria-pressed="true"] { background: color-mix(in srgb, #7a4d00 24%, var(--surface)); color: color-mix(in srgb, #7a4d00 40%, #fff); }
+:root[data-theme="dark"] .diary-alerts li.is-warn { background: color-mix(in srgb, #7a4d00 24%, var(--surface)); color: color-mix(in srgb, #7a4d00 40%, #fff); }
+:root[data-theme="dark"] .diary-alerts li.is-good { background: color-mix(in srgb, #116b33 24%, var(--surface)); color: color-mix(in srgb, #116b33 40%, #fff); }
+.sdg-book.is-red  { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.sdg-book.is-green{ background: linear-gradient(135deg, #22c55e, #16a34a); }

@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Link2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import '@/styles/adm.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
 
 export default function RedeemInviteForm() {
   const router = useRouter();

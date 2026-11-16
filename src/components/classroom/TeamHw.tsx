@@ -13,6 +13,11 @@ import {
   type HwRule, type Point, type TeamsState, type ToolStudent,
 } from '@/lib/classroom/class-tools';
 import type { AssignmentRow, DetailRow } from '@/lib/classroom/assignments';
+import '@/styles/adm.css';
+import '@/styles/td.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/thw.css';
 
 const tag = (id: string) => `#${id.slice(0, 6)}`;
 

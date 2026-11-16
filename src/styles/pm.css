@@ -1,0 +1,69 @@
+/* Kiểu riêng khu vực "pm-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 10px 24px; border: 0; border-radius: 999px; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: transform 160ms ease, box-shadow 160ms ease; }
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.btn-primary { color: #fff; background: var(--blue); box-shadow: var(--shadow-sm); }
+.btn-outline { color: var(--brand-blue); background: var(--surface); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.btn-outline:hover { box-shadow: inset 0 0 0 2px var(--brand-blue), var(--shadow-md); }
+.sr-award-form .btn { justify-self: start; }
+.praise-dl .btn-primary { grid-column: 1 / -1; }
+
+/* Nút .btn bị tắt (vd chưa đủ điều kiện): nhìn rõ là đang tắt, cả nền sáng lẫn nền tối */
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; box-shadow: none; transform: none; filter: saturate(.4); }
+.home .btn { transition: transform 150ms ease, box-shadow 150ms ease; }
+.home .btn:hover { transform: translateY(-2px); }
+.home .btn:active { transform: translateY(2px); box-shadow: none; }
+
+/* nút */
+.btn { transition: transform 120ms ease, box-shadow 120ms ease, background-color 160ms ease; }
+.btn-primary { box-shadow: 0 4px 0 var(--blue-deep); }
+.btn-primary:hover { box-shadow: 0 6px 0 var(--blue-deep); }
+.btn-outline { box-shadow: inset 0 0 0 2px var(--brand-blue), 0 4px 0 rgb(36 87 197 / .28); }
+.btn-outline:hover { box-shadow: inset 0 0 0 2px var(--brand-blue), 0 6px 0 rgb(36 87 197 / .28); }
+.btn:active:not(:disabled) { transform: translateY(2px); }
+.btn-primary:active:not(:disabled) { box-shadow: 0 2px 0 var(--blue-deep); }
+.btn-outline:active:not(:disabled) { box-shadow: inset 0 0 0 2px var(--brand-blue), 0 2px 0 rgb(36 87 197 / .28); }
+@media (prefers-reduced-motion: reduce) { .btn:hover, .btn:active:not(:disabled) { transform: none; } }
+/* công cụ trên lớp: nút gọn hơn để vừa một hàng */
+.ct .btn { min-height: 44px; padding: 8px 16px; font-size: 15px; }
+.pm-kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 4px; }
+.pm-kinds button { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 8px; border: 2px solid var(--line-strong); border-radius: 14px; background: var(--surface); color: var(--ink); font-weight: 700; cursor: pointer; }
+.pm-kinds button.is-on { border-color: var(--brand-blue); background: var(--blue-soft); color: var(--brand-blue); box-shadow: 0 0 0 3px rgb(36 87 197 / .15); }
+.pm-form { display: grid; gap: 12px; margin-top: 14px; }
+.pm-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.pm-row .pm-field.is-sm { max-width: 140px; }
+.pm-row:has(.is-sm) { grid-template-columns: auto minmax(0, 1fr); }
+.pm-field { display: grid; gap: 4px; min-width: 0; }
+.pm-field > span { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13.5px; font-weight: 800; }
+.pm-field > span svg { width: 16px; height: 16px; }
+.pm-field input, .pm-field select, .pm-field textarea { width: 100%; min-height: 46px; padding: 10px 12px; border: 2px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; }
+.pm-field textarea { resize: vertical; }
+.pm-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.pm-quick button { padding: 6px 10px; border: 1.5px dashed var(--line-strong); border-radius: 999px; background: transparent; color: var(--muted); font-size: 13.5px; font-weight: 600; cursor: pointer; text-align: left; }
+.pm-quick button:hover { border-color: var(--brand-blue); color: var(--brand-blue); }
+.pm-send { justify-self: start; min-height: 50px; padding-inline: 22px; }
+.pm-hist { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.pm-hist h3 { font-size: 16px; margin-bottom: 8px; }
+.pm-hist ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.pm-hist li { padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface-2); }
+.pm-hist li.is-teacher { border-left: 4px solid var(--brand-blue); }
+.pm-hist p { margin: 4px 0; }
+.pm-hist small { color: var(--muted); font-weight: 600; }
+.pm-hd { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; }
+.pm-st { padding: 1px 10px; border-radius: 99px; font-size: 12.5px; font-weight: 800; background: var(--line); color: var(--muted); }
+.pm-st.is-approved, .pm-st.is-answered { background: #dcfce7; color: #166534; }
+.pm-st.is-declined { background: #fee2e2; color: #991b1b; }
+.pm-st.is-read { background: var(--blue-soft); color: var(--brand-blue); }
+.pm-reply { margin-top: 8px; padding: 8px 12px; border-left: 4px solid #22c55e; border-radius: 8px; background: var(--surface); }
+@media (max-width: 560px) { .pm-kinds button { flex-direction: column; gap: 2px; font-size: 13.5px; min-height: 58px; } .pm-field input[type=date] { padding-inline: 8px; font-size: 15px; }
+}
+.pm-start { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pm-start .btn { justify-content: center; min-height: 52px; }
+.pm-start .btn svg { width: 20px; height: 20px; }
+.pm-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.pm-close svg { width: 18px; height: 18px; }
+.pm-more { justify-self: start; margin-top: 8px; padding: 6px 4px; border: 0; background: transparent; color: var(--brand-blue); font: inherit; font-weight: 700; cursor: pointer; }
+.pm-hist li.is-fresh { border-color: #f5c451; background: #fffaeb; }
+.pm-new { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 99px; background: #ef4444; color: #fff; font-size: 12px; font-weight: 800; vertical-align: 1px; }
+@media (max-width: 560px) { .pm-start { grid-template-columns: 1fr; } }
+:root[data-theme="dark"] .pm-st.is-approved, :root[data-theme="dark"] .pm-st.is-answered { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
+:root[data-theme="dark"] .pm-st.is-declined { background: color-mix(in srgb, #991b1b 24%, var(--surface)); color: color-mix(in srgb, #991b1b 40%, #fff); }

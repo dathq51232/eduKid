@@ -1,6 +1,7 @@
 'use client';
 
 import { GAME_LEVELS, LEVEL_INFO, LEVEL_NOTE, type GameLevel } from '@/lib/games/catalog';
+import '@/styles/level.css';
 
 type Props = {
   value: GameLevel;

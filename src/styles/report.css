@@ -1,0 +1,58 @@
+/* Kiểu riêng khu vực "report-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+.notebook p.line { font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 26px; font-weight: 600; line-height: 48px; }
+.sync-note.is-ok { color: #15803d; }
+@media (max-width: 520px) {
+  body { font-size: 17px; }
+  .wrap { width: calc(100% - 32px); }
+  .brand { font-size: 22px; }
+  .top-cta { padding: 10px 14px; font-size: 15px; }
+  
+  .notebook { padding-left: 62px; }
+  .notebook::before { left: 42px; }
+  .notebook p.line { font-size: 22px; }
+  .journey { padding-block: 64px; }
+  
+  
+  .answers { grid-template-columns: repeat(2, 1fr); }
+  
+  .footer { align-items: flex-start; flex-direction: column; }
+}
+@media print {
+  body { background: #fff !important; }
+  .learn-top, .no-print, .back-link, .dash-head, .adm-alert, .login-cards-wrap .dash-card-head button { display: none !important; }
+  .login-cards-wrap { box-shadow: none; padding: 0; }
+  .login-card { border-color: #999; color: #000; }
+}
+
+/* ------------------------------------------------ Phiếu báo tiến bộ (giáo viên) */
+
+.report-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.report-list { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.report-card { display: grid; gap: 10px; padding: 16px; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--surface); }
+.report-card.is-ok { border-color: color-mix(in srgb, var(--green-solid) 55%, transparent); background: color-mix(in srgb, var(--green-solid) 6%, var(--surface)); }
+.report-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.report-head strong { font-size: 18px; }
+.report-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.report-chip { padding: 3px 10px; border-radius: 999px; background: var(--blue-soft); color: var(--link); font-size: 13px; font-weight: 800; }
+.report-chip.is-soft { background: var(--surface-2); color: var(--muted); }
+.report-chip.is-low { background: #fde8e6; color: #b3261e; }
+.report-chip.is-up { background: #ddf7e7; color: #15803d; }
+.report-card textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--bg-ffffff); color: var(--ink); font: inherit; font-size: 15px; line-height: 1.5; resize: vertical; }
+.report-ok { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 10px; background: var(--surface-2); font-weight: 800; font-size: 14px; cursor: pointer; }
+.report-ok svg { width: 16px; height: 16px; color: var(--green-solid); }
+.report-ok input { width: 18px; height: 18px; accent-color: var(--green-solid); }
+.report-print { display: none; }
+@media print {
+  .report-print { display: block; }
+  /* Thể thức NĐ30: Times New Roman, nội dung cỡ 14, giãn dòng 1,3, cách đoạn 6pt, lùi đầu dòng 1 cm */
+  .report-page { break-after: page; page-break-after: always; padding: 0; color: #000; font-family: 'Times New Roman', Times, serif; font-size: 14pt; line-height: 1.3; }
+  .report-page:last-child { break-after: auto; page-break-after: auto; }
+  .report-page *, .report-page { font-family: 'Times New Roman', Times, serif !important; }
+  .report-page p { margin: 0 0 6pt; }
+  .report-page h2 { text-align: center; font-size: 14pt; font-weight: bold; margin: 12pt 0 2pt; }
+  .report-page-sub { text-align: center; font-style: italic; }
+  .report-line { text-indent: 1cm; text-align: justify; }
+}
+:root[data-theme="dark"] .report-chip.is-low { background: color-mix(in srgb, #b3261e 24%, var(--surface)); color: color-mix(in srgb, #b3261e 40%, #fff); }
+:root[data-theme="dark"] .report-chip.is-up { background: color-mix(in srgb, #15803d 24%, var(--surface)); color: color-mix(in srgb, #15803d 40%, #fff); }

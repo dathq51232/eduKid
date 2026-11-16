@@ -6,6 +6,7 @@ import { Fragment } from 'react';
 import { FloralScope, Floral } from './floral';
 import { PageFrame } from './frames';
 import { cornerBox, cornerSize, FALLBACK_FONT, fallbackScale, fontFamily, textSegments, type Corner, type FontId, type SheetLayout, type SheetPage, type SheetSettings } from '@/lib/writing/sheet';
+import '@/styles/ws.css';
 
 export const MOTIFS: { id: string; label: string }[] = [
   { id: 'hoa', label: 'Chùm hoa' }, { id: 'la', label: 'Cành lá' }, { id: 'sao', label: 'Ngôi sao' }, { id: 'buom', label: 'Bướm' },

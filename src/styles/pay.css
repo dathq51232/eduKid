@@ -1,0 +1,34 @@
+/* Kiểu riêng khu vực "pay-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.pin-dots span.is-on { background: var(--brand-blue); box-shadow: none; }
+.role-pick label.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.gaps-periods .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.pay-panel { display: grid; gap: 16px; }
+.pay-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.pay-plan { display: grid; gap: 4px; justify-items: start; padding: 18px; border-radius: 18px; border: 2px solid var(--line-strong); background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; box-shadow: var(--shadow-sm); }
+.pay-plan:hover, .pay-plan.is-on { border-color: var(--blue); }
+.pay-plan-name { font-weight: 700; color: var(--muted); }
+.pay-plan strong { font-size: 28px; color: var(--blue); }
+.pay-plan-note { font-size: 14px; color: var(--muted); }
+.pay-plan-cta { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 12px; border-radius: 999px; background: var(--brand-yellow); color: #1e2b4a; font-weight: 800; font-size: 14px; }
+.pay-plan-cta svg { width: 16px; height: 16px; }
+.pay-qr { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: start; padding: 18px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); border: 2px dashed var(--blue); }
+.pay-info { display: grid; gap: 8px; min-width: 0; }
+.pay-info p { margin: 0; }
+.pay-step { font-weight: 600; }
+.pay-line { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.pay-line span { color: var(--muted); font-size: 14px; }
+.pay-line strong { overflow-wrap: anywhere; }
+.pay-warn { padding: 8px 12px; border-radius: 10px; background: #fff7e6; color: #7a4b00; font-size: 14px; }
+@media (max-width: 640px) {
+  .pay-qr { grid-template-columns: 1fr; justify-items: center; }
+  .pay-info { width: 100%; }
+  .pay-line { grid-template-columns: minmax(0, 1fr) auto; row-gap: 2px; }
+  .pay-line span { grid-column: 1 / -1; }
+  .pay-line strong { font-size: 17px; }
+}
+.plan-edit .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.fx-toggle.is-on { background: var(--bg-fff3d1); color: var(--fg-7a4d00); }
+.praise-spots .mini-btn.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.qz-round.fx-toggle.is-on { background: radial-gradient(circle at 35% 30%, #ffb3e0, #d6409f 70%); box-shadow: 0 4px 0 #a32b78, 0 8px 16px rgb(120 20 80 / .25); }
+.pen-colors button.is-on, .wb-colors button.is-on { box-shadow: 0 0 0 3px #a78bfa; }
+:root[data-theme="dark"] .pay-warn { background: color-mix(in srgb, #7a4b00 24%, var(--surface)); color: color-mix(in srgb, #7a4b00 40%, #fff); }

@@ -4,6 +4,7 @@ import BrandLogo from '@/components/brand/BrandLogo';
 import ThemeToggle from '@/components/brand/ThemeToggle';
 import SignOutButton from '@/components/classroom/SignOutButton';
 import { TourHelpButton } from '@/components/tour/GuidedTour';
+import '@/styles/ph.css';
 
 // Thanh trên của Góc phụ huynh: không có tab Học tập / Game trí tuệ (đó là góc của bé).
 export default function ParentHeader({ childCorner = false, signedIn = true }: { childCorner?: boolean; signedIn?: boolean }) {

@@ -4,6 +4,8 @@ import { Bot, Swords, Trophy } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import { PieceIcon } from '@/components/chess/ChessPieces';
 import { XqDiscIcon } from '@/components/xiangqi/XiangqiBoard';
+import '@/styles/chh.css';
+import '@/styles/games.css';
 
 export const metadata: Metadata = { title: 'Đấu cờ · EduChain Kids' };
 

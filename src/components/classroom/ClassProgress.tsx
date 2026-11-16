@@ -2,6 +2,9 @@ import Link from 'next/link';
 import { BarChart3 } from 'lucide-react';
 import CsvButton from '@/components/classroom/CsvButton';
 import { fmtDateTime, lessonsOfClass, percent, subjectLabel, type LessonResult } from '@/lib/classroom/progress';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
+import '@/styles/score.css';
 
 // Tiến độ theo bài của cả lớp (máy chủ dựng sẵn; dữ liệu đã được RLS giới hạn trong lớp của giáo viên).
 export default function ClassProgress({ classId, className, results, names }: { classId: string; className: string; results: LessonResult[]; names: Map<string, string> }) {

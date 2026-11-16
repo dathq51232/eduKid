@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { ArrowRight, Volume2 } from 'lucide-react';
 import { buildSentenceVisual } from '@/lib/english/sentenceVisuals';
 import { resolveVisualIconSrc } from '@/lib/illustration-icons';
+import '@/styles/en.css';
 
 type Props = {
   action: string;

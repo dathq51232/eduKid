@@ -10,6 +10,13 @@ import { GAMES } from '@/lib/games/catalog';
 import { SUBJECT_MASCOT } from '@/lib/mascots';
 import { CONTENT } from '@/lib/content';
 import type { SubjectCode } from '@/lib/types';
+import '@/styles/ft.css';
+import '@/styles/home.css';
+import '@/styles/notebook.css';
+import '@/styles/brand.css';
+import '@/styles/btn.css';
+import '@/styles/grade.css';
+import '@/styles/hero.css';
 
 // Trang chủ EduChain Kids. Ý tưởng giao diện: "vở ô li" của học sinh tiểu học —
 // nền giấy kẻ ô, mỗi môn là một cuốn vở có nhãn vở, câu hỏi mẫu viết trên trang vở có lề đỏ.

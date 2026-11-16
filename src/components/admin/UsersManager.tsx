@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { errorText } from '@/lib/admin/questions';
 import { useAdminUser } from './AdminContext';
 import ConfirmButton from './ConfirmButton';
+import '@/styles/adm.css';
 
 type Role = 'parent' | 'teacher' | 'school_admin' | 'system_admin' | 'student';
 type UserRow = {

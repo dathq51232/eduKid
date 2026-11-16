@@ -4,6 +4,7 @@ import { BarList, TrafficColumns } from '@/components/admin/AdminCharts';
 import { pathLabel } from '@/lib/analytics/path';
 import { FEATURES } from '@/lib/features';
 import { KIND_LABEL, PERIODS, ago, delta, fmt, money, type Insights, type Period } from '@/lib/admin/insights';
+import '@/styles/adm.css';
 
 const PERIOD_WORD: Record<Period, string> = { 1: 'hôm nay', 7: '7 ngày', 30: '30 ngày', 365: '1 năm' };
 const PREV_WORD: Record<Period, string> = { 1: 'hôm qua', 7: '7 ngày trước đó', 30: '30 ngày trước đó', 365: 'năm trước' };

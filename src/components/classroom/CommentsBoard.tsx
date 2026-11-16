@@ -11,6 +11,11 @@ import {
   APP_SUBJECTS, LEVEL_NAME, SUBJECT_NAME, commentSubjectsFor, generateClassComments, groupLevel, periodsFor,
   type CommentSubject, type Period, type StudentData, type SubjectStats,
 } from '@/lib/classroom/comments';
+import '@/styles/adm.css';
+import '@/styles/btn.css';
+import '@/styles/comment.css';
+import '@/styles/comments.css';
+import '@/styles/dash.css';
 
 type Student = { id: string; name: string };
 type AnyLevel = 'T' | 'H' | 'C' | 'D';

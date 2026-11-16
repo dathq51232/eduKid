@@ -7,6 +7,10 @@ import ParentHeader from '@/components/parent/ParentHeader';
 import LunarCalendar from '@/components/utils/LunarCalendar';
 import PersonalMoney from '@/components/classroom/PersonalMoney';
 import { getViewer } from '@/lib/auth/viewer';
+import '@/styles/adm.css';
+import '@/styles/ct.css';
+import '@/styles/ph.css';
+import '@/styles/dash.css';
 
 export const metadata: Metadata = { title: 'Tiện ích gia đình · EduChain Kids', robots: { index: false } };
 export const dynamic = 'force-dynamic';

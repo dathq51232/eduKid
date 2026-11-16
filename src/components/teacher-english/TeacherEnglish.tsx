@@ -24,6 +24,9 @@ import { emptyProgress, useTeacherEnglish, type LessonProgress, type ProgressMap
 import { fold } from '@/lib/classroom/teacher-nav';
 import { buildDeck, todayQueue, useReview } from '@/lib/teacher-english/review';
 import DailyReview from '@/components/teacher-english/DailyReview';
+import '@/styles/ct.css';
+import '@/styles/te.css';
+import '@/styles/btn.css';
 
 type Tab = 'lo-trinh' | 'on-tap' | 'mau-cau' | 'tien-do';
 const TABS: { key: Tab; en: string; vi: string; Icon: typeof Flag }[] = [

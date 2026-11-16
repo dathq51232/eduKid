@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ArrowRight, RotateCcw, Sparkles, Volume2, Zap } from 'lucide-react';
 import SentenceIllustration from '@/components/english/SentenceIllustration';
 import type { StepProps } from '@/components/english/steps/types';
+import '@/styles/en.css';
 
 /** Bước 3 — Thay biến số tốc độ cao (Slot Drill) và Ghép từ thành câu (Word Bank). */
 export default function StepBuilder({ lesson, state, dispatch, speaking, toggleSample, speak, goStep }: StepProps) {

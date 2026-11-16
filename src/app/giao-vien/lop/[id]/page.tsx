@@ -13,6 +13,10 @@ import { createClient } from '@/lib/supabase/server';
 import { classRoster, warmClass } from '@/lib/classroom/class-page';
 import { compareViName } from '@/lib/classroom/names';
 import { FEATURES } from '@/lib/features';
+import '@/styles/adm.css';
+import '@/styles/btn.css';
+import '@/styles/comments.css';
+import '@/styles/dash.css';
 
 export const metadata: Metadata = { title: 'Quản lý lớp · EduChain Kids' };
 export const dynamic = 'force-dynamic';

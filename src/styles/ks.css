@@ -1,0 +1,12 @@
+/* Kiểu riêng khu vực "ks-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.ks-bar { display: block; height: 10px; overflow: hidden; border-radius: 99px; background: var(--surface-2); }
+.ks-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #a78bfa, #ff6fa8); }
+.ks-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ks-row li { position: relative; display: grid; place-items: center; width: 64px; height: 64px; border: 2px solid var(--line); border-radius: 16px; background: var(--surface); }
+.ks-row li.is-ghost { border-style: dashed; }
+.ks-row li.is-ghost img { filter: brightness(0); opacity: .16; }
+:root[data-theme="dark"] .ks-row li.is-ghost img { filter: brightness(0) invert(1); opacity: .14; }
+.ks-row li.is-ghost b { position: absolute; color: var(--muted); font-size: 22px; font-weight: 900; }
+.ks-note { margin: 0; color: var(--muted); font-size: 13.5px; }
+.ks-link { display: inline-flex; align-items: center; gap: 2px; justify-self: start; color: var(--brand-blue); font-weight: 800; text-decoration: none; }
+.ks-link svg { width: 16px; height: 16px; }

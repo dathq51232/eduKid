@@ -18,6 +18,9 @@ import {
 } from '@/lib/board/types';
 import { ItemView, ShapeIcon, TEXT_FONT, mathSize } from './BoardItems';
 import InstrumentsLayer, { edgeSnap, type Instruments, type InstKey } from './Instruments';
+import '@/styles/wb.css';
+import '@/styles/btn.css';
+import '@/styles/pen.css';
 
 type Tool = 'select' | 'hand' | 'pen' | 'text' | 'shape' | 'solid' | 'math' | 'sticker' | 'compass';
 type Drag =

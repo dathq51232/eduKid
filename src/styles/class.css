@@ -1,0 +1,30 @@
+/* Kiểu riêng khu vực "class-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.class-code-input { font-size: 26px !important; font-weight: 700; letter-spacing: .12em; text-align: center; text-transform: uppercase; }
+.dash-section { display: grid; gap: 12px; }
+
+.class-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
+.class-tile { position: relative; display: grid; gap: 4px; padding: 18px 44px 18px 20px; border-radius: 20px; background: var(--surface); box-shadow: var(--shadow-sm); transition: transform 150ms ease, box-shadow 150ms ease; }
+.class-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.class-tile.is-archived { opacity: .7; }
+.class-tile-name { font-size: 22px; font-weight: 700; }
+.class-tile-meta { color: var(--muted); font-size: 15px; }
+.class-tile-code strong { color: var(--brand-blue); letter-spacing: .06em; }
+.class-tile-go { position: absolute; right: 16px; top: 50%; width: 22px; height: 22px; color: var(--muted); transform: translateY(-50%); }
+@media print {
+  body { background: #fff !important; }
+  .learn-top, .no-print, .back-link, .dash-head, .adm-alert, .login-cards-wrap .dash-card-head button { display: none !important; }
+  .login-cards-wrap { box-shadow: none; padding: 0; }
+  .login-card { border-color: #999; color: #000; }
+}
+@media print {
+  .dash, .class-manager { display: block; padding: 0; }
+}
+.class-manager { display: grid; gap: 18px; }
+.kh-modal-box > .dash-section { margin: 0; }
+
+/* ===== Giáo viên › Trang lớp: gọn cho vừa màn hình (rộng theo màn hình, dòng bảng thấp, nút thao tác không xuống dòng) ===== */
+.dash.wrap:has(> .class-manager) { width: min(1480px, calc(100% - 40px)); gap: 16px; padding-bottom: 40px; }
+.class-manager { gap: 14px; }
+@media (max-width: 640px) {
+  .dash.wrap:has(> .class-manager) { width: calc(100% - 24px); }
+}

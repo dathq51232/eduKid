@@ -1,0 +1,14 @@
+/* Kiểu riêng khu vực "cr-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.cr-track { position: relative; display: grid; gap: 10px; }
+.cr-lane { position: relative; height: 54px; border-radius: 14px; border: 2px solid var(--line); background: repeating-linear-gradient(90deg, var(--surface-2) 0 40px, var(--surface) 40px 80px); }
+.cr-lane.is-win { border-color: var(--brand-yellow); background: repeating-linear-gradient(90deg, #fff8e1 0 40px, #fff3d1 40px 80px); }
+.cr-name { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 150px; font-size: 16px; font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cr-lane.is-win .cr-name { color: #1e2b4a; }
+.cr-animal { position: absolute; top: 50%; font-size: 36px; line-height: 1; transform: translate(-50%, -50%) scaleX(-1); }
+.cr-animal-icon { display: block; width: 48px; height: 48px; object-fit: contain; }
+.cr-finish { position: absolute; top: 0; bottom: 0; right: 70px; z-index: 1; width: 12px; border-radius: 3px; background: repeating-linear-gradient(0deg, #1e2b4a 0 10px, #fff 10px 20px); }
+@media (max-width: 900px) {
+  .cr-name { width: 100px; font-size: 14px; }
+}
+.cr-name.is-rolling { animation: name-roll .11s linear infinite; }
+.cr-count { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; color: #ffc83d; font-size: clamp(110px, 16vw, 200px); font-weight: 700; line-height: 1; text-shadow: 0 6px 0 #d39b12, 0 0 40px rgb(255 200 61 / .5); pointer-events: none; animation: count-pop .65s cubic-bezier(.2, 1.4, .4, 1); }

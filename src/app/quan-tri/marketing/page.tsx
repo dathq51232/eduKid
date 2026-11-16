@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getStaffContext } from '@/lib/auth/staff';
 import { createClient } from '@/lib/supabase/server';
 import MarketingStudio, { type MPost, type MReport } from '@/components/admin/MarketingStudio';
+import '@/styles/adm.css';
 
 export const metadata = { title: 'Marketing — Quản trị EduChain Kids' };
 export const dynamic = 'force-dynamic';

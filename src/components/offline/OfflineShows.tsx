@@ -10,6 +10,11 @@ import { Box, MonitorPlay, Presentation, Trash2, Wifi, WifiOff } from 'lucide-re
 import { deleteOffline, getOffline, listOffline, type OfflineItem, type OfflineSummary } from '@/lib/offline/store';
 import { setLocalSoundResolver } from '@/lib/deck/sounds';
 import type { TeacherAsset } from '@/lib/assets/client';
+import '@/styles/adm.css';
+import '@/styles/dp.css';
+import '@/styles/ofl.css';
+import '@/styles/s3d.css';
+import '@/styles/btn.css';
 
 const DeckPlayer = dynamic(() => import('@/components/deck/DeckPlayer'), { ssr: false });
 const Lesson3DStudio = dynamic(() => import('@/components/lesson3d/Lesson3DStudio'), { ssr: false });

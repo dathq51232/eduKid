@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { CheckCircle2, CloudDownload, X } from 'lucide-react';
 import { getOffline, offlineKey } from '@/lib/offline/store';
 import { OFFLINE_PAGE } from '@/lib/offline/save';
+import '@/styles/ofl.css';
 
 type Props = { kind: 'deck' | 'l3d'; id: string; className?: string; run: (progress: (t: string) => void) => Promise<unknown> };
 

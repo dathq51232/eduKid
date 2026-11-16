@@ -1,0 +1,15 @@
+/* Kiểu riêng khu vực "account-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.account-link { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 14px; border-radius: 14px; background: var(--blue-soft); color: var(--brand-blue); font-size: 15px; font-weight: 700; white-space: nowrap; }
+.account-link svg { width: 18px; height: 18px; }
+.account-link.is-loading { width: 120px; background: var(--surface-2); }
+@media (max-width: 600px) { .account-link span { display: none; } .account-link.is-loading { width: 44px; } }
+/* Điện thoại: logo + nút cùng một hàng, menu hàng dưới (bớt một hàng header) */
+@media (max-width: 560px) {
+  .learn-tools .theme-toggle.theme-switch { padding-inline: 2px; }
+  .learn-tools .account-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .learn-tools .account-link { padding-inline: 10px; }
+}
+.account-cta { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border-radius: 14px; background: var(--brand-yellow); color: #3b2a00; font-size: 15px; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 0 #d9a21f; }
+.account-cta:hover { filter: brightness(1.04); }
+.account-cta:focus-visible { outline: 3px solid var(--brand-blue); outline-offset: 3px; }
+@media (max-width: 1199px) { .account-cta { display: none; } }

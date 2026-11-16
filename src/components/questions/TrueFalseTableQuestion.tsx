@@ -4,6 +4,7 @@
 
 import EmojiText from '@/components/EmojiText';
 import type { AnswerValue, Question } from '@/lib/types';
+import '@/styles/tf.css';
 
 type Props = {
   question: Question;

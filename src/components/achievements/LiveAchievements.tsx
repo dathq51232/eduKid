@@ -6,6 +6,12 @@ import { Medal, RefreshCw } from 'lucide-react';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import GiftShelf from './GiftShelf';
 import type { AchievementsPayload, BoardRow } from '@/lib/achievements';
+import '@/styles/ach.css';
+import '@/styles/adm.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/lb.css';
+import '@/styles/mini.css';
 
 const REFRESH_MS = 30_000;
 

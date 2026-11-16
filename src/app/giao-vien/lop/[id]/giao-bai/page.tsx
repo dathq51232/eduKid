@@ -11,6 +11,7 @@ import { compareViName } from '@/lib/classroom/names';
 import { CONTENT } from '@/lib/content';
 import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
 import { ToolIcon } from '@/components/classroom/tool-icons';
+import '@/styles/dash.css';
 
 export const metadata: Metadata = { title: 'Giao bài về nhà · EduChain Kids' };
 export const dynamic = 'force-dynamic';

@@ -6,6 +6,8 @@ import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import ExamTaker from '@/components/classroom/ExamTaker';
 import { getViewer } from '@/lib/auth/viewer';
+import '@/styles/exam.css';
+import '@/styles/dash.css';
 
 export const metadata: Metadata = { title: 'Làm đề · EduChain Kids' };
 export const dynamic = 'force-dynamic';

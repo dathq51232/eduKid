@@ -19,6 +19,13 @@ import { bookLessons, lessonPool, type ExamQuestion } from '@/lib/exams/matrix';
 import { useGradeContent } from '@/components/learn/GradeReady';
 import { answerText } from '@/lib/exams/word';
 import type { SubjectCode } from '@/lib/types';
+import '@/styles/callon.css';
+import '@/styles/ce.css';
+import '@/styles/btn.css';
+import '@/styles/cl.css';
+import '@/styles/cr.css';
+import '@/styles/cw.css';
+import '@/styles/dash.css';
 
 const SUBJECTS: { code: SubjectCode; name: string; milo: MiloVariant }[] = [
   { code: 'toan', name: 'Toán', milo: 'professor' },

@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import ChessVsBot from '@/components/chess/ChessVsBot';
 import { ChessTabs } from '@/components/chess/ChessParts';
+import '@/styles/chs.css';
 
 export const metadata: Metadata = { title: 'Cờ vua · EduChain Kids' };
 

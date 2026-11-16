@@ -8,6 +8,7 @@ import { LEVEL_LABEL } from '@/lib/curriculum/grade1';
 import { LEVELS, LEVEL_LIST, defaultTimeLimit, type Level } from '@/lib/levels';
 import { QUESTION_TYPES, type DbQuestionType } from '@/lib/types';
 import QuestionPreview from './QuestionPreview';
+import '@/styles/adm.css';
 
 type Props = {
   initial: QuestionDraft;

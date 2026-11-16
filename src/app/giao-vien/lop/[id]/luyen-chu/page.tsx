@@ -3,6 +3,7 @@ import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import TeacherWriting from '@/components/writing/TeacherWriting';
 import { loadClassPage } from '@/lib/classroom/class-page';
+import '@/styles/ct.css';
 
 export const metadata: Metadata = { title: 'Luyện chữ · EduChain Kids', robots: { index: false } };
 export const dynamic = 'force-dynamic';

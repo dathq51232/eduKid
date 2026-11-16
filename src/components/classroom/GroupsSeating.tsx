@@ -12,6 +12,10 @@ import {
   normalizeSeating, normalizeTeams, placeSeat, relayout, seatIndex, shortName, teamsFromSeating, unseat, unseated,
   type DeskKind, type Group, type GroupMode, type GroupOpts, type GroupsState, type Level, type Seating, type TeacherDeskPos, type TeamsState, type ToolStudent,
 } from '@/lib/classroom/class-tools';
+import '@/styles/adm.css';
+import '@/styles/ct.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
 
 type Props = { classId: string; className: string; students: ToolStudent[]; levels: Record<string, Level>; absentToday: string[]; initialTab: 'groups' | 'seating' };
 type Save = 'idle' | 'saving' | 'saved' | 'error';

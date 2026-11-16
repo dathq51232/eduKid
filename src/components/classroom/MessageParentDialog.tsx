@@ -7,6 +7,11 @@ import { CheckCheck, Clock, MessageCircle, Send, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { zaloHref } from '@/lib/classroom/class-tools';
 import { ago, senderLabel, teacherSendError, type Inbox, type TeacherMsg } from '@/lib/classroom/messages';
+import '@/styles/adm.css';
+import '@/styles/ct.css';
+import '@/styles/pm.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
 
 const callName = (name: string) => name.trim().split(/\s+/).slice(-2).join(' ');
 

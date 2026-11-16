@@ -1,0 +1,43 @@
+/* Kiểu riêng khu vực "kh-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.dash-muted { color: var(--muted); font-size: 15px; }
+.assign-paper-form .dash-muted { flex-basis: 100%; margin: 0; font-size: 13px; }
+.planner-editor.is-full > .dash-muted { display: none; }
+.pv-opts .pv-chk { font-weight: 500; }
+.kh-side { position: sticky; top: 76px; display: grid; gap: 4px; padding: 10px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); }
+.kh-side-k { margin: 2px 6px 6px; font-size: 11.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.kh-side button { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; padding: 9px 10px; border: 0; border-radius: 10px; background: none; color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; text-align: left; cursor: pointer; }
+.kh-side button:hover { background: var(--line); }
+.kh-side button.is-on { background: #2457c5; color: #fff; }
+.kh-side button small { font-size: 12px; font-weight: 700; opacity: .75; }
+.kh-main { min-width: 0; display: grid; gap: 12px; align-content: start; }
+.kh-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.kh-head h1 { margin: 0; font-size: clamp(26px, 3.4vw, 36px); display: flex; align-items: center; gap: 10px; }
+.kh-lead { margin: 4px 0 0; }
+.kh-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.kh-menu { position: relative; }
+.kh-menu > summary { list-style: none; cursor: pointer; } .kh-menu > summary::-webkit-details-marker { display: none; }
+.kh-menu > div { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 230px; display: grid; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 30px rgb(0 0 0 / .2); }
+.kh-menu > div button { text-align: left; padding: 9px 10px; border: 0; border-radius: 8px; background: none; color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; }
+.kh-menu > div button:hover { background: var(--line); }
+.kh-modal { position: fixed; inset: 0; z-index: 80; display: grid; place-items: start center; padding: 4vh 16px; background: rgb(15 23 42 / .55); overflow: auto; }
+.kh-modal[hidden] { display: none; }
+.kh-modal-box { position: relative; width: min(1180px, 100%); border-radius: 18px; background: var(--bg, #f3f6fb); box-shadow: 0 20px 60px rgb(0 0 0 / .35); padding: 8px; }
+.kh-modal-box.is-small { width: min(760px, 100%); }
+.kh-x { position: absolute; right: 14px; top: 14px; z-index: 2; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.kh-opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; align-items: end; margin: 8px 0; }
+.kh-chk { font-weight: 600; display: flex; gap: 6px; align-items: center; }
+@media (max-width: 900px) {
+  .kh-side { position: static; display: flex; overflow-x: auto; padding: 6px; }
+  .kh-side-k { display: none; }
+  .kh-side button { width: auto; white-space: nowrap; }
+}
+/* Kế hoạch bài dạy: dưới 1400px menu bên trái thành hàng tab trên đầu → lịch tuần chiếm hết bề ngang */
+@media (max-width: 1400px) {
+  .kh-side { position: static; display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; }
+  .kh-side-k { display: none; }
+  .kh-side button { width: auto; white-space: nowrap; }
+}
+@media (max-width: 640px) {
+  .kh-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+}
+.kt-section .dash-muted { margin: -4px 0 12px; }

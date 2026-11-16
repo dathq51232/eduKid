@@ -9,6 +9,8 @@ import type { RosterRow } from '@/components/classroom/ClassManager';
 import { getViewer } from '@/lib/auth/viewer';
 import { compareViName } from '@/lib/classroom/names';
 import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
+import '@/styles/diary.css';
+import '@/styles/dash.css';
 
 export const metadata: Metadata = { title: 'Sổ lớp hằng ngày · EduChain Kids' };
 export const dynamic = 'force-dynamic';

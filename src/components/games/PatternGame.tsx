@@ -9,6 +9,8 @@ import PatternItemView from './PatternItemView';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import type { GameLevel } from '@/lib/games/catalog';
 import { answerOf, explainPattern, itemKey, itemName, optionsOf, patternsForLevel, sequenceOf } from '@/lib/games/patterns';
+import '@/styles/game.css';
+import '@/styles/pattern.css';
 
 const PRAISE_RIGHT = ['Chính xác! Thám tử tinh mắt quá.', 'Đúng rồi! Em nhìn ra quy luật rồi đó.', 'Tuyệt! Em suy luận rất chắc chắn.'];
 const PRAISE_TRY = ['Chưa đúng lần này, không sao cả! Cùng xem lại nhé.', 'Gần lắm rồi! Thám tử giỏi cũng cần xem lại manh mối.', 'Mình học thêm được một quy luật mới đây!'];

@@ -6,6 +6,9 @@ import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Mail } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import { createClient } from '@/lib/supabase/client';
+import '@/styles/adm.css';
+import '@/styles/auth.css';
+import '@/styles/btn.css';
 
 const LINK_ERRORS: Record<string, string> = {
   'lien-ket-het-han': 'Liên kết đặt lại mật khẩu đã hết hạn hoặc đã dùng rồi. Bạn gửi lại liên kết mới nhé.',

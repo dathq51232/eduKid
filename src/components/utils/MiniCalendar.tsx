@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Moon, Sun } from 'lucide-react';
 import { LUNAR_MONTH_NAME, WEEKDAYS, canChiDay, canChiYear, dayInfo, type DayInfo } from '@/lib/utils/lunar';
+import '@/styles/uw.css';
 
 const SHORT = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 type Data = { today: DayInfo; week: DayInfo[]; next: { when: string; name: string; kind: string }[] };

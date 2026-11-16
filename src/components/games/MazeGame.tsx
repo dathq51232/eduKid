@@ -9,6 +9,8 @@ import LevelPicker, { rememberLevel } from './LevelPicker';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import type { GameLevel } from '@/lib/games/catalog';
 import { DIRS, DIR_LABEL, SIZE_BY_LEVEL, generateMaze, hasWall, keyToDir, move, solveMaze, type Dir, type Maze, type Pos } from '@/lib/games/maze';
+import '@/styles/game.css';
+import '@/styles/maze.css';
 
 const CELL = 40;
 const PAD = 4;

@@ -8,6 +8,9 @@ import { ArrowLeft, UserPlus } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import { createClient } from '@/lib/supabase/client';
 import { ADMIN_CONTACT, FREE_STUDENT_LIMIT, TEACHER_TRIAL_DAYS } from '@/lib/contact';
+import '@/styles/adm.css';
+import '@/styles/auth.css';
+import '@/styles/btn.css';
 
 type Role = 'teacher' | 'parent';
 

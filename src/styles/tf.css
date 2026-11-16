@@ -1,0 +1,38 @@
+/* Kiểu riêng khu vực "tf-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Bảng Đúng/Sai */
+.tf-table { width: 100%; border-collapse: separate; border-spacing: 0; overflow: hidden; border: 2px solid var(--line-strong); border-radius: 14px; font-size: clamp(18px, 3.6vw, 22px); }
+.tf-table th { padding: 10px; background: var(--bg-e1ebff); color: var(--link); font-weight: 800; }
+.tf-table th:first-child, .tf-table td:first-child { text-align: left; }
+.tf-table td { padding: 8px 10px; border-top: 1px solid var(--rule); }
+.tf-table tbody tr:nth-child(even) td { background: var(--bg-f5f8ff); }
+.tf-cell { width: 70px; text-align: center; }
+.tf-toggle { display: inline-grid; width: 48px; height: 48px; place-items: center; border: 2px solid var(--line-strong); border-bottom-width: 4px; border-radius: 10px; background: var(--bg-ffffff); color: var(--link); font: inherit; font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 24px; font-weight: 800; cursor: pointer; }
+.tf-toggle[aria-pressed="true"] { background: var(--bg-e1ebff); box-shadow: 0 0 0 3px var(--blue) inset; }
+.tf-toggle:disabled { cursor: default; }
+.tf-table.is-right { border-color: var(--green); }
+.tf-table.is-wrong { border-color: var(--red); }
+.tmr-face.look-snail svg.tf { height: auto; width: min(640px, 92%); }
+/* mặt đồng hồ */
+.tf .tf-left { fill: #ffe08a; transition: fill .4s; }
+.tf.is-warn .tf-left { fill: #ffbf73; }
+.tf.is-last .tf-left, .tf.is-done .tf-left { fill: #ff9b9b; }
+.tf .tf-hand { transition: none; }
+.tf-eyes { transform-box: fill-box; transform-origin: center; animation: tf-blink 4s infinite; }
+.tf-shake, .tf-bell-l, .tf-bell-r { transform-box: fill-box; transform-origin: 50% 100%; }
+.tf.is-last .tf-shake { animation: tf-shake .5s ease-in-out infinite; }
+.tf.is-done .tf-shake { animation: tf-shake .12s linear 12; }
+.tf.is-done .tf-bell-l, .tf.is-done .tf-bell-r { animation: tf-ring .08s linear 18 alternate; }
+.tf .tf-sand { fill: #f2c14e; }
+.tf .tf-stream { stroke: #f2c14e; stroke-width: 6; stroke-dasharray: 8 6; animation: tf-flow .4s linear infinite; }
+.tf:not(.is-running) .tf-stream { animation-play-state: paused; }
+.tf-crawl { animation: tf-crawl .9s ease-in-out infinite; animation-play-state: paused; }
+.tf.is-running .tf-crawl { animation-play-state: running; }
+.tf-flame { transform-box: fill-box; transform-origin: 50% 0; animation: tf-flame .18s ease-in-out infinite alternate; }
+.tf:not(.is-running) .tf-flame { opacity: .35; animation: none; }
+.tf-twinkle { animation: tf-twinkle 2.2s ease-in-out infinite; }
+.tf .tf-track { stroke: rgb(255 255 255 / .12); }
+.tf .tf-ring { stroke: #ffc83d; transition: stroke-dashoffset .15s linear, stroke .4s; }
+.tf.is-warn .tf-ring { stroke: #ffa94d; }
+.tf.is-last .tf-ring, .tf.is-done .tf-ring { stroke: #ff6b6b; }
+.ph { display: grid; gap: 18px; padding-block: 22px 56px; }

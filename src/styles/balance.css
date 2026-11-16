@@ -1,0 +1,50 @@
+/* Kiểu riêng khu vực "balance-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.choice.is-right { background: var(--mint); border-color: var(--green); color: var(--fg-11704c); }
+.choice.is-wrong { background: var(--bg-ffe1de); border-color: var(--red); color: var(--fg-9c2a22); }
+.fill-input.is-right { background: var(--mint); border-color: var(--green); }
+.fill-input.is-wrong { background: var(--bg-ffe1de); border-color: var(--red); }
+.blank-input.is-right { background: var(--mint); border-color: var(--green); }
+.blank-input.is-wrong { background: var(--bg-ffe1de); border-color: var(--red); }
+.pattern-option { display: grid; width: 100%; min-height: 88px; place-items: center; padding: 8px; border: 2px solid var(--line-strong); border-bottom-width: 5px; border-radius: 16px; background: var(--bg-ffffff); cursor: pointer; transition: transform 160ms ease, background-color 160ms ease; }
+.pattern-option:hover:not([aria-disabled="true"]) { transform: translateY(-2px); background: var(--bg-fff3d1); }
+.pattern-option[aria-disabled="true"] { cursor: default; }
+.pattern-option.is-right { border-color: var(--green); background: var(--mint); box-shadow: 0 0 0 3px var(--green) inset; }
+.pattern-option.is-wrong { border-color: var(--bg-c58a00); background: var(--bg-fff3d1); }
+.pattern-option:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+
+/* Cân thăng bằng */
+.balance-facts { margin-top: 14px; padding: 10px 12px; border-radius: 14px; background: var(--bg-f1f5fc); }
+.balance-facts p { font-size: 15px; font-weight: 700; }
+.balance-facts ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 6px 0 0; padding: 0; list-style: none; }
+.balance-facts li { flex: 0 1 200px; padding: 4px; border-radius: 12px; background: #f7fbff; }
+.balance-main { margin-top: 12px; border-radius: 16px; background: #f7fbff; }
+.balance-svg { display: block; width: 100%; max-width: 460px; height: auto; margin-inline: auto; }
+.balance-svg.is-small { max-width: 220px; }
+.balance-beam, .balance-pan { transition: transform 450ms cubic-bezier(.3, 1.4, .5, 1); }
+.balance-option { min-height: 64px; font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 30px; font-weight: 800; color: var(--ink); }
+@media (max-width: 640px) {
+  .balance-facts li { flex-basis: 100%; }
+  .balance-svg.is-small { max-width: 260px; }
+  .balance-option { min-height: 56px; font-size: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-nav-link, .game-filter, .game-card, .level-chip, .pattern-option, .memory-inner { transition: none; }
+  .main-nav-link:hover, .game-filter:hover, .game-card:hover, .level-option:hover .level-chip, .pattern-option:hover:not([aria-disabled="true"]) { transform: none; }
+  .maze-btn:active, .sudoku-key:active:not(:disabled) { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .balance-beam, .balance-pan { transition: none; }
+}
+.fx-on .choice.is-right, .fx-on .question-card .is-right { animation: right-glow 1200ms ease-out; }
+.choice.is-right { box-shadow: 0 0 0 3px rgba(31, 157, 107, .2); }
+@media (prefers-reduced-motion: reduce) {
+  .lesson-decor-motif, .milo-trail-milo, .milo-trail-bubble, .fx-on .choice.is-right, .fx-on .question-card .is-right { animation: none !important; transition: none !important; }
+  .milo-trail-milo.is-tilt { transform: none; }
+  .confetti { display: none; }
+}
+.qz .choice.is-right { border-color: #2fb34a; border-bottom-color: #198a33; background: linear-gradient(180deg, #f0fff2, #ccf3d4); color: #0f6a2c; }
+.qz .choice.is-wrong { border-color: #e5484d; border-bottom-color: #b3261e; background: linear-gradient(180deg, #fff5f4, #ffd9d5); color: #9c2a22; }
+
+/* ===== Chế độ tối: làm dịu nền sáng còn sót (sinh tự động từ các khối nền trắng/pastel chưa có bản tối — chế độ sáng giữ nguyên) ===== */
+:root[data-theme="dark"] .balance-facts li { background: var(--surface-2); }
+:root[data-theme="dark"] .balance-main { background: var(--surface-2); }

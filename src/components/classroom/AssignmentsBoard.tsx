@@ -10,6 +10,13 @@ import {
   type AssignmentRow, type DetailRow, type ExamItem,
 } from '@/lib/classroom/assignments';
 import type { SubjectCode } from '@/lib/types';
+import '@/styles/adm.css';
+import '@/styles/assign.css';
+import '@/styles/exam.css';
+import '@/styles/btn.css';
+import '@/styles/comments.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
 
 export type LessonOption = { id: string; subject: SubjectCode; title: string; group: string };
 type Student = { id: string; name: string };

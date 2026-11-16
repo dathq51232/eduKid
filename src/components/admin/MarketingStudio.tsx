@@ -8,6 +8,9 @@ import { useRouter } from 'next/navigation';
 import { Check, Copy, ExternalLink, FilePlus2, ImagePlus, Save, Share2, Sparkles, Trash2, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { CH, CHANNELS, TEMPLATES, autoVariants, slug, withUtm, type Channel } from '@/lib/social/compose';
+import '@/styles/adm.css';
+import '@/styles/mk.css';
+import '@/styles/btn.css';
 
 export type MPost = { id: string; title: string; campaign: string; link: string | null; body: string; hashtags: string; variants: Partial<Record<Channel, string>>; posted: Partial<Record<Channel, string>>; created_at: string };
 export type MReport = { campaign: string; source: string; clicks: number; signups: number; last_day: string };

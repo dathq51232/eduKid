@@ -6,6 +6,13 @@ import { downloadXlsx, XS } from '@/lib/xlsx';
 import { nd30HeaderHtml, nd30SignHtml } from '@/lib/doc-style';
 import { SUBJECT_VI, buildReport, reportRanges, reportText, type CompactResult, type Range, type StudentReport } from '@/lib/classroom/report';
 import { ToolIcon } from '@/components/classroom/tool-icons';
+import '@/styles/adm.css';
+import '@/styles/planner.css';
+import '@/styles/praise.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
+import '@/styles/report.css';
 
 type Student = { id: string; name: string };
 type Draft = { text: string; ok: boolean };

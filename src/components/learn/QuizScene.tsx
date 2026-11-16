@@ -9,6 +9,7 @@ import { SUBJECT_MASCOT } from '@/lib/mascots';
 import { createClient } from '@/lib/supabase/client';
 import { rankFor } from '@/lib/levels';
 import { readTotalPoints } from '@/lib/progress';
+import '@/styles/qz.css';
 
 type Subject = 'toan' | 'tieng-viet' | 'tieng-anh';
 

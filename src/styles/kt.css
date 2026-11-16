@@ -1,0 +1,46 @@
+/* Kiểu riêng khu vực "kt-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.figure.is-compact { padding: 6px; border: 0; background: none; }
+:root[data-theme="dark"] .figure.is-compact { background: #f7f9fd; border-radius: 12px; }
+.pin-dots span.is-on { background: var(--brand-blue); box-shadow: none; }
+.role-pick label.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.dash-section { display: grid; gap: 12px; }
+.gaps-periods .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.plan-edit .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.fx-toggle.is-on { background: var(--bg-fff3d1); color: var(--fg-7a4d00); }
+.praise-spots .mini-btn.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.qz-round.fx-toggle.is-on { background: radial-gradient(circle at 35% 30%, #ffb3e0, #d6409f 70%); box-shadow: 0 4px 0 #a32b78, 0 8px 16px rgb(120 20 80 / .25); }
+.pen-colors button.is-on, .wb-colors button.is-on { box-shadow: 0 0 0 3px #a78bfa; }
+.kh-modal-box > .dash-section { margin: 0; }
+
+/* Icon chủ đề: ô cảnh + nhân vật 3D bật ra khỏi khung */
+.kt-badge { position: relative; display: inline-block; flex: none; border-radius: 26%; box-shadow: 0 5px 0 rgb(0 0 0 / .1), 0 10px 18px rgb(0 0 0 / .16); }
+.kt-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.kt-hero { position: absolute; left: 10%; bottom: 10%; width: 80%; height: auto; filter: drop-shadow(0 6px 6px rgb(0 0 0 / .28)); transform: translateY(-10%); transition: transform .28s cubic-bezier(.3, 1.5, .5, 1); }
+.kt-side { position: absolute; right: -10%; bottom: -8%; width: 38%; height: auto; filter: drop-shadow(0 3px 4px rgb(0 0 0 / .25)); transform: rotate(12deg); transition: transform .28s ease; }
+.kt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.kt-grid.is-compact { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; }
+.kt-card { position: relative; display: grid; justify-items: center; align-content: start; gap: 6px; padding: 18px 10px 12px; border: 2px solid var(--line); border-radius: 20px; background: var(--surface); color: var(--ink); font: inherit; text-align: center; cursor: pointer; transition: transform .18s ease, border-color .18s ease; }
+.kt-card b { margin-top: 6px; font-size: 15px; font-weight: 800; line-height: 1.2; }
+.kt-card small { color: var(--muted); font-size: 12.5px; font-weight: 600; line-height: 1.3; }
+.kt-card:hover { transform: translateY(-2px); border-color: var(--kt-c); }
+.kt-card:hover .kt-hero, .kt-card.is-on .kt-hero { transform: translateY(-20%) rotate(-6deg) scale(1.06); }
+.kt-card:hover .kt-side { transform: rotate(-4deg) scale(1.08); }
+.kt-card:focus-visible { outline: 3px solid var(--kt-c); outline-offset: 3px; }
+.kt-card.is-on { border-color: var(--kt-c); background: color-mix(in srgb, var(--kt-c) 9%, var(--surface)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--kt-c) 28%, transparent); }
+.kt-check { position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--kt-c); color: #fff; }
+.kt-check svg { width: 16px; height: 16px; }
+.kt-grid.is-compact .kt-card { padding: 14px 6px 10px; }
+.kt-grid.is-compact .kt-card b { font-size: 13.5px; }
+.kt-open { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 14px 4px 5px; border: 2px solid var(--line); border-radius: 99px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+.kt-open:hover { border-color: var(--kid-c); }
+.kt-open .kt-badge { border-radius: 50%; box-shadow: none; }
+.kt-open .kt-bg rect { rx: 60; }
+.kt-open .kt-side { display: none; }
+.kt-open .kt-hero { transform: none; left: 8%; bottom: 8%; width: 84%; }
+.kt-pop { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px; background: rgb(15 23 42 / .5); }
+.kt-pop-box { width: min(680px, 100%); max-height: calc(100dvh - 32px); overflow: auto; padding: 16px 18px 20px; border-radius: 22px; background: var(--surface); box-shadow: var(--shadow-lg); }
+.kt-pop-box header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.kt-pop-box h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 19px; }
+.kt-pop-box h2 svg, .kt-section h2 svg { color: var(--kid-c); }
+.kt-pop-x { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--surface-2); color: var(--ink); cursor: pointer; }
+.kt-pop-x svg { width: 20px; height: 20px; }

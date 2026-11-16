@@ -4,6 +4,7 @@ import NotConfigured from '@/components/classroom/NotConfigured';
 import LunarCalendar from '@/components/utils/LunarCalendar';
 import { ToolIcon } from '@/components/classroom/tool-icons';
 import { loadClassPage } from '@/lib/classroom/class-page';
+import '@/styles/ct.css';
 
 export const metadata: Metadata = { title: 'Lịch âm dương · EduChain Kids', robots: { index: false } };
 export const dynamic = 'force-dynamic';

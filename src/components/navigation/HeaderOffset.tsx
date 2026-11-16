@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import '@/styles/learn.css';
 
 // Đo chiều cao thật của thanh trên cùng (đổi theo cỡ màn hình, chữ, tài khoản…) và ghi vào biến CSS --learn-top-h
 // để các thanh dính bên dưới (thanh làm bài, mục lục, thanh làm đề) nằm ngay dưới, không bị che.

@@ -1,0 +1,58 @@
+/* Kiểu riêng khu vực "zg-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 10px 24px; border: 0; border-radius: 999px; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: transform 160ms ease, box-shadow 160ms ease; }
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.sr-award-form .btn { justify-self: start; }
+
+/* Nút .btn bị tắt (vd chưa đủ điều kiện): nhìn rõ là đang tắt, cả nền sáng lẫn nền tối */
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; box-shadow: none; transform: none; filter: saturate(.4); }
+.home .btn { transition: transform 150ms ease, box-shadow 150ms ease; }
+.home .btn:hover { transform: translateY(-2px); }
+.home .btn:active { transform: translateY(2px); box-shadow: none; }
+
+/* nút */
+.btn { transition: transform 120ms ease, box-shadow 120ms ease, background-color 160ms ease; }
+.btn:active:not(:disabled) { transform: translateY(2px); }
+@media (prefers-reduced-motion: reduce) { .btn:hover, .btn:active:not(:disabled) { transform: none; } }
+.diary-wide { width: 100%; }
+.ct-x { display: inline-grid; place-items: center; width: 30px; height: 30px; margin-left: 6px; border: 0; border-radius: 8px; background: transparent; color: inherit; cursor: pointer; vertical-align: middle; }
+.ct-x:hover { background: rgb(var(--ink-rgb) / .08); }
+.ct-link { display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: none; color: var(--link); font: inherit; font-weight: 700; cursor: pointer; }
+.td-log p .ct-x { margin-left: auto; }
+/* công cụ trên lớp: nút gọn hơn để vừa một hàng */
+.ct .btn { min-height: 44px; padding: 8px 16px; font-size: 15px; }
+.ct-radio .ct-link { margin-top: 4px; font-size: 13px; }
+.zg-open { justify-content: center; background: #0068ff; color: #fff; text-decoration: none; box-shadow: 0 4px 0 #0050c4; }
+.zg-open:hover { background: #1a78ff; color: #fff; }
+.zg-add, .zg-edit, .zg-del { justify-self: start; font-size: 13.5px; }
+.zg-form { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.zg-label { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; }
+.zg-label svg, .zg-add svg, .zg-edit svg { width: 16px; height: 16px; }
+.zg-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.zg-row input { flex: 1 1 200px; min-width: 0; min-height: 40px; padding: 0 10px; border-radius: 10px; border: 2px solid var(--blue); background: var(--surface); color: var(--ink); font: inherit; font-size: 14.5px; }
+.zg-form small { color: var(--muted); font-weight: 600; font-size: 12.5px; line-height: 1.4; }
+.zg-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-radius: 16px; background: #e3f0ff; border: 1px solid #bcd7ff; }
+.zg-name { display: inline-flex; align-items: center; gap: 10px; color: #0050c4; }
+.zg-name > svg { width: 28px; height: 28px; }
+.zg-name b { display: block; color: var(--ink); }
+.zg-name small { display: block; color: var(--muted); font-weight: 600; }
+.zg-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.zg-qr { display: grid; justify-items: center; gap: 8px; padding: 18px; border-radius: 18px; background: #fff; color: #1e2b4a; border: 1px solid var(--line); box-shadow: var(--shadow-md); position: relative; max-width: 340px; }
+.zg-qr-x { position: absolute; top: 8px; right: 8px; color: #1e2b4a; }
+.zg-qr-title { font-weight: 700; font-size: 17px; text-align: center; }
+.zg-qr-sub { color: #56627a; font-weight: 600; font-size: 14px; }
+:root[data-theme="dark"] .zg-card { background: #10284a; border-color: #1d3d6b; }
+:root[data-theme="dark"] .zg-name { color: #7fb2ff; }
+@media print {
+  body:has(.zg-qr) * { visibility: hidden; }
+  body:has(.zg-qr) .zg-qr, body:has(.zg-qr) .zg-qr * { visibility: visible; }
+  body:has(.zg-qr) .zg-qr { position: absolute; left: 50%; top: 40px; transform: translateX(-50%); box-shadow: none; border: 0; max-width: none; }
+  .zg-qr-x { display: none !important; }
+}
+.ct-link.is-danger { color: var(--red); }
+.chs-promo .ct-link { color: #fff; }
+.chs-side > .ct-link { display: inline-flex; align-items: center; gap: 4px; }
+.tdy-done .ct-link { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 700; }
+.kb-todo .ct-link { display: inline; padding: 0; margin-left: 4px; }
+.mn-form-hd .ct-x { margin-left: auto; }
+.tdy-later .ct-link { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 700; text-align: left; }
+.tdy-done .ct-link, .tdy-later .ct-link { font-size: 14px; }

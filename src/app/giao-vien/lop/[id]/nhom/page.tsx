@@ -5,6 +5,7 @@ import GroupsSeating from '@/components/classroom/GroupsSeating';
 import type { SummaryRow } from '@/components/classroom/ClassManager';
 import { absentToday, loadClassPage } from '@/lib/classroom/class-page';
 import { levelOf, type Level } from '@/lib/classroom/class-tools';
+import '@/styles/ct.css';
 
 export const metadata: Metadata = { title: 'Nhóm & chỗ ngồi · EduChain Kids' };
 export const dynamic = 'force-dynamic';

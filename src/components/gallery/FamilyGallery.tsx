@@ -11,6 +11,10 @@ import WritingJourney from './WritingJourney';
 import ArtViewer from './ArtViewer';
 import { galleryError, loadGallery, toggleHeart } from '@/lib/gallery/client';
 import { SEEN_KEY, type GalleryData, type HeartEmoji } from '@/lib/gallery/types';
+import '@/styles/adm.css';
+import '@/styles/gm.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
 
 export type FamilyClass = { class_id: string; class_name: string; grade: number; student_id: string; student_name: string };
 type Tab = 'phong' | 'nop' | 'net-chu';

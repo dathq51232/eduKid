@@ -1,0 +1,54 @@
+/* Kiểu riêng khu vực "notebook-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.notebook-cover {
+  --nb: var(--nb-blue);
+  position: relative; display: grid; grid-template-rows: 1fr auto; gap: 16px; min-height: 210px;
+  padding: 22px 22px 18px 40px; border-radius: 6px 18px 18px 6px;
+  background: var(--nb); color: #fff;
+  /* gáy vở bên trái + mép giấy bên dưới */
+  box-shadow: inset 16px 0 0 rgb(0 0 0 / .16), inset 18px 0 0 rgb(255 255 255 / .12),
+              0 4px 0 -1px var(--page-edge), 0 5px 0 -1px var(--line-strong),
+              0 9px 0 -2px var(--page-edge), 0 10px 0 -2px var(--line-strong), var(--shadow-sm);
+  transition: transform 160ms ease;
+}
+.notebook-cover.tone-coral { --nb: var(--nb-coral); }
+.notebook-cover.tone-green { --nb: var(--nb-green); }
+.notebook-cover:hover { transform: translateY(-3px) rotate(-.6deg); }
+.notebook-cover:focus-visible { outline: 3px solid var(--brand-yellow); outline-offset: 4px; }
+.notebook-icon { position: absolute; top: 18px; right: 18px; width: 30px; height: 30px; opacity: .85; }
+.notebook-label {
+  align-self: center; display: grid; gap: 8px; margin-right: 28px; padding: 14px 16px 12px;
+  border-radius: 14px; background: var(--label-paper); color: var(--label-ink);
+  box-shadow: inset 0 0 0 3px var(--label-paper), inset 0 0 0 5px var(--nb);
+}
+.notebook-line { display: block; padding-bottom: 4px; border-bottom: 1.5px dotted rgb(30 43 74 / .35); font-size: 15px; font-weight: 600; color: #56627a; }
+.notebook-line strong { margin-left: 4px; color: var(--nb); font-size: 26px; font-weight: 700; line-height: 1.1; }
+.notebook-detail { color: #3d4963; }
+.notebook-open { display: inline-flex; align-items: center; justify-self: end; gap: 6px; font-size: 15px; font-weight: 700; }
+.notebook-open svg { width: 18px; height: 18px; transition: translate 160ms ease; }
+.notebook-cover:hover .notebook-open svg { translate: 4px 0; }
+@media (max-width: 960px) {
+  .notebook-cover { min-height: 0; grid-template-columns: 1fr auto; grid-template-rows: auto; align-items: center; }
+  .notebook-open { align-self: end; }
+}
+@media (max-width: 600px) {
+  .notebook-cover { grid-template-columns: 1fr; padding-left: 34px; }
+  .notebook-label { margin-right: 34px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .notebook-cover, .notebook-open svg { transition: none; }
+  .notebook-cover:hover { transform: none; }
+}
+
+/* vở môn học: Milo theo môn ngồi ở góc bìa, số bài thật trên nhãn */
+.home .notebook-cover { min-height: 290px; padding-bottom: 20px; }
+.home .notebook-label { align-self: start; }
+.home .notebook-cover:hover { transform: translateY(-4px) rotate(-.6deg); }
+.notebook-count { color: var(--nb); font-weight: 700; }
+.notebook-milo { position: absolute; left: 34px; bottom: 12px; width: 76px; height: auto; pointer-events: none; transform: rotate(-4deg); transition: transform 200ms ease; }
+.notebook-cover:hover .notebook-milo { transform: rotate(2deg) translateY(-4px); }
+.home .notebook-icon { display: none; }
+.home .notebook-open { position: relative; z-index: 1; }
+@media (max-width: 640px) {
+  .home .notebook-cover { min-height: 270px; }
+  .notebook-milo { width: 66px; }
+}

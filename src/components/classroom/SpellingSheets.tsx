@@ -7,6 +7,11 @@ import { ALL_PAIRS, BODY_FONTS, COPY_PAPERS, DEFAULT_LOOK, HAND_FONTS, SHEET_ICO
 import type { PairId } from '@/lib/spelling/bank';
 import { currentWeek, HK2_WEEK, lessonForWeek, WEEKS, weekLabel } from '@/lib/spelling/curriculum';
 import { ToolIcon } from '@/components/classroom/tool-icons';
+import '@/styles/adm.css';
+import '@/styles/planner.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/ws.css';
 
 const KEY = 'edukid:phieu-chinh-ta';
 type Saved = { school: string; className: string; teacher: string; pairs: PairId[]; picCount: number; wordCount: number; copy: boolean; withKey: boolean;

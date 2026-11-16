@@ -3,6 +3,7 @@ import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import WhiteboardTool from '@/components/board/WhiteboardTool';
 import { loadClassPage } from '@/lib/classroom/class-page';
+import '@/styles/ct.css';
 
 export const metadata: Metadata = { title: 'Bảng trắng · EduChain Kids', robots: { index: false } };
 export const dynamic = 'force-dynamic';

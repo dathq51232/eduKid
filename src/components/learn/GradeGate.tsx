@@ -6,6 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import LearnHeader from '@/components/LearnHeader';
 import { lessonGradeFromId, parseGrade } from '@/lib/basics';
 import { gradeLoaded, loadGrade } from '@/lib/grade-loader';
+import '@/styles/adm.css';
+import '@/styles/mini.css';
 
 export default function GradeGate({ children }: { children: React.ReactNode }) {
   const sp = useSearchParams();

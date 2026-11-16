@@ -5,6 +5,8 @@
 import { useEffect, useState } from 'react';
 import { contentVersion } from '@/lib/content/store';
 import { gradeLoaded, loadGrade } from '@/lib/grade-loader';
+import '@/styles/adm.css';
+import '@/styles/mini.css';
 
 /** Trả về số phiên bản kho bài: đổi khi khối vừa nạp xong (dùng làm phụ thuộc cho useMemo) */
 export function useGradeContent(grade: number): { ready: boolean; failed: boolean; version: number } {

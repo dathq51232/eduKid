@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Bell } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { NOTI_GROUPS, NOTI_ICON, ago, type AdminNotification } from '@/lib/admin/insights';
+import '@/styles/adm.css';
 
 const POLL_MS = 60_000;
 

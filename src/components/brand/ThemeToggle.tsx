@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import '@/styles/theme.css';
 
 type Theme = 'light' | 'dark';
 const KEY = 'educhain-theme';

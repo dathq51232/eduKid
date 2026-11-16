@@ -5,6 +5,8 @@ import { FileSpreadsheet } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { asciiFilename } from '@/lib/filename';
 import type { Award, ExamCode, QualityLevel, SubjectLevel } from '@/lib/classroom/school';
+import '@/styles/adm.css';
+import '@/styles/btn.css';
 
 // Tải "Bảng tổng hợp kết quả đánh giá giáo dục" theo mẫu vnEdu (.xlsx) + trang nhận xét của kỳ.
 // Lấy dữ liệu đã LƯU (mức, điểm, phẩm chất – năng lực, khen thưởng, nhận xét); tạo file ngay trên trình duyệt.

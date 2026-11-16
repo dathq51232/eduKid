@@ -6,6 +6,7 @@ import { parsePeriod, type Insights } from '@/lib/admin/insights';
 import { getStaffContext } from '@/lib/auth/staff';
 import { createClient } from '@/lib/supabase/server';
 import type { AdminLesson, LessonStatus } from '@/lib/admin/types';
+import '@/styles/adm.css';
 
 type Overview = {
   lessons: Partial<Record<LessonStatus, number>>;

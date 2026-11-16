@@ -9,6 +9,9 @@ import { Play } from 'lucide-react';
 import { FX_BY_ID, elLabel, type Anim, type Slide } from '@/lib/deck/types';
 import { animIterations, animSpan, fxEasing, fxFrames, planSlide, type Step } from '@/lib/deck/player';
 import { playSound } from '@/lib/deck/sounds';
+import '@/styles/dk.css';
+import '@/styles/mini.css';
+import '@/styles/tl.css';
 
 const PPS = 70; // điểm ảnh mỗi giây
 const GROUP_COLOR = { in: '#22c55e', em: '#f59e0b', out: '#ef4444' } as const;

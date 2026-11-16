@@ -15,6 +15,10 @@ import { SCENES_SORTED, pickScene } from '@/lib/deck/scenes';
 import { MASCOTS, PHASES, WARMUPS, buildPlan, buildPlanFromGiaoAn, planSlides, tietOf, type BuildOpts, type Knowledge, type LessonPlan, type MascotId, type PhaseId, type Warmup } from '@/lib/deck/fromLesson';
 import { SUBJECT_NAMES, isAppSubject, isPlan, mondayOf, addDays, viDate, weekdayVi, type LessonPlan as GiaoAn } from '@/lib/plans/generate';
 import SlideView, { SlideFrame } from './SlideView';
+import '@/styles/dfl.css';
+import '@/styles/dk.css';
+import '@/styles/btn.css';
+import '@/styles/dh.css';
 
 type Bank = { lessons: ContentLesson[]; byId: Map<string, ContentLesson>; know: (id: string) => Knowledge };
 type PlanRow = { id: string; subject: string; grade: number; title: string; teach_date: string | null; period: number | null };

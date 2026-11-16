@@ -1,0 +1,63 @@
+/* Kiểu riêng khu vực "games-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.wrap { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+
+@media (max-width: 900px) {
+  .wrap { width: min(100% - 40px, 680px); }
+  
+  
+  
+  .notebook { margin-right: 14px; }
+  
+  
+  
+  
+  .footer { flex-wrap: wrap; padding-block: 20px; }
+}
+@media (max-width: 520px) {
+  body { font-size: 17px; }
+  .wrap { width: calc(100% - 32px); }
+  .brand { font-size: 22px; }
+  .top-cta { padding: 10px 14px; font-size: 15px; }
+  
+  .notebook { padding-left: 62px; }
+  .notebook::before { left: 42px; }
+  .notebook p.line { font-size: 22px; }
+  .journey { padding-block: 64px; }
+  
+  
+  .answers { grid-template-columns: repeat(2, 1fr); }
+  
+  .footer { align-items: flex-start; flex-direction: column; }
+}
+
+/* ==================================================================
+   GAME TRÍ TUỆ: danh mục
+================================================================== */
+.games-main { padding-top: 32px; padding-bottom: 96px; }
+.games-main > * + * { margin-top: 24px; }
+.games-hero { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 28px 32px; border: 2px solid var(--line-strong); border-radius: 20px; background: var(--bg-ffffff); box-shadow: var(--shadow-md); }
+
+.games-hero h1 { margin-top: 4px; font-size: clamp(34px, 6vw, 52px); }
+.games-lead { margin-top: 8px; color: var(--muted); font-size: 20px; font-weight: 500; }
+.games-hero-milo { flex: none; }
+@media (max-width: 640px) {
+  .games-hero, .ach-hero, .parent-status, .game-finish, .game-empty { flex-direction: column; align-items: flex-start; padding: 22px; }
+  .game-grid, .ach-progress, .ach-stats { grid-template-columns: 1fr; }
+  .pattern-cell .shape-icon { width: 36px; height: 36px; }
+  .pattern-options.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .memory-front .shape-icon { width: 38px; height: 38px; }
+}
+@media (max-width: 640px) {
+  .games-hero { flex-direction: column-reverse; }
+}
+
+/* Khối nội dung: viền mảnh 1px thay cho viền 2px, cùng một kiểu bóng nhẹ */
+.games-hero, .lesson, .lesson-row, .question-card, .intro-card, .score-box, .review-item, .empty-state,
+.points-card, .comment-card, .dialog-card, .back-link, .icon-button, .quiz-count,
+.game-filter, .game-grade select, .notebook { border-width: 1px; }
+.games-hero { box-shadow: var(--shadow-sm); }
+
+/* ---------------- Game trí tuệ: tiêu đề gọn ---------------- */
+.games-hero h1 { margin-top: 0; }
+.games-lead { max-width: 52ch; font-size: 18px; line-height: 1.55; }
+.tsh-main > .dash.wrap:has(> .class-manager) { padding-top: 14px; }

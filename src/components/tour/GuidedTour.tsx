@@ -9,6 +9,7 @@ import { createPortal } from 'react-dom';
 import { CircleHelp, Sparkles, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { TOURS, type TourId, type TourStep } from '@/lib/tour/steps';
+import '@/styles/gt.css';
 
 const LOCAL = 'gt-da-xem';
 const SNOOZE = 'gt-de-sau:';

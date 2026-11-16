@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import EnglishStudio from '@/components/english/EnglishStudio';
+import '@/styles/en.css';
+import '@/styles/kn.css';
 
 export const metadata: Metadata = { title: 'English Journey · EduChain Kids' };
 

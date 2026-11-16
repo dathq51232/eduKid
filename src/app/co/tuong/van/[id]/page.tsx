@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import LearnHeader from '@/components/LearnHeader';
 import XqOnline from '@/components/xiangqi/XqOnline';
 import { getViewer } from '@/lib/auth/viewer';
+import '@/styles/chs.css';
 
 export const metadata: Metadata = { title: 'Ván cờ tướng · EduChain Kids' };
 

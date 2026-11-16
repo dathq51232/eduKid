@@ -1,0 +1,31 @@
+/* Kiểu riêng khu vực "kho-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.pin-dots span.is-on { background: var(--brand-blue); box-shadow: none; }
+.role-pick label.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.dash-muted { color: var(--muted); font-size: 15px; }
+.assign-paper-form .dash-muted { flex-basis: 100%; margin: 0; font-size: 13px; }
+.gaps-periods .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.plan-edit .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.fx-toggle.is-on { background: var(--bg-fff3d1); color: var(--fg-7a4d00); }
+.praise-spots .mini-btn.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.qz-round.fx-toggle.is-on { background: radial-gradient(circle at 35% 30%, #ffb3e0, #d6409f 70%); box-shadow: 0 4px 0 #a32b78, 0 8px 16px rgb(120 20 80 / .25); }
+.pen-colors button.is-on, .wb-colors button.is-on { box-shadow: 0 0 0 3px #a78bfa; }
+.planner-editor.is-full > .dash-muted { display: none; }
+.kho-h { margin: 0 0 8px; font-size: 14px; }
+.kho-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.kho-card { display: flex; flex-direction: column; gap: 4px; background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 10px 12px; color: var(--ink); }
+.kho-card.is-on { border-color: #2457c5; background: #f5f8ff; }
+.kho-card.is-base { border-style: dashed; }
+.kho-card small { color: var(--muted); font-size: 12px; }
+.kho-t { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; font-size: 14px; }
+.kho-pct { flex: none; font-weight: 800; font-size: 12.5px; border-radius: 999px; padding: 2px 9px; background: #f1f5f9; color: #475569; }
+.kho-pct.is-hi { background: #dcfce7; color: #15803d; } .kho-pct.is-mid { background: #fef9c3; color: #a16207; }
+.kho-why { display: flex; flex-wrap: wrap; gap: 4px; }
+.kho-why span { font-size: 11.5px; border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; background: var(--surface); }
+.kho-why .is-ok { border-color: #86efac; color: #15803d; } .kho-why .is-no { border-color: #fecaca; color: #b91c1c; }
+.kho-swap { margin: 2px 0; padding-left: 18px; font-size: 12.5px; color: #15803d; }
+.kho-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 4px; }
+.kho-note { margin: 8px 0 0; font-size: 12.5px; }
+.kt-section .dash-muted { margin: -4px 0 12px; }
+:root[data-theme="dark"] .kho-card.is-on { background: var(--surface-2); }
+:root[data-theme="dark"] .kho-pct { background: var(--surface-2); color: var(--ink); }
+:root[data-theme="dark"] .kho-pct.is-hi { background: color-mix(in srgb, #15803d 24%, var(--surface)); color: color-mix(in srgb, #15803d 40%, #fff); }

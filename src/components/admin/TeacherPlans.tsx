@@ -7,6 +7,10 @@ import CsvButton from '@/components/classroom/CsvButton';
 import { createClient } from '@/lib/supabase/client';
 import { FREE_STUDENT_LIMIT, TEACHER_TRIAL_DAYS } from '@/lib/contact';
 import { useAdminUser } from './AdminContext';
+import '@/styles/adm.css';
+import '@/styles/billing.css';
+import '@/styles/mini.css';
+import '@/styles/tone.css';
 
 type Row = { teacher_id: string; display_name: string; email: string | null; school_name: string | null; classes: number; students_used: number; student_limit: number; note: string | null; joined_at: string; trial_until?: string | null };
 const PRESETS = [3, 10, 20, 40];

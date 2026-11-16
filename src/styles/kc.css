@@ -1,0 +1,40 @@
+/* Kiểu riêng khu vực "kc-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 10px 24px; border: 0; border-radius: 999px; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: transform 160ms ease, box-shadow 160ms ease; }
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.btn-yellow { color: #1e2b4a; background: var(--brand-yellow); box-shadow: 0 4px 0 #e0a800; }
+.home-actions .btn-yellow { min-height: 54px; padding: 12px 30px; font-size: 18px; box-shadow: 0 6px 16px rgb(224 168 0 / .35); }
+.sr-award-form .btn { justify-self: start; }
+
+/* Nút .btn bị tắt (vd chưa đủ điều kiện): nhìn rõ là đang tắt, cả nền sáng lẫn nền tối */
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; box-shadow: none; transform: none; filter: saturate(.4); }
+.home .btn { transition: transform 150ms ease, box-shadow 150ms ease; }
+.home .btn:hover { transform: translateY(-2px); }
+.home .btn:active { transform: translateY(2px); box-shadow: none; }
+.home .home-actions .btn-yellow, .home .btn-yellow { box-shadow: 0 4px 0 #d39b12; }
+
+/* nút */
+.btn { transition: transform 120ms ease, box-shadow 120ms ease, background-color 160ms ease; }
+.btn-yellow { box-shadow: 0 4px 0 #d39b12; }
+.btn-yellow:hover { box-shadow: 0 6px 0 #d39b12; }
+.btn:active:not(:disabled) { transform: translateY(2px); }
+.btn-yellow:active:not(:disabled) { box-shadow: 0 2px 0 #d39b12; }
+@media (prefers-reduced-motion: reduce) { .btn:hover, .btn:active:not(:disabled) { transform: none; } }
+/* công cụ trên lớp: nút gọn hơn để vừa một hàng */
+.ct .btn { min-height: 44px; padding: 8px 16px; font-size: 15px; }
+.kc-stage { position: relative; width: 140px; height: 120px; }
+.kc-art { position: relative; display: block; width: 140px; height: 120px; transform-origin: 50% 92%; }
+.kc-lid { transform-box: fill-box; transform-origin: 50% 100%; transition: transform .6s cubic-bezier(.3, 1.6, .5, 1); }
+.kc-art.is-open .kc-lid { transform: translate(6px, -24px) rotate(-9deg); }
+.kc.is-ready .kc-art { animation: kcWiggle 1.8s ease-in-out infinite; }
+.kc.is-locked .kc-art { filter: saturate(.35); opacity: .85; }
+.kc-lock { position: absolute; z-index: 2; left: 50%; top: 46%; display: grid; place-items: center; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; background: var(--surface); color: var(--muted); box-shadow: var(--shadow-sm); }
+.kc-lock svg { width: 20px; height: 20px; }
+.kc-rays { position: absolute; left: 50%; top: 50%; width: 170px; height: 170px; margin: -85px 0 0 -85px; border-radius: 50%; background: repeating-conic-gradient(rgb(255 200 61 / .35) 0 12deg, transparent 12deg 30deg); -webkit-mask: radial-gradient(closest-side, #000 40%, transparent); mask: radial-gradient(closest-side, #000 40%, transparent); animation: kcSpin 14s linear infinite; }
+.kc-prize { position: absolute; z-index: 3; left: 50%; top: -34px; transform: translateX(-50%); filter: drop-shadow(0 6px 8px rgb(0 0 0 / .25)); animation: kcPop .7s cubic-bezier(.3, 1.6, .5, 1) both; }
+.kc-star { font-size: 54px; line-height: 1; }
+.kc-txt p { margin: 0; font-size: 15px; line-height: 1.45; }
+.kc-btn { font-size: 16px; }
+@media (prefers-reduced-motion: reduce) {
+  .kw-fl, .kw-tw, .kw-bub, .kc-art, .kc-rays, .kc-prize, .lm-milo, .lm-node.is-next .lm-island::after, .qz-combo.is-pop { animation: none !important; }
+  .kt-hero, .kt-side, .kc-lid { transition: none; }
+}

@@ -1,0 +1,124 @@
+/* Kiểu riêng khu vực "qz-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* Làm bài */
+.quiz-bar { position: sticky; top: var(--learn-top-h, 74px); z-index: 20; border-bottom: 3px solid var(--line-strong); background: var(--paper); }
+.icon-button { display: grid; flex: none; width: 48px; height: 48px; place-items: center; border: 2px solid var(--line-strong); border-radius: 14px; background: var(--bg-ffffff); color: var(--ink); cursor: pointer; }
+.icon-button:hover { background: var(--yellow); }
+
+.question-card { padding: 28px; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--bg-ffffff); box-shadow: var(--shadow-lg); }
+@media (max-width: 520px) {
+  .question-card { padding: 20px; }
+}
+.order-actions .icon-button:disabled { opacity: .35; cursor: default; }
+
+/* Thẻ chung: bo tròn hơn, viền nhạt */
+.lesson-row, .question-card, .lesson, .auth-card, .intro-card { border-radius: 20px; }
+
+/* Chữ trên nền vàng / nền trắng mờ luôn màu mực đậm (kể cả chế độ tối) */
+.button-yellow, .top-cta, .sticker, .grade-chip:hover, .back-link:hover, .lesson-row.is-next .lesson-no,
+.icon-button:hover, .result-card, .order-no, .adm-qnum, .nav-dot.is-current:not(.is-wrong):not(.is-correct):not(.is-timeout), .points-pop, .review-points, .maze-btn,
+.toc-link.is-next .toc-no, .toc-fab, .points-chip { color: #1e2b4a; }
+.pin-dots span.is-on { background: var(--brand-blue); box-shadow: none; }
+.role-pick label.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+
+/* Khối nội dung: viền mảnh 1px thay cho viền 2px, cùng một kiểu bóng nhẹ */
+.games-hero, .lesson, .lesson-row, .question-card, .intro-card, .score-box, .review-item, .empty-state,
+.points-card, .comment-card, .dialog-card, .back-link, .icon-button, .quiz-count,
+.game-filter, .game-grade select, .notebook { border-width: 1px; }
+.gaps-periods .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+/* Màn hình rất hẹp (iPhone SE, máy Android nhỏ ~320–380px) */
+@media (max-width: 380px) {
+  .quiz-bar .icon-button { width: 40px; height: 40px; border-radius: 12px; }
+  .swap-count { font-size: 13px; }
+}
+.plan-edit .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+
+.question-card { position: relative; }
+.fx-toggle.is-on { background: var(--bg-fff3d1); color: var(--fg-7a4d00); }
+@media (max-width: 760px) {
+  body:has(.quiz-bar) .quiz-bar { top: 0; }
+}
+@media (max-width: 760px) {
+  .question-card { padding: 16px 14px; }
+  .question-top { gap: 8px; }
+  /* "Nghe đọc đề" và "Đổi câu khác" chung một hàng, gọn */
+  .question-tools { flex-wrap: nowrap; gap: 8px; margin-top: 8px; }
+  .question-tools .button { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 6px 12px; font-size: 15px; gap: 6px; white-space: nowrap; }
+}
+.praise-spots .mini-btn.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.qz-scene { position: fixed; inset: 0; z-index: -1; background: #a9dcfb; pointer-events: none; }
+.qz-scene svg { display: block; width: 100%; height: 100%; }
+.qz-cloud { fill: #ffffff; opacity: .92; }
+.qz-cloud-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; will-change: transform; }
+.qz-scene.is-live .qz-cloud-layer.c1 { animation: qzDrift 38s ease-in-out infinite alternate; }
+.qz-scene.is-live .qz-cloud-layer.c2 { animation: qzDrift 46s ease-in-out infinite alternate-reverse; }
+.qz-scene.is-live .qz-cloud-layer.c3 { animation: qzDrift 52s ease-in-out infinite alternate; }
+@media (prefers-reduced-motion: reduce) { .qz-scene .qz-cloud-layer { animation: none !important; } }
+
+/* thanh trên: biển gỗ thương hiệu, tiến độ, đồng hồ, nút tròn */
+.qz .quiz-bar { top: 0; padding-top: 10px; border: 0; background: transparent; }
+.qz-brand { display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 8px; border-radius: 16px; background: linear-gradient(180deg, #c98d55, #a8693a); box-shadow: inset 0 0 0 3px #e2b07c, 0 6px 0 #7a4a22, 0 10px 18px rgb(60 30 0 / .25); flex: none; }
+.qz-brand > span { display: grid; line-height: 1.05; }
+.qz-brand small { margin-top: 4px; padding: 2px 8px; border-radius: 8px; background: #f7e3bd; color: #6b3f16; font-size: 11.5px; font-weight: 800; text-align: center; }
+.qz-pill { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 16px; border: 3px solid #f6d58f; border-radius: 999px; background: var(--qz-cream); color: var(--qz-navy); box-shadow: 0 4px 0 #e6c071, 0 8px 18px rgb(60 40 0 / .18); }
+.qz-progress { flex: 1 1 260px; max-width: 420px; }
+.qz-star { width: 30px; height: 30px; flex: none; color: #f2a516; fill: #ffcf33; filter: drop-shadow(0 2px 0 #c97f06); }
+.qz-track { position: relative; flex: 1; height: 18px; overflow: hidden; border-radius: 99px; background: #f1e6cf; box-shadow: inset 0 2px 3px rgb(0 0 0 / .12); }
+.qz-track > span { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: linear-gradient(180deg, #7be07a, #2fb34a); box-shadow: inset 0 -3px 0 rgb(0 0 0 / .12); transition: width .4s ease; }
+.qz-time { flex: none; }
+.qz-time svg { width: 28px; height: 28px; color: #e2462f; }
+.qz-time b { font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.qz-time small { font-size: 12px; font-weight: 800; color: #8a5a00; }
+.qz-time.is-low b { color: #c26a00; }
+.qz-time.is-danger { border-color: #ff9a8a; }
+.qz-time.is-danger b { color: #d32f2f; }
+.qz-hud-gap { flex: 1; }
+.qz-round.icon-button { width: 52px; height: 52px; border: 3px solid #fff; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5aa2ff, #1f5fd6 70%); color: #fff; box-shadow: 0 4px 0 #1846a3, 0 8px 16px rgb(20 50 120 / .3); }
+.qz-round.icon-button:hover { filter: brightness(1.08); }
+.qz-round.icon-button[aria-pressed="false"] { background: radial-gradient(circle at 35% 30%, #b6c2d8, #7c8aa6 70%); box-shadow: 0 4px 0 #5d6a85; }
+.qz-round.fx-toggle.is-on { background: radial-gradient(circle at 35% 30%, #ffb3e0, #d6409f 70%); box-shadow: 0 4px 0 #a32b78, 0 8px 16px rgb(120 20 80 / .25); }
+.qz-board.question-card { position: relative; padding: 26px 30px 30px; border: 14px solid transparent; border-radius: 28px;
+  background: linear-gradient(180deg, #fffdf7, #fff6e3) padding-box, linear-gradient(150deg, #d79a5c 0%, #9b6232 35%, #c4834a 62%, #7d4c24 100%) border-box;
+  box-shadow: 0 0 0 3px #6e4420, inset 0 0 0 3px #f5dfb8, 0 20px 40px rgb(60 30 0 / .35); }
+.qz-student { display: flex; align-items: center; gap: 10px; padding: 6px 16px 6px 6px; border: 3px solid #fff; border-radius: 999px; background: linear-gradient(180deg, #2f6fd6, #1f4fb8); color: #fff; box-shadow: 0 4px 0 #173d8f; font-weight: 700; }
+.qz-student-av { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #fff; }
+.qz-student-av svg { width: 26px; height: 26px; fill: #2f6fd6; }
+.qz-student-name b { font-weight: 900; }
+.qz-student-lv { padding-left: 10px; border-left: 2px solid rgb(255 255 255 / .35); font-weight: 900; white-space: nowrap; }
+
+/* đồ trang trí hai bên (màn hình rộng) */
+.qz-side { position: fixed; bottom: 96px; z-index: 0; pointer-events: none; display: none; }
+.qz-left { left: max(8px, calc(50% - 700px)); width: 220px; }
+.qz-milo { position: relative; z-index: 1; display: grid; place-items: center; filter: drop-shadow(0 10px 10px rgb(0 0 0 / .25)); }
+.qz-stump { height: 54px; margin: -18px auto 0; width: 170px; border-radius: 50% / 40%; background: radial-gradient(ellipse at 50% 30%, #e7c08a 0 28%, #c98d55 29% 46%, #9b6232 47%); box-shadow: 0 10px 0 #7a4a22; }
+.qz-right { right: max(8px, calc(50% - 700px)); width: 210px; display: none; justify-items: center; gap: 10px; }
+.qz-sign { position: relative; padding: 14px 16px; border-radius: 14px; background: linear-gradient(180deg, #c98d55, #a8693a); color: #fff8e8; font-weight: 900; font-size: 19px; line-height: 1.2; text-align: center; box-shadow: inset 0 0 0 3px #e2b07c, 0 6px 0 #7a4a22; }
+.qz-sign i { display: block; font-style: normal; color: #ffd6e2; }
+.qz-books { display: grid; gap: 4px; justify-items: center; }
+.qz-books span { width: 150px; padding: 8px 12px; border-radius: 8px 14px 14px 8px; color: #fff; font-weight: 900; font-size: 17px; box-shadow: inset 10px 0 0 rgb(255 255 255 / .25), 0 4px 0 rgb(0 0 0 / .2); opacity: .7; }
+.qz-books span.is-on { opacity: 1; transform: translateX(-10px) rotate(-2deg); box-shadow: inset 10px 0 0 rgb(255 255 255 / .3), 0 0 0 3px #ffe17a, 0 6px 0 rgb(0 0 0 / .25); }
+.qz-cup { font-size: 58px; line-height: 1; filter: drop-shadow(0 6px 4px rgb(0 0 0 / .25)); }
+@media (min-width: 1360px) { .qz-left { display: block; } .qz-right { display: grid; } }
+/* màn hình nhỏ */
+@media (max-width: 900px) {
+  .qz-brand small, .qz-brand .brand-word { display: none; }
+  .qz-round.icon-button { width: 44px; height: 44px; }
+  .qz-board.question-card { padding: 18px 16px 20px; border-width: 10px; border-radius: 22px; }
+}
+/* màn hình nhỏ */
+@media (max-width: 900px) {
+  .qz-brand { padding: 5px; }
+  .qz-progress { order: 5; flex-basis: 100%; max-width: none; }
+  .qz-pill { min-height: 44px; padding: 4px 12px; }
+  .qz-student { display: none; }
+}
+.pen-colors button.is-on, .wb-colors button.is-on { box-shadow: 0 0 0 3px #a78bfa; }
+
+/* Màn làm bài: khen chuỗi đúng liên tiếp */
+.qz-combo { position: absolute; z-index: 6; top: -20px; left: 50%; margin: 0; padding: 7px 18px; border-radius: 99px; background: linear-gradient(90deg, #ff8a3d, #ff4f7b); color: #fff; font-size: 17px; font-weight: 800; white-space: nowrap; box-shadow: 0 5px 0 #c2334f, 0 10px 18px rgb(194 51 79 / .3); transform: translateX(-50%); pointer-events: none; }
+.qz-combo b { font-size: 21px; }
+.qz-combo.is-pop { animation: qzComboPop .7s cubic-bezier(.3, 1.6, .5, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .kw-fl, .kw-tw, .kw-bub, .kc-art, .kc-rays, .kc-prize, .lm-milo, .lm-node.is-next .lm-island::after, .qz-combo.is-pop { animation: none !important; }
+  .kt-hero, .kt-side, .kc-lid { transition: none; }
+}

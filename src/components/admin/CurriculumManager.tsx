@@ -9,6 +9,7 @@ import { TYPE_LABEL, type CatalogForm } from '@/lib/admin/types';
 import { LEVEL_LABEL, STAGE_LABEL } from '@/lib/curriculum/grade1';
 import { QUESTION_TYPES, type DbQuestionType } from '@/lib/types';
 import { useAdminUser } from './AdminContext';
+import '@/styles/adm.css';
 
 type Row = {
   topic_id: string; topic_code: string; topic_title: string; topic_core: boolean; topic_status: string;

@@ -1,0 +1,81 @@
+/* Kiểu riêng khu vực "parent-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.ach-hero, .parent-status { display: flex; align-items: center; gap: 24px; padding: 28px; border: 2px solid var(--line-strong); border-radius: 20px; background: var(--bg-ffffff); box-shadow: var(--shadow-md); }
+.parent-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+@media (max-width: 640px) {
+  .games-hero, .ach-hero, .parent-status, .game-finish, .game-empty { flex-direction: column; align-items: flex-start; padding: 22px; }
+  .game-grid, .ach-progress, .ach-stats { grid-template-columns: 1fr; }
+  .pattern-cell .shape-icon { width: 36px; height: 36px; }
+  .pattern-options.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .memory-front .shape-icon { width: 38px; height: 38px; }
+}
+.pin-dots span.is-on { background: var(--brand-blue); box-shadow: none; }
+.role-pick label.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 0 0 2px var(--brand-blue); }
+.gaps-periods .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.plan-edit .mini-btn.is-on { background: var(--blue); color: var(--on-brand); box-shadow: none; }
+.fx-toggle.is-on { background: var(--bg-fff3d1); color: var(--fg-7a4d00); }
+.praise-spots .mini-btn.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.qz-round.fx-toggle.is-on { background: radial-gradient(circle at 35% 30%, #ffb3e0, #d6409f 70%); box-shadow: 0 4px 0 #a32b78, 0 8px 16px rgb(120 20 80 / .25); }
+.pen-colors button.is-on, .wb-colors button.is-on { box-shadow: 0 0 0 3px #a78bfa; }
+
+/* ==========================================================================
+   CẬP NHẬT UI/UX 11/2026:
+   - Nút Phụ huynh trên Header (.parent-top-link)
+   - Màn hình chuẩn bị bài đưa CTA lên đầu + ngăn Tuỳ chỉnh thu gọn (.intro-hero-top, .intro-settings)
+   - Khung lời giải có Milo (.solution-milo-box)
+   - Chế độ đăng nhập Phụ huynh 2 lựa chọn & cầu nối Học sinh ↔ Phụ huynh (.parent-auth-modes, .sd-hero-actions)
+   ========================================================================== */
+.parent-top-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 1.5px solid #fdba74;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #c2410c;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: transform 120ms ease, background-color 140ms ease;
+}
+.parent-top-link:hover { background: #ffedd5; transform: translateY(-1px); }
+.parent-top-link img { width: 20px; height: 20px; object-fit: contain; flex: none; }
+:root[data-theme="dark"] .parent-top-link { background: #3b2412; border-color: #9a3412; color: #fdba74; }
+@media (max-width: 560px) { .parent-top-link { padding: 5px 10px; font-size: 13px; } }
+
+.parent-auth-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.parent-auth-mode {
+  display: grid;
+  gap: 3px;
+  padding: 11px 13px;
+  border: 2px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+.parent-auth-mode strong { font-size: 14px; font-weight: 700; }
+.parent-auth-mode small { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.parent-auth-mode.is-on {
+  border-color: var(--brand-blue);
+  background: var(--blue-soft);
+  color: var(--blue-deep);
+}
+:root[data-theme="dark"] .parent-auth-mode.is-on { color: var(--ink); }
+@media (max-width: 520px) { .parent-auth-modes { grid-template-columns: 1fr; } }
+/* ===== Rà soát UI/UX 11/2026: tràn ngang, độ tương phản, trạng thái chưa rõ ===== */
+/* Header khu học tập: 761–1199px không còn đẩy nút Đăng nhập ra ngoài màn hình */
+@media (max-width: 1199px) {
+  .parent-top-link { padding: 6px 9px; }
+  .parent-top-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+:root[data-theme="dark"] .parent-top-link:hover { background: color-mix(in srgb, #ffedd5 14%, var(--surface)); }

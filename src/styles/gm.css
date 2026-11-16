@@ -1,0 +1,52 @@
+/* Kiểu riêng khu vực "gm-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+.adm-alert { padding: 10px 14px; border-radius: 10px; font-size: 15px; }
+.adm-alert.is-error { background: var(--bg-fde8e6); color: var(--fg-8c1d18); }
+.adm-alert.is-ok { background: var(--bg-e2f5ec); color: var(--fg-0f5c3e); }
+.adm-alert.is-info { background: var(--bg-e7eefc); color: var(--fg-1d3f8f); }
+.adm-alert.is-warn { background: var(--bg-fff3d1); color: var(--fg-6b4a00); }
+.dash-form.is-row .adm-alert { grid-column: 1 / -1; }
+.dash-muted { color: var(--muted); font-size: 15px; }
+@media print {
+  body { background: #fff !important; }
+  .learn-top, .no-print, .back-link, .dash-head, .adm-alert, .login-cards-wrap .dash-card-head button { display: none !important; }
+  .login-cards-wrap { box-shadow: none; padding: 0; }
+  .login-card { border-color: #999; color: #000; }
+}
+.vnedu-export .adm-alert { margin: 0; padding: 4px 10px; font-size: 0.85rem; }
+.assign-paper-form .dash-muted { flex-basis: 100%; margin: 0; font-size: 13px; }
+.adm-alert.is-ok { background: #e7f8ee; border-color: #86d3a5; color: #166534; }
+
+/* ================= Phòng triển lãm của lớp (gallery) ================= */
+.gm-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.gm-head h1 { margin: 0 0 4px; font-size: clamp(22px, 3vw, 30px); }
+.gm-head p { margin: 0; max-width: 70ch; }
+.gm-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 12px; }
+.gm-tabs button { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.gm-tabs button svg { width: 18px; height: 18px; }
+.gm-tabs button.is-on { background: var(--blue); border-color: var(--blue); color: #fff; }
+.gm-badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 12px; display: inline-grid; place-items: center; }
+.gm-sample { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gm-set { display: inline-flex; gap: 10px; flex-wrap: wrap; align-items: center; font-size: 14px; font-weight: 700; }
+.gm-set select { margin-left: 4px; font: inherit; font-weight: 600; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); }
+.gm-note { margin-top: 12px; font-size: 14px; }
+.gm-kids { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.gm-kids .is-on { background: var(--blue); color: #fff; }
+.gm-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.gm-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.gm-row.s-hidden { opacity: .6; }
+.gm-row.s-pending { border-color: #f59e0b; }
+.gm-thumb { width: 96px; height: 72px; border: 0; padding: 0; border-radius: 8px; overflow: hidden; background: var(--surface-2); cursor: zoom-in; }
+.gm-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gm-meta { min-width: 0; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+.gm-meta small { flex-basis: 100%; color: var(--muted); }
+
+.gm-act { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 640px) { .gm-row { grid-template-columns: 72px minmax(0, 1fr); } .gm-thumb { width: 72px; height: 56px; } .gm-act { grid-column: 1 / -1; justify-content: flex-start; } }
+.gm-floor { fill: #fdf6e3; stroke: #9ca3af; stroke-width: 1; }
+.gm-key { display: flex; gap: 4px; align-items: center; font-size: 10px; font-weight: 700; margin-top: 3px; }
+.gm-key i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-left: 4px; }
+.mb-tabs { padding: 0 18px; margin: 6px 0 0; }
+.planner-editor.is-full > .dash-muted { display: none; }
+.kt-section .dash-muted { margin: -4px 0 12px; }
+:root[data-theme="dark"] .adm-alert.is-ok { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); border-color: color-mix(in srgb, #86d3a5 35%, var(--surface)); }

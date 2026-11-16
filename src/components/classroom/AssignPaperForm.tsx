@@ -6,6 +6,10 @@ import { Send } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { assignError, defaultDueInput, type ExamItem } from '@/lib/classroom/assignments';
 import type { SubjectCode } from '@/lib/types';
+import '@/styles/adm.css';
+import '@/styles/assign.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
 
 // Giao một đề / phiếu bài tập cho cả lớp làm trực tiếp trên app: học sinh làm, máy chủ chấm, giáo viên xem thống kê từng câu.
 export default function AssignPaperForm({ classId, title, subject, items, minutes, label = 'Giao làm trên app' }: {

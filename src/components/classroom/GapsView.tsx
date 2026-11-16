@@ -4,6 +4,13 @@ import { SUBJECT_NAME } from '@/lib/classroom/assignments';
 import type { computeGaps } from '@/lib/classroom/gaps';
 import { compareViName } from '@/lib/classroom/names';
 import { ToolIcon } from '@/components/classroom/tool-icons';
+import '@/styles/adm.css';
+import '@/styles/btn.css';
+import '@/styles/comments.css';
+import '@/styles/dash.css';
+import '@/styles/gap.css';
+import '@/styles/mini.css';
+import '@/styles/tone.css';
 
 export const GAP_PERIODS = [{ d: 7, label: '7 ngày' }, { d: 30, label: '30 ngày' }, { d: 120, label: 'Học kỳ (120 ngày)' }];
 const pct = (r: number | null) => (r === null ? '—' : `${Math.round(r * 100)}%`);

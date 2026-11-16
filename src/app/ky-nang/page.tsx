@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import LearnHeader from '@/components/LearnHeader';
 import { SKILL_GROUPS } from '@/lib/skills/hub';
+import '@/styles/kn.css';
 
 export const metadata: Metadata = { title: 'Phát triển kỹ năng · EduChain Kids' };
 

@@ -1,0 +1,99 @@
+/* Kiểu riêng khu vực "lesson-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.lesson-tag { display: inline-block; padding: 2px 12px; border-radius: 999px; background: var(--bg-e1ebff); color: var(--link); font-size: 15px; font-weight: 600; }
+
+/* Danh sách bài: mỗi bài là một dòng vở */
+.lesson-list { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.lesson-row { display: grid; grid-template-columns: 56px 1fr; gap: 6px 16px; align-items: center; padding: 18px 20px; border: 2px solid var(--line-strong); border-radius: 6px 18px 18px 6px; background: var(--bg-ffffff); }
+.lesson-row.is-next { background: var(--bg-fff3d1); box-shadow: var(--shadow-md); }
+.lesson-no { display: grid; width: 56px; height: 56px; place-items: center; border: 2px solid var(--line-strong); border-radius: 50%; background: var(--bg-ffffff); font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 26px; font-weight: 800; }
+.lesson-row.is-next .lesson-no { background: var(--yellow); }
+.lesson-row.is-done .lesson-no { background: var(--mint); color: var(--fg-11704c); border-color: var(--green); }
+.lesson-info h3 { font-size: 22px; }
+.lesson-info p { margin-top: 2px; color: var(--muted); font-size: 16px; line-height: 1.5; }
+.lesson-meta { margin-top: 4px; font-size: 15px; font-weight: 600; color: var(--link); }
+.lesson-actions { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 10px; margin-top: 6px; border-top: 2px dashed var(--rule); }
+
+/* ==================================================================
+   MỤC LỤC BÀI HỌC (trang chọn bài)
+   Màn hình rộng: cột trái dính khi cuộn. Màn hình hẹp: nút "Mục lục" nổi + bảng chọn bài.
+================================================================== */
+.lesson-row { scroll-margin-top: 150px; }
+.lesson-row:focus { outline: none; }
+.lesson-row:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
+.lesson-toc { display: none; }
+@media (min-width: 1100px) {
+  .lesson-toc { position: sticky; top: calc(var(--learn-top-h, 74px) + 30px); display: flex; flex-direction: column; gap: 8px; align-self: start; max-height: calc(100vh - 124px); margin-top: 32px; padding: 14px 10px 10px 12px; border: 2px solid var(--line-strong); border-radius: 18px; background: var(--bg-ffffff); }
+  .lesson-row { scroll-margin-top: 110px; }
+}
+
+/* Thẻ chung: bo tròn hơn, viền nhạt */
+.lesson-row, .question-card, .lesson, .auth-card, .intro-card { border-radius: 20px; }
+
+/* Chữ trên nền vàng / nền trắng mờ luôn màu mực đậm (kể cả chế độ tối) */
+.button-yellow, .top-cta, .sticker, .grade-chip:hover, .back-link:hover, .lesson-row.is-next .lesson-no,
+.icon-button:hover, .result-card, .order-no, .adm-qnum, .nav-dot.is-current:not(.is-wrong):not(.is-correct):not(.is-timeout), .points-pop, .review-points, .maze-btn,
+.toc-link.is-next .toc-no, .toc-fab, .points-chip { color: #1e2b4a; }
+
+/* Khối nội dung: viền mảnh 1px thay cho viền 2px, cùng một kiểu bóng nhẹ */
+.games-hero, .lesson, .lesson-row, .question-card, .intro-card, .score-box, .review-item, .empty-state,
+.points-card, .comment-card, .dialog-card, .back-link, .icon-button, .quiz-count,
+.game-filter, .game-grade select, .notebook { border-width: 1px; }
+
+/* ==================================================================
+   TRANG LÀM BÀI: nền theo môn, đường tiến độ có Milo, pháo giấy, sticker
+   (tự vẽ bằng SVG; chuyển động tắt được và tự tắt khi máy bật "giảm chuyển động")
+================================================================== */
+.lesson-decor { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.lesson-decor-frame { position: absolute; inset: 8px; border: 3px dashed; border-radius: 22px; }
+.lesson-decor-motif { position: absolute; opacity: .2; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)); }
+.lesson-decor.is-animated .lesson-decor-motif { animation: decor-float 7s ease-in-out infinite; animation-delay: var(--d, 0s); }
+@media (max-width: 760px) { .lesson-decor-motif { opacity: .13; } .lesson-decor-frame { inset: 4px; border-width: 2px; } }
+@media (prefers-reduced-motion: reduce) {
+  .lesson-decor-motif, .milo-trail-milo, .milo-trail-bubble, .fx-on .choice.is-right, .fx-on .question-card .is-right { animation: none !important; transition: none !important; }
+  .milo-trail-milo.is-tilt { transform: none; }
+  .confetti { display: none; }
+}
+.lesson-list.cb-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
+.cb-list > .lesson-row.cb-card { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 10px; text-align: left; padding: 16px; border: 2px solid var(--line-strong); border-radius: 22px; background: var(--surface); box-shadow: 0 5px 0 var(--line-strong); transition: transform .15s ease, box-shadow .15s ease; }
+.cb-list > .lesson-row.cb-card:hover { transform: translateY(-3px); box-shadow: 0 8px 0 var(--line-strong); }
+.cb-card .lesson-no { width: 50px; height: 50px; font-size: 22px; border-color: color-mix(in srgb, var(--cover, var(--blue)) 35%, transparent); background: color-mix(in srgb, var(--cover, var(--blue)) 10%, var(--surface)); color: var(--cover, var(--blue)); }
+.cb-card .lesson-info .lesson-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 6px; font-size: 14px; -webkit-line-clamp: unset; }
+.lesson-actions.cb-actions { display: grid; gap: 8px; margin-top: auto; padding-top: 10px; border-top: 2px dashed var(--rule); }
+.cb-list > .lesson-row.cb-card.is-next { border-color: #f5b82e; background: linear-gradient(180deg, color-mix(in srgb, #ffc83d 22%, var(--surface)), var(--surface) 70%); box-shadow: 0 5px 0 #e9ad15, 0 0 0 5px rgb(255 200 61 / .3); }
+.cb-card.is-next .lesson-no { background: var(--brand-yellow); color: #1e2b4a; border-color: #e9ad15; }
+.cb-list > .lesson-row.cb-card.is-done { border-color: color-mix(in srgb, var(--green-solid) 45%, transparent); background: color-mix(in srgb, var(--green-solid) 7%, var(--surface)); box-shadow: 0 5px 0 color-mix(in srgb, var(--green-solid) 35%, transparent); }
+.cb-card.is-done .lesson-no { background: var(--green-solid); border-color: var(--green-solid); color: #fff; }
+@media (max-width: 640px) {
+  .subject-banner.cb-hero { grid-template-columns: minmax(0, 1fr) 96px; padding: 20px 16px 0 18px; border-radius: 22px; } .cb-float.is-0 .sticker-art { width: 54px; height: 54px; }
+  .subject-tab.cb-tab { min-height: 56px; padding: 6px 8px; }
+  .topic-head.cb-topic { grid-template-columns: 48px minmax(0, 1fr); } .cb-topic-art .sticker-art { width: 40px; height: 40px; }
+  .lesson-list.cb-list { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .subject-tab.cb-tab, .cb-list > .lesson-row.cb-card { transition: none; }
+}
+@media (max-width: 760px) {
+  /* đang làm câu hỏi: ẩn menu chung, thanh làm bài lên sát đầu màn hình */
+  body:has(.quiz-bar) .learn-top { display: none; }
+  .milo-trail { margin: -10px -6px 0; }
+  .milo-trail svg { max-height: 58px; }
+  .question-tools .swap-count { padding: 0 6px; font-size: 13px; }
+
+  /* --- 2. chọn bài --- */
+  .cb-list > .lesson-row.cb-card { gap: 6px; padding: 12px 14px; }
+  .cb-card .lesson-no { width: 42px; height: 42px; font-size: 20px; font-weight: 800; }
+  .cb-card .lesson-info { padding: 2px 0 0 54px; min-height: 42px; }
+  .cb-card .lesson-info h3 { font-size: 17px; padding-right: 78px; }
+  .cb-card .lesson-info p { -webkit-line-clamp: 1; font-size: 14px; }
+  .cb-card .lesson-info .lesson-meta { margin-top: 2px; font-size: 14px; }
+  .lesson-actions.cb-actions { padding-top: 8px; gap: 6px; }
+  .lesson-actions.cb-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .cb-tools .muc-select select { min-height: 44px; }
+}
+@media (max-width: 560px) {
+  /* sao của bài đã học nằm góc phải: chừa chỗ cho cả tên bài lẫn mô tả */
+  .cb-card .lesson-info h3 { padding-right: 0; }
+  .cb-card.is-done .lesson-info { padding-right: 78px; }
+}
+.qz-board .lesson-tag { background: #fff0cc; color: #7a4d00; }
+.lesson-row:not(.is-next) { content-visibility: auto; contain-intrinsic-size: auto 72px; }

@@ -21,6 +21,15 @@ import PlanWeekBoard from './PlanWeekBoard';
 import type { DeckRow } from '@/components/deck/DeckHome';
 import type { LibraryMeta } from '@/lib/plans/library';
 import { ToolIcon } from '@/components/classroom/tool-icons';
+import '@/styles/adm.css';
+import '@/styles/kh.css';
+import '@/styles/planner.css';
+import '@/styles/praise.css';
+import '@/styles/pw.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
+import '@/styles/pv.css';
 
 type Saved = { id: string; class_id: string | null; class_name: string | null; subject: PlanSubject; grade: number; title: string; teach_date: string | null; period: number | null; updated_at: string };
 type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;

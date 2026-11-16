@@ -1,6 +1,7 @@
 import MiloMascot from '@/components/mascot/MiloMascot';
 import type { GameId } from '@/lib/games/catalog';
 import { GAME_MASCOT } from '@/lib/mascots';
+import '@/styles/game.css';
 
 const INK = '#1f2a44';
 

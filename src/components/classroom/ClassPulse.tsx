@@ -2,6 +2,7 @@
 // Chỉ hiển thị (server component); số liệu tính sẵn ở src/app/giao-vien/page.tsx.
 import Link from 'next/link';
 import { ChevronRight, Users } from 'lucide-react';
+import '@/styles/tdy.css';
 
 export type Birthday = { id: string; name: string; short: string; inDays: number; date: string; age: number };
 type Watch = { id: string; name: string; text: string; tone: 'warn' | 'good' };

@@ -7,6 +7,11 @@ import { useRouter } from 'next/navigation';
 import { Home, Lock, MapPin, Pencil, Phone, Save, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { RELATIONS, formatPhone, normalizePhone, telHref, zaloHref, type Contact } from '@/lib/classroom/class-tools';
+import '@/styles/adm.css';
+import '@/styles/ct.css';
+import '@/styles/ph.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
 
 type Slot = { key: 'bo' | 'me' | 'khac'; id: string | null; relation: string; name: string; phone: string; zalo: string; mine: boolean };
 const OTHER_RELATIONS = RELATIONS.filter((r) => r !== 'Bố' && r !== 'Mẹ');

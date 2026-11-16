@@ -8,6 +8,7 @@ import GradeReady from '@/components/learn/GradeReady';
 import WorksheetBuilder from '@/components/exams/WorksheetBuilder';
 import { getViewer } from '@/lib/auth/viewer';
 import { classRow, warmClass } from '@/lib/classroom/class-page';
+import '@/styles/dash.css';
 
 export const metadata: Metadata = { title: 'Phiếu bài tập · EduChain Kids' };
 export const dynamic = 'force-dynamic';

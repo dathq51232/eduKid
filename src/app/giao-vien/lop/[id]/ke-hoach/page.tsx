@@ -13,6 +13,7 @@ import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
 import { lessonInfos } from '@/lib/plans/lessons';
 import type { DeckRow } from '@/components/deck/DeckHome';
 import type { SubjectCode } from '@/lib/types';
+import '@/styles/dash.css';
 
 export const metadata: Metadata = { title: 'Kế hoạch bài dạy · EduChain Kids' };
 export const dynamic = 'force-dynamic';

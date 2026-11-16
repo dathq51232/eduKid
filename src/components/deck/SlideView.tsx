@@ -15,6 +15,7 @@ import type { SubjectCode } from '@/lib/types';
 import { animIterations, fxEasing, fxFrames, planSlide, type Step } from '@/lib/deck/player';
 import { playSound } from '@/lib/deck/sounds';
 import { questionSegments, speakSegments, stopSpeaking } from '@/lib/speech';
+import '@/styles/dk.css';
 
 const Scene3DBox = dynamic(() => import('./Scene3DBox'), { ssr: false });
 

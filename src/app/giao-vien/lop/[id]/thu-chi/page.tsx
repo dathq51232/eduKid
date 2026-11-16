@@ -3,6 +3,7 @@ import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import PersonalMoney from '@/components/classroom/PersonalMoney';
 import { loadClassPage } from '@/lib/classroom/class-page';
+import '@/styles/ct.css';
 
 export const metadata: Metadata = { title: 'Thu chi cá nhân · EduChain Kids', robots: { index: false } };
 export const dynamic = 'force-dynamic';

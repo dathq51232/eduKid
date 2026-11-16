@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { fmtMoney, parseMoney, todayVn, type Kind } from '@/lib/utils/money';
+import '@/styles/uw.css';
 
 type Fund = { balance: number; owed: number };
 

@@ -6,6 +6,9 @@ import { useEffect, useState } from 'react';
 import { Check, Palette, X } from 'lucide-react';
 import MiloMascot, { type MiloVariant } from '@/components/mascot/MiloMascot';
 import { KID_THEMES, kidTheme, saveKidTheme, useKidTheme, type KidThemeId } from '@/lib/kid-theme';
+import '@/styles/kt.css';
+import '@/styles/dash.css';
+import '@/styles/kw.css';
 
 /* ---------------- Cảnh nền toàn màn hình ---------------- */
 

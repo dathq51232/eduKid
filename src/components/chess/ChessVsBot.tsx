@@ -12,6 +12,9 @@ import { BOT_LEVELS, Board, pickMove, type BotLevel, type BotMove } from '@/lib/
 import { REASON_TEXT, SIDE_NAME, TIME_CONTROLS, boardResult, captured, fmtClock, timeoutResult, type GameResult } from '@/lib/chess/game';
 import { sfx } from '@/lib/chess/sound-pref';
 import BoardStage from './BoardView';
+import '@/styles/chs.css';
+import '@/styles/ct.css';
+import '@/styles/btn.css';
 
 type Pick = 'w' | 'b' | 'r';
 type Setup = { pick: Pick; level: BotLevel; tc: string };

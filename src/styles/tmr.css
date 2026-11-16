@@ -1,0 +1,84 @@
+/* Kiểu riêng khu vực "tmr-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.cb-list > .lesson-row.cb-card.is-done { border-color: color-mix(in srgb, var(--green-solid) 45%, transparent); background: color-mix(in srgb, var(--green-solid) 7%, var(--surface)); box-shadow: 0 5px 0 color-mix(in srgb, var(--green-solid) 35%, transparent); }
+.tmr-stage { position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 18px 20px 22px; border-radius: 24px; background: radial-gradient(circle at 50% 30%, #22345e, #0f1626 72%); color: #fff; min-width: 0; overflow: hidden; }
+.tmr-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; font-weight: 700; font-size: 14px; opacity: .9; }
+.tmr-top > span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.tmr-top svg { width: 18px; height: 18px; }
+.tmr-keys { font-size: 13px; opacity: .65; font-weight: 600; }
+.tmr-label { width: min(560px, 100%); padding: 6px 12px; border: 2px solid transparent; border-radius: 14px; background: transparent; color: #fff; font: inherit; font-size: 28px; font-weight: 700; text-align: center; }
+.tmr-label:hover, .tmr-label:focus { border-color: rgb(255 255 255 / .25); outline: none; background: rgb(255 255 255 / .05); }
+.tmr-face { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.tmr-face svg.tf { height: min(44vh, 400px); width: auto; max-width: 100%; }
+.tmr-face.look-ring { position: relative; }
+.tmr-face.look-ring .tmr-digits { position: absolute; inset: 0; display: grid; place-content: center; }
+.tmr-digits { text-align: center; }
+.tmr-digits b { display: block; font-size: clamp(64px, 11vw, 132px); line-height: 1; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.tmr-digits span { color: #ffc83d; font-weight: 700; font-size: 17px; }
+.tmr.is-warn .tmr-digits b { color: #ffb347; }
+.tmr.is-last .tmr-digits b { color: #ff6b6b; animation: tmr-pulse 1s ease-in-out infinite; }
+.tmr.is-done .tmr-digits b { color: #ff6b6b; }
+.tmr-done { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgb(15 22 38 / .82); text-align: center; animation: tmr-in .35s ease-out; }
+.tmr-done b { display: block; color: #ffc83d; font-size: clamp(44px, 7vw, 84px); line-height: 1.05; }
+.tmr-done span { font-size: 22px; font-weight: 700; }
+.tmr-done img, .tmr-done svg { animation: spot-hop .6s ease .2s 3; }
+.tmr-presets, .tmr-ctl { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.tmr-presets button, .tmr-ctl button { display: inline-flex; align-items: center; gap: 7px; min-height: 46px; padding: 0 16px; border-radius: 14px; border: 1px solid rgb(255 255 255 / .16); background: rgb(255 255 255 / .08); color: #fff; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; }
+.tmr-presets button:hover, .tmr-ctl button:hover { background: rgb(255 255 255 / .16); }
+.tmr-presets button.is-on { background: #ffc83d; border-color: #ffc83d; color: #1e2b4a; }
+.tmr-presets button:disabled { opacity: .5; cursor: default; }
+.tmr-ctl svg { width: 19px; height: 19px; }
+.tmr-ctl .tmr-go { min-width: 170px; justify-content: center; background: #ffc83d; border-color: #ffc83d; color: #1e2b4a; box-shadow: 0 4px 0 #d39b12; font-size: 18px; }
+.tmr-ctl .tmr-go:hover { background: #ffd35f; }
+.tmr-custom { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; font-weight: 700; }
+.tmr-custom input { width: 64px; min-height: 44px; border-radius: 10px; border: 1px solid rgb(255 255 255 / .3); background: rgb(255 255 255 / .1); color: #fff; font: inherit; font-size: 22px; text-align: center; }
+.tmr-settings { display: grid; gap: 14px; padding: 16px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); }
+.tmr-looks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tmr-looks button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 6px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+.tmr-looks button.is-on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.tmr-thumb { display: grid; place-items: center; width: 100%; height: 76px; border-radius: 10px; background: #14203b; overflow: hidden; }
+.tmr-thumb svg.tf { height: 70px; width: auto; max-width: 100%; }
+.tmr-sound { display: grid; gap: 10px; font-weight: 700; font-size: 14px; }
+.tmr-sound label { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tmr-sound svg { width: 17px; height: 17px; }
+.tmr-sound select { min-height: 38px; padding: 0 8px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font: inherit; }
+
+.tmr-sound p { font-weight: 600; font-size: 13px; }
+.tmr:fullscreen .tmr-settings, .tmr.is-full .tmr-settings { display: none; }
+.tmr:fullscreen .tmr-stage, .tmr.is-full .tmr-stage { min-height: 100vh; justify-content: center; border-radius: 0; }
+.tmr:fullscreen .tmr-face svg.tf { height: 56vh; }
+.tmr:fullscreen .tmr-digits b { font-size: 14vh; }
+.tmr:fullscreen .tmr-label { font-size: 5vh; }
+/* ô nhỏ góc màn hình */
+.tmr-mini { position: fixed; right: 20px; bottom: 20px; z-index: 70; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; border-radius: 18px; background: #1e2b4a; color: #fff; box-shadow: 0 10px 30px rgb(15 23 42 / .35); }
+.tmr-mini-ic { font-size: 22px; }
+.tmr-mini-txt { display: flex; flex-direction: column; line-height: 1.1; color: #fff; text-decoration: none; }
+.tmr-mini-txt span { font-size: 12px; opacity: .75; font-weight: 600; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tmr-mini-txt b { font-size: 26px; font-variant-numeric: tabular-nums; }
+.tmr-mini button { display: grid; place-items: center; width: 38px; height: 38px; border: 0; border-radius: 11px; background: rgb(255 255 255 / .14); color: #fff; cursor: pointer; }
+.tmr-mini button svg { width: 18px; height: 18px; }
+.tmr-mini.is-warn b { color: #ffb347; }
+.tmr-mini.is-last b, .tmr-mini.is-done b { color: #ff8a8a; }
+.tmr-mini.is-done { animation: tmr-flash .6s ease-in-out 6; }
+@media print { .tmr-mini { display: none !important; } }
+@media (max-width: 1100px) {
+  .tmr-looks { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .tmr-looks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tmr-keys { display: none; }
+}
+@media (max-width: 760px) {
+  .tmr-mini { bottom: 84px; right: 12px; }
+}
+/* hẹn giờ: tiếng chạy theo giây + tắt âm */
+.tmr-ctl button.is-muted { background: #b4232a; border-color: #b4232a; }
+.tmr-tick { display: grid; gap: 6px; }
+.tmr-tick-opts { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-2); }
+.tmr-tick-opts button { flex: 1; min-height: 38px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: 13.5px; cursor: pointer; }
+.tmr-tick-opts button.is-on { background: var(--surface); color: var(--blue); box-shadow: 0 1px 3px rgb(var(--ink-rgb) / .15); }
+.tmr-tick small { color: var(--muted); font-weight: 600; font-size: 12.5px; line-height: 1.4; }
+.tmr-muted-note { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 10px; background: #ffe4e4; color: #b4232a; font-size: 13px; }
+:root[data-theme="dark"] .tmr-muted-note { background: #3d1c22; color: #ff8a8f; }
+.tmr-mini button[aria-pressed="true"] { background: #b4232a; }
+.tmr-muted-note svg { width: 16px; height: 16px; flex: none; }
+.ph { display: grid; gap: 18px; padding-block: 22px 56px; }

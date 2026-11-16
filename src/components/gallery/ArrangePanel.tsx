@@ -7,6 +7,12 @@ import Link from 'next/link';
 import { ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight, EyeOff, Minus, Pencil, Plus, RotateCcw, Save, Trash2, Upload, X } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
 import { KIND_LABEL, SIZE_PRESETS, WALL_LABEL, wallOrder, type GalleryItem, type GalleryKind, type WallSizes } from '@/lib/gallery/types';
+import '@/styles/adm.css';
+import '@/styles/gv.css';
+import '@/styles/ap.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
 
 const KINDS: GalleryKind[] = ['praise', 'art', 'writing'];
 

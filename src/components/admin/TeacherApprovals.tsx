@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAdminUser } from './AdminContext';
+import '@/styles/adm.css';
 
 type App = { id: string; user_id: string; display_name: string; email: string | null; school_name: string; note: string | null; created_at: string };
 type School = { id: string; name: string };

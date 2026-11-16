@@ -1,0 +1,26 @@
+/* Kiểu riêng khu vực "dh-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.dk-tpl-pv, .dh-pv { display: flex; align-items: center; justify-content: center; gap: 6%; aspect-ratio: 16 / 9; border-radius: 8px; }
+.dh-new { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
+.dh-name { display: grid; gap: 4px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.dh-name input { font: inherit; font-size: 16px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); }
+.dh-blank { display: flex; align-items: center; gap: 12px; padding: 10px 18px; border-radius: 16px; border: 1.5px solid #c4b5fd; background: linear-gradient(135deg, #faf5ff, var(--surface)); color: var(--ink); cursor: pointer; text-align: left; font: inherit; }
+.dh-blank img { width: 46px; height: 46px; }
+.dh-blank b { display: flex; align-items: center; gap: 4px; font-size: 16px; } .dh-blank b svg { width: 18px; height: 18px; }
+.dh-blank small { display: block; color: var(--muted); font-size: 12.5px; }
+.dh-h { margin: 6px 0 0; font-size: 17px; } .dh-h span { font-size: 12px; background: var(--line); border-radius: 999px; padding: 1px 8px; } .dh-h small { color: var(--muted); font-size: 13px; font-weight: 600; }
+.dh-tpls { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.dh-tpls button { width: 100%; display: grid; gap: 4px; padding: 0 0 10px; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--surface); color: var(--ink); text-align: left; cursor: pointer; font: inherit; }
+.dh-tpls button:hover:not(:disabled) { border-color: #a78bfa; box-shadow: 0 4px 14px #7c3aed22; }
+.dh-tpls .dh-pv { border-radius: 0; }
+.dh-tpls b, .dh-tpls small { padding: 0 12px; } .dh-tpls b { font-size: 14.5px; } .dh-tpls small { color: var(--muted); font-size: 12.5px; }
+@media (max-width: 700px) { .dh-new { grid-template-columns: 1fr; } }
+
+.dh-blank.is-lesson { border-color: #fcd34d; background: linear-gradient(135deg, #fffbeb, var(--surface)); }
+:root[data-theme="dark"] .dh-blank { background: linear-gradient(135deg, #2e1f4d, var(--surface)); border-color: #7c3aed; color: var(--ink); }
+:root[data-theme="dark"] .dh-blank.is-lesson { background: linear-gradient(135deg, #3d2e0c, var(--surface)); border-color: #b45309; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .dh-blank { background: linear-gradient(135deg, #2e1f4d, var(--surface)); border-color: #7c3aed; color: var(--ink); }
+  :root:not([data-theme]) .dh-blank.is-lesson { background: linear-gradient(135deg, #3d2e0c, var(--surface)); border-color: #b45309; }
+}
+@media (max-width: 900px) { .dh-new { grid-template-columns: 1fr; }
+}

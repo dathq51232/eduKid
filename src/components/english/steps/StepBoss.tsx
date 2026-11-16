@@ -8,6 +8,7 @@ import { playRhythmCountIn } from '@/lib/english/reflexEngine';
 import type { ReflexRound } from '@/components/english/useReflexRound';
 import type { SampleAudio } from '@/components/english/useSampleAudio';
 import type { StepProps } from '@/components/english/steps/types';
+import '@/styles/en.css';
 
 const BOSS_TAG = 'boss';
 const BOSS_TARGET_MS = 1200;

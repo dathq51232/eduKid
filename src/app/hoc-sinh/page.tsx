@@ -15,6 +15,13 @@ import { MUC_NAME, SUBJECT_NAME, dueInfo, lessonHref, type MyAssignment } from '
 import { createClient } from '@/lib/supabase/server';
 import { learningStreak } from '@/lib/streak';
 import type { SubjectCode } from '@/lib/types';
+import '@/styles/adm.css';
+import '@/styles/sd.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/result.css';
+import '@/styles/task.css';
+import '@/styles/tone.css';
 
 export const metadata: Metadata = { title: 'Trang của em · EduChain Kids' };
 export const dynamic = 'force-dynamic';

@@ -11,6 +11,12 @@ import { MUC_NAME, type BookLesson, type Muc } from '@/lib/exams/matrix';
 import { ACCEPT_DOCS, checkMath, draftId, draftProblem, extractFile, extractedText, parseExtracted, parseText, type Draft, type DraftType, type Extracted } from '@/lib/bank/parse';
 import { bankError, deleteMine, generateWithAi, machineDrafts, saveDrafts, type MyQuestion } from '@/lib/bank/client';
 import type { SubjectCode } from '@/lib/types';
+import '@/styles/adm.css';
+import '@/styles/gm.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/mb.css';
+import '@/styles/mini.css';
 
 type Tab = 'nap' | 'ai' | 'kho';
 const TYPE_NAME: Record<DraftType, string> = { single_choice: 'Trắc nghiệm 1 đáp án', multiple_choice: 'Trắc nghiệm nhiều đáp án', true_false: 'Đúng / Sai', fill_blank: 'Tự luận / điền đáp án' };

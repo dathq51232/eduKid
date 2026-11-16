@@ -1,3 +1,4 @@
+import '@/styles/brand.css';
 // Logo EduChain Kids (11/2026): khối lục giác ghép 4 mảnh xếp hình E-D-K-C (3D) + chữ "EduChainKids" nhiều màu.
 // Ảnh nằm trong dự án: public/brand/logo-mark(.webp|-sm.webp) — biểu tượng, public/brand/logo-word.webp — chữ,
 // public/brand/logo-full.webp — trọn bộ. Có 2 kiểu: biểu tượng (mark) và biểu tượng + chữ (full); tagline tuỳ chọn.

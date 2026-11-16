@@ -9,6 +9,7 @@ import { playRhythmCountIn } from '@/lib/english/reflexEngine';
 import { ReflexScorecard, VadMeter } from '@/components/english/ReflexWidgets';
 import type { ReflexRound } from '@/components/english/useReflexRound';
 import type { SampleAudio } from '@/components/english/useSampleAudio';
+import '@/styles/en.css';
 
 const LAB_TAG = 'lab';
 const LEVELS: AgeLevel[] = ['age4_6', 'age7_9', 'age10_12'];

@@ -1,0 +1,24 @@
+/* Kiểu riêng khu vực "su-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.dash-muted { color: var(--muted); font-size: 15px; }
+.assign-paper-form .dash-muted { flex-basis: 100%; margin: 0; font-size: 13px; }
+
+.su-pick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.su-q { font-weight: 700; color: var(--muted); } .su-done { display: inline-flex; gap: 4px; align-items: center; color: #16a34a; font-weight: 800; }
+.su-tip { margin: 0 0 8px; }
+.su-work { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.su-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.su-prev { position: relative; border-radius: 12px; overflow: hidden; background: var(--surface-2); min-height: 120px; display: grid; place-items: center; }
+.su-prev img { display: block; max-width: 100%; max-height: 36vh; }
+.su-prev span { position: absolute; left: 8px; top: 8px; font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: rgb(17 24 39 / .7); color: #fff; }
+.su-enh { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+.su-enh button { display: inline-flex; align-items: center; gap: 5px; padding: 7px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+.su-enh button svg { width: 16px; height: 16px; }
+.su-enh button.is-on { background: #ede9fe; border-color: #7c3aed; color: #5b21b6; }
+.su-form { display: grid; gap: 8px; }
+.su-form label { display: grid; gap: 3px; font-size: 14px; font-weight: 700; }
+.su-form input, .su-form select, .su-form textarea { font: inherit; font-weight: 500; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); }
+.su-act { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+@media (max-width: 820px) { .su-work { grid-template-columns: 1fr; } }
+.planner-editor.is-full > .dash-muted { display: none; }
+.kt-section .dash-muted { margin: -4px 0 12px; }
+:root[data-theme="dark"] .su-enh button.is-on { background: color-mix(in srgb, #5b21b6 24%, var(--surface)); color: color-mix(in srgb, #5b21b6 40%, #fff); }

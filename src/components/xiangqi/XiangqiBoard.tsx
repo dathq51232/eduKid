@@ -6,6 +6,8 @@
 import { memo, useId } from 'react';
 import { DiscDefs, WoodDefs, WoodFrame, WoodSurface } from '@/components/chess/Wood';
 import { XQ_GLYPHS } from '@/lib/xiangqi/glyphs';
+import '@/styles/chs.css';
+import '@/styles/xq.css';
 
 export type XqSide = 'r' | 'b';
 export type XqKind = 'k' | 'a' | 'e' | 'h' | 'r' | 'c' | 'p';

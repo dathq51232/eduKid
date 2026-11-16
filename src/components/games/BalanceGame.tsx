@@ -13,6 +13,9 @@ import {
   BALANCE_ROUND, B_SHAPE_COLOR, B_SHAPE_NAME, MAX_BY_LEVEL, makeRound, qSide, tilt,
   type BItem, type BalanceQ, type Scale,
 } from '@/lib/games/balance';
+import '@/styles/game.css';
+import '@/styles/balance.css';
+import '@/styles/pattern.css';
 
 const INK = '#1f2a44';
 const ITEM = 30;

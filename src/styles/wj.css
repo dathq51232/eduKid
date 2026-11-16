@@ -1,0 +1,19 @@
+/* Kiểu riêng khu vực "wj-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+.wj-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
+.wj-head h2 { display: inline-flex; gap: 8px; align-items: center; margin: 0; }
+.wj-head select { font: inherit; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); }
+.wj-pair { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: center; margin-top: 12px; }
+.wj-pair.is-one { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.wj-arrow { font-size: 34px; font-weight: 800; color: #16a34a; }
+.wj-card { margin: 0; border: 1px solid var(--line); border-radius: 14px; padding: 8px; background: var(--surface); }
+.wj-card figcaption { font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+.wj-card button { display: block; width: 100%; border: 0; padding: 0; background: none; cursor: zoom-in; }
+.wj-card img { width: 100%; display: block; border-radius: 8px; }
+.wj-card p { margin: 6px 0 0; font-size: 14px; }
+.wj-sum { font-weight: 700; margin: 10px 0; }
+.wj-strip { list-style: none; margin: 0; padding: 0 0 6px; display: flex; gap: 8px; overflow-x: auto; }
+.wj-strip button { border: 1px solid var(--line); border-radius: 10px; padding: 4px; background: var(--surface); cursor: pointer; display: grid; gap: 2px; color: var(--ink); }
+.wj-strip img { width: 120px; height: 80px; object-fit: cover; border-radius: 6px; display: block; }
+.wj-strip small { font-size: 12px; color: var(--muted); }
+@media (max-width: 640px) { .wj-pair { grid-template-columns: 1fr; } .wj-arrow { transform: rotate(90deg); justify-self: center; } }

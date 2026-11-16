@@ -1,0 +1,44 @@
+/* Kiểu riêng khu vực "toc-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.toc-title { display: flex; align-items: center; gap: 6px; margin: 0; font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 18px; font-weight: 800; }
+.toc-group + .toc-group { margin-top: 12px; }
+.toc-group-title { margin: 0 0 4px; padding: 0 6px; color: var(--muted); font-size: 13px; font-weight: 800; line-height: 1.35; }
+.toc-group ul { margin: 0; padding: 0; list-style: none; }
+.toc-link { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 8px; border-radius: 10px; color: var(--ink); font-size: 15px; line-height: 1.3; transition: background-color 160ms ease; }
+.toc-link:hover { background: var(--bg-fff3d1); }
+.toc-link[aria-current="location"] { background: var(--blue-deep); color: #ffffff; }
+.toc-link[aria-current="location"] .toc-no { border-color: var(--bg-ffffff); }
+.toc-link:focus-visible { outline: 3px solid var(--yellow); outline-offset: 1px; }
+.toc-no { display: grid; flex: none; width: 28px; height: 28px; place-items: center; border: 2px solid var(--line-strong); border-radius: 50%; background: var(--bg-ffffff); color: var(--ink); font-size: 13px; font-weight: 800; }
+.toc-link.is-done .toc-no { border-color: var(--green); background: var(--green-solid); color: #ffffff; }
+.toc-link.is-next .toc-no { background: var(--yellow); }
+.toc-label { flex: 1; min-width: 0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.toc-next { flex: none; padding: 0 6px; border-radius: 999px; background: var(--bg-fff3d1); color: var(--fg-7a5300); font-size: 11px; font-weight: 800; }
+
+.toc-fab { position: fixed; right: 16px; bottom: 20px; z-index: 40; display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 10px 18px; border: 2px solid var(--line-strong); border-bottom-width: 4px; border-radius: 999px; background: var(--yellow); color: var(--ink); font: inherit; font-weight: 800; cursor: pointer; box-shadow: 0 6px 18px rgb(var(--ink-rgb) / .18); }
+.toc-fab:focus-visible { outline: 3px solid var(--blue-deep); outline-offset: 3px; }
+.toc-sheet-backdrop { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; background: rgb(var(--ink-rgb) / .45); }
+.toc-sheet { display: flex; flex-direction: column; width: min(560px, 100%); max-height: 80vh; border: 2px solid var(--line-strong); border-bottom: 0; border-radius: 20px 20px 0 0; background: var(--paper); }
+.toc-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px 10px; border-bottom: 2px solid var(--rule); }
+.toc-close { display: grid; width: 44px; height: 44px; place-items: center; border: 2px solid var(--line-strong); border-radius: 50%; background: var(--bg-ffffff); color: var(--ink); cursor: pointer; }
+.toc-close:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+.toc-sheet-body { overflow-y: auto; padding: 10px 12px 24px; overscroll-behavior: contain; }
+@media (min-width: 1100px) {
+  .toc-scroll { overflow-y: auto; padding-right: 4px; overscroll-behavior: contain; }
+  .toc-fab { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .toc-link { transition: none; } }
+
+/* Chữ trên nền vàng / nền trắng mờ luôn màu mực đậm (kể cả chế độ tối) */
+.button-yellow, .top-cta, .sticker, .grade-chip:hover, .back-link:hover, .lesson-row.is-next .lesson-no,
+.icon-button:hover, .result-card, .order-no, .adm-qnum, .nav-dot.is-current:not(.is-wrong):not(.is-correct):not(.is-timeout), .points-pop, .review-points, .maze-btn,
+.toc-link.is-next .toc-no, .toc-fab, .points-chip { color: #1e2b4a; }
+.cb-list > .lesson-row.cb-card.is-next { border-color: #f5b82e; background: linear-gradient(180deg, color-mix(in srgb, #ffc83d 22%, var(--surface)), var(--surface) 70%); box-shadow: 0 5px 0 #e9ad15, 0 0 0 5px rgb(255 200 61 / .3); }
+.cb-list > .lesson-row.cb-card.is-done { border-color: color-mix(in srgb, var(--green-solid) 45%, transparent); background: color-mix(in srgb, var(--green-solid) 7%, var(--surface)); box-shadow: 0 5px 0 color-mix(in srgb, var(--green-solid) 35%, transparent); }
+
+/* ==========================================================================
+   D3 — TRANG HỌC SINH (làm mới 10/2026, luật nới cho trẻ em: giữ Milo, emoji, màu tươi)
+   ========================================================================== */
+/* Chọn bài: bỏ nhãn "Chưa học" lặp lại trên mọi thẻ; chữ mục lục tối thiểu 14px; chữ "Aa"/"ABC" đậm hơn cho dễ đọc */
+.toc-group-title { font-size: 14px; }
+.toc-no { width: 30px; height: 30px; font-size: 14px; }
+.toc-next { padding: 1px 8px; font-size: 13px; }

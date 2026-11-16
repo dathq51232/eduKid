@@ -1,0 +1,22 @@
+/* Kiểu riêng khu vực "cm-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+.dash-card { display: grid; gap: 12px; padding: 22px; border-radius: 22px; background: var(--surface); box-shadow: var(--shadow-sm); }
+@media print {
+  body { background: #fff !important; }
+  .learn-top, .no-print, .back-link, .dash-head, .adm-alert, .login-cards-wrap .dash-card-head button { display: none !important; }
+  .login-cards-wrap { box-shadow: none; padding: 0; }
+  .login-card { border-color: #999; color: #000; }
+}
+.diary-grid > .dash-card { margin: 0; }
+
+/* ===== Bảng học sinh: chế độ xem + Hồ sơ học sinh dạng bảng tính (cm-, sp-) ===== */
+.cm-add > summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; }
+.cm-add > summary::-webkit-details-marker { display: none; }
+.cm-add > summary h2 { margin: 0; }
+.cm-add-caret { margin-left: auto; width: 22px; height: 22px; color: var(--muted); transition: transform .15s; }
+.cm-add[open] > summary { margin-bottom: 12px; }
+.cm-add[open] .cm-add-caret { transform: rotate(180deg); }
+.cm-views { display: inline-flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.cm-views button { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 12px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.cm-views button svg { width: 16px; height: 16px; }
+.cm-views button.is-on { background: var(--surface); color: var(--brand-blue); box-shadow: 0 2px 6px rgb(var(--ink-rgb) / .1); }
+.class-manager .cm-add { padding: 12px 18px; }

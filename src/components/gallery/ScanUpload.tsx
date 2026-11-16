@@ -8,6 +8,12 @@ import AudioRecorder from './AudioRecorder';
 import { addItem, canvasToImage } from '@/lib/gallery/client';
 import { detectPaper, enhance, fullQuad, loadPhoto, rotate90, warp, type Enhance, type Quad } from '@/lib/gallery/scan';
 import { KIND_LABEL, type GalleryKind } from '@/lib/gallery/types';
+import '@/styles/adm.css';
+import '@/styles/ce.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
+import '@/styles/su.css';
 
 type Student = { id: string; name: string };
 const ENH: { key: Enhance; label: string; hint: string }[] = [

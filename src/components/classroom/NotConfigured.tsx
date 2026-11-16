@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import MiloMascot from '@/components/mascot/MiloMascot';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
 
 export default function NotConfigured({ title }: { title: string }) {
   return (

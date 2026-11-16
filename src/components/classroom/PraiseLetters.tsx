@@ -14,6 +14,11 @@ import { isCustomized, readDesigns, writeDesigns, type PraiseDesign } from '@/li
 import { DEFAULT_SLOT, PHOTO_SHAPES, PHOTO_SPOTS, deletePhoto, loadPhotos, matchFiles, prepPhoto, readSlots, saveCrop, savePhoto, slotBox, writeSlot, type PhotoSlot, type StudentPhoto } from '@/lib/praise/photos';
 import { LETTER_H, LETTER_W, PRAISE_REASONS, PRAISE_TEMPLATES, defaultTemplateFor, fillReason, templateById, type PraiseTemplateId } from '@/lib/praise/templates';
 import { ToolIcon } from '@/components/classroom/tool-icons';
+import '@/styles/adm.css';
+import '@/styles/praise.css';
+import '@/styles/btn.css';
+import '@/styles/dash.css';
+import '@/styles/mini.css';
 
 const PraiseEditor = dynamic(() => import('./PraiseEditor'), { ssr: false });
 

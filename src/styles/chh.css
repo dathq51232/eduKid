@@ -1,0 +1,21 @@
+/* Kiểu riêng khu vực "chh-" (tách khỏi globals.css để trang khác không phải tải; kèm quy tắc của lớp hay đi cùng, đúng thứ tự gốc) */
+
+/* ==================================================================
+   CÂU LẠC BỘ CỜ (chh-*) · CỜ VUA (chs-*)
+================================================================== */
+.chh-hero-ic { display: flex; align-items: flex-end; gap: 0; flex: none; filter: drop-shadow(0 6px 10px rgb(var(--ink-rgb) / .18)); }
+.chh-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 20px; }
+.chh-card { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 22px 24px 24px; border: 2px solid var(--line-strong); border-radius: 22px; background: var(--surface); box-shadow: var(--shadow-sm); color: var(--ink); text-decoration: none; transition: transform .15s, box-shadow .15s; }
+a.chh-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--brand-blue); }
+.chh-card > b { font-size: 28px; font-weight: 800; }
+.chh-card > span:not(.chh-art) { color: var(--muted); font-weight: 600; }
+.chh-card ul { display: grid; gap: 8px; margin-top: 10px; padding: 0; list-style: none; }
+.chh-card li { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.chh-card li svg { width: 20px; height: 20px; color: var(--brand-blue); }
+.chh-card li.is-soon { color: var(--muted); font-weight: 600; }
+.chh-card.is-soon { opacity: .75; }
+.chh-art { display: flex; align-items: flex-end; height: 96px; margin: -4px 0 6px; padding: 10px 16px 0; border-radius: 16px; border: 6px solid #6e4423; background: repeating-conic-gradient(#ecd2a4 0 25%, #a46c3c 0 50%) 0 0 / 48px 48px; }
+.chh-xq { gap: 4px; align-items: center; padding-top: 0; border-color: #6e4423; background: linear-gradient(135deg, #cf9d63, #a06c3c); }
+@media (max-width: 560px) {
+  .chh-hero-ic { display: none; }
+}

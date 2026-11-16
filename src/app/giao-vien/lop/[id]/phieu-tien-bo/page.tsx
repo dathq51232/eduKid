@@ -14,6 +14,7 @@ import type { CompactResult } from '@/lib/classroom/report';
 import { createClient } from '@/lib/supabase/server';
 import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
 import type { SubjectCode } from '@/lib/types';
+import '@/styles/dash.css';
 
 export const metadata: Metadata = { title: 'Phiếu báo tiến bộ · EduChain Kids' };
 export const dynamic = 'force-dynamic';
