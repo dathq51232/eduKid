@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { MODEL_ASSETS } from './models';
 import * as N from './nature';
+import * as A from './animals';
 
 export type AssetOpts = { color: string; name: string; on?: boolean };
 export type Asset = {
@@ -121,22 +122,22 @@ export const ASSETS: Asset[] = [
   { id: 'umbrella', cat: 'Bầu trời', name: 'Ô (dù)', color: '#ef4444', kw: 'mua thoi tiet', b: ({ color }) => grp(mesh(new THREE.SphereGeometry(0.9, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2), M(color), 0, 1.6), mesh(cyl(0.03, 0.03, 1.7, 5), M(DARK), 0, 0.85)) },
   { id: 'wind-sock', cat: 'Bầu trời', name: 'Cờ đo gió', color: '#f97316', kw: 'gio bao', b: ({ color }) => { const s = mesh(cone(0.25, 1.1, 8, ), M(color), 0.55, 2.2, 0); s.rotation.z = Math.PI / 2; return grp(mesh(cyl(0.04, 0.04, 2.4, 5), M(DARK), 0, 1.2), s); } },
   // ---------- Sinh vật & cơ thể ----------
-  { id: 'duck', cat: 'Sinh vật', name: 'Con vịt', color: '#fde047', b: ({ color }) => animal(color, color, { legs: 2, beak: '#f97316', scale: [1.3, 0.9, 1] }) },
-  { id: 'chicken', cat: 'Sinh vật', name: 'Con gà', color: '#f8fafc', kw: 'ga mai', b: ({ color }) => { const g = animal(color, color, { legs: 2, beak: '#f59e0b', scale: [1.1, 1, 0.9] }); g.add(mesh(box(0.06, 0.2, 0.18), M('#ef4444'), 0.62, 1.3, 0)); return g; } },
-  { id: 'cat', cat: 'Sinh vật', name: 'Con mèo', color: '#f59e0b', b: ({ color }) => animal(color, color, { ears: 'up', tail: true }) },
+  { id: 'duck', cat: 'Sinh vật', name: 'Con vịt', color: '#fde047', b: ({ color }) => A.duck(color) },
+  { id: 'chicken', cat: 'Sinh vật', name: 'Con gà', color: '#f8fafc', kw: 'ga mai', b: ({ color }) => A.chicken(color) },
+  { id: 'cat', cat: 'Sinh vật', name: 'Con mèo', color: '#f59e0b', b: ({ color }) => A.cat(color) },
   { id: 'dog', cat: 'Sinh vật', name: 'Con chó', color: '#a16207', b: ({ color }) => animal(color, color, { ears: 'round', tail: true }) },
   { id: 'cow', cat: 'Sinh vật', name: 'Con bò', color: '#e7e5e4', kw: 'trau', b: ({ color }) => { const g = animal(color, color, { ears: 'round', tail: true, scale: [1.6, 1, 1] }); g.scale.setScalar(1.3); return g; } },
   { id: 'pig', cat: 'Sinh vật', name: 'Con lợn', color: '#f9a8d4', b: ({ color }) => animal(color, color, { ears: 'round' }) },
-  { id: 'rabbit', cat: 'Sinh vật', name: 'Con thỏ', color: '#f1f5f9', b: ({ color }) => animal(color, color, { ears: 'up', scale: [1.1, 0.95, 0.9] }) },
+  { id: 'rabbit', cat: 'Sinh vật', name: 'Con thỏ', color: '#f1f5f9', b: ({ color }) => A.rabbit(color) },
   { id: 'fox', cat: 'Sinh vật', name: 'Con cáo', color: '#ea580c', kw: 'ho soi', b: ({ color }) => animal(color, color, { ears: 'up', tail: true }) },
-  { id: 'bird', cat: 'Sinh vật', name: 'Con chim', color: '#38bdf8', y: 0, b: ({ color }) => { const g = animal(color, color, { legs: 2, beak: '#f59e0b', scale: [1, 0.8, 0.8] }); g.scale.setScalar(0.6); return g; } },
+  { id: 'bird', cat: 'Sinh vật', name: 'Con chim', color: '#38bdf8', y: 0, b: ({ color }) => A.bird(color) },
   { id: 'fish', cat: 'Sinh vật', name: 'Con cá', color: '#fb923c', y: 0.4, b: ({ color }) => { const b = mesh(sph(0.4, 10, 8), M(color)); b.scale.set(1.5, 0.8, 0.5); const t = mesh(cone(0.3, 0.5, 4), M(color), -0.75, 0, 0); t.rotation.z = Math.PI / 2; return grp(b, t); } },
-  { id: 'frog', cat: 'Sinh vật', name: 'Con ếch', color: '#22c55e', kw: 'nong noc vong doi', b: ({ color }) => { const b = mesh(sph(0.45, 10, 8), M(color), 0, 0.35, 0); b.scale.set(1.1, 0.7, 1); return grp(b, mesh(sph(0.12, 8, 6), M('#f8fafc'), 0.3, 0.7, 0.18), mesh(sph(0.12, 8, 6), M('#f8fafc'), 0.3, 0.7, -0.18), mesh(sph(0.06, 6, 5), M('#111827'), 0.38, 0.72, 0.18), mesh(sph(0.06, 6, 5), M('#111827'), 0.38, 0.72, -0.18)); } },
-  { id: 'tadpole', cat: 'Sinh vật', name: 'Nòng nọc', color: '#334155', y: 0.2, b: ({ color }) => { const t = mesh(cone(0.12, 0.6, 6), M(color), -0.35, 0, 0); t.rotation.z = Math.PI / 2; return grp(mesh(sph(0.22, 8, 6), M(color)), t); } },
-  { id: 'egg', cat: 'Sinh vật', name: 'Quả trứng', color: '#fef3c7', b: ({ color }) => { const e = mesh(sph(0.3, 12, 10), M(color, { flatShading: false }), 0, 0.38, 0); e.scale.y = 1.3; return grp(e); } },
-  { id: 'caterpillar', cat: 'Sinh vật', name: 'Sâu non', color: '#84cc16', kw: 'buom vong doi', b: ({ color }) => grp(...[0, 1, 2, 3, 4].map((i) => mesh(sph(0.16, 8, 6), M(i === 4 ? '#65a30d' : color), -0.4 + i * 0.22, 0.16, 0))) },
-  { id: 'butterfly', cat: 'Sinh vật', name: 'Con bướm', color: '#a855f7', y: 1, b: ({ color }) => { const w1 = mesh(sph(0.4, 8, 6), M(color), 0, 0, 0.35); w1.scale.set(1, 0.1, 0.8); const w2 = w1.clone(); w2.position.z = -0.35; const r = grp(w1, w2); r.name = 'rotor'; return grp(mesh(cyl(0.05, 0.05, 0.7, 6), M(DARK), 0, 0, 0).rotateZ(Math.PI / 2), r); } },
-  { id: 'grasshopper', cat: 'Sinh vật', name: 'Châu chấu', color: '#65a30d', b: ({ color }) => { const b = mesh(sph(0.2, 8, 6), M(color), 0, 0.25, 0); b.scale.set(2.2, 0.8, 0.8); return grp(b, mesh(cyl(0.02, 0.02, 0.6, 4), M(color), -0.2, 0.25, 0.15).rotateZ(0.8), mesh(cyl(0.02, 0.02, 0.6, 4), M(color), -0.2, 0.25, -0.15).rotateZ(0.8)); } },
+  { id: 'frog', cat: 'Sinh vật', name: 'Con ếch', color: '#22c55e', kw: 'nong noc vong doi', b: ({ color }) => A.frog(color) },
+  { id: 'tadpole', cat: 'Sinh vật', name: 'Nòng nọc', color: '#334155', y: 0.2, b: ({ color }) => A.tadpole(color) },
+  { id: 'egg', cat: 'Sinh vật', name: 'Quả trứng', color: '#fef3c7', b: ({ color }) => A.egg(color) },
+  { id: 'caterpillar', cat: 'Sinh vật', name: 'Sâu non', color: '#84cc16', kw: 'buom vong doi', b: ({ color }) => A.caterpillar(color) },
+  { id: 'butterfly', cat: 'Sinh vật', name: 'Con bướm', color: '#a855f7', y: 1, b: ({ color }) => A.butterfly(color) },
+  { id: 'grasshopper', cat: 'Sinh vật', name: 'Châu chấu', color: '#65a30d', b: ({ color }) => A.grasshopper(color) },
   { id: 'lungs', cat: 'Sinh vật', name: 'Phổi', color: '#f9a8d4', split: true, kw: 'ho hap co the', y: 0.2, b: ({ color }) => { const l = mesh(sph(0.55, 10, 8), M(color), -0.45, 1, 0); l.scale.set(0.8, 1.3, 0.7); const r = l.clone(); r.position.x = 0.45; const tr = mesh(cyl(0.09, 0.09, 1, 8), M('#e2e8f0'), 0, 2.1, 0); return withParts(grp(l, r, tr), [[l, -0.6, 0, 0], [r, 0.6, 0, 0], [tr, 0, 0.6, 0]]); } },
   { id: 'stomach', cat: 'Sinh vật', name: 'Dạ dày & ruột', color: '#fb7185', split: true, kw: 'tieu hoa co the', b: ({ color }) => { const st = mesh(sph(0.45, 10, 8), M(color), 0.2, 2, 0); st.scale.set(1.3, 0.8, 0.7); const c = new THREE.CatmullRomCurve3(Array.from({ length: 18 }, (_, i) => new THREE.Vector3(Math.sin(i * 1.3) * 0.6, 1.3 - i * 0.05, Math.cos(i * 1.3) * 0.25))); const gut = mesh(new THREE.TubeGeometry(c, 60, 0.11, 6), M('#fda4af')); const es = mesh(cyl(0.07, 0.07, 1, 6), M('#fecdd3'), -0.15, 2.8, 0); return withParts(grp(es, st, gut), [[es, 0, 0.6, 0], [st, 0.5, 0.2, 0], [gut, 0, -0.5, 0]]); } },
   { id: 'bone', cat: 'Sinh vật', name: 'Xương', color: '#f5f5f4', kw: 'van dong co the', b: ({ color }) => grp(mesh(cyl(0.12, 0.12, 1.6, 8), M(color), 0, 0.3, 0).rotateZ(Math.PI / 2), mesh(sph(0.2, 8, 6), M(color), -0.85, 0.3, 0.1), mesh(sph(0.2, 8, 6), M(color), -0.85, 0.3, -0.1), mesh(sph(0.2, 8, 6), M(color), 0.85, 0.3, 0.1), mesh(sph(0.2, 8, 6), M(color), 0.85, 0.3, -0.1)) },

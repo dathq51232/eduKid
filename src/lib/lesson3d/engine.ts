@@ -320,6 +320,9 @@ export class Stage3D {
         // đi / chạy / bơi theo vòng tròn: quay mặt theo hướng di chuyển
         if (fx === 'orbit' && /^(walk|run|swim)$/.test(want)) n.root.rotation.y = o.ry - n.ang;
       }
+      // bướm vỗ cánh liên tục (khi đang hiện)
+      const flap = n.body.userData.flap as THREE.Object3D[] | undefined;
+      if (flap && n.root.visible) { const k = Math.sin(t * 9) * 0.55 + 0.25; flap[0].rotation.z = k; flap[1].rotation.z = -k; }
       const rotor = n.body.getObjectByName('rotor');
       const active = sp > 0.01 && (ASSET_BY_ID[o.type]?.onoff ? e.on !== false : true);
       if (fx === 'patrol' && o.fx.to?.length === 2) this.patrol(o, n, active ? dt * sp : 0, dt);
@@ -327,7 +330,7 @@ export class Stage3D {
       if (fx === 'pulse') n.root.scale.setScalar(o.s * (1 + Math.sin(t * 2.4 * sp) * 0.12));
       if (fx === 'bob') n.root.position.y = o.y + Math.sin(t * 2 * sp) * 0.15;
       if (fx === 'blink') n.body.visible = Math.sin(t * 5 * sp) > -0.4;
-      if (fx === 'orbit') { n.ang += dt * 0.35 * sp; n.root.position.set(Math.cos(n.ang) * n.rad, o.y, Math.sin(n.ang) * n.rad); if (rotor) rotor.rotation.y += dt * 2; }
+      if (fx === 'orbit') { n.ang += dt * 0.35 * sp; n.root.position.set(Math.cos(n.ang) * n.rad, o.y, Math.sin(n.ang) * n.rad); if (rotor) rotor.rotation.y += dt * 2; if (n.body.userData.walker) n.root.rotation.y = o.ry - n.ang; }
       if (fx === 'tilt') { const beam = n.body.userData.beam as THREE.Object3D | undefined; if (beam) beam.rotation.z = Math.sin(t * 1.2 * sp) * 0.25; }
       if (fx === 'clock') { const h = n.body.userData.hands as { h: THREE.Object3D; m: THREE.Object3D } | undefined; if (h) { h.m.rotation.z -= dt * sp * 1.2; h.h.rotation.z -= (dt * sp * 1.2) / 12; } }
       if (fx === 'heat') n.root.traverse((m) => { const mm = (m as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined; if (mm && 'emissive' in mm && !Array.isArray(mm)) { mm.emissive?.setRGB(0.9, 0.2, 0.05); mm.emissiveIntensity = 0.25 + 0.25 * Math.sin(t * 2 * sp); } });
