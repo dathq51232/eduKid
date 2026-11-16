@@ -212,6 +212,22 @@ export function questionSegments(prompt: string, options: string[], subject: Sub
   return merge([...segs, ...list]);
 }
 
+// Đọc trọn một câu hỏi: đề + (nếu có) các dòng điền ô (ô trống đọc là "mấy"), nhận định Đúng/Sai
+// và danh sách lựa chọn. Dùng chung cho trang Làm bài và Phòng thi lớp.
+export function speakableQuestion(
+  q: { prompt: string; type: string; options?: string[]; blanks?: string[]; statements?: string[] },
+  subject: SubjectCode,
+  prompt: string = q.prompt,
+): Segment[] {
+  const readOptions = ['single_choice', 'true_false', 'multiple_choice'].includes(q.type) ? (q.options ?? []) : [];
+  const extra = [
+    ...(q.blanks ?? []).map((line) => line.replace(/\{\}/g, ' mấy ')),
+    ...(q.statements ?? []).map((t, i) => `${String.fromCharCode(97 + i)}: ${t}`),
+  ];
+  const text = [prompt, ...extra].map((t) => (/[.!?:]$/.test(t.trim()) ? t : `${t}.`)).join(' ');
+  return questionSegments(text, readOptions, subject);
+}
+
 // ---------------------------------------------------------------------------
 // Phát âm
 // ---------------------------------------------------------------------------

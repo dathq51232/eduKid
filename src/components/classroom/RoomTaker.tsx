@@ -4,9 +4,11 @@
 // Kết quả: thang 10 + sao + huy hiệu Cú + lời Milo theo kỹ năng; xem lại đáp án khi phòng đã đóng.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Send, XCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Clock, Send, Volume2, XCircle } from 'lucide-react';
 import QuestionRenderer from '@/components/questions/QuestionRenderer';
 import EmojiText from '@/components/EmojiText';
+import VoiceHelp from '@/components/VoiceHelp';
+import { segmentsFor, speakableQuestion, speakSegments, stopSpeaking, type Segment } from '@/lib/speech';
 import { createClient } from '@/lib/supabase/client';
 import { answerLabel, SUBJECT_NAME, toQuestion } from '@/lib/classroom/assignments';
 import { keyLabel, miloRoomComment, owlOf, roomError, whenLabel, type RoomAnswer, type RoomItem } from '@/lib/classroom/rooms';
@@ -46,6 +48,9 @@ export default function RoomTaker({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [code, setCode] = useState('');
+  // đọc đề: 'q' = đang đọc câu hỏi, 'p' = đang đọc bài đọc (đồng hồ thi vẫn chạy)
+  const [speaking, setSpeaking] = useState<'q' | 'p' | null>(null);
+  const [voiceProblem, setVoiceProblem] = useState<'unsupported' | 'no_vi_voice' | null>(null);
   const sentRef = useRef(false);
   const leavesRef = useRef(0);
   const kAns = `edukid:phong:${id}:ans`, kLeave = `edukid:phong:${id}:leave`;
@@ -74,6 +79,10 @@ export default function RoomTaker({ id }: { id: string }) {
     document.addEventListener('visibilitychange', on);
     return () => document.removeEventListener('visibilitychange', on);
   }, [running, kLeave]);
+
+  // sang câu khác / nộp bài / rời trang: dừng đọc
+  useEffect(() => { stopSpeaking(); setSpeaking(null); }, [cur, running]);
+  useEffect(() => () => stopSpeaking(), []);
 
   const questions = useMemo(() => (room?.questions ?? []).map(toQuestion), [room]);
   const endAt = room && started ? Math.min(started + room.minutes * 60_000, new Date(room.closes_at).getTime()) : 0;
@@ -202,6 +211,11 @@ export default function RoomTaker({ id }: { id: string }) {
   const answered = questions.filter((_, i) => !empty(answers[i])).length;
   const mm = Math.floor(left / 60000), ss = Math.floor((left % 60000) / 1000);
   const setAnswer = (v: AnswerValue) => setAnswers((a) => { const n = [...a]; while (n.length < questions.length) n.push(null); n[cur] = v; return n; });
+  const speak = async (kind: 'q' | 'p', segs: Segment[]) => {
+    if (speaking === kind) { stopSpeaking(); setSpeaking(null); return; }
+    const r = await speakSegments(segs, { onStart: () => setSpeaking(kind), onEnd: () => setSpeaking((k) => (k === kind ? null : k)) });
+    if (!r.ok) { setVoiceProblem(r.reason); setSpeaking(null); }
+  };
   const finish = () => {
     const missing = questions.length - answered;
     if (missing > 0 && !window.confirm(`Em còn ${missing} câu chưa làm. Vẫn nộp bài?`)) return;
@@ -222,6 +236,19 @@ export default function RoomTaker({ id }: { id: string }) {
       </nav>
       <section className="question-card">
         <div className="question-meta"><span className="lesson-tag">Câu {cur + 1}/{questions.length}</span></div>
+        <div className="question-tools">
+          <button type="button" className="button button-white speak-button" aria-pressed={speaking === 'q'}
+            onClick={() => void speak('q', speakableQuestion(q, room.subject, m ? m[3] : q.prompt))}>
+            <Volume2 size={20} aria-hidden="true" /><span>{speaking === 'q' ? 'Dừng đọc' : 'Nghe đọc đề'}</span>
+          </button>
+          {m && (
+            <button type="button" className="button button-white speak-button" aria-pressed={speaking === 'p'}
+              onClick={() => void speak('p', segmentsFor(`${m[1]}. ${m[2]}`, room.subject))}>
+              <BookOpen size={20} aria-hidden="true" /><span>{speaking === 'p' ? 'Dừng đọc' : 'Nghe bài đọc'}</span>
+            </button>
+          )}
+        </div>
+        {voiceProblem && <VoiceHelp reason={voiceProblem} onClose={() => setVoiceProblem(null)} />}
         {m ? (
           <>
             <section className="reading-box" aria-label={`Bài đọc: ${m[1]}`}><p className="reading-title">{m[1]}</p><p className="reading-text">{m[2]}</p></section>

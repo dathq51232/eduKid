@@ -44,7 +44,7 @@ import { totals } from '@/lib/scoring';
 import { TIMER_SOUND_MODES, playSound, readTimerSound, saveTimerSound, timerSoundFor, type TimerSoundMode } from '@/lib/sound';
 import { isPracticeId, newSeed } from '@/lib/practice/core';
 import { lastShownSet, rememberShownSet } from '@/lib/set-history';
-import { getVoiceStatus, questionSegments, segmentsFor, speakSegments, stopSpeaking } from '@/lib/speech';
+import { getVoiceStatus, segmentsFor, speakableQuestion, speakSegments, stopSpeaking } from '@/lib/speech';
 import type { AnswerRecord, AnswerValue, Question } from '@/lib/types';
 import { MAX_MINUTES, TIME_PRESETS, applyTime, readTimeSetting, saveTimeSetting, timeLabel, type TimeSetting } from '@/lib/quiz-time';
 import '@/styles/feedback.css';
@@ -507,14 +507,7 @@ function LamBaiContent() {
       setIsSpeaking(false);
       return;
     }
-    const readOptions = ['single_choice', 'true_false', 'multiple_choice'].includes(q.type) ? q.options : [];
-    // Điền nhiều ô: đọc các dòng, ô trống đọc là "mấy"; bảng Đúng/Sai: đọc từng nhận định
-    const extra = [
-      ...(q.blanks ?? []).map((line) => line.replace(/\{\}/g, ' mấy ')),
-      ...(q.statements ?? []).map((t, i) => `${String.fromCharCode(97 + i)}: ${t}`),
-    ];
-    const text = [q.prompt, ...extra].map((t) => (/[.!?:]$/.test(t.trim()) ? t : `${t}.`)).join(' ');
-    const result = await speakSegments(questionSegments(text, readOptions, subjectCode), {
+    const result = await speakSegments(speakableQuestion(q, subjectCode), {
       onStart: () => setIsSpeaking(true),
       onEnd: () => setIsSpeaking(false),
     });
