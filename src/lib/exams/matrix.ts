@@ -250,7 +250,9 @@ export function shufflePaper(base: Paper, seed: number, code: string): Paper {
 
 /** Đảo thứ tự lựa chọn / vế nối / mục sắp xếp để in (đáp án không đổi vì so theo nội dung) */
 function prepare(q: ExamQuestion, r: ReturnType<typeof makeRng>): ExamQuestion {
-  if (q.type === 'single_choice' || q.type === 'multiple_choice' || q.type === 'matching' || q.type === 'ordering') {
+  // Hộp màu: đảo thứ tự thẻ (giữ thứ tự các hộp)
+  if (q.type === 'grouping') return { ...q, left: r.shuffle(q.left ?? []) };
+  if (q.type === 'single_choice' || q.type === 'multiple_choice' || q.type === 'matching' || q.type === 'pair_grid' || q.type === 'ordering') {
     let opts = r.shuffle(q.options);
     // sắp xếp: không để trùng đúng thứ tự đáp án
     if (q.type === 'ordering' && opts.length > 1 && opts.every((o, i) => o === q.options[i])) opts = [...opts.slice(1), opts[0]];

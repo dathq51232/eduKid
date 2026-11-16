@@ -28,7 +28,9 @@ export function gradeLocal(type: QuestionType, given: AnswerValue, key: AnswerKe
       const order = k.order as string[];
       return given.length === order.length && given.every((x, i) => normalizeAnswer(x) === normalizeAnswer(order[i]));
     }
-    case 'matching': {
+    case 'matching':
+    case 'grouping':
+    case 'pair_grid': {
       if (typeof given !== 'object' || Array.isArray(given) || !k.pairs || typeof k.pairs !== 'object') return false;
       const pairs = k.pairs as Record<string, string>;
       const keys = Object.keys(pairs);

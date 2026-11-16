@@ -1138,6 +1138,60 @@ const countSide: Template = (r, c, l) => {
 };
 
 // ===========================================================================
+// 🎨 HỘP MÀU / 🧩 MẢNH GHÉP (docs/BAN-SAC-EDUCHAINKIDS.md mục 5)
+// ===========================================================================
+/** Xếp số vào hộp “Bé hơn N / Lớn hơn N” (bài so sánh số) */
+const numBox: Template = (r, c, l) => {
+  if (c.max < 6) return null;
+  const n = r.int(3, c.max - 2);
+  const nums = r.sample(Array.from({ length: c.max + 1 }, (_, i) => i).filter((x) => x !== n), 5);
+  if (nums.every((x) => x < n) || nums.every((x) => x > n)) return null;
+  const lo = `Bé hơn ${n}`, hi = `Lớn hơn ${n}`;
+  const items: [string, string][] = nums.map((x) => [String(x), x < n ? lo : hi]);
+  return Q.grp(`Xếp mỗi số vào đúng hộp.`, [lo, hi], items,
+    M('T1.SO.02', 'TOAN.SOSANH', 'hop_so_sanh', l, `${lo}: ${nums.filter((x) => x < n).join(', ')}. ${hi}: ${nums.filter((x) => x > n).join(', ')}.`,
+      `So sánh từng số với ${n}: số nào đứng trước ${n} khi đếm thì bé hơn ${n}, đứng sau thì lớn hơn ${n}.`));
+};
+
+/** Xếp phép tính vào hộp theo kết quả “Bé hơn N / Bằng N / Lớn hơn N” (cộng, trừ trong phạm vi bài) */
+const calcBox: Template = (r, c, l) => {
+  if (!c.ops.length) return null;
+  const n = r.int(4, c.max - 2);
+  const made = new Map<string, number>();
+  for (let guard = 0; made.size < 6 && guard < 80; guard++) {
+    const op = r.pick(c.ops);
+    const a = r.int(0, c.max), b = op === '+' ? r.int(0, c.max - a) : r.int(0, a);
+    made.set(`${a} ${op === '+' ? '+' : MINUS} ${b}`, op === '+' ? a + b : a - b);
+  }
+  const all = [...made.entries()];
+  const want = [all.find(([, v]) => v < n), all.find(([, v]) => v === n), all.find(([, v]) => v > n)];
+  if (want.some((x) => !x)) return null;
+  const rest = r.sample(all.filter((x) => !want.includes(x)), 2);
+  const lo = `Bé hơn ${n}`, eq = `Bằng ${n}`, hi = `Lớn hơn ${n}`;
+  const items: [string, string][] = r.shuffle([...want as [string, number][], ...rest]).map(([e, v]) => [e, v < n ? lo : v === n ? eq : hi]);
+  return Q.grp('Tính rồi xếp mỗi phép tính vào hộp đúng.', [lo, eq, hi], items,
+    M('T1.PT.02', 'TOAN.TINH', 'hop_phep_tinh', l, items.map(([e]) => `${e} = ${made.get(e)}`).join('; ') + '.',
+      `Tính kết quả từng phép tính rồi so sánh với ${n}.`));
+};
+
+/** 🧩 Ghép phép tính với kết quả (4 cặp, kết quả khác nhau) */
+const calcGrid: Template = (r, c, l) => {
+  if (!c.ops.length) return null;
+  const byResult = new Map<number, string>();
+  for (let guard = 0; byResult.size < 4 && guard < 80; guard++) {
+    const op = r.pick(c.ops);
+    const a = r.int(1, c.max), b = op === '+' ? r.int(0, c.max - a) : r.int(0, a);
+    const v = op === '+' ? a + b : a - b;
+    if (!byResult.has(v)) byResult.set(v, `${a} ${op === '+' ? '+' : MINUS} ${b}`);
+  }
+  if (byResult.size < 4) return null;
+  const pairs: [string, string][] = [...byResult.entries()].map(([v, e]) => [e, String(v)]);
+  return Q.grid('Ghép mỗi phép tính với kết quả của nó.', pairs,
+    M('T1.PT.02', 'TOAN.TINH', 'ghep_ket_qua', l, pairs.map(([e, v]) => `${e} = ${v}`).join('; ') + '.',
+      'Tính từng phép tính trước, rồi tìm mảnh ghi đúng kết quả để ghép.'));
+};
+
+// ===========================================================================
 // CÁC BÀI
 // ===========================================================================
 export type Pool = Record<Level, Template[]>;
@@ -1151,13 +1205,13 @@ const ADDSUB = { max: 10, focusMin: 1, ops: ['+', '-'] as const };
 const P1: Pool = { 1: [countPick], 2: [countFill, pickGroupN], 3: [countTwo, sequenceAsc], 4: [sequenceDesc, tfCount], 5: [positionInRow, rowsWithN] };
 const P2: Pool = { 1: [countPick, countOn], 2: [countFill, pickGroupN], 3: [countTwo, sequenceAsc], 4: [sequenceDesc, tfCount], 5: [positionInRow, rowsWithN] };
 const P3: Pool = { 1: [compareRows], 2: [pickExtremeGroup, matchEqual], 3: [addToEqual, countTwo], 4: [removeToEqual, tfCount], 5: [whoMost] };
-const P4: Pool = { 1: [signPick], 2: [signPicture, extreme], 3: [orderNums], 4: [signTable, allLess], 5: [between, betweenCount] };
+const P4: Pool = { 1: [signPick], 2: [signPicture, extreme], 3: [orderNums, numBox], 4: [signTable, allLess, numBox], 5: [between, betweenCount] };
 const P5: Pool = { 1: [bondPart], 2: [bondPicture, bondWhole], 3: [splitWord, whichWhole], 4: [splitAll, bondTable], 5: [halves] };
 const P7: Pool = { 1: [shapeName, objectShape], 2: [oddOne, objectShape], 3: [countScene, classifyObjects], 4: [tfShapes, patternRow, G1.tri, G1.sq], 5: [pattern3x3, G1.mid, G1.rect] };
 const P8: Pool = { 1: [compose, shapeName], 2: [sticksSquares, compose, oddOne], 3: [sticksTriangles, sticksCount, countScene], 4: [sticksNeeded, tfScene, G1.rect, G1.tri], 5: [sharedVsApart, pattern3x3, G1.diag, G1.tri, G1.sq] };
-const P10: Pool = { 1: [addCalc], 2: [addPicture, addWhich], 3: [addTable, addWord], 4: [addMissing, addWord], 5: [addCompare, addMany] };
-const P11: Pool = { 1: [subCalc], 2: [subPicture, subWhich], 3: [subTable, subWord], 4: [subMissing, subWord], 5: [subCompare, subMany] };
-const P12: Pool = { 1: [addCalc, subCalc], 2: [addWhich, subWhich], 3: [family, mixTable], 4: [opPick, biggest], 5: [subMissing, addCompare, subCompare] };
+const P10: Pool = { 1: [addCalc], 2: [addPicture, addWhich], 3: [addTable, addWord, calcGrid], 4: [addMissing, addWord, calcBox], 5: [addCompare, addMany] };
+const P11: Pool = { 1: [subCalc], 2: [subPicture, subWhich], 3: [subTable, subWord, calcGrid], 4: [subMissing, subWord, calcBox], 5: [subCompare, subMany] };
+const P12: Pool = { 1: [addCalc, subCalc], 2: [addWhich, subWhich], 3: [family, mixTable, calcGrid], 4: [opPick, biggest, calcBox], 5: [subMissing, addCompare, subCompare, calcBox] };
 const P14: Pool = { 1: [blockName, objectBlock], 2: [countBlocks, objectBlock], 3: [stackCount, classifyBlocks], 4: [tfBlocks, stackCount], 5: [towersEqual, towersCut, stackCount] };
 const P15: Pool = { 1: [rowMiddle], 2: [leftRight, nextTo], 3: [shelfLevel, queue], 4: [shelfAbove, tfPositions], 5: [countSide] };
 

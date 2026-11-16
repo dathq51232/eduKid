@@ -109,6 +109,17 @@ export function signature(q: SigInput): string {
 
 export type GeneratedQuestion = PracticeQuestion & { id: string; timeLimit: number };
 
+/**
+ * 🧩 Mảnh ghép (docs/BAN-SAC-EDUCHAINKIDS.md mục 5): khoảng một nửa số câu nối 3–5 cặp được đổi sang lưới mảnh ghép —
+ * cùng dữ liệu, cùng cách chấm. Quyết định theo `salt` (seed + vị trí) để sinh lại đúng câu khi chấm.
+ */
+function gridify(q: PracticeQuestion, salt: number): PracticeQuestion {
+  if (q.type !== 'matching' || !q.left || q.left.length < 3 || q.left.length > 5 || q.figure || q.optionFigures) return q;
+  if (new Set([...q.left, ...q.options]).size !== q.left.length + q.options.length) return q; // lưới trộn chung: hai vế không trùng chữ
+  if ((Math.imul(salt >>> 0, 2654435761) >>> 0) % 2) return q;
+  return { ...q, type: 'pair_grid', prompt: q.prompt.replace(/^Nối\b/, 'Ghép') };
+}
+
 const timeOf = (q: PracticeQuestion) =>
   q.timeLimit ?? defaultTimeLimit(q.type, q.level, q.prompt + (q.blanks ?? []).join(' ') + (q.statements ?? []).join(' '));
 
@@ -120,8 +131,8 @@ export function generateOne(lessonId: string, seed: number, level: Level): Gener
   const ctx = entry.makeCtx();
   const templates = entry.pool[level];
   for (let i = 0; i < 60; i++) {
-    const q = r.pick(templates)(r, ctx, level);
-    if (q) return { ...q, id: swapIdOf(lessonId, seed, level), timeLimit: timeOf(q) };
+    const q0 = r.pick(templates)(r, ctx, level);
+    if (q0) { const q = gridify(q0, seed + level); return { ...q, id: swapIdOf(lessonId, seed, level), timeLimit: timeOf(q) }; }
   }
   return null;
 }
@@ -150,9 +161,8 @@ export function generatePractice(lessonId: string, seed: number): GeneratedQuest
       got++;
     }
   }
-  return out.map((q, i) => ({
-    ...q,
-    id: questionIdOf(lessonId, seed, i),
-    timeLimit: timeOf(q),
-  }));
+  return out.map((q0, i) => {
+    const q = gridify(q0, seed + i * 7);
+    return { ...q, id: questionIdOf(lessonId, seed, i), timeLimit: timeOf(q) };
+  });
 }

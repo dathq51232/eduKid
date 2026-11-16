@@ -16,7 +16,7 @@ import LessonToc, { lessonAnchor, lessonBadge, type TocGroup } from '@/component
 import { GRADES, SUBJECTS, countQuestions, getLessons, getSubject, isSubjectCode, lessonTimeLimit, parseGrade } from '@/lib/data';
 import { rankFor } from '@/lib/levels';
 import { MUC, MUC_LIST, type Muc } from '@/lib/sets';
-import { mucFor, readBest, readMucStore, readTotalPoints, saveMucAll, saveMucLesson, starsFor, type BestMap, type MucStore } from '@/lib/progress';
+import { chainLevel, mucFor, readBest, readChain, readMucStore, readTotalPoints, saveMucAll, saveMucLesson, starsFor, type BestMap, type ChainStore, type MucStore } from '@/lib/progress';
 import { TOPICS_BY_GRADE } from '@/lib/curriculum';
 import { ADV_BOOK } from '@/lib/content/knowledge-nc';
 import type { Lesson, SubjectCode } from '@/lib/types';
@@ -78,6 +78,7 @@ function ChonBaiContent() {
   const [best, setBest] = useState<BestMap>({});
   const [mucStore, setMucStore] = useState<MucStore>({ all: 1, lessons: {} });
   const [points, setPoints] = useState(0);
+  const [chain, setChain] = useState<ChainStore>({});
   // Kiểu xem: Bản đồ phiêu lưu (mặc định) hoặc Danh sách (có chọn mức độ / đổi bộ câu từng bài)
   const [view, setView] = useState<'map' | 'list'>('map');
   const chooseView = (v: 'map' | 'list') => {
@@ -87,6 +88,7 @@ function ChonBaiContent() {
   useEffect(() => {
     try { if (localStorage.getItem(VIEW_KEY) === 'list') setView('list'); } catch { /* bỏ qua */ }
     setBest(readBest());
+    setChain(readChain());
     setPoints(readTotalPoints());
     setMucStore(readMucStore());
   }, []);
@@ -145,7 +147,7 @@ function ChonBaiContent() {
     items: g.list.map((l) => {
       const [no, label] = lessonBadge(l.title, lessons.indexOf(l) + 1);
       const r = best[l.id];
-      return { id: l.id, no, label, title: l.title, done: !!r, stars: r ? starsFor(r.score, r.total) : 0, next: nextLesson?.id === l.id, href: startHrefFor(l) };
+      return { id: l.id, no, label, title: l.title, done: !!r, stars: r ? starsFor(r.score, r.total) : 0, next: nextLesson?.id === l.id, href: startHrefFor(l), chain: chainLevel(chain, l.id) };
     }),
   }));
 

@@ -15,6 +15,8 @@ export const MILO_TOOLS: Record<QuestionType, MiloTool> = {
   fill_blanks: { icon: '✏️', code: '270f-fe0f', name: 'Bút chì', hint: 'Điền vào các ô trống' },
   matching: { icon: '🧵', code: '1f9f5', name: 'Sợi chỉ', hint: 'Nối mỗi ô bên trái với ô hợp bên phải' },
   ordering: { icon: '🪜', code: '1fa9c', name: 'Bậc thang', hint: 'Xếp theo thứ tự đúng' },
+  grouping: { icon: '🎨', code: '1f3a8', name: 'Hộp màu', hint: 'Chạm từng thẻ rồi chạm vào hộp đúng' },
+  pair_grid: { icon: '🧩', code: '1f9e9', name: 'Mảnh ghép', hint: 'Tìm từng cặp mảnh ghép hợp nhau' },
 };
 
 export const toolFor = (t: QuestionType): MiloTool | undefined => MILO_TOOLS[t];
@@ -31,6 +33,8 @@ const PRAISE: Record<QuestionType, string[]> = {
   fill_blanks: ['Đúng hết các ô rồi! Em cẩn thận lắm.', 'Chính xác! Ô nào em cũng điền đúng.'],
   matching: ['Đúng rồi! Em nối khớp hết các cặp.', 'Tuyệt! Sợi chỉ nào cũng nối đúng chỗ.'],
   ordering: ['Đúng rồi! Em xếp đúng thứ tự.', 'Chính xác! Bậc nào cũng đúng chỗ.'],
+  grouping: ['Đúng rồi! Thẻ nào cũng vào đúng hộp.', 'Tuyệt! Em phân loại rất chuẩn.'],
+  pair_grid: ['Đúng rồi! Em ghép khớp hết các mảnh.', 'Tuyệt! Mảnh nào cũng tìm được bạn của nó.'],
 };
 /** Sai thì gợi, không chê */
 const RETRY: Record<QuestionType, string> = {
@@ -42,6 +46,8 @@ const RETRY: Record<QuestionType, string> = {
   fill_blanks: 'Có ô chưa đúng, không sao! Mình xem lại nhé.',
   matching: 'Có cặp nối chưa khớp, không sao! Em xem lời giải nhé.',
   ordering: 'Thứ tự chưa đúng chỗ, không sao! Mình xem lại nhé.',
+  grouping: 'Có thẻ vào nhầm hộp, không sao! Em xem lời giải nhé.',
+  pair_grid: 'Có cặp ghép chưa khớp, không sao! Mình xem lại nhé.',
 };
 
 /** Lời Milo sau khi chấm; seed (vd. số thứ tự câu) để đổi câu khen cho đỡ lặp mà không ngẫu nhiên mỗi lần vẽ lại */

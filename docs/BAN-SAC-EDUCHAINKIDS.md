@@ -88,8 +88,8 @@ Mỗi dạng câu hỏi là **một món đồ trong cặp sách của Milo**: t
 | ✏️ **Bút chì** | **Điền** số, chữ, từ vào ô trống | `fill_blank`, `fill_blanks` | Có |
 | 🧵 **Sợi chỉ** | **Nối** mỗi ô bên trái với ô bên phải | `matching` | Có |
 | 🪜 **Bậc thang** | **Xếp thứ tự** đúng (số, tiếng, câu, đoạn) | `ordering` | Có |
-| 🎨 **Hộp màu** | **Kéo** từng thẻ vào đúng nhóm (2–3 hộp) | `grouping` | Cần làm |
-| 🧩 **Mảnh ghép** | Lật/chọn **2 ô cùng cặp** trên lưới, đúng thì ô biến mất | `pair_grid` | Cần làm |
+| 🎨 **Hộp màu** | **Chạm** thẻ rồi chạm hộp để xếp thẻ vào đúng nhóm (2–3 hộp) | `grouping` | Có (11/2026) |
+| 🧩 **Mảnh ghép** | Chạm **2 mảnh cùng cặp** trên lưới để ghép (cùng màu); chấm khi bấm Kiểm tra | `pair_grid` | Có (11/2026) |
 | 📿 **Chuỗi hạt** | Xâu các hạt chữ/tiếng **thành từ, thành câu** theo chuỗi | `bead_chain` | Cần làm |
 | 🎧 **Tai nghe** | **Nghe** đoạn âm thanh rồi trả lời (chính tả nghe – viết, nghe tiếng Anh) | thuộc tính `audio` trên mọi dạng | Cần làm |
 | 🖼️ **Khung tranh** | Nhìn **tranh/ghép hình đoán từ** (đố chữ, thành ngữ) | `single_choice`/`fill_blank` + `images` | Cần làm |
@@ -200,8 +200,8 @@ Thay cho mô hình vòng loại toàn quốc, EduChain Kids tổ chức **theo m
 |---|---|---|
 | 1 | Hiện **tên đồ nghề + biểu tượng** trên mọi câu hỏi (`src/components/questions/*`) | Chỉ đổi nhãn, không đổi cách chấm |
 | 1 | Áp **giọng Milo** cho lời khen / gợi ý sai (`lam-bai`) | Theo mục 3 |
-| 2 | Dạng mới **🎨 Hộp màu** (`grouping`) và **🧩 Mảnh ghép** (`pair_grid`) | Thêm vào `QuestionType`, bộ sinh câu `src/lib/practice/*`, máy chấm |
-| 2 | **Mắt xích kỹ năng**: tính thành thạo theo mục 6, hiện trên bản đồ bài | Dựa trên `skill_code` |
+| 2 | ✅ **🎨 Hộp màu** và **🧩 Mảnh ghép** (11/2026): chấm như ghép cặp; Hộp màu có trong Toán 1 (so sánh số, phép tính) và Tiếng Việt 2–3 (loại từ, chính tả); khoảng một nửa câu nối 3–5 cặp tự đổi sang Mảnh ghép | Còn: thêm Hộp màu cho Toán 2–5, Tiếng Anh |
+| 2 | ✅ **Mắt xích kỹ năng** (11/2026): bài “vững” khi đạt ngưỡng ở 2 ngày khác nhau, hiện vòng xích vàng trên bản đồ bài (lưu trên máy em) | Còn: đồng bộ lên máy chủ, báo cho cô / phụ huynh |
 | 3 | **Mùa Mắt Xích**: ✅ Phòng thi lớp (chặng Ra hoa) — mã phòng, đề riêng, huy hiệu Cú, gắn cờ (11/2026, migration 0062, trang `giao-vien/lop/[id]/phong-thi`) | Còn: chặng Ươm mầm, Kết trái, Mùa vàng; đưa điểm phòng thi vào sổ lớp / thư khen |
 | 3 | **🎧 Tai nghe** (câu có âm thanh) và **📿 Chuỗi hạt**, **🖼️ Khung tranh** | Tiếng Việt lớp 1–2 và Tiếng Anh dùng nhiều |
 | 4 | Ngân hàng **ca dao – tục ngữ – câu đố** theo lớp, có giải nghĩa | Dùng chung cho Tiếng Việt và thư khen |

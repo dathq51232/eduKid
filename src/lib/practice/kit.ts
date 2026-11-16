@@ -38,6 +38,16 @@ export const Q = {
     type: 'matching', prompt, left: pairs.map((p) => p[0]), options: pairs.map((p) => p[1]),
     key: { pairs: Object.fromEntries(pairs) }, ...base(m), ...x,
   }),
+  /** 🎨 Hộp màu: xếp từng thẻ vào đúng hộp. items: [thẻ, tên hộp][] (thẻ không trùng nhau) */
+  grp: (prompt: string, boxes: string[], items: [string, string][], m: Meta, x: Extra = {}): PracticeQuestion => ({
+    type: 'grouping', prompt, left: items.map((p) => p[0]), options: [...boxes],
+    key: { pairs: Object.fromEntries(items) }, ...base(m), ...x,
+  }),
+  /** 🧩 Mảnh ghép: tìm từng cặp trên lưới. pairs: [vế 1, vế 2][] (mọi vế khác nhau) */
+  grid: (prompt: string, pairs: [string, string][], m: Meta, x: Extra = {}): PracticeQuestion => ({
+    type: 'pair_grid', prompt, left: pairs.map((p) => p[0]), options: pairs.map((p) => p[1]),
+    key: { pairs: Object.fromEntries(pairs) }, ...base(m), ...x,
+  }),
   /** Điền nhiều ô: lines chứa "{}"; answers = các bộ đáp án chấp nhận (mỗi bộ đủ các ô) */
   blanks: (prompt: string, lines: string[], answers: (number | string)[][], m: Meta, x: Extra = {}): PracticeQuestion => {
     const sets = answers.map((a) => a.map(String));

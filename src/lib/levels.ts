@@ -42,6 +42,8 @@ export const TYPE_EXTRA_SECONDS: Record<QuestionType, number> = {
   matching: 15,
   fill_blanks: 15,
   true_false_table: 20,
+  grouping: 20,
+  pair_grid: 20,
 };
 export const LONG_PROMPT_CHARS = 60; // đề dài hơn thì cộng thêm thời gian đọc
 export const LONG_PROMPT_EXTRA = 10;

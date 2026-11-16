@@ -69,12 +69,44 @@ export function addPoints(lessonId: string, title: string, points: number): { ne
   return { newPoints, previousTotal, totalPoints: previousTotal + newPoints };
 }
 
+// ---------------------------------------------------------------------------
+// MẮT XÍCH KỸ NĂNG (docs/BAN-SAC-EDUCHAINKIDS.md mục 6): một bài “vững” khi em đạt ngưỡng ở 2 NGÀY KHÁC NHAU
+// (mức Cơ bản ≥ 8/10, mức Khá/Giỏi ≥ 7/10) — làm một lần cao điểm chưa đủ, phải nhớ được sang hôm sau.
+// ---------------------------------------------------------------------------
+const CHAIN_KEY = 'edukid_chain_v1';
+/** mã bài -> các ngày (YYYY-MM-DD, giờ máy) em đạt ngưỡng */
+export type ChainStore = Record<string, string[]>;
+export const CHAIN_DAYS = 2;
+export const chainPass = (muc?: 1 | 2 | 3) => (muc && muc > 1 ? 0.7 : 0.8);
+export function readChain(): ChainStore {
+  try {
+    const raw = localStorage.getItem(CHAIN_KEY);
+    const v = raw ? (JSON.parse(raw) as ChainStore) : {};
+    return v && typeof v === 'object' ? v : {};
+  } catch {
+    return {};
+  }
+}
+/** 0 = chưa đạt lần nào, 1 = đạt 1 ngày, 2 = mắt xích đã vững */
+export const chainLevel = (s: ChainStore, lessonId: string): 0 | 1 | 2 => Math.min(CHAIN_DAYS, s[lessonId]?.length ?? 0) as 0 | 1 | 2;
+function recordChain(lessonId: string, score: number, total: number, muc?: 1 | 2 | 3) {
+  if (total <= 0 || score / total < chainPass(muc)) return;
+  const d = new Date();
+  const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const s = readChain();
+  const days = s[lessonId] ?? [];
+  if (days.includes(day)) return;
+  s[lessonId] = [...days, day].slice(-5);
+  try { localStorage.setItem(CHAIN_KEY, JSON.stringify(s)); } catch { /* bỏ qua */ }
+}
+
 export function saveAttempt(summary: AttemptSummary) {
   try {
     sessionStorage.setItem(LAST_KEY, JSON.stringify(summary));
   } catch {
     // Trình duyệt chặn bộ nhớ: trang kết quả sẽ báo không tìm thấy bài làm.
   }
+  recordChain(summary.lessonId, summary.score, summary.total, summary.muc);
   try {
     const best = readBest();
     const prev = best[summary.lessonId];

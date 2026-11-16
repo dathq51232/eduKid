@@ -228,9 +228,9 @@ const foreignName: T3 = (r, c, l) => {
 const W = TV2G;
 type LvMap = Partial<Record<Level, T3[]>>;
 const F: Partial<Record<TV3Focus, LvMap>> = {
-  suvat: { 1: [from2(W.wordKindPick)], 2: [from2(W.wordKindGroup)], 3: [from2(W.kindMatch)] },
-  hoatdong: { 1: [from2(W.wordKindPick)], 2: [from2(W.wordKindGroup)], 3: [from2(W.kindMatch)] },
-  dacdiem: { 1: [from2(W.wordKindPick)], 2: [from2(W.wordKindGroup)], 3: [from2(W.kindMatch)] },
+  suvat: { 1: [from2(W.wordKindPick)], 2: [from2(W.wordKindGroup)], 3: [from2(W.kindMatch), from2(W.kindBox)] },
+  hoatdong: { 1: [from2(W.wordKindPick)], 2: [from2(W.wordKindGroup)], 3: [from2(W.kindMatch), from2(W.kindBox)] },
+  dacdiem: { 1: [from2(W.wordKindPick)], 2: [from2(W.wordKindGroup)], 3: [from2(W.kindMatch), from2(W.kindBox)] },
   gioithieu: { 2: [from2(W.sentType)], 3: [from2(W.pickSentType)], 4: [from2(W.orderWords)] },
   neuhd: { 2: [from2(W.sentType)], 3: [from2(W.pickSentType)], 4: [from2(W.orderWords)] },
   neudd: { 2: [from2(W.sentType)], 3: [from2(W.pickSentType)], 4: [from2(W.orderWords)] },
@@ -256,7 +256,7 @@ const BASE: LvMap = {
   1: [from2(W.spellPick), themeGroup3],
   2: [from2(W.spellPick), themeGroup3],
   3: [from2(W.spellGroup), themeOdd3],
-  4: [themeOdd3, antPick, sosanhWhat],
+  4: [themeOdd3, antPick, sosanhWhat, from2(W.spellBox)],
   5: [from2(W.orderPara), synGroup, antMatch, from2(W.antonymMatch)],
 };
 

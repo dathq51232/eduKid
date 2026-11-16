@@ -45,6 +45,15 @@
 .lm-milo { position: absolute; z-index: 2; top: -6px; left: calc(50% + 42px); width: 58px; filter: drop-shadow(0 4px 4px rgb(0 0 0 / .2)); animation: cb-bob 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
 .lm-node.is-r .lm-milo { left: auto; right: calc(50% + 42px); }
 .lm-milo .milo { display: block; width: 58px; max-width: none; height: auto; }
+/* Mắt xích kỹ năng: đạt ngưỡng ở 2 ngày khác nhau = vững (vòng xích vàng quanh đảo) */
+.lm-chain-count { display: inline-flex; align-items: center; gap: 3px; flex: none; padding: 4px 9px; border-radius: 99px; background: #fff3c4; color: #7a4d00; font-size: 12.5px; font-weight: 800; white-space: nowrap; }
+.lm-chain-count svg { width: 14px; height: 14px; }
+.lm-chain { position: absolute; z-index: 1; top: 52px; left: calc(50% - 54px); display: inline-flex; align-items: center; gap: 1px; padding: 2px 5px; border-radius: 99px; background: var(--surface); box-shadow: 0 2px 4px rgb(0 0 0 / .15); color: #b7791f; font-size: 11px; font-weight: 800; }
+.lm-chain svg { width: 16px; height: 16px; }
+.lm-chain.is-1 { color: var(--muted); }
+.lm-chain.is-2 { background: #ffc83d; color: #5b3a00; }
+.lm-node.is-linked .lm-island { box-shadow: 0 0 0 4px #ffc83d, 0 6px 0 rgb(0 0 0 / .13), 0 10px 16px rgb(0 0 0 / .12); }
+:root[data-theme="dark"] .lm-chain-count { background: #4a3a10; color: #fde68a; }
 @media (prefers-reduced-motion: reduce) {
   .kw-fl, .kw-tw, .kw-bub, .kc-art, .kc-rays, .kc-prize, .lm-milo, .lm-node.is-next .lm-island::after, .qz-combo.is-pop { animation: none !important; }
   .kt-hero, .kt-side, .kc-lid { transition: none; }

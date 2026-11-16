@@ -34,7 +34,7 @@ function rightAnswer(q: GeneratedQuestion): AnswerValue {
     case 'fill_blanks': return (k.answers as string[][])[0];
     case 'true_false_table': return k.truth as string[];
     case 'fill_blank': return (k.accepted as string[])[0];
-    case 'matching': return k.pairs as Record<string, string>;
+    case 'matching': case 'grouping': case 'pair_grid': return k.pairs as Record<string, string>;
     default: return null;
   }
 }
@@ -46,7 +46,8 @@ function wrongAnswer(q: GeneratedQuestion): AnswerValue {
     case 'ordering': return [...(k.order as string[])].reverse();
     case 'fill_blanks': { const a = [...(k.answers as string[][])[0]]; a[a.length - 1] = String(Number(a[a.length - 1]) + 1); return a; }
     case 'true_false_table': { const t = [...(k.truth as string[])]; t[0] = t[0] === 'Đúng' ? 'Sai' : 'Đúng'; return t; }
-    case 'matching': { const e = Object.entries(k.pairs as Record<string, string>); const [a, b] = [e[0][1], e[1][1]]; e[0][1] = b; e[1][1] = a; return Object.fromEntries(e); }
+    case 'matching': case 'pair_grid': { const e = Object.entries(k.pairs as Record<string, string>); const [a, b] = [e[0][1], e[1][1]]; e[0][1] = b; e[1][1] = a; return Object.fromEntries(e); }
+    case 'grouping': { const e = Object.entries(k.pairs as Record<string, string>); e[0][1] = q.options.find((b) => b !== e[0][1]) ?? e[0][1]; return Object.fromEntries(e); }
     default: return null;
   }
 }

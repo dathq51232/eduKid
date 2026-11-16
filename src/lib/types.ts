@@ -19,7 +19,11 @@ export type QuestionType =
   | 'ordering' // sắp xếp
   // Hai dạng dưới chỉ dùng cho bài luyện tập sinh ngẫu nhiên (src/lib/practice), chấm trên trình duyệt:
   | 'fill_blanks' // điền nhiều ô trong câu (ví dụ "Có [ ] hình tròn")
-  | 'true_false_table'; // bảng Đúng/Sai nhiều nhận định
+  | 'true_false_table' // bảng Đúng/Sai nhiều nhận định
+  // 🎨 Hộp màu: leftItems = các thẻ, options = tên các hộp; đáp án { pairs: thẻ -> hộp } (chấm như ghép cặp)
+  | 'grouping'
+  // 🧩 Mảnh ghép: leftItems / options là hai vế của từng cặp, trộn chung trên một lưới; đáp án { pairs } (chấm như ghép cặp)
+  | 'pair_grid';
 
 export type Subject = {
   code: SubjectCode;

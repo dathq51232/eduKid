@@ -8,6 +8,8 @@ import MatchingQuestion from './MatchingQuestion';
 import MultipleChoiceQuestion from './MultipleChoiceQuestion';
 import OrderingQuestion from './OrderingQuestion';
 import TrueFalseTableQuestion from './TrueFalseTableQuestion';
+import GroupingQuestion from './GroupingQuestion';
+import PairGridQuestion from './PairGridQuestion';
 import { toolFor, toolImg } from '@/lib/milo-tools';
 import '@/styles/qz.css';
 
@@ -55,6 +57,10 @@ function renderBody(props: Props) {
       return <FillBlanksQuestion {...props} />;
     case 'true_false_table':
       return <TrueFalseTableQuestion {...props} />;
+    case 'grouping':
+      return <GroupingQuestion {...props} />;
+    case 'pair_grid':
+      return <PairGridQuestion {...props} />;
     default:
       return <p className="unsupported-note">Dạng câu hỏi này chưa được hỗ trợ.</p>;
   }

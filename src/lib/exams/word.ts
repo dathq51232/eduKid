@@ -43,6 +43,12 @@ function questionHtmlRaw(q: ExamQuestion, no: number, pts: number | null): strin
         + (q.statements ?? []).map((st) => `<tr><td>${esc(st)}</td><td class="tf">&nbsp;</td></tr>`).join('') + '</table>';
     case 'fill_blanks':
       return `${head}${br(q.prompt)}</p>` + (q.blanks ?? []).map((l) => `<p class="indent">${esc(l).replace(/\{\}/g, BLANK)}</p>`).join('');
+    case 'grouping':
+      return `${head}${br(q.prompt)}</p><p class="hint">Viết số thứ tự của mỗi thẻ vào đúng nhóm:</p>`
+        + `<p class="indent">${(q.left ?? []).map((t, i) => `${i + 1}. ${esc(t)}`).join(' &nbsp;&nbsp; ')}</p>`
+        + `<table class="grid" border="1" cellspacing="0" cellpadding="4"><tr>${q.options.map((b) => `<th>${esc(b)}</th>`).join('')}</tr>`
+        + `<tr>${q.options.map(() => '<td class="gap">&nbsp;<br>&nbsp;</td>').join('')}</tr></table>`;
+    case 'pair_grid':
     case 'matching':
       return `${head}${br(q.prompt)}</p><p class="hint">Nối mỗi ý ở cột trái với ý phù hợp ở cột phải:</p><table class="grid" border="1" cellspacing="0" cellpadding="4">`
         + Array.from({ length: Math.max(q.left?.length ?? 0, q.options.length) }, (_, i) =>
@@ -72,6 +78,11 @@ export function answerText(q: ExamQuestion): string {
   if (q.type === 'true_false' && typeof k.correct === 'string') return k.correct === 'Đúng' ? 'Đ' : 'S';
   if (Array.isArray(k.accepted)) return (k.accepted as string[]).slice(0, 3).join(' hoặc ');
   if (Array.isArray(k.order)) return (k.order as string[]).join(' → ');
+  if (q.type === 'grouping' && k.pairs && typeof k.pairs === 'object') {
+    const pairs = k.pairs as Record<string, string>;
+    const left = q.left ?? Object.keys(pairs);
+    return q.options.map((b) => `${b}: ${left.map((t, i) => (pairs[t] === b ? i + 1 : null)).filter((x) => x !== null).join(', ')}`).join('; ');
+  }
   if (k.pairs && typeof k.pairs === 'object') {
     const pairs = k.pairs as Record<string, string>;
     return (q.left ?? Object.keys(pairs)).map((l, i) => { const j = q.options.indexOf(pairs[l]); return `${i + 1}–${j >= 0 ? lower[j] : '?'}`; }).join(', ');

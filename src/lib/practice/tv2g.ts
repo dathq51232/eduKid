@@ -263,14 +263,35 @@ const kindMatch: TVTemplate = (r, c, l) => {
   return Q.mt('Nối mỗi từ với nhóm của nó.', pairs, M('V2.TU.01', 'TV.TUNGU', 'phan_loai_tu', l, pairs.map(([w, n]) => `"${w}": ${n}`).join('; ') + '.'));
 };
 
+// 🎨 Hộp màu: xếp từ vào hộp “từ chỉ sự vật / hoạt động / đặc điểm”
+const kindBox: TVTemplate = (r, c, l) => {
+  const focus = kindsOf(c);
+  const ks = (focus.length >= 2 ? focus : r.shuffle(['suvat', 'hoatdong', 'dacdiem'] as Kind[]).slice(0, 2)).slice(0, 3);
+  const per = ks.length === 3 ? 2 : 3;
+  const items: [string, string][] = ks.flatMap((k) => r.sample(KIND_WORDS[k], per).map((w): [string, string] => [w, `Từ chỉ ${KIND_NAME[k]}`]));
+  if (new Set(items.map((x) => x[0])).size !== items.length) return null;
+  return Q.grp('Xếp mỗi từ vào đúng hộp.', ks.map((k) => `Từ chỉ ${KIND_NAME[k]}`), items,
+    M(KIND_OUT[ks[0]], 'TV.TUNGU', 'hop_loai_tu', l, ks.map((k) => `Từ chỉ ${KIND_NAME[k]}: ${items.filter((x) => x[1] === `Từ chỉ ${KIND_NAME[k]}`).map((x) => x[0]).join(', ')}`).join('. ') + '.'));
+};
+// 🎨 Hộp màu: chính tả — xếp từ vào hộp “Viết đúng / Viết sai”
+const spellBox: TVTemplate = (r, c, l) => {
+  const pair = r.pick(c.spell.length ? c.spell : ['s/x', 'ch/tr', 'l/n']);
+  const list = SPELL[pair];
+  if (!list || list.length < 4) return null;
+  const shown = r.sample(list, 4).map(([ok, bad]): [string, string] => (r.chance(0.5) ? [ok, 'Viết đúng'] : [bad, 'Viết sai']));
+  if (shown.every((x) => x[1] === shown[0][1])) return null;
+  return Q.grp(`Xếp mỗi từ vào hộp “Viết đúng” hoặc “Viết sai” (${pair}).`, ['Viết đúng', 'Viết sai'], shown,
+    M('V2.CT.02', 'TV.CHINHTA', 'hop_chinh_ta', l, `Viết đúng: ${shown.filter((x) => x[1] === 'Viết đúng').map((x) => x[0]).join(', ') || '(không có)'}.`));
+};
+
 export const TV2G_POOL: TVPool = {
   1: [wordKindPick, spellPick, endPunct, alphaNext],
   2: [wordKindGroup, themeGroup, spellPick, sentType],
-  3: [pickSentType, spellGroup, kindMatch, alphaOrder],
-  4: [orderWords, capName, antonym, themeOdd],
-  5: [orderPara, commaPick, antonymMatch, themeOdd],
+  3: [pickSentType, spellGroup, kindMatch, alphaOrder, kindBox],
+  4: [orderWords, capName, antonym, themeOdd, spellBox],
+  5: [orderPara, commaPick, antonymMatch, themeOdd, kindBox],
 };
 
 // Dùng lại cho Tiếng Việt 3 (practice/tv3g.ts)
-export const TV2G = { wordKindPick, wordKindGroup, spellPick, spellGroup, endPunct, sentType, pickSentType, orderWords, capName, antonym, antonymMatch, commaPick, orderPara, kindMatch, alphaOrder };
+export const TV2G = { wordKindPick, wordKindGroup, spellPick, spellGroup, endPunct, sentType, pickSentType, orderWords, capName, antonym, antonymMatch, commaPick, orderPara, kindMatch, alphaOrder, kindBox, spellBox };
 export const SPELL_KEYS = Object.keys(SPELL);
