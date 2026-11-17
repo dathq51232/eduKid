@@ -7,8 +7,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeftRight, Cloud, HardDrive, PartyPopper, RotateCcw, Volume2 } from 'lucide-react';
 import { speakSegments, stopSpeaking } from '@/lib/speech';
 import {
-  MASTERED_BOX, NEW_PER_DAY, addDays, nextGapLabel, todayQueue, todayVN, type Card, type Grade, type useReview,
+  MASTERED_BOX, NEW_PER_DAY, addDays, cardImage, nextGapLabel, todayQueue, todayVN, type Card, type Grade, type useReview,
 } from '@/lib/teacher-english/review';
+import { f3dSrc } from '@/lib/teacher-english/phrase-images';
 import '@/styles/adm.css';
 import '@/styles/ct.css';
 import '@/styles/rv.css';
@@ -19,7 +20,7 @@ import '@/styles/dash.css';
 type Review = ReturnType<typeof useReview>;
 type Dir = 'en-vi' | 'vi-en';
 const DIR_KEY = 'gv-ta-on-tap-chieu';
-const KIND: Record<Card['kind'], string> = { vocab: 'Từ vựng', expr: 'Mẫu câu', phrase: 'Câu của tôi' };
+const KIND: Record<Card['kind'], string> = { vocab: 'Từ vựng', expr: 'Mẫu câu', phrase: 'Câu sư phạm' };
 const fmtDay = (iso: string) => `${Number(iso.slice(8, 10))}/${Number(iso.slice(5, 7))}`;
 
 export default function DailyReview({ deck, review }: { deck: Card[]; review: Review }) {
@@ -91,7 +92,9 @@ export default function DailyReview({ deck, review }: { deck: Card[]; review: Re
         <div className="rv-bar" role="progressbar" aria-valuemin={0} aria-valuemax={session.length} aria-valuenow={pos}><i style={{ width: `${(pos / session.length) * 100}%` }} /></div>
 
         <div className={`rv-card${flipped ? ' is-flipped' : ''}`}>
-          <p className="rv-tag">{KIND[card.kind]} · {card.source}{!st && <b className="rv-new">Mới</b>}</p>
+          <p className="rv-tag">{card.source.startsWith(KIND[card.kind]) ? card.source : `${KIND[card.kind]} · ${card.source}`}{!st && <b className="rv-new">Mới</b>}</p>
+          {/* eslint-disable-next-line @next/next/no-img-element -- hình 3D webp nhỏ đã tối ưu sẵn */}
+          <img key={card.id} className={`rv-img${card.kind === 'vocab' ? ' is-word' : ''}`} src={f3dSrc(cardImage(card))} width={96} height={96} alt="" aria-hidden="true" decoding="async" />
           <p className={`rv-front${card.kind === 'vocab' ? ' is-word' : ''}`} lang={dir === 'en-vi' ? 'en' : 'vi'}>{front}</p>
           {dir === 'en-vi' && card.ipa && <p className="rv-ipa">{card.ipa}</p>}
           {dir === 'en-vi' && (
@@ -142,7 +145,7 @@ export default function DailyReview({ deck, review }: { deck: Card[]; review: Re
       <div className="rv-head">
         <div>
           <h2 id="rv-h">Ôn mỗi ngày <span lang="en">· Daily review</span></h2>
-          <p className="dash-muted">Mỗi ngày 5–10 phút. Thẻ nhớ tốt sẽ lâu mới gặp lại (1 → 3 → 7 → 14 → 30 ngày…), thẻ hay quên sẽ gặp lại sớm. Thẻ lấy từ các bài cô đã bắt đầu học và <b>Câu của tôi</b>.</p>
+          <p className="dash-muted">Mỗi ngày 5–10 phút. Thẻ nhớ tốt sẽ lâu mới gặp lại (1 → 3 → 7 → 14 → 30 ngày…), thẻ hay quên sẽ gặp lại sớm. Thẻ lấy từ các bài cô đã bắt đầu học, <b>Câu của tôi</b> và các câu sư phạm trong Ngân hàng mẫu câu.</p>
         </div>
         <span className={`te-sync is-${sync}`} title={sync === 'cloud' ? 'Lịch ôn lưu vào tài khoản' : 'Chưa bật lưu trên tài khoản (migration 0060): tạm lưu trên máy này'}>
           {sync === 'cloud' ? <Cloud aria-hidden="true" /> : <HardDrive aria-hidden="true" />}
@@ -171,7 +174,10 @@ export default function DailyReview({ deck, review }: { deck: Card[]; review: Re
         <p className="adm-alert is-ok rv-empty">🎉 Hôm nay đã ôn xong.{nextDue ? ` Lần ôn tới: ngày ${fmtDay(nextDue)}${nextDue === addDays(today, 1) ? ' (mai)' : ''}.` : ''}{unseen ? ` Còn ${unseen} thẻ mới, mai sẽ mở thêm.` : ''}</p>
       )}
 
-      <p className="dash-muted rv-src">Bộ thẻ: {deck.length} thẻ từ {sources.join(', ')}. Học thêm bài mới ở <b>Lộ trình</b> hoặc đánh dấu ★ ở <b>Ngân hàng mẫu câu</b> để có thêm thẻ.</p>
+      <p className="dash-muted rv-src">
+        Bộ thẻ: {deck.length} thẻ — {sources.filter((s) => s.startsWith('Tuần')).join(', ') || 'chưa có bài'} và {deck.filter((c) => c.kind === 'phrase').length} câu sư phạm.
+        Thẻ mới mỗi ngày được xáo ngẫu nhiên (trộn từ vựng và câu sư phạm). Học thêm bài ở <b>Lộ trình</b> hoặc đánh dấu ★ ở <b>Ngân hàng mẫu câu</b> để câu đó được ưu tiên.
+      </p>
     </section>
   );
 }
