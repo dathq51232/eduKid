@@ -180,6 +180,8 @@ export function splitIntegration(title: string): { title: string; integration: s
 const SHORT: Partial<Record<PlanSubject, string>> = { tnxh: 'TNXH', hdtn: 'HĐTN', gdtc: 'GDTC', 'ls-dl': 'Lịch sử và Địa lí' };
 export function canonicalSubjectLabel(label: string, subject: PlanSubject, extra: boolean): string {
   const f = fold(label);
+  // có số thứ tự riêng ở cuối (vd "HĐTN1", "HĐTN2") → giữ nguyên như trường ghi
+  if (/\p{L}\s*\d+$/u.test(label.trim())) return label;
   const upper = /\p{Lu}/u.test(label) && label === label.toUpperCase();
   if (subject === 'khac' || !(upper || EXTRA_ONLY.test(f) || SUBJECT_ALIASES.some(([re]) => re.test(f)))) return label;
   return `${SHORT[subject] ?? SUBJECT_NAMES[subject]}${extra ? ' (BS)' : ''}`;
