@@ -9,6 +9,7 @@
   - Bài giảng / thao giảng: `src/components/deck/DeckStudio.tsx` (trình soạn kiểu Canva), `SlideView.tsx` (vẽ trang, kéo/xoay/sửa chữ), `DeckPlayer.tsx` (trình chiếu), dữ liệu `src/lib/deck/types.ts`, bộ mẫu `theme-sets.ts`.
   - Đề / phiếu: `src/components/exams/*`, `src/lib/exams/*`.
 - Kiểm tra trước khi giao: `npx tsc --noEmit -p .` và `npx eslint <thư mục đã sửa>`.
+- Sửa câu hỏi / kiến thức / bộ sinh câu / đề (`src/lib/content|practice|exams|curriculum`, `grading.ts`): BẮT BUỘC `npm run check:noi-dung` đạt hết (git pre-commit tự chạy bản nhanh). Viết phép tính bằng số trong kiến thức, nhận xét, lời giải phải tính đúng — `check:knowledge` tính lại tất cả. Quy trình: `docs/KIEM-TRA-NOI-DUNG.md`.
 - Hiệu năng: không setState theo từng khung hình / mỗi 100–200 ms cho cả trang (gom lại, chỉ cập nhật khi giá trị hiển thị đổi); hoạt ảnh nền chỉ dùng `transform`/`opacity` trên phần tử HTML riêng (không animate phần tử bên trong SVG toàn màn hình).
 
 ## graphify

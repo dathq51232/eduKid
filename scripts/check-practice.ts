@@ -98,7 +98,7 @@ for (const lesson of practiceLessons().filter((x) => !ONLY || x.id.includes(ONLY
         const n = (q.blanks ?? []).join('\n').split('{}').length - 1;
         for (const set of (q.key as { answers: string[][] }).answers) {
           if (set.length !== n) err(where, `số ô ${n} khác số đáp án ${set.length}`);
-          if (!set.every((x) => /^\d{1,9}(,\d{1,4})?$/.test(x))) err(where, `đáp án không phải số: ${set.join(',')}`);
+          if (!set.every((x) => /^\d{1,9}(,\d{1,8})?$/.test(x))) err(where, `đáp án không phải số: ${set.join(',')}`);
         }
       }
       if (q.type === 'true_false_table') {

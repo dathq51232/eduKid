@@ -30,9 +30,9 @@ const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
 const lcm = (a: number, b: number) => (a / gcd(a, b)) * b;
 
 // ------------------------------------------------------------------- số thập phân
-/** làm sạch sai số dấu phẩy động */
-const cl = (x: number) => Math.round(x * 10000) / 10000;
-const parts = (x: number) => Math.abs(cl(x)).toFixed(4).replace(/\.?0+$/, '').split('.');
+/** làm sạch sai số dấu phẩy động — giữ 8 chữ số thập phân (trước đây 4 chữ số làm tròn sai 19,85 × 0,001 = 0,0199) */
+const cl = (x: number) => Math.round(x * 1e8) / 1e8;
+const parts = (x: number) => Math.abs(cl(x)).toFixed(8).replace(/\.?0+$/, '').split('.');
 /** hiển thị: 1 250,75 */
 export const d = (x: number) => {
   const [i, fp] = parts(x);

@@ -150,6 +150,7 @@ export function defaultMatrix(lessons: BookLesson[], total = 10, ratio: [number,
   }
   // 2) Chia câu của từng chủ đề vào 3 mức sao cho tổng mỗi mức đúng tỉ lệ (lần lượt từng câu, ưu tiên chủ đề còn nhiều chỗ)
   const left = [...unit];
+  const short: Record<Muc, number> = { 1: 0, 2: 0, 3: 0 };
   for (const m of MUCS) {
     let need = target[m];
     for (let guard = 0; need > 0 && guard < 500; guard++) {
@@ -163,6 +164,17 @@ export function defaultMatrix(lessons: BookLesson[], total = 10, ratio: [number,
       const i = rows.map((_, k) => k).filter((k) => rows[k].counts[m] < avail[k][m]).sort((a, b) => rows[a].counts[m] - rows[b].counts[m])[0];
       if (i === undefined) break;
       rows[i].counts[m]++; need--;
+    }
+    short[m] = need;
+  }
+  // 3) Mức không đủ câu (vd. lớp 1 chưa có câu mức 3 in được — câu khó đều có tranh): chuyển phần thiếu sang mức gần nhất
+  //    còn câu, để đề vẫn đủ `total` câu
+  const near: Record<Muc, Muc[]> = { 1: [2, 3], 2: [1, 3], 3: [2, 1] };
+  for (const m of MUCS) for (const alt of near[m]) {
+    for (let guard = 0; short[m] > 0 && guard < 500; guard++) {
+      const i = rows.map((_, k) => k).filter((k) => rows[k].counts[alt] < avail[k][alt]).sort((a, b) => left[b] - left[a] || rows[a].counts[alt] - rows[b].counts[alt])[0];
+      if (i === undefined) break;
+      rows[i].counts[alt]++; if (left[i] > 0) left[i]--; short[m]--;
     }
   }
   return { rows, points: { 1: 1, 2: 1, 3: 1 } };

@@ -17,7 +17,9 @@ function correctAnswerOf(q: ContentQuestion) {
   const k = q.key as Record<string, unknown>;
   if (q.type === 'fill_blank') return (k.accepted as string[])[0];
   if (q.type === 'ordering') return k.order as string[];
-  if (q.type === 'matching') return k.pairs as Record<string, string>;
+  if (q.type === 'matching' || q.type === 'grouping' || q.type === 'pair_grid') return k.pairs as Record<string, string>;
+  if (q.type === 'fill_blanks') return (k.answers as string[][])[0];
+  if (q.type === 'true_false_table') return k.truth as string[];
   return k.correct as string | string[];
 }
 
@@ -48,9 +50,37 @@ function checkQuestion(lesson: ContentLesson, q: ContentQuestion, i: number) {
     case 'ordering':
       if ((k.order as string[]).length < 2 || !norm(k.order as string[])) err(at, 'sắp xếp cần ≥2 mục khác nhau');
       break;
-    case 'matching': {
+    case 'matching':
+    case 'pair_grid': {
       const p = k.pairs as Record<string, string>;
       if (Object.keys(p).length < 2 || !norm(Object.values(p)) || !norm(Object.keys(p))) err(at, 'ghép cặp cần ≥2 cặp, không trùng');
+      if (q.left && (q.left.length !== Object.keys(p).length || q.left.some((x) => !(x in p)))) err(at, 'vế trái không khớp đáp án ghép');
+      if (Object.values(p).some((v) => !q.options.some((o) => normalizeAnswer(o) === normalizeAnswer(v)))) err(at, 'vế phải của đáp án không có trong lựa chọn');
+      break;
+    }
+    case 'grouping': {
+      // xếp vào hộp: nhiều mục được vào cùng một hộp, mỗi mục phải vào một hộp có thật
+      const p = k.pairs as Record<string, string>;
+      const items = q.left ?? [];
+      if (items.length < 2 || !norm(items)) err(at, 'xếp hộp cần ≥2 mục khác nhau');
+      if (q.options.length < 2 || !norm(q.options)) err(at, 'xếp hộp cần ≥2 hộp khác nhau');
+      if (items.length !== Object.keys(p).length || items.some((x) => !(x in p))) err(at, 'mục cần xếp không khớp đáp án');
+      if (Object.values(p).some((v) => !q.options.includes(v))) err(at, 'đáp án xếp vào hộp không có');
+      if (new Set(Object.values(p)).size < 2) err(at, 'mọi mục cùng một hộp — câu không phân loại được');
+      break;
+    }
+    case 'fill_blanks': {
+      const qq = q as ContentQuestion & { blanks?: string[] };
+      const holes = (qq.blanks ?? []).join(' ').match(/\{\}/g)?.length ?? 0;
+      const ans = (k.answers as string[][]) ?? [];
+      if (!ans.length || ans.some((a) => a.length !== holes || a.some((x) => !String(x).trim()))) err(at, `điền nhiều ô: ${holes} ô nhưng đáp án có ${ans.map((a) => a.length).join('/')} giá trị`);
+      break;
+    }
+    case 'true_false_table': {
+      const qq = q as ContentQuestion & { statements?: string[] };
+      const t = (k.truth as string[]) ?? [];
+      if (!qq.statements || qq.statements.length !== t.length || t.length < 2) err(at, 'bảng Đúng/Sai: số ý không khớp đáp án');
+      if (t.some((x) => x !== 'Đúng' && x !== 'Sai')) err(at, 'bảng Đúng/Sai chỉ nhận "Đúng"/"Sai"');
       break;
     }
     case 'fill_blank':

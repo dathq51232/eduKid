@@ -1,0 +1,11 @@
+#!/bin/sh
+# EduChain Kids — chặn commit nếu câu hỏi / kiến thức có lỗi.
+# Chỉ chạy khi commit có sửa nội dung, bộ sinh câu, đề, chấm điểm hoặc danh mục chương trình.
+# Bỏ qua một lần (không khuyến khích): git commit --no-verify
+if git diff --cached --name-only | grep -qE '^src/lib/(content|practice|exams|curriculum)/|^src/lib/grading\.ts$|^scripts/check-'; then
+  echo "▶ Đang kiểm tra câu hỏi & kiến thức (npm run check:noi-dung -- nhanh)…"
+  npm run --silent check:noi-dung -- nhanh || {
+    echo "✗ Commit bị chặn: còn lỗi câu hỏi / kiến thức. Sửa xong rồi commit lại."
+    exit 1
+  }
+fi

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks || true",
     "dev": "next dev --turbopack",
     "dev:webpack": "next dev",
     "build": "next build",
@@ -10,6 +11,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "check:content": "tsx scripts/check-content.ts",
+    "check:knowledge": "tsx scripts/check-knowledge.ts",
+    "check:noi-dung": "node scripts/check-noi-dung.mjs",
     "check:deck-layout": "tsx scripts/check-deck-layout.ts",
     "check:deck-all": "tsx scripts/check-deck-all.ts",
     "gen:sql": "tsx scripts/gen-curriculum-sql.ts > supabase/seed/curriculum_grade1.sql && tsx scripts/gen-content-sql.ts > supabase/seed/content_grade1_hk1.sql",

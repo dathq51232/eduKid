@@ -1,5 +1,6 @@
 // Kiểm tra ma trận và đề kiểm tra: 4 mã đề (khác câu / trộn), lọc theo yêu cầu cần đạt, file Word.
 // Chạy: npm run check:exams
+import '../src/lib/content'; // nạp đủ 5 khối vào kho (matrix.ts đọc CONTENT_LIVE) — thiếu dòng này script kiểm 0 câu
 import { available, bookLessons, buildPaper, defaultMatrix, outcomesIn, shufflePaper, totals, type Paper } from '../src/lib/exams/matrix';
 import { examDocument } from '../src/lib/exams/word';
 import type { SubjectCode } from '../src/lib/types';
@@ -50,4 +51,5 @@ for (const subject of SUBJECTS) for (const grade of [1, 2, 3, 4, 5]) {
   ok(html.includes('Yêu cầu cần đạt') && html.includes('Thông tư 27/2020') && (html.match(/ĐỀ D/g) ?? []).length >= 2, `${subject} ${grade}: file Word có cột YCCĐ, chú thích mức, đủ đề D + đáp án D`);
 }
 console.log(`${checks - fail}/${checks} đạt`);
+if (checks === 0) { console.log('✗ không kiểm được đề nào — kho bài chưa nạp?'); fail++; }
 if (fail) process.exit(1);
