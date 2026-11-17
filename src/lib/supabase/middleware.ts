@@ -2,7 +2,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 import { NextResponse, type NextRequest } from 'next/server';
-import { learningGate } from '@/lib/auth/gate';
+import { learningGate, parseGate } from '@/lib/auth/gate';
+import type { Gate } from '@/lib/billing';
 import { lessonGradeFromId } from '@/lib/basics';
 
 // Làm mới phiên đăng nhập Supabase ở mỗi request để Server Components đọc được user.
@@ -20,12 +21,11 @@ export async function updateSession(request: NextRequest) {
 
   // Phiên còn hạn > 5 phút và không phải trang học cần kiểm tra học phí / khối: khỏi gọi Supabase Auth ở middleware
   // (mỗi lần chuyển trang đỡ một lượt gọi mạng). Trang đọc người dùng từ token (getViewer), API quyền cao xác thực lại bằng getUser (getVerifiedViewer); RLS vẫn kiểm tra.
-  const path0 = request.nextUrl.pathname;
-  const gated = GATED.includes(path0) || path0.startsWith('/hoc-sinh/de/');
-  if (!gated) {
-    const exp = sessionExpiry(request);
-    if (exp && exp * 1000 - Date.now() > 5 * 60_000) return response;
-  }
+  const path = request.nextUrl.pathname;
+  const gated = GATED.includes(path) || path.startsWith('/hoc-sinh/de/');
+  const exp = sessionExpiry(request);
+  const fresh = Boolean(exp && exp * 1000 - Date.now() > 5 * 60_000);
+  if (!gated && fresh) return response;
 
   const supabase = createServerClient(url, key, {
     cookies: {
@@ -40,22 +40,31 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Không chèn code giữa createServerClient và getUser: dễ gây lỗi đăng xuất ngẫu nhiên.
-  const { data } = await supabase.auth.getUser();
+  // Trang học + token còn hạn: hỏi thẳng cổng học (my_learning_gate) — PostgREST tự kiểm chữ ký token, nên khỏi gọi
+  // Supabase Auth trước (mỗi lần học sinh mở bài đỡ một vòng mạng). Token giả / bị thu hồi -> hàm báo lỗi -> đi đường đầy đủ bên dưới.
+  let gate: Gate | null = null;
+  if (gated && fresh) {
+    const { data, error } = await supabase.rpc('my_learning_gate');
+    gate = parseGate(data, error);
+  }
 
-  // Bắt buộc đăng nhập mới được học / chơi (để mọi bài làm của học sinh đều được lưu và thầy cô xem được).
-  // Chưa đăng nhập -> chuyển tới trang đăng nhập, đăng nhập xong quay lại đúng trang đang mở.
-  if (!data.user && requiresLogin(request.nextUrl.pathname)) {
-    const redirect = toLogin(request);
-    response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
-    return redirect;
+  if (!gate) {
+    // Không chèn code giữa createServerClient và getUser: dễ gây lỗi đăng xuất ngẫu nhiên.
+    const { data } = await supabase.auth.getUser();
+
+    // Bắt buộc đăng nhập mới được học / chơi (để mọi bài làm của học sinh đều được lưu và thầy cô xem được).
+    // Chưa đăng nhập -> chuyển tới trang đăng nhập, đăng nhập xong quay lại đúng trang đang mở.
+    if (!data.user && requiresLogin(path)) {
+      const redirect = toLogin(request);
+      response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+      return redirect;
+    }
+    if (data.user && gated) gate = await learningGate(supabase, data.user.id);
   }
 
   // Học sinh: (1) hết hạn học phí -> chỉ còn trang của em + trang đóng phí; (2) chỉ học nội dung KHỐI CỦA MÌNH.
   // Thông tin lấy từ database (my_learning_gate), không tin tham số trên URL. Người lớn (giáo viên…) không bị giới hạn.
-  const path = request.nextUrl.pathname;
-  if (data.user && (GATED.includes(path) || path.startsWith('/hoc-sinh/de/'))) {
-    const gate = await learningGate(supabase, data.user.id);
+  if (gate) {
     const grade = gate.is_student ? gate.grade : null;
     const go = (pathname: string, params: Record<string, string> = {}) => {
       const to = request.nextUrl.clone();

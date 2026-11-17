@@ -21,6 +21,8 @@ import ContactAdmin from '@/components/ContactAdmin';
 import { FREE_STUDENT_LIMIT, TEACHER_TRIAL_DAYS } from '@/lib/contact';
 import { fmtDay } from '@/lib/billing';
 import { createClient } from '@/lib/supabase/server';
+import { hasSupabaseEnv } from '@/lib/supabase/env';
+import { schoolName, teacherClasses } from '@/lib/classroom/teacher-home';
 import { FEATURES } from '@/lib/features';
 import { buildToday, type TodayItem } from '@/lib/classroom/today';
 import '@/styles/adm.css';
@@ -31,9 +33,9 @@ import '@/styles/dash.css';
 export const metadata: Metadata = { title: 'Giáo viên · EduChain Kids' };
 export const dynamic = 'force-dynamic';
 
-type ClassRow = { id: string; name: string; grade: number; join_code: string | null; status: string };
-
 export default async function TeacherHome() {
+  // danh sách lớp hỏi cùng lượt với người dùng (dùng chung kết quả với layout giáo viên)
+  const classesP = hasSupabaseEnv() ? teacherClasses().catch(() => []) : Promise.resolve([]);
   const viewer = await getViewer();
   if (viewer.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Khu vực giáo viên" /></main></>);
   if (viewer.state === 'signed_out') redirect('/dang-nhap?next=/giao-vien');
@@ -60,19 +62,15 @@ export default async function TeacherHome() {
   }
 
   const supabase = await createClient();
-  const [{ data: classes }, { data: members }, { data: school }, { data: planRows }] = await Promise.all([
-    supabase.from('classes').select('id, name, grade, join_code, status').order('created_at'),
-    supabase.from('class_memberships').select('class_id').eq('status', 'active'),
-    viewer.teacherSchoolId ? supabase.from('schools').select('name').eq('id', viewer.teacherSchoolId).maybeSingle() : Promise.resolve({ data: null }),
+  const [list, school, { data: planRows }] = await Promise.all([
+    classesP,
+    schoolName(viewer.teacherSchoolId),
     supabase.rpc('teacher_my_plan'),
   ]);
   const plan = ((planRows ?? []) as { student_limit: number; students_used: number; trial_until?: string | null; base_limit?: number; locked?: number }[])[0];
   const trialUntil = plan?.trial_until ?? null;
   const trialDays = trialUntil ? Math.max(1, Math.ceil((Date.parse(trialUntil) - Date.now()) / 86_400_000)) : 0;
   const planText = plan ? `${trialUntil ? `Dùng thử đủ lớp đến ${fmtDay(trialUntil)}` : plan.student_limit <= FREE_STUDENT_LIMIT ? 'Gói miễn phí' : 'Gói của thầy cô'}: ${plan.students_used}/${plan.student_limit} học sinh` : null;
-  const count = new Map<string, number>();
-  for (const m of (members ?? []) as { class_id: string }[]) count.set(m.class_id, (count.get(m.class_id) ?? 0) + 1);
-  const list = (classes ?? []) as ClassRow[];
 
   const active = list.find((c) => c.status === 'active');
   const nowMs = Date.now();
@@ -94,10 +92,17 @@ export default async function TeacherHome() {
   let contactGaps: number | null = null;
   if (active) {
     const since14 = new Date(nowMs - 14 * 86400_000).toISOString();
-    const [{ data: plans, error: planErr }, { data: asg, error: asgErr }, { data: roster }, { data: diary, error: diaryErr }, { data: month }, { data: msgs, error: msgErr }, { data: profRaw, error: profErr }, { data: gaps, error: gapErr }] = await Promise.all([
+    const [{ data: plans, error: planErr }, { data: asg, error: asgErr }, { data: roster, res }, { data: diary, error: diaryErr }, { data: month }, { data: msgs, error: msgErr }, { data: profRaw, error: profErr }, { data: gaps, error: gapErr }] = await Promise.all([
       supabase.rpc('teacher_list_plans', { p_class: active.id }),
       supabase.rpc('teacher_list_assignments', { p_class: active.id }),
-      supabase.rpc('teacher_class_roster', { p_class: active.id }),
+      // danh sách em -> kết quả 14 ngày của các em: nối tiếp nhau nhưng chạy song song với các truy vấn khác
+      supabase.rpc('teacher_class_roster', { p_class: active.id }).then(async (r) => {
+        const ids = ((r.data ?? []) as { student_id: string; membership_status: string }[]).filter((x) => x.membership_status === 'active').map((x) => x.student_id);
+        const { data: res } = ids.length
+          ? await supabase.from('lesson_results').select('student_id, score, total, created_at').in('student_id', ids).gte('created_at', since14).limit(5000)
+          : { data: [] };
+        return { data: r.data, res };
+      }),
       // Sổ lớp (migration 0026) — chưa chạy migration thì bỏ qua
       supabase.rpc('teacher_diary_day', { p_class: active.id, p_day: todayIso }),
       supabase.rpc('teacher_diary_range', { p_class: active.id, p_from: `${todayIso.slice(0, 7)}-01`, p_to: todayIso }),
@@ -118,10 +123,6 @@ export default async function TeacherHome() {
     births = prof ? upcomingBirthdays(students, prof, todayIso) : [];
     const profileLack = prof ? students.filter((st) => !prof[st.id]?.birth || !prof[st.id]?.address).length : 0;
     contactGaps = gapErr ? null : Number(gaps ?? 0);
-    const ids = students.map((x) => x.id);
-    const { data: res } = ids.length
-      ? await supabase.from('lesson_results').select('student_id, score, total, created_at').in('student_id', ids).gte('created_at', since14).limit(5000)
-      : { data: [] };
     const results = (res ?? []) as { student_id: string; score: number; total: number; created_at: string }[];
     const ms = (r: { created_at: string }) => new Date(r.created_at).getTime();
     const week = results.filter((r) => ms(r) >= nowMs - 7 * 86400_000), prev = results.filter((r) => ms(r) < nowMs - 7 * 86400_000);
@@ -135,7 +136,7 @@ export default async function TeacherHome() {
     const open = asgList.filter((a) => a.status === 'open').sort((a, b) => (a.due_at ?? '9').localeCompare(b.due_at ?? '9'));
     const d = diaryErr ? null : (diary as { saved_at: string | null; entries: { student_id: string; status: string }[] } | null);
     k = {
-      students: ids.length,
+      students: students.length,
       diaryOn: !diaryErr,
       attendanceSaved: Boolean(d?.saved_at),
       absent: d ? d.entries.filter((e) => e.status !== 'present').length : 0,
@@ -151,7 +152,7 @@ export default async function TeacherHome() {
       grade: active.grade,
       plans: planErr ? null : (plans ?? []) as Parameters<typeof buildToday>[0]['plans'],
       assignments: asgErr ? null : asgList as Parameters<typeof buildToday>[0]['assignments'],
-      students: ids.length,
+      students: students.length,
       activeLast7: k.practiced,
       recordsOn: FEATURES.teacherRecords,
     }).filter((t) => !t.title.startsWith('Hôm nay dạy')); // lịch hôm nay đã có ô riêng
@@ -273,14 +274,14 @@ export default async function TeacherHome() {
 
       {!active && (
         <section aria-labelledby="tdy-classes">
-          <h2 id="tdy-classes" className="tdy-sect"><School aria-hidden="true" /> Lớp của tôi <span>· {(school as { name?: string } | null)?.name ?? 'Giáo viên'}{planText ? ` · ${planText}` : ''}</span></h2>
+          <h2 id="tdy-classes" className="tdy-sect"><School aria-hidden="true" /> Lớp của tôi <span>· {school || 'Giáo viên'}{planText ? ` · ${planText}` : ''}</span></h2>
           {list.length === 0 ? <p className="dash-muted">Chưa có lớp nào.</p> : (
             <ul className="class-list">
               {list.map((c) => (
                 <li key={c.id}>
                   <Link href={`/giao-vien/lop/${c.id}`} className={`class-tile${c.status !== 'active' ? ' is-archived' : ''}`}>
                     <span className="class-tile-name">Lớp {c.name}</span>
-                    <span className="class-tile-meta">Khối {c.grade} · {count.get(c.id) ?? 0} học sinh{c.status !== 'active' ? ' · đã lưu trữ' : ''}</span>
+                    <span className="class-tile-meta">Khối {c.grade} · {c.students} học sinh{c.status !== 'active' ? ' · đã lưu trữ' : ''}</span>
                     <span className="class-tile-code">Mã lớp <strong>{c.join_code}</strong></span>
                     <ChevronRight className="class-tile-go" aria-hidden="true" />
                   </Link>

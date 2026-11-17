@@ -11,7 +11,7 @@ import { computeGaps, type ResultRow } from '@/lib/classroom/gaps';
 import { createClient } from '@/lib/supabase/server';
 import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
 import { lessonInfos } from '@/lib/plans/lessons';
-import type { DeckRow } from '@/components/deck/DeckHome';
+import { listDecks } from '@/lib/deck/list-decks';
 import type { SubjectCode } from '@/lib/types';
 import '@/styles/dash.css';
 
@@ -36,26 +36,28 @@ export default async function PlanPage({ params, searchParams }: { params: Promi
   }
 
   const supabase = await createClient();
-  const { data: cls } = await classRow(id);
+  const since = new Date(Date.now() - 30 * 86400_000).toISOString();
+  // Lớp, danh sách em -> kết quả 30 ngày, bài thao giảng: cùng một lượt (trước đây 4 lượt nối tiếp)
+  const [{ data: cls }, { students, rows }, decks] = await Promise.all([
+    classRow(id),
+    // Dạng bài lớp còn hay sai trong 30 ngày (từ bài luyện trên app) — gợi ý cho phần Luyện tập
+    classRoster(id).then(async ({ data: roster }) => {
+      const students = ((roster ?? []) as RosterRow[]).filter((r) => r.membership_status === 'active').map((r) => ({ id: r.student_id, name: r.display_name }));
+      const { data: rows } = students.length
+        ? await supabase.from('lesson_results').select('student_id, lesson_code, lesson_title, subject_code, score, total, answers, created_at')
+          .in('student_id', students.map((s) => s.id)).gte('created_at', since).order('created_at', { ascending: false }).limit(3000)
+        : { data: [] };
+      return { students, rows };
+    }),
+    // Bài thao giảng đã gắn giáo án (migration 0046) — hiện nút Sửa / Trình chiếu trên thẻ tiết ở Tuần dạy
+    listDecks(supabase).then((d) => d.rows),
+  ]);
   if (!cls) notFound();
   const c = cls as { id: string; name: string; grade: number };
-
-  // Dạng bài lớp còn hay sai trong 30 ngày (từ bài luyện trên app) — gợi ý cho phần Luyện tập
-  const { data: roster } = await classRoster(id);
-  const students = ((roster ?? []) as RosterRow[]).filter((r) => r.membership_status === 'active').map((r) => ({ id: r.student_id, name: r.display_name }));
-  const since = new Date(Date.now() - 30 * 86400_000).toISOString();
-  const { data: rows } = students.length
-    ? await supabase.from('lesson_results').select('student_id, lesson_code, lesson_title, subject_code, score, total, answers, created_at')
-      .in('student_id', students.map((s) => s.id)).gte('created_at', since).order('created_at', { ascending: false }).limit(3000)
-    : { data: [] };
   const { gaps } = computeGaps((rows ?? []) as ResultRow[], students, { maxGaps: 30 });
   const weakForms: Record<SubjectCode, string[]> = { toan: [], 'tieng-viet': [], 'tieng-anh': [] };
   for (const g of gaps) weakForms[g.subject].push(`${g.formName} (${g.lessonTitle}, lớp đúng ${Math.round(g.rate * 100)}%)`);
 
-  // Bài thao giảng đã gắn giáo án (migration 0046) — hiện nút Sửa / Trình chiếu trên thẻ tiết ở Tuần dạy
-  const dks = await supabase.from('slide_decks').select('id, title, grade, updated_at, slides:data->slides, plan:data->src->>plan').order('updated_at', { ascending: false }).limit(200);
-  const decks: DeckRow[] = ((dks.data ?? []) as { id: string; title: string; grade: number; updated_at: string; slides: unknown; plan: string | null }[])
-    .map((d) => ({ id: d.id, title: d.title, grade: d.grade, updated_at: d.updated_at, slides: Array.isArray(d.slides) ? d.slides.length : undefined, plan: d.plan ?? undefined }));
 
   return (
     <>

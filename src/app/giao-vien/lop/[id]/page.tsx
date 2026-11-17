@@ -33,11 +33,11 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
   const supabase = await createClient();
-  const { data: cls } = await supabase.from('classes').select('id, name, grade, join_code, status').eq('id', id).maybeSingle();
-  if (!cls) notFound(); // lớp không tồn tại HOẶC không được phân công — trả cùng một kết quả
-
-  const [{ data: roster }, { data: summary }, { data: pinRows, error: pinErr }, { data: billing }, { data: planRows }] = await Promise.all([
-    classRoster(id),
+  // Mọi truy vấn chạy cùng một lượt (trước đây 4 lượt nối tiếp). Lớp không được phân công: RLS / hàm teacher_* không trả gì.
+  const rosterP = classRoster(id);
+  const [{ data: cls }, { data: roster }, { data: summary }, { data: pinRows, error: pinErr }, { data: billing }, { data: planRows }, { data: lockedRows }, { data: results }] = await Promise.all([
+    supabase.from('classes').select('id, name, grade, join_code, status').eq('id', id).maybeSingle(),
+    rosterP,
     supabase.rpc('class_results_summary', { p_class: id }),
     // PIN học sinh (migration 0009) — chỉ giáo viên của lớp đọc được; lỗi (chưa chạy migration) thì coi như chưa có PIN
     supabase.rpc('teacher_class_pins', { p_class: id }),
@@ -45,9 +45,21 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
     supabase.rpc('teacher_class_billing', { p_class: id }),
     // Gói của giáo viên (migration 0019): giới hạn học sinh; quản trị xem lớp thì không giới hạn
     supabase.rpc('teacher_my_plan'),
+    // em đang tạm khoá vì hết chỗ trong gói (migration 0045); chưa chạy migration thì bỏ qua
+    supabase.rpc('teacher_locked_students', { p_class: id }),
+    // RLS chỉ trả kết quả của học sinh thuộc lớp giáo viên được phân công; chờ danh sách em rồi hỏi ngay
+    rosterP.then(async ({ data }) => {
+      const ids = ((data ?? []) as RosterRow[]).filter((r) => r.membership_status === 'active').map((r) => r.student_id);
+      return ids.length
+        ? await supabase.from('lesson_results')
+            .select('id, student_id, lesson_code, lesson_title, subject_code, grade, muc, score, total, points, duration_ms, created_at')
+            .in('student_id', ids)
+            .order('created_at', { ascending: false })
+            .limit(5000)
+        : { data: [] };
+    }),
   ]);
-  // em đang tạm khoá vì hết chỗ trong gói (migration 0045); chưa chạy migration thì bỏ qua
-  const { data: lockedRows } = await supabase.rpc('teacher_locked_students', { p_class: id });
+  if (!cls) notFound(); // lớp không tồn tại HOẶC không được phân công — trả cùng một kết quả
   const lockedIds = ((lockedRows ?? []) as { student_id: string }[]).map((r) => r.student_id);
   const planRow = ((planRows ?? []) as { student_limit: number; students_used: number }[])[0];
   const plan = planRow ? { limit: planRow.student_limit, used: planRow.students_used } : null;
@@ -56,14 +68,6 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   const rosterRows = ((roster ?? []) as RosterRow[]).slice().sort((x, y) => compareViName(x.display_name, y.display_name));
   const active = rosterRows.filter((r) => r.membership_status === 'active');
   const names = new Map(active.map((r) => [r.student_id, r.display_name]));
-  // RLS chỉ trả kết quả của học sinh thuộc lớp giáo viên được phân công
-  const { data: results } = active.length
-    ? await supabase.from('lesson_results')
-        .select('id, student_id, lesson_code, lesson_title, subject_code, grade, muc, score, total, points, duration_ms, created_at')
-        .in('student_id', active.map((r) => r.student_id))
-        .order('created_at', { ascending: false })
-        .limit(5000)
-    : { data: [] };
 
   return (
     <>

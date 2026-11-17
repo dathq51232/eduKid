@@ -40,7 +40,7 @@ export default async function StudentHome() {
 
   const supabase = await createClient();
   // RLS chỉ trả dữ liệu của chính học sinh đang đăng nhập
-  const [{ data: me }, { data: cls }, { data: results }, { data: gameRows, count: games }, { data: assigned }, { data: roomRows }] = await Promise.all([
+  const [{ data: me }, { data: cls }, { data: results }, { data: gameRows, count: games }, { data: assigned }, { data: roomRows }, gate] = await Promise.all([
     supabase.from('students').select('display_name, grade').eq('id', viewer.studentId).maybeSingle(),
     supabase.from('classes').select('name, grade').eq('status', 'active').order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('lesson_results').select('id, lesson_title, lesson_code, subject_code, grade, muc, score, total, points, created_at').order('created_at', { ascending: false }).limit(300),
@@ -49,11 +49,12 @@ export default async function StudentHome() {
     supabase.rpc('student_my_assignments'),
     // Phòng thi lớp (migration 0062). Chưa chạy migration thì danh sách rỗng.
     supabase.rpc('student_my_rooms'),
+    // Học phí (migration 0018) — hỏi cùng lượt với các truy vấn trên
+    learningGate(supabase, viewer.userId),
   ]);
   const rooms = ((roomRows ?? []) as MyRoom[]);
   const nowMs = Date.now();
   // Học phí (migration 0018): hết hạn thì mọi nút học dẫn tới trang đóng phí (máy chủ cũng chặn ở middleware + API)
-  const gate = await learningGate(supabase, viewer.userId);
   const locked = gate.is_student && !gate.active;
   const PAY = gate.reason === 'plan_locked' ? '/hoc-sinh#tam-khoa' : '/hoc-sinh/dong-phi';
   const tasks = ((assigned ?? []) as MyAssignment[]);

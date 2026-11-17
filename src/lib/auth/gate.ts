@@ -7,8 +7,14 @@ import { studentGradeOf } from './student-grade';
 // (chỉ giới hạn khối như cũ) để không khoá nhầm cả trường.
 export async function learningGate(supabase: SupabaseClient, userId: string): Promise<Gate> {
   const { data, error } = await supabase.rpc('my_learning_gate');
-  const row = (Array.isArray(data) ? data[0] : data) as Gate | undefined;
-  if (!error && row) return { ...row, grade: row.grade == null ? null : Number(row.grade) };
+  const row = parseGate(data, error);
+  if (row) return row;
   const grade = await studentGradeOf(supabase, userId);
   return { is_student: grade !== null, grade, active: true, reason: grade !== null ? 'free' : 'not_student', until: null };
+}
+
+/** Kết quả hàm my_learning_gate -> Gate; lỗi / rỗng thì null */
+export function parseGate(data: unknown, error: unknown): Gate | null {
+  const row = (Array.isArray(data) ? data[0] : data) as Gate | undefined;
+  return !error && row ? { ...row, grade: row.grade == null ? null : Number(row.grade) } : null;
 }

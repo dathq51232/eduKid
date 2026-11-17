@@ -252,6 +252,12 @@ export default async function ParentsPage() {
 
   const supabase = await createClient();
   // RLS: phụ huynh chỉ đọc được liên kết của mình và học sinh đã liên kết hợp lệ
+  // Học tại nhà (migration 0047): danh sách con kèm PIN / học phí, mã gia đình — hỏi song song với liên kết con
+  const famP = supabase.rpc('parent_children').then(async ({ data: fam, error: famErr }) => {
+    const famKids = famErr ? [] : ((fam ?? []) as FamilyChild[]);
+    const { data: fc } = famKids.some((k) => k.own) ? await supabase.rpc('parent_family_class') : { data: null };
+    return { famKids, famErr, famCode: ((fc ?? []) as { join_code: string }[])[0]?.join_code ?? null };
+  });
   const { data: links } = await supabase.from('parent_student_links').select('student_id').eq('parent_id', viewer.userId).eq('status', 'active');
   const ids = ((links ?? []) as { student_id: string }[]).map((l) => l.student_id);
   const [{ data: kids }, { data: results }] = ids.length
@@ -262,14 +268,7 @@ export default async function ParentsPage() {
     : [{ data: [] }, { data: [] }];
   const children = (kids ?? []) as Child[];
   const all = (results ?? []) as Result[];
-  // Học tại nhà (migration 0047): danh sách con kèm PIN / học phí, mã gia đình
-  const { data: fam, error: famErr } = await supabase.rpc('parent_children');
-  const famKids = famErr ? [] : ((fam ?? []) as FamilyChild[]);
-  let famCode: string | null = null;
-  if (famKids.some((k) => k.own)) {
-    const { data: fc } = await supabase.rpc('parent_family_class');
-    famCode = ((fc ?? []) as { join_code: string }[])[0]?.join_code ?? null;
-  }
+  const { famKids, famErr, famCode } = await famP;
   const h = await headers();
   const origin = `${h.get('x-forwarded-proto') ?? 'https'}://${h.get('x-forwarded-host') ?? h.get('host') ?? 'educhainkids.vn'}`;
 
