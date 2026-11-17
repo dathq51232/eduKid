@@ -12,7 +12,8 @@
 .room-create h2 { margin: 0; }
 .room-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
 .room-form .room-title { grid-column: 1 / -1; }
-.room-form input, .room-form select { width: 100%; }
+.room-form input, .room-form select { width: 100%; min-width: 0; }
+.room-form > label { min-width: 0; } /* ô ngày giờ không tràn khỏi cột lưới */
 .room-units { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 0; padding: 0; border: 0; }
 .room-units legend { margin-bottom: 6px; font-weight: 700; }
 .room-unit { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); cursor: pointer; }
@@ -77,6 +78,7 @@
 .room-step-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .room-step-head h3 { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 17px; }
 .room-step-head h3 svg { width: 19px; height: 19px; }
+.room-step-no { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 13px; font-weight: 800; }
 .room-step-head > span { flex: 1; min-width: 180px; font-size: 14px; }
 .room-rules { display: grid; gap: 10px; }
 .room-mode { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; margin: 0; padding: 0; border: 0; }

@@ -201,35 +201,34 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
       </fieldset>
       {matrix && <p className={have < n ? 'exam-warn' : 'dash-muted'}>{have < n ? `Quy tắc hiện có ${have} câu (ít hơn ${n}) — chủ đề đã chọn còn ít câu, hoặc cô đã bớt câu.` : `Đủ ${have} câu cho ${mode === 'chung' ? 'đề chung' : `${students.length} đề riêng`}.`}</p>}
 
-      {matrix && (
-        <section className="room-step" aria-label="Quy tắc sinh đề">
-          <div className="room-step-head">
-            <h3><Settings2 aria-hidden="true" /> Quy tắc sinh đề</h3>
-            <span className="dash-muted">{mode === 'chung' ? 'Đề chung' : 'Đề riêng từng em'} · {ratio === 'tu-chinh' ? 'cô tự chỉnh' : RATIOS.find((r) => r.key === ratio)?.name}{t ? ` · ${t.questions} câu · ${t.score} đ` : ''}</span>
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowRules((v) => !v)} aria-expanded={showRules}>{showRules ? 'Thu gọn' : 'Chỉnh quy tắc'}</button>
-          </div>
-          {showRules && (
+      {/* Hai bước luôn hiện để cô thấy có thể chỉnh; cần chọn chủ đề trước mới bấm được */}
+      <section className="room-step" aria-label="Quy tắc sinh đề">
+        <div className="room-step-head">
+          <h3><span className="room-step-no">1</span><Settings2 aria-hidden="true" /> Quy tắc sinh đề</h3>
+          <span className="dash-muted">{!matrix ? 'Tick ít nhất một chủ đề ở trên để đặt quy tắc: đề riêng / đề chung, số câu từng mức, điểm mỗi câu.'
+            : `${mode === 'chung' ? 'Đề chung' : 'Đề riêng từng em'} · ${ratio === 'tu-chinh' ? 'cô tự chỉnh' : RATIOS.find((r) => r.key === ratio)?.name}${t ? ` · ${t.questions} câu · ${t.score} đ` : ''}`}</span>
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowRules((v) => !v)} aria-expanded={showRules && !!matrix} disabled={!matrix}><Settings2 aria-hidden="true" /> {showRules && matrix ? 'Thu gọn' : 'Chỉnh quy tắc'}</button>
+        </div>
+        {matrix && showRules && (
             <RoomRules matrix={matrix} subject={subject} mode={mode} ratio={ratio} nStudents={students.length}
               onMode={(m) => { if (m === mode || !dropDrafts()) return; setMode(m); }}
               onRatio={(k) => { if (!dropDrafts()) return; setCustom(null); setRatio(k); }}
               onMatrix={(m) => { if (!dropDrafts()) return; setCustom(m); setRatio('tu-chinh'); }} />
-          )}
-        </section>
-      )}
+        )}
+      </section>
 
-      {matrix && (
-        <section className="room-step" aria-label="Xem trước đề">
-          <div className="room-step-head">
-            <h3><Eye aria-hidden="true" /> Xem trước và sửa đề</h3>
-            <span className="dash-muted">{drafts ? `${drafts.length} đề · ${editedCount} câu cô đã sửa` : 'Không bắt buộc — bỏ qua thì máy sinh đề lúc tạo phòng.'}</span>
-            <button type="button" className="btn btn-outline btn-sm" onClick={preview} disabled={!have}><Eye aria-hidden="true" /> {drafts ? 'Sinh lại đề' : 'Xem trước đề'}</button>
-          </div>
-          {drafts && (
-            <RoomPreview drafts={drafts} matrix={matrix} students={students} onChange={setDrafts}
-              onRegenerate={(sid) => setDrafts((ds) => ds && ds.map((d) => (d.student === sid ? { student: sid, slots: previewPaper(matrix, newSeed()).slots } : d)))} />
-          )}
-        </section>
-      )}
+      <section className="room-step" aria-label="Xem trước đề">
+        <div className="room-step-head">
+          <h3><span className="room-step-no">2</span><Eye aria-hidden="true" /> Xem trước và sửa đề</h3>
+          <span className="dash-muted">{!matrix ? 'Sau khi chọn chủ đề, bấm “Xem trước đề” để xem từng đề, đổi câu, sửa câu hỏi và đáp án.'
+            : drafts ? `${drafts.length} đề · ${editedCount} câu cô đã sửa` : 'Không bắt buộc — bỏ qua thì máy sinh đề lúc tạo phòng.'}</span>
+          <button type="button" className="btn btn-outline btn-sm" onClick={preview} disabled={!have}><Eye aria-hidden="true" /> {drafts ? 'Sinh lại đề' : 'Xem trước đề'}</button>
+        </div>
+        {matrix && drafts && (
+          <RoomPreview drafts={drafts} matrix={matrix} students={students} onChange={setDrafts}
+            onRegenerate={(sid) => setDrafts((ds) => ds && ds.map((d) => (d.student === sid ? { student: sid, slots: previewPaper(matrix, newSeed()).slots } : d)))} />
+        )}
+      </section>
 
       {err && <p className="adm-alert is-error" role="alert">{err}</p>}
       <button type="submit" className="btn btn-yellow" disabled={busy || !picked.length || problems > 0}>
