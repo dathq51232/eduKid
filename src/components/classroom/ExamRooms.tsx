@@ -3,12 +3,14 @@
 // PHÒNG THI LỚP (chặng “Ra hoa”, docs/BAN-SAC-EDUCHAINKIDS.md mục 8.1) — trang của cô:
 // tạo phòng (sinh đề riêng cho từng em ngay trên máy cô), phát mã, xem kết quả, cho làm lại, xem cờ bất thường.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { DoorOpen, Flag, Lock, RotateCcw, Trash2, Unlock, Users } from 'lucide-react';
+import { DoorOpen, Eye, Flag, Lock, RotateCcw, Settings2, Trash2, Unlock, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useGradeContent } from '@/components/learn/GradeReady';
-import { SUBJECT_NAME } from '@/lib/classroom/assignments';
+import { SUBJECT_NAME, type ExamItem } from '@/lib/classroom/assignments';
 import { bookLessons, defaultMatrix, totals, type Matrix } from '@/lib/exams/matrix';
-import { roomPaper, seedFor } from '@/lib/classroom/rooms-build';
+import { commonPaperFor, paperByPlan, previewPaper, roomPaper, seedFor, slotItem, type RoomMode, type RoomPlan } from '@/lib/classroom/rooms-build';
+import RoomRules, { RATIOS } from './RoomRules';
+import RoomPreview, { draftProblems, type RoomDraft } from './RoomPreview';
 import {
   FLAG_LABEL, ROOM_RATIO, lessonStats, owlOf, roomDefaults, roomError, toLocalInput, whenLabel,
   type RoomDetailRow, type RoomRow,
@@ -64,6 +66,8 @@ export default function ExamRooms({ classId, className, grade, students }: { cla
 }
 
 // ------------------------------------------------------------------------------------------------ Tạo phòng
+const newSeed = () => Math.floor(Math.random() * 2 ** 31);
+
 function CreateRoom({ classId, className, grade, students, subjects, onCreated }: {
   classId: string; className: string; grade: number; students: Student[]; subjects: SubjectCode[]; onCreated: (code: string) => void;
 }) {
@@ -86,48 +90,98 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
   const [title, setTitle] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  // Quy tắc sinh đề (cô tự đặt) + đề xem trước (cô duyệt, sửa)
+  const [mode, setMode] = useState<RoomMode>('rieng');
+  const [ratio, setRatio] = useState(RATIOS[0].key);
+  const [custom, setCustom] = useState<Matrix | null>(null);
+  const [showRules, setShowRules] = useState(false);
+  const [drafts, setDrafts] = useState<RoomDraft[] | null>(null);
 
   const chosen = useMemo(() => lessons.filter((l) => picked.includes(l.unit.code)), [lessons, picked]);
-  const matrix: Matrix | null = useMemo(() => (chosen.length ? defaultMatrix(chosen, n, ROOM_RATIO) : null), [chosen, n]);
-  const have = matrix ? totals(matrix).questions : 0;
+  const auto: Matrix | null = useMemo(() => {
+    if (!chosen.length) return null;
+    return defaultMatrix(chosen, n, RATIOS.find((r) => r.key === ratio)?.r ?? ROOM_RATIO);
+  }, [chosen, n, ratio]);
+  const matrix = custom ?? auto;
+  const t = matrix ? totals(matrix) : null;
+  const have = t?.questions ?? 0;
   const autoTitle = `Phòng thi ${SUBJECT_NAME[subject]}${chosen.length ? ` – ${units.filter((u) => picked.includes(u.code)).map((u) => u.title).slice(0, 2).join(', ')}` : ''}`;
+  const problems = drafts ? draftProblems(drafts) : 0;
+  const editedCount = drafts ? drafts.reduce((a, d) => a + d.slots.filter((s) => s.edited).length, 0) : 0;
+
+  /** Đổi quy tắc thì đề xem trước không còn đúng: hỏi trước nếu cô đã sửa câu */
+  const dropDrafts = () => {
+    if (editedCount && !window.confirm('Đổi quy tắc sẽ bỏ đề xem trước (kể cả các câu cô đã sửa). Tiếp tục?')) return false;
+    setDrafts(null);
+    return true;
+  };
+  const resetRules = () => { setCustom(null); setRatio((r) => (r === 'tu-chinh' ? RATIOS[0].key : r)); };
+
+  const makeDrafts = (m: Matrix): RoomDraft[] => {
+    const salt = Date.now() >>> 0;
+    return mode === 'chung'
+      ? [{ student: null, slots: previewPaper(m, newSeed()).slots }]
+      : students.map((s) => ({ student: s.id, slots: previewPaper(m, seedFor(s.id, salt)).slots }));
+  };
+  const preview = () => {
+    setErr('');
+    if (!matrix || !have) return setErr('Chọn chủ đề và đặt ít nhất một câu trong quy tắc.');
+    if (mode === 'rieng' && !students.length) return setErr('Lớp chưa có học sinh.');
+    if (drafts && !dropDrafts()) return;
+    setDrafts(makeDrafts(matrix));
+  };
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr('');
     if (!matrix || !chosen.length) return setErr('Chọn ít nhất một chủ đề.');
+    if (!have) return setErr('Quy tắc sinh đề chưa có câu nào.');
     if (!students.length) return setErr('Lớp chưa có học sinh.');
+    if (problems) return setErr(`Còn ${problems} câu trong đề xem trước có đáp án chưa chấm được — sửa lại hoặc đổi câu đó.`);
     const o = new Date(opens), c = new Date(closes);
     if (Number.isNaN(o.getTime()) || Number.isNaN(c.getTime()) || c <= o) return setErr('Giờ đóng phải sau giờ mở.');
     setBusy(true);
     const salt = Date.now() >>> 0;
-    const papers = students.map((s) => ({ student: s.id, ...roomPaper(matrix, seedFor(s.id, salt)) }));
-    const short = papers.filter((p) => p.items.length < Math.min(3, n));
-    if (short.length) { setBusy(false); return setErr('Ngân hàng chưa đủ câu cho các chủ đề đã chọn — chọn thêm chủ đề hoặc giảm số câu.'); }
+    const plan: RoomPlan = { ...matrix, mode };
+    let papers: { student: string; questions: ExamItem[] }[];
+    if (mode === 'chung') {
+      const base = (drafts?.[0]?.slots ?? previewPaper(matrix, salt).slots).map((s) => slotItem(s, matrix.points));
+      plan.base = base;
+      papers = students.map((s) => ({ student: s.id, questions: commonPaperFor(base, seedFor(s.id, salt)) }));
+    } else {
+      papers = students.map((s) => {
+        const d = drafts?.find((x) => x.student === s.id);
+        return { student: s.id, questions: d ? d.slots.map((x) => slotItem(x, matrix.points)) : roomPaper(matrix, seedFor(s.id, salt)).items };
+      });
+    }
+    if (papers.some((p) => p.questions.length < Math.min(3, have))) { setBusy(false); return setErr('Ngân hàng chưa đủ câu cho các chủ đề đã chọn — chọn thêm chủ đề hoặc giảm số câu.'); }
     const { data, error } = await createClient().rpc('teacher_create_room', {
-      p_class: classId, p_title: (title.trim() || autoTitle).slice(0, 200), p_subject: subject, p_n: n, p_minutes: minutes,
-      p_opens: o.toISOString(), p_closes: c.toISOString(), p_matrix: matrix,
-      p_papers: papers.map((p) => ({ student: p.student, questions: p.items })),
+      p_class: classId, p_title: (title.trim() || autoTitle).slice(0, 200), p_subject: subject,
+      p_n: Math.max(...papers.map((p) => p.questions.length)), p_minutes: minutes,
+      p_opens: o.toISOString(), p_closes: c.toISOString(), p_matrix: plan, p_papers: papers,
     });
     setBusy(false);
     if (error) return setErr(roomError(error.message));
     const row = ((data ?? []) as { id: string; code: string }[])[0];
-    setPicked([]); setTitle('');
+    setPicked([]); setTitle(''); setDrafts(null); setCustom(null);
     onCreated(row?.code ?? '');
   };
 
   return (
     <form className="dash-card room-create" onSubmit={create}>
       <h2>🌼 Tạo phòng thi mới · lớp {className}</h2>
-      <p className="dash-muted">Mỗi em nhận <b>một đề riêng</b> (cùng ma trận: 40% mức 1, 30% mức 2, 30% mức 3), làm <b>một lần</b>, máy chấm ngay. Em chỉ thấy kết quả của mình; đáp án hiện sau khi phòng đóng.</p>
+      <p className="dash-muted">
+        {mode === 'chung' ? <>Cả lớp làm <b>chung một đề</b> cô đã duyệt (mỗi em đảo thứ tự câu và phương án)</> : <>Mỗi em nhận <b>một đề riêng</b> theo cùng quy tắc</>}
+        {t && t.questions > 0 ? <> — {t.byMuc[1]} câu mức 1, {t.byMuc[2]} câu mức 2, {t.byMuc[3]} câu mức 3</> : null}, làm <b>một lần</b>, máy chấm ngay. Em chỉ thấy kết quả của mình; đáp án hiện sau khi phòng đóng.
+      </p>
       <div className="room-form">
         <label className="adm-field"><span>Môn</span>
-          <select value={subject} onChange={(e) => { setSubject(e.target.value as SubjectCode); setPicked([]); }}>
+          <select value={subject} onChange={(e) => { if (!dropDrafts()) return; setSubject(e.target.value as SubjectCode); setPicked([]); resetRules(); }}>
             {subjects.map((s) => <option key={s} value={s}>{SUBJECT_NAME[s]}</option>)}
           </select>
         </label>
         <label className="adm-field"><span>Số câu</span>
-          <input type="number" min={3} max={40} value={n} onChange={(e) => setN(Math.max(3, Math.min(40, Number(e.target.value) || def.n)))} />
+          <input type="number" min={3} max={40} value={n} onChange={(e) => { if (!dropDrafts()) return; setN(Math.max(3, Math.min(40, Number(e.target.value) || def.n))); resetRules(); }} />
         </label>
         <label className="adm-field"><span>Thời gian (phút)</span>
           <input type="number" min={5} max={90} value={minutes} onChange={(e) => setMinutes(Math.max(5, Math.min(90, Number(e.target.value) || def.minutes)))} />
@@ -140,14 +194,47 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
         <legend>Chủ đề kiểm tra</legend>
         {units.length === 0 ? <p className="dash-muted">Đang tải ngân hàng bài…</p> : units.map((u) => (
           <label key={u.code} className={`room-unit${picked.includes(u.code) ? ' is-on' : ''}`}>
-            <input type="checkbox" checked={picked.includes(u.code)} onChange={(e) => setPicked((p) => (e.target.checked ? [...p, u.code] : p.filter((x) => x !== u.code)))} />
+            <input type="checkbox" checked={picked.includes(u.code)} onChange={(e) => { if (!dropDrafts()) return; const on = e.target.checked; setPicked((p) => (on ? [...p, u.code] : p.filter((x) => x !== u.code))); resetRules(); }} />
             <span><b>{u.title}</b><small>HK{u.semester} · {u.ids.length} bài</small></span>
           </label>
         ))}
       </fieldset>
-      {matrix && <p className={have < n ? 'exam-warn' : 'dash-muted'}>{have < n ? `Chủ đề đã chọn chỉ đủ khoảng ${have} câu — mỗi em sẽ nhận ít câu hơn.` : `Đủ câu cho ${students.length} đề riêng.`}</p>}
+      {matrix && <p className={have < n ? 'exam-warn' : 'dash-muted'}>{have < n ? `Quy tắc hiện có ${have} câu (ít hơn ${n}) — chủ đề đã chọn còn ít câu, hoặc cô đã bớt câu.` : `Đủ ${have} câu cho ${mode === 'chung' ? 'đề chung' : `${students.length} đề riêng`}.`}</p>}
+
+      {matrix && (
+        <section className="room-step" aria-label="Quy tắc sinh đề">
+          <div className="room-step-head">
+            <h3><Settings2 aria-hidden="true" /> Quy tắc sinh đề</h3>
+            <span className="dash-muted">{mode === 'chung' ? 'Đề chung' : 'Đề riêng từng em'} · {ratio === 'tu-chinh' ? 'cô tự chỉnh' : RATIOS.find((r) => r.key === ratio)?.name}{t ? ` · ${t.questions} câu · ${t.score} đ` : ''}</span>
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowRules((v) => !v)} aria-expanded={showRules}>{showRules ? 'Thu gọn' : 'Chỉnh quy tắc'}</button>
+          </div>
+          {showRules && (
+            <RoomRules matrix={matrix} subject={subject} mode={mode} ratio={ratio} nStudents={students.length}
+              onMode={(m) => { if (m === mode || !dropDrafts()) return; setMode(m); }}
+              onRatio={(k) => { if (!dropDrafts()) return; setCustom(null); setRatio(k); }}
+              onMatrix={(m) => { if (!dropDrafts()) return; setCustom(m); setRatio('tu-chinh'); }} />
+          )}
+        </section>
+      )}
+
+      {matrix && (
+        <section className="room-step" aria-label="Xem trước đề">
+          <div className="room-step-head">
+            <h3><Eye aria-hidden="true" /> Xem trước và sửa đề</h3>
+            <span className="dash-muted">{drafts ? `${drafts.length} đề · ${editedCount} câu cô đã sửa` : 'Không bắt buộc — bỏ qua thì máy sinh đề lúc tạo phòng.'}</span>
+            <button type="button" className="btn btn-outline btn-sm" onClick={preview} disabled={!have}><Eye aria-hidden="true" /> {drafts ? 'Sinh lại đề' : 'Xem trước đề'}</button>
+          </div>
+          {drafts && (
+            <RoomPreview drafts={drafts} matrix={matrix} students={students} onChange={setDrafts}
+              onRegenerate={(sid) => setDrafts((ds) => ds && ds.map((d) => (d.student === sid ? { student: sid, slots: previewPaper(matrix, newSeed()).slots } : d)))} />
+          )}
+        </section>
+      )}
+
       {err && <p className="adm-alert is-error" role="alert">{err}</p>}
-      <button type="submit" className="btn btn-yellow" disabled={busy || !picked.length}><DoorOpen aria-hidden="true" /> {busy ? 'Đang tạo đề cho từng em…' : `Tạo phòng cho ${students.length} em`}</button>
+      <button type="submit" className="btn btn-yellow" disabled={busy || !picked.length || problems > 0}>
+        <DoorOpen aria-hidden="true" /> {busy ? 'Đang tạo đề cho từng em…' : `Tạo phòng cho ${students.length} em${drafts ? ' với đề đã duyệt' : ''}`}
+      </button>
     </form>
   );
 }
@@ -209,10 +296,11 @@ function RoomDetail({ room, onChanged }: { room: RoomRow; onChanged: () => void 
   const newPaper = async (r: RoomDetailRow) => {
     const retake = r.done || r.started_at;
     if (retake && !window.confirm(`Cho ${r.display_name} làm lại với đề mới? Kết quả cũ được lưu vào nhật ký.`)) return;
-    const m = room.matrix as unknown as Matrix;
-    if (!m?.rows?.length) return setErr('Phòng này thiếu ma trận để sinh đề mới.');
+    // đề mới theo đúng quy tắc của phòng: đề chung → đảo lại đề chung; đề riêng → sinh theo ma trận
+    const plan = room.matrix as unknown as RoomPlan;
+    if (!plan?.rows?.length && !plan?.base?.length) return setErr('Phòng này thiếu quy tắc sinh đề để tạo đề mới.');
     setBusyId(r.student_id);
-    const p = roomPaper(m, seedFor(r.student_id, Date.now() >>> 0));
+    const p = paperByPlan(plan, seedFor(r.student_id, Date.now() >>> 0));
     const { error } = await createClient().rpc('teacher_room_set_paper', { p_room: room.id, p_student: r.student_id, p_questions: p.items });
     setBusyId(null);
     if (error) return setErr(roomError(error.message));
@@ -269,7 +357,7 @@ function RoomDetail({ room, onChanged }: { room: RoomRow; onChanged: () => void 
           </tbody>
         </table>
       </div>
-      <p className="dash-muted">Cờ chỉ để cô xem lại — hệ thống không tự trừ điểm hay huỷ bài. “Cho làm lại” giao đề mới cùng ma trận; kết quả cũ lưu trong nhật ký.</p>
+      <p className="dash-muted">Cờ chỉ để cô xem lại — hệ thống không tự trừ điểm hay huỷ bài. “Cho làm lại” giao đề mới theo đúng quy tắc của phòng (đề chung thì đảo lại đề chung); kết quả cũ lưu trong nhật ký.</p>
     </div>
   );
 }

@@ -30,8 +30,8 @@ export const ROOM_RATIO: [number, number] = [0.4, 0.3];
 
 /** Sao của một câu = mức câu (Mức 1 = 1 sao, Mức 2 = 2 sao, Mức 3 = 3 sao) */
 export const starsOf = (muc: number | undefined) => Math.min(3, Math.max(1, Math.round(muc ?? 1)));
-/** Thang 10, làm tròn 0,5 */
-export const score10 = (correct: number, total: number) => (total > 0 ? Math.round((correct / total) * 20) / 2 : 0);
+/** Thang 10, làm tròn 0,5 — `got` / `max`: điểm đạt / tổng điểm (hoặc số câu đúng / số câu) */
+export const score10 = (got: number, max: number) => (max > 0 ? Math.round((got / max) * 20) / 2 : 0);
 
 export type Owl = { key: 'gold' | 'silver' | 'bronze' | 'try'; name: string; icon: string };
 /** Huy hiệu Cú theo mốc điểm (không xếp hạng) */

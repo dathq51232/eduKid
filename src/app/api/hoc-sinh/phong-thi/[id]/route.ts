@@ -53,7 +53,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (r.ok) stars += st;
     return { ...r, muc, lesson: items[r.i]?.lessonTitle ?? '' };
   });
-  const score = score10(graded.correct, graded.total);
+  // thang 10 theo điểm từng câu cô đặt trong quy tắc sinh đề (phòng cũ: mọi câu 1 điểm → như tính theo số câu đúng)
+  const score = score10(graded.score, graded.max);
   const duration = Math.max(0, Math.min(now, started + room.minutes * 60_000) - started);
   const leaves = Number.isSafeInteger(body.leaves) ? Math.max(0, Math.min(999, body.leaves as number)) : 0;
   const flags: string[] = [];
