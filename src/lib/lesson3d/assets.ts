@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { MODEL_ASSETS } from './models';
 import * as N from './nature';
 import * as A from './animals';
+import * as B from './body';
 
 export type AssetOpts = { color: string; name: string; on?: boolean };
 export type Asset = {
@@ -138,11 +139,13 @@ export const ASSETS: Asset[] = [
   { id: 'caterpillar', cat: 'Sinh vật', name: 'Sâu non', color: '#84cc16', kw: 'buom vong doi', b: ({ color }) => A.caterpillar(color) },
   { id: 'butterfly', cat: 'Sinh vật', name: 'Con bướm', color: '#a855f7', y: 1, b: ({ color }) => A.butterfly(color) },
   { id: 'grasshopper', cat: 'Sinh vật', name: 'Châu chấu', color: '#65a30d', b: ({ color }) => A.grasshopper(color) },
-  { id: 'lungs', cat: 'Sinh vật', name: 'Phổi', color: '#f9a8d4', split: true, kw: 'ho hap co the', y: 0.2, b: ({ color }) => { const l = mesh(sph(0.55, 10, 8), M(color), -0.45, 1, 0); l.scale.set(0.8, 1.3, 0.7); const r = l.clone(); r.position.x = 0.45; const tr = mesh(cyl(0.09, 0.09, 1, 8), M('#e2e8f0'), 0, 2.1, 0); return withParts(grp(l, r, tr), [[l, -0.6, 0, 0], [r, 0.6, 0, 0], [tr, 0, 0.6, 0]]); } },
-  { id: 'stomach', cat: 'Sinh vật', name: 'Dạ dày & ruột', color: '#fb7185', split: true, kw: 'tieu hoa co the', b: ({ color }) => { const st = mesh(sph(0.45, 10, 8), M(color), 0.2, 2, 0); st.scale.set(1.3, 0.8, 0.7); const c = new THREE.CatmullRomCurve3(Array.from({ length: 18 }, (_, i) => new THREE.Vector3(Math.sin(i * 1.3) * 0.6, 1.3 - i * 0.05, Math.cos(i * 1.3) * 0.25))); const gut = mesh(new THREE.TubeGeometry(c, 60, 0.11, 6), M('#fda4af')); const es = mesh(cyl(0.07, 0.07, 1, 6), M('#fecdd3'), -0.15, 2.8, 0); return withParts(grp(es, st, gut), [[es, 0, 0.6, 0], [st, 0.5, 0.2, 0], [gut, 0, -0.5, 0]]); } },
-  { id: 'bone', cat: 'Sinh vật', name: 'Xương', color: '#f5f5f4', kw: 'van dong co the', b: ({ color }) => grp(mesh(cyl(0.12, 0.12, 1.6, 8), M(color), 0, 0.3, 0).rotateZ(Math.PI / 2), mesh(sph(0.2, 8, 6), M(color), -0.85, 0.3, 0.1), mesh(sph(0.2, 8, 6), M(color), -0.85, 0.3, -0.1), mesh(sph(0.2, 8, 6), M(color), 0.85, 0.3, 0.1), mesh(sph(0.2, 8, 6), M(color), 0.85, 0.3, -0.1)) },
-  { id: 'kid', cat: 'Sinh vật', name: 'Học sinh', color: '#2457c5', kw: 'nguoi tre em', b: ({ color }) => grp(mesh(new THREE.CapsuleGeometry(0.32, 0.6, 4, 8), M(color), 0, 0.65), mesh(sph(0.3, 12, 10), M('#f5c9a0'), 0, 1.45), mesh(new THREE.SphereGeometry(0.31, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), M('#2b1d14'), 0, 1.5)) },
-  { id: 'adult', cat: 'Sinh vật', name: 'Người lớn', color: '#0f766e', kw: 'nguoi nghe nghiep bo me co giao', b: ({ color }) => { const g = grp(mesh(new THREE.CapsuleGeometry(0.4, 0.95, 4, 8), M(color), 0, 0.9), mesh(sph(0.34, 12, 10), M('#f5c9a0'), 0, 1.95), mesh(new THREE.SphereGeometry(0.35, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), M('#1f2937'), 0, 2)); return g; } },
+  { id: 'lungs', cat: 'Sinh vật', name: 'Phổi', color: '#f2a1ae', split: true, kw: 'ho hap co the khi quan', y: 0.1, b: ({ color }) => B.lungs(color) },
+  { id: 'heart', cat: 'Sinh vật', name: 'Tim', color: '#b8322f', split: true, kw: 'tuan hoan mau co the dong mach tinh mach', y: 0.2, b: ({ color }) => B.heart(color) },
+  { id: 'brain', cat: 'Sinh vật', name: 'Não', color: '#f0b7b3', split: true, kw: 'than kinh co the', y: 0.2, b: ({ color }) => B.brain(color) },
+  { id: 'stomach', cat: 'Sinh vật', name: 'Dạ dày & ruột', color: '#e9867f', split: true, kw: 'tieu hoa co the ruot non ruot gia', b: ({ color }) => B.digestive(color) },
+  { id: 'bone', cat: 'Sinh vật', name: 'Xương', color: '#efe9dc', kw: 'van dong co the xuong dui', b: ({ color }) => B.femur(color) },
+  { id: 'kid', cat: 'Sinh vật', name: 'Học sinh', color: '#2457c5', kw: 'nguoi tre em', b: ({ color }) => B.person({ shirt: '#ffffff', pants: color, kid: true }) },
+  { id: 'adult', cat: 'Sinh vật', name: 'Người lớn', color: '#0f766e', kw: 'nguoi nghe nghiep bo me co giao', b: ({ color }) => B.person({ shirt: color, pants: '#334155' }) },
   // ---------- Việt Nam & cộng đồng ----------
   { id: 'stilt', cat: 'Việt Nam', name: 'Nhà sàn', color: WOOD, b: ({ color }) => { const g = new THREE.Group(); [[-0.9, -0.6], [0.9, -0.6], [-0.9, 0.6], [0.9, 0.6]].forEach(([x, z]) => g.add(mesh(cyl(0.08, 0.08, 1, 5), M('#6b4a2b'), x, 0.5, z))); g.add(mesh(box(2.1, 0.8, 1.5), M(color), 0, 1.4)); const r = mesh(cone(1.7, 1.2, 4), M('#d9b26a'), 0, 2.4); r.rotation.y = Math.PI / 4; r.scale.z = 0.75; g.add(r); return g; } },
   { id: 'house', cat: 'Việt Nam', name: 'Nhà mái ngói', color: '#f4e4c1', kw: 'nha o', b: ({ color }) => { const r = mesh(cone(1.45, 1, 4), M('#c2410c'), 0, 1.7); r.rotation.y = Math.PI / 4; return grp(mesh(box(1.8, 1.2, 1.4), M(color), 0, 0.6), r, mesh(box(0.4, 0.7, 0.05), M(TRUNK), 0, 0.35, 0.72)); } },
@@ -190,13 +193,29 @@ export const ASSETS: Asset[] = [
   { id: 'numberline', cat: 'Toán', name: 'Tia số', color: '#2457c5', kw: 'thuoc', b: ({ color }) => { const g = grp(mesh(box(4.4, 0.06, 0.06), M(color), 0, 0.15)); for (let i = 0; i <= 10; i++) { g.add(mesh(box(0.04, 0.25, 0.04), M(color), -2 + i * 0.4, 0.2)); const t = textTexture(String(i), { bg: '#ffffff', fg: '#1b2a47', w: 64, h: 64, size: 40 }); if (t) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t })); s.scale.set(0.3, 0.3, 1); s.position.set(-2 + i * 0.4, 0.55, 0); g.add(s); } } const a = mesh(cone(0.1, 0.25, 6), M(color), 2.3, 0.15, 0); a.rotation.z = -Math.PI / 2; g.add(a); return g; } },
   { id: 'abacus', cat: 'Toán', name: 'Bàn tính', color: '#b45309', kw: 'tram chuc don vi', b: ({ color }) => { const g = grp(mesh(box(2.2, 0.12, 0.2), M(color), 0, 0.1), mesh(box(2.2, 0.12, 0.2), M(color), 0, 1.6), mesh(box(0.12, 1.6, 0.2), M(color), -1.05, 0.85), mesh(box(0.12, 1.6, 0.2), M(color), 1.05, 0.85)); const cols = ['#ef4444', '#3b82f6', '#22c55e']; [-0.6, 0, 0.6].forEach((x, i) => { g.add(mesh(cyl(0.025, 0.025, 1.5, 5), M(METAL), x, 0.85)); for (let k = 0; k < 3 + i; k++) g.add(mesh(sph(0.13, 8, 6), M(cols[i]), x, 0.28 + k * 0.24)); }); return g; } },
   { id: 'clock', cat: 'Toán', name: 'Đồng hồ kim', color: '#2457c5', kw: 'gio xem gio la ma', b: ({ color, name }) => {
+    // Mặt số vẽ lên một tấm tròn riêng (CircleGeometry: ảnh không bị xoay / lật như khi dán lên nắp khối trụ).
+    // Số đi theo chiều kim đồng hồ, 12 ở trên cùng; có vạch phút, vạch giờ đậm. Mặc định chỉ 3 giờ đúng.
     const roman = /la ?m[aã]/i.test(name);
     let face: THREE.Material = M('#ffffff');
-    if (typeof document !== 'undefined') { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d')!; g.fillStyle = '#fff'; g.fillRect(0, 0, 256, 256); g.fillStyle = '#1b2a47'; g.font = `700 ${roman ? 22 : 28}px Quicksand, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; const R = ['XII', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI']; for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; g.fillText(roman ? R[i] : String(i || 12), 128 + Math.sin(a) * 96, 128 - Math.cos(a) * 96); } const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; face = new THREE.MeshStandardMaterial({ map: t }); }
-    const disc = mesh(cyl(1, 1, 0.12, 32), [M(color), face, M(color)], 0, 1.3, 0); disc.rotation.x = Math.PI / 2; disc.rotation.y = Math.PI;
-    const hh = mesh(box(0.08, 0.5, 0.03), M('#1b2a47'), 0, 0.25, 0); const hm = mesh(box(0.05, 0.75, 0.03), M('#ef4444'), 0, 0.37, 0);
-    const ph = grp(hh); ph.position.set(0, 1.3, 0.09); const pm = grp(hm); pm.position.set(0, 1.3, 0.1); pm.rotation.z = -Math.PI * 0.4;
-    const g = grp(disc, ph, pm, mesh(box(0.8, 0.12, 0.5), M(color), 0, 0.06, 0), mesh(box(0.1, 0.3, 0.1), M(color), 0, 0.25, 0)); g.userData.hands = { h: ph, m: pm }; return g;
+    if (typeof document !== 'undefined') {
+      const S = 512, C = S / 2, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d')!;
+      g.fillStyle = '#ffffff'; g.beginPath(); g.arc(C, C, C, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = '#1b2a47'; g.lineCap = 'round';
+      for (let i = 0; i < 60; i++) { const a = (i / 60) * Math.PI * 2, big = i % 5 === 0, r0 = big ? 212 : 224; g.lineWidth = big ? 9 : 3; g.beginPath(); g.moveTo(C + Math.sin(a) * r0, C - Math.cos(a) * r0); g.lineTo(C + Math.sin(a) * 240, C - Math.cos(a) * 240); g.stroke(); }
+      const R = ['XII', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
+      g.fillStyle = '#1b2a47'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, txt = roman ? R[i] : String(i || 12); g.font = `700 ${roman ? (txt.length > 2 ? 40 : 48) : 64}px Quicksand, "Segoe UI", sans-serif`; g.fillText(txt, C + Math.sin(a) * 168, C - Math.cos(a) * 168 + 3); }
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; face = new THREE.MeshStandardMaterial({ map: t, roughness: 0.6 });
+    }
+    const disc = mesh(cyl(1, 1, 0.12, 48), M(color, { flatShading: false }), 0, 1.3, 0); disc.rotation.x = Math.PI / 2;
+    const dial = mesh(new THREE.CircleGeometry(0.92, 64), face, 0, 1.3, 0.062);
+    const rim = mesh(new THREE.TorusGeometry(0.96, 0.05, 10, 64), M(color, { flatShading: false }), 0, 1.3, 0.06);
+    // kim giờ ngắn, to; kim phút dài, mảnh (đặt trục quay ở tâm)
+    const hh = mesh(box(0.09, 0.48, 0.025), M('#1b2a47'), 0, 0.2, 0); const hm = mesh(box(0.05, 0.74, 0.025), M('#ef4444'), 0, 0.31, 0);
+    const ph = grp(hh); ph.position.set(0, 1.3, 0.085); ph.rotation.z = -Math.PI / 2; // kim giờ chỉ số 3
+    const pm = grp(hm); pm.position.set(0, 1.3, 0.11); // kim phút chỉ số 12
+    const pin = mesh(cyl(0.06, 0.06, 0.06, 16), M('#1b2a47'), 0, 1.3, 0.13); pin.rotation.x = Math.PI / 2;
+    const g = grp(disc, dial, rim, ph, pm, pin, mesh(box(0.8, 0.12, 0.5), M(color), 0, 0.06, 0), mesh(box(0.1, 0.3, 0.1), M(color), 0, 0.25, 0)); g.userData.hands = { h: ph, m: pm }; return g;
   } },
   { id: 'calendar', cat: 'Toán', name: 'Lịch để bàn', color: '#dc2626', text: true, kw: 'ngay thang', b: ({ color, name }) => { const p = textBox(1.4, 1.1, 0.04, color, textTexture(name, { bg: '#ffffff', fg: '#1b2a47', w: 256, h: 200, size: 56, border: color })); p.position.set(0, 0.62, 0.15); p.rotation.x = -0.25; const b = mesh(box(1.4, 1.1, 0.04), M(color), 0, 0.62, -0.15); b.rotation.x = 0.25; return grp(p, b, mesh(cyl(0.03, 0.03, 1.4, 6), M(METAL), 0, 1.15, 0).rotateZ(Math.PI / 2)); } },
   { id: 'ruler', cat: 'Toán', name: 'Thước kẻ', color: '#fde047', kw: 'do do dai thuoc gap cm', b: ({ color }) => { const g = grp(mesh(box(3, 0.05, 0.4), M(color), 0, 0.03)); for (let i = 0; i <= 20; i++) g.add(mesh(box(0.015, 0.06, i % 5 ? 0.1 : 0.2), M('#1b2a47'), -1.4 + i * 0.14, 0.05, -0.15 + (i % 5 ? 0 : 0.05))); return g; } },
