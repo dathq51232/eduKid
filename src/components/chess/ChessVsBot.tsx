@@ -11,6 +11,7 @@ import { BoardAlerts, LiveClock, SoundButton, TurnBar } from './ChessParts';
 import { BOT_LEVELS, Board, pickMove, type BotLevel, type BotMove } from '@/lib/chess/bot';
 import { REASON_TEXT, SIDE_NAME, TIME_CONTROLS, boardResult, captured, fmtClock, timeoutResult, type GameResult } from '@/lib/chess/game';
 import { sfx } from '@/lib/chess/sound-pref';
+import { syncGameResult } from '@/lib/progress-sync';
 import BoardStage from './BoardView';
 import '@/styles/chs.css';
 import '@/styles/ct.css';
@@ -70,7 +71,10 @@ export default function ChessVsBot() {
   const finish = useCallback((r: GameResult) => {
     setResult(r); setShowResult(true); setThinking(false); setHint(null); setNote('');
     sfx(r.winner === null ? 'complete' : r.winner === me ? 'complete' : 'timeout');
-  }, [me]);
+    // lưu ván để phụ huynh / cô xem (bỏ qua ván bỏ cuộc ngay từ đầu); 2 thắng · 1 hoà · 0 thua
+    const plies = gameRef.current.history().length;
+    if (plies >= 4) syncGameResult({ gameId: 'chess', level: setup.level, score: r.winner === null ? 1 : r.winner === me ? 2 : 0, maxScore: 2, details: { moves: Math.ceil(plies / 2) } });
+  }, [me, setup.level]);
 
   const apply = useCallback((m: BoardMove) => {
     const game = gameRef.current;

@@ -229,3 +229,39 @@
 .tsh-main > .dash.wrap:has(> .class-manager) { padding-top: 14px; }
 .sdg-book.is-red  { background: linear-gradient(135deg, #ef4444, #dc2626); }
 .sdg-book.is-green{ background: linear-gradient(135deg, #22c55e, #16a34a); }
+
+/* "Con luyện tập" gộp mọi hoạt động: bài cô giao chưa làm, đếm theo loại, dòng thời gian */
+.ph-due { display: grid; gap: 4px; padding: 10px 14px; border: 1.5px solid #f59e0b; border-radius: 14px; background: #fffbeb; color: #78350f; font-size: 14px; }
+.ph-due ul { margin: 0; padding-left: 18px; }
+.ph-due small { color: #92400e; }
+.ph-kinds { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ph-kinds li { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; background: var(--surface-2); font-size: 13px; }
+.ph-kinds li b { min-width: 18px; padding: 0 6px; border-radius: 999px; background: var(--brand-blue); color: #fff; font-size: 12px; text-align: center; }
+.ph-kinds li.is-zero { color: var(--muted); }
+.ph-kinds li.is-zero b { background: var(--line-strong); color: var(--muted); }
+.ph-feed { display: grid; margin: 0; padding: 0; list-style: none; }
+.ph-feed li { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+.ph-feed-ic { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; background: var(--surface-2); font-size: 16px; }
+.ph-feed-tx { display: grid; min-width: 0; }
+.ph-feed-tx b { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.ph-feed-tx small { color: var(--muted); font-size: 12.5px; }
+.ph-feed-rs { padding: 2px 9px; border-radius: 999px; background: var(--surface-2); font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.ph-feed-rs.is-good { background: #dcfce7; color: #166534; }
+.ph-feed-rs.is-mid { background: #fef3c7; color: #92400e; }
+.ph-feed-rs.is-low { background: #fee2e2; color: #991b1b; }
+:root[data-theme="dark"] .ph-due { background: #2f2810; border-color: #b7791f; color: #f5e7b8; }
+:root[data-theme="dark"] .ph-due small { color: #fcd34d; }
+:root[data-theme="dark"] .ph-feed-rs.is-good { background: #14532d; color: #bbf7d0; }
+:root[data-theme="dark"] .ph-feed-rs.is-mid { background: #4a3a10; color: #fde68a; }
+:root[data-theme="dark"] .ph-feed-rs.is-low { background: #4c1d1d; color: #fecaca; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .ph-due { background: #2f2810; border-color: #b7791f; color: #f5e7b8; }
+  :root:not([data-theme]) .ph-due small { color: #fcd34d; }
+  :root:not([data-theme]) .ph-feed-rs.is-good { background: #14532d; color: #bbf7d0; }
+  :root:not([data-theme]) .ph-feed-rs.is-mid { background: #4a3a10; color: #fde68a; }
+  :root:not([data-theme]) .ph-feed-rs.is-low { background: #4c1d1d; color: #fecaca; }
+}
+@media (max-width: 480px) {
+  .ph-feed li { grid-template-columns: 30px minmax(0, 1fr); }
+  .ph-feed-rs { grid-column: 2; justify-self: start; }
+}

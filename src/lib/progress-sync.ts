@@ -32,7 +32,7 @@ export async function syncLessonResult(p: { lessonId: string; seed?: number; muc
   }
 }
 
-export function syncGameResult(p: { gameId: GameId; level: number; score: number; maxScore: number; details?: Record<string, number> }) {
+export function syncGameResult(p: { gameId: GameId | 'chess' | 'xiangqi'; level: number; score: number; maxScore: number; details?: Record<string, number> }) {
   if (!enabled()) return;
   void fetch('/api/tien-do/game', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(p), keepalive: true }).catch(() => undefined);
 }

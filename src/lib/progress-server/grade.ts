@@ -89,7 +89,9 @@ export function gradeLessonSubmission(lessonId: string, submitted: SubmittedAnsw
 }
 
 // Kết quả game: kiểm tra trong giới hạn hợp lý (game chạy ở trình duyệt nên đây là kết quả "luyện tập").
-const GAME_LIMITS: Record<string, { maxScore: number }> = { pattern: { maxScore: 50 }, memory: { maxScore: 50 }, maze: { maxScore: 1 }, sudoku: { maxScore: 30 }, balance: { maxScore: 10 } };
+const GAME_LIMITS: Record<string, { maxScore: number }> = { pattern: { maxScore: 50 }, memory: { maxScore: 50 }, maze: { maxScore: 1 }, sudoku: { maxScore: 30 }, balance: { maxScore: 10 },
+  // cờ với máy (migration 0067): 2 thắng · 1 hoà · 0 thua; level = mức máy 1–3
+  chess: { maxScore: 2 }, xiangqi: { maxScore: 2 } };
 export function checkGameResult(input: { gameId?: unknown; level?: unknown; score?: unknown; maxScore?: unknown; details?: unknown }) {
   const gameId = typeof input.gameId === 'string' ? input.gameId : '';
   const lim = GAME_LIMITS[gameId];

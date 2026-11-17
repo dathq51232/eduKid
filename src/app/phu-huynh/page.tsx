@@ -19,6 +19,7 @@ import type { Contact } from '@/lib/classroom/class-tools';
 import { getViewer } from '@/lib/auth/viewer';
 import GuidedTour, { TourHelpButton } from '@/components/tour/GuidedTour';
 import { createClient } from '@/lib/supabase/server';
+import { KIND_INFO, KIND_ORDER, buildActivities, type ChessRow, type GameRow, type LessonRow, type RecentRow } from '@/lib/parent/activity';
 import '@/styles/adm.css';
 import '@/styles/fam.css';
 import '@/styles/gt.css';
@@ -53,6 +54,14 @@ const weekday = (iso: string) => WD[new Date(`${iso}T00:00:00`).getDay()];
 const fmtLong = (iso?: string) => {
   const d = iso ? new Date(`${iso}T00:00:00`) : new Date();
   return d.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric', ...(iso ? {} : { timeZone: 'Asia/Ho_Chi_Minh' }) });
+};
+const VN_TZ = { timeZone: 'Asia/Ho_Chi_Minh' } as const;
+/** hạn nộp: "T6, 21/11" */
+const fmtDue = (iso: string) => new Date(iso).toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'numeric', ...VN_TZ });
+/** lúc làm: "14:05 · 18/11" */
+const fmtWhen = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', ...VN_TZ })} · ${d.toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric', ...VN_TZ })}`;
 };
 const fmtDay = (iso: string) => {
   const d = new Date(`${iso}T00:00:00`);
@@ -93,13 +102,20 @@ export default async function ParentsPage() {
   // Phụ huynh dùng chung mã PIN của con nên phiên này là phiên của học sinh: dashboard phụ huynh, không có tab học / game
   if (viewer.isStudent && viewer.studentId) {
     const supabase = await createClient();
-    const [{ data: ov, error: ovErr }, { data: diary }, { data: results }, { data: me }, { data: oldContacts }, { data: msgs, error: msgErr }] = await Promise.all([
+    const sid = viewer.studentId;
+    const [{ data: ov, error: ovErr }, { data: diary }, { data: results }, { data: me }, { data: oldContacts }, { data: msgs, error: msgErr },
+      { data: games }, { data: chess }, { data: recent, error: recentErr }, { data: homework }] = await Promise.all([
       supabase.rpc('parent_overview'), // migration 0033
       supabase.rpc('parent_diary_recent', { p_days: 30 }), // migration 0031
       supabase.from('lesson_results').select('lesson_title, lesson_code, subject_code, score, total, points, created_at').order('created_at', { ascending: false }).limit(100),
       supabase.from('students').select('display_name, grade').eq('id', viewer.studentId).maybeSingle(),
       supabase.rpc('parent_my_contacts'),
       supabase.rpc('parent_messages_mine', { p_limit: 20 }), // migration 0037
+      // "Con luyện tập" gộp mọi hoạt động: trò chơi + cờ với máy, cờ online, bài cô giao + phòng thi (0067), bài cô giao chưa làm (0017)
+      supabase.from('game_results').select('game_id, level, score, max_score, created_at').order('created_at', { ascending: false }).limit(100),
+      supabase.from('chess_games').select('variant, white, black, result, finished_at, created_at').eq('status', 'finished').or(`white.eq.${sid},black.eq.${sid}`).order('finished_at', { ascending: false }).limit(30),
+      supabase.rpc('student_recent_results', { p_days: 30 }),
+      supabase.rpc('student_my_assignments'),
     ]);
     const o = (ovErr ? null : ov) as Overview | null;
     const childName = o?.child?.name ?? (me as { display_name?: string } | null)?.display_name ?? viewer.displayName;
@@ -110,8 +126,13 @@ export default async function ParentsPage() {
     // ngày của thông báo mới nhất đã hiện ở khung vàng: chỉ giữ trong dòng thời gian nếu còn nhận xét / vắng
     const timeline = days.filter((d) => d !== latestAnn || d.note || d.tags?.length || (d.status && d.status !== 'present'));
     const list = (results ?? []) as Result[];
-    const lessons = new Set(list.map((r) => r.lesson_code)).size;
-    const avg = list.length ? Math.round(list.reduce((s, r) => s + (r.score * 100) / r.total, 0) / list.length) : 0;
+    const acts = buildActivities({
+      studentId: sid, lessons: list as LessonRow[], games: (games ?? []) as GameRow[], chess: (chess ?? []) as ChessRow[],
+      recent: recentErr ? [] : ((recent ?? []) as RecentRow[]),
+    });
+    // bài cô giao còn mở, con chưa làm (hạn gần nhất trước)
+    const pending = ((homework ?? []) as { title: string; due_at: string; status: string; done: boolean }[])
+      .filter((a) => a.status === 'open' && !a.done && Date.parse(a.due_at) > Date.now()).sort((a, b) => Date.parse(a.due_at) - Date.parse(b.due_at));
     const today = o?.today;
     const month = o?.month;
     const praiseToday = today?.tags?.find((t) => t.startsWith('★'));
@@ -123,12 +144,14 @@ export default async function ParentsPage() {
     const vn = (t: string | number) => new Date(new Date(t).getTime() + 7 * 3600_000).toISOString().slice(0, 10);
     const todayVn = vn(Date.now());
     const last7 = Array.from({ length: 7 }, (_, i) => vn(Date.now() - (6 - i) * 86400_000));
-    const perDay = last7.map((d) => list.filter((r) => vn(r.created_at) === d).length);
+    const perDay = last7.map((d) => acts.filter((a) => vn(a.at) === d).length);
     const maxDay = Math.max(1, ...perDay);
-    const week = list.filter((r) => vn(r.created_at) >= last7[0]);
+    const week = acts.filter((a) => vn(a.at) >= last7[0]);
+    const byKind = KIND_ORDER.map((k) => ({ k, n: week.filter((a) => a.kind === k).length }));
+    // độ đúng theo môn: luyện bài + bài cô giao + phòng thi
     const bySubj = Object.keys(SUBJ).map((k) => {
-      const rs = list.filter((r) => r.subject_code === k);
-      return { k, n: rs.length, pct: rs.length ? Math.round(rs.reduce((t, r) => t + (r.score * 100) / r.total, 0) / rs.length) : null };
+      const rs = acts.filter((a) => a.subject === k && a.pct !== null);
+      return { k, n: rs.length, pct: rs.length ? Math.round(rs.reduce((t, a) => t + (a.pct ?? 0), 0) / rs.length) : null };
     }).filter((x) => x.n > 0);
     const weak = bySubj.filter((x) => (x.pct ?? 100) < 70).sort((a, b) => (a.pct ?? 0) - (b.pct ?? 0))[0];
     return (
@@ -167,7 +190,7 @@ export default async function ParentsPage() {
             <li><span className="ph-ic is-green" aria-hidden="true">📅</span><div><span>Đi học {monthName}</span><b>{month?.days ? `${month.present}/${month.days} ngày` : <em>Cô chưa ghi</em>}</b></div></li>
             <li><span className="ph-ic is-yellow" aria-hidden="true">⭐</span><div><span>Cô khen</span><b>{month ? `${month.praise} lần` : <em>Chưa có</em>}</b></div></li>
             <li><span className="ph-ic is-red" aria-hidden="true">🔔</span><div><span>Cô nhắc nhở</span><b>{month ? `${month.remind} lần` : <em>Chưa có</em>}</b></div></li>
-            <li><span className="ph-ic is-purple" aria-hidden="true">🎯</span><div><span>Luyện 7 ngày qua</span><b>{week.length ? `${week.length} bài` : <em>Chưa làm bài</em>}</b></div></li>
+            <li><span className="ph-ic is-purple" aria-hidden="true">🎯</span><div><span>Luyện 7 ngày qua</span><b>{week.length ? `${week.length} hoạt động` : <em>Chưa làm bài</em>}</b></div></li>
           </ul>
 
           <div className="ph-grid">
@@ -202,10 +225,22 @@ export default async function ParentsPage() {
             </section>
 
               <section className="ph-card" aria-labelledby="ph-res-title" data-tour="luyen-tap">
-                <div className="ph-card-hd"><div><h2 id="ph-res-title"><TrendingUp aria-hidden="true" /> Con luyện tập</h2><p className="ph-sub">{list.length ? `${lessons} bài · đúng trung bình ${avg}% (${list.length} lượt gần nhất)` : 'Con chưa làm bài nào'}</p></div></div>
-                {list.length === 0 ? <p className="dash-muted">Kết quả sẽ hiện ở đây sau mỗi bài con luyện tập. Gia đình nhắc con học một bài nhỏ mỗi ngày nhé!</p> : (
+                <div className="ph-card-hd"><div>
+                  <h2 id="ph-res-title"><TrendingUp aria-hidden="true" /> Con luyện tập</h2>
+                  <p className="ph-sub">{acts.length ? `${week.length} hoạt động 7 ngày qua · luyện bài, bài cô giao, phòng thi, trò chơi trí tuệ, chơi cờ` : 'Con chưa làm bài nào'}</p>
+                </div></div>
+                {pending.length > 0 && (
+                  <div className="ph-due">
+                    <b>📝 Con còn {pending.length} bài cô giao chưa làm</b>
+                    <ul>{pending.slice(0, 3).map((a, i) => <li key={i}>{a.title} <small>· hạn {fmtDue(a.due_at)}</small></li>)}</ul>
+                  </div>
+                )}
+                {acts.length === 0 ? <p className="dash-muted">Kết quả luyện bài, bài cô giao, phòng thi, trò chơi trí tuệ và các ván cờ sẽ hiện ở đây. Gia đình nhắc con học một bài nhỏ mỗi ngày nhé!</p> : (
                   <>
-                    <div className="ph-week" aria-label={`Số bài 7 ngày qua: ${perDay.join(', ')}`}>
+                    <ul className="ph-kinds" aria-label="Hoạt động 7 ngày qua theo loại">
+                      {byKind.map((x) => <li key={x.k} className={x.n ? undefined : 'is-zero'}><span aria-hidden="true">{KIND_INFO[x.k].icon}</span>{KIND_INFO[x.k].name}<b>{x.n}</b></li>)}
+                    </ul>
+                    <div className="ph-week" aria-label={`Số hoạt động 7 ngày qua: ${perDay.join(', ')}`}>
                       {last7.map((d, i) => (
                         <div key={d} className={d === todayVn ? 'is-today' : undefined}>
                           <span><i style={{ height: `${perDay[i] ? 18 + (perDay[i] / maxDay) * 82 : 4}%` }} /></span>
@@ -219,9 +254,16 @@ export default async function ParentsPage() {
                       </ul>
                     )}
                     {weak && <p className="ph-tip">💡 Con còn chưa chắc môn <b>{SUBJ[weak.k]}</b> (đúng {weak.pct}%). Gia đình động viên con làm lại các bài môn này nhé.</p>}
-                    <ul className="ph-res">
-                      {list.slice(0, 4).map((r, i) => <li key={i}><span>{r.lesson_title ?? r.lesson_code}</span><b>{r.score}/{r.total}</b></li>)}
+                    <ul className="ph-feed">
+                      {acts.slice(0, 8).map((a, i) => (
+                        <li key={i}>
+                          <span className="ph-feed-ic" aria-hidden="true">{KIND_INFO[a.kind].icon}</span>
+                          <span className="ph-feed-tx"><b>{a.title}</b><small>{KIND_INFO[a.kind].name} · {fmtWhen(a.at)}</small></span>
+                          <span className={`ph-feed-rs ${a.pct === null ? '' : a.pct >= 80 ? 'is-good' : a.pct >= 50 ? 'is-mid' : 'is-low'}`}>{a.result}</span>
+                        </li>
+                      ))}
                     </ul>
+                    {recentErr && <p className="dash-muted">Bài cô giao và phòng thi sẽ hiện ở đây khi nhà trường cập nhật hệ thống (migration 0067).</p>}
                   </>
                 )}
               </section>

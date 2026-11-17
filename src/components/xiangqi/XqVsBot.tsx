@@ -11,6 +11,7 @@ import { xqEvaluate, xqPickMove } from '@/lib/xiangqi/bot';
 import { BOT_LEVELS, type BotLevel } from '@/lib/chess/bot';
 import { TIME_CONTROLS, fmtClock, reasonText } from '@/lib/chess/game';
 import { sfx } from '@/lib/chess/sound-pref';
+import { syncGameResult } from '@/lib/progress-sync';
 import { BoardAlerts, LiveClock, SoundButton, TurnBar } from '@/components/chess/ChessParts';
 import BoardStage from '@/components/chess/BoardView';
 import '@/styles/chs.css';
@@ -68,7 +69,12 @@ export default function XqVsBot() {
   const g = gRef.current;
   const bot = other(me);
 
-  const finish = useCallback((r: Result) => { setResult(r); setShowResult(true); setThinking(false); setHint(null); setNote(''); sfx(r.winner === null || r.winner === me ? 'complete' : 'timeout'); }, [me]);
+  const finish = useCallback((r: Result) => {
+    setResult(r); setShowResult(true); setThinking(false); setHint(null); setNote(''); sfx(r.winner === null || r.winner === me ? 'complete' : 'timeout');
+    // lưu ván để phụ huynh / cô xem (bỏ qua ván bỏ cuộc ngay từ đầu); 2 thắng · 1 hoà · 0 thua
+    const plies = gRef.current.ucis.length;
+    if (plies >= 4) syncGameResult({ gameId: 'xiangqi', level: setup.level, score: r.winner === null ? 1 : r.winner === me ? 2 : 0, maxScore: 2, details: { moves: Math.ceil(plies / 2) } });
+  }, [me, setup.level]);
 
   const apply = useCallback((uci: string) => {
     const game = gRef.current; const mover = game.turn();

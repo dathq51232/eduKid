@@ -8,8 +8,7 @@ import CsvButton from '@/components/classroom/CsvButton';
 import { getViewer } from '@/lib/auth/viewer';
 import { createClient } from '@/lib/supabase/server';
 import { classRow, classRoster, warmClass } from '@/lib/classroom/class-page';
-import { gameById } from '@/lib/games/catalog';
-import type { GameId } from '@/lib/games/catalog';
+import { gameLabel, gameResult } from '@/lib/parent/activity';
 import {
   fmtDateTime, fmtDuration, lessonsOfStudent, percent, studentTotals, subjectLabel,
   type GameResult, type LessonResult,
@@ -148,9 +147,9 @@ export default async function StudentProgressPage({ params }: { params: Promise<
                   {gameList.slice(0, 30).map((g) => (
                     <tr key={g.id}>
                       <td>{fmtDateTime(g.created_at)}</td>
-                      <th scope="row">{gameById(g.game_id as GameId)?.title ?? (g.game_id === 'robot' ? 'Robot lập trình (đã gỡ)' : g.game_id)}</th>
+                      <th scope="row">{gameLabel(g.game_id)}</th>
                       <td>{g.level}</td>
-                      <td>{g.score}/{g.max_score}</td>
+                      <td>{gameResult(g)}</td>
                     </tr>
                   ))}
                 </tbody>
