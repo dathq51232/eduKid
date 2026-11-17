@@ -1,6 +1,6 @@
 // Xưởng video stickman — bộ phong cách, giọng đọc, nhạc nền và nhân vật / bối cảnh mẫu của EduChain.
 // Phương pháp giữ nhân vật đồng nhất lấy theo chế độ A · Director của kaomei/stickman-video-director (MIT):
-// mô tả nhân vật "đóng băng" lặp nguyên văn ở mọi cảnh, khối giọng đọc lặp nguyên văn, mỗi cảnh ~10 giây
+// mô tả nhân vật "đóng băng" lặp nguyên văn ở mọi cảnh, khối giọng đọc lặp nguyên văn, mỗi cảnh 8 giây
 // chia 3 nhịp, cảnh sau kế thừa trạng thái cuối của cảnh trước, không có chữ trong hình.
 // Phần mô tả dùng cho Google Flow (Veo) viết bằng tiếng Anh; nhãn giao diện bằng tiếng Việt.
 
@@ -92,7 +92,7 @@ export type LibItem = { id: string; name: string; note: string; anchor: string; 
 export const CHARACTER_TEMPLATE =
   'One minimalist 2D cartoon character with a white filled circular head, two small dark oval eyes, simple eyebrow strokes and a short curved smile. The torso is a slim closed tapered shape with solid white fill inside its dark outline. [Distinctive item, e.g. a bright red cap]. Both arms and both legs are dark single-line strokes with constant medium weight; hands are small dark rounded shapes and feet are short dark rounded strokes. Keep the same head-to-body proportions, white head and torso fill, and outline weight in every shot. Exactly two arms and two legs exist; a moving limb replaces its previous pose rather than leaving another limb behind. Expressions change only the simple facial marks, never the head shape or character design.';
 
-const LIMBS = 'Both arms and both legs are dark single-line strokes with constant medium weight; hands are small dark rounded shapes and feet are short dark rounded strokes. Keep the same head-to-body proportions, white head and torso fill, and outline weight in every shot. Exactly two arms and two legs exist; a moving limb replaces its previous pose rather than leaving another limb behind. Expressions change only the simple facial marks, never the head shape or character design.';
+export const LIMBS = 'Both arms and both legs are dark single-line strokes with constant medium weight; hands are small dark rounded shapes and feet are short dark rounded strokes. Keep the same head-to-body proportions, white head and torso fill, and outline weight in every shot. Exactly two arms and two legs exist; a moving limb replaces its previous pose rather than leaving another limb behind. Expressions change only the simple facial marks, never the head shape or character design.';
 
 export const BUILTIN_CHARACTERS: LibItem[] = [
   { id: 'b-chain', builtin: true, name: 'Bé Chain', note: 'Học sinh tò mò, hay hỏi "vì sao?"', refs: [],
@@ -122,3 +122,38 @@ export const alias = (name: string) => name.normalize('NFD').replace(/[̀-ͯ]/g,
 export const styleOf = (k: string) => STYLES.find((s) => s.key === k) ?? STYLES[0];
 export const voiceOf = (k: string) => VOICES.find((v) => v.key === k) ?? VOICES[0];
 export const musicOf = (k: string) => MUSIC.find((m) => m.key === k) ?? MUSIC[0];
+
+// ---------------------------------------------------------------- tạo nhân vật nhanh (không cần viết tiếng Anh)
+export type CharBuild = { kind: 'child' | 'adult' | 'elder'; hair: string; item: string; color: string };
+export const CHAR_KINDS: [CharBuild['kind'], string][] = [['child', 'Học sinh (nhỏ)'], ['adult', 'Người lớn (cô, thầy, bố mẹ)'], ['elder', 'Ông bà']];
+export const CHAR_HAIR: [string, string, string][] = [
+  ['none', 'Không tóc (đầu tròn)', ''],
+  ['short', 'Tóc ngắn', 'a simple solid dark short hair shape on top of the head'],
+  ['bob', 'Tóc ngắn ngang vai', 'a simple solid dark bob hair shape framing the head'],
+  ['ponytail', 'Tóc buộc đuôi ngựa', 'a simple solid dark hair shape with one ponytail at the back'],
+  ['pigtails', 'Tóc buộc hai bên', 'a simple solid dark hair shape with two small pigtails on the sides'],
+  ['curly', 'Tóc xoăn', 'a simple solid dark curly hair shape made of small round bumps'],
+  ['gray-bun', 'Tóc bạc búi', 'a simple solid light-gray hair shape with a small round bun on top'],
+];
+export const CHAR_ITEMS: [string, string, string][] = [
+  ['cap', 'Mũ lưỡi trai', 'wearing a {c} cap with a short brim facing forward'],
+  ['backpack', 'Ba lô', 'wearing a small {c} backpack with two straps'],
+  ['scarf', 'Khăn quàng', 'wearing a {c} scarf tied around the neck'],
+  ['glasses', 'Kính tròn + nơ cổ', 'with thin round glasses lines and a small {c} bow tie'],
+  ['bow', 'Nơ trên tóc', 'with a small {c} bow on the head'],
+  ['cardigan', 'Áo khoác len', 'with a soft {c} cardigan outline over the torso'],
+  ['raincoat', 'Áo mưa', 'wearing a {c} hooded raincoat outline over the torso'],
+  ['apron', 'Tạp dề', 'wearing a {c} apron outline over the torso'],
+  ['headband', 'Băng đô', 'wearing a {c} headband'],
+  ['stick', 'Gậy chống', 'holding a {c} walking stick'],
+];
+export const CHAR_COLORS: [string, string][] = [['red', 'Đỏ'], ['bright orange', 'Cam'], ['sunny yellow', 'Vàng'], ['leaf green', 'Xanh lá'], ['sky-blue', 'Xanh da trời'], ['purple', 'Tím'], ['soft pink', 'Hồng']];
+
+/** Ghép mô tả cố định (tiếng Anh, đúng khuôn của repo) từ các lựa chọn đơn giản */
+export function buildCharacterAnchor(b: CharBuild): string {
+  const who = b.kind === 'child' ? 'small minimalist 2D cartoon child character' : b.kind === 'adult' ? 'adult minimalist 2D cartoon character, taller than the children,' : 'elderly minimalist 2D cartoon grandparent character, slightly shorter than other adults,';
+  const hair = CHAR_HAIR.find((h) => h[0] === b.hair)?.[2];
+  const item = (CHAR_ITEMS.find((x) => x[0] === b.item)?.[2] ?? '').replace('{c}', b.color);
+  const torso = b.kind === 'child' ? 'a short slim closed tapered shape' : 'a slim closed tapered shape';
+  return `One ${who} with a white filled circular head${hair ? `, ${hair}` : ''}, two small dark oval eyes, simple eyebrow strokes and a short curved smile${b.kind === 'elder' ? ' with two tiny smile-line strokes' : ''}. The torso is ${torso} with solid white fill inside its dark outline, ${item}. ${LIMBS}`;
+}

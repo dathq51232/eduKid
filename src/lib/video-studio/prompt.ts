@@ -1,6 +1,6 @@
 // Bộ ghép câu lệnh Google Flow (Veo) cho Xưởng video — theo "Omni Flash Production Prompt Contract" của
 // stickman-video-director (chế độ A): mỗi câu lệnh tự đủ, theo đúng thứ tự 12 mục, lặp nguyên văn mô tả
-// nhân vật / bối cảnh / giọng đọc / nhạc để các cảnh ~10 giây ghép lại vẫn đồng nhất.
+// nhân vật / bối cảnh / giọng đọc / nhạc để các cảnh 8 giây ghép lại vẫn đồng nhất.
 import { alias, musicOf, styleOf, voiceOf, type LibItem, type Narration, type Ratio } from './presets';
 
 export type VsClip = {
@@ -23,6 +23,9 @@ export type VsProject = {
   voiceKey: string;
   musicKey: string;
   brief: string;
+  /** nhân vật chính và bối cảnh mặc định dùng khi tách cảnh tự động */
+  cast?: string[];
+  settingId?: string;
   clips: VsClip[];
 };
 
@@ -31,7 +34,7 @@ export const emptyClip = (settingId = 's-lop', cast: string[] = ['b-chain']): Vs
   ({ id: uid(), settingId, cast, firstFrame: '', beats: ['', '', ''], dialogue: '', endFrame: '', overlay: '' });
 export const newProject = (): VsProject => ({
   title: 'Video mới', ratio: '16:9', styleKey: 'cozy', voiceKey: 'vi-female', musicKey: 'ukulele', brief: '',
-  clips: [emptyClip(), emptyClip(), emptyClip()],
+  cast: ['b-chain', 'b-co-mai'], settingId: 's-lop', clips: [],
 });
 
 type Lib = { characters: LibItem[]; settings: LibItem[] };
@@ -66,13 +69,13 @@ export function buildClipPrompt(p: VsProject, i: number, lib: Lib): string {
     ? cast.map((ch, k) => `Character ${k + 1}, called "${alias(ch.name)}" in the actions below (never write any name on screen): ${ch.anchor.trim()}`).join('\n')
     : 'No characters appear in this clip; show only the setting and props.';
   return [
-    `1. Output: approximately 10 seconds, ${p.ratio} aspect ratio, 720p target, 24 FPS, synchronized audio. Clip ${i + 1} of ${p.clips.length}.`,
+    `1. Output: exactly 8 seconds, ${p.ratio} aspect ratio, 720p target, 24 FPS, synchronized audio. Clip ${i + 1} of ${p.clips.length}.`,
     `2. Style and environment: ${style.grammar} ${style.environment} ${setting?.anchor.trim() ?? 'a simple friendly setting'}`,
     `3. Character lock (exactly ${cast.length} character${cast.length === 1 ? '' : 's'}, frozen design, repeated verbatim in every clip):\n${castBlock}`,
     `4. Palette: ${style.palette} Use ordinary color names only.`,
     `5. ${COMPOSITION[p.ratio]}`,
     `6. First frame: ${first}`,
-    `7. Timed actions with concrete, continuous character movement (never idle):\n[0-3s] ${c.beats[0].trim() || '—'}\n[3-7s] ${c.beats[1].trim() || '—'}\n[7-10s] ${c.beats[2].trim() || '—'}`,
+    `7. Timed actions with concrete, continuous character movement (never idle):\n[0-3s] ${c.beats[0].trim() || '—'}\n[3-6s] ${c.beats[1].trim() || '—'}\n[6-8s] ${c.beats[2].trim() || '—'}`,
     `8. Dialogue: ${dialogueLine(voice.narration, c.dialogue)}`,
     `9. Voice: ${voice.block}`,
     `10. ${i === 0 ? music.first : music.next} Voice-first mix.`,
@@ -108,10 +111,10 @@ export function checkProject(p: VsProject, lib: Lib): Check[] {
   const missing = p.clips.flatMap((c) => [...c.cast.filter((id) => !find(lib.characters, id)), ...(find(lib.settings, c.settingId) ? [] : [c.settingId])]);
   out.push({ ok: !missing.length, text: missing.length ? 'Có nhân vật / bối cảnh đã bị xoá khỏi thư viện' : 'Nhân vật và bối cảnh đều có trong thư viện' });
   if (voice.narration !== 'none') {
-    const limit = voice.narration === 'vi' ? 32 : 25;
+    const limit = voice.narration === 'vi' ? 20 : 16;
     const long = p.clips.map((c, i) => (c.dialogue.trim().split(/\s+/).filter(Boolean).length > limit ? i + 1 : 0)).filter(Boolean);
     const blank = p.clips.map((c, i) => (c.dialogue.trim() ? 0 : i + 1)).filter(Boolean);
-    out.push({ ok: !long.length, text: long.length ? `Lời đọc cảnh ${long.join(', ')} dài quá ~${limit} từ cho 10 giây — rút gọn, đừng tăng tốc độ đọc` : `Lời đọc mỗi cảnh trong khoảng ${limit} từ` });
+    out.push({ ok: !long.length, text: long.length ? `Lời đọc cảnh ${long.join(', ')} dài quá ~${limit} từ cho 8 giây — rút gọn, đừng tăng tốc độ đọc` : `Lời đọc mỗi cảnh trong khoảng ${limit} từ` });
     if (blank.length) out.push({ ok: true, text: `Cảnh ${blank.join(', ')} không có lời đọc` });
   }
   const noRef = new Set(p.clips.flatMap((c) => c.cast).filter((id) => !(find(lib.characters, id)?.refs.length)));
@@ -128,7 +131,7 @@ export function buildPackage(p: VsProject, lib: Lib): string {
   const lines: string[] = [
     `# ${p.title}`, '',
     '## Khối liên tục chung',
-    `- Khổ hình: ${p.ratio} · Thời lượng: ${p.clips.length * 10} giây (${p.clips.length} cảnh × ~10 giây)`,
+    `- Khổ hình: ${p.ratio} · Thời lượng: ${p.clips.length * 8} giây (${p.clips.length} cảnh × 8 giây)`,
     `- Phong cách: ${style.name}`,
     `- Giọng đọc: ${voice.name}`,
     `- Nhạc nền: ${music.name} (cảnh 1 tạo chủ đề, các cảnh sau nối tiếp y hệt)`,

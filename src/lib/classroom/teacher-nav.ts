@@ -5,7 +5,7 @@ export type ToolKey =
   | 'so-lop' | 'goi-ten' | 'ke-hoach' | 'giao-bai' | 'phieu-bai-tap' | 'phieu-chinh-ta'
   | 'lo-hong' | 'de-kiem-tra' | 'phong-thi' | 'nhan-xet' | 'ket-qua-truong' | 'phieu-tien-bo' | 'thu-khen' | 'lop'
   | 'nhom' | 'thi-dua' | 'hen-gio' | 'danh-ba' | 'bai-giang-3d' | 'tin-nhan' | 'trien-lam' | 'luyen-chu' | 'bang-trang'
-  | 'lich' | 'thu-chi' | 'quy-lop' | 'tieng-anh' | 'xuong-video';
+  | 'lich' | 'thu-chi' | 'quy-lop' | 'tieng-anh';
 export type ToolTone = 'green' | 'yellow' | 'blue' | 'violet' | 'red' | 'coral';
 export type Tool = { key: ToolKey; label: string; desc: string; group: string; tone: ToolTone; path: string; keywords: string };
 
@@ -20,7 +20,6 @@ const ALL: Tool[] = [
   { key: 'luyen-chu', label: 'Luyện chữ', desc: 'Tô chữ mẫu ô li, chấm điểm', group: 'Dạy học', tone: 'violet', path: 'luyen-chu', keywords: 'luyen chu viet chu dep o li to chu mau tap viet chu hoa' },
   { key: 'bang-trang', label: 'Bảng trắng', desc: 'Bút, hình, thước, êke, compa', group: 'Dạy học', tone: 'blue', path: 'bang-trang', keywords: 'bang trang bang den ve hinh but thuoc ke eke compa thuoc do goc hinh khoi chieu bang tuong tac' },
   { key: 'tieng-anh', label: 'Tiếng Anh sư phạm', desc: 'Lộ trình học, mẫu câu lớp học', group: 'Dạy học', tone: 'blue', path: 'tieng-anh', keywords: 'tieng anh su pham classroom english mau cau lop hoc giao vien luyen noi phat am lo trinh 24 tuan teacher english academy global success' },
-  { key: 'xuong-video', label: 'Xưởng video', desc: 'Phân cảnh stickman cho Google Flow', group: 'Dạy học', tone: 'coral', path: 'xuong-video', keywords: 'xuong video stickman google flow veo youtube phim hoat hinh phan canh nhan vat boi canh cau lenh kenh' },
   { key: 'giao-bai', label: 'Giao bài về nhà', desc: 'Hạn nộp, em nào chưa làm', group: 'Dạy học', tone: 'violet', path: 'giao-bai', keywords: 'giao bai ve nha han nop' },
   { key: 'phieu-bai-tap', label: 'Phiếu bài tập', desc: 'In kèm đáp án', group: 'Dạy học', tone: 'yellow', path: 'phieu-bai-tap', keywords: 'phieu bai tap in dap an' },
   { key: 'phieu-chinh-ta', label: 'Phiếu chính tả', desc: 'Tranh, tập chép, đáp án', group: 'Dạy học', tone: 'blue', path: 'phieu-chinh-ta', keywords: 'chinh ta tap chep' },

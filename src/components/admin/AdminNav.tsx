@@ -23,7 +23,7 @@ export default function AdminNav({ counts }: { counts?: NavCounts | null }) {
     { href: '/quan-tri/giao-vien', label: 'Giáo viên', icon: UserCheck, exact: false, show: isAdmin },
     { href: '/quan-tri/bai-hoc', label: 'Bài học', icon: BookOpen, exact: false, show: true, n: isAdmin ? counts?.lessons_review : undefined },
     { href: '/quan-tri/chuong-trinh', label: 'Chương trình', icon: ListTree, exact: false, show: true },
-    { href: '/quan-tri/xuong-video', label: 'Xưởng video', icon: Clapperboard, exact: false, show: true },
+    { href: '/quan-tri/xuong-video', label: 'Xưởng video', icon: Clapperboard, exact: false, show: isAdmin },
     { href: '/quan-tri/thu-phi', label: 'Thu phí', icon: CreditCard, exact: false, show: isAdmin && FEATURES.billing, n: counts?.payments_pending },
     { href: '/quan-tri/nhat-ky', label: 'Nhật ký', icon: ScrollText, exact: false, show: isAdmin },
   ];

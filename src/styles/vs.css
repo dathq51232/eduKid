@@ -98,3 +98,29 @@
   .vs-beats { grid-template-columns: 1fr; }
   .vs-lesson select { width: 100%; }
 }
+/* bố cục 3 bước, tạo nhanh nhân vật, hướng dẫn */
+.vs-box h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.vs-step { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--brand-blue); color: #fff; font-size: 15px; }
+.vs-lesson-lb { font-weight: 700; font-size: 14px; }
+.vs-chip-add { display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 4px 12px; border: 1.5px dashed var(--brand-blue); border-radius: 999px; background: transparent; color: var(--brand-blue); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.vs-chip-add svg { width: 14px; height: 14px; }
+.vs-adv { border: 1.5px solid var(--line); border-radius: 14px; padding: 10px 12px; background: var(--surface-2); }
+.vs-adv > summary { cursor: pointer; color: var(--brand-blue); font-weight: 700; font-size: 14px; }
+.vs-adv[open] { display: grid; gap: 10px; }
+.vs-adv textarea { width: 100%; min-height: 42px; padding: 8px 11px; border: 2px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; line-height: 1.45; resize: vertical; }
+.vs-big { min-height: 52px; padding-inline: 24px; font-size: 17px; }
+.vs-empty { padding: 18px; border: 2px dashed var(--line-strong); border-radius: 14px; text-align: center; color: var(--muted); }
+.vs-field > span em { margin-left: 6px; font-style: normal; font-weight: 700; color: var(--muted); }
+.vs-field > span em.vs-over { color: #c2410c; }
+.vs-beat-view { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: 13.5px; line-height: 1.45; color: var(--ink); }
+.vs-beat-view li { display: flex; gap: 8px; }
+.vs-beat-view li > span { flex: none; min-width: 44px; color: var(--brand-blue); font-weight: 800; }
+.vs-build { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; padding: 12px; border-radius: 14px; background: var(--blue-soft); }
+.vs-build-tip { grid-column: 1 / -1; margin: 0; }
+.vs-field-label { margin: 0 0 6px; color: var(--muted); font-size: 13px; font-weight: 800; }
+.vs-guide { display: grid; gap: 14px; max-width: 900px; }
+.vs-guide-steps, .vs-guide-tips { display: grid; gap: 10px; margin: 0; padding-left: 24px; font-size: 15px; line-height: 1.55; }
+.vs-guide-steps li::marker { color: var(--brand-blue); font-weight: 800; }
+.vs-guide-steps { list-style: decimal; }
+.vs-guide-tips { list-style: disc; }
+.vs-guide-steps li, .vs-guide-tips li { display: list-item; }
