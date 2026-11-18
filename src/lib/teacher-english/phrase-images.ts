@@ -10,6 +10,7 @@ const KEYWORDS: [string, string][] = [
   ['singing', 'microphone'], ['lamp', 'light-bulb'], ['policeman', 'police-officer'], ['go out', 'door'], ['come in', 'door'],
   ['cinema', 'clapper-board'], ['tall', 'person-standing'], ['clean the floor', 'broom'], ['crayon', 'crayon'],
   ['hello', 'waving-hand'], ['goodbye', 'waving-hand'], ['see you', 'waving-hand'], ['good morning', 'sunrise'], ['good afternoon', 'sun'], ['leader', 'triangular-flag'],
+  ['half of the class', 'puzzle-piece'], ['only the boys', 'raised-hand'], ['mime', 'performing-arts'], ['bedroom', 'bed'],
   // Đồ ăn, thức uống
   ['fish and chips', 'french-fries'], ['chips', 'french-fries'], ['pizza', 'pizza'], ['popcorn', 'popcorn'], ['pasta', 'spaghetti'],
   ['noodles', 'steaming-bowl'], ['banana', 'banana'], ['nut', 'peanuts'], ['apple', 'red-apple'], ['mango', 'mango'], ['lemon', 'lemon'],
@@ -34,7 +35,7 @@ const KEYWORDS: [string, string][] = [
   ['draw', 'paintbrush'], ['colour', 'crayon'], ['picture', 'framed-picture'], ['board', 'framed-picture'], ['quiz', 'red-question-mark'],
   ['question', 'red-question-mark'], ['maths', 'abacus'], ['number', 'abacus'], ['count', 'abacus'], ['eleven', 'abacus'], ['twelve', 'abacus'],
   ['timetable', 'spiral-calendar'], ['subject', 'laptop'], ['computer', 'laptop'], ['gym', 'person-cartwheeling'],
-  ['music room', 'musical-keyboard'], ['music', 'headphone'], ['school trip', 'minibus'], ['school', 'school'], ['class', 'school'],
+  ['music room', 'musical-keyboard'], ['music', 'headphone'], ['school trip', 'minibus'], ['school', 'school'],
   ['classroom', 'school'], ['bell', 'bell'], ['desk', 'chair'],
   // Hình, màu
   ['square', 'blue-square'], ['rainbow', 'rainbow'], ['red', 'red-circle'], ['blue', 'blue-circle'], ['green', 'green-circle'],
@@ -88,8 +89,8 @@ const KEYWORDS: [string, string][] = [
   ['welcome', 'waving-hand'], ['guests', 'waving-hand'], ['absent', 'ledger'], ['name', 'speech-balloon'], ['sit down', 'chair'],
   ['seat', 'chair'], ['seats', 'chair'], ['stand up', 'person-standing'], ['quiet', 'person-in-lotus-position'], ['clap', 'raised-hand'],
   ['raise your hand', 'raised-hand'], ['big hand', 'party-popper'], ['shout', 'loudspeaker'], ['louder', 'loudspeaker'],
-  ['listen', 'ear'], ['repeat', 'speaking-head'], ['say', 'speech-balloon'], ['ask', 'speech-balloon'], ['tell', 'speech-balloon'],
-  ['pronunciation', 'speaking-head'], ['partner', 'speech-balloon'], ['pairs', 'speech-balloon'], ['groups', 'puzzle-piece'], ['group', 'puzzle-piece'],
+  ['listen', 'ear'], ['repeat', 'microphone'], ['say', 'speech-balloon'], ['ask', 'speech-balloon'], ['tell', 'speech-balloon'],
+  ['pronunciation', 'mouth'], ['partner', 'speech-balloon'], ['pairs', 'speech-balloon'], ['groups', 'puzzle-piece'], ['group', 'puzzle-piece'],
   ['leader', 'triangular-flag'], ['team', 'sports-medal'], ['point', 'right-arrow'], ['game', 'game-die'], ['rules', 'ledger'],
   ['turn', 'game-die'], ['simon says', 'game-die'], ['guess', 'red-question-mark'], ['mime', 'performing-arts'], ['charades', 'performing-arts'],
   ['survey', 'ledger'], ['excellent', 'star'], ['brilliant', 'star'], ['great job', 'sports-medal'], ['well done', 'sports-medal'],
@@ -100,6 +101,7 @@ const KEYWORDS: [string, string][] = [
   ['started', 'triangular-flag'], ['stop', 'alarm-clock'], ['come to the front', 'person-walking'], ['go back', 'person-walking'],
   ['walk', 'person-walking'], ['move', 'person-running'], ['line up', 'person-standing'], ['plan', 'spiral-calendar'],
   ['poster', 'framed-picture'], ['present', 'microphone'], ['share', 'speech-balloon'], ['interview', 'microphone'], ['describe', 'speech-balloon'],
+  ['class', 'school'],
 ];
 
 const TOPIC_IMG: Record<TopicKey, string> = {
@@ -109,7 +111,7 @@ const TOPIC_IMG: Record<TopicKey, string> = {
 };
 const SITUATION_IMG: Record<SituationKey, string> = {
   greeting: 'waving-hand', settling: 'person-in-lotus-position', starting: 'triangular-flag', instructions: 'ledger',
-  'pairs-groups': 'speech-balloon', drilling: 'speaking-head', games: 'game-die', praise: 'star', encourage: 'red-heart',
+  'pairs-groups': 'speech-balloon', drilling: 'microphone', games: 'game-die', praise: 'star', encourage: 'red-heart',
   correcting: 'pencil', checking: 'light-bulb', behaviour: 'raised-hand', transitions: 'right-arrow', ending: 'bell',
 };
 
