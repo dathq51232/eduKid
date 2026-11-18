@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Delete, GraduationCap, LogIn, Presentation, Users } from 'lucide-react';
+import { ArrowLeft, Delete, GraduationCap, LogIn, Presentation, Search, Users } from 'lucide-react';
 import BrandLogo, { BrandWord } from '@/components/brand/BrandLogo';
 import { createClient } from '@/lib/supabase/client';
 import { safeNext } from '@/lib/auth/safe-next';
@@ -73,7 +73,19 @@ function AdultLogin({ next, configured, parentEmailMode = false }: { next: strin
   );
 }
 
-type Remembered = { code: string; className: string; id: string; name: string };
+/** bỏ dấu, chữ thường: "Trần Phúc Hậu" → "tran phuc hau" */
+function fold(s: string) {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+/** tìm tên không cần dấu: mỗi từ gõ vào phải là đầu của một chữ trong tên ("khang", "tran kh", "hau") */
+function nameMatches(name: string, query: string) {
+  const q = fold(query);
+  if (!q) return true;
+  const words = fold(name).split(' ');
+  return q.split(' ').every((part) => words.some((w) => w.startsWith(part)));
+}
+
+type Remembered ={ code: string; className: string; id: string; name: string };
 const REMEMBER_KEY = 'educhain-hoc-sinh';
 
 // Nhớ lớp + tên của em trên thiết bị này (chỉ tên gọi và mã lớp, không lưu PIN) để lần sau chỉ cần nhập PIN.
@@ -102,6 +114,7 @@ function StudentLogin({ configured, initialCode, next = '', parentMode = false }
   const [mates, setMates] = useState<Classmate[]>([]);
   const [me, setMe] = useState<Classmate | null>(null);
   const [pin, setPin] = useState('');
+  const [query, setQuery] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const pinRef = useRef<HTMLInputElement>(null);
@@ -220,21 +233,38 @@ function StudentLogin({ configured, initialCode, next = '', parentMode = false }
   }
 
   if (step === 'name') {
+    const pick = (m: Classmate) => { setMe(m); setPin(''); setError(''); setQuery(''); setStep('pin'); };
+    // giữ màu theo thứ tự gốc trong lớp để tên không đổi màu khi lọc
+    const shown = mates.map((m, i) => ({ m, i })).filter(({ m }) => nameMatches(m.name, query));
     return (
       <div className="auth-form">
         <p className="auth-step-title">Lớp {className} — {parentMode ? 'chọn tên con bạn' : 'em là bạn nào?'}</p>
         {error && <p className="adm-alert is-error" role="alert">{error}</p>}
-        <ul className="name-grid">
-          {mates.map((m, i) => (
-            <li key={m.id}>
-              <button type="button" className={`name-btn tone-${TONES[i % TONES.length]}`} onClick={() => { setMe(m); setPin(''); setError(''); setStep('pin'); }}>
-                <span className="name-initial" aria-hidden="true">{m.name.trim().split(/\s+/).pop()?.[0] ?? '?'}</span>
-                <span>{m.name}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-        <button type="button" className="auth-back" onClick={() => { setStep('code'); setError(''); }}><ArrowLeft size={16} aria-hidden="true" /> Đổi mã lớp</button>
+        {mates.length > 6 && (
+          <label className="auth-name-search">
+            <Search aria-hidden="true" />
+            <span className="sr-only">{parentMode ? 'Tìm tên con' : 'Tìm tên em'}</span>
+            <input type="search" autoComplete="off" enterKeyHint="go" value={query}
+              placeholder={parentMode ? 'Gõ tên con, vd: Khang' : 'Gõ tên em, vd: Khang'}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && shown.length === 1) { e.preventDefault(); pick(shown[0].m); } }} />
+          </label>
+        )}
+        {shown.length === 0 ? (
+          <p className="auth-name-empty">Không thấy tên nào có “{query.trim()}”. {you} thử gõ tên khác nhé.</p>
+        ) : (
+          <ul className="name-grid">
+            {shown.map(({ m, i }) => (
+              <li key={m.id}>
+                <button type="button" className={`name-btn tone-${TONES[i % TONES.length]}`} onClick={() => pick(m)}>
+                  <span className="name-initial" aria-hidden="true">{m.name.trim().split(/\s+/).pop()?.[0] ?? '?'}</span>
+                  <span>{m.name}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <button type="button" className="auth-back" onClick={() => { setStep('code'); setError(''); setQuery(''); }}><ArrowLeft size={16} aria-hidden="true" /> Đổi mã lớp</button>
       </div>
     );
   }

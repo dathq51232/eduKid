@@ -113,3 +113,11 @@ img.auth-hero-word { height: clamp(46px, 6vw, 76px); width: auto; max-width: 100
 .auth-family b { font-size: 15px; }
 .auth-family div { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 :root[data-theme="dark"] .auth-family { background: #12204a; border-color: #233a6b; }
+
+/* Ô tìm tên ở bước "em là bạn nào?" (lớp đông thì gõ vài chữ, không cần dấu) */
+.auth-name-search { position: relative; display: block; }
+.auth-name-search svg { position: absolute; left: 14px; top: 50%; width: 20px; height: 20px; transform: translateY(-50%); color: var(--muted, #5b6680); pointer-events: none; }
+.auth-name-search input { width: 100%; min-height: 52px; padding: 10px 14px 10px 44px; border: 2px solid var(--line, #d6deeb); border-radius: 14px;
+  font: inherit; font-size: 18px; background: var(--surface, #fff); color: inherit; }
+.auth-name-search input:focus { outline: none; border-color: var(--brand-blue, #2457c5); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-blue, #2457c5) 20%, transparent); }
+.auth-name-empty { margin: 0; padding: 18px 8px; text-align: center; color: var(--muted, #5b6680); font-size: 16px; }
