@@ -1,11 +1,15 @@
 // Giấy ô li kiểu vở tiểu học: dòng li mảnh cách nhau U px, dòng kẻ đậm mỗi 4 li, đường dọc mỗi ô, lề đỏ bên trái.
-export function drawPaper(c: CanvasRenderingContext2D, w: number, h: number, U: number, opt: { margin?: number; offsetY?: number; squareGrid?: boolean; cellCount?: 4 | 5 } = {}) {
+// inset: chừa dải lề quanh trang (để vẽ khung trang) — lưới chỉ kẻ bên trong; blank: giấy trắng không kẻ.
+export function drawPaper(c: CanvasRenderingContext2D, w: number, h: number, U: number, opt: { margin?: number; offsetY?: number; squareGrid?: boolean; cellCount?: 4 | 5; inset?: number; blank?: boolean } = {}) {
   const margin = opt.margin ?? 0;
   const oy = opt.offsetY ?? 0;
   const cellCount = opt.cellCount ?? 4;
   c.save();
   c.fillStyle = '#fffefa';
   c.fillRect(0, 0, w, h);
+  if (opt.blank) { c.restore(); return; }
+  const inset = opt.inset ?? 0;
+  if (inset > 0) { c.beginPath(); c.rect(inset, inset, w - inset * 2, h - inset * 2); c.clip(); }
   const drawLine = (x1: number, y1: number, x2: number, y2: number, bold: boolean) => {
     c.strokeStyle = bold ? 'rgba(124, 58, 237, .62)' : 'rgba(167, 139, 250, .34)';
     c.lineWidth = bold ? 1.6 : 1;
