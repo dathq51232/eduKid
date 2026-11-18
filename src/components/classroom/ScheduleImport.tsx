@@ -31,7 +31,7 @@ const keyOf = (date: string, period: number, title: string) => `${date}|${period
  * bài Toán / Tiếng Việt / Tiếng Anh có trong app dùng yêu cầu cần đạt, dạng bài, kiến thức của bài;
  * tiết ôn tập / bổ sung (BS) dùng khung ôn luyện theo bài trọng tâm của tuần; môn khác dùng khung chung của môn.
  */
-export default function ScheduleImport({ classId, className, grade, school, weakForms, lessonsBySubject, saved, canSave, library, onOpen, onSaved, onPreview, onItems }: {
+export default function ScheduleImport({ classId, className, grade, school, weakForms, lessonsBySubject, saved, canSave, library, onOpen, onSaved, onPreview, onItems, incoming }: {
   classId: string; className: string; grade: number; school: string;
   weakForms: Record<SubjectCode, string[]>; lessonsBySubject: Record<SubjectCode, LessonInfo[]>;
   saved: SavedLite[]; canSave: boolean;
@@ -41,6 +41,8 @@ export default function ScheduleImport({ classId, className, grade, school, weak
   onPreview: (p: { title: string; filename: string; week: WeekArgs }) => void;
   /** giáo án đang có trong bảng (để lịch tuần hiện các tiết chưa lưu) */
   onItems?: (plans: LessonPlan[]) => void;
+  /** lịch báo giảng đã tạo sẵn (mục Tạo lịch báo giảng): soạn giáo án ngay, không cần chọn file */
+  incoming?: { schedule: Schedule; label: string; seq: number } | null;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState('');
@@ -80,7 +82,24 @@ export default function ScheduleImport({ classId, className, grade, school, weak
     if (!/\.xlsx$/i.test(file.name)) return setMsg({ kind: 'error', text: 'Chỉ đọc được file .xlsx. Nếu là .xls, mở bằng Excel rồi “Lưu thành” Excel Workbook (.xlsx).' });
     if (file.size > 5_000_000) return setMsg({ kind: 'error', text: 'File quá lớn (tối đa 5 MB).' });
     try {
-      const s = parseScheduleBook(await readXlsxAll(await file.arrayBuffer()));
+      await applySchedule(parseScheduleBook(await readXlsxAll(await file.arrayBuffer())));
+    } catch (e) {
+      setMsg({ kind: 'error', text: e instanceof Error ? e.message : 'Không đọc được file.' });
+    }
+  };
+
+  // lịch đã tạo sẵn từ TKB + PPCT của khối
+  const lastSeq = useRef(0);
+  useEffect(() => {
+    if (!incoming || incoming.seq === lastSeq.current) return;
+    lastSeq.current = incoming.seq;
+    setMsg(null); setSch(null); setItems([]); setFileName(incoming.label);
+    void applySchedule(incoming.schedule).catch((e: unknown) => setMsg({ kind: 'error', text: e instanceof Error ? e.message : 'Không dùng được lịch này.' }));
+  }, [incoming]); // eslint-disable-line react-hooks/exhaustive-deps -- chỉ chạy khi có lịch mới (seq đổi)
+
+  /** Lịch đã quy về mẫu chuẩn → soạn giáo án từng tiết (kho trường trước, rồi bài trong app, rồi khung chung) */
+  async function applySchedule(s: Schedule) {
+    {
       let list: Item[] = plansFromSchedule(s, { grade, className, lessonsBySubject, weakForms }).map((rp) => ({ ...rp, base: rp }));
       // ưu tiên giáo án trong kho của trường (đúng môn, khối, bài, tiết)
       if (library.length) {
@@ -105,10 +124,8 @@ export default function ScheduleImport({ classId, className, grade, school, weak
       saveSched(classId, list.filter((r) => r.plan.date).map((r) => ({ date: r.plan.date, period: r.plan.period || 0, session: r.row.session, subject: r.plan.subject, label: r.row.subjectLabel || '', title: r.plan.title })));
       setPick(list.map((r) => !(!!r.plan.date && savedKeys.has(keyOf(r.plan.date, r.plan.period, r.plan.title)))));
       if (s.grade !== null && s.grade !== grade) setMsg({ kind: 'info', text: `Lịch báo giảng là của khối ${s.grade}, lớp ${className} là khối ${grade}: giáo án dùng khung chung, không ghép bài của app. Kiểm tra lại file nếu nhầm.` });
-    } catch (e) {
-      setMsg({ kind: 'error', text: e instanceof Error ? e.message : 'Không đọc được file.' });
     }
-  };
+  }
 
   const chosen = items.filter((_, i) => pick[i]);
   // tiết đã lưu trước đó không lưu lại (tránh trùng); vẫn đưa vào file Word

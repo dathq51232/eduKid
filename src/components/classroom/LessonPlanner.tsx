@@ -14,6 +14,8 @@ import { weekExport, weekSheet, loadWeekOpts, saveWeekOpts, DEFAULT_WEEK_OPTS, t
 import { downloadXlsx } from '@/lib/xlsx';
 import type { SubjectCode } from '@/lib/types';
 import ScheduleImport from './ScheduleImport';
+import LbgBuilder from './LbgBuilder';
+import type { Schedule } from '@/lib/plans/schedule';
 import PlanLibrary from './PlanLibrary';
 import DocPreview from './DocPreview';
 import PlanWorkspace from './PlanWorkspace';
@@ -38,10 +40,11 @@ const notReady = (m: string) => /function|does not exist|schema cache/i.test(m);
 const MIGRATION_HINT = 'Chưa bật lưu giáo án: chạy supabase/migrations/0021_lesson_plans.sql và 0022_lesson_plans_subjects.sql trên Supabase. Vẫn soạn và tải Word được.';
 const SUBJECT_HINT = 'Giáo án môn này cần chạy supabase/migrations/0022_lesson_plans_subjects.sql trên Supabase. Vẫn tải Word được.';
 // Bài giảng & 3D đã tách thành mục riêng (/giao-vien/lop/[id]/bai-giang-3d), cùng cấp Kế hoạch bài dạy.
-type Tab = 'tuan' | 'kho' | 'da-luu' | 'mau';
-const TABS: Tab[] = ['tuan', 'kho', 'da-luu', 'mau'];
+type Tab = 'tuan' | 'tao-lich' | 'kho' | 'da-luu' | 'mau';
+const TABS: Tab[] = ['tuan', 'tao-lich', 'kho', 'da-luu', 'mau'];
 const LEAD: Record<Tab, string> = {
   tuan: 'Mỗi tiết trong tuần là một thẻ: bấm để soạn giáo án, tạo bài giảng, mở phiếu của tiết đó.',
+  'tao-lich': 'Tổ trưởng nạp PPCT và lịch tuần của khối, nhập thời khoá biểu từng lớp → app tạo lịch báo giảng mỗi tuần, báo chỗ lệch.',
   kho: 'Giáo án Word của trường, tách sẵn từng tiết — khi nạp lịch báo giảng, tiết nào có trong kho được dùng ngay.',
   'da-luu': 'Mọi giáo án đã lưu, kể cả của lớp cũ — mở, nhân bản cho lớp mới.',
   mau: 'Cách in lịch báo giảng tuần cho vừa 1 trang.',
@@ -64,6 +67,8 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
   /** mở sẵn mục (?tab=) */
   initialTab?: string;
 }) {
+  // lịch tạo ở mục Tạo lịch báo giảng → chuyển sang bước soạn giáo án
+  const [incoming, setIncoming] = useState<{ schedule: Schedule; label: string; seq: number } | null>(null);
   const [tab, setTab] = useState<Tab>(() => (TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'tuan'));
   const go = (t: Tab) => { setTab(t); try { const u = new URL(window.location.href); u.searchParams.set('tab', t); window.history.replaceState(null, '', u); } catch { /* bỏ qua */ } };
   const router = useRouter();
@@ -244,7 +249,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
   };
 
   const MENU: [Tab, string, number | null][] = [
-    ['tuan', '📅 Tuần dạy', null], ['kho', '📚 Kho giáo án', library.length],
+    ['tuan', '📅 Tuần dạy', null], ['tao-lich', '🧩 Tạo lịch báo giảng', null], ['kho', '📚 Kho giáo án', library.length],
     ['da-luu', '🗂 Đã lưu (tất cả)', saved.length], ['mau', '⚙️ Mẫu in lịch báo giảng', null],
   ];
   return (
@@ -288,6 +293,11 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
             onOpen={(id) => void open(id)} onOpenDraft={openDraft} onRemove={(id) => void remove(id)}
             onPreviewPlan={(pl) => setPreview({ title: pl.title || 'Giáo án', filename: `giao-an-${pl.title || 'bai-hoc'}`, html: plansDocument([pl], school) })}
             onExportWeek={(w) => void exportWeek(w)} onImport={() => setImportOpen(true)} onMakeDeck={(id) => router.push(deckHref(id))} />
+        )}
+
+        {tab === 'tao-lich' && (
+          <LbgBuilder grade={grade} className={className}
+            onUse={(schedule, label) => { setIncoming((x) => ({ schedule, label, seq: (x?.seq ?? 0) + 1 })); setImportOpen(true); }} />
         )}
 
         {/* kho luôn gắn sẵn (để gợi ý giáo án từ kho khi nạp lịch), chỉ hiện ở mục Kho giáo án */}
@@ -361,7 +371,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
           <div className="kh-modal-box">
             <button type="button" className="kh-x" aria-label="Đóng" onClick={() => setImportOpen(false)}><X aria-hidden="true" /></button>
             <ScheduleImport classId={classId} className={className} grade={grade} school={school} weakForms={weakForms} lessonsBySubject={lessonsBySubject}
-              saved={saved} canSave={canSave} library={library} onItems={setDrafts}
+              saved={saved} canSave={canSave} library={library} onItems={setDrafts} incoming={incoming}
               onOpen={(p) => { setImportOpen(false); openDraft(p); }} onPreview={(p) => { setPreview(p); }}
               onSaved={(m) => { setWeek(m); setScope('week'); void refresh(); }} />
           </div>
