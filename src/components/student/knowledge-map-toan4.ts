@@ -1,51 +1,7 @@
-// "Bản đồ kiến thức" — Toán 4: các trạm (mắt xích kỹ năng), vùng, đường nối, mẹo của Milo. Tiến độ của em tính riêng (knowledge-map-progress.ts).
-import type { T4Topic } from '@/lib/content/toan4-plan';
+// "Bản đồ kiến thức" — Toán 4: các trạm (mắt xích kỹ năng), đường nối, mẹo của Milo. Phép tính trong ví dụ đã tính lại cho đúng.
+import { F, regions, type MapDef, type MapLink, type MapNode, type MapState } from './knowledge-map-types';
 
-// Toạ độ x, y theo khung 1000 × 620 (đổi ra % khi vẽ). Phép tính trong ví dụ đã tính lại cho đúng.
-
-export type MapTip = { name: string; how: string; example: string };
-export type MapNode = {
-  id: string;
-  name: string;
-  icon: string;
-  region: RegionId;
-  x: number;
-  y: number;
-  /** các mảng kiến thức (toan4-plan.ts) thuộc trạm này — để tính tiến độ từ bài em đã làm */
-  topics: T4Topic[];
-  know: string;
-  tips: MapTip[];
-};
-/** tiến độ của em ở một trạm */
-export type NodeState = {
-  /** mức cao nhất em đã đạt: 0 = chưa học, 1–5 = L1…L5 */
-  level: number;
-  /** lần làm gần nhất còn nhầm nhiều */
-  weak?: boolean;
-  /** bài em đang học */
-  current?: boolean;
-};
-export type MapState = Record<string, NodeState>;
-export type RegionId = 'so' | 'ps' | 'hinh' | 'tk';
-export type MapRegion = { id: RegionId; name: string; x: number; y: number; w: number; h: number; tone: string };
-/** đường nối: from là kiến thức cần biết trước của to; c = điểm uốn (đường cong) nếu cần né trạm khác */
-export type MapLink = { from: string; to: string; c?: [number, number] };
-
-export const MAP_W = 1000;
-export const MAP_H = 620;
-
-export const LEVEL_NAMES = ['Chưa học', 'Làm quen', 'Cơ bản', 'Vận dụng', 'Thử thách', 'Mở rộng'];
-
-export const REGIONS: MapRegion[] = [
-  { id: 'so', name: 'Số và phép tính', x: 16, y: 16, w: 468, h: 288, tone: 'is-blue' },
-  { id: 'ps', name: 'Phân số', x: 500, y: 16, w: 484, h: 392, tone: 'is-yellow' },
-  { id: 'hinh', name: 'Hình học và đo lường', x: 16, y: 320, w: 468, h: 284, tone: 'is-green' },
-  { id: 'tk', name: 'Thống kê và khả năng', x: 500, y: 424, w: 484, h: 180, tone: 'is-coral' },
-];
-
-const F = (n: string) => `/emoji/f3d/${n}.webp`;
-
-export const NODES: MapNode[] = [
+const NODES: MapNode[] = [
   {
     id: 'so-lon', name: 'Số đến lớp triệu', icon: F('abacus'), region: 'so', x: 100, y: 115, topics: ['num100k', 'num1m', 'placeClass', 'numMillion', 'roundBig', 'cmpBig', 'naturalSeq', 'evenOdd'],
     know: 'Mỗi lớp có 3 hàng: đơn vị, chục, trăm. Lớp đơn vị → lớp nghìn → lớp triệu.',
@@ -160,7 +116,7 @@ export const NODES: MapNode[] = [
   },
 ];
 
-export const LINKS: MapLink[] = [
+const LINKS: MapLink[] = [
   { from: 'so-lon', to: 'cong-tru' },
   { from: 'cong-tru', to: 'nhan-chia' },
   { from: 'cong-tru', to: 'tong-hieu' },
@@ -177,6 +133,14 @@ export const LINKS: MapLink[] = [
   { from: 'khoi-luong', to: 'dien-tich' },
   { from: 'kha-nang', to: 'bieu-do' },
 ];
+
+export const MAP_TOAN4: MapDef = {
+  grade: 4,
+  title: 'Toán 4',
+  regions: regions('Số và phép tính', 'Phân số', 'Hình học và đo lường', 'Thống kê và khả năng'),
+  nodes: NODES,
+  links: LINKS,
+};
 
 /** tiến độ mẫu cho trang demo */
 export const DEMO_STATE: MapState = {

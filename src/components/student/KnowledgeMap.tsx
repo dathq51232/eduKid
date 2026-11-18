@@ -1,16 +1,16 @@
 'use client';
 /* eslint-disable @next/next/no-img-element -- hình 3D / Milo có sẵn trong public, kích thước tự do */
-// "Bản đồ kiến thức" (Toán 4): mỗi trạm là một mắt xích kỹ năng, sáng dần theo mức L1–L5.
+// "Bản đồ kiến thức" (Toán theo khối): mỗi trạm là một mắt xích kỹ năng, sáng dần theo mức L1–L5.
 // Đường nối = kiến thức cần biết trước. Bấm trạm → kiến thức cần nhớ, mẹo của Milo, nút luyện bài.
 // Trạm là thẻ HTML đặt trên lớp SVG tĩnh (không hoạt ảnh trong SVG) để chạy mượt trên máy tính bảng.
 // Dùng ở trang của em (tiến độ thật) và trang demo (tiến độ mẫu).
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { BookOpen, ChevronRight, Lightbulb, Play, Volume2, X } from 'lucide-react';
-import { LEVEL_NAMES, LINKS, MAP_H, MAP_W, NODES, REGIONS, type MapNode, type MapState, type NodeState } from './knowledge-map-toan4';
+import { LEVEL_NAMES, MAP_H, MAP_W, type MapDef, type MapNode, type MapState, type NodeState } from './knowledge-map-types';
+import { MAPS } from './knowledge-maps';
 import '@/styles/bdk.css';
 
-const byId = new Map(NODES.map((n) => [n.id, n]));
 const NONE: NodeState = { level: 0 };
 
 /** đọc to câu của Milo (giọng tiếng Việt của trình duyệt, nếu có) */
@@ -39,6 +39,8 @@ function goalText(level: number) {
 }
 
 type Props = {
+  /** khối lớp (1–5) */
+  grade: number;
   state: MapState;
   /** đường dẫn luyện bài của từng trạm; không có thì nút luyện dẫn tới #luyen (demo) */
   hrefs?: Record<string, string>;
@@ -46,7 +48,10 @@ type Props = {
   compact?: boolean;
 };
 
-export default function KnowledgeMap({ state, hrefs, compact }: Props) {
+export default function KnowledgeMap({ grade, state, hrefs, compact }: Props) {
+  const def = MAPS[grade] ?? MAPS[4];
+  const { nodes: NODES, links: LINKS, regions: REGIONS } = def;
+  const byId = useMemo(() => new Map(NODES.map((n) => [n.id, n])), [NODES]);
   const [openId, setOpenId] = useState<string | null>(null);
   const st = (id: string) => state[id] ?? NONE;
   const open = openId ? byId.get(openId) ?? null : null;
@@ -81,14 +86,14 @@ export default function KnowledgeMap({ state, hrefs, compact }: Props) {
     const sa = state[a.id] ?? NONE, sb = state[b.id] ?? NONE;
     const d = l.c ? `M${a.x} ${a.y} Q${l.c[0]} ${l.c[1]} ${b.x} ${b.y}` : `M${a.x} ${a.y} L${b.x} ${b.y}`;
     return { key: `${l.from}-${l.to}`, d, on: sa.level >= 3 && sb.level >= 3, weak: !!sa.weak, focus: !!openId && (l.from === openId || l.to === openId) };
-  }), [openId, state]);
+  }), [openId, state, LINKS, byId]);
 
   return (
     <div className={`bdk${compact ? ' is-compact' : ''}`}>
       <header className="bdk-head">
         {!compact && (
           <div className="bdk-subjects" role="tablist" aria-label="Chọn môn">
-            <button type="button" role="tab" aria-selected="true" className="is-on"><img src="/emoji/f3d/abacus.webp" alt="" />Toán 4</button>
+            <button type="button" role="tab" aria-selected="true" className="is-on"><img src="/emoji/f3d/abacus.webp" alt="" />{def.title}</button>
             <button type="button" role="tab" aria-selected="false" disabled><img src="/emoji/f3d/open-book.webp" alt="" />Tiếng Việt<small>Sắp có</small></button>
             <button type="button" role="tab" aria-selected="false" disabled><img src="/emoji/f3d/blue-book.webp" alt="" />Tiếng Anh<small>Sắp có</small></button>
           </div>
@@ -159,12 +164,13 @@ export default function KnowledgeMap({ state, hrefs, compact }: Props) {
       </div>
       <p className="bdk-hint">Bấm vào một trạm để xem kiến thức và mẹo của Milo.</p>
 
-      {open && <NodePanel node={open} state={state} href={hrefs?.[open.id]} onClose={() => setOpenId(null)} onGo={setOpenId} />}
+      {open && <NodePanel def={def} byId={byId} node={open} state={state} href={hrefs?.[open.id]} onClose={() => setOpenId(null)} onGo={setOpenId} />}
     </div>
   );
 }
 
-function NodePanel({ node, state, href, onClose, onGo }: { node: MapNode; state: MapState; href?: string; onClose: () => void; onGo: (id: string) => void }) {
+function NodePanel({ def, byId, node, state, href, onClose, onGo }: { def: MapDef; byId: Map<string, MapNode>; node: MapNode; state: MapState; href?: string; onClose: () => void; onGo: (id: string) => void }) {
+  const LINKS = def.links;
   const s = state[node.id] ?? NONE;
   const needs = LINKS.filter((l) => l.to === node.id).map((l) => byId.get(l.from)!);
   const opens = LINKS.filter((l) => l.from === node.id).map((l) => byId.get(l.to)!);
@@ -178,7 +184,7 @@ function NodePanel({ node, state, href, onClose, onGo }: { node: MapNode; state:
         <header className="bdk-panel-head">
           <img src={node.icon} alt="" />
           <div>
-            <p className="bdk-muted">Toán 4 · {s.level ? `Mức L${s.level} · ${LEVEL_NAMES[s.level]}` : 'Chưa học'}</p>
+            <p className="bdk-muted">{def.title} · {s.level ? `Mức L${s.level} · ${LEVEL_NAMES[s.level]}` : 'Chưa học'}</p>
             <h2 id="bdk-panel-title">{node.name}</h2>
           </div>
           <button type="button" className="bdk-close" onClick={onClose} aria-label="Đóng"><X aria-hidden="true" /></button>

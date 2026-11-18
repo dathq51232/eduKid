@@ -10,7 +10,7 @@ import NotConfigured from '@/components/classroom/NotConfigured';
 import SignOutButton from '@/components/classroom/SignOutButton';
 import RoomJoin from '@/components/classroom/RoomJoin';
 import KnowledgeMap from '@/components/student/KnowledgeMap';
-import { toan4MapHrefs, toan4MapState } from '@/components/student/knowledge-map-progress';
+import { mapHrefs, mapOfGrade, mapState } from '@/components/student/knowledge-map-progress';
 import { getViewer } from '@/lib/auth/viewer';
 import { learningGate } from '@/lib/auth/gate';
 import { fmtDay } from '@/lib/billing';
@@ -87,9 +87,10 @@ export default async function StudentHome() {
   const nextHref = next ? (locked ? PAY : next.kind === 'exam' ? `/hoc-sinh/de/${next.id}` : next.lesson_code && next.subject ? lessonHref(next.lesson_code, next.subject, next.grade, next.muc) : null) : null;
   const nextDue = next ? dueInfo(next.due_at) : null;
 
-  // Bản đồ kiến thức (hiện có Toán 4): mức từng trạm tính từ bài em đã làm
-  const mapState = grade === 4 ? toan4MapState(list) : null;
-  const mapHrefs = mapState ? (locked ? Object.fromEntries(Object.keys(mapState).map((k) => [k, PAY])) : toan4MapHrefs(mapState, grade, list)) : undefined;
+  // Bản đồ kiến thức Toán theo khối của em: mức từng trạm tính từ bài em đã làm
+  const map = mapOfGrade(grade);
+  const kmState = map ? mapState(map, list) : null;
+  const kmHrefs = map && kmState ? (locked ? Object.fromEntries(map.nodes.map((n) => [n.id, PAY])) : mapHrefs(map, kmState, list)) : undefined;
 
   return (
     <>
@@ -190,10 +191,10 @@ export default async function StudentHome() {
           </section>
         </div>
 
-        {mapState && (
+        {map && kmState && (
           <section className="dash-section sd-map" id="ban-do" aria-labelledby="sd-map-t">
-            <h2 id="sd-map-t"><MapIcon aria-hidden="true" /> Bản đồ kiến thức · Toán 4</h2>
-            <KnowledgeMap state={mapState} hrefs={mapHrefs} compact />
+            <h2 id="sd-map-t"><MapIcon aria-hidden="true" /> Bản đồ kiến thức · {map.title}</h2>
+            <KnowledgeMap grade={map.grade} state={kmState} hrefs={kmHrefs} compact />
           </section>
         )}
 

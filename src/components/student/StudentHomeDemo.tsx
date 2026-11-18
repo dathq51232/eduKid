@@ -59,7 +59,7 @@ export default function StudentHomeDemo() {
         <span>Demo:</span>
         <button type="button" aria-pressed={mode === 'nho'} onClick={() => setMode('nho')}>Lớp 1–2 · Lớp học của Milo</button>
         <button type="button" aria-pressed={mode === 'lon'} onClick={() => setMode('lon')}>Lớp 3–5 · Thẻ học</button>
-        <button type="button" aria-pressed={mode === 'bando'} onClick={() => setMode('bando')}>Bản đồ kiến thức · Toán 4</button>
+        <button type="button" aria-pressed={mode === 'bando'} onClick={() => setMode('bando')}>Bản đồ kiến thức</button>
       </div>
       {mode === 'nho' ? <SmallKids /> : mode === 'lon' ? <BigKids onOpenMap={() => setMode('bando')} /> : <KnowledgeMapDemo />}
     </div>
