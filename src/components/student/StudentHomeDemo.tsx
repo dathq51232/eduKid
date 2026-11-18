@@ -5,10 +5,11 @@
 //  B. Lớp 3–5: thẻ học có tiến độ (mục tiêu ngày, học tiếp, bài cô giao, môn học, huy hiệu, thử thách tuần) + thanh tab.
 import { useEffect, useState } from 'react';
 import { BookOpen, ChevronRight, Gamepad2, Home, Settings, Trophy, User, Volume2 } from 'lucide-react';
+import KnowledgeMapDemo from './KnowledgeMapDemo';
 import '@/styles/hs2.css';
 
 const F = (n: string) => `/emoji/f3d/${n}.webp`;
-type Mode = 'nho' | 'lon';
+type Mode = 'nho' | 'lon' | 'bando';
 
 const KID = { name: 'Minh Anh', stars: 128, streak: 5, todayDone: 3, todayGoal: 5 };
 const NEXT = { subject: 'Toán', title: 'Phép cộng trong phạm vi 10', lesson: 'Bài 12', done: 3, total: 5 };
@@ -51,15 +52,16 @@ function say(text: string) {
 
 export default function StudentHomeDemo() {
   const [mode, setMode] = useState<Mode>('nho');
-  useEffect(() => { if (new URLSearchParams(location.search).get('lop') === 'lon') setMode('lon'); }, []);
+  useEffect(() => { const q = new URLSearchParams(location.search).get('lop'); if (q === 'lon' || q === 'bando') setMode(q); }, []);
   return (
     <div className={`hs2 hs2-${mode}`}>
       <div className="hs2-switch" role="group" aria-label="Chọn giao diện demo">
         <span>Demo:</span>
         <button type="button" aria-pressed={mode === 'nho'} onClick={() => setMode('nho')}>Lớp 1–2 · Lớp học của Milo</button>
         <button type="button" aria-pressed={mode === 'lon'} onClick={() => setMode('lon')}>Lớp 3–5 · Thẻ học</button>
+        <button type="button" aria-pressed={mode === 'bando'} onClick={() => setMode('bando')}>Bản đồ kiến thức · Toán 4</button>
       </div>
-      {mode === 'nho' ? <SmallKids /> : <BigKids />}
+      {mode === 'nho' ? <SmallKids /> : mode === 'lon' ? <BigKids onOpenMap={() => setMode('bando')} /> : <KnowledgeMapDemo />}
     </div>
   );
 }
@@ -126,7 +128,7 @@ function Bar({ done, total, label }: { done: number; total: number; label: strin
     </span>
   );
 }
-function BigKids() {
+function BigKids({ onOpenMap }: { onOpenMap: () => void }) {
   return (
     <div className="hs2-app">
       <main className="hs2-feed">
@@ -181,7 +183,7 @@ function BigKids() {
         </section>
 
         <section aria-labelledby="hs2-subj">
-          <h2 id="hs2-subj" className="hs2-h">Môn học</h2>
+          <div className="hs2-h-row"><h2 id="hs2-subj" className="hs2-h">Môn học</h2><button type="button" className="hs2-more hs2-more-btn" onClick={onOpenMap}>Bản đồ kiến thức</button></div>
           <div className="hs2-subjects">
             {SUBJECTS.map((s) => (
               <a key={s.name} href="#mon" className={`hs2-subj ${s.tone}`}>

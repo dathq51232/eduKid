@@ -1,0 +1,154 @@
+/* ===== Bản đồ kiến thức (bdk-) — demo trang học sinh: trạm = mắt xích kỹ năng, sáng dần theo mức L1–L5 ===== */
+.bdk { --bk-ink: #1e2b4a; --bk-muted: #46536e; --bk-blue: #2457c5; --bk-yellow: #ffc83d; --bk-coral: #e5484d; --bk-coral-soft: #ffe4e1;
+  --bk-green: #16a34a; --bk-line: #b7c4dd;
+  max-width: 1280px; margin: 0 auto; color: var(--bk-ink); font-size: 16px; }
+
+.bdk-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.bdk-subjects { display: flex; flex-wrap: wrap; gap: 8px; }
+.bdk-subjects button { display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 6px 18px 6px 8px; border-radius: 999px;
+  border: 2px solid #c9d6ee; background: #fff; color: var(--bk-ink); font: inherit; font-weight: 800; cursor: pointer; }
+.bdk-subjects button img { width: 36px; height: 36px; }
+.bdk-subjects button.is-on { background: var(--bk-blue); border-color: var(--bk-blue); color: #fff; }
+.bdk-subjects button:disabled { cursor: default; color: var(--bk-muted); }
+.bdk-subjects button:disabled img { filter: grayscale(1); opacity: .55; }
+.bdk-subjects small { font-size: 13px; font-weight: 700; background: #eef3fb; border-radius: 999px; padding: 2px 8px; }
+.bdk-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.bdk-stat { background: #fff; border-radius: 999px; padding: 8px 16px; font-weight: 700; box-shadow: 0 4px 12px rgb(30 43 74 / .08); }
+.bdk-stat b { color: var(--bk-blue); font-size: 20px; }
+.bdk-stat.is-weak b { color: var(--bk-coral); }
+
+/* Milo gợi ý */
+.bdk-milo { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 12px; }
+.bdk-milo-img { width: 96px; height: auto; flex: none; filter: drop-shadow(0 8px 10px rgb(30 43 74 / .18)); }
+.bdk-milo-bubble { flex: 1; background: #fff; border-radius: 24px; padding: 14px 18px; box-shadow: 0 8px 20px rgb(30 43 74 / .10);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.bdk-milo-bubble p { flex: 1 1 280px; margin: 0; font-size: 19px; font-weight: 700; line-height: 1.4; }
+.bdk-milo-actions { display: flex; align-items: center; gap: 10px; }
+.bdk-speak { width: 52px; height: 52px; border-radius: 50%; border: 0; background: #e7efff; color: var(--bk-blue); display: grid; place-items: center; cursor: pointer; }
+.bdk-speak svg { width: 26px; height: 26px; }
+.bdk-cta { display: inline-flex; align-items: center; gap: 8px; min-height: 56px; padding: 0 22px; border-radius: 999px; border: 0;
+  background: var(--bk-yellow); color: var(--bk-ink); font: inherit; font-weight: 800; font-size: 17px; text-decoration: none; cursor: pointer;
+  box-shadow: 0 5px 0 #d69a00; transition: transform .15s; }
+.bdk-cta svg { width: 20px; height: 20px; fill: currentColor; }
+.bdk-cta:hover { transform: translateY(-2px); }
+.bdk-cta:focus-visible, .bdk-node:focus-visible, .bdk-chip:focus-visible { outline: 4px solid var(--bk-blue); outline-offset: 3px; }
+
+/* chú thích */
+.bdk-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; list-style: none; margin: 0 0 10px; padding: 0; font-size: 15px; color: var(--bk-muted); font-weight: 600; }
+.bdk-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.bdk-legend i { width: 16px; height: 16px; border-radius: 5px; border: 2px solid; }
+.bdk-legend i.is-strong { background: var(--bk-blue); border-color: var(--bk-blue); }
+.bdk-legend i.is-learning { background: #eaf1ff; border-color: #8fb0ec; }
+.bdk-legend i.is-current { background: #fff6d6; border-color: var(--bk-yellow); }
+.bdk-legend i.is-weak { background: var(--bk-coral-soft); border-color: var(--bk-coral); }
+.bdk-legend i.is-new { background: #f1f3f7; border-color: #cfd6e3; border-style: dashed; }
+.bdk-legend-line { width: 22px; height: 0; border-top: 3px solid var(--bk-line); }
+
+/* bản đồ: khung cố định tỉ lệ, cuộn ngang trong khung khi màn hẹp (trang không bị tràn) */
+.bdk-scroll { overflow-x: auto; border-radius: 28px; background: #fff; box-shadow: 0 14px 34px rgb(30 43 74 / .10); -webkit-overflow-scrolling: touch; }
+.bdk-map { position: relative; min-width: 980px; width: 100%;
+  background-color: #fbfdff; background-image: linear-gradient(#e9eff9 1px, transparent 1px), linear-gradient(90deg, #e9eff9 1px, transparent 1px); background-size: 28px 28px; }
+.bdk-region { position: absolute; border-radius: 22px; border: 2px dashed; }
+.bdk-region span { position: absolute; top: 8px; left: 14px; font-weight: 800; font-size: 15px; letter-spacing: .02em; text-transform: uppercase; }
+.bdk-region.is-blue { background: rgb(36 87 197 / .05); border-color: rgb(36 87 197 / .25); color: #1d4aa8; }
+.bdk-region.is-yellow { background: rgb(255 200 61 / .09); border-color: rgb(214 154 0 / .35); color: #8a5a00; }
+.bdk-region.is-green { background: rgb(22 163 74 / .06); border-color: rgb(22 163 74 / .28); color: #11753a; }
+.bdk-region.is-coral { background: rgb(229 72 77 / .05); border-color: rgb(229 72 77 / .25); color: #b42328; }
+
+.bdk-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.bdk-lines path { fill: none; stroke: var(--bk-line); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 2 7; }
+.bdk-lines path.is-on { stroke: var(--bk-blue); stroke-dasharray: none; opacity: .55; }
+.bdk-lines path.is-weak { stroke: var(--bk-coral); stroke-dasharray: 8 6; opacity: .8; }
+.bdk-lines path.is-focus { stroke-width: 5; opacity: 1; }
+
+.bdk-pos { position: absolute; transform: translate(-50%, -50%); z-index: 1; }
+.bdk-node { position: relative; width: 116px; min-height: 96px; padding: 10px 6px 8px; border-radius: 20px; border: 3px solid;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; font: inherit; color: var(--bk-ink); cursor: pointer;
+  transition: transform .15s; }
+.bdk-node:hover, .bdk-node.is-open { transform: translateY(-3px) scale(1.04); }
+.bdk-node img { width: 38px; height: 38px; }
+.bdk-node b { font-size: 15px; line-height: 1.2; font-weight: 800; text-align: center; }
+.bdk-dots { display: flex; gap: 3px; margin-top: auto; }
+.bdk-dots i { width: 12px; height: 6px; border-radius: 3px; background: rgb(30 43 74 / .15); }
+.bdk-dots i.is-on { background: currentColor; }
+
+/* mắt xích sáng (đã vững): nền xanh, phát sáng nhẹ (bóng tĩnh, không hoạt ảnh) */
+.bdk-node.is-strong { background: linear-gradient(160deg, #3a6fe0, var(--bk-blue)); border-color: #1d4aa8; color: #fff; box-shadow: 0 0 0 4px rgb(36 87 197 / .15), 0 8px 18px rgb(36 87 197 / .35); }
+.bdk-node.is-strong .bdk-dots i { background: rgb(255 255 255 / .3); }
+.bdk-node.is-strong .bdk-dots i.is-on { background: var(--bk-yellow); }
+.bdk-node.is-learning { background: #eaf1ff; border-color: #8fb0ec; color: #1d4aa8; box-shadow: 0 4px 10px rgb(30 43 74 / .08); }
+.bdk-node.is-learning b { color: var(--bk-ink); }
+.bdk-node.is-current { background: #fff6d6; border-color: var(--bk-yellow); color: #8a5a00; box-shadow: 0 0 0 5px rgb(255 200 61 / .35), 0 8px 18px rgb(214 154 0 / .25); }
+.bdk-node.is-current b { color: var(--bk-ink); }
+.bdk-node.is-weak { background: var(--bk-coral-soft); border-color: var(--bk-coral); color: var(--bk-coral); box-shadow: 0 0 0 5px rgb(229 72 77 / .15), 0 8px 18px rgb(229 72 77 / .2); }
+.bdk-node.is-weak b { color: var(--bk-ink); }
+.bdk-node.is-new { background: #f6f7fa; border-color: #cfd6e3; border-style: dashed; color: #8592a8; }
+.bdk-node.is-new img { filter: grayscale(1); opacity: .5; }
+.bdk-node.is-new b { color: var(--bk-muted); }
+
+.bdk-tag { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-style: normal; font-size: 13px; font-weight: 800;
+  border-radius: 999px; padding: 2px 10px; color: #fff; }
+.bdk-tag.is-weak { background: var(--bk-coral); }
+.bdk-tag.is-current { background: #d69a00; }
+.bdk-hint { margin: 8px 4px 0; color: var(--bk-muted); font-size: 15px; }
+
+/* bảng chi tiết trạm: ngăn kéo bên phải, màn hẹp thành tấm trượt từ dưới */
+.bdk-backdrop { position: fixed; inset: 0; z-index: 40; border: 0; background: rgb(30 43 74 / .35); cursor: pointer; animation: bdk-fade .2s ease-out; }
+.bdk-panel { position: fixed; z-index: 41; top: 0; right: 0; bottom: 0; width: min(440px, 100%); overflow-y: auto; background: #fff;
+  padding: 20px 20px 0; display: flex; flex-direction: column; gap: 14px; box-shadow: -12px 0 40px rgb(30 43 74 / .2); animation: bdk-in-r .28s ease-out; }
+@keyframes bdk-fade { from { opacity: 0; } }
+@keyframes bdk-in-r { from { transform: translateX(40px); opacity: 0; } }
+@keyframes bdk-in-b { from { transform: translateY(40px); opacity: 0; } }
+@media (max-width: 640px) {
+  .bdk-panel { top: auto; left: 0; width: 100%; max-height: 86vh; border-radius: 26px 26px 0 0; animation-name: bdk-in-b; }
+  .bdk-milo-img { width: 72px; }
+  .bdk-milo-bubble p { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) { .bdk-panel, .bdk-backdrop { animation: none; } .bdk-node, .bdk-cta { transition: none; } }
+
+.bdk-panel-head { display: flex; align-items: center; gap: 12px; }
+.bdk-panel-head img { width: 56px; height: 56px; }
+.bdk-panel-head h2 { margin: 0; font-size: 24px; line-height: 1.2; }
+.bdk-muted { margin: 0; color: var(--bk-muted); font-size: 15px; font-weight: 600; }
+.bdk-close { margin-left: auto; flex: none; width: 48px; height: 48px; border-radius: 50%; border: 0; background: #eef3fb; color: var(--bk-ink); display: grid; place-items: center; cursor: pointer; }
+
+.bdk-levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; list-style: none; margin: 0; padding: 0; }
+.bdk-levels li { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border-radius: 14px; background: #f1f3f7; color: var(--bk-muted); text-align: center; }
+.bdk-levels li b { font-size: 17px; }
+.bdk-levels li span { font-size: 13px; font-weight: 700; line-height: 1.15; }
+.bdk-levels li.is-on { background: var(--bk-blue); color: #fff; }
+.bdk-levels li.is-next { background: #fff6d6; color: #8a5a00; outline: 2px dashed var(--bk-yellow); }
+.bdk-goal { margin: -4px 0 0; font-size: 15px; color: var(--bk-muted); }
+
+.bdk-warn { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: var(--bk-coral-soft); border-radius: 18px; padding: 12px 14px; }
+.bdk-warn img { width: 44px; height: 44px; flex: none; }
+.bdk-warn p { flex: 1 1 200px; margin: 0; font-size: 16px; line-height: 1.4; }
+.bdk-warn button { display: inline-flex; align-items: center; gap: 4px; min-height: 48px; padding: 0 16px; border-radius: 999px; border: 0;
+  background: var(--bk-coral); color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+.bdk-warn button svg { width: 18px; height: 18px; }
+
+.bdk-sec h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 17px; }
+.bdk-sec h3 svg { width: 20px; height: 20px; color: var(--bk-blue); }
+.bdk-sec h3 + .bdk-chips + h3 { margin-top: 12px; }
+.bdk-know { margin: 0; font-size: 17px; line-height: 1.5; background: #f5f8ff; border-left: 5px solid var(--bk-blue); border-radius: 0 14px 14px 0; padding: 10px 14px; }
+.bdk-tips { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.bdk-tips li { border-radius: 18px; padding: 12px 14px; background: #fffaf0; border: 2px solid #ffe3a3; }
+.bdk-tips b { font-size: 17px; }
+.bdk-tips p { margin: 4px 0 8px; font-size: 16px; line-height: 1.45; color: var(--bk-muted); }
+.bdk-tips code { display: block; font-family: inherit; font-weight: 700; font-size: 16px; background: #fff; border-radius: 12px; padding: 8px 12px; color: var(--bk-ink); }
+
+.bdk-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.bdk-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 4px 14px 4px 6px; border-radius: 999px; border: 2px solid;
+  font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; background: #fff; color: var(--bk-ink); }
+.bdk-chip img { width: 30px; height: 30px; }
+.bdk-chip.is-strong { border-color: var(--bk-blue); }
+.bdk-chip.is-learning { border-color: #8fb0ec; }
+.bdk-chip.is-current { border-color: var(--bk-yellow); background: #fff6d6; }
+.bdk-chip.is-weak { border-color: var(--bk-coral); background: var(--bk-coral-soft); }
+.bdk-chip.is-new { border-color: #cfd6e3; border-style: dashed; color: var(--bk-muted); }
+
+.bdk-panel-foot { position: sticky; bottom: 0; margin: auto -20px 0; padding: 12px 20px 16px; background: linear-gradient(180deg, rgb(255 255 255 / 0), #fff 30%); }
+.bdk-cta.is-big { width: 100%; justify-content: center; font-size: 19px; }
+
+/* nền trang tối (theo hs2): chữ nằm thẳng trên nền đổi sang sáng; thẻ, bản đồ, ngăn kéo vẫn nền trắng */
+:root[data-theme="dark"] .bdk-legend, :root[data-theme="dark"] .bdk-hint { color: #d5ddec; }

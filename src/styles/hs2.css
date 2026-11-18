@@ -105,6 +105,7 @@
 .hs2-h { margin: 0 0 10px; font-size: 22px; }
 .hs2-h-row { display: flex; justify-content: space-between; align-items: baseline; }
 .hs2-more { color: var(--hs-blue); font-weight: 700; font-size: 16px; text-decoration: none; }
+.hs2-more-btn { border: 0; background: #e7efff; border-radius: 999px; padding: 8px 14px; min-height: 44px; font-family: inherit; cursor: pointer; }
 .hs2-bar { display: block; height: 12px; border-radius: 999px; background: #dde6f5; overflow: hidden; }
 .hs2-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #22c55e, #16a34a); transform-origin: left; }
 
