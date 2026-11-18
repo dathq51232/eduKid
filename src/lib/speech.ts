@@ -6,8 +6,12 @@
 //
 // Cách làm ở đây:
 //   1. Chờ danh sách giọng tải xong, chọn đúng giọng vi-VN (ưu tiên giọng tự nhiên/online).
-//   2. Toán, Tiếng Việt: đọc toàn bộ bằng giọng Việt; ký hiệu + − = > < được đổi thành chữ.
-//   3. Tiếng Anh: phần tiếng Anh đọc bằng giọng Anh, phần hướng dẫn tiếng Việt đọc bằng giọng Việt.
+//   2. Mọi môn: tự nhận đoạn tiếng Anh → giọng Anh, phần còn lại → giọng Việt (ký hiệu + − = > < đổi thành chữ).
+//      - Môn Tiếng Anh: chuỗi từ không dấu là tiếng Anh (trừ vài từ Việt không dấu hay gặp).
+//      - Môn khác / không rõ môn: chỉ coi là tiếng Anh khi có dấu hiệu rõ (trong ngoặc kép, hoặc từ không thể là
+//        tiếng Việt như "hello", "school", hoặc từ tiếng Anh thông dụng như "my", "the"), để tên riêng không dấu
+//        ("Lan", "Minh Anh"), đơn vị ("cm", "kg"), số La Mã, chữ cái biến số (a, b) vẫn đọc giọng Việt.
+//   3. Số đứng giữa hai từ tiếng Anh đọc theo tiếng Anh ("Unit 4" → "unit four").
 //   4. Máy không có giọng Việt thì KHÔNG đọc bằng giọng Anh, mà báo cho người dùng cách cài.
 
 import type { SubjectCode } from './types';
@@ -120,6 +124,37 @@ function viText(text: string): string {
   return mathToVietnamese(stripPictographs(text).replace(/["“”']/g, ''));
 }
 
+/** Âm tiết tiếng Việt viết không dấu (phụ âm đầu + vần + phụ âm cuối): "lan", "minh", "nguyen"… */
+const VI_SYLLABLE = /^(ngh|ng|nh|ch|gh|gi|kh|ph|qu|th|tr|[bcdghklmnpqrstvx])?[aeiouy]{1,3}(ch|ng|nh|[cmnpt])?$/;
+/** Từ tiếng Anh thông dụng mà viết ra trông giống âm tiết tiếng Việt ("my", "the", "to"…) */
+const EN_COMMON = new Set(['a', 'an', 'the', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'me', 'he', 'she', 'it', 'we', 'they', 'you', 'is', 'am', 'are', 'was', 'be', 'to', 'of', 'in', 'on', 'at', 'by', 'for', 'and', 'or', 'not', 'no', 'yes', 'this', 'that', 'these', 'those', 'what', 'who', 'how', 'can', 'do', 'go', 'see', 'say', 'hi', 'bye', 'cat', 'dog', 'pen', 'book', 'big', 'pig', 'hen', 'ten', 'one', 'two', 'six', 'nine', 'red', 'tea', 'sun', 'cup', 'man', 'boy', 'toy', 'key', 'kite', 'happy', 'mum', 'dad']);
+/** Đơn vị đo, viết tắt hay gặp trong đề Toán: đọc theo tiếng Việt */
+const VI_UNITS = new Set(['mm', 'cm', 'dm', 'm', 'km', 'g', 'kg', 'mg', 'ml', 'l', 'ha', 'dam', 'hm', 'yen', 'ta', 'tan', 'cm2', 'dm2', 'm2', 'km2', 'cm3', 'dm3', 'm3']);
+const ROMAN = /^[IVXLCDM]+$/;
+
+/** Từ mượn quen thuộc, trong câu tiếng Việt đọc theo giọng Việt */
+const VI_LOAN = new Set(['video', 'robot', 'radio', 'pizza', 'piano', 'taxi', 'sofa', 'karaoke', 'email', 'internet', 'website', 'laptop', 'game', 'online', 'ok', 'tivi', 'ti-vi', 'com-pa', 'ki-lo-gam', 'ki-lo-met', 'xang-ti-met', 'met']);
+/** Âm đầu / chữ ghép tiếng Việt đứng riêng (bài học vần: "ng", "ngh", "gh", "tr"…) */
+const VI_ONSET = /^(ngh|ng|nh|ch|gh|gi|kh|ph|qu|th|tr|[bcdghklmnpqrstvx])$/;
+
+/**
+ * Ở môn không phải Tiếng Anh, phân loại một từ không dấu:
+ * 'en' = chắc chắn tiếng Anh (không thể là âm tiết tiếng Việt: "hello", "school"…);
+ * 'amb' = vừa là từ tiếng Anh thông dụng vừa đọc được như tiếng Việt ("an", "to", "can", "my") → theo từ bên cạnh;
+ * 'vi' = còn lại (tên riêng không dấu, âm / vần, đơn vị, số La Mã, viết tắt, từ mượn quen thuộc).
+ */
+function classifyStrict(tok: string): 'en' | 'vi' | 'amb' {
+  const w = tok.toLowerCase().replace(/’/g, "'");
+  if (w.length < 2 || VI_UNITS.has(w) || VI_LOAN.has(w) || ROMAN.test(tok) || VI_ONSET.test(w)) return 'vi';
+  if (tok === tok.toUpperCase()) return 'vi'; // viết tắt / chữ in hoa (HCN, ABCDEF) đọc từng chữ theo giọng Việt
+  if (!/[aeiouy]/.test(w)) return 'vi'; // không có nguyên âm: đọc từng chữ cái
+  // tên phiên âm có gạch nối (Ma-ri-a, Yu-ki, An-na): mỗi phần là một âm tiết Việt
+  if (w.includes('-') && w.split('-').every((x) => VI_SYLLABLE.test(x))) return 'vi';
+  const viLike = VI_SYLLABLE.test(w) && !/[fjwz']/.test(w);
+  if (viLike) return EN_COMMON.has(w) ? 'amb' : 'vi';
+  return 'en';
+}
+
 // Từ tiếng Việt không dấu hay gặp: không coi là tiếng Anh khi đứng một mình
 const VI_NO_MARK = new Set(['con', 'cho', 'ba', 'me', 'bo', 'ca', 'ga', 'to', 'nho', 'xa', 'xe', 'hoa', 'em', 'anh', 'chi', 'co', 'thi', 'va', 'la', 'hay', 'bao', 'nhieu', 'tim', 'hai', 'mai', 'tranh', 'xanh', 'trong', 'hong', 'den', 'nau', 'tim', 'mau', 'sai', 'dung', 'cau']);
 const ASCII_WORD = /^[A-Za-z][A-Za-z'’-]*$/;
@@ -128,27 +163,40 @@ function englishBlankToSpeech(t: string) {
   return t.replace(/(?:_\s?){1,}/g, ' blank ').replace(/\s{2,}/g, ' ').trim();
 }
 
-// Tiếng Anh: tách đoạn tiếng Anh (trong ngoặc kép hoặc chuỗi từ không dấu) khỏi phần tiếng Việt.
-export function splitEnglishVietnamese(input: string): Segment[] {
-  const text = stripPictographs(input).replace(/'([^']+)'/g, '"$1"');
+// Tách đoạn tiếng Anh (trong ngoặc kép hoặc chuỗi từ không dấu) khỏi phần tiếng Việt.
+// strict = môn không phải Tiếng Anh: chỉ nhận từ tiếng Anh rõ ràng (xem classifyStrict).
+export function splitEnglishVietnamese(input: string, strict = false): Segment[] {
+  // strict: bỏ ngoặc kép (để "hello" vẫn nhận ra là một từ tiếng Anh); không strict: đổi 'x' thành "x" để tách theo ngoặc
+  const text = strict ? stripPictographs(input).replace(/["“”]|(^|\s)'|'(?=\s|[.,!?;:]|$)/g, '$1 ') : stripPictographs(input).replace(/'([^']+)'/g, '"$1"');
   type Run = { text: string; lang: SpeechLang; quoted: boolean; words: number };
   const runs: Run[] = [];
 
-  text.split(/["“”]/).forEach((part, i) => {
+  // Tiếng Việt / Toán hay dùng ngoặc kép cho từ tiếng Việt ("học sinh") → ở chế độ strict không tách theo ngoặc kép
+  text.split(strict ? /(?!)/ : /["“”]/).forEach((part, i) => {
     if (i % 2 === 1) {
       runs.push({ text: part, lang: 'en', quoted: true, words: 99 });
       return;
     }
     const tokens = part.split(/(\s+|[(),.!?;:])/).filter((t) => t !== '');
-    const isWord = (t: string) => /\S/.test(t) && !/^[(),.!?;:]$/.test(t);
+    // dấu câu, ký hiệu đứng riêng (·, –, /, …) không phải từ: không quyết định ngôn ngữ
+    const isWord = (t: string) => /\S/.test(t) && !/^[\p{P}\p{S}]+$/u.test(t);
+    // số (và số có dấu chấm, phẩy) không quyết định ngôn ngữ: đi theo đoạn đang đọc
+    const isNumber = (t: string) => /^\d+([.,]\d+)*$/.test(t);
     const wordCount = tokens.filter(isWord).length;
+    // ngôn ngữ từng từ (null = số / dấu câu: đi theo đoạn đang đọc)
+    const langs: (SpeechLang | 'amb' | null)[] = tokens.map((tok) => {
+      if (!isWord(tok) || isNumber(tok)) return null;
+      const ascii = ASCII_WORD.test(tok) || /^_+$/.test(tok);
+      if (strict) return ascii && !/^_+$/.test(tok) ? classifyStrict(tok) : 'vi';
+      return ascii && !(VI_NO_MARK.has(tok.toLowerCase()) && wordCount > 1) ? 'en' : 'vi';
+    });
+    // từ lưỡng nghĩa ("my", "an", "to") đứng cạnh từ tiếng Anh chắc chắn thì là tiếng Anh, còn lại là tiếng Việt
+    const near = (i: number, step: number) => { for (let j = i + step; j >= 0 && j < langs.length; j += step) { const l = langs[j]; if (l === 'en' || l === 'vi') return l; } return null; };
+    langs.forEach((l, i) => { if (l === 'amb') langs[i] = near(i, 1) === 'en' || near(i, -1) === 'en' ? 'en' : 'vi'; });
     let cur: Run | null = null;
-    for (const tok of tokens) {
-      let lang: SpeechLang | null = null;
-      if (isWord(tok)) {
-        const ascii = ASCII_WORD.test(tok) || /^_+$/.test(tok);
-        lang = ascii && !(VI_NO_MARK.has(tok.toLowerCase()) && wordCount > 1) ? 'en' : 'vi';
-      }
+    for (let k = 0; k < tokens.length; k++) {
+      const tok = tokens[k];
+      const lang = langs[k] as SpeechLang | null;
       if (lang && cur && cur.lang !== lang) {
         runs.push(cur);
         cur = null;
@@ -160,15 +208,22 @@ export function splitEnglishVietnamese(input: string): Segment[] {
     if (cur) runs.push(cur);
   });
 
-  // Một từ không dấu đứng lẻ giữa hai đoạn tiếng Việt (vd. "màu xanh dương") là tiếng Việt
+  // Một từ không dấu đứng lẻ giữa hai đoạn tiếng Việt (vd. "màu xanh dương") là tiếng Việt.
+  // (Ở chế độ strict từ đó đã được xét là tiếng Anh rõ ràng nên giữ nguyên, trừ từ thông dụng ngắn như "to", "me".)
+  // Một từ không dấu đứng đầu / cuối câu, sát đoạn tiếng Việt, đọc được như âm tiết Việt (vd. "Nghe và chọn") cũng là tiếng Việt.
   runs.forEach((r, i) => {
-    if (r.lang === 'en' && !r.quoted && r.words === 1 && runs[i - 1]?.lang === 'vi' && runs[i + 1]?.lang === 'vi') r.lang = 'vi';
+    if (r.lang !== 'en' || r.quoted || r.words !== 1) return;
+    const prev = runs[i - 1]?.lang, next = runs[i + 1]?.lang;
+    const w = r.text.replace(/[^A-Za-z']/g, '').toLowerCase();
+    const viLike = VI_SYLLABLE.test(w) && !EN_COMMON.has(w);
+    if (prev === 'vi' && next === 'vi') { if (!strict || viLike || (EN_COMMON.has(w) && VI_SYLLABLE.test(w))) r.lang = 'vi'; }
+    else if ((prev === 'vi' || next === 'vi') && viLike) r.lang = 'vi';
   });
 
   const out: Segment[] = [];
   for (const r of runs) {
     const clean = r.lang === 'en' ? englishBlankToSpeech(r.text.replace(/[()]/g, ' ')) : viText(r.text.replace(/[()]/g, ' '));
-    if (!clean.replace(/[\s.,!?;:]/g, '')) continue;
+    if (!clean.replace(/[\s\p{P}\p{S}]/gu, '')) continue;
     const last = out[out.length - 1];
     if (last && last.lang === r.lang) last.text += ' ' + clean;
     else out.push({ text: clean, lang: r.lang });
@@ -186,15 +241,19 @@ function merge(segs: Segment[]): Segment[] {
   return out;
 }
 
-// Chia đoạn đọc theo môn học.
-export function segmentsFor(text: string, subject: SubjectCode): Segment[] {
-  if (subject === 'tieng-anh') return splitEnglishVietnamese(text);
-  const t = viText(text);
-  return t ? [{ text: t, lang: 'vi' }] : [];
+// Chia đoạn đọc theo môn học ('auto' = không rõ môn: lời nhắn, tiêu đề, nội dung chung).
+export function segmentsFor(text: string, subject: SubjectCode | 'auto'): Segment[] {
+  return splitEnglishVietnamese(text, subject !== 'tieng-anh');
+}
+
+/** Đọc một đoạn bất kỳ, tự chọn giọng Anh / Việt theo từng đoạn. */
+export function speakText(text: string, opts: { subject?: SubjectCode | 'auto'; rate?: number; onStart?: () => void; onEnd?: () => void } = {}): Promise<SpeakResult> {
+  const { subject = 'auto', ...rest } = opts;
+  return speakSegments(segmentsFor(text, subject), rest);
 }
 
 // Đề + các lựa chọn (giúp bé lớp 1 chưa đọc thạo vẫn làm được bài).
-export function questionSegments(prompt: string, options: string[], subject: SubjectCode): Segment[] {
+export function questionSegments(prompt: string, options: string[], subject: SubjectCode | 'auto'): Segment[] {
   const segs = segmentsFor(prompt, subject);
   // Lựa chọn chỉ là hình (vd ⭐⭐⭐) thì không đọc danh sách lựa chọn
   if (options.length < 2 || options.some((o) => !stripPictographs(o).replace(/[\s.,?!]/g, ''))) return segs;
@@ -216,7 +275,7 @@ export function questionSegments(prompt: string, options: string[], subject: Sub
 // và danh sách lựa chọn. Dùng chung cho trang Làm bài và Phòng thi lớp.
 export function speakableQuestion(
   q: { prompt: string; type: string; options?: string[]; blanks?: string[]; statements?: string[] },
-  subject: SubjectCode,
+  subject: SubjectCode | 'auto',
   prompt: string = q.prompt,
 ): Segment[] {
   const readOptions = ['single_choice', 'true_false', 'multiple_choice'].includes(q.type) ? (q.options ?? []) : [];

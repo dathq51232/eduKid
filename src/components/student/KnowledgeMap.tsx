@@ -9,18 +9,14 @@ import Link from 'next/link';
 import { BookOpen, ChevronRight, Lightbulb, Play, Volume2, X } from 'lucide-react';
 import { LEVEL_NAMES, MAP_H, MAP_W, type MapDef, type MapNode, type MapState, type NodeState } from './knowledge-map-types';
 import { MAPS } from './knowledge-maps';
+import { speakText } from '@/lib/speech';
 import '@/styles/bdk.css';
 
 const NONE: NodeState = { level: 0 };
 
-/** đọc to câu của Milo (giọng tiếng Việt của trình duyệt, nếu có) */
+/** đọc to câu của Milo: bộ đọc chung tự chọn giọng Việt / Anh, máy thiếu giọng thì đọc qua máy chủ */
 function say(text: string) {
-  try {
-    const s = window.speechSynthesis; if (!s) return;
-    s.cancel();
-    const u = new SpeechSynthesisUtterance(text); u.lang = 'vi-VN'; u.rate = 0.95;
-    s.speak(u);
-  } catch { /* trình duyệt không hỗ trợ đọc */ }
+  void speakText(text);
 }
 
 function stateClass(s: NodeState) {

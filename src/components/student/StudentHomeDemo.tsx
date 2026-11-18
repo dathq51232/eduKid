@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import { BookOpen, ChevronRight, Gamepad2, Home, Settings, Trophy, User, Volume2 } from 'lucide-react';
 import KnowledgeMapDemo from './KnowledgeMapDemo';
+import { speakText } from '@/lib/speech';
 import '@/styles/hs2.css';
 
 const F = (n: string) => `/emoji/f3d/${n}.webp`;
@@ -40,14 +41,9 @@ const BADGES = [
   { name: 'Mọt sách', icon: F('books'), got: true }, { name: '10 ngày liền', icon: F('fire'), got: false },
 ];
 
-/** đọc to câu của Milo (giọng tiếng Việt của trình duyệt, nếu có) */
+/** đọc to câu của Milo: bộ đọc chung tự chọn giọng Việt / Anh, máy thiếu giọng thì đọc qua máy chủ */
 function say(text: string) {
-  try {
-    const s = window.speechSynthesis; if (!s) return;
-    s.cancel();
-    const u = new SpeechSynthesisUtterance(text); u.lang = 'vi-VN'; u.rate = 0.95;
-    s.speak(u);
-  } catch { /* trình duyệt không hỗ trợ đọc */ }
+  void speakText(text);
 }
 
 export default function StudentHomeDemo() {

@@ -14,6 +14,7 @@ import { stemByKey } from '@/lib/lesson3d/templates';
 import { FIT_LABEL } from '@/lib/lesson3d/stem-catalog';
 import { MAX_OBJECTS, clipLabel, uid, type BaseType, type Control3D, type FxType, type Lesson3D, type Link3D, type Obj3D, type Quiz3D } from '@/lib/lesson3d/types';
 import { fold } from '@/lib/classroom/teacher-nav';
+import { speakText } from '@/lib/speech';
 import OfflineSaveButton from '@/components/offline/OfflineSaveButton';
 import { saveLesson3DOffline } from '@/lib/offline/save';
 import '@/styles/s3d.css';
@@ -197,7 +198,8 @@ export default function Lesson3DStudio({ classId, lessonId, initial, offline }: 
     }
     const ob = ref.current.L.objects.find((o) => o.id === id); if (ob?.spot.on) setPlay({ ...P, card: id });
   };
-  const speak = (text: string) => { try { const s = window.speechSynthesis; s.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'vi-VN'; u.rate = 0.92; const v = s.getVoices().find((x) => x.lang?.toLowerCase().startsWith('vi')); if (v) u.voice = v; s.speak(u); } catch { /* máy không có giọng đọc */ } };
+  // bộ đọc chung: đoạn tiếng Anh đọc giọng Anh, còn lại giọng Việt; máy thiếu giọng thì đọc qua máy chủ
+  const speak = (text: string) => { void speakText(text); };
   const fullscreen = () => { const el = stageRef.current?.parentElement; if (!el) return; const p = document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen?.(); p?.catch?.(() => {}); };
   // chọn điểm B của "Đi lại A ↔ B": bấm lên sa bàn
   const [picking, setPicking] = useState(false);
