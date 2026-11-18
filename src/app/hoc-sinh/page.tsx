@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { BookOpen, CheckCircle2, ChevronRight, ClipboardList, Clock, Crown, CreditCard, Flame, Gamepad2, Lock, PenLine, Rocket, RotateCcw, Sparkles, Star, Trophy, Users } from 'lucide-react';
+import { BookOpen, CheckCircle2, Map as MapIcon, ChevronRight, ClipboardList, Clock, Crown, CreditCard, Flame, Gamepad2, Lock, PenLine, Rocket, RotateCcw, Sparkles, Star, Trophy, Users } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import GalleryTeaser from '@/components/gallery/GalleryTeaser';
 import KidWorld, { KidThemeSection, ThemedMilo } from '@/components/learn/KidWorld';
@@ -9,6 +9,8 @@ import { DailyChest, StickerShelf } from '@/components/learn/KidRewards';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import SignOutButton from '@/components/classroom/SignOutButton';
 import RoomJoin from '@/components/classroom/RoomJoin';
+import KnowledgeMap from '@/components/student/KnowledgeMap';
+import { toan4MapHrefs, toan4MapState } from '@/components/student/knowledge-map-progress';
 import { getViewer } from '@/lib/auth/viewer';
 import { learningGate } from '@/lib/auth/gate';
 import { fmtDay } from '@/lib/billing';
@@ -84,6 +86,10 @@ export default async function StudentHome() {
   const next = todo[0];
   const nextHref = next ? (locked ? PAY : next.kind === 'exam' ? `/hoc-sinh/de/${next.id}` : next.lesson_code && next.subject ? lessonHref(next.lesson_code, next.subject, next.grade, next.muc) : null) : null;
   const nextDue = next ? dueInfo(next.due_at) : null;
+
+  // Bản đồ kiến thức (hiện có Toán 4): mức từng trạm tính từ bài em đã làm
+  const mapState = grade === 4 ? toan4MapState(list) : null;
+  const mapHrefs = mapState ? (locked ? Object.fromEntries(Object.keys(mapState).map((k) => [k, PAY])) : toan4MapHrefs(mapState, grade, list)) : undefined;
 
   return (
     <>
@@ -183,6 +189,13 @@ export default async function StudentHome() {
             {st.weekDays >= WEEK_GOAL && <p className="sd-goal-ok">Em đã đạt mục tiêu tuần này! ⭐</p>}
           </section>
         </div>
+
+        {mapState && (
+          <section className="dash-section sd-map" id="ban-do" aria-labelledby="sd-map-t">
+            <h2 id="sd-map-t"><MapIcon aria-hidden="true" /> Bản đồ kiến thức · Toán 4</h2>
+            <KnowledgeMap state={mapState} hrefs={mapHrefs} compact />
+          </section>
+        )}
 
         <div className="sd-fun">
           <DailyChest day={st.today} studied={st.studiedToday} />

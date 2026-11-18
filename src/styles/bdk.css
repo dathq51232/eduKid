@@ -93,8 +93,8 @@
 .bdk-hint { margin: 8px 4px 0; color: var(--bk-muted); font-size: 15px; }
 
 /* bảng chi tiết trạm: ngăn kéo bên phải, màn hẹp thành tấm trượt từ dưới */
-.bdk-backdrop { position: fixed; inset: 0; z-index: 40; border: 0; background: rgb(30 43 74 / .35); cursor: pointer; animation: bdk-fade .2s ease-out; }
-.bdk-panel { position: fixed; z-index: 41; top: 0; right: 0; bottom: 0; width: min(440px, 100%); overflow-y: auto; background: #fff;
+.bdk-backdrop { position: fixed; inset: 0; z-index: 400; border: 0; background: rgb(30 43 74 / .35); cursor: pointer; animation: bdk-fade .2s ease-out; }
+.bdk-panel { position: fixed; z-index: 401; top: 0; right: 0; bottom: 0; width: min(440px, 100%); overflow-y: auto; background: #fff;
   padding: 20px 20px 0; display: flex; flex-direction: column; gap: 14px; box-shadow: -12px 0 40px rgb(30 43 74 / .2); animation: bdk-in-r .28s ease-out; }
 @keyframes bdk-fade { from { opacity: 0; } }
 @keyframes bdk-in-r { from { transform: translateX(40px); opacity: 0; } }
@@ -108,7 +108,7 @@
 
 .bdk-panel-head { display: flex; align-items: center; gap: 12px; }
 .bdk-panel-head img { width: 56px; height: 56px; }
-.bdk-panel-head h2 { margin: 0; font-size: 24px; line-height: 1.2; }
+.bdk .bdk-panel-head h2 { margin: 0; font-size: 24px; line-height: 1.2; }
 .bdk-muted { margin: 0; color: var(--bk-muted); font-size: 15px; font-weight: 600; }
 .bdk-close { margin-left: auto; flex: none; width: 48px; height: 48px; border-radius: 50%; border: 0; background: #eef3fb; color: var(--bk-ink); display: grid; place-items: center; cursor: pointer; }
 
@@ -152,3 +152,7 @@
 
 /* nền trang tối (theo hs2): chữ nằm thẳng trên nền đổi sang sáng; thẻ, bản đồ, ngăn kéo vẫn nền trắng */
 :root[data-theme="dark"] .bdk-legend, :root[data-theme="dark"] .bdk-hint { color: #d5ddec; }
+
+/* đặt trong trang của em (mục "Bản đồ kiến thức"): đã có tiêu đề mục nên bỏ hàng chọn môn, số liệu dồn sang phải */
+.bdk.is-compact .bdk-head { justify-content: flex-end; margin-top: -6px; }
+.bdk .bdk-sec h3 { display: flex; font-size: 17px; }
