@@ -45,6 +45,7 @@ import { TIMER_SOUND_MODES, playSound, readTimerSound, saveTimerSound, timerSoun
 import { isPracticeId, newSeed } from '@/lib/practice/core';
 import { lastShownSet, rememberShownSet } from '@/lib/set-history';
 import { getVoiceStatus, segmentsFor, speakableQuestion, speakSegments, stopSpeaking } from '@/lib/speech';
+import MathBilingual from '@/components/questions/MathBilingual';
 import type { AnswerRecord, AnswerValue, Question } from '@/lib/types';
 import { MAX_MINUTES, TIME_PRESETS, applyTime, readTimeSetting, saveTimeSetting, timeLabel, type TimeSetting } from '@/lib/quiz-time';
 import '@/styles/feedback.css';
@@ -841,6 +842,8 @@ function LamBaiContent() {
               </>
             );
           })()}
+
+          {subjectCode === 'toan' && <MathBilingual prompt={q.prompt} blanks={q.blanks} />}
 
           {q.figure && <Figure figure={q.figure} />}
 

@@ -1,4 +1,4 @@
-// Phát triển kỹ năng (Skill Development Hub) — 6 nhóm kỹ năng cho học sinh tiểu học (6–11 tuổi).
+// Phát triển kỹ năng (Skill Development Hub) — 7 nhóm kỹ năng cho học sinh tiểu học (6–11 tuổi).
 // Nội dung tự soạn, bám các khung tham khảo: CASEL (5 năng lực cảm xúc – xã hội), WHO 2020 (trẻ 5–17 tuổi vận động
 // trung bình 60 phút/ngày, hạn chế ngồi trước màn hình), giáo dục tài chính cho trẻ (kiếm – tiết kiệm – tiêu – chia sẻ,
 // "cần" và "muốn"), giáo dục an toàn cho học sinh Việt Nam (đuối nước, giao thông, phòng chống xâm hại, số khẩn cấp).
@@ -13,6 +13,7 @@ export type Skill = {
   /** thử thách làm ở nhà / ở lớp trong tuần */ mission: string;
   /** gợi ý cho bố mẹ, thầy cô */ parent: string;
   /** kỹ năng đã có trang luyện trong app */ href?: string; hrefLabel?: string;
+  /** công cụ luyện ngay trên trang kỹ năng (typing = luyện gõ 10 ngón) */ tool?: 'typing';
 };
 export type SkillGroup = { id: string; no: string; name: string; en: string; tone: string; icon: string; blurb: string; skills: Skill[] };
 
@@ -340,6 +341,74 @@ export const SKILL_GROUPS: SkillGroup[] = [
         ],
         mission: 'Trong 7 ngày đi ngủ và thức dậy đúng giờ đã hẹn; đánh dấu vào lịch mỗi ngày làm được.',
         parent: 'Giữ giờ ngủ cố định cả nhà; cất thiết bị điện tử ra khỏi phòng ngủ của con.',
+      },
+    ],
+  },
+  {
+    // Bám mạch Tin học 3–5 (CT GDPT 2018): làm quen máy tính, chuột – bàn phím, gõ 10 ngón, thư mục – tệp,
+    // đạo đức – an toàn khi dùng Internet; giới hạn thời gian màn hình theo khuyến nghị WHO.
+    id: 'may-tinh', no: '07', name: 'Sử dụng máy tính', en: 'Digital & Computer Skills', tone: '#0369a1', icon: F('laptop'),
+    blurb: 'Dùng chuột, bàn phím thành thạo, gõ 10 ngón, cất bài vào thư mục và lên mạng an toàn, có giờ giấc.',
+    skills: [
+      {
+        id: 'lam-quen', name: 'Làm quen máy tính', icon: F('laptop'),
+        goal: 'Biết các bộ phận của máy tính, bật – tắt đúng cách, cầm chuột và ngồi đúng tư thế.',
+        tips: ['Máy tính có: màn hình (xem), bàn phím (gõ chữ), chuột (chỉ và bấm), thân máy (bộ não).', 'Tắt máy: bấm Start → Shut down, đợi màn hình tắt hẳn rồi mới rút điện.', 'Ngồi thẳng lưng, mắt cách màn hình khoảng một sải tay, cổ tay đặt nhẹ trên bàn.'],
+        scenarios: [
+          { q: 'Muốn gõ chữ vào máy tính, em dùng bộ phận nào?', opts: ['Chuột', 'Bàn phím', 'Loa'], a: 1, why: 'Bàn phím dùng để gõ chữ và số; chuột dùng để chỉ và bấm chọn.' },
+          { q: 'Học xong, em tắt máy thế nào cho đúng?', opts: ['Rút phích điện ngay', 'Bấm Start → Shut down, đợi máy tắt hẳn', 'Tắt màn hình là xong'], a: 1, why: 'Tắt đúng cách giúp máy không bị hỏng và không mất bài đang làm.' },
+          { q: 'Bấm đúp chuột (double-click) là:', opts: ['Bấm nút trái hai lần thật nhanh', 'Bấm nút phải một lần', 'Giữ chuột rồi kéo'], a: 0, why: 'Bấm đúp nút trái để mở một biểu tượng, một thư mục hay một bài.' },
+        ],
+        mission: 'Chỉ và gọi tên 4 bộ phận của máy tính ở nhà cho bố mẹ; tự tắt máy đúng cách 3 lần trong tuần.',
+        parent: 'Đặt máy ở phòng chung, ghế vừa tầm con; hướng dẫn con tắt máy đúng cách thay vì rút điện.',
+      },
+      {
+        id: 'go-phim', name: 'Gõ phím 10 ngón', icon: F('pen'), tool: 'typing',
+        goal: 'Đặt tay đúng hàng phím cơ sở, gõ không nhìn bàn phím, đúng trước rồi mới nhanh.',
+        tips: ['Hai ngón trỏ đặt lên phím F và J — hai phím có gờ nổi để tìm bằng tay.', 'Mỗi ngón phụ trách một cột phím; ngón cái bấm phím cách (Space).', 'Gõ đều tay, mắt nhìn màn hình; gõ đúng quan trọng hơn gõ nhanh.'],
+        scenarios: [
+          { q: 'Hai ngón trỏ đặt lên hai phím nào của hàng cơ sở?', opts: ['A và L', 'F và J', 'Q và P'], a: 1, why: 'Phím F và J có gờ nổi giúp em đặt tay đúng mà không cần nhìn.' },
+          { q: 'Khi gõ, mắt em nên nhìn:', opts: ['Bàn phím', 'Màn hình', 'Ngón tay'], a: 1, why: 'Nhìn màn hình để thấy chữ đúng hay sai; tay tự nhớ chỗ phím sau vài tuần luyện.' },
+          { q: 'Gõ sai nhiều chữ, em nên:', opts: ['Gõ nhanh hơn nữa', 'Gõ chậm lại cho đúng', 'Dùng một ngón cho nhanh'], a: 1, why: 'Đúng trước, nhanh sau: gõ chậm mà đúng thì tay mới nhớ lâu.' },
+        ],
+        mission: 'Mỗi ngày luyện gõ 10 phút ở ô bên dưới; ghi lại số chữ / phút sau 7 ngày xem em tiến bộ bao nhiêu.',
+        parent: 'Luyện ngắn mỗi ngày (10 phút) tốt hơn một buổi dài; khen khi con giữ đúng tay, chưa cần khen tốc độ.',
+      },
+      {
+        id: 'thu-muc', name: 'Cất bài vào thư mục', icon: F('package'),
+        goal: 'Đặt tên tệp rõ ràng, cất bài vào đúng thư mục và tìm lại được khi cần.',
+        tips: ['Thư mục giống ngăn cặp sách: mỗi môn một ngăn (Toán, Tiếng Việt, Tiếng Anh…).', 'Đặt tên tệp nói rõ nội dung: “Toan-bai-tap-tuan-5”, không để “abc”.', 'Làm bài xong nhớ bấm Lưu (Ctrl + S) trước khi đóng.'],
+        scenarios: [
+          { q: 'Tên tệp nào giúp em dễ tìm lại nhất?', opts: ['abc', 'Tieng-Viet-ke-chuyen-tuan-3', 'moi'], a: 1, why: 'Tên nói rõ môn, nội dung, thời gian thì nhìn là biết ngay.' },
+          { q: 'Sắp tắt máy mà bài vẽ chưa lưu. Em làm gì?', opts: ['Tắt luôn', 'Bấm Lưu (Ctrl + S) rồi mới tắt', 'Để mai vẽ lại'], a: 1, why: 'Không lưu thì bài sẽ mất; Ctrl + S là phím tắt lưu nhanh.' },
+          { q: 'Muốn cất bài Toán, em để vào:', opts: ['Thư mục “Toán”', 'Ngoài màn hình nền, lẫn với mọi thứ', 'Thùng rác'], a: 0, why: 'Cất đúng thư mục giống xếp sách đúng ngăn, lúc cần tìm rất nhanh.' },
+        ],
+        mission: 'Tạo 3 thư mục Toán – Tiếng Việt – Tiếng Anh và cất ít nhất một bài vào mỗi thư mục, đặt tên rõ ràng.',
+        parent: 'Cùng con sắp xếp thư mục lần đầu; thỉnh thoảng hỏi “Bài hôm qua con cất ở đâu?” để con tự tìm.',
+      },
+      {
+        id: 'an-toan-mang', name: 'An toàn trên mạng', icon: F('locked'),
+        goal: 'Giữ bí mật mật khẩu và thông tin cá nhân, nhận ra trò lừa, biết hỏi người lớn khi gặp điều lạ.',
+        tips: ['Mật khẩu chỉ em và bố mẹ biết — không cho bạn bè, không cho người lạ.', 'Không gửi tên trường, địa chỉ nhà, ảnh của em cho người quen trên mạng.', 'Thấy tin nhắn lạ, quảng cáo “trúng thưởng”, hình làm em sợ: tắt đi và báo bố mẹ, thầy cô.'],
+        scenarios: [
+          { q: 'Một bạn trong game xin mật khẩu “để giúp em lên cấp”. Em làm gì?', opts: ['Gửi ngay', 'Không gửi, kể với bố mẹ', 'Gửi một nửa mật khẩu'], a: 1, why: 'Không bao giờ đưa mật khẩu cho ai ngoài bố mẹ; người xin mật khẩu thường là kẻ lừa.' },
+          { q: 'Màn hình hiện “Chúc mừng em trúng điện thoại, bấm vào đây!”. Em:', opts: ['Bấm vào ngay', 'Không bấm, tắt đi và hỏi người lớn', 'Gửi link cho bạn'], a: 1, why: 'Quảng cáo “trúng thưởng” thường là lừa đảo hoặc chứa phần mềm độc.' },
+          { q: 'Người lạ trên mạng rủ em gặp mặt ngoài đời. Em:', opts: ['Đi một mình', 'Không đi, kể ngay với bố mẹ', 'Giữ bí mật'], a: 1, why: 'Không gặp người chỉ quen trên mạng; kể với bố mẹ để được bảo vệ.' },
+        ],
+        mission: 'Cùng bố mẹ viết 3 “luật dùng mạng của nhà mình” và dán cạnh máy tính.',
+        parent: 'Bật chế độ an toàn cho trẻ em trên trình duyệt / YouTube; dặn con “gặp gì lạ cứ kể, bố mẹ không mắng”.',
+      },
+      {
+        id: 'gio-man-hinh', name: 'Giờ dùng màn hình', icon: F('alarm-clock'),
+        goal: 'Dùng máy tính có giờ giấc, nghỉ mắt đúng lúc, ưu tiên học và vận động trước khi giải trí.',
+        tips: ['Cứ 20 phút nhìn màn hình thì nhìn xa khoảng 20 giây cho mắt nghỉ.', 'Giải trí trên màn hình không quá 1–2 tiếng mỗi ngày (khuyến nghị cho trẻ em).', 'Học xong, vận động xong mới chơi game; tắt màn hình 1 tiếng trước khi ngủ.'],
+        scenarios: [
+          { q: 'Em đã xem video 20 phút liền. Em nên:', opts: ['Xem tiếp', 'Nhìn ra xa một lúc cho mắt nghỉ', 'Dụi mắt rồi xem tiếp'], a: 1, why: 'Mắt cần nghỉ sau mỗi 20 phút để không mỏi và cận thị.' },
+          { q: 'Bài tập chưa xong mà bạn rủ chơi game. Em:', opts: ['Chơi trước, học sau', 'Làm xong bài rồi chơi theo giờ đã hẹn', 'Vừa học vừa chơi'], a: 1, why: 'Việc chính trước, giải trí sau giúp em làm tốt cả hai.' },
+          { q: 'Hết giờ chơi đã hẹn với bố mẹ, em:', opts: ['Xin thêm thật nhiều lần', 'Lưu game và tắt máy', 'Giả vờ chưa hết giờ'], a: 1, why: 'Giữ lời hẹn giúp em được bố mẹ tin tưởng hơn.' },
+        ],
+        mission: 'Lập “thời gian biểu màn hình” cho 7 ngày cùng bố mẹ và tự hẹn giờ mỗi lần dùng máy.',
+        parent: 'Làm gương: cả nhà cùng tắt màn hình trong bữa ăn; dùng đồng hồ hẹn giờ để con tự quản lý.',
       },
     ],
   },

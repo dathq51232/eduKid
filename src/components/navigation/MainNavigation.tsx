@@ -19,7 +19,7 @@ type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: '/chon-bai', label: 'Học tập', icon: 'hoc-tap', match: ['/chon-bai', '/lam-bai', '/ket-qua'] },
-  // Phát triển kỹ năng: 6 nhóm; Phản xạ tiếng Anh (English Journey, /tieng-anh) nằm trong nhóm Ngôn ngữ & giao tiếp
+  // Phát triển kỹ năng: 7 nhóm; Phản xạ tiếng Anh (English Journey, /tieng-anh) nằm trong nhóm Ngôn ngữ & giao tiếp
   { href: '/ky-nang', label: 'Phát triển kỹ năng', short: 'Kỹ năng', iconSrc: '/emoji/f3d/sports-medal.webp', match: ['/ky-nang', '/tieng-anh'] },
   { href: '/tro-choi', label: 'Game trí tuệ', short: 'Game', icon: 'game', match: ['/tro-choi'] },
   { href: '/co', label: 'Đấu cờ', icon: 'dau-co', match: ['/co'] },

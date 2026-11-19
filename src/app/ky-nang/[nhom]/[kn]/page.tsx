@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Lightbulb, Users } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import SkillPractice from '@/components/skills/SkillPractice';
+import TypingPractice from '@/components/skills/TypingPractice';
 import { SKILL_GROUPS, groupById, skillById } from '@/lib/skills/hub';
 import '@/styles/kn.css';
 
@@ -46,6 +47,8 @@ export default async function SkillPage({ params }: Params) {
           <h2 id="kn-tips"><Lightbulb aria-hidden="true" /> Em cần nhớ</h2>
           <ol className="kn-tips">{s.tips.map((t) => <li key={t}>{t}</li>)}</ol>
         </section>
+
+        {s.tool === 'typing' && <TypingPractice />}
 
         <SkillPractice skillKey={`${g.id}/${s.id}`} scenarios={s.scenarios} mission={s.mission} />
 

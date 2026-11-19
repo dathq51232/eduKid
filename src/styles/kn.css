@@ -123,3 +123,38 @@
 :root[data-theme="dark"] .kn-opt.is-wrong { background: color-mix(in srgb, #7f1d1d 24%, var(--surface)); color: color-mix(in srgb, #7f1d1d 40%, #fff); }
 :root[data-theme="dark"] .kn-why { background: color-mix(in srgb, #7c2d12 24%, var(--surface)); color: color-mix(in srgb, #7c2d12 40%, #fff); }
 :root[data-theme="dark"] .kn-why.is-right { background: color-mix(in srgb, #14532d 24%, var(--surface)); color: color-mix(in srgb, #14532d 40%, #fff); }
+
+/* Luyện gõ 10 ngón (TypingPractice, nhóm Sử dụng máy tính) */
+.kn-ty h2 svg { color: var(--kn-tone); }
+.kn-ty-lessons { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.kn-ty-lesson { display: grid; gap: 2px; padding: 10px 12px; border-radius: 16px; border: 2px solid var(--line-strong); background: var(--surface-2); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.kn-ty-lesson b { font-size: 16px; }
+.kn-ty-lesson small { font-size: 13px; color: var(--muted); }
+.kn-ty-lesson[aria-checked="true"] { border-color: var(--kn-tone); background: color-mix(in srgb, var(--kn-tone) 10%, var(--surface)); }
+.kn-ty .kn-step { display: inline-block; margin: 0 0 8px; }
+.kn-ty-target { margin: 0 0 10px; padding: 14px 16px; border-radius: 16px; background: var(--surface-2); font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: clamp(22px, 4vw, 30px); letter-spacing: .04em; line-height: 1.5; overflow-wrap: anywhere; cursor: text; }
+.kn-ty-target span { border-radius: 4px; }
+.kn-ty-target .is-ok { color: #15803d; }
+.kn-ty-target .is-bad { color: #fff; background: #dc2626; }
+.kn-ty-target .is-cur { box-shadow: inset 0 -4px 0 var(--kn-tone); background: color-mix(in srgb, var(--kn-tone) 14%, transparent); }
+.kn-ty-input { width: 100%; min-height: 52px; padding: 0 14px; border-radius: 14px; border: 2px solid var(--line-strong); background: var(--surface); color: var(--ink); font: inherit; font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 20px; }
+.kn-ty-input:focus { outline: 3px solid var(--kn-tone); outline-offset: 2px; }
+.kn-ty-next { margin: 10px 0; font-size: 17px; }
+.kn-ty-next kbd { display: inline-block; min-width: 30px; padding: 2px 8px; border-radius: 8px; border: 2px solid var(--kn-tone); background: var(--surface); font-weight: 800; text-align: center; font-family: inherit; }
+.kn-ty-warn { color: #dc2626; font-weight: 700; }
+.kn-ty-kb { display: grid; gap: 5px; justify-items: center; padding: 12px 8px; border-radius: 18px; background: var(--surface-2); }
+.kn-ty-row { display: flex; gap: 5px; }
+.kn-ty-row.r1 { margin-left: 18px; } .kn-ty-row.r2 { margin-left: 40px; }
+.kn-ty-key { display: grid; place-items: center; width: clamp(24px, 6.4vw, 42px); height: clamp(28px, 6.4vw, 42px); border-radius: 8px; font-weight: 800; font-size: clamp(12px, 2.6vw, 16px); color: #1f2937; border-bottom: 3px solid rgb(0 0 0 / .18); transition: transform .1s; }
+.kn-ty-key.is-bump { text-decoration: underline; text-underline-offset: 3px; }
+.kn-ty-key.is-next { outline: 3px solid var(--ink); transform: translateY(-2px) scale(1.08); }
+.kn-ty-space { width: clamp(150px, 40vw, 260px); }
+.kn-ty-key.f-lp, .kn-ty-key.f-rp { background: #fbcfe8; }
+.kn-ty-key.f-lr, .kn-ty-key.f-rr { background: #fde68a; }
+.kn-ty-key.f-lm, .kn-ty-key.f-rm { background: #bbf7d0; }
+.kn-ty-key.f-li { background: #bfdbfe; } .kn-ty-key.f-ri { background: #c7d2fe; }
+.kn-ty-key.f-th { background: #e5e7eb; }
+.kn-ty-key.f-x { background: #f3f4f6; }
+.kn-ty-done { padding: 8px 0; }
+.kn-ty-cup { width: 44px; height: 44px; color: #f59e0b; }
+@media (max-width: 560px) { .kn-ty-row.r1 { margin-left: 8px; } .kn-ty-row.r2 { margin-left: 18px; } }
