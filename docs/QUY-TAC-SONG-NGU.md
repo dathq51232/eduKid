@@ -68,7 +68,23 @@ Danh sách đầy đủ: `NOUNS`, `UNITS`, `SUBJ`, `PLACE`, `COLOR`, `ACT`, `TRE
 4. Chạy lại `npm run check:song-ngu`: phải **không có lỗi** (chữ Việt sót, chỗ trống sót, a/an, số ít / số nhiều, viết hoa đầu câu).
    Soát nghĩa bằng mắt vài câu mẫu của quy tắc vừa thêm.
 
-## 6. Độ phủ hiện tại (11/2026)
+## 6. Đáp án
+
+Dịch bằng `translateAnswer` / `translateAnswers` (cùng file), hiện thành cặp *Việt → Anh* dưới đề:
+lựa chọn, dòng điền ô (`{}` hiện là `?`), nhận định Đúng / Sai, vế trái ghép cặp. Đáp án chỉ có số thì giữ nguyên, không hiện lại.
+
+- Một nhóm đáp án có một đáp án chưa dịch được → **không hiện cả nhóm** (cùng nguyên tắc với đề).
+- Giờ: lựa chọn cụ thể là giờ đồng hồ (`7 giờ 30 phút` → *7:30*, `8 giờ` → *8 o'clock*); dòng điền ô `{} giờ {} phút` → *? h ? min*.
+- Thế kỉ: `thế kỉ XXI` → *the 21st century*; `tháng 5` → *May*; `Thứ Ba, ngày 14` → *Tuesday the 14th*.
+- Số viết bằng chữ: `ba trăm linh bảy nghìn không trăm năm mươi mốt` → *three hundred and seven thousand and fifty-one*.
+- Khả năng xảy ra dịch theo khung *It is certain / possible / impossible that …* để khớp lựa chọn *chắc chắn / có thể / không thể*.
+- Đồng xu: mặt ngửa = *heads*, mặt sấp = *tails*.
+- Cụm đáp án ngắn: bảng `ANSWER_PHRASES`; nhãn “Băng A, Nhóm B, Đồng hồ C…”: bảng `LABEL_WORD`.
+- `npm run check:song-ngu -- --chua-dap-an 60` in các đáp án chưa có quy tắc.
+
+## 7. Độ phủ hiện tại (11/2026)
 
 Đề Toán lớp 1–5 (câu soạn sẵn + bộ sinh câu mọi mức, 24 316 đề khác nhau): **dịch trọn khoảng 90%** — lớp 2–5: 90–95%, lớp 1: ~64%
 (lớp 1 có nhiều câu chuyện tranh mỗi mẫu chỉ vài câu). Đề chưa dịch trọn vẫn có phép tính tiếng Anh + từ vựng.
+
+Đáp án có chữ (5 952 đáp án khác nhau): **dịch được ~98%** — lớp 1: 94%, lớp 2–5: 98–99,6%.

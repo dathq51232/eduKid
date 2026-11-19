@@ -53,7 +53,7 @@ const NOUNS: Record<string, Noun> = {
   'quả dưa': ['melon', 'melons'], 'quả bưởi': ['pomelo', 'pomelos'], 'quả na': ['custard apple', 'custard apples'], 'quả chanh': ['lemon', 'lemons'],
   'cái thước': ['ruler', 'rulers'], 'cục tẩy': ['rubber', 'rubbers'], 'chiếc mũ': ['hat', 'hats'], 'chiếc cặp': ['school bag', 'school bags'],
   'cái ghế': ['chair', 'chairs'], 'cái bàn': ['table', 'tables'], 'chiếc thuyền': ['boat', 'boats'], 'chiếc ô tô': ['car', 'cars'], 'chiếc lá': ['leaf', 'leaves'],
-  'ngôi sao': ['star', 'stars'], 'tấm thảm': ['rug', 'rugs'], 'cái giường': ['bed', 'beds'], 'cái tủ': ['cupboard', 'cupboards'], 'băng giấy': ['paper strip', 'paper strips'], 'bông': ['flower', 'flowers'], 'góc vuông': ['right angle', 'right angles'], 'khối lập phương': ['cube', 'cubes'], 'mặt': ['face', 'faces'], 'câu hỏi': ['question', 'questions'], 'cái đĩa': ['plate', 'plates'], 'đĩa': ['plate', 'plates'], 'quyển truyện tranh': ['comic', 'comics'],
+  'ngôi sao': ['star', 'stars'], 'con gấu': ['bear', 'bears'], 'con vật': ['animal', 'animals'], 'hàng': ['row', 'rows'], 'quả dâu tây': ['strawberry', 'strawberries'], 'tấm thảm': ['rug', 'rugs'], 'cái giường': ['bed', 'beds'], 'cái tủ': ['cupboard', 'cupboards'], 'băng giấy': ['paper strip', 'paper strips'], 'bông': ['flower', 'flowers'], 'góc vuông': ['right angle', 'right angles'], 'khối lập phương': ['cube', 'cubes'], 'mặt': ['face', 'faces'], 'câu hỏi': ['question', 'questions'], 'cái đĩa': ['plate', 'plates'], 'đĩa': ['plate', 'plates'], 'quyển truyện tranh': ['comic', 'comics'],
   'cái bánh': ['cake', 'cakes'], 'chiếc bánh': ['cake', 'cakes'], 'gói bánh': ['packet of biscuits', 'packets of biscuits'],
   'quyển sách': ['book', 'books'], 'cuốn sách': ['book', 'books'], 'sách': ['book', 'books'], 'quyển truyện': ['storybook', 'storybooks'],
   'quyển': ['book', 'books'],
@@ -135,17 +135,25 @@ const WDAY: Record<string, string> = { 'hai': 'Monday', 'ba': 'Tuesday', 'tư': 
 const TREE: Record<string, string> = { 'phượng': 'flame trees', 'bàng': 'tropical almond trees', 'sao': 'sao trees', 'xà cừ': 'mahogany trees', 'bạch đàn': 'eucalyptus trees', 'cau': 'areca palms', 'dừa': 'coconut palms' };
 const COLOR: Record<string, string> = { 'vàng': 'yellow', 'tím': 'purple', 'đỏ': 'red', 'xanh lá': 'green', 'xanh': 'blue', 'hồng': 'pink', 'cam': 'orange', 'trắng': 'white', 'nâu': 'brown', 'đen': 'black' };
 const ACT: Record<string, string> = { 'học đàn': 'have a piano lesson', 'đá bóng': 'play football', 'học vẽ': 'have an art lesson', 'tập bơi': 'go swimming', 'học bơi': 'have a swimming lesson', 'học múa': 'have a dance lesson', 'đọc sách': 'read books', 'chạy bộ': 'go running', 'học tiếng Anh': 'have an English lesson' };
-type Kind = 'n' | 't' | 'u' | 'name' | 'who' | 'cls' | 'e' | 's' | 'p' | 'w' | 'L' | 'k' | 'c' | 'a' | 'x';
+// Khả năng xảy ra: dịch theo khung "It is certain / possible / impossible that …" để khớp các lựa chọn chắc chắn / có thể / không thể
+const MODAL: Record<string, string> = { 'chắc chắn': 'certain', 'có thể': 'possible', 'không thể': 'impossible', '___': '___' };
+const FLAVOR: Record<string, string> = { 'cam': 'orange', 'chanh': 'lemon', 'dâu': 'strawberry', 'nho': 'grape', 'bạc hà': 'mint' };
+// Danh từ bỏ lượng từ ("số nấm", "số bóng bay") → số nhiều
+const BARE: Record<string, string> = Object.fromEntries(Object.entries(NOUNS).flatMap(([k, [, pl]]) => {
+  const m = /^(con|quả|cái|chiếc|cây|bông|viên|quyển|cuốn|tấm|ngôi) (.+)$/.exec(k);
+  return m ? [[m[2], pl]] : [[k, pl]];
+}));
+type Kind = 'n' | 't' | 'u' | 'name' | 'who' | 'cls' | 'e' | 's' | 'p' | 'w' | 'L' | 'k' | 'c' | 'a' | 'x' | 'm' | 'f' | 'b';
 type Rule = { re: RegExp; kinds: Kind[]; en: string };
 const SLOT: Record<Kind, string> = {
-  n: `(${NUM_SRC})`, t: `(${NOUN_ALT})`, u: `(${UNIT_ALT})`, name: `(${NAME_ALT})`, who: `(${WHO_ALT})`, cls: String.raw`(\d+[A-E])`,
-  e: String.raw`([0-9a-z()+\-−–×x*:÷=<>?…_□ ,;./%  ]+?)`, s: `(${alt(Object.keys(SUBJ))})`, p: `(${alt(Object.keys(PLACE))})`, w: `(${alt(Object.keys(WDAY))})`, L: '([A-Z])', k: `(${alt(Object.keys(TREE))})`, c: `(${alt(Object.keys(COLOR))})`, a: `(${alt(Object.keys(ACT))})`, x: String.raw`([\p{L} ]+?)`,
+  n: `(${NUM_SRC}|\\?)`, t: `(${NOUN_ALT})`, u: `(${UNIT_ALT})`, name: `(${NAME_ALT})`, who: `(${WHO_ALT})`, cls: String.raw`(\d+[A-E])`,
+  e: String.raw`([0-9a-z()+\-−–×x*:÷=<>?…_□ ,;./%  ]+?)`, s: `(${alt(Object.keys(SUBJ))})`, p: `(${alt(Object.keys(PLACE))})`, w: `(${alt(Object.keys(WDAY))})`, L: '([A-Z])', k: `(${alt(Object.keys(TREE))})`, c: `(${alt(Object.keys(COLOR))})`, a: `(${alt(Object.keys(ACT))})`, x: String.raw`([\p{L} ]+?)`, m: `(${alt(Object.keys(MODAL))})`, f: `(${alt(Object.keys(FLAVOR))})`, b: `(${alt(Object.keys(BARE))})`,
 };
 
 function rule(vi: string, en: string): Rule {
   const kinds: Kind[] = [];
-  const src = vi.split(/(\{(?:n|t|u|name|who|cls|e|s|p|w|L|k|c|a|x)\})/).map((part) => {
-    const m = /^\{(n|t|u|name|who|cls|e|s|p|w|L|k|c|a|x)\}$/.exec(part);
+  const src = vi.split(/(\{(?:n|t|u|name|who|cls|e|s|p|w|L|k|c|a|x|m|f|b)\})/).map((part) => {
+    const m = /^\{(n|t|u|name|who|cls|e|s|p|w|L|k|c|a|x|m|f|b)\}$/.exec(part);
     if (m) { kinds.push(m[1] as Kind); return SLOT[m[1] as Kind]; }
     return esc(part).replace(/ /g, '\\s+');
   }).join('');
@@ -174,6 +182,9 @@ function fill(r: Rule, m: RegExpExecArray): string | null {
       case 'k': return TREE[v.toLowerCase()] ?? null;
       case 'c': return COLOR[v.toLowerCase()] ?? null;
       case 'a': return ACT[v] ?? ACT[v.toLowerCase()] ?? null;
+      case 'm': return MODAL[v.toLowerCase()] ?? null;
+      case 'f': return FLAVOR[v.toLowerCase()] ?? null;
+      case 'b': return BARE[v.toLowerCase()] ?? null;
       case 'x': return null; // chỉ để khớp phần nhắc lại, không dùng bên tiếng Anh
     }
   };
@@ -584,9 +595,9 @@ const RULES: Rule[] = [
   rule('Mặt {n} chấm xuất hiện bao nhiêu lần?', 'How many times does the {1}-dot face appear?'),
   rule('Gieo một con xúc xắc {n} lần, có {n} lần xuất hiện mặt {n} chấm.', 'A dice is rolled {1} times and the {3}-dot face appears {2} times.'),
   rule('Số lần xuất hiện mặt {n} chấm chiếm bao nhiêu phần trăm tổng số lần gieo?', 'What percentage of all the rolls show the {1}-dot face?'),
-  rule('Tung một đồng xu {n} lần, có {n} lần xuất hiện mặt sấp.', 'A coin is tossed {1} times and lands heads {2} times.'),
-  rule('Tỉ số của số lần xuất hiện mặt sấp và tổng số lần tung là:', 'The ratio of the number of heads to the total number of tosses is:'),
-  rule('Mặt sấp xuất hiện bao nhiêu lần?', 'How many times does it land heads?'),
+  rule('Tung một đồng xu {n} lần, có {n} lần xuất hiện mặt sấp.', 'A coin is tossed {1} times and lands tails up {2} times.'),
+  rule('Tỉ số của số lần xuất hiện mặt sấp và tổng số lần tung là:', 'The ratio of the number of tails to the total number of tosses is:'),
+  rule('Mặt sấp xuất hiện bao nhiêu lần?', 'How many times does it land tails up?'),
   rule('Có {n} tấm thẻ ghi các số {e}.', 'There are {1} cards with the numbers {2}.'), rule('Rút ngẫu nhiên {n} thẻ.', '{1} card is drawn at random.'),
   rule('Khả năng rút được thẻ ghi số lớn hơn {n} là:', 'The chance of drawing a card with a number greater than {1} is:'),
   rule('Khả năng rút được thẻ ghi số {n} là:', 'The chance of drawing the card with the number {1} is:'),
@@ -915,6 +926,105 @@ const RULES: Rule[] = [
   rule('{name} đặt thêm {n} {t}.', '{1} puts down {2} more {3}.'), rule('{name} lấy ra {n} {t}.', '{1} takes out {2q3}.'),
   rule('Số gồm {n} chục và {n} đơn vị là số nào?', 'Which number is made up of {1} tens and {2} ones?'), rule('Số {n} gồm mấy chục?', 'How many tens are there in {1}?'),
   rule('Bút mực dài hơn bút chì.', 'The pen is longer than the pencil.'),
+  // --- Nhãn trong đáp án ---
+  rule('Cả hai:', 'Both:'), rule('Phép tính:', 'Calculation:'), rule('Ô thứ {n}:', 'Box {1}:'), rule('Còn thiếu:', 'Still needed:'),
+  rule('Đường kính:', 'Diameter:'), rule('Bán kính:', 'Radius:'), rule('Giá trị:', 'Value:'), rule('Kho thứ nhất:', 'First warehouse:'), rule('Kho thứ hai:', 'Second warehouse:'),
+  rule('Tử số:', 'Numerator:'), rule('Mẫu số:', 'Denominator:'), rule('Một mặt:', 'One face:'), rule('Toàn phần:', 'Total surface:'), rule('Con:', 'Child:'), rule('Mẹ:', 'Mum:'), rule('Bố:', 'Dad:'),
+  rule('Đáy lớn:', 'Longer base:'), rule('Đáy bé:', 'Shorter base:'), rule('Chu vi:', 'Perimeter:'), rule('Diện tích:', 'Area:'), rule('Thể tích:', 'Volume:'),
+  rule('Phần nguyên:', 'Whole-number part:'), rule('Phần thập phân:', 'Decimal part:'), rule('Trả lời:', 'Answer:'), rule('Số còn thiếu:', 'Missing number:'),
+  rule('Các số còn thiếu (từ trái sang phải):', 'Missing numbers (from left to right):'), rule('Số bạn thích bơi:', 'Pupils who like swimming:'),
+  rule('Số gồm {n} chục và {n} đơn vị là:', 'The number made up of {1} tens and {2} ones is:'), rule('Thương:', 'Quotient:'), rule('Số dư:', 'Remainder:'),
+  rule('{e} và {e}', '{1} and {2}'),
+  // --- Nhận định Đúng / Sai, đáp án là câu ---
+  rule('Có tất cả {n} {t}.', 'There are {1q2} altogether.'), rule('Có {n} {t}.', 'There are {1q2}.'), rule('Có {n} ngày.', 'There are {1} days.'),
+  rule('Hộp thứ hai có {n} {t}.', 'The second box has {1q2}.'), rule('Mỗi bạn được {n} {t}.', 'Each pupil gets {1q2}.'),
+  rule('Trả lời: Có tất cả {n} {t}.', 'Answer: There are {1q2} altogether.'), rule('Trả lời: Còn lại {n} {t}.', 'Answer: There are {1q2} left.'),
+  rule('Gộp lại được {n}.', 'Together they make {1}.'), rule('Chữ số còn thiếu là {n}', 'The missing digit is {1}'),
+  rule('Số liền trước của {n} là {n}', 'The number just before {1} is {2}'), rule('Số liền sau của {n} là {n}', 'The number just after {1} is {2}'),
+  rule('Số gồm {n} trăm, {n} chục và {n} đơn vị là {n}', 'The number made up of {1} hundreds, {2} tens and {3} ones is {4}'),
+  rule('Số gồm {n} chục và {n} đơn vị là {n}', 'The number made up of {1} tens and {2} ones is {3}'),
+  rule('{n} gồm {n} chục và {n} đơn vị.', '{1} is made up of {2} tens and {3} ones.'), rule('{n} gồm {n} và {n}.', '{1} is made up of {2} and {3}.'), rule('{n} gồm {n} và {n}', '{1} is made up of {2} and {3}'),
+  rule('{n} trăm, {n} chục, {n} đơn vị', '{1} hundreds, {2} tens, {3} ones'),
+  rule('Số bị trừ {n}, số trừ {n}. Hiệu là {n}', 'Minuend {1}, subtrahend {2}. The difference is {3}'), rule('Số hạng {n}, số hạng {n}. Tổng là {n}', 'Addend {1}, addend {2}. The sum is {3}'),
+  rule('Làm tròn {n} đến hàng chục được {n}.', 'Rounding {1} to the nearest ten gives {2}.'), rule('Làm tròn {n} đến hàng trăm được {n}.', 'Rounding {1} to the nearest hundred gives {2}.'),
+  rule('Làm tròn {n} đến hàng nghìn được {n}.', 'Rounding {1} to the nearest thousand gives {2}.'), rule('Làm tròn {n} đến hàng chục nghìn được {n}.', 'Rounding {1} to the nearest ten thousand gives {2}.'),
+  rule('Làm tròn {n} đến hàng trăm nghìn được {n}.', 'Rounding {1} to the nearest hundred thousand gives {2}.'),
+  rule('Tháng {n} thường có {n} ngày', '{1m} usually has {2} days'), rule('Góc bẹt có số đo {n}°', 'A straight angle measures {1}°'), rule('Góc vuông có số đo {n}°', 'A right angle measures {1}°'),
+  rule('Góc bẹt bằng {n} góc vuông', 'A straight angle equals {1} right angles'), rule('Có, đó là {n}', 'Yes, it is {1}'),
+  rule('Kim ngắn chỉ số {n}, kim dài chỉ số {n}', 'The hour hand points to {1} and the minute hand points to {2}'),
+  rule("Kim ngắn chỉ số {n}, kim dài chỉ số {n} thì đồng hồ chỉ {n} giờ.", "When the hour hand points to {1} and the minute hand points to {2}, the clock shows {3} o'clock."),
+  rule('Băng {L} dài hơn băng {L}.', 'Strip {1} is longer than strip {2}.'), rule('Băng {L} ngắn hơn băng {L}.', 'Strip {1} is shorter than strip {2}.'),
+  rule('Băng {L} ngắn nhất.', 'Strip {1} is the shortest.'), rule('Băng {L} dài nhất.', 'Strip {1} is the longest.'), rule('Băng {L} dài {n} {u}.', 'Strip {1} is {2} {3} long.'),
+  rule('Băng giấy dài {n} {u}.', 'The paper strip is {1} {2} long.'), rule('Cần thêm {n} khối.', '{1} more cubes are needed.'), rule('Cần lấy bớt {n} khối.', '{1} cubes need to be taken away.'),
+  rule('Cần {n} que tính.', '{1} counting sticks are needed.'), rule('Có tất cả {n} khối.', 'There are {1} cubes altogether.'),
+  rule('Có {n} khối hộp chữ nhật.', 'There are {1} cuboids.'), rule('Số khối lập phương nhiều hơn số khối hộp chữ nhật.', 'There are more cubes than cuboids.'),
+  rule('Số hình vuông nhiều hơn số hình tam giác.', 'There are more squares than triangles.'),
+  rule('Hai đường thẳng song song cắt nhau tại một điểm.', 'Two parallel lines meet at one point.'), rule('Hai đường thẳng song song không bao giờ cắt nhau.', 'Two parallel lines never meet.'),
+  rule('Hai đường thẳng vuông góc tạo thành hai góc nhọn và hai góc tù.', 'Two perpendicular lines form two acute angles and two obtuse angles.'),
+  rule('Hai đường thẳng vuông góc tạo thành bốn góc vuông.', 'Two perpendicular lines form four right angles.'),
+  rule('Hai cạnh đối diện của hình chữ nhật song song với nhau.', 'Opposite sides of a rectangle are parallel.'),
+  rule('Hai cạnh kề nhau của hình chữ nhật vuông góc với nhau.', 'Adjacent sides of a rectangle are perpendicular.'),
+  rule('Dùng ê ke để vẽ hai đường thẳng vuông góc.', 'A set square is used to draw two perpendicular lines.'),
+  rule('Hình tam giác cũng là hình tứ giác.', 'A triangle is also a quadrilateral.'), rule('Hình vuông là một hình tứ giác.', 'A square is a quadrilateral.'),
+  rule('Hai điểm nối được hai đoạn thẳng khác nhau.', 'Two points can be joined by two different line segments.'), rule('Hình tròn có {n} cạnh.', 'A circle has {1} sides.'),
+  rule('Đường cong được vẽ bằng thước kẻ thẳng.', 'A curved line is drawn with a ruler.'), rule('Hình tứ giác có {n} đỉnh.', 'A quadrilateral has {1} vertices.'),
+  rule('Hình tứ giác có {n} cạnh.', 'A quadrilateral has {1} sides.'), rule('Đoạn thẳng có hai đầu mút.', 'A line segment has two endpoints.'),
+  rule('Đường thẳng có hai đầu mút.', 'A straight line has two endpoints.'), rule('Ba điểm thẳng hàng cùng nằm trên một đường thẳng.', 'Three collinear points lie on the same straight line.'),
+  rule('Một đường gấp khúc có thể gồm {n} đoạn thẳng.', 'A broken line can be made of {1} line segments.'),
+  rule('Hình bình hành có bốn cạnh bằng nhau.', 'A parallelogram has four equal sides.'),
+  rule('Hình bình hành có hai cặp cạnh đối diện song song và bằng nhau.', 'A parallelogram has two pairs of opposite sides that are parallel and equal.'),
+  rule('Hình bình hành nào cũng có bốn góc vuông.', 'Every parallelogram has four right angles.'), rule('Hình vuông có {n} góc vuông.', 'A square has {1} right angles.'),
+  rule('Hình tam giác có {n} đỉnh.', 'A triangle has {1} vertices.'), rule('Hình chữ nhật có {n} đỉnh.', 'A rectangle has {1} vertices.'),
+  rule('Hình chữ nhật có {n} góc vuông.', 'A rectangle has {1} right angles.'), rule('Hình tứ giác nào cũng có {n} góc vuông.', 'Every quadrilateral has {1} right angles.'),
+  rule('Hình vuông có {n} cạnh dài bằng nhau.', 'A square has {1} sides of equal length.'), rule('Hình chữ nhật có {n} cạnh dài bằng nhau.', 'A rectangle has {1} sides of equal length.'),
+  rule('Hình chữ nhật có hai cạnh dài bằng nhau và hai cạnh ngắn bằng nhau.', 'A rectangle has two equal long sides and two equal short sides.'),
+  rule('Hình vuông cũng là một hình thoi đặc biệt.', 'A square is also a special rhombus.'), rule('Hình thoi có bốn cạnh bằng nhau.', 'A rhombus has four equal sides.'),
+  rule('Hình thoi có hai cặp cạnh đối diện song song.', 'A rhombus has two pairs of parallel opposite sides.'),
+  rule('Hình chữ nhật dài {n} {u}, rộng {n} {u} có chu vi {n} {u}.', 'A rectangle {1} {2} long and {3} {4} wide has a perimeter of {5} {6}.'),
+  rule('Hình chữ nhật dài {n} {u}, rộng {n} {u} có diện tích {n} {u}.', 'A rectangle {1} {2} long and {3} {4} wide has an area of {5} {6}.'),
+  rule('Hình vuông cạnh {n} {u} có chu vi {n} {u}.', 'A square with sides of {1} {2} has a perimeter of {3} {4}.'),
+  rule('Hình vuông cạnh {n} {u} có diện tích {n} {u}.', 'A square with sides of {1} {2} has an area of {3} {4}.'),
+  rule('Mọi điểm ở giữa hai điểm A, B đều là trung điểm của AB.', 'Every point between A and B is a midpoint of AB.'),
+  rule('Nếu M là trung điểm của AB thì AB dài gấp {n} lần AM.', 'If M is the midpoint of AB, then AB is {1} times as long as AM.'),
+  rule('Nếu M là trung điểm của AB thì AM dài gấp đôi MB.', 'If M is the midpoint of AB, then AM is twice as long as MB.'),
+  rule('Ba điểm A, M, B thẳng hàng và M nằm giữa A, B thì M là điểm ở giữa.', 'If A, M and B are collinear and M lies between A and B, then M is a point between them.'),
+  rule('Mỗi đoạn thẳng chỉ có một trung điểm.', 'Each line segment has only one midpoint.'),
+  rule('Trung điểm của đoạn thẳng là điểm ở giữa và chia đoạn thẳng thành hai phần bằng nhau.', 'The midpoint of a line segment is the point in the middle that splits it into two equal parts.'),
+  rule('Các mặt của hình hộp chữ nhật đều là hình vuông.', 'All the faces of a cuboid are squares.'), rule('Các mặt của khối lập phương đều là hình vuông.', 'All the faces of a cube are squares.'),
+  rule('Quả bóng có dạng khối lập phương.', 'A ball is shaped like a cube.'), rule('Hình trụ có {n} mặt.', 'A cylinder has {1} faces.'),
+  rule('Mọi bán kính của một hình tròn đều dài bằng nhau.', 'All the radii of a circle are equal.'), rule('Đường kính dài gấp {n} lần bán kính.', 'The diameter is {1} times as long as the radius.'),
+  rule('Tâm hình tròn là trung điểm của mỗi đường kính.', 'The centre of a circle is the midpoint of every diameter.'), rule('Đường kính đi qua tâm của hình tròn.', 'A diameter passes through the centre of the circle.'),
+  rule('Hộp bánh hình hộp chữ nhật có {n} cạnh.', 'A cuboid-shaped biscuit tin has {1} edges.'), rule('Con xúc xắc thường có dạng khối lập phương.', 'A dice is usually shaped like a cube.'),
+  rule('Khối hộp chữ nhật có {n} mặt.', 'A cuboid has {1} faces.'), rule('Hình lập phương có {n} cạnh bằng nhau.', 'A cube has {1} equal edges.'),
+  rule('Hình hộp chữ nhật có {n} cạnh.', 'A cuboid has {1} edges.'), rule('Dùng thước kẻ để vẽ hình tròn.', 'A circle is drawn with a ruler.'),
+  rule('Một hình tròn chỉ có một bán kính.', 'A circle has only one radius.'), rule('Bán kính dài hơn đường kính.', 'The radius is longer than the diameter.'),
+  rule('Khối lập phương có {n} đỉnh.', 'A cube has {1} vertices.'), rule('Hình khai triển của hình trụ có {n} hình tròn.', 'The net of a cylinder has {1} circles.'),
+  rule('Hình lập phương có {n} mặt là hình vuông bằng nhau.', 'A cube has {1} faces that are equal squares.'),
+  // --- Khả năng xảy ra (chắc chắn / có thể / không thể) ---
+  rule('Trong hộp chỉ có bi {c}.', 'The box has only {1} marbles.'), rule('Trong hộp có bi {c} và bi {c}.', 'The box has {1} and {2} marbles.'),
+  rule('Lấy ra một viên bi, viên bi đó {m} là bi {c}.', 'One marble is taken out. It is {1} that it is a {2} marble.'),
+  rule('Trong túi chỉ có kẹo {f}.', 'The bag has only {1} sweets.'), rule('Trong túi có {n} kẹo {f} và {n} kẹo {f}.', 'The bag has {1} {2} sweets and {3} {4} sweets.'),
+  rule('Lấy ra một chiếc kẹo, chiếc kẹo đó {m} là kẹo {f}.', 'One sweet is taken out. It is {1} that it is a {2} sweet.'),
+  rule('Gieo xúc xắc sáu mặt ({n} đến {n} chấm), mặt {n} chấm {m} xuất hiện.', 'A six-sided dice ({1} to {2} dots) is rolled. It is {4} that the {3}-dot face comes up.'),
+  rule('Hôm nay trời {m} mưa.', 'It is {1} that it will rain today.'), rule('Ngày mai mặt trời {m} mọc ở đằng tây.', 'It is {1} that the sun will rise in the west tomorrow.'),
+  rule('Rút một thẻ từ các thẻ số {e}, thẻ rút được {m} là số chẵn.', 'A card is drawn from the number cards {1}. It is {2} that it shows an even number.'),
+  rule('Một tuần {m} có bảy ngày.', 'It is {1} that a week has seven days.'), rule('Sau thứ hai {m} là thứ ba.', 'It is {1} that Tuesday comes after Monday.'),
+  rule('Tung một đồng xu, mặt ngửa {m} xuất hiện.', 'A coin is tossed. It is {1} that it lands heads up.'),
+  rule('Gieo một con xúc xắc thì {m} được mặt {n} chấm.', 'When a dice is rolled, it is {1} that the {2}-dot face comes up.'),
+  rule('Hộp có {n} bi đỏ.', 'A box has {1} red marbles.'), rule('Hộp có {n} bi đỏ và {n} bi xanh.', 'A box has {1} red marbles and {2} blue marbles.'),
+  rule('Lấy ra {n} viên bi thì {m} lấy được bi {c}.', 'If you take out {1} marbles, it is {2} that you get a {3} marble.'),
+  rule('Rút {n} thẻ từ các thẻ số {e} thì {m} được số chẵn.', 'If you draw {1} cards from the number cards {2}, it is {3} that you get an even number.'),
+  rule('Rút {n} thẻ từ các thẻ số {e} thì {m} được số {n}.', 'If you draw {1} cards from the number cards {2}, it is {3} that you get {4}.'),
+  rule('Tháng sau {m} có {n} ngày.', 'It is {1} that next month has {2} days.'),
+  rule('{n} và {n} được {n}', '{1} and {2} make {3}'), rule('{n} chục', '{1} tens'), rule('Nhóm {n} con', 'Group of {1} animals'),
+  rule('{n} giờ còn gọi là {n} giờ chiều (tối)', "{1}:00 is also called {2} o'clock in the afternoon (evening)"),
+  rule('{n} giờ còn gọi là {n} giờ chiều', "{1}:00 is also called {2} o'clock in the afternoon"), rule('{n} giờ còn gọi là {n} giờ tối', "{1}:00 is also called {2} o'clock in the evening"),
+  rule('Có {n} {t} và {n} {t}.', 'There are {1q2} and {3q4}.'), rule('Có {n} số.', 'There are {1} numbers.'),
+  rule('Số {b} bằng số {b}.', 'There are as many {1} as {2}.'), rule('Số {b} ít hơn số {b}.', 'There are fewer {1} than {2}.'),
+  rule('Số {b} nhiều hơn số {b}.', 'There are more {1} than {2}.'),
+  rule('{t} ở bên trái {t}.', 'The {1s} is to the left of the {2s}.'), rule('{t} ở bên phải {t}.', 'The {1s} is to the right of the {2s}.'),
+  rule('{t} ở trên {t}.', 'The {1s} is above the {2s}.'), rule('{t} ở dưới {t}.', 'The {1s} is below the {2s}.'),
+  rule('{t} ở trước {t}.', 'The {1s} is in front of the {2s}.'), rule('{t} ở sau {t}.', 'The {1s} is behind the {2s}.'),
   rule('Số đó là:', 'That number is:'), rule('Số lớn:', 'The larger number:'), rule('Số bé:', 'The smaller number:'), rule('Số thứ nhất:', 'The first number:'), rule('Số thứ hai:', 'The second number:'),
   rule('Kho A có {n} {t}, kho B có nhiều hơn {n} {t}.', 'Warehouse A has {1q2}. Warehouse B has {3q4} more.'),
   rule('Nhà máy làm được {n} {t}, đã chuyển đi {n} {t}.', 'A factory makes {1q2} and has sent out {3q4}.'),
@@ -1043,3 +1153,164 @@ export function translateMathPrompt(prompt: string): string | null {
 
 /** Cho script kiểm tra: dịch từng câu (null = chưa có quy tắc). */
 export const translateSentenceForCheck = translateSentence;
+
+// ---------------------------------------------------------------------------
+// ĐÁP ÁN: lựa chọn, dòng điền ô ("{} viên"), nhận định Đúng / Sai, vế ghép cặp
+// ---------------------------------------------------------------------------
+
+// Cụm từ ngắn hay gặp làm đáp án (khoá viết thường, không dấu chấm cuối)
+const ANSWER_PHRASES: Record<string, string> = {
+  'đúng': 'True', 'sai': 'False', 'có': 'Yes', 'không': 'No', 'chắc chắn': 'certain', 'có thể': 'possible', 'không thể': 'impossible',
+  'góc vuông': 'right angle', 'góc nhọn': 'acute angle', 'góc tù': 'obtuse angle', 'góc bẹt': 'straight angle', 'không phải góc vuông': 'not a right angle',
+  'hình tròn': 'circle', 'hình tam giác': 'triangle', 'hình vuông': 'square', 'hình chữ nhật': 'rectangle', 'hình tứ giác': 'quadrilateral',
+  'hình bình hành': 'parallelogram', 'hình thoi': 'rhombus', 'hình thang': 'trapezium', 'tam giác nhọn': 'acute triangle', 'tam giác vuông': 'right-angled triangle',
+  'tam giác tù': 'obtuse triangle', 'tam giác đều': 'equilateral triangle', 'hình hộp chữ nhật': 'cuboid', 'hình lập phương': 'cube',
+  'khối cầu': 'sphere', 'khối trụ': 'cylinder', 'khối hộp chữ nhật': 'cuboid', 'khối lập phương': 'cube', 'khối rubik': 'Rubik’s cube', 'khối ru-bích': 'Rubik’s cube',
+  'con xúc xắc': 'dice', 'mặt con xúc xắc': 'face of a dice', 'đường gấp khúc': 'broken line', 'đường thẳng': 'straight line', 'đoạn thẳng': 'line segment',
+  'đường cong': 'curved line', 'ba điểm thẳng hàng': 'three points in a straight line', 'ba đoạn thẳng': 'three line segments',
+  'song song': 'parallel', 'vuông góc': 'perpendicular', 'cắt nhau': 'intersecting', 'không gặp nhau': 'never meet', 'trùng nhau': 'coincide',
+  'cắt nhau tạo góc tù': 'intersect at an obtuse angle',
+  'quả bóng': 'ball', 'viên bi': 'marble', 'quả cam': 'orange', 'quả táo': 'apple', 'quả nho': 'grape', 'quả chuối': 'banana', 'quả địa cầu': 'globe',
+  'lon nước ngọt': 'soft drink can', 'hộp sữa hình trụ': 'cylindrical milk carton', 'khúc gỗ tròn': 'round log', 'hộp bánh hình hộp': 'box-shaped biscuit tin',
+  'ống nước': 'water pipe', 'hộp bút': 'pencil case', 'tủ lạnh': 'fridge', 'chiếc tủ lạnh': 'fridge', 'hộp sữa': 'milk carton', 'hộp sữa giấy': 'paper milk carton',
+  'hộp quà': 'gift box', 'hộp quà vuông đều các mặt': 'gift box with equal square faces', 'cái nón lá': 'conical hat', 'bao diêm': 'matchbox',
+  'viên gạch': 'brick', 'quyển sách': 'book', 'mặt trống': 'drum skin', 'cái giường': 'bed', 'tấm thảm': 'rug', 'cái tủ': 'cupboard', 'cái bàn': 'table',
+  'cái ghế': 'chair', 'cái đĩa': 'plate', 'cái trống': 'drum', 'cái cặp': 'school bag', 'đồng xu': 'coin', 'ô bàn cờ vua': 'chessboard square',
+  'chiếc thước ê-ke': 'set square', 'chiếc khăn mùi xoa': 'handkerchief', 'chiếc đĩa ăn cơm': 'dinner plate', 'chiếc bánh chưng': 'chung cake',
+  'hộp bánh quy': 'biscuit tin', 'khối gỗ vuông đồ chơi': 'wooden toy cube', 'con gấu bông': 'teddy bear', 'lá cờ đuôi nheo': 'pennant flag',
+  'mặt đồng hồ treo tường': 'wall clock face', 'cánh cửa ra vào': 'front door', 'bánh xe đạp': 'bicycle wheel', 'đồng hồ báo thức': 'alarm clock',
+  'chiếc ô tô': 'car', 'mái nhà nhìn từ phía trước': 'roof seen from the front', 'miếng bánh mì sandwich cắt chéo': 'sandwich cut diagonally',
+  'phần nghìn': 'thousandths', 'phần trăm': 'hundredths', 'phần mười': 'tenths', 'trăm': 'hundreds', 'chục': 'tens', 'đơn vị': 'ones',
+  'lớp đơn vị': 'ones period', 'lớp nghìn': 'thousands period', 'lớp triệu': 'millions period',
+  'tổng': 'sum', 'hiệu': 'difference', 'tích': 'product', 'thương': 'quotient', 'số hạng': 'addend', 'thừa số': 'factor', 'số bị chia': 'dividend',
+  'số chia': 'divisor', 'số bị trừ': 'minuend', 'số trừ': 'subtrahend', 'bằng': 'equal', 'bằng nhau': 'equal', 'vừa đủ': 'just enough',
+  'dài hơn': 'longer', 'ngắn hơn': 'shorter', 'cao hơn': 'taller', 'thấp hơn': 'shorter', 'nhiều hơn': 'more', 'ít hơn': 'fewer', 'rất nhiều': 'very many',
+  'nặng hơn': 'heavier', 'nhẹ hơn': 'lighter',
+  'sáng': 'morning', 'trưa': 'noon', 'chiều': 'afternoon', 'tối': 'evening', 'đêm': 'night',
+  'ê ke': 'set square', 'com-pa': 'compasses', 'thước thẳng': 'ruler', 'bên trái': 'on the left', 'bên phải': 'on the right',
+  'ngăn trên cùng': 'top shelf', 'ngăn giữa': 'middle shelf', 'ngăn dưới cùng': 'bottom shelf',
+  'mặt quyển vở': 'notebook cover', 'chiếc khăn mùi soa': 'handkerchief', 'biển báo nguy hiểm': 'warning sign', 'bảng lớp học': 'classroom board',
+  'chiếc điện thoại': 'phone', 'phong bì thư': 'envelope', 'nắp hộp sữa bò tròn': 'round milk tin lid', 'ngôi nhà': 'house', 'tờ tiền': 'banknote',
+  'trên': 'above', 'dưới': 'below', 'trước': 'in front', 'sau': 'behind', 'phía trước': 'in front', 'phía sau': 'behind', 'ở giữa': 'in the middle',
+  'thừa ghế': 'too many chairs', 'thiếu ghế': 'not enough chairs', 'thừa cà rốt': 'too many carrots', 'thiếu cà rốt': 'not enough carrots',
+};
+const LABEL_WORD: Record<string, string> = {
+  'băng': 'Strip', 'nhóm': 'Group', 'đường': 'Path', 'đồng hồ': 'Clock', 'hình': 'Shape', 'bút': 'Pen', 'cách': 'Way', 'tầng': 'Floor', 'vạch': 'Mark',
+  'số': 'Number', 'ô': 'Box', 'đội': 'Team', 'kho': 'Warehouse', 'túi': 'Bag', 'hộp': 'Box', 'thùng': 'Tank', 'bạn': 'Child',
+};
+const ROMAN: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100 };
+const romanToInt = (r: string) => [...r].reduce((acc, ch, i, a) => (ROMAN[ch] < (ROMAN[a[i + 1]] ?? 0) ? acc - ROMAN[ch] : acc + ROMAN[ch]), 0);
+const ordinal = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
+const DAY_EN: Record<string, string> = { ...Object.fromEntries(Object.entries(WDAY).map(([k, v]) => [`thứ ${k}`, v])), 'chủ nhật': 'Sunday' };
+
+// Số viết bằng chữ ("ba mươi bảy" → 37), đến 999
+const VI_DIGIT: Record<string, number> = { 'không': 0, 'một': 1, 'mốt': 1, 'hai': 2, 'ba': 3, 'bốn': 4, 'tư': 4, 'năm': 5, 'lăm': 5, 'sáu': 6, 'bảy': 7, 'tám': 8, 'chín': 9 };
+function viWordsToNumber(text: string): number | null {
+  // tách lớp triệu / nghìn: "ba trăm linh bảy nghìn không trăm năm mươi mốt"
+  const g = /^(?:(.+?) triệu)?\s*(?:(.+?) nghìn)?\s*(.*)$/u.exec(text.toLowerCase().trim().replace(/\s+/g, ' '));
+  if (!g || (!g[1] && !g[2])) return viUnder1000(text);
+  const part = (x?: string) => (x === undefined || x === '' ? 0 : viUnder1000(x));
+  const [mi, th, re] = [part(g[1]), part(g[2]), part(g[3])];
+  return mi === null || th === null || re === null ? null : mi * 1e6 + th * 1000 + re;
+}
+function viUnder1000(text: string): number | null {
+  const w = text.toLowerCase().trim().replace(/^không trăm\s*/u, '');
+  if (!w) return 0;
+  const m = /^(?:(\S+) trăm\s*)?(?:(?:linh|lẻ) (\S+)|mười(?: (\S+))?|(\S+) mươi(?: (\S+))?|(\S+))?$/u.exec(w);
+  if (!m || !w) return null;
+  const d = (x?: string, allow = true) => (x === undefined ? 0 : allow && x in VI_DIGIT ? VI_DIGIT[x] : NaN);
+  let n = m[1] !== undefined ? d(m[1]) * 100 : 0;
+  if (m[2] !== undefined) n += d(m[2]);
+  else if (w.includes('mười') && m[4] === undefined) n += 10 + d(m[3]);
+  else if (m[4] !== undefined) n += d(m[4]) * 10 + d(m[5]);
+  else if (m[6] !== undefined) n += d(m[6]);
+  return Number.isFinite(n) && !(m[1] === undefined && m[4] === undefined && m[6] === undefined && m[2] === undefined && !w.includes('mười')) ? n : null;
+}
+
+// Phép tính kèm đơn vị Việt: "2 giờ 15 phút + 1 giờ 5 phút = ? giờ ? phút" → "2 h 15 min + 1 h 5 min = ? h ? min"
+const UNIT_SHORT: [RegExp, string][] = [
+  [/thế kỉ/g, 'centuries'], [/giờ/g, 'h'], [/phút/g, 'min'], [/giây/g, 's'], [/ngày/g, 'days'], [/tuần/g, 'weeks'], [/tháng/g, 'months'],
+  [/năm/g, 'years'], [/tấn/g, 't'], [/tạ/g, 'quintals'], [/yến/g, '×10 kg'], [/đồng/g, 'dong'], [/lít/g, 'l'], [/dam²/g, 'dam²'], [/hm²/g, 'hm²'],
+];
+const MATH_UNITS = new RegExp(String.raw`^(?:${NUM_SRC}|centuries|h|min|s|days|weeks|months|years|t|quintals|×10 kg|dong|dam²|hm²|km/h|m/min|m/s|dm²|cm²|m²|km²|cm³|dm³|m³|[\s+\-−–×x*:÷=<>?…_□.,;()/%²³°]|cm|mm|dm|km|kg|ml|ha|m|g|l)+$`, 'u');
+function unitMath(t: string): string | null {
+  if (!/\d|\?/.test(t) || !/[+\-−–×x*:÷=<>]/.test(t)) return null;
+  const en = UNIT_SHORT.reduce((acc, [re, to]) => acc.replace(re, to), t.replace(/km\/giờ/g, 'km/h').replace(/m\/phút/g, 'm/min'));
+  return MATH_UNITS.test(en) ? numsToEn(en).replace(/\(dư\s*/g, '(remainder ') : null;
+}
+
+const capFirst = (src: string, en: string) => (/^[A-ZÀ-ỸĐ]/u.test(src) ? en.charAt(0).toUpperCase() + en.slice(1) : en);
+
+/** Dịch một đáp án; null nếu chưa có quy tắc. Ô trống "{}" hiện là "?". */
+export function translateAnswer(raw: string): string | null {
+  const t = raw.trim().replace(/\{\}/g, '?').replace(/\s+/g, ' ');
+  if (!t) return '';
+  if (MATH_ONLY.test(t)) return numsToEn(t);
+  const low = t.toLowerCase().replace(/\.$/, '');
+  if (ANSWER_PHRASES[low]) return capFirst(t, ANSWER_PHRASES[low]) + (/\.$/.test(t) ? '.' : '');
+  if (DAY_EN[low]) return DAY_EN[low];
+  if (SUBJ[low]) return cap(SUBJ[low]);
+  if (NAME_SET.has(t)) return t;
+  const remainder = /^(.+?) \(dư (.+)\)$/.exec(t);
+  if (remainder && MATH_ONLY.test(remainder[1]) && MATH_ONLY.test(remainder[2])) return `${numsToEn(remainder[1])} (remainder ${numsToEn(remainder[2])})`;
+  const um = unitMath(t);
+  if (um) return um;
+  const n = viWordsToNumber(t);
+  if (n !== null) return capFirst(t, numberWordsEn(n));
+  let m: RegExpExecArray | null;
+  if ((m = /^thế kỉ ([IVXL]+|\?)$/iu.exec(t))) return m[1] === '?' ? 'century ?' : `the ${ordinal(romanToInt(m[1].toUpperCase()))} century`;
+  if (/^[IVXL]+$/.test(t)) return t;
+  if ((m = /^tháng (\d{1,2})$/iu.exec(t)) && MONTH[Number(m[1])]) return MONTH[Number(m[1])];
+  if ((m = /^ngày (\d{1,2}|\?)$/iu.exec(t))) return m[1] === '?' ? 'the ?' : `the ${ordinal(Number(m[1]))}`;
+  if ((m = /^(thứ \S+|chủ nhật), ngày (\d{1,2})$/iu.exec(t)) && DAY_EN[m[1].toLowerCase()]) return `${DAY_EN[m[1].toLowerCase()]} the ${ordinal(Number(m[2]))}`;
+  if ((m = /^lớp (\d+[A-E])$/iu.exec(t))) return `Class ${m[1].toUpperCase()}`;
+  if ((m = new RegExp(`^(${alt(Object.keys(LABEL_WORD))}) ([A-Z]|\\d+)$`, 'iu').exec(t))) return `${LABEL_WORD[m[1].toLowerCase()]} ${m[2]}`;
+  if ((m = new RegExp(`^(bé hơn|lớn hơn|bằng|gần bằng) (${NUM_SRC})$`, 'iu').exec(t))) return capFirst(t, `${({ 'bé hơn': 'less than', 'lớn hơn': 'greater than', 'bằng': 'equal to', 'gần bằng': 'about' } as Record<string, string>)[m[1].toLowerCase()]} ${enNum(m[2])}`);
+  if ((m = new RegExp(`^(${NUM_SRC}|\\?) (và|của|hoặc) (${NUM_SRC}|\\?)$`, 'u').exec(t))) return `${enNum(m[1])} ${({ 'và': 'and', 'của': 'of', 'hoặc': 'or' } as Record<string, string>)[m[2]]} ${enNum(m[3])}`;
+  if ((m = new RegExp(`^(${NUM_SRC}|\\?) (gang tay|sải tay|bước chân)$`, 'u').exec(t))) return `${enNum(m[1])} ${({ 'gang tay': 'hand spans', 'sải tay': 'arm spans', 'bước chân': 'steps' } as Record<string, string>)[m[2]]}`;
+  if ((m = new RegExp(`^(${NUM_SRC}) đồng và (${NUM_SRC}) đồng$`, 'u').exec(t))) return `${enNum(m[1])} dong and ${enNum(m[2])} dong`;
+  if ((m = /^kém (\S+) phút$/iu.exec(t))) return `${m[1] === '?' ? '?' : enNum(m[1])} minutes to`;
+  // Giờ: lựa chọn số cụ thể là giờ đồng hồ (7:30, 7 o'clock); dòng điền ô "? giờ ? phút" để dạng h / min (dùng được cho cả khoảng thời gian)
+  if ((m = /^(\d{1,2}) giờ (\d{1,2}) phút$/u.exec(t))) return `${m[1]}:${m[2].padStart(2, '0')}`;
+  if ((m = /^(\d{1,2}) giờ$/u.exec(t))) return `${m[1]} o'clock`;
+  if ((m = /^(\d+|\?) giờ (\d+|\?) phút$/u.exec(t))) return `${m[1]} h ${m[2]} min`;
+  if ((m = /^(\?) giờ$/u.exec(t))) return '? hours';
+  if ((m = /^Nửa (giờ|phút) = (\?|\d+) (phút|giây)$/u.exec(t))) return `Half ${m[1] === 'giờ' ? 'an hour' : 'a minute'} = ${m[2]} ${m[3] === 'phút' ? 'minutes' : 'seconds'}`;
+  // "Nhãn: phần sau" — nhãn theo quy tắc, phần sau là đáp án
+  const colon = t.indexOf(': ');
+  if (colon > 0) {
+    const head = byRules(t.slice(0, colon + 1));
+    const tail = head !== null ? translateAnswer(t.slice(colon + 2)) : null;
+    if (head !== null && tail !== null) return `${head} ${tail}`;
+  }
+  // đồ vật / con vật đứng một mình ("Con mèo", "Quả cam", "Cái bàn")
+  const nounKey = Object.keys(NOUNS).find((k) => k === low) ?? Object.keys(NOUNS).find((k) => `con ${k}` === low || `cái ${k}` === low || `chiếc ${k}` === low || `quả ${k}` === low);
+  if (nounKey) return capFirst(t, NOUNS[nounKey][0]);
+  if ((m = /^con (\S+(?: \S+)?)$/iu.exec(t)) && NOUNS[`con ${m[1].toLowerCase()}`]) return capFirst(t, NOUNS[`con ${m[1].toLowerCase()}`][0]);
+  const item = translateItem(t);
+  if (item) return item;
+  return translateSentence(t);
+}
+
+function numberWordsEn(n: number): string {
+  const ones = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+  const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+  const u100 = (x: number): string => (x < 20 ? ones[x] : tens[Math.floor(x / 10)] + (x % 10 ? `-${ones[x % 10]}` : ''));
+  const u1000 = (x: number): string => (x < 100 ? u100(x) : `${ones[Math.floor(x / 100)]} hundred${x % 100 ? ` and ${u100(x % 100)}` : ''}`);
+  if (n < 1000) return u1000(n);
+  const mi = Math.floor(n / 1e6), th = Math.floor((n % 1e6) / 1000), re = n % 1000;
+  const parts = [mi ? `${u1000(mi)} million` : '', th ? `${u1000(th)} thousand` : '', re ? (re < 100 ? `and ${u100(re)}` : u1000(re)) : ''].filter(Boolean);
+  return parts.join(' ');
+}
+
+/** Dịch cả nhóm đáp án; null nếu có một đáp án chưa có quy tắc (không hiện nửa Việt nửa Anh). */
+export function translateAnswers(list: string[] | undefined): string[] | null {
+  if (!list?.length) return [];
+  const out: string[] = [];
+  for (const a of list) {
+    const e = translateAnswer(a);
+    if (e === null) return null;
+    out.push(e);
+  }
+  return out;
+}

@@ -843,7 +843,7 @@ function LamBaiContent() {
             );
           })()}
 
-          {subjectCode === 'toan' && <MathBilingual prompt={q.prompt} blanks={q.blanks} />}
+          {subjectCode === 'toan' && <MathBilingual prompt={q.prompt} blanks={q.blanks} options={q.options} leftItems={q.leftItems} statements={q.statements} />}
 
           {q.figure && <Figure figure={q.figure} />}
 

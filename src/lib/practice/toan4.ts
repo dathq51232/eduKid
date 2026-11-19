@@ -454,7 +454,8 @@ const timeConvert: T4Template = (r, c, l) => {
 const centuryOf: T4Template = (r, c, l) => {
   const y = r.int(1001, 2099);
   const cent = Math.ceil(y / 100);
-  const ROM = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX', 'XXI'];
+  // đến XXII: năm 2001–2099 (thế kỉ XXI) có đáp án nhiễu là thế kỉ XXII
+  const ROM = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX', 'XXI', 'XXII'];
   return Q.sc(`Năm ${y} thuộc thế kỉ nào?`, r.shuffle([cent, cent - 1, cent + 1].map((x) => `thế kỉ ${ROM[x]}`)), `thế kỉ ${ROM[cent]}`,
     M('T4.DL.03', 'TOAN.GIOLICH', 'the_ki', l, `Thế kỉ ${ROM[cent]} gồm các năm từ ${(cent - 1) * 100 + 1} đến ${cent * 100}.`));
 };

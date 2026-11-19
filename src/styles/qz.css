@@ -156,5 +156,11 @@
 .qz-bi-words b { color: #2457c5; }
 .qz-bi-words li.is-op b { color: #b45309; }
 .qz-bi-words li.is-term b { color: #7c4ddf; }
+.qz-bi-ans { width: 100%; display: grid; gap: 6px; }
+.qz-bi-ans-title { margin: 0; font-size: 14px; font-weight: 800; color: #5b6478; text-transform: uppercase; letter-spacing: .04em; }
+.qz-bi-ans ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.qz-bi-ans li { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 6px; padding: 5px 12px; border-radius: 14px; background: #fff; border: 1px solid #d6e2ff; font-size: 15px; color: #5b6478; text-align: left; max-width: 100%; }
+.qz-bi-ans li b { color: #1e2a4a; font-size: 16px; }
+.qz-bi-ans li span::after { content: ' →'; color: #9aa6c2; }
 .qz-bi-empty { margin: 0; color: #5b6478; font-size: 15px; }
 @media (max-width: 560px) { .qz-bi-expr { font-size: 17px; } }
