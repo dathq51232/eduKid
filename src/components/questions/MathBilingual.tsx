@@ -1,6 +1,6 @@
 'use client';
-// Toán song ngữ: bật lên thì dưới đề hiện phép tính đọc bằng tiếng Anh, số và từ vựng Toán Anh – Việt,
-// kèm nút nghe giọng Anh. Bật / tắt lưu trên máy em (dùng chung mọi bài Toán).
+// Toán song ngữ: bật lên thì dưới đề hiện bản dịch tiếng Anh cả đề (khi đề có quy tắc dịch — xem docs/QUY-TAC-SONG-NGU.md),
+// nếu chưa có thì hiện phép tính đọc bằng tiếng Anh; kèm số, từ vựng Toán Anh – Việt và nút nghe giọng Anh. Bật / tắt lưu trên máy em (dùng chung mọi bài Toán).
 import { useEffect, useMemo, useState } from 'react';
 import { Languages, Volume2 } from 'lucide-react';
 import { englishSpeech, mathEnglishFor } from '@/lib/math-english';
@@ -51,10 +51,16 @@ export default function MathBilingual({ prompt, blanks }: Props) {
           ) : (
             <>
               <div className="qz-bi-say" lang="en">
-                {me.instruction && <p className="qz-bi-ins">{me.instruction}</p>}
-                {me.expressions.map((e) => (
-                  <p key={e.math} className="qz-bi-expr"><span className="qz-bi-math" lang="vi">{e.math}</span> {e.en}</p>
-                ))}
+                {me.sentence ? (
+                  <p className="qz-bi-sentence">{me.sentence}</p>
+                ) : (
+                  <>
+                    {me.instruction && <p className="qz-bi-ins">{me.instruction}</p>}
+                    {me.expressions.map((e) => (
+                      <p key={e.math} className="qz-bi-expr"><span className="qz-bi-math" lang="vi">{e.math}</span> {e.en}</p>
+                    ))}
+                  </>
+                )}
               </div>
               <button type="button" className="qz-bi-listen" onClick={listen}>
                 <Volume2 aria-hidden="true" /> {speaking ? 'Dừng' : 'Nghe tiếng Anh'}

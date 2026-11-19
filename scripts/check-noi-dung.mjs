@@ -14,6 +14,7 @@ const STEPS = [
   ['Đổi bộ câu hỏi không trùng', 'check-sets.ts', []],
   ['Ma trận & đề kiểm tra', 'check-exams.ts', []],
   ['Trò chơi học tập', 'check-games.ts', []],
+  ['Toán song ngữ: bản dịch tiếng Anh', 'check-song-ngu.ts', fast ? ['nhanh'] : []],
 ];
 
 const rows = [];

@@ -146,6 +146,7 @@
 .qz-bi-say { display: grid; gap: 4px; }
 .qz-bi-say p { margin: 0; }
 .qz-bi-ins { font-size: 17px; font-weight: 700; color: #2457c5; }
+.qz-bi-sentence { font-size: 19px; font-weight: 700; color: #1e2a4a; line-height: 1.45; white-space: pre-line; }
 .qz-bi-expr { font-size: 20px; font-weight: 700; color: #1e2a4a; line-height: 1.4; }
 .qz-bi-math { display: inline-block; margin-right: 6px; padding: 0 10px; border-radius: 10px; background: #fff; color: #2457c5; font-variant-numeric: tabular-nums; }
 .qz-bi-listen { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: #2457c5; color: #fff; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; }

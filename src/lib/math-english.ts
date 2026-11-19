@@ -1,7 +1,10 @@
-// Toán song ngữ: đọc phép tính và từ vựng Toán trong đề bằng tiếng Anh (không dịch máy cả câu).
+// Toán song ngữ: bản dịch cả đề theo mẫu câu (src/lib/math-translate.ts — chỉ khi mọi câu có quy tắc),
+// kèm phép tính đọc bằng tiếng Anh và từ vựng Toán trong đề (không dịch máy).
 // - Phép tính trong đề ("7 + 5 = ?", "36 : 4 = …") → câu tiếng Anh: "Seven plus five equals what?"
 // - Số trong đề → chữ tiếng Anh ("12 · twelve"); thuật ngữ Toán quen thuộc → từ tiếng Anh ("tổng · sum").
 // - Vài câu lệnh hay gặp ("Tính", "Điền số thích hợp"…) → câu lệnh tiếng Anh tương ứng.
+
+import { translateMathPrompt } from './math-translate';
 
 const ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
   'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
@@ -23,13 +26,13 @@ export function numberToEnglish(n: number): string {
   if (millions) parts.push(`${under1000(millions)} million`);
   if (thousands) parts.push(`${under1000(thousands)} thousand`);
   if (rest) parts.push(rest < 100 ? `and ${under1000(rest)}` : under1000(rest));
-  return parts.map((t) => t.charAt(0).toUpperCase() + t.slice(1)).join(' ');
+  return parts.join(' ');
 }
 
 /** Chuỗi số kiểu Việt Nam ("1.000", "3,5") → chữ tiếng Anh ("one thousand", "three point five"). */
 export function numeralToEnglish(raw: string): string {
   const s = raw.trim();
-  if (/^\d{1,3}(\.\d{3})+$/.test(s)) return numberToEnglish(Number(s.replace(/\./g, '')));
+  if (/^\d{1,3}([.\s\u00a0\u202f]\d{3})+$/.test(s)) return numberToEnglish(Number(s.replace(/[.\s\u00a0\u202f]/g, '')));
   const m = s.match(/^(\d+)(?:,(\d+))?$/);
   if (!m) return s;
   const whole = numberToEnglish(Number(m[1]));
@@ -46,7 +49,7 @@ export const OPERATOR_VOCAB: { sign: string; en: string }[] = [
   { sign: ':', en: 'divided by' }, { sign: '=', en: 'equals' }, { sign: '>', en: 'greater than' }, { sign: '<', en: 'less than' },
 ];
 
-const NUM = String.raw`\d{1,3}(?:\.\d{3})+|\d+(?:,\d+)?`;
+const NUM = String.raw`\d{1,3}(?:[ \u00a0\u202f]\d{3})+(?!\d)|\d{1,3}(?:\.\d{3})+|\d+(?:,\d+)?`;
 const BLANK = String.raw`\?|…|\.{3}|_+|□`;
 const TERM = `(?:${NUM}|${BLANK})`;
 // Dấu chia ":" phải cách đều hai bên ("36 : 4") hoặc dính liền ("36:4"); "Bài 1: 3 + 4" không phải phép chia.
@@ -128,6 +131,7 @@ const PHRASES: [RegExp, string][] = [
 const NUM_RE = new RegExp(NUM, 'g');
 
 export type MathEnglish = {
+  /** bản dịch cả đề (null nếu có câu chưa có quy tắc) */ sentence: string | null;
   /** câu lệnh tiếng Anh (nếu nhận ra) */ instruction: string | null;
   expressions: { math: string; en: string; time?: boolean }[];
   numbers: { n: string; en: string }[];
@@ -166,11 +170,12 @@ export function mathEnglishFor(prompt: string, extra: string[] = []): MathEnglis
     return expressions.some((e) => !e.time && alts.some((a) => e.math.includes(a)));
   });
 
-  return { instruction, expressions, numbers, terms, operators };
+  return { sentence: translateMathPrompt(prompt), instruction, expressions, numbers, terms, operators };
 }
 
-/** Câu tiếng Anh để đọc to: câu lệnh + phép tính; không có phép tính thì đọc các số và thuật ngữ. */
+/** Câu tiếng Anh để đọc to: bản dịch cả đề nếu có; không thì câu lệnh + phép tính, hoặc các số và thuật ngữ. */
 export function englishSpeech(me: MathEnglish): string {
+  if (me.sentence) return me.sentence.replace(/\n+/g, ' ');
   const parts: string[] = [];
   if (me.instruction) parts.push(me.instruction);
   if (me.expressions.length) parts.push(...me.expressions.map((e) => e.en));
