@@ -235,3 +235,26 @@
   .tdy-now-side { width: 100%; }
   .tdy-now-side .tdy-btn { flex: 1; justify-content: center; }
 }
+
+/* ===== Màu nhận diện từng khối trên trang Hôm nay — nền ngả nhẹ + viền + vạch màu trên đầu + biểu tượng tiêu đề cùng màu.
+   Mỗi khối một --acc; nền / viền pha từ --surface / --line nên tự hợp giao diện sáng và tối. Chỉ áp trong .tdy (trang phụ huynh giữ nguyên). ===== */
+.tdy .tdy-todo { --acc: #f59e0b; }   /* Việc hôm nay — cam: cần làm */
+.tdy .tdy-sched { --acc: #3b6fe0; }  /* Hôm nay dạy — xanh dương: giờ học */
+.tdy .li-aside { --acc: #6366f1; }   /* Tiết đã chọn gợi ý — chàm */
+.tdy .uw-cal { --acc: #0d9488; }     /* Tuần này — xanh ngọc: lịch, nhắc hẹn */
+.tdy .tdy-pulse { --acc: #8b5cf6; }  /* Lớp mình — tím */
+.tdy .uw-money { --acc: #e11d48; }   /* Thu chi — hồng đỏ */
+.tdy .te-card-dash { --acc: #16a34a; } /* Tiếng Anh sư phạm — xanh lá */
+.tdy :is(.tdy-todo, .tdy-sched, .li-aside, .uw-cal, .tdy-pulse, .uw-money, .te-card-dash) {
+  border-color: color-mix(in srgb, var(--acc) 28%, var(--line));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--acc) 9%, var(--surface)), var(--surface) 160px);
+  box-shadow: inset 0 3px 0 var(--acc), var(--shadow-sm);
+}
+.tdy :is(.tdy-todo, .tdy-sched, .li-aside, .tdy-pulse) h2 > svg { color: var(--acc); }
+.tdy :is(.uw-cal, .uw-money, .te-card-dash) .uw-hd h2 { display: flex; align-items: center; gap: 6px; }
+.tdy :is(.uw-cal, .uw-money, .te-card-dash) .uw-hd h2::before { content: ''; flex: none; width: 4px; height: 18px; border-radius: 4px; background: var(--acc); }
+:root[data-theme="dark"] .tdy :is(.tdy-todo, .tdy-sched, .li-aside, .uw-cal, .tdy-pulse, .uw-money, .te-card-dash) {
+  border-color: color-mix(in srgb, var(--acc) 34%, var(--line));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--acc) 13%, var(--surface)), var(--surface) 160px);
+}
+.tdy-mine-2 > .uw { align-content: start; } /* 2 ô cao bằng nhau: nội dung dồn lên đầu, không giãn cách giữa các dòng */
