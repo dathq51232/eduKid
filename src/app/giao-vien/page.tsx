@@ -247,7 +247,7 @@ export default async function TeacherHome() {
                 <TodaySchedule classId={active.id} day={todayIso} tomorrow={tomorrowIso} base={base} saved={todayPlans} savedTomorrow={tomorrowPlans} headingId="tdy-sched" />
               </section>
               <section className="tdy-card tdy-todo" aria-labelledby="tdy-todo">
-                <TodoList items={todo} day={todayIso} headingId="tdy-todo" />
+                <TodoList items={todo} day={todayIso} headingId="tdy-todo" calHref={`${base}/lich`} />
               </section>
             </div>
             {/* ④ Lớp mình (gợi ý tiết dạy đã chọn hiện ở trên khi có) */}
