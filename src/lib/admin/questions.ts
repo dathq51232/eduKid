@@ -4,6 +4,8 @@ import { normalizeAnswer } from '@/lib/grading';
 import { defaultTimeLimit, type Level } from '@/lib/levels';
 import { shuffle } from '@/lib/shuffle';
 import type { AnswerKey, Question, DbQuestionType } from '@/lib/types';
+import { questionMathIssues, type MathQ } from '@/lib/content/verify-math';
+import { identityIssues } from '@/lib/content/rules';
 import type { AdminQuestionRow, QuestionDraft } from './types';
 
 export function emptyDraft(type: DbQuestionType = 'single_choice'): QuestionDraft {
@@ -201,7 +203,26 @@ export function validateDraft(d: QuestionDraft): string[] {
       break;
     }
   }
+  // Quy tắc kiến thức (docs/QUY-TAC-CAP-NHAT-KIEN-THUC.md): chỉ kiểm khi cấu trúc câu đã hợp lệ
+  if (!errors.length) errors.push(...knowledgeIssues(d));
   return errors;
+}
+
+/** Câu soạn ở trang Quản trị → dạng chung để máy tính lại phép tính (cùng bộ máy với npm run check:knowledge) */
+export function draftToMathQ(d: QuestionDraft): MathQ {
+  const opts = clean(d.options);
+  const key = d.type === 'multiple_choice' ? { correct: clean(d.correctMany) }
+    : d.type === 'fill_blank' ? { accepted: clean(d.accepted) }
+    : { correct: d.correct.trim() };
+  return { type: d.type, prompt: d.prompt, options: opts, key, explanation: d.explanation, solution: d.solution };
+}
+
+/** Lỗi đúng kiến thức (phép tính sai trong đáp án / nhận xét / lời giải, câu Đúng–Sai chấm ngược) và lỗi bản sắc */
+export function knowledgeIssues(d: QuestionDraft): string[] {
+  const PART: Record<string, string> = { 'nhận xét': 'Nhận xét', 'lời giải': 'Lời giải', 'đáp án': 'Đáp án', 'đúng/sai': 'Câu Đúng/Sai' };
+  const math = questionMathIssues(draftToMathQ(d)).map((i) => `${PART[i.part] ?? i.part}: ${i.msg}`);
+  const identity = [d.prompt, d.explanation, d.solution, ...d.options].flatMap((t) => identityIssues(t));
+  return [...math, ...new Set(identity)];
 }
 
 // Câu hỏi đúng như học sinh sẽ thấy (dùng cho nút Xem thử).

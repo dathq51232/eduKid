@@ -40,3 +40,8 @@ câu mức L4–L5 và câu mới thêm; sửa xong vẫn chạy lại lệnh tr
 - Ma trận đề Học kì 1 lớp 1 (cả 3 môn) chỉ ra 8/10 câu vì chưa có câu mức 3 in được; nay chuyển phần thiếu sang mức gần nhất.
 - `check:exams` kiểm 0 câu (quên nạp kho bài) → nay nạp đủ và báo lỗi nếu không kiểm được gì.
 - `check:content` báo nhầm 18 câu xếp hộp (`grouping`) và chưa kiểm cấu trúc các dạng xếp hộp, mảnh ghép, điền nhiều ô, bảng Đ/S.
+
+## Nội dung thêm qua trang Quản trị
+
+Câu soạn tay / nhập CSV ở `/quan-tri/bai-hoc` được kiểm bằng **cùng bộ máy** (`src/lib/content/verify-math.ts`) ngay khi lưu,
+cùng quy tắc cơ bản / nâng cao trong `src/lib/content/rules.ts`. Chi tiết: `docs/QUY-TAC-CAP-NHAT-KIEN-THUC.md`.
