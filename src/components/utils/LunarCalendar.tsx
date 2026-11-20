@@ -34,10 +34,13 @@ export default function LunarCalendar({ title, subtitle, icon, classId, students
   const [sel, setSel] = useState<YMD>(today);
   const [bdays, setBdays] = useState<Bday[]>([]);
   const cal = useCalendarNotes();
+  const [openNew, setOpenNew] = useState(false);
 
-  // ?ngay=YYYY-MM-DD: mở thẳng ngày có việc (từ "Việc hôm nay")
+  // ?ngay=YYYY-MM-DD: mở thẳng ngày có việc (từ "Việc hôm nay"); &them=1: mở sẵn ô thêm ghi chú
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get('ngay');
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('them') === '1') setOpenNew(true);
+    const q = sp.get('ngay');
     if (!q || !/^\d{4}-\d{2}-\d{2}$/.test(q)) return;
     const [y, m, d] = q.split('-').map(Number);
     setSel({ y, m, d }); setCur({ y, m });
@@ -212,7 +215,7 @@ export default function LunarCalendar({ title, subtitle, icon, classId, students
             )}
           </section>
 
-          <CalendarNotes day={iso(sel)} api={cal} who={who ?? (classId ? 'gv' : 'ph')} />
+          <CalendarNotes day={iso(sel)} api={cal} who={who ?? (classId ? 'gv' : 'ph')} openNew={openNew} />
 
           <section className="lg-glass lg-up">
             <h2>Sắp tới</h2>

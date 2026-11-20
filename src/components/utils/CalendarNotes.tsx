@@ -2,7 +2,7 @@
 
 // Ô "Ghi chú & nhắc hẹn" của ngày đang chọn trên trang Lịch (giáo viên + phụ huynh):
 // xem / thêm / sửa / xoá việc của ngày, chọn nhắc trước mấy ngày và lặp lại. Đến lúc nhắc, việc hiện ở "Việc hôm nay".
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BellRing, Pencil, Plus, StickyNote, Trash2 } from 'lucide-react';
 import {
   REMIND_OPTIONS, REPEAT_LABEL, dayLabel, fallsOn, remindLabel, type CalendarNote, type NoteInput, type Repeat, type useCalendarNotes,
@@ -32,8 +32,11 @@ const TEMPLATES: Record<'gv' | 'ph', { title: string; remind: number; repeat?: R
 
 const blank = (day: string): NoteInput => ({ day, at_time: null, title: '', note: '', remind_days: 1, repeat: 'none' });
 
-export default function CalendarNotes({ day, api, who }: { day: string; api: Api; who: 'gv' | 'ph' }) {
+/** openNew: mở sẵn ô thêm ghi chú (từ nút "+ Ghi chú" trên trang chủ) */
+export default function CalendarNotes({ day, api, who, openNew = false }: { day: string; api: Api; who: 'gv' | 'ph'; openNew?: boolean }) {
   const [form, setForm] = useState<(NoteInput & { id?: string }) | null>(null);
+  const opened = useRef(false); // chỉ mở sẵn một lần, đổi ngày sau đó không bật lại
+  useEffect(() => { if (openNew && !opened.current) { opened.current = true; setForm((f) => f ?? blank(day)); } }, [openNew, day]);
   const [busy, setBusy] = useState(false);
   const list = api.notes.filter((n) => fallsOn(n, day)).sort((a, b) => (a.at_time ?? '99').localeCompare(b.at_time ?? '99'));
 

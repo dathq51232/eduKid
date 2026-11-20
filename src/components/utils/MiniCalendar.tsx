@@ -6,7 +6,7 @@
 // Danh sách chỉ xem trong 2 tuần tới (UPCOMING_DAYS).
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Moon, Sun } from 'lucide-react';
+import { ChevronRight, Moon, Plus, Sun } from 'lucide-react';
 import { LUNAR_MONTH_NAME, WEEKDAYS, canChiDay, canChiYear, dayInfo, type DayInfo } from '@/lib/utils/lunar';
 import { UPCOMING_DAYS, addDays, leftLabel, occurrencesBetween, useCalendarNotes } from '@/lib/calendar-notes';
 import '@/styles/uw.css';
@@ -33,8 +33,12 @@ function build(): Data {
   return { today, todayIso: isoOf(today), week, holidays };
 }
 
-/** compact: bỏ 2 thẻ ngày lớn (khi ngày âm/dương đã hiện ở đầu trang) — chỉ còn dải tuần + lễ sắp tới */
-export default function MiniCalendar({ href, compact = false, title = '📅 Lịch hôm nay' }: { href: string; compact?: boolean; title?: string }) {
+/** compact: bỏ 2 thẻ ngày lớn (khi ngày âm/dương đã hiện ở đầu trang) — chỉ còn dải tuần + lễ sắp tới.
+ *  hideDue: không lặp việc đã tới lúc nhắc (trang giáo viên đã có ở "Việc hôm nay").
+ *  addNote: nút "+ Ghi chú" mở trang Lịch với ô thêm ghi chú hôm nay. */
+export default function MiniCalendar({ href, compact = false, title = '📅 Lịch hôm nay', hideDue = false, addNote = false }: {
+  href: string; compact?: boolean; title?: string; hideDue?: boolean; addNote?: boolean;
+}) {
   // tính sau khi gắn vào trang để ngày luôn theo đồng hồ máy (tránh lệch giữa máy chủ và trình duyệt)
   const [data, setData] = useState<Data | null>(null);
   useEffect(() => { setData(build()); }, []);
@@ -51,9 +55,10 @@ export default function MiniCalendar({ href, compact = false, title = '📅 Lị
       when: `${o.daysLeft <= 1 ? leftLabel(o.daysLeft) : `${o.day.slice(8)}/${o.day.slice(5, 7)} · còn ${o.daysLeft} ngày`}${o.note.at_time ? ` · ${o.note.at_time}` : ''}`,
     }));
     const rank = (x: Item) => (x.kind === 'nhac' ? 0 : 1);
-    const next = [...notes, ...data.holidays].sort((a, b) => rank(a) - rank(b) || a.i - b.i).slice(0, MAX_ITEMS);
+    const next = [...notes.filter((x) => !(hideDue && x.kind === 'nhac')), ...data.holidays]
+      .sort((a, b) => rank(a) - rank(b) || a.i - b.i).slice(0, MAX_ITEMS);
     return { next, noteDays };
-  }, [data, cal.notes, href]);
+  }, [data, cal.notes, href, hideDue]);
 
   if (!data) return <section className="uw uw-cal" aria-busy="true"><p className="uw-muted">Đang tải lịch…</p></section>;
   const { today: t, week } = data;
@@ -62,7 +67,10 @@ export default function MiniCalendar({ href, compact = false, title = '📅 Lị
     <section className="uw uw-cal" aria-labelledby="uw-cal-h">
       <div className="uw-hd">
         <h2 id="uw-cal-h">{title}</h2>
-        <Link href={href} className="uw-more">Mở lịch <ChevronRight aria-hidden="true" /></Link>
+        <span className="uw-cal-acts">
+          {addNote && <Link href={`${href}?ngay=${data.todayIso}&them=1`} className="uw-addnote"><Plus aria-hidden="true" /> Ghi chú</Link>}
+          <Link href={href} className="uw-more">Mở lịch <ChevronRight aria-hidden="true" /></Link>
+        </span>
       </div>
       {!compact && <div className="uw-faces">
         <div className="uw-face is-s">

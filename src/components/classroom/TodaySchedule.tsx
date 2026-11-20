@@ -76,10 +76,12 @@ function useSlots(classId: string, day: string, tomorrow: string, saved: SavedSl
 
 type Props = { classId: string; day: string; tomorrow: string; base: string; saved: SavedSlot[]; savedTomorrow: SavedSlot[] };
 
-/** ① Dải "Bây giờ": tiết đang dạy hoặc tiết kế tiếp, kèm nút dùng ngay trong tiết */
-export function NowBar(p: Props) {
+/** ① Dải "Bây giờ": tiết đang dạy hoặc tiết kế tiếp, kèm nút dùng ngay trong tiết.
+ *  side: việc hằng ngày của cả buổi (Điểm danh, Giao bài) — gộp vào cùng dải để trang chỉ có một hàng nút. */
+export function NowBar(p: Props & { side?: React.ReactNode }) {
   const { today, next, min, allPast } = useSlots(p.classId, p.day, p.tomorrow, p.saved, p.savedTomorrow);
-  if (min === null) return <section className="tdy-now-bar is-idle" aria-busy="true"><span className="tdy-now-ic"><Clock3 aria-hidden="true" /></span><div><small>Bây giờ</small><b>Đang xem lịch dạy…</b></div></section>;
+  const side = p.side ? <div className="tdy-now-side" data-tour="viec-nhanh">{p.side}</div> : null;
+  if (min === null) return <section className="tdy-now-bar is-idle" aria-busy="true"><span className="tdy-now-ic"><Clock3 aria-hidden="true" /></span><div className="tdy-now-txt"><small>Bây giờ</small><b>Đang xem lịch dạy…</b></div>{side}</section>;
   const now = today.groups.find((g) => whenOf(g, min) === 'now');
   const upcoming = today.groups.find((g) => whenOf(g, min) === 'next');
   const g = now ?? upcoming;
@@ -98,8 +100,9 @@ export function NowBar(p: Props) {
           <Link href={`${p.base}/bai-giang-3d`} className="tdy-now-btn is-main"><MonitorPlay aria-hidden="true" /> Mở bài giảng</Link>
           {now
             ? <><Link href={`${p.base}/goi-ten`} className="tdy-now-btn"><Dices aria-hidden="true" /> Dò bài</Link><Link href={`${p.base}/hen-gio`} className="tdy-now-btn"><Timer aria-hidden="true" /> Hẹn giờ</Link></>
-            : <Link href={`${p.base}/ke-hoach`} className="tdy-now-btn"><NotebookPen aria-hidden="true" /> Xem giáo án</Link>}
+            : <><Link href={`${p.base}/ke-hoach`} className="tdy-now-btn"><NotebookPen aria-hidden="true" /> Xem giáo án</Link><Link href={`${p.base}/goi-ten`} className="tdy-now-btn is-opt"><Dices aria-hidden="true" /> Gọi tên</Link></>}
         </div>
+        {side}
       </section>
     );
   }
@@ -114,7 +117,9 @@ export function NowBar(p: Props) {
       </div>
       <div className="tdy-now-acts">
         <Link href={`${p.base}/ke-hoach`} className="tdy-now-btn is-main"><NotebookPen aria-hidden="true" /> {n && !next.unsaved ? 'Xem giáo án' : 'Soạn giáo án'}</Link>
+        <Link href={`${p.base}/goi-ten`} className="tdy-now-btn is-opt"><Dices aria-hidden="true" /> Gọi tên</Link>
       </div>
+      {side}
     </section>
   );
 }
@@ -139,6 +144,10 @@ export default function TodaySchedule(p: Props & { headingId: string }) {
   };
   const showTomorrow = allPast || (min !== null && !today.groups.length && next.groups.length > 0);
   const view = showTomorrow ? next : today;
+  // tiết đã dạy thu gọn thành một dòng (bấm để xem lại) — khối ngắn lại, tiết đang / sắp dạy nổi lên
+  const [showPast, setShowPast] = useState(false);
+  const past = showTomorrow ? [] : view.groups.filter((g) => whenOf(g, min) === 'past');
+  const shown = showPast ? view.groups : view.groups.filter((g) => !past.includes(g));
 
   return (
     <>
@@ -150,7 +159,16 @@ export default function TodaySchedule(p: Props & { headingId: string }) {
         <p className="tdy-line">{showTomorrow ? 'Ngày mai chưa có tiết nào.' : 'Chưa có tiết nào cho hôm nay.'} <Link href={`${p.base}/ke-hoach`}>Nạp lịch báo giảng</Link></p>
       ) : (
         <ul className="tdy-slots">
-          {view.groups.map((g) => {
+          {past.length > 0 && (
+            <li className="tdy-slot-past">
+              <button type="button" onClick={() => setShowPast((v) => !v)} aria-expanded={showPast}>
+                <span className="tdy-chip is-done">✓ Đã dạy</span>
+                <span>{past.map((g) => `${periodLabel(g)} · ${g.items.map((r) => r.subject).join(', ')}`).join(' — ')}</span>
+                <small>{showPast ? 'Ẩn' : 'Xem lại'}</small>
+              </button>
+            </li>
+          )}
+          {shown.map((g) => {
             const w = showTomorrow ? null : whenOf(g, min);
             const allSaved = g.items.every((r) => r.saved);
             const t = slotOf(g.period, g.pm);

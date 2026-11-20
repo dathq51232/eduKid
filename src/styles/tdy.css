@@ -212,3 +212,26 @@
 :root[data-theme="dark"] .tdy-mark:hover, :root[data-theme="dark"] .tdy-mark:focus-visible { background: color-mix(in srgb, #15803d 24%, var(--surface)); color: color-mix(in srgb, #15803d 40%, #fff); }
 :root[data-theme="dark"] .tdy-chip.is-done { background: color-mix(in srgb, #15803d 24%, var(--surface)); color: color-mix(in srgb, #15803d 40%, #fff); }
 .sdg-book.is-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+
+/* ===== Trang Hôm nay — bố cục 11/2026: một dải nút; trái = việc phải làm (60%), phải = xem nhanh (40%); Của tôi 2 ô ===== */
+.tdy-now-side { display: flex; flex-wrap: wrap; gap: 8px; padding-left: 14px; border-left: 1px solid var(--line); }
+.tdy-now-side .tdy-btn { min-height: 42px; padding: 0 14px; font-size: 14.5px; box-shadow: none; }
+.tdy-now-side .tdy-btn.is-primary { box-shadow: 0 3px 0 #d39b12; }
+.tdy-cols.tdy-cols-main { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+.tdy-slot-past { border-bottom: 1px solid var(--line); }
+.tdy-slot-past button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 6px 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; font-weight: 600; text-align: left; cursor: pointer; }
+.tdy-slot-past button > span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tdy-slot-past small { color: var(--brand-blue); font-size: 12.5px; font-weight: 700; }
+.tdy-slot-past button:hover small { text-decoration: underline; }
+.tdy-mine-grid.tdy-mine-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+@media (max-width: 1100px) {
+  .tdy-now-side { padding-left: 0; border-left: 0; }
+}
+@media (max-width: 860px) {
+  .tdy-cols.tdy-cols-main, .tdy-mine-grid.tdy-mine-2 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .tdy-now-btn.is-opt, .tdy-now-side .tdy-btn.is-opt { display: none; } /* Gọi tên, Giao bài đã có trên tab dưới đáy */
+  .tdy-now-side { width: 100%; }
+  .tdy-now-side .tdy-btn { flex: 1; justify-content: center; }
+}

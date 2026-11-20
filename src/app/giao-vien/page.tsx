@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { Inbox } from '@/lib/classroom/messages';
 import { redirect } from 'next/navigation';
-import { BookCheck, Check, ChevronRight, Dices, Moon, School, Send, UserRound } from 'lucide-react';
+import { BookCheck, Check, ChevronRight, Moon, School, Send, UserRound } from 'lucide-react';
 import { TodoList } from '@/components/classroom/TeacherToday';
 import TodaySchedule, { NowBar } from '@/components/classroom/TodaySchedule';
 import { LUNAR_MONTH_NAME, canChiYear, solarToLunar } from '@/lib/utils/lunar';
@@ -204,15 +204,6 @@ export default async function TeacherHome() {
           <p className="tdy-date">{dateLabel} <span className="tdy-lunar" title={`Ngày ${lunar.day} tháng ${LUNAR_MONTH_NAME[lunar.month]} năm ${canChiYear(lunar.year)}`}><Moon aria-hidden="true" /> {lunar.day}/{lunar.month}{lunar.leap ? ' nhuận' : ''} {canChiYear(lunar.year)}</span></p>
           <h1>Chào {firstName} <span aria-hidden="true">👋</span></h1>
         </div>
-        {active && (
-          <div className="tdy-actions" data-tour="viec-nhanh">
-            <Link href={`${base}/goi-ten`} className="tdy-btn"><Dices aria-hidden="true" /> Gọi tên</Link>
-            <Link href={`${base}/giao-bai`} className="tdy-btn"><Send aria-hidden="true" /> Giao bài</Link>
-            {k?.attendanceSaved
-              ? <Link href={`${base}/so-lop`} className="tdy-btn is-done" title="Mở Sổ lớp để sửa"><Check aria-hidden="true" /> Đã điểm danh · {k.students - k.absent}/{k.students}</Link>
-              : <Link href={`${base}/so-lop`} className="tdy-btn is-primary"><BookCheck aria-hidden="true" /> Điểm danh</Link>}
-          </div>
-        )}
       </header>
 
       {!active && (
@@ -237,22 +228,29 @@ export default async function TeacherHome() {
 
       {active && k && (
         <>
-          {/* ① Bây giờ: tiết đang dạy / kế tiếp + nút dùng ngay trong tiết */}
-          <NowBar classId={active.id} day={todayIso} tomorrow={tomorrowIso} base={base} saved={todayPlans} savedTomorrow={tomorrowPlans} />
+          {/* ① Bây giờ: tiết đang dạy / kế tiếp + nút dùng trong tiết, gộp việc hằng ngày (Điểm danh, Giao bài) — một hàng nút duy nhất */}
+          <NowBar classId={active.id} day={todayIso} tomorrow={tomorrowIso} base={base} saved={todayPlans} savedTomorrow={tomorrowPlans}
+            side={<>
+              {k.attendanceSaved
+                ? <Link href={`${base}/so-lop`} className="tdy-btn is-done" title="Mở Sổ lớp để sửa"><Check aria-hidden="true" /> Đã điểm danh · {k.students - k.absent}/{k.students}</Link>
+                : <Link href={`${base}/so-lop`} className="tdy-btn is-primary"><BookCheck aria-hidden="true" /> Điểm danh</Link>}
+              <Link href={`${base}/giao-bai`} className="tdy-btn is-opt"><Send aria-hidden="true" /> Giao bài</Link>
+            </>} />
 
-          <div className="tdy-cols">
-            {/* ② Hôm nay dạy  ③ Việc hôm nay */}
+          {/* Trái (~60%) = việc phải làm: ② Việc hôm nay → ③ Hôm nay dạy (+ tiết đã chọn gợi ý).
+              Phải (~40%) = xem nhanh: ④ Tuần này (lịch, nhắc hẹn) → ⑤ Lớp mình. Điện thoại: một cột theo đúng thứ tự này. */}
+          <div className="tdy-cols tdy-cols-main">
             <div className="tdy-stack">
-              <section className="tdy-card tdy-sched" aria-labelledby="tdy-sched">
-                <TodaySchedule classId={active.id} day={todayIso} tomorrow={tomorrowIso} base={base} saved={todayPlans} savedTomorrow={tomorrowPlans} headingId="tdy-sched" />
-              </section>
               <section className="tdy-card tdy-todo" aria-labelledby="tdy-todo">
                 <TodoList items={todo} day={todayIso} headingId="tdy-todo" calHref={`${base}/lich`} />
               </section>
-            </div>
-            {/* ④ Lớp mình (gợi ý tiết dạy đã chọn hiện ở trên khi có) */}
-            <div className="tdy-stack">
+              <section className="tdy-card tdy-sched" aria-labelledby="tdy-sched">
+                <TodaySchedule classId={active.id} day={todayIso} tomorrow={tomorrowIso} base={base} saved={todayPlans} savedTomorrow={tomorrowPlans} headingId="tdy-sched" />
+              </section>
               <LessonPlanAside classId={active.id} grade={active.grade} />
+            </div>
+            <div className="tdy-stack">
+              <MiniCalendar href={`${base}/lich`} compact title="📅 Tuần này" hideDue addNote />
               <ClassPulse base={base} births={births} birthsOn={birthsOn} watch={watch}
                 unread={inbox?.unread ?? 0} pendingLeave={inbox?.pending_leave ?? 0} recentMsgs={inbox?.items.length ?? 0} contactGaps={contactGaps}
                 spark={k.spark} students={k.students} todayIso={todayIso} planText={planText}
@@ -260,13 +258,12 @@ export default async function TeacherHome() {
             </div>
           </div>
 
-          {/* ⑤ Của tôi: việc cá nhân, ít gấp — để cuối, số tiền luôn che khi mở trang */}
+          {/* ⑥ Của tôi: việc cá nhân, ít gấp — để cuối, 2 ô bằng nhau; số tiền luôn che khi mở trang */}
           <section className="tdy-mine" aria-labelledby="tdy-mine-h">
             <h2 id="tdy-mine-h" className="tdy-sect"><UserRound aria-hidden="true" /> Của tôi</h2>
-            <div className="tdy-mine-grid">
-              <MiniCalendar href={`${base}/lich`} compact title="📅 Tuần này" />
+            <div className="tdy-mine-grid tdy-mine-2">
               <MoneyCard href={`${base}/thu-chi`} title="Thu chi cá nhân" fundHref={`${base}/quy-lop`} classId={active.id} />
-              <TeacherEnglishCard href={`${base}/tieng-anh`} grade={active.grade} day={todayIso} />
+              <TeacherEnglishCard href={`${base}/tieng-anh`} grade={active.grade} day={todayIso} compact />
             </div>
           </section>
         </>

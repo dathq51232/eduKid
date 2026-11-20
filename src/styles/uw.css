@@ -82,3 +82,8 @@
 .uw-next .is-nhac { background: #fef3c7; color: #7c2d12; box-shadow: inset 3px 0 0 #f59e0b; font-weight: 700; }
 :root[data-theme="dark"] .uw-next .is-note { background: rgb(20 184 166 / .16); color: #99f6e4; }
 :root[data-theme="dark"] .uw-next .is-nhac { background: rgb(245 158 11 / .2); color: #fde68a; }
+.uw-cal-acts { display: inline-flex; align-items: center; gap: 10px; margin-left: auto; }
+.uw-cal-acts .uw-more { margin-left: 0; }
+.uw-addnote { display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 99px; background: #ccfbf1; color: #115e59; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.uw-addnote svg { width: 14px; height: 14px; }
+:root[data-theme="dark"] .uw-addnote { background: rgb(20 184 166 / .16); color: #99f6e4; }

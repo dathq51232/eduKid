@@ -14,7 +14,9 @@ import { speakSegments, stopSpeaking } from '@/lib/speech';
 import '@/styles/te.css';
 import '@/styles/uw.css';
 
-export default function TeacherEnglishCard({ href, grade, day }: { href: string; grade?: number; day: string }) {
+/** compact: bản gọn cho trang chủ — Câu của ngày và Ngân hàng mẫu câu thu vào một nút, bấm mới mở */
+export default function TeacherEnglishCard({ href, grade, day, compact = false }: { href: string; grade?: number; day: string; compact?: boolean }) {
+  const [more, setMore] = useState(!compact);
   const { progress, saved, sync } = useTeacherEnglish();
   // Ôn mỗi ngày: số thẻ đến hạn + thẻ mới hôm nay (cùng cách tính với tab Ôn mỗi ngày)
   const review = useReview();
@@ -62,6 +64,12 @@ export default function TeacherEnglishCard({ href, grade, day }: { href: string;
           <ChevronRight aria-hidden="true" />
         </Link>
       )}
+      {!more && (
+        <button type="button" className="te-dash-more" onClick={() => setMore(true)} aria-expanded={false}>
+          💬 Câu của ngày · <span lang="en">{phrase.en}</span> <ChevronRight aria-hidden="true" />
+        </button>
+      )}
+      {more && <>
       <div className="te-dash-phrase">
         <p className="uw-muted">💬 Câu của ngày · Phrase of the day</p>
         <div>
@@ -76,6 +84,7 @@ export default function TeacherEnglishCard({ href, grade, day }: { href: string;
         <span>{PHRASES.length} câu Anh–Việt{grade ? ` · lọc sẵn lớp ${grade}` : ''}</span>
         <ChevronRight aria-hidden="true" />
       </Link>
+      </>}
     </section>
   );
 }
