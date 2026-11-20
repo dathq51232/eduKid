@@ -64,6 +64,5 @@ Phát hiện kiểu lỗi mới mà máy chưa bắt → thêm luật vào `rule
 ## 7. Lộ trình
 
 - **Bước 1 (đã làm):** migration 0070, bộ quy tắc + bộ máy kiểm dùng chung, kiểm khi soạn câu / nhập CSV, tài liệu này.
-- **Bước 2:** giao diện — ô “Kiến thức cần nhớ” và chọn cấp trong trang soạn bài, nút gửi duyệt dùng `validateLessonBank`,
-  bảng Độ phủ trên trang chủ Quản trị tách Cơ bản / Nâng cao, thẻ “Cập nhật kiến thức”.
+- **Bước 2 (đã làm):** trang soạn bài có ô **Kiến thức cần nhớ & cấp bài** (chọn cấp, bài cần học trước, máy kiểm khi gõ, chỉ lưu khi đạt, ghi `checked_at`); nút **Gửi duyệt / Xuất bản** khoá khi chưa đạt `validateLessonBank` (chưa chạy migration 0070/0071 thì không khoá); trang chủ Quản trị có thẻ **Cập nhật kiến thức** (độ phủ CB / NC theo môn × lớp, bài thiếu kiến thức). Migration `0071_lesson_level_grant.sql` mở quyền sửa hai cột mới.
 - **Bước 3:** trang làm bài đọc kiến thức từ `lesson_knowledge` khi bài không có trong kho soạn sẵn; bài nâng cao hiện ở “Chuyên đề nâng cao”.

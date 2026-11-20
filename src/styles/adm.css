@@ -438,3 +438,30 @@ a.adm-row-title:hover { color: var(--link); text-decoration: underline; }
 .mk-head .adm-muted { max-width: 760px; margin: 0; }
 :root[data-theme="dark"] .adm-alert.is-ok { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); border-color: color-mix(in srgb, #86d3a5 35%, var(--surface)); }
 .rv-empty, .rv-src { margin: 0; }
+
+/* ===== Kiến thức cần nhớ & cấp bài (KnowledgePanel) + thẻ Cập nhật kiến thức trên trang chủ — migration 0070 ===== */
+.adm-kn-h { display: flex; align-items: center; gap: 8px; margin: 0; }
+.adm-kn-h svg { color: var(--blue); }
+.adm-kn .adm-card-head .adm-tag { margin-left: auto; }
+.adm-kn .adm-card-head .adm-tag + .adm-tag { margin-left: 0; }
+.adm-tag.is-ok { gap: 4px; align-items: center; background: #dcf5e6; color: #15803d; }
+.adm-kn .adm-fieldset { gap: 12px; }
+.adm-kn-hint { margin: -4px 0 0; font-size: 13.5px; }
+.adm-kn-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.adm-kn-list li { display: flex; align-items: flex-start; gap: 6px; padding: 6px 10px; border-radius: 8px; line-height: 1.45; }
+.adm-kn-list li svg { flex: none; margin-top: 2px; }
+.adm-kn-list .is-bad { background: #fde8e8; color: #9b1c1c; }
+.adm-kn-list .is-warn { background: var(--bg-fff3d1); color: var(--fg-6b4a00); }
+.adm-kn-gate { display: grid; gap: 6px; padding: 12px; border-radius: 10px; background: var(--bg-f3f6fb); }
+.adm-kn-gate > p { margin: 0; }
+.adm-kn-ok, .adm-kn-warn { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
+.adm-kn-ok { color: #15803d; }
+.adm-kn-warn { color: var(--fg-6b4a00); font-weight: 500; }
+.adm-kn-cov td a { display: grid; gap: 1px; font-size: 13px; }
+.adm-kn-cov td a .is-nc { color: var(--fg-6b2fb3); }
+.adm-kn-cov td a .is-none { color: var(--fg-a5b0c2); font-weight: 400; }
+.adm-kn-miss { color: #b45309; font-size: 12.5px; font-weight: 700; }
+:root[data-theme="dark"] .adm-tag.is-ok { background: rgb(22 163 74 / .2); color: #86efac; }
+:root[data-theme="dark"] .adm-kn-list .is-bad { background: rgb(220 38 38 / .18); color: #fca5a5; }
+:root[data-theme="dark"] .adm-kn-ok { color: #86efac; }
+:root[data-theme="dark"] .adm-kn-miss { color: #fbbf24; }

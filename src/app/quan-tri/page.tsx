@@ -69,10 +69,12 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
   }
 
   const k = parsePeriod((await searchParams).k, 1);
-  const [{ data: ov, error }, { data: reviewData }, { data: ins, error: insErr }] = await Promise.all([
+  const [{ data: ov, error }, { data: reviewData }, { data: ins, error: insErr }, kn] = await Promise.all([
     supabase.rpc('admin_overview'),
     supabase.from('lessons').select(lessonSelect).eq('status', 'review').order('updated_at', { ascending: true }).limit(10),
     supabase.rpc('admin_insights', { p_days: k }),
+    // cấp bài + đã có "Kiến thức cần nhớ" chưa (migration 0070; chưa chạy thì báo lỗi → thẻ hiện hướng dẫn)
+    supabase.from('lessons').select('id,title,level,status,subjects(code,name,grade),lesson_knowledge(lesson_id)').neq('status', 'archived').range(0, 4999),
   ]);
   const insights = !insErr && ins ? (ins as Insights) : null;
   if (error || !ov) return <p className="adm-alert is-error">Không tải được số liệu: {error?.message}</p>;
@@ -136,8 +138,92 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
         </div>
       </section>
 
+      <KnowledgeCard rows={kn.error ? null : (kn.data ?? []) as unknown as KnRow[]} />
+
       <LessonTable title="Bài đang chờ duyệt" lessons={review} empty="Không có bài nào chờ duyệt." />
     </div>
+  );
+}
+
+// ---------- Cập nhật kiến thức: độ phủ Cơ bản / Nâng cao + bài thiếu "Kiến thức cần nhớ" (migration 0070) ----------
+type KnRow = {
+  id: string; title: string; level: 'co_ban' | 'nang_cao'; status: LessonStatus;
+  subjects: { code: string; name: string; grade: number } | null;
+  lesson_knowledge: { lesson_id: string } | { lesson_id: string }[] | null;
+};
+const hasKn = (r: KnRow) => (Array.isArray(r.lesson_knowledge) ? r.lesson_knowledge.length > 0 : Boolean(r.lesson_knowledge));
+
+function KnowledgeCard({ rows }: { rows: KnRow[] | null }) {
+  if (!rows) {
+    return (
+      <section className="adm-card">
+        <div className="adm-card-head"><h2>Cập nhật kiến thức</h2></div>
+        <p className="adm-setup">Chưa bật quy tắc kiến thức cơ bản / nâng cao: chạy migration <code>0070_lesson_knowledge.sql</code> và <code>0071_lesson_level_grant.sql</code> trên Supabase rồi tải lại trang.</p>
+      </section>
+    );
+  }
+  const cellOf = (prefix: string, grade: number, level: KnRow['level']) => {
+    const list = rows.filter((r) => r.level === level && r.subjects?.code === `${prefix}-${grade}`);
+    return { total: list.length, published: list.filter((r) => r.status === 'published').length, noKn: list.filter((r) => !hasKn(r)).length };
+  };
+  // bài đã xuất bản / chờ duyệt mà chưa có kiến thức: cần bổ sung trước
+  const missing = rows.filter((r) => !hasKn(r) && (r.status === 'published' || r.status === 'review'));
+  const nc = rows.filter((r) => r.level === 'nang_cao');
+  return (
+    <section className="adm-card">
+      <div className="adm-card-head">
+        <h2>Cập nhật kiến thức</h2>
+        <span className="adm-muted">Cơ bản (CB) · Nâng cao (NC): bài đã xuất bản / tổng số · <span className="adm-kn-miss">⚠ thiếu kiến thức cần nhớ</span></span>
+      </div>
+      <div className="adm-stats">
+        <Stat label="Bài cơ bản" value={rows.length - nc.length} note={`${rows.filter((r) => r.level === 'co_ban' && r.status === 'published').length} đã xuất bản`} />
+        <Stat label="Bài nâng cao" value={nc.length} note={`${nc.filter((r) => r.status === 'published').length} đã xuất bản`} />
+        <Stat label="Thiếu kiến thức cần nhớ" value={rows.filter((r) => !hasKn(r)).length} note={`${missing.length} bài đang xuất bản / chờ duyệt`} />
+      </div>
+      <div className="adm-table-wrap">
+        <table className="adm-table adm-coverage adm-kn-cov">
+          <thead>
+            <tr><th scope="col">Môn</th>{[1, 2, 3, 4, 5].map((g) => <th key={g} scope="col">Lớp {g}</th>)}</tr>
+          </thead>
+          <tbody>
+            {SUBJECTS.map((s) => (
+              <tr key={s.prefix}>
+                <th scope="row"><span className={`adm-dot ${s.tone}`} aria-hidden="true" /> {s.name}</th>
+                {[1, 2, 3, 4, 5].map((g) => {
+                  const cb = cellOf(s.prefix, g, 'co_ban'), ncv = cellOf(s.prefix, g, 'nang_cao');
+                  return (
+                    <td key={g}>
+                      <Link href={`/quan-tri/bai-hoc?mon=${s.prefix}&lop=${g}`}>
+                        <span className={cb.total ? '' : 'is-none'}>CB {cb.total ? `${cb.published}/${cb.total}` : '—'}</span>
+                        <span className={ncv.total ? 'is-nc' : 'is-none'}>NC {ncv.total ? `${ncv.published}/${ncv.total}` : '—'}</span>
+                        {cb.noKn + ncv.noKn > 0 && <span className="adm-kn-miss">⚠ {cb.noKn + ncv.noKn}</span>}
+                      </Link>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {missing.length > 0 && (
+        <>
+          <p className="adm-muted">Bổ sung “Kiến thức cần nhớ” cho các bài này trước (bài đang xuất bản / chờ duyệt):</p>
+          <ul className="adm-rows">
+            {missing.slice(0, 8).map((l) => (
+              <li key={l.id}>
+                <Link href={`/quan-tri/bai-hoc/${l.id}`} className="adm-row-link">
+                  <span className="adm-row-title">{l.title}</span>
+                  <span className="adm-muted">{l.subjects ? `${l.subjects.name} lớp ${l.subjects.grade}` : ''} · {l.level === 'nang_cao' ? 'Nâng cao' : 'Cơ bản'}</span>
+                  <StatusBadge status={l.status} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+          {missing.length > 8 && <p className="adm-muted">… và {missing.length - 8} bài khác.</p>}
+        </>
+      )}
+    </section>
   );
 }
 

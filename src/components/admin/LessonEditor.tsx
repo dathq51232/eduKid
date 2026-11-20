@@ -12,6 +12,7 @@ import { LEVEL_LABEL, STAGE_LABEL } from '@/lib/curriculum/grade1';
 import { useAdminUser } from './AdminContext';
 import ConfirmButton from './ConfirmButton';
 import CsvImport from './CsvImport';
+import KnowledgePanel, { type BankGate } from './KnowledgePanel';
 import QuestionForm from './QuestionForm';
 import QuestionPreview from './QuestionPreview';
 import StatusBadge from './StatusBadge';
@@ -43,6 +44,9 @@ export default function LessonEditor({ lessonId }: { lessonId: string }) {
   const [lessonOutcomes, setLessonOutcomes] = useState<string[]>([]); // đã lưu
   const [pickedOutcomes, setPickedOutcomes] = useState<string[]>([]); // đang chọn
   const catalog = useCatalog(lesson?.subjects?.id, lesson?.subjects?.code);
+  // Quy tắc kiến thức (KnowledgePanel): chưa đạt thì khoá Gửi duyệt / Xuất bản; chưa chạy migration thì không khoá
+  const [gate, setGate] = useState<BankGate>({ available: false, errors: [] });
+  const onGate = useCallback((g: BankGate) => setGate((p) => (p.available === g.available && p.errors.join('\n') === g.errors.join('\n') ? p : g)), []);
 
   const load = useCallback(async () => {
     const [{ data: l, error: e1 }, { data: q, error: e2 }, { data: lo }] = await Promise.all([
@@ -100,6 +104,7 @@ export default function LessonEditor({ lessonId }: { lessonId: string }) {
     meta.semester !== (lesson.semester ? String(lesson.semester) : '') ||
     meta.topic_id !== (lesson.topic_id ?? '') ||
     outcomesDirty;
+  const blocked = gate.available && gate.errors.length > 0;
 
   // Chạy một thao tác, báo kết quả, tải lại dữ liệu
   const act = async (fn: () => PromiseLike<{ error: { message?: string } | null }>, okText: string) => {
@@ -259,7 +264,7 @@ export default function LessonEditor({ lessonId }: { lessonId: string }) {
           <span className="adm-spacer" />
 
           {status === 'draft' && !me.isAdmin && isOwner && (
-            <button type="button" className="adm-btn is-primary" disabled={busy || rows.length === 0} onClick={() => setStatus('review', 'Đã gửi bài cho quản trị viên duyệt.')}>
+            <button type="button" className="adm-btn is-primary" disabled={busy || rows.length === 0 || blocked} title={blocked ? 'Bài chưa đạt điều kiện ở ô Kiến thức cần nhớ & cấp bài' : undefined} onClick={() => setStatus('review', 'Đã gửi bài cho quản trị viên duyệt.')}>
               <Send size={16} aria-hidden="true" /> Gửi duyệt
             </button>
           )}
@@ -271,7 +276,7 @@ export default function LessonEditor({ lessonId }: { lessonId: string }) {
           {me.isAdmin && (status === 'draft' || status === 'review') && (
             <ConfirmButton
               className="adm-btn is-primary"
-              disabled={busy || rows.length === 0}
+              disabled={busy || rows.length === 0 || blocked}
               confirmLabel={`Xuất bản ${rows.length} câu cho học sinh?`}
               onConfirm={() => act(() => supabase.rpc('publish_lesson', { p_lesson: lesson.id }), 'Đã xuất bản. Học sinh đã thấy bài này.')}
             >
@@ -308,8 +313,13 @@ export default function LessonEditor({ lessonId }: { lessonId: string }) {
           )}
         </div>
 
+        {blocked && (status === 'draft' || status === 'review') && editable && (
+          <p className="adm-alert is-warn">Chưa gửi duyệt / xuất bản được: {gate.errors[0]}{gate.errors.length > 1 ? ` (và ${gate.errors.length - 1} điều kiện khác — xem ô Kiến thức cần nhớ bên dưới)` : ''}</p>
+        )}
         {msg && <p className={`adm-alert ${msg.kind === 'ok' ? 'is-ok' : 'is-error'}`} role="status">{msg.text}</p>}
       </section>
+
+      <KnowledgePanel supabase={supabase} lessonId={lesson.id} subjectId={lesson.subjects?.id ?? null} editable={editable} drafts={drafts} onGate={onGate} />
 
       {/* Danh sách câu hỏi */}
       <section className="adm-card">
