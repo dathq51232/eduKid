@@ -5,7 +5,7 @@ export type ToolKey =
   | 'so-lop' | 'goi-ten' | 'ke-hoach' | 'giao-bai' | 'phieu-bai-tap' | 'phieu-chinh-ta'
   | 'lo-hong' | 'de-kiem-tra' | 'phong-thi' | 'nhan-xet' | 'ket-qua-truong' | 'phieu-tien-bo' | 'thu-khen' | 'lop'
   | 'nhom' | 'thi-dua' | 'hen-gio' | 'danh-ba' | 'bai-giang-3d' | 'tin-nhan' | 'trien-lam' | 'luyen-chu' | 'bang-trang'
-  | 'lich' | 'thu-chi' | 'quy-lop' | 'tieng-anh';
+  | 'lich' | 'thu-chi' | 'quy-lop' | 'tieng-anh' | 'kho-cau-hoi';
 export type ToolTone = 'green' | 'yellow' | 'blue' | 'violet' | 'red' | 'coral';
 export type Tool = { key: ToolKey; label: string; desc: string; group: string; tone: ToolTone; path: string; keywords: string };
 
@@ -21,6 +21,7 @@ const ALL: Tool[] = [
   { key: 'bang-trang', label: 'Bảng trắng', desc: 'Bút, hình, thước, êke, compa', group: 'Dạy học', tone: 'blue', path: 'bang-trang', keywords: 'bang trang bang den ve hinh but thuoc ke eke compa thuoc do goc hinh khoi chieu bang tuong tac' },
   { key: 'tieng-anh', label: 'Tiếng Anh sư phạm', desc: 'Lộ trình học, mẫu câu lớp học', group: 'Dạy học', tone: 'blue', path: 'tieng-anh', keywords: 'tieng anh su pham classroom english mau cau lop hoc giao vien luyen noi phat am lo trinh 24 tuan teacher english academy global success' },
   { key: 'giao-bai', label: 'Giao bài về nhà', desc: 'Hạn nộp, em nào chưa làm', group: 'Dạy học', tone: 'violet', path: 'giao-bai', keywords: 'giao bai ve nha han nop' },
+  { key: 'kho-cau-hoi', label: 'Kho câu hỏi', desc: 'Nạp Word, Excel, PDF; máy kiểm, cô duyệt', group: 'Dạy học', tone: 'blue', path: 'kho-cau-hoi', keywords: 'kho cau hoi ngan hang cua toi nap de word excel pdf tach cau sinh cau tuong tu ai may kiem duyet bai tap' },
   { key: 'phieu-bai-tap', label: 'Phiếu bài tập', desc: 'In kèm đáp án', group: 'Dạy học', tone: 'yellow', path: 'phieu-bai-tap', keywords: 'phieu bai tap in dap an' },
   { key: 'phieu-chinh-ta', label: 'Phiếu chính tả', desc: 'Tranh, tập chép, đáp án', group: 'Dạy học', tone: 'blue', path: 'phieu-chinh-ta', keywords: 'chinh ta tap chep' },
   { key: 'lo-hong', label: 'Lỗ hổng kiến thức', desc: 'Dạng bài lớp hay sai', group: 'Dạy học', tone: 'red', path: 'lo-hong', keywords: 'lo hong hay sai kem' },

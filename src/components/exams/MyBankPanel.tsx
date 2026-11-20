@@ -8,8 +8,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookUp, Check, Copy, Cpu, FileUp, Library, Lock, Sparkles, Trash2, TriangleAlert, X } from 'lucide-react';
 import { autoLocked, makeVariants, promptNumbers } from '@/lib/bank/variants';
 import { MUC_NAME, type BookLesson, type Muc } from '@/lib/exams/matrix';
-import { ACCEPT_DOCS, checkMath, draftId, draftProblem, extractFile, extractedText, parseExtracted, parseText, type Draft, type DraftType, type Extracted } from '@/lib/bank/parse';
+import { ACCEPT_DOCS, draftId, draftProblem, extractFile, extractedText, parseExtracted, parseText, type Draft, type DraftType, type Extracted } from '@/lib/bank/parse';
 import { bankError, deleteMine, generateWithAi, machineDrafts, saveDrafts, type MyQuestion } from '@/lib/bank/client';
+import { draftIssues, MUC_LEVEL } from '@/lib/bank/check';
 import type { SubjectCode } from '@/lib/types';
 import '@/styles/adm.css';
 import '@/styles/gm.css';
@@ -44,23 +45,24 @@ function VariantRow({ d, onMake }: { d: Draft; onMake: (locked: number[]) => voi
   );
 }
 
-function DraftCard({ d, n, lessons, subject, onChange, onRemove, onVariants }: { d: Draft; n: number; lessons: BookLesson[]; subject: SubjectCode; onChange: (d: Draft) => void; onRemove: () => void; onVariants?: (locked: number[]) => void }) {
+function DraftCard({ d, n, lessons, subject, grade, onChange, onRemove, onVariants }: { d: Draft; n: number; lessons: BookLesson[]; subject: SubjectCode; grade: number; onChange: (d: Draft) => void; onRemove: () => void; onVariants?: (locked: number[]) => void }) {
   const set = (p: Partial<Draft>) => onChange({ ...d, ...p });
   const choice = d.type === 'single_choice' || d.type === 'multiple_choice';
   const problem = draftProblem(d);
-  const math = subject === 'toan' ? checkMath(d) : undefined;
-  const warn = problem ?? math ?? (d.warn && !d.correct.length ? d.warn : undefined);
+  // máy kiểm (cùng bộ máy với trang Quản trị) — chỉ cảnh báo, thầy cô quyết định
+  const issues = useMemo(() => draftIssues(d, subject, grade), [d, subject, grade]);
+  const warn = problem ?? (d.warn && !d.correct.length ? d.warn : undefined);
   const setType = (t: DraftType) => {
     if (t === 'single_choice' || t === 'multiple_choice') set({ type: t, options: d.options.length >= 2 ? d.options : ['', '', '', ''], correct: t === 'single_choice' ? d.correct.slice(0, 1) : d.correct });
     else if (t === 'true_false') set({ type: t, correct: [d.correct[0] === 'Sai' ? 'Sai' : 'Đúng'] });
     else set({ type: t, correct: choice ? d.correct.slice(0, 1) : d.correct });
   };
   return (
-    <article className={`mb-card${d.include ? '' : ' is-off'}${warn ? ' has-warn' : ''}`}>
+    <article className={`mb-card${d.include ? '' : ' is-off'}${warn || issues.length ? ' has-warn' : ''}`}>
       <header>
         <label className="mb-inc"><input type="checkbox" checked={d.include} onChange={(e) => set({ include: e.target.checked })} /> <b>Câu {n}</b></label>
         <select value={d.type} onChange={(e) => setType(e.target.value as DraftType)} aria-label="Dạng câu">{(Object.keys(TYPE_NAME) as DraftType[]).map((t) => <option key={t} value={t}>{TYPE_NAME[t]}</option>)}</select>
-        <select value={d.muc} onChange={(e) => set({ muc: Number(e.target.value) as Muc })} aria-label="Mức">{([1, 2, 3] as Muc[]).map((m) => <option key={m} value={m}>{MUC_NAME[m]}</option>)}</select>
+        <select value={d.muc} onChange={(e) => set({ muc: Number(e.target.value) as Muc })} aria-label="Mức">{([1, 2, 3] as Muc[]).map((m) => <option key={m} value={m}>{MUC_NAME[m]} · {MUC_LEVEL[m]}</option>)}</select>
         <select className="mb-lesson" value={d.lessonId} onChange={(e) => set({ lessonId: e.target.value })} aria-label="Bài">{lessons.map((l) => <option key={l.id} value={l.id}>{l.title}</option>)}</select>
         {d.source === 'AI' && <span className="mb-ai"><Sparkles aria-hidden="true" /> AI</span>}
         <button type="button" className="mb-x" onClick={onRemove} aria-label={`Bỏ câu ${n}`}><X aria-hidden="true" /></button>
@@ -91,14 +93,22 @@ function DraftCard({ d, n, lessons, subject, onChange, onRemove, onVariants }: {
         <textarea rows={2} value={d.explanation} onChange={(e) => set({ explanation: e.target.value })} aria-label="Lời giải" />
       </details>
       {warn && <p className="mb-warn"><TriangleAlert aria-hidden="true" /> {warn}</p>}
+      {issues.length > 0 && (
+        <ul className="mb-issues" aria-label="Máy kiểm cảnh báo">
+          {issues.map((x) => <li key={x}><TriangleAlert aria-hidden="true" /> {x}</li>)}
+        </ul>
+      )}
+      {!warn && !issues.length && d.prompt.trim() && <p className="mb-pass"><Check aria-hidden="true" /> Máy kiểm đạt</p>}
       {subject === 'toan' && onVariants && d.type !== 'true_false' && <VariantRow d={d} onMake={onVariants} />}
     </article>
   );
 }
 
-export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, mine, onSaved, onDeleted, onClose }: {
+export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, mine, onSaved, onDeleted, onClose, inline }: {
   subject: SubjectCode; grade: number; lessons: BookLesson[]; defaultLessonId: string; mine: MyQuestion[] | null;
-  onSaved: (rows: MyQuestion[]) => void; onDeleted: (ids: string[]) => void; onClose: () => void;
+  onSaved: (rows: MyQuestion[]) => void; onDeleted: (ids: string[]) => void; onClose?: () => void;
+  /** true: hiện thẳng trong trang (Kho câu hỏi), không phải hộp thoại */
+  inline?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>('nap');
   const [lessonId, setLessonId] = useState(defaultLessonId || lessons[0]?.id || '');
@@ -112,7 +122,11 @@ export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, 
   const [pick, setPick] = useState<Set<string>>(new Set());
   const fileRef = useRef<HTMLInputElement>(null);
   const titleOf = (id: string) => lessons.find((l) => l.id === id)?.title ?? '';
-  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape' && !busy) onClose(); }; addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, [busy, onClose]);
+  useEffect(() => {
+    if (inline || !onClose) return;
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape' && !busy) onClose(); };
+    addEventListener('keydown', k); return () => removeEventListener('keydown', k);
+  }, [busy, onClose, inline]);
 
   const onFile = async (f: File) => {
     setBusy('Đang đọc tài liệu…'); setMsg(null);
@@ -154,6 +168,10 @@ export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, 
   };
   const chosen = drafts.filter((d) => d.include);
   const bad = chosen.filter((d) => draftProblem(d));
+  const flagged = useMemo(() => new Set(drafts.filter((d) => draftIssues(d, subject, grade).length).map((d) => d.id)), [drafts, subject, grade]);
+  const passing = drafts.filter((d) => !draftProblem(d) && !flagged.has(d.id));
+  // "Giữ tất cả câu đạt": chỉ chọn câu đủ nội dung, đáp án và máy kiểm không cảnh báo
+  const keepPassing = () => setDrafts((ds) => ds.map((d) => ({ ...d, include: !draftProblem(d) && !flagged.has(d.id) })));
   const save = async () => {
     if (!chosen.length) return;
     if (bad.length) { setMsg({ kind: 'error', text: `Còn ${bad.length} câu thiếu nội dung / đáp án — sửa hoặc bỏ chọn trước khi lưu.` }); return; }
@@ -206,11 +224,12 @@ export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, 
   );
 
   return (
-    <div className="mb-scrim" role="dialog" aria-modal="true" aria-label="Nạp tài liệu và ngân hàng của tôi" onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onClose(); }}>
+    <div className={inline ? 'mb-inline' : 'mb-scrim'} role={inline ? undefined : 'dialog'} aria-modal={inline ? undefined : true} aria-label="Nạp tài liệu và ngân hàng của tôi"
+      onMouseDown={(e) => { if (!inline && onClose && e.target === e.currentTarget && !busy) onClose(); }}>
       <div className="mb">
         <header className="mb-head">
           <h2><Library aria-hidden="true" /> Ngân hàng của tôi · {SUBJECT_NAME[subject]} lớp {grade}</h2>
-          <button type="button" className="mb-x" onClick={onClose} aria-label="Đóng"><X aria-hidden="true" /></button>
+          {!inline && onClose && <button type="button" className="mb-x" onClick={onClose} aria-label="Đóng"><X aria-hidden="true" /></button>}
         </header>
         <nav className="gm-tabs mb-tabs" role="tablist">
           <button type="button" role="tab" aria-selected={tab === 'nap'} className={tab === 'nap' ? 'is-on' : ''} onClick={() => setTab('nap')}><FileUp aria-hidden="true" /> Nạp tài liệu</button>
@@ -226,7 +245,7 @@ export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, 
               <button type="button" className="mb-drop" disabled={!!busy} onClick={() => fileRef.current?.click()}
                 onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) void onFile(f); }}>
                 <FileUp aria-hidden="true" /><b>Chọn hoặc kéo thả file vào đây</b>
-                <small>Word (.docx) hoặc Excel (.xlsx) — đọc ngay trên máy cô, file không gửi lên máy chủ. File PDF: mở bằng Word để chuyển sang .docx trước.</small>
+                <small>Word (.docx), Excel (.xlsx), PDF có chữ hoặc .txt — đọc ngay trên máy cô, file không gửi lên máy chủ. PDF chụp / scan: mở bằng Word để Word nhận chữ rồi lưu .docx.</small>
               </button>
               <details className="mb-help"><summary>Đề nên viết thế nào để app tách đúng?</summary>
                 <ul>
@@ -291,13 +310,14 @@ export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, 
           {tab !== 'kho' && drafts.length > 0 && (
             <section className="mb-drafts" aria-label="Câu chờ duyệt">
               <div className="mb-row mb-sticky">
-                <b>{drafts.length} câu chờ duyệt · đã chọn {chosen.length}{bad.length ? ` · ${bad.length} câu cần sửa` : ''}</b>
+                <b>{drafts.length} câu chờ duyệt · đã chọn {chosen.length}{bad.length ? ` · ${bad.length} câu cần sửa` : ''}{flagged.size ? ` · máy cảnh báo ${flagged.size} câu` : ''}</b>
+                {flagged.size > 0 && passing.length > 0 && <button type="button" className="mini-btn" onClick={keepPassing} title="Chỉ chọn câu máy kiểm đạt; câu có cảnh báo cô xem lại rồi tự chọn">Giữ {passing.length} câu đạt</button>}
                 <button type="button" className="mini-btn" onClick={() => setDrafts((ds) => ds.map((d) => ({ ...d, include: chosen.length !== ds.length })))}>{chosen.length === drafts.length ? 'Bỏ chọn hết' : 'Chọn hết'}</button>
                 <button type="button" className="mini-btn" onClick={() => setDrafts([])}>Xoá danh sách</button>
                 <button type="button" className="btn btn-primary btn-sm" disabled={!chosen.length || !!busy} onClick={() => void save()}><Check aria-hidden="true" /> Lưu {chosen.length} câu vào ngân hàng</button>
               </div>
               {drafts.map((d, i) => (
-                <DraftCard key={d.id} d={d} n={i + 1} lessons={lessons} subject={subject} onVariants={(lk) => variantsOf(d, lk)}
+                <DraftCard key={d.id} d={d} n={i + 1} lessons={lessons} subject={subject} grade={grade} onVariants={(lk) => variantsOf(d, lk)}
                   onChange={(nd) => setDrafts((ds) => ds.map((x) => (x.id === d.id ? nd : x)))} onRemove={() => setDrafts((ds) => ds.filter((x) => x.id !== d.id))} />
               ))}
               <button type="button" className="mini-btn" onClick={() => setDrafts((ds) => [...ds, { id: draftId(), type: 'single_choice', prompt: '', options: ['', '', '', ''], correct: [], muc: 2, lessonId, explanation: '', source: 'Tự soạn', include: true }])}>+ Thêm câu tự soạn</button>

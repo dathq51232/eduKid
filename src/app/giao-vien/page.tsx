@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { Inbox } from '@/lib/classroom/messages';
 import { redirect } from 'next/navigation';
-import { BookCheck, Check, ChevronRight, Moon, School, Send, UserRound } from 'lucide-react';
+import { BookCheck, Check, ChevronRight, Library, Moon, School, Send, UserRound } from 'lucide-react';
 import { TodoList } from '@/components/classroom/TeacherToday';
 import TodaySchedule, { NowBar } from '@/components/classroom/TodaySchedule';
 import { LUNAR_MONTH_NAME, canChiYear, solarToLunar } from '@/lib/utils/lunar';
@@ -235,6 +235,7 @@ export default async function TeacherHome() {
                 ? <Link href={`${base}/so-lop`} className="tdy-btn is-done" title="Mở Sổ lớp để sửa"><Check aria-hidden="true" /> Đã điểm danh · {k.students - k.absent}/{k.students}</Link>
                 : <Link href={`${base}/so-lop`} className="tdy-btn is-primary"><BookCheck aria-hidden="true" /> Điểm danh</Link>}
               <Link href={`${base}/giao-bai`} className="tdy-btn is-opt"><Send aria-hidden="true" /> Giao bài</Link>
+              <Link href={`${base}/kho-cau-hoi`} className="tdy-btn is-opt" title="Nạp Word, Excel, PDF → tách câu → máy kiểm → cô duyệt"><Library aria-hidden="true" /> Kho câu hỏi</Link>
             </>} />
 
           {/* Trái (~60%) = việc phải làm: ② Việc hôm nay → ③ Hôm nay dạy (+ tiết đã chọn gợi ý).

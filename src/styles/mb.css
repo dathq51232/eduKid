@@ -74,3 +74,40 @@
 }
 :root[data-theme="dark"] .mb-ai { background: color-mix(in srgb, #f3e8ff 14%, var(--surface)); }
 :root[data-theme="dark"] .mb-opts label.is-ok { background: color-mix(in srgb, #dcfce7 14%, var(--surface)); }
+/* "Kho câu hỏi" của giáo viên: hiện thẳng trong trang, không phải hộp thoại */
+.mb-inline .mb { width: 100%; max-height: none; height: auto; border: 1px solid var(--line); border-radius: 18px; box-shadow: none; overflow: visible; }
+.mb-inline .mb-body { overflow: visible; grid-template-columns: minmax(0, 1fr); }
+.mb-inline .mb-sec, .mb-inline .mb-drafts { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.mb-inline .mb-drop small { white-space: normal; }
+.mb-inline .mb-f { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.mb-inline .mb-f select { min-width: 0; max-width: 100%; }
+.mb-inline .mb-card { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.mb-inline .mb-card header select { min-width: 0; }
+.mb-inline .mb-card header > select:not(.mb-lesson) { flex: 1 1 140px; }
+.mb-inline .mb-sticky { top: 0; }
+/* máy kiểm: cảnh báo (vàng) / đạt (xanh) */
+.mb-issues { list-style: none; margin: 0; padding: 8px 10px; display: grid; gap: 4px; border-radius: 10px; background: #fffbeb; color: #92400e; font-size: 13px; }
+.mb-issues li { display: flex; align-items: flex-start; gap: 6px; overflow-wrap: anywhere; }
+.mb-issues svg { width: 15px; height: 15px; flex: none; margin-top: 2px; }
+.mb-pass { display: flex; align-items: center; gap: 5px; margin: 0; color: #15803d; font-size: 12.5px; font-weight: 700; }
+.mb-pass svg { width: 15px; height: 15px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .mb-issues { background: rgb(245 158 11 / .14); color: #fcd34d; } :root:not([data-theme="light"]) .mb-pass { color: #4ade80; } }
+:root[data-theme="dark"] .mb-issues { background: rgb(245 158 11 / .14); color: #fcd34d; }
+:root[data-theme="dark"] .mb-pass { color: #4ade80; }
+/* trang Kho câu hỏi (qb-) */
+.qb { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
+.qb-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.qb-head h1 { margin: 0 0 4px; font-size: 26px; }
+.qb-head p { margin: 0; max-width: 640px; }
+.qb-subj { display: flex; gap: 6px; flex-wrap: wrap; }
+.qb-subj button { padding: 7px 14px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.qb-subj button.is-on { background: var(--brand-blue); border-color: var(--brand-blue); color: #fff; }
+.qb-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.qb-steps li { position: relative; display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 8px; row-gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.qb-steps svg { width: 20px; height: 20px; color: var(--brand-blue); grid-row: 1; grid-column: 1; }
+.qb-steps b { grid-row: 1; grid-column: 2; font-size: 14.5px; }
+.qb-steps small { grid-column: 1 / -1; color: var(--muted); font-size: 12.5px; line-height: 1.35; }
+.qb-n { position: absolute; top: 8px; right: 10px; font-size: 12px; font-weight: 800; color: var(--muted); }
+.qb-use { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin: 0; font-size: 14px; }
+.qb-use svg { width: 16px; height: 16px; }
+@media (max-width: 760px) { .qb-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

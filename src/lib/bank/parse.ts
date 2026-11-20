@@ -28,7 +28,7 @@ export type Draft = {
 let seq = 0;
 export const draftId = () => `d${Date.now().toString(36)}${(seq++).toString(36)}`;
 
-export const ACCEPT_DOCS = '.docx,.xlsx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+export const ACCEPT_DOCS = '.docx,.xlsx,.pdf,.txt,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const MAX_DOC = 20 * 1024 * 1024;
 
 export type Extracted = { kind: 'text'; lines: string[]; name: string } | { kind: 'rows'; rows: string[][]; name: string };
@@ -54,8 +54,15 @@ export async function extractFile(file: File): Promise<Extracted> {
     const sh = await readXlsx(buf);
     return { kind: 'rows', rows: (sh.rows as unknown as unknown[][]).map((r) => r.map((c) => clean(String(c ?? '')))), name };
   }
-  if (/\.pdf$/i.test(name)) throw new Error('Chưa nhận PDF: mở file PDF bằng Word (Tệp → Mở) để Word chuyển sang .docx, kiểm tra lại chữ rồi nạp file .docx.');
-  throw new Error('Chỉ nhận file Word (.docx) hoặc Excel (.xlsx). File .doc / .xls đời cũ: mở bằng Word / Excel rồi “Lưu thành” .docx / .xlsx.');
+  if (/\.pdf$/i.test(name)) {
+    const { readPdfLines } = await import('@/lib/pdf-read');
+    let lines: string[];
+    try { lines = await readPdfLines(buf); } catch { throw new Error('Không mở được file PDF này (file hỏng hoặc có mật khẩu).'); }
+    if (lines.join('').replace(/\s/g, '').length < 20) throw new Error('PDF này là ảnh chụp / scan, không có lớp chữ để đọc. Tạm thời: mở PDF bằng Word (Tệp → Mở) để Word nhận chữ, lưu thành .docx rồi nạp lại.');
+    return { kind: 'text', lines: lines.map(clean).filter(Boolean), name };
+  }
+  if (/\.txt$/i.test(name)) return { kind: 'text', lines: new TextDecoder().decode(buf).split(/\r?\n/).map(clean).filter(Boolean), name };
+  throw new Error('Chỉ nhận file Word (.docx), Excel (.xlsx), PDF hoặc .txt. File .doc / .xls đời cũ: mở bằng Word / Excel rồi “Lưu thành” .docx / .xlsx.');
 }
 
 /** Chữ gộp (để AI đọc làm tài liệu nguồn) */
