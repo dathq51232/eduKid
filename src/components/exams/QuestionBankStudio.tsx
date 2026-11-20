@@ -9,6 +9,7 @@ import { CheckCheck, FileText, FileUp, ShieldCheck, Sparkles } from 'lucide-reac
 import { bookLessons } from '@/lib/exams/matrix';
 import type { SubjectCode } from '@/lib/types';
 import MyBankPanel from './MyBankPanel';
+import PracticeSets from './PracticeSets';
 import { useMyBank } from './useMyBank';
 import '@/styles/mb.css';
 
@@ -50,6 +51,8 @@ export default function QuestionBankStudio({ classId, grade }: { classId: string
       {bank.error && <p className="adm-alert is-error" role="alert">{bank.error}</p>}
       <MyBankPanel key={`${subject}-${grade}`} inline subject={subject} grade={grade} lessons={lessons} defaultLessonId={lessons[0]?.id ?? ''} mine={bank.mine}
         onSaved={bank.add} onDeleted={bank.remove} />
+
+      <PracticeSets key={`ps-${subject}-${grade}`} classId={classId} subject={subject} lessons={lessons} mine={bank.mine} />
 
       <p className="qb-use dash-muted">
         <FileText aria-hidden="true" /> Câu đã lưu được chọn tự động khi ra

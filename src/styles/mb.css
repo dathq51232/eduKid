@@ -111,3 +111,27 @@
 .qb-use { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin: 0; font-size: 14px; }
 .qb-use svg { width: 16px; height: 16px; }
 @media (max-width: 760px) { .qb-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* Kho câu hỏi: Bộ ôn luyện cho lớp (qb-ps-) */
+.qb-ps { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.qb-ps-head h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 19px; }
+.qb-ps-head h2 svg { width: 22px; height: 22px; color: #16a34a; }
+.qb-ps-head p { margin: 0; font-size: 14px; }
+.qb-ps-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.qb-ps-list > li { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.qb-ps-list > li.is-pick { border-color: #16a34a; }
+.qb-ps-row { display: flex; align-items: center; gap: 8px; padding: 4px 10px; }
+.qb-ps-row > input { width: 18px; height: 18px; flex: none; accent-color: #16a34a; }
+.qb-ps-title { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 0; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.qb-ps-title b { flex: 1 1 220px; min-width: 0; font-size: 14.5px; }
+.qb-ps-cnt { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; color: var(--muted); font-size: 13px; }
+.qb-ps-cnt em { font-style: normal; font-weight: 700; color: #16a34a; }
+.qb-ps-title > svg { width: 18px; height: 18px; flex: none; color: var(--muted); transition: transform .15s; }
+.qb-ps-title > svg.is-open { transform: rotate(180deg); }
+.qb-ps-qs { list-style: none; margin: 0; padding: 4px 10px 10px; display: grid; gap: 5px; border-top: 1px dashed var(--line); }
+.qb-ps-qs label { display: flex; align-items: flex-start; gap: 8px; padding: 6px 8px; border-radius: 10px; cursor: pointer; }
+.qb-ps-qs label:hover { background: color-mix(in srgb, var(--brand-blue) 6%, transparent); }
+.qb-ps-qs input { margin-top: 3px; accent-color: #16a34a; }
+.qb-ps-bar { position: sticky; bottom: 8px; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #16a34a; border-radius: 14px; background: var(--surface); box-shadow: 0 8px 24px rgb(15 23 42 / .18); }
+.qb-ps-bar .assign-paper { flex: 1 1 100%; }
+.qb-ps-bar .assign-paper, .qb-ps-bar .assign-paper * { min-width: 0; max-width: 100%; }
+.qb-ps-bar .assign-paper button { white-space: normal; text-align: left; }
