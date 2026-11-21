@@ -11,7 +11,7 @@ import { MUC_NAME, type BookLesson, type Muc } from '@/lib/exams/matrix';
 import { ACCEPT_DOCS, draftId, draftProblem, extractFile, extractedText, parseExtracted, parseText, type Draft, type DraftType, type Extracted } from '@/lib/bank/parse';
 import { bankError, deleteMine, generateWithAi, machineDrafts, saveDrafts, type MyQuestion } from '@/lib/bank/client';
 import { draftIssues, MUC_LEVEL } from '@/lib/bank/check';
-import { DEFAULT_MIX, MAX_PER_MUC, MAX_TOTAL, MUCS, mixPlan, pctSum, planTotal, type MucMix } from '@/lib/bank/muc-mix';
+import { DEFAULT_MIX, MAX_PER_MUC, MAX_TOTAL, MUCS, mixPlan, pctSum, planFromPct, planTotal, type MucMix } from '@/lib/bank/muc-mix';
 import type { SubjectCode } from '@/lib/types';
 import '@/styles/adm.css';
 import '@/styles/gm.css';
@@ -53,6 +53,14 @@ function MucMixField({ mix, onChange }: { mix: MucMix; onChange: (m: MucMix) => 
   const sum = pctSum(mix.pct);
   const setN = (m: Muc, v: number) => onChange({ ...mix, count: { ...mix.count, [m]: v } });
   const setP = (m: Muc, v: number) => onChange({ ...mix, pct: { ...mix.pct, [m]: v } });
+  // ô Tổng đang gõ (chế độ Theo số câu chỉ chia lại khi rời ô / Enter để không mất tỉ lệ giữa các chữ số)
+  const [typing, setTyping] = useState<string | null>(null);
+  const setTotal = (raw: number) => {
+    const n = Math.max(0, Math.min(MAX_TOTAL, Math.round(Number.isFinite(raw) ? raw : 0)));
+    if (mix.by === 'pct') { onChange({ ...mix, total: n }); return; }
+    // giữ tỉ lệ giữa các mức đang có (chưa có câu nào thì theo % đang đặt)
+    onChange({ ...mix, count: planFromPct(n, total ? mix.count : mix.pct) });
+  };
   const only = (m: Muc) => onChange({ ...mix, by: 'count', count: { 1: 0, 2: 0, 3: 0, [m]: Math.min(MAX_PER_MUC, Math.max(total, 5)) } });
   return (
     <fieldset className="mb-mix">
@@ -60,18 +68,19 @@ function MucMixField({ mix, onChange }: { mix: MucMix; onChange: (m: MucMix) => 
       <div className="mb-mix-by" role="radiogroup" aria-label="Cách chia mức">
         <label><input type="radio" checked={mix.by === 'count'} onChange={() => onChange({ ...mix, by: 'count' })} /> Theo số câu</label>
         <label><input type="radio" checked={mix.by === 'pct'} onChange={() => onChange({ ...mix, by: 'pct' })} /> Theo %</label>
-        {mix.by === 'pct' && (
-          <label className="mb-mix-total">Tổng
-            {/* chọn nhanh trong danh sách hoặc gõ số câu (1–20) */}
-            <input type="number" min={1} max={MAX_TOTAL} list="mb-mix-totals" value={mix.total || ''}
-              onChange={(e) => onChange({ ...mix, total: Math.max(0, Math.min(MAX_TOTAL, Math.round(Number(e.target.value) || 0))) })} aria-label="Tổng số câu" /> câu
-            <datalist id="mb-mix-totals">{[5, 10, 15, 20].filter((n) => n <= MAX_TOTAL).map((n) => <option key={n} value={n} />)}</datalist>
-            <select value="" onChange={(e) => e.target.value && onChange({ ...mix, total: Number(e.target.value) })} aria-label="Chọn nhanh tổng số câu">
-              <option value="">Chọn nhanh</option>
-              {[5, 8, 10, 12, 15, 20].filter((n) => n <= MAX_TOTAL).map((n) => <option key={n} value={n}>{n} câu</option>)}
-            </select>
-          </label>
-        )}
+        <label className="mb-mix-total">Tổng
+          {/* gõ số câu (1–20) hoặc chọn nhanh; chế độ Theo số câu thì chia lại số câu từng mức theo tỉ lệ đang có */}
+          <input type="number" min={1} max={MAX_TOTAL} list="mb-mix-totals" value={typing ?? String((mix.by === 'pct' ? mix.total : total) || '')}
+            onChange={(e) => { if (mix.by === 'pct') setTotal(Number(e.target.value)); else setTyping(e.target.value); }}
+            onBlur={() => { if (typing !== null) { setTotal(Number(typing)); setTyping(null); } }}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); } }}
+            aria-label="Tổng số câu" /> câu
+          <datalist id="mb-mix-totals">{[5, 10, 15, 20].filter((n) => n <= MAX_TOTAL).map((n) => <option key={n} value={n} />)}</datalist>
+          <select value="" onChange={(e) => e.target.value && setTotal(Number(e.target.value))} aria-label="Chọn nhanh tổng số câu">
+            <option value="">Chọn nhanh</option>
+            {[5, 8, 10, 12, 15, 20].filter((n) => n <= MAX_TOTAL).map((n) => <option key={n} value={n}>{n} câu</option>)}
+          </select>
+        </label>
       </div>
       <div className="mb-mix-row">
         {MUCS.map((m) => (
