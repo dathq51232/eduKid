@@ -63,8 +63,9 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   ]);
   if (!cls) notFound(); // lớp không tồn tại HOẶC không được phân công — trả cùng một kết quả
   const lockedIds = ((lockedRows ?? []) as { student_id: string }[]).map((r) => r.student_id);
-  const planRow = ((planRows ?? []) as { student_limit: number; students_used: number }[])[0];
-  const plan = planRow ? { limit: planRow.student_limit, used: planRow.students_used } : null;
+  const planRow = ((planRows ?? []) as { student_limit: number; students_used: number; open_plan?: boolean }[])[0];
+  // đang thu học phí (0076): cô dùng miễn phí đủ lớp → chỉ còn giới hạn 40 em/lớp
+  const plan = planRow && !planRow.open_plan ? { limit: planRow.student_limit, used: planRow.students_used } : null;
   const pins: Record<string, string> = Object.fromEntries(((pinRows ?? []) as { student_id: string; pin: string }[]).map((p) => [p.student_id, p.pin]));
   // Xếp theo tên tiếng Việt A–Z (tên → họ đệm), cùng thứ tự với Sổ lớp, Danh bạ…
   const rosterRows = ((roster ?? []) as RosterRow[]).slice().sort((x, y) => compareViName(x.display_name, y.display_name));

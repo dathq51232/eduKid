@@ -67,10 +67,13 @@ export default async function TeacherHome() {
     schoolName(viewer.teacherSchoolId),
     supabase.rpc('teacher_my_plan'),
   ]);
-  const plan = ((planRows ?? []) as { student_limit: number; students_used: number; trial_until?: string | null; base_limit?: number; locked?: number }[])[0];
-  const trialUntil = plan?.trial_until ?? null;
+  const plan = ((planRows ?? []) as { student_limit: number; students_used: number; trial_until?: string | null; base_limit?: number; locked?: number; open_plan?: boolean }[])[0];
+  // Đang thu học phí từ phụ huynh (migration 0076): cô dùng miễn phí đủ lớp — không còn dùng thử / giới hạn gói
+  const openPlan = !!plan?.open_plan;
+  const trialUntil = openPlan ? null : plan?.trial_until ?? null;
   const trialDays = trialUntil ? Math.max(1, Math.ceil((Date.parse(trialUntil) - Date.now()) / 86_400_000)) : 0;
-  const planText = plan ? `${trialUntil ? `Dùng thử đủ lớp đến ${fmtDay(trialUntil)}` : plan.student_limit <= FREE_STUDENT_LIMIT ? 'Gói miễn phí' : 'Gói của thầy cô'}: ${plan.students_used}/${plan.student_limit} học sinh` : null;
+  const planText = !plan ? null : openPlan ? `Miễn phí cho thầy cô · tối đa 40 em/lớp: ${plan.students_used} học sinh`
+    : `${trialUntil ? `Dùng thử đủ lớp đến ${fmtDay(trialUntil)}` : plan.student_limit <= FREE_STUDENT_LIMIT ? 'Gói miễn phí' : 'Gói của thầy cô'}: ${plan.students_used}/${plan.student_limit} học sinh`;
 
   const active = list.find((c) => c.status === 'active');
   const nowMs = Date.now();
@@ -219,10 +222,10 @@ export default async function TeacherHome() {
           Sau đó gói miễn phí giữ {plan.base_limit ?? FREE_STUDENT_LIMIT} em vào lớp sớm nhất; các em còn lại tạm khoá phần học (bài đã làm vẫn giữ) cho đến khi được mở gói.
         </p>
       )}
-      {plan && (plan.locked ?? 0) > 0 && (
+      {plan && !openPlan && (plan.locked ?? 0) > 0 && (
         <ContactAdmin note={`Đã hết thời gian dùng thử: ${plan.locked} em đang tạm khoá (gói hiện có ${plan.student_limit} chỗ). Liên hệ để mở gói cho cả lớp — các em học lại ngay, không mất bài.`} />
       )}
-      {plan && !trialUntil && !(plan.locked ?? 0) && plan.students_used >= plan.student_limit && (
+      {plan && !openPlan && !trialUntil && !(plan.locked ?? 0) && plan.students_used >= plan.student_limit && (
         <ContactAdmin note={`Thầy cô đã dùng hết ${plan.student_limit} chỗ học sinh của gói. Liên hệ để được mở thêm.`} />
       )}
 
