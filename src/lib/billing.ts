@@ -1,8 +1,17 @@
 // Thu phí học sinh (migration 0018): kiểu dữ liệu, định dạng tiền, nội dung mã VietQR (chuẩn EMVCo / NAPAS 247).
 // Mã QR được vẽ ngay trong app (src/lib/qr.ts) — không gọi dịch vụ ngoài, không lộ thông tin học sinh trong nội dung chuyển khoản.
 
-export type Plan = 'month' | 'year';
-export const PLAN_NAME: Record<Plan, string> = { month: 'Gói 1 tháng', year: 'Gói năm học' };
+export type Plan = 'month' | 'term' | 'year';
+export const PLAN_NAME: Record<Plan, string> = { month: 'Gói 1 tháng', term: 'Gói học kỳ', year: 'Gói năm học' };
+/** Loại gói (migration 0074): em ở lớp của cô (vào bằng mã lớp) → gói lớp học; phụ huynh tự đăng ký, học tại nhà → gói gia đình */
+export type PriceKind = 'school' | 'family';
+export const KIND_NAME: Record<PriceKind, string> = { school: 'Gói lớp học', family: 'Gói gia đình' };
+export type BillingOffer = { kind: PriceKind; price_term: number; price_year: number; term_end: string; year_end: string; class_name: string | null };
+export type Waiver = {
+  id: string; student_id: string; student_name: string; reason: string; status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  created_at: string; decided_at: string | null; period_to: string | null; admin_note: string | null;
+};
+export const WAIVER_STATUS: Record<Waiver['status'], string> = { pending: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Không duyệt', cancelled: 'Đã rút' };
 export type BillingPublic = {
   enabled: boolean; price_month: number; price_year: number; trial_days: number;
   bank_bin: string | null; bank_name: string | null; account_no: string | null; account_name: string | null; note: string | null; year_end: string;
@@ -55,10 +64,16 @@ export const BILLING_ERRORS: Record<string, string> = {
   not_pending: 'Yêu cầu này đã được xử lý.',
   not_allowed: 'Chỉ quản trị hệ thống làm được việc này.',
   invalid_plan: 'Gói không hợp lệ.',
+  not_in_class: 'Em này không còn ở lớp (hoặc là lớp gia đình).',
+  bad_reason: 'Ghi lý do đặc cách (5–300 chữ).',
+  waiver_pending: 'Em này đã có yêu cầu đặc cách đang chờ duyệt.',
+  waiver_active: 'Em này đang được đặc cách trong học kỳ này.',
+  waiver_quota: 'Lớp đã dùng hết suất đặc cách của học kỳ.',
 };
 export function billingError(message: string): string {
   const code = Object.keys(BILLING_ERRORS).find((k) => message.includes(k));
   if (code) return BILLING_ERRORS[code];
+  if (/student_billing_offer|admin_save_pricing|waiver|fee_waivers/i.test(message) && /function|does not exist|schema cache|relation/i.test(message)) return 'Chưa có giá theo học kỳ và đặc cách: hãy chạy supabase/migrations/0074_semester_pricing_waivers.sql trên Supabase.';
   if (/function|does not exist|schema cache|relation/i.test(message)) return 'Chưa bật tính năng thu phí: hãy chạy supabase/migrations/0018_billing.sql trên Supabase.';
   return 'Chưa thực hiện được. Thử lại sau.';
 }

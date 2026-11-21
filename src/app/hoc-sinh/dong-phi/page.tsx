@@ -7,7 +7,7 @@ import NotConfigured from '@/components/classroom/NotConfigured';
 import PaymentPanel from '@/components/billing/PaymentPanel';
 import { learningGate } from '@/lib/auth/gate';
 import { getViewer } from '@/lib/auth/viewer';
-import { PLAN_NAME, fmtDay, vnd, type BillingPublic, type PaymentRow } from '@/lib/billing';
+import { PLAN_NAME, billingError, fmtDay, vnd, type BillingOffer, type BillingPublic, type PaymentRow } from '@/lib/billing';
 import { createClient } from '@/lib/supabase/server';
 import '@/styles/adm.css';
 import '@/styles/dash.css';
@@ -25,12 +25,15 @@ export default async function TuitionPage() {
   if (!viewer.isStudent || !viewer.studentId) redirect('/sau-dang-nhap');
 
   const supabase = await createClient();
-  const [gate, { data: pub }, { data: pays }] = await Promise.all([
+  const [gate, { data: pub }, { data: pays }, { data: off, error: offErr }] = await Promise.all([
     learningGate(supabase, viewer.userId),
     supabase.rpc('billing_public'),
     supabase.rpc('student_my_payments'),
+    // bảng giá theo học kỳ của em (gói lớp học / gia đình — migration 0074)
+    supabase.rpc('student_billing_offer'),
   ]);
   const info = ((pub ?? []) as BillingPublic[])[0];
+  const offer = ((off ?? []) as BillingOffer[])[0];
   const list = (pays ?? []) as PaymentRow[];
   const state = gate.reason === 'paid' ? { tone: 'is-ok', text: `Em đã đóng học phí, học đến hết ngày ${fmtDay(gate.until)}.` }
     : gate.reason === 'trial' ? { tone: 'is-info', text: `Em đang học thử miễn phí đến ${fmtDay(gate.until)}. Bố mẹ có thể đóng học phí trước để không bị gián đoạn.` }
@@ -49,7 +52,9 @@ export default async function TuitionPage() {
           </div>
         </header>
         <p className={`adm-alert ${state.tone}`} role="status">{state.text}</p>
-        {info && info.enabled ? <PaymentPanel info={info} /> : <p className="dash-muted">Nhà trường chưa bật thu học phí.</p>}
+        {!info || !info.enabled ? <p className="dash-muted">Nhà trường chưa bật thu học phí.</p>
+          : offer ? <PaymentPanel info={info} offer={offer} />
+          : <p className="adm-alert is-warn">{billingError(offErr?.message ?? 'student_billing_offer does not exist')}</p>}
         {list.length > 0 && (
           <section className="dash-section" aria-label="Các lần đóng phí">
             <h2>Các lần đóng phí</h2>

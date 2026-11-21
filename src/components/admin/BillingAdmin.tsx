@@ -5,7 +5,8 @@ import { Check, Search, X } from 'lucide-react';
 import CsvButton from '@/components/classroom/CsvButton';
 import QrCode from '@/components/billing/QrCode';
 import { createClient } from '@/lib/supabase/client';
-import { BANKS, PLAN_NAME, billingError, fmtDay, vietQrPayload, vnd, type Plan } from '@/lib/billing';
+import { BANKS, KIND_NAME, PLAN_NAME, billingError, fmtDay, vietQrPayload, vnd, type Plan, type PriceKind } from '@/lib/billing';
+import WaiverAdmin from './WaiverAdmin';
 import { useAdminUser } from './AdminContext';
 import '@/styles/adm.css';
 import '@/styles/auth.css';
@@ -14,10 +15,13 @@ import '@/styles/billing.css';
 type Settings = {
   enabled: boolean; enabled_at: string | null; price_month: number; price_year: number; trial_days: number;
   bank_bin: string | null; bank_name: string | null; account_no: string | null; account_name: string | null; note: string | null;
+  // migration 0074 (chưa chạy thì không có các cột này)
+  price_school_term?: number; price_school_year?: number; price_family_term?: number; price_family_year?: number; commission_pct?: number; waiver_pct?: number;
 };
 type Pay = {
   id: string; code: string; plan: Plan; amount: number; status: 'pending' | 'confirmed' | 'cancelled'; created_at: string; confirmed_at: string | null;
   period_to: string | null; student_id: string; student_name: string; grade: number; class_name: string | null; school_name: string | null;
+  kind?: PriceKind; teacher_name?: string | null; commission?: number;
 };
 type Summary = { pending: number; pending_amount: number; month_amount: number; month_count: number; paid_students: number };
 type Tab = 'pending' | 'confirmed' | 'cancelled' | 'all';
@@ -66,6 +70,20 @@ export default function BillingAdmin() {
     void loadSettings();
   };
 
+  const hasPricing = st?.price_school_term !== undefined;
+  const savePricing = async () => {
+    if (!st || !hasPricing) return;
+    setBusy(true);
+    const { error } = await supabase.rpc('admin_save_pricing', {
+      p_school_term: st.price_school_term, p_school_year: st.price_school_year, p_family_term: st.price_family_term, p_family_year: st.price_family_year,
+      p_commission_pct: st.commission_pct, p_waiver_pct: st.waiver_pct,
+    });
+    setBusy(false);
+    if (error) return setMsg({ kind: 'error', text: billingError(error.message) });
+    setMsg({ kind: 'ok', text: 'Đã lưu bảng giá. Mã chuyển khoản tạo từ bây giờ dùng giá mới.' });
+    void loadSettings();
+  };
+
   const confirm = async (p: Pay) => {
     const note = window.prompt(`Xác nhận ĐÃ NHẬN ${vnd(p.amount)} — nội dung ${p.code} — ${p.student_name}?\nGhi chú (không bắt buộc, ví dụ: đã đối chiếu sao kê VCB 19/10):`, '');
     if (note === null) return;
@@ -85,15 +103,21 @@ export default function BillingAdmin() {
 
   if (!me.isAdmin) return <p className="adm-alert is-warn">Chỉ quản trị hệ thống quản lý thu phí.</p>;
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => setSt((s) => (s ? { ...s, [k]: v } : s));
-  const preview = st?.bank_bin && st.account_no ? vietQrPayload({ bin: st.bank_bin, account: st.account_no, amount: st.price_month, content: 'EDKTHU123' }) : null;
-  const csvRows = rows.map((r) => [r.code, r.student_name, r.class_name ?? '', r.school_name ?? '', PLAN_NAME[r.plan], r.amount, TAB_NAME[r.status as Tab] ?? r.status, fmtTime(r.created_at), fmtTime(r.confirmed_at), fmtDay(r.period_to)]);
+  const qrAmount = st?.price_school_term ?? st?.price_month ?? 0;
+  const preview = st?.bank_bin && st.account_no ? vietQrPayload({ bin: st.bank_bin, account: st.account_no, amount: qrAmount, content: 'EDKTHU123' }) : null;
+  const money = (k: 'price_school_term' | 'price_school_year' | 'price_family_term', label: string) => (
+    <label className="adm-field"><span>{label}</span>
+      <input type="number" min={1000} step={1000} value={st?.[k] ?? 0} onChange={(e) => set(k, Number(e.target.value) || 0)} />
+    </label>
+  );
+  const csvRows = rows.map((r) => [r.code, r.student_name, r.class_name ?? '', r.school_name ?? '', r.kind ? KIND_NAME[r.kind] : '', PLAN_NAME[r.plan] ?? r.plan, r.amount, r.teacher_name ?? '', r.commission ?? 0, TAB_NAME[r.status as Tab] ?? r.status, fmtTime(r.created_at), fmtTime(r.confirmed_at), fmtDay(r.period_to)]);
 
   return (
     <div className="adm-stack">
       <div className="adm-head">
         <div>
           <h1>Thu phí học sinh</h1>
-          <p>Học sinh đóng theo tháng hoặc theo năm học bằng chuyển khoản (mã QR có nội dung riêng). Giáo viên dùng miễn phí.</p>
+          <p>Phụ huynh đóng cho từng em theo học kỳ hoặc năm học bằng chuyển khoản (mã QR có nội dung riêng). Em ở lớp của cô dùng gói lớp học (cô nhận phí cộng tác); em học tại nhà dùng gói gia đình.</p>
         </div>
       </div>
       {msg && <p className={`adm-alert is-${msg.kind}`} role="status">{msg.text}</p>}
@@ -114,12 +138,14 @@ export default function BillingAdmin() {
               <input type="checkbox" checked={st.enabled} onChange={(e) => set('enabled', e.target.checked)} />
               <span><strong>Bật thu phí</strong> — hết {st.trial_days} ngày học thử mà chưa đóng thì khoá phần học{st.enabled_at ? ` (bật lần đầu ${fmtDay(st.enabled_at)})` : ''}</span>
             </label>
-            <label className="adm-field"><span>Giá gói tháng (đ)</span>
-              <input type="number" min={1000} step={1000} value={st.price_month} onChange={(e) => set('price_month', Number(e.target.value) || 0)} />
-            </label>
-            <label className="adm-field"><span>Giá gói năm học (đ) — học đến 31/5</span>
-              <input type="number" min={1000} step={1000} value={st.price_year} onChange={(e) => set('price_year', Number(e.target.value) || 0)} />
-            </label>
+            {!hasPricing && <>
+              <label className="adm-field"><span>Giá gói tháng (đ)</span>
+                <input type="number" min={1000} step={1000} value={st.price_month} onChange={(e) => set('price_month', Number(e.target.value) || 0)} />
+              </label>
+              <label className="adm-field"><span>Giá gói năm học (đ) — học đến 31/5</span>
+                <input type="number" min={1000} step={1000} value={st.price_year} onChange={(e) => set('price_year', Number(e.target.value) || 0)} />
+              </label>
+            </>}
             <label className="adm-field"><span>Số ngày học thử</span>
               <input type="number" min={0} max={60} value={st.trial_days} onChange={(e) => set('trial_days', Math.max(0, Math.min(60, Number(e.target.value) || 0)))} />
             </label>
@@ -143,14 +169,39 @@ export default function BillingAdmin() {
           {preview && (
             <div className="billing-preview">
               <QrCode text={preview} size={160} label="Mã QR thử" />
-              <p className="adm-muted">Mã QR thử ({vnd(st.price_month)}, nội dung EDKTHU123). Mở app ngân hàng quét thử: phải hiện đúng tên chủ tài khoản và số tiền — <strong>không cần chuyển</strong>. Quét đúng rồi mới bật thu phí.</p>
+              <p className="adm-muted">Mã QR thử ({vnd(qrAmount)}, nội dung EDKTHU123). Mở app ngân hàng quét thử: phải hiện đúng tên chủ tài khoản và số tiền — <strong>không cần chuyển</strong>. Quét đúng rồi mới bật thu phí.</p>
             </div>
           )}
         </section>
       )}
 
+      {st && (hasPricing ? (
+        <section className="adm-card">
+          <div className="adm-card-head"><h2>Bảng giá (tính cho mỗi em)</h2></div>
+          <div className="billing-form">
+            {money('price_school_term', 'Gói lớp học — 1 học kỳ (đ)')}
+            {money('price_school_year', 'Gói lớp học — năm học (đ)')}
+            {money('price_family_term', 'Gói gia đình — 1 học kỳ (đ)')}
+            <label className="adm-field"><span>Gói gia đình — năm học (đ)</span>
+              <input type="number" min={1000} step={1000} value={st.price_family_year ?? 0} onChange={(e) => set('price_family_year', Number(e.target.value) || 0)} />
+              <button type="button" className="mini-btn" onClick={() => set('price_family_year', Math.round((st.price_family_term ?? 0) * 2 * 0.9))}>= 2 học kỳ giảm 10%</button>
+            </label>
+            <label className="adm-field"><span>Phí cộng tác của cô (% gói lớp học)</span>
+              <input type="number" min={0} max={90} value={st.commission_pct ?? 0} onChange={(e) => set('commission_pct', Math.max(0, Math.min(90, Number(e.target.value) || 0)))} />
+            </label>
+            <label className="adm-field"><span>Suất đặc cách tối đa (% sĩ số lớp)</span>
+              <input type="number" min={0} max={50} value={st.waiver_pct ?? 0} onChange={(e) => set('waiver_pct', Math.max(0, Math.min(50, Number(e.target.value) || 0)))} />
+            </label>
+            <div className="billing-actions"><button type="button" className="button button-blue" disabled={busy} onClick={() => void savePricing()}>Lưu bảng giá</button></div>
+          </div>
+          <p className="adm-muted">Học kỳ 1 học đến hết 15/1, học kỳ 2 đến hết 31/5 (mua từ 16/12 được học luôn hết học kỳ 2). Gói năm học học đến 31/5. Gói gia đình không có phí cộng tác.</p>
+        </section>
+      ) : <p className="adm-alert is-info">Chưa có bảng giá theo học kỳ và đặc cách: chạy <code>supabase/migrations/0074_semester_pricing_waivers.sql</code> trên Supabase.</p>)}
+
+      {hasPricing && <WaiverAdmin onChanged={() => void loadSettings()} />}
+
       <section className="adm-card">
-        <div className="adm-card-head"><h2>Các khoản đóng phí</h2><CsvButton filename="thu-phi.csv" header={['Mã CK', 'Học sinh', 'Lớp', 'Trường', 'Gói', 'Số tiền', 'Trạng thái', 'Tạo lúc', 'Xác nhận lúc', 'Học đến']} rows={csvRows} /></div>
+        <div className="adm-card-head"><h2>Các khoản đóng phí</h2><CsvButton filename="thu-phi.csv" header={['Mã CK', 'Học sinh', 'Lớp', 'Trường', 'Loại gói', 'Gói', 'Số tiền', 'Cô của lớp', 'Phí cộng tác', 'Trạng thái', 'Tạo lúc', 'Xác nhận lúc', 'Học đến']} rows={csvRows} /></div>
         <div className="billing-filter">
           <div className="auth-tabs" role="tablist" aria-label="Trạng thái">
             {(Object.keys(TAB_NAME) as Tab[]).map((t) => <button key={t} type="button" role="tab" aria-selected={tab === t} className="auth-tab" onClick={() => setTab(t)}>{TAB_NAME[t]}</button>)}
@@ -167,8 +218,8 @@ export default function BillingAdmin() {
                   <tr key={r.id}>
                     <td className="is-mono"><strong>{r.code}</strong></td>
                     <td><strong>{r.student_name}</strong><br /><small>{[r.class_name ? `Lớp ${r.class_name}` : `Khối ${r.grade}`, r.school_name].filter(Boolean).join(' · ')}</small></td>
-                    <td>{PLAN_NAME[r.plan]}</td>
-                    <td>{vnd(r.amount)}</td>
+                    <td>{PLAN_NAME[r.plan] ?? r.plan}{r.kind && <><br /><small>{KIND_NAME[r.kind]}</small></>}</td>
+                    <td>{vnd(r.amount)}{r.commission ? <><br /><small title={r.teacher_name ? `Cô ${r.teacher_name}` : undefined}>Cộng tác {vnd(r.commission)}</small></> : null}</td>
                     <td>{fmtTime(r.created_at)}</td>
                     <td>{r.status === 'confirmed' ? <>Đã nhận {fmtTime(r.confirmed_at)}<br /><small>Học đến {fmtDay(r.period_to)}</small></> : TAB_NAME[r.status as Tab]}</td>
                     <td className="adm-row-actions">

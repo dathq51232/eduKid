@@ -16,3 +16,26 @@
 .billing-search input { border: 0; outline: 0; background: transparent; font: inherit; width: 100%; color: var(--ink); }
 .report-bar .adm-field { min-width: 200px; }
 .adm-filters .adm-field { min-width: 160px; }
+/* ---------- đặc cách học phí (migration 0074) ---------- */
+.waiver-reason { max-width: 320px; overflow-wrap: anywhere; }
+.waiver-box { display: grid; gap: 10px; }
+.waiver-box > h2 svg { color: #db2777; }
+.waiver-form { display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+.waiver-form .btn svg { width: 16px; height: 16px; }
+.waiver-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.waiver-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.waiver-list small { flex: 1 1 100%; color: var(--muted); overflow-wrap: anywhere; }
+.waiver-list .mini-btn { margin-left: auto; }
+.waiver-st { font-size: 13px; font-weight: 700; padding: 1px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+.waiver-st.is-pending { background: rgb(245 158 11 / .18); color: #b45309; }
+.waiver-st.is-approved { background: rgb(22 163 74 / .16); color: #15803d; }
+.waiver-st.is-rejected { background: rgb(220 38 38 / .12); color: #b91c1c; }
+:root[data-theme="dark"] .waiver-st.is-pending { color: #fcd34d; }
+:root[data-theme="dark"] .waiver-st.is-approved { color: #4ade80; }
+:root[data-theme="dark"] .waiver-st.is-rejected { color: #fca5a5; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .waiver-st.is-pending { color: #fcd34d; }
+  :root:not([data-theme="light"]) .waiver-st.is-approved { color: #4ade80; }
+  :root:not([data-theme="light"]) .waiver-st.is-rejected { color: #fca5a5; }
+}
+@media (max-width: 640px) { .waiver-form { grid-template-columns: 1fr; } }

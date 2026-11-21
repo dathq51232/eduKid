@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Check, Copy, QrCode as QrIcon } from 'lucide-react';
 import QrCode from '@/components/billing/QrCode';
 import { createClient } from '@/lib/supabase/client';
-import { PLAN_NAME, billingError, fmtDay, vietQrPayload, vnd, type BillingPublic, type Plan } from '@/lib/billing';
+import { KIND_NAME, PLAN_NAME, billingError, fmtDay, vietQrPayload, vnd, type BillingOffer, type BillingPublic, type Plan } from '@/lib/billing';
 import '@/styles/adm.css';
 import '@/styles/dash.css';
 import '@/styles/mini.css';
@@ -27,8 +27,8 @@ function CopyLine({ label, value, mono }: { label: string; value: string; mono?:
   );
 }
 
-/** Chọn gói -> tạo mã chuyển khoản riêng -> hiện QR VietQR (số tiền, nội dung điền sẵn) + thông tin tài khoản. */
-export default function PaymentPanel({ info }: { info: BillingPublic }) {
+/** Chọn gói (học kỳ / năm học, giá theo gói lớp học hoặc gia đình — migration 0074) -> tạo mã chuyển khoản riêng -> hiện QR VietQR + thông tin tài khoản. */
+export default function PaymentPanel({ info, offer }: { info: BillingPublic; offer: BillingOffer }) {
   const router = useRouter();
   const [req, setReq] = useState<Req | null>(null);
   const [busy, setBusy] = useState<Plan | null>(null);
@@ -48,12 +48,17 @@ export default function PaymentPanel({ info }: { info: BillingPublic }) {
   if (!ready) return <p className="adm-alert is-info">Nhà trường chưa cấu hình tài khoản nhận học phí. Bố mẹ liên hệ thầy cô chủ nhiệm nhé.</p>;
   return (
     <div className="pay-panel">
+      <p className="pay-kind">
+        <strong>{KIND_NAME[offer.kind]}</strong>{offer.kind === 'school' && offer.class_name ? ` · lớp ${offer.class_name}` : ''}
+        <span>{offer.kind === 'school' ? 'Giá ưu đãi cho em học ở lớp của thầy cô (vào bằng mã lớp). Tính cho mỗi em.' : 'Dành cho bé học tại nhà do bố mẹ tự đăng ký. Tính cho mỗi bé.'}</span>
+      </p>
       <div className="pay-plans">
-        {(['month', 'year'] as Plan[]).map((p) => (
+        {(['term', 'year'] as Plan[]).map((p) => (
           <button key={p} type="button" className={`pay-plan${req?.plan === p ? ' is-on' : ''}`} onClick={() => void choose(p)} disabled={busy !== null}>
             <span className="pay-plan-name">{PLAN_NAME[p]}</span>
-            <strong>{vnd(p === 'month' ? info.price_month : info.price_year)}</strong>
-            <span className="pay-plan-note">{p === 'month' ? 'Học 1 tháng, nối tiếp ngày hết hạn' : `Học đến hết ${fmtDay(info.year_end)}`}</span>
+            <strong>{vnd(p === 'term' ? offer.price_term : offer.price_year)}</strong>
+            <span className="pay-plan-note">{p === 'term' ? `Học đến hết ${fmtDay(offer.term_end)}` : `Học đến hết ${fmtDay(offer.year_end)}`}</span>
+            {p === 'year' && offer.price_term * 2 > offer.price_year && <span className="pay-plan-save">Tiết kiệm {vnd(offer.price_term * 2 - offer.price_year)} so với đóng 2 học kỳ</span>}
             <span className="pay-plan-cta"><QrIcon aria-hidden="true" /> {busy === p ? 'Đang tạo mã…' : 'Lấy mã chuyển khoản'}</span>
           </button>
         ))}
