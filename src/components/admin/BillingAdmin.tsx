@@ -39,6 +39,8 @@ export default function BillingAdmin() {
   const [rows, setRows] = useState<Pay[]>([]);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error' | 'info'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // Mã QR thử: chọn khoản muốn quét thử (4 mức giá mới; chưa chạy 0074 thì dùng giá tháng cũ)
+  const [qrKey, setQrKey] = useState<QrKey>('price_school_term');
 
   const loadSettings = useCallback(async () => {
     const [{ data, error }, { data: s }] = await Promise.all([supabase.rpc('admin_billing_settings'), supabase.rpc('admin_billing_summary')]);
@@ -103,7 +105,7 @@ export default function BillingAdmin() {
 
   if (!me.isAdmin) return <p className="adm-alert is-warn">Chỉ quản trị hệ thống quản lý thu phí.</p>;
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => setSt((s) => (s ? { ...s, [k]: v } : s));
-  const qrAmount = st?.price_school_term ?? st?.price_month ?? 0;
+  const qrAmount = (st?.[qrKey] as number | undefined) ?? st?.price_month ?? 0;
   const preview = st?.bank_bin && st.account_no ? vietQrPayload({ bin: st.bank_bin, account: st.account_no, amount: qrAmount, content: 'EDKTHU123' }) : null;
   const money = (k: 'price_school_term' | 'price_school_year' | 'price_family_term', label: string) => (
     <label className="adm-field"><span>{label}</span>
@@ -169,6 +171,13 @@ export default function BillingAdmin() {
           {preview && (
             <div className="billing-preview">
               <QrCode text={preview} size={160} label="Mã QR thử" />
+              {hasPricing && (
+                <label className="adm-field billing-qr-pick"><span>Khoản quét thử</span>
+                  <select value={qrKey} onChange={(e) => setQrKey(e.target.value as QrKey)}>
+                    {(Object.keys(QR_NAME) as QrKey[]).map((k) => <option key={k} value={k}>{QR_NAME[k]} — {vnd(Number(st[k] ?? 0))}</option>)}
+                  </select>
+                </label>
+              )}
               <p className="adm-muted">Mã QR thử ({vnd(qrAmount)}, nội dung EDKTHU123). Mở app ngân hàng quét thử: phải hiện đúng tên chủ tài khoản và số tiền — <strong>không cần chuyển</strong>. Quét đúng rồi mới bật thu phí.</p>
             </div>
           )}
@@ -240,3 +249,7 @@ export default function BillingAdmin() {
 }
 
 const BILLING_NOT_READY = billingError('billing_not_ready');
+type QrKey = 'price_school_term' | 'price_school_year' | 'price_family_term' | 'price_family_year';
+const QR_NAME: Record<QrKey, string> = {
+  price_school_term: 'Lớp học · học kỳ', price_school_year: 'Lớp học · năm học', price_family_term: 'Gia đình · học kỳ', price_family_year: 'Gia đình · năm học',
+};

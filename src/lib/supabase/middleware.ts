@@ -76,8 +76,12 @@ export async function updateSession(request: NextRequest) {
       if (grade) redirect.cookies.set(GRADE_COOKIE, String(grade), { path: '/', sameSite: 'lax', maxAge: 12 * 3600 });
       return redirect;
     };
-    // hết chỗ trong gói của thầy cô (migration 0045) -> trang của em (có thông báo); hết học phí -> trang đóng phí
-    if (gate.is_student && !gate.active) return go(gate.reason === 'plan_locked' ? '/hoc-sinh' : '/hoc-sinh/dong-phi');
+    // hết chỗ trong gói của thầy cô (migration 0045) -> trang của em (có thông báo); hết học phí -> trang đóng phí.
+    // Hết học phí vẫn làm được BÀI CÔ GIAO (migration 0075): đề cô giao (/hoc-sinh/de/…) và bài học cô đang giao (/lam-bai).
+    if (gate.is_student && !gate.active) {
+      if (gate.reason === 'plan_locked') return go('/hoc-sinh');
+      if (!(await assignedWork(supabase, path, request.nextUrl.searchParams))) return go('/hoc-sinh/dong-phi');
+    }
     if (grade && GRADE_LOCKED.includes(path)) {
       const q = request.nextUrl.searchParams;
       const asked = Number(q.get('grade') ?? grade);
@@ -95,6 +99,15 @@ export async function updateSession(request: NextRequest) {
     }
   }
   return response;
+}
+
+/** Em hết hạn học phí vẫn được mở: đề cô giao, bài học cô đang giao cho em (hỏi database, không tin URL) */
+async function assignedWork(supabase: ReturnType<typeof createServerClient>, path: string, q: URLSearchParams): Promise<boolean> {
+  if (path.startsWith('/hoc-sinh/de/')) return true;
+  const lesson = q.get('lessonId');
+  if (path !== '/lam-bai' || !lesson) return false;
+  const { data, error } = await supabase.rpc('student_assigned_lesson', { p_lesson: lesson });
+  return !error && data === true;
 }
 
 const GRADE_LOCKED = ['/chon-bai', '/lam-bai'];

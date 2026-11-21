@@ -6,6 +6,7 @@ import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import ClassManager, { type BillingRow, type RosterRow, type SummaryRow } from '@/components/classroom/ClassManager';
 import FeeWaivers from '@/components/classroom/FeeWaivers';
+import ClassFeePlan from '@/components/classroom/ClassFeePlan';
 import ClassProgress from '@/components/classroom/ClassProgress';
 import { ClassLeaderboard } from '@/components/achievements/LiveAchievements';
 import type { LessonResult } from '@/lib/classroom/progress';
@@ -89,6 +90,8 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
           plan={plan}
           lockedIds={lockedIds}
         />
+        {/* Gói học phí cô công bố cho lớp (migration 0075) — tự ẩn khi chưa chạy migration */}
+        <ClassFeePlan classId={id} />
         {/* Đặc cách học phí (migration 0074): chỉ hiện khi đang thu phí */}
         {((billing ?? []) as BillingRow[]).some((b) => b.reason !== 'free') && (
           <FeeWaivers classId={id} students={active.map((r) => ({ id: r.student_id, name: r.display_name, paid: ((billing ?? []) as BillingRow[]).some((b) => b.student_id === r.student_id && b.reason === 'paid') }))} />

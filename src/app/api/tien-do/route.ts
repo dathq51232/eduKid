@@ -27,7 +27,11 @@ export async function POST(request: Request) {
 
   // Còn hạn học phí + chỉ lưu bài của khối mình (lấy từ database, không tin dữ liệu trình duyệt gửi)
   const gate = await learningGate(await createClient(), viewer.userId);
-  if (gate.is_student && !gate.active) return NextResponse.json({ saved: false, reason: 'expired' }, { status: 402 });
+  if (gate.is_student && !gate.active) {
+    // hết học phí: chỉ lưu bài cô đang giao cho em (migration 0075)
+    const { data: assigned } = gate.reason === 'expired' ? await (await createClient()).rpc('student_assigned_lesson', { p_lesson: graded.lessonCode }) : { data: false };
+    if (assigned !== true) return NextResponse.json({ saved: false, reason: 'expired' }, { status: 402 });
+  }
   if (gate.grade && graded.grade !== gate.grade) return NextResponse.json({ saved: false, reason: 'wrong_grade' }, { status: 403 });
 
   const seed = Number.isSafeInteger(body.seed) && (body.seed as number) > 0 ? (body.seed as number) : null;

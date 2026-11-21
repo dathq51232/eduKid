@@ -39,3 +39,4 @@
 .pay-plan-save { padding: 2px 10px; border-radius: 999px; background: rgb(22 163 74 / .14); color: #15803d; font-size: 13px; font-weight: 700; }
 :root[data-theme="dark"] .pay-plan-save { color: #4ade80; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pay-plan-save { color: #4ade80; } }
+.pay-announce { margin-top: 4px; padding: 8px 12px; border-radius: 12px; background: var(--blue-soft); color: var(--ink) !important; font-size: 15px !important; }

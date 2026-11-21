@@ -6,7 +6,14 @@ export const PLAN_NAME: Record<Plan, string> = { month: 'Gói 1 tháng', term: '
 /** Loại gói (migration 0074): em ở lớp của cô (vào bằng mã lớp) → gói lớp học; phụ huynh tự đăng ký, học tại nhà → gói gia đình */
 export type PriceKind = 'school' | 'family';
 export const KIND_NAME: Record<PriceKind, string> = { school: 'Gói lớp học', family: 'Gói gia đình' };
-export type BillingOffer = { kind: PriceKind; price_term: number; price_year: number; term_end: string; year_end: string; class_name: string | null };
+/** Gói cô công bố cho lớp (migration 0075): phụ huynh tự chọn | chỉ học kỳ | chỉ năm học */
+export type FeePlan = 'choice' | 'term' | 'year';
+export const FEE_PLAN_NAME: Record<FeePlan, string> = { choice: 'Để phụ huynh chọn', term: 'Gói học kỳ', year: 'Gói năm học' };
+export type BillingOffer = {
+  kind: PriceKind; price_term: number; price_year: number; term_end: string; year_end: string; class_name: string | null;
+  /** chưa chạy migration 0075 thì không có */
+  fee_plan?: FeePlan; teacher_name?: string | null;
+};
 export type Waiver = {
   id: string; student_id: string; student_name: string; reason: string; status: 'pending' | 'approved' | 'rejected' | 'cancelled';
   created_at: string; decided_at: string | null; period_to: string | null; admin_note: string | null;
@@ -69,6 +76,7 @@ export const BILLING_ERRORS: Record<string, string> = {
   waiver_pending: 'Em này đã có yêu cầu đặc cách đang chờ duyệt.',
   waiver_active: 'Em này đang được đặc cách trong học kỳ này.',
   waiver_quota: 'Lớp đã dùng hết suất đặc cách của học kỳ.',
+  plan_not_offered: 'Lớp của em chỉ mở gói thầy cô đã công bố. Tải lại trang để lấy đúng mã.',
 };
 export function billingError(message: string): string {
   const code = Object.keys(BILLING_ERRORS).find((k) => message.includes(k));

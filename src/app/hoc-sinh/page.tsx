@@ -58,6 +58,12 @@ export default async function StudentHome() {
   const nowMs = Date.now();
   // Học phí (migration 0018): hết hạn thì mọi nút học dẫn tới trang đóng phí (máy chủ cũng chặn ở middleware + API)
   const locked = gate.is_student && !gate.active;
+  // Bài cô giao + phòng thi lớp: hết học phí vẫn làm được (migration 0075); chỉ khoá khi em bị tạm khoá vì gói của thầy cô
+  const classLocked = gate.reason === 'plan_locked';
+  const workHref = (t: { id: string; kind: string; status: string; lesson_code: string | null; subject: SubjectCode | null; grade: number; muc: number | null }) =>
+    classLocked ? PAY
+      : t.kind === 'exam' ? `/hoc-sinh/de/${t.id}`
+      : t.lesson_code && t.subject ? (locked && t.status !== 'open' ? PAY : lessonHref(t.lesson_code, t.subject, t.grade, t.muc)) : null;
   const PAY = gate.reason === 'plan_locked' ? '/hoc-sinh#tam-khoa' : '/hoc-sinh/dong-phi';
   const tasks = ((assigned ?? []) as MyAssignment[]);
   const todo = tasks.filter((t) => t.status === 'open' && !t.done)
@@ -84,7 +90,7 @@ export default async function StudentHome() {
 
   // Việc nên làm bây giờ: bài cô giao gần hạn nhất → bài cần ôn → bài mới
   const next = todo[0];
-  const nextHref = next ? (locked ? PAY : next.kind === 'exam' ? `/hoc-sinh/de/${next.id}` : next.lesson_code && next.subject ? lessonHref(next.lesson_code, next.subject, next.grade, next.muc) : null) : null;
+  const nextHref = next ? workHref(next) : null;
   const nextDue = next ? dueInfo(next.due_at) : null;
 
   // Bản đồ kiến thức Toán theo khối của em: mức từng trạm tính từ bài em đã làm
@@ -101,7 +107,7 @@ export default async function StudentHome() {
           <p id="tam-khoa" className="adm-alert is-warn tuition-banner" role="status"><Lock aria-hidden="true" /> Tài khoản của em đang tạm khoá vì lớp đã hết thời gian dùng thử. Bài em đã làm vẫn được giữ nguyên — khi thầy cô mở thêm chỗ, em học tiếp được ngay.</p>
         )}
         {gate.reason === 'expired' && (
-          <p className="adm-alert is-warn tuition-banner" role="status"><Lock aria-hidden="true" /> Thời gian học của em đã hết. Nhờ bố mẹ đóng học phí để học tiếp nhé! <Link href={PAY} className="btn btn-yellow btn-sm"><CreditCard aria-hidden="true" /> Đóng học phí</Link></p>
+          <p className="adm-alert is-warn tuition-banner" role="status"><Lock aria-hidden="true" /> Hết thời gian học các bài tự chọn. Em vẫn làm được bài cô giao và phòng thi lớp; nhờ bố mẹ đóng học phí để luyện tập thêm các bài khác nhé! <Link href={PAY} className="btn btn-yellow btn-sm"><CreditCard aria-hidden="true" /> Đóng học phí</Link></p>
         )}
         {gate.reason === 'trial' && (
           <p className="adm-alert is-info tuition-banner">Em đang học thử miễn phí đến {fmtDay(gate.until)}. <Link href={PAY}>Xem học phí →</Link></p>
@@ -126,7 +132,7 @@ export default async function StudentHome() {
         <div className="sd-top">
           <section className="sd-next" aria-labelledby="sd-next-t">
             <h2 id="sd-next-t"><Sparkles aria-hidden="true" /> Hôm nay em làm gì?</h2>
-            {locked ? (
+            {locked && (classLocked || !next || !nextHref) ? (
               <div className="sd-next-card is-lock">
                 <div><b>Nhờ bố mẹ đóng học phí</b><span>để học tiếp các bài mới nhé.</span></div>
                 <Link href={PAY} className="btn btn-yellow"><Lock aria-hidden="true" /> Đóng học phí</Link>
@@ -213,7 +219,7 @@ export default async function StudentHome() {
 
         <section className="dash-section student-rooms" id="phong-thi" aria-label="Phòng thi lớp">
           <h2>🌼 Phòng thi lớp</h2>
-          {!locked && <RoomJoin />}
+          {!classLocked && <RoomJoin />}
           {rooms.length > 0 && (
             <ul className="task-list">
               {rooms.map((r) => {
@@ -227,7 +233,7 @@ export default async function StudentHome() {
                       <span>{SUBJECT_NAME[r.subject]} · {r.n_questions} câu · {r.minutes} phút · {soon ? `mở ${whenLabel(r.opens_at)}` : open ? `đóng ${whenLabel(r.closes_at)}` : 'đã đóng'}</span>
                       {r.done && r.score !== null && <span className="task-done">Đã nộp: {String(Number(r.score)).replace('.', ',')}/10 · {owlOf(Number(r.score)).name} · ⭐ {r.stars}</span>}
                     </div>
-                    {!locked && (r.done || open) && <Link href={`/hoc-sinh/phong-thi/${r.id}`} className={`btn btn-sm ${r.done ? 'btn-outline' : 'btn-yellow'}`}>{r.done ? 'Xem kết quả' : 'Vào thi'}</Link>}
+                    {!classLocked && (r.done || open) && <Link href={`/hoc-sinh/phong-thi/${r.id}`} className={`btn btn-sm ${r.done ? 'btn-outline' : 'btn-yellow'}`}>{r.done ? 'Xem kết quả' : 'Vào thi'}</Link>}
                   </li>
                 );
               })}
@@ -241,7 +247,7 @@ export default async function StudentHome() {
             <ul className="task-list">
               {tasks.map((t) => {
                 const d = dueInfo(t.due_at);
-                const href = locked ? PAY : t.kind === 'exam' ? `/hoc-sinh/de/${t.id}` : t.lesson_code && t.subject ? lessonHref(t.lesson_code, t.subject, t.grade, t.muc) : null;
+                const href = workHref(t);
                 const closed = t.status !== 'open';
                 return (
                   <li key={t.id} className={`task-item${t.done ? ' is-done' : ''}${!t.done && d.overdue ? ' is-over' : ''}`}>

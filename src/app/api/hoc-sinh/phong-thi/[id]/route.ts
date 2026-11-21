@@ -20,7 +20,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!rateLimit(`phongthi:${viewer.studentId}`, 20, 60 * 60_000)) return NextResponse.json({ error: 'Em nộp quá nhiều lần, thử lại sau.' }, { status: 429 });
 
   const gate = await learningGate(await createClient(), viewer.userId);
-  if (gate.is_student && !gate.active) return NextResponse.json({ error: 'Đã hết hạn học phí — nhờ bố mẹ đóng học phí để tiếp tục.' }, { status: 402 });
+  // Bài cô giao / phòng thi lớp: hết học phí vẫn làm được (migration 0075); chỉ chặn em bị tạm khoá vì gói của thầy cô (0045)
+  if (gate.is_student && gate.reason === 'plan_locked') return NextResponse.json({ error: 'Tài khoản đang tạm khoá — nhờ thầy cô liên hệ quản trị.' }, { status: 402 });
 
   const body = (await request.json().catch(() => ({}))) as { answers?: unknown; leaves?: unknown };
   const admin = createAdminClient();

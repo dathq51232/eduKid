@@ -34,6 +34,9 @@ export default function PaymentPanel({ info, offer }: { info: BillingPublic; off
   const [busy, setBusy] = useState<Plan | null>(null);
   const [err, setErr] = useState('');
   const ready = Boolean(info.bank_bin && info.account_no);
+  // Lớp ở trường: cô đã công bố một gói (migration 0075) thì chỉ hiện gói đó; lớp gia đình / cô để phụ huynh chọn thì hiện cả hai
+  const fixed: Plan | null = offer.kind === 'school' && (offer.fee_plan === 'term' || offer.fee_plan === 'year') ? offer.fee_plan : null;
+  const plans: Plan[] = fixed ? [fixed] : ['term', 'year'];
 
   const choose = async (plan: Plan) => {
     setBusy(plan);
@@ -51,9 +54,10 @@ export default function PaymentPanel({ info, offer }: { info: BillingPublic; off
       <p className="pay-kind">
         <strong>{KIND_NAME[offer.kind]}</strong>{offer.kind === 'school' && offer.class_name ? ` · lớp ${offer.class_name}` : ''}
         <span>{offer.kind === 'school' ? 'Giá ưu đãi cho em học ở lớp của thầy cô (vào bằng mã lớp). Tính cho mỗi em.' : 'Dành cho bé học tại nhà do bố mẹ tự đăng ký. Tính cho mỗi bé.'}</span>
+        {fixed && <span className="pay-announce">{offer.teacher_name ? `Cô ${offer.teacher_name}` : 'Thầy cô'}{offer.class_name ? ` (lớp ${offer.class_name})` : ''} đã công bố: <b>{PLAN_NAME[fixed]} — {vnd(fixed === 'term' ? offer.price_term : offer.price_year)}</b></span>}
       </p>
       <div className="pay-plans">
-        {(['term', 'year'] as Plan[]).map((p) => (
+        {plans.map((p) => (
           <button key={p} type="button" className={`pay-plan${req?.plan === p ? ' is-on' : ''}`} onClick={() => void choose(p)} disabled={busy !== null}>
             <span className="pay-plan-name">{PLAN_NAME[p]}</span>
             <strong>{vnd(p === 'term' ? offer.price_term : offer.price_year)}</strong>
