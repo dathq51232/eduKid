@@ -3,8 +3,8 @@
 // PHÒNG THI LỚP (chặng “Ra hoa”, docs/BAN-SAC-EDUCHAINKIDS.md mục 8.1) — trang của cô:
 // tạo phòng (sinh đề riêng cho từng em ngay trên máy cô), phát mã, xem kết quả, cho làm lại, xem cờ bất thường.
 // Tuỳ chọn ĐẤU CẶP (mục 8.2, migration 0073): bốc thăm chia cặp, mỗi vòng một phòng thi, loại trực tiếp (BattlePanel).
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { DoorOpen, Eye, Flag, Lock, RotateCcw, Settings2, Swords, Trash2, Unlock, Users } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Check, Copy, DoorOpen, Eye, Flag, Lock, RotateCcw, Settings2, Swords, Trash2, Unlock, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useGradeContent } from '@/components/learn/GradeReady';
 import { SUBJECT_NAME, type ExamItem } from '@/lib/classroom/assignments';
@@ -50,20 +50,16 @@ export default function ExamRooms({ classId, className, grade, students }: { cla
   }, [classId]);
   useEffect(() => { void load(); }, [load]);
 
+  const topRef = useRef<HTMLDivElement>(null);
+  // Danh sách phòng ở đầu trang (cô mở trang chủ yếu để xem mã, kết quả); khung tạo phòng ở dưới
   return (
     <>
-      <CreateRoom classId={classId} className={className} grade={grade} students={students} subjects={subjects}
-        onCreated={(code, battle) => {
-          setMsg(battle ? `Đã bốc thăm chia cặp và mở vòng 1. Mã phòng vòng 1: ${code} — các em làm lúc nào cũng được trong giờ mở; cặp nào hai em nộp xong là có kết quả.`
-            : `Đã tạo phòng thi. Mã phòng: ${code} — đọc hoặc viết mã lên bảng cho các em.`);
-          void load(); if (battle) setBattleTick((t) => t + 1);
-        }} />
+      <div ref={topRef} />
       {msg && <p className="adm-alert is-ok" role="status">{msg}</p>}
       {err && <p className="adm-alert is-error" role="alert">{err}</p>}
-      <BattlePanel classId={classId} grade={grade} refresh={battleTick} onChanged={() => void load()} />
       <section className="dash-section">
         <h2><DoorOpen aria-hidden="true" /> Phòng thi của lớp</h2>
-        {rooms === null ? <p className="dash-muted">Đang tải…</p> : rooms.length === 0 ? <p className="dash-muted">Chưa có phòng thi nào. Tạo phòng ở trên.</p> : (
+        {rooms === null ? <p className="dash-muted">Đang tải…</p> : rooms.length === 0 ? <p className="dash-muted">Chưa có phòng thi nào. Tạo phòng ở phần dưới.</p> : (
           <ul className="room-list">
             {rooms.map((r) => (
               <RoomCard key={r.id} room={r} open={openId === r.id} onToggle={() => setOpenId((x) => (x === r.id ? null : r.id))} onChanged={load} />
@@ -71,6 +67,14 @@ export default function ExamRooms({ classId, className, grade, students }: { cla
           </ul>
         )}
       </section>
+      <BattlePanel classId={classId} grade={grade} refresh={battleTick} onChanged={() => void load()} />
+      <CreateRoom classId={classId} className={className} grade={grade} students={students} subjects={subjects}
+        onCreated={(code, battle) => {
+          setMsg(battle ? `Đã bốc thăm chia cặp và mở vòng 1. Mã phòng vòng 1: ${code} — các em làm lúc nào cũng được trong giờ mở; cặp nào hai em nộp xong là có kết quả.`
+            : `Đã tạo phòng thi. Mã phòng: ${code} — đọc hoặc viết mã lên bảng cho các em.`);
+          void load(); if (battle) setBattleTick((t) => t + 1);
+          topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }} />
     </>
   );
 }
@@ -301,7 +305,10 @@ function RoomCard({ room, open, onToggle, onChanged }: { room: RoomRow; open: bo
   return (
     <li className={`room-card is-${live ? 'live' : soon ? 'soon' : 'closed'}`}>
       <div className="room-card-head">
-        <div className="room-code" aria-label={`Mã phòng ${room.code.split('').join(' ')}`}>{room.code}</div>
+        <div className="room-code-wrap">
+          <div className="room-code" aria-label={`Mã phòng ${room.code.split('').join(' ')}`}>{room.code}</div>
+          <CopyCode code={room.code} />
+        </div>
         <div className="room-card-info">
           <strong>{room.title}</strong>
           <span>{SUBJECT_NAME[room.subject]} · {room.n_questions} câu · {room.minutes} phút · {whenLabel(room.opens_at)} → {whenLabel(room.closes_at)}</span>
@@ -317,6 +324,20 @@ function RoomCard({ room, open, onToggle, onChanged }: { room: RoomRow; open: bo
       </div>
       {open && <RoomDetail room={room} onChanged={onChanged} />}
     </li>
+  );
+}
+
+/** Nút chép nhanh mã phòng (dán vào nhóm phụ huynh, tin nhắn…) */
+function CopyCode({ code }: { code: string }) {
+  const [ok, setOk] = useState(false);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(code); setOk(true); setTimeout(() => setOk(false), 1500); } catch { window.prompt('Chép mã phòng:', code); }
+  };
+  return (
+    <button type="button" className={`room-copy${ok ? ' is-ok' : ''}`} onClick={copy} aria-label={`Chép mã phòng ${code}`} title="Chép mã phòng">
+      {ok ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+      <span>{ok ? 'Đã chép' : 'Chép mã'}</span>
+    </button>
   );
 }
 

@@ -111,3 +111,11 @@
 .room-edit-actions { display: flex; gap: 8px; }
 :root[data-theme="dark"] .room-pv-list > li.has-warn { background: #3a2a10; }
 :root[data-theme="dark"] .room-edit-opts label.is-ok { background: #14532d; }
+/* nút chép nhanh mã phòng, nằm ngay dưới ô mã */
+.room-code-wrap { display: grid; justify-items: center; gap: 6px; }
+.room-copy { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--surface); color: var(--ink); font-family: inherit; font-size: 13px; font-weight: 700; line-height: 1.2; cursor: pointer; }
+.room-copy svg { width: 14px; height: 14px; }
+.room-copy:hover { border-color: var(--brand-yellow); }
+.room-copy.is-ok { border-color: #22c55e; color: #15803d; }
+:root[data-theme="dark"] .room-copy.is-ok { color: #86efac; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .room-copy.is-ok { color: #86efac; } }
