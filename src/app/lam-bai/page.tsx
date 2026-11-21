@@ -32,7 +32,7 @@ import SolutionSteps from '@/components/learn/SolutionSteps';
 import { isAdvancedId } from '@/lib/content/knowledge-nc';
 import { awardSticker, prefersReducedMotion, readFx, saveFx } from '@/lib/stickers';
 import { SUBJECT_MASCOT } from '@/lib/mascots';
-import { getLesson, getQuestionSet, getReplacement, gradeAnswer, isSubjectCode, parseGrade } from '@/lib/data';
+import { fetchTeacherQuestions, getLesson, getQuestionSet, getReplacement, gradeAnswer, isSubjectCode, mixTeacherQuestions, parseGrade } from '@/lib/data';
 import { isAnswered } from '@/lib/grading';
 import { miloLine, trailLine } from '@/lib/milo-tools';
 import { knowledgeFor } from '@/lib/content/knowledge';
@@ -138,7 +138,20 @@ function LamBaiContent() {
   // Câu dễ trước, câu khó sau (sắp ổn định: cùng cấp độ giữ thứ tự của bài)
   const questionSet = useMemo(() => getQuestionSet(lessonId, seed, muc, truParam), [lessonId, seed, muc, truParam]);
   const setNote = questionSet.note;
-  const rawOrder = useMemo<Question[]>(() => [...questionSet.questions].sort((a, b) => a.level - b.level), [questionSet]);
+  // "Câu của cô": câu thầy cô lớp em bật cho lớp luyện ở Kho câu hỏi (chỉ học sinh đã đăng nhập; chấm ở máy chủ).
+  // Chỉ trộn khi em còn ở màn chuẩn bị — đang làm bài thì không đổi bộ câu.
+  const [teacherQs, setTeacherQs] = useState<Question[]>([]);
+  const phaseRef = useRef<'intro' | 'quiz'>('intro');
+  useEffect(() => {
+    if (!lessonId || practice) return;
+    const ac = new AbortController();
+    void fetchTeacherQuestions(lessonId, ac.signal).then((l) => { if (!ac.signal.aborted && l.length && phaseRef.current === 'intro') setTeacherQs(l); });
+    return () => ac.abort();
+  }, [lessonId, practice]);
+  const rawOrder = useMemo<Question[]>(
+    () => mixTeacherQuestions(questionSet.questions, teacherQs, muc, seed).sort((a, b) => a.level - b.level),
+    [questionSet, teacherQs, muc, seed],
+  );
   // Thời lượng tuỳ chỉnh (hệ số hoặc tổng số phút theo quy định của trường), chia cho từng câu theo độ khó.
   // Chỉ đổi được ở màn chuẩn bị (đổi là bắt đầu lại lượt làm).
   const [timeSet, setTimeSet] = useState<TimeSetting>({ scale: 1 });
@@ -156,6 +169,7 @@ function LamBaiContent() {
   const extraMsRef = useRef(0); // thời gian đã dùng cho các câu bị đổi đi (vẫn tính vào tổng thời gian)
 
   const [phase, setPhase] = useState<'intro' | 'quiz'>('intro');
+  phaseRef.current = phase;
   const [items, setItems] = useState<Record<string, Item>>({});
   const itemsRef = useRef(items);
   const [current, setCurrent] = useState(0);
@@ -646,6 +660,7 @@ function LamBaiContent() {
                     {seed ? <>Đang dùng: <strong>bộ câu mới, mức {MUC[muc].name}</strong>. Bấm “Đổi bộ câu hỏi” để lấy bộ khác — không trùng câu nào với bộ đang làm.</> : <>Đang dùng: <strong>bộ câu gốc của bài</strong>.</>}
                   </p>
                   {setNote && <p className="set-note">{setNote}</p>}
+                  {rawOrder.some((x) => x.byTeacher) && <p className="set-note">Bộ câu này có {rawOrder.filter((x) => x.byTeacher).length} câu thầy cô lớp em gửi cho Milo.</p>}
                 </div>
                 <fieldset className="time-scale">
                   <legend><Timer size={18} aria-hidden="true" /> Thời gian làm bài</legend>
@@ -801,6 +816,7 @@ function LamBaiContent() {
             <div className="question-meta">
               <span className="lesson-tag">Câu {current + 1}/{order.length}</span>
               <span className={`level-chip is-l${q.level}`}>{LEVELS[q.level].code} · {LEVELS[q.level].name}</span>
+              {q.byTeacher && <span className="qz-by-teacher" title="Câu do thầy cô lớp em soạn">Câu thầy cô gửi</span>}
               {item.status === 'skipped' && !submitted && <span className="skip-tag">Câu để sau</span>}
             </div>
           </div>

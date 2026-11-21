@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient, hasServiceRole } from '@/lib/supabase/admin';
 import { gradeLessonSubmission, type SubmittedAnswer } from '@/lib/progress-server/grade';
 import { rateLimit } from '@/lib/rate-limit';
+import { teacherKeysFor } from '@/lib/bank/for-class-server';
 
 // Lưu kết quả một bài học cho HỌC SINH đang đăng nhập.
 // Máy chủ chấm lại toàn bộ; học sinh không ghi thẳng vào bảng (RLS chặn), chỉ máy chủ ghi bằng service_role.
@@ -18,7 +19,10 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => ({}))) as { lessonId?: unknown; seed?: unknown; muc?: unknown; answers?: unknown };
   if (typeof body.lessonId !== 'string' || body.lessonId.length > 120) return NextResponse.json({ saved: false, reason: 'invalid' }, { status: 400 });
-  const graded = gradeLessonSubmission(body.lessonId, body.answers as SubmittedAnswer[]);
+  // "Câu của cô" (mã tq-…): lấy đáp án từ kho của thầy cô lớp em
+  const tqIds = Array.isArray(body.answers) ? (body.answers as SubmittedAnswer[]).map((a) => a?.questionId).filter((id): id is string => typeof id === 'string' && id.startsWith('tq-')) : [];
+  const teacher = tqIds.length ? await teacherKeysFor(createAdminClient(), viewer.studentId, tqIds) : undefined;
+  const graded = gradeLessonSubmission(body.lessonId, body.answers as SubmittedAnswer[], teacher);
   if ('error' in graded) return NextResponse.json({ saved: false, reason: graded.error }, { status: 400 });
 
   // Còn hạn học phí + chỉ lưu bài của khối mình (lấy từ database, không tin dữ liệu trình duyệt gửi)

@@ -140,3 +140,17 @@
 .qb-ps-tools { display: flex; flex-wrap: wrap; gap: 6px; }
 .qb-ps .qb-subj { margin-top: -2px; }
 .qb-sect { margin: 8px 0 -4px; font-size: 19px; }
+
+/* "Câu của cô" trong bài học của lớp (migration 0072) */
+.qb-fc-tag { display: inline-flex; align-items: center; gap: 3px; padding: 1px 8px; border-radius: 999px; background: #e7f0ff; color: #1d4ed8; font-weight: 700; }
+.qb-fc-tag svg, .qb-fc-note svg { width: 14px; height: 14px; }
+.qb-fc-ico { flex: none; width: 16px; height: 16px; color: #1d4ed8; }
+.qb-fc-btn { border-color: #1d4ed8; color: #1d4ed8; font-weight: 700; }
+.qb-fc-note { display: flex; gap: 6px; align-items: flex-start; }
+.qb-fc-note svg { flex: none; margin-top: 3px; color: #1d4ed8; }
+:root[data-theme="dark"] .qb-fc-tag { background: #1e2a4a; color: #a9c4ff; }
+:root[data-theme="dark"] .qb-fc-ico, :root[data-theme="dark"] .qb-fc-btn, :root[data-theme="dark"] .qb-fc-note svg { color: #a9c4ff; border-color: #a9c4ff; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .qb-fc-tag { background: #1e2a4a; color: #a9c4ff; }
+  :root:not([data-theme="light"]) .qb-fc-ico, :root:not([data-theme="light"]) .qb-fc-btn, :root:not([data-theme="light"]) .qb-fc-note svg { color: #a9c4ff; border-color: #a9c4ff; }
+}

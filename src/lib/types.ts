@@ -61,6 +61,7 @@ export type Question = {
   optionFigures?: Record<string, Figure>; // hình cho từng lựa chọn (lựa chọn là tranh)
   blanks?: string[]; // fill_blanks: mỗi dòng một câu, "{}" là ô trống
   statements?: string[]; // true_false_table: các nhận định
+  byTeacher?: boolean; // "Câu của cô": câu thầy cô lớp em soạn (mã "tq-…", chấm ở máy chủ)
 };
 
 // Câu trả lời học sinh gửi đi: chuỗi (chọn 1, đúng/sai, điền), mảng (chọn nhiều, sắp xếp)

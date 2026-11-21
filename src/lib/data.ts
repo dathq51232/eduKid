@@ -191,6 +191,7 @@ export async function gradeAnswer(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   meta?: { spentMs: number; timedOut: boolean },
 ): Promise<GradeResult> {
+  if (isTeacherQuestionId(questionId)) return gradeTeacherQuestion(questionId, answer);
   if (isPracticeId(questionId)) {
     // Câu sinh ngẫu nhiên: sinh lại đúng câu từ seed rồi chấm
     const gq = questionById(questionId);
@@ -204,4 +205,60 @@ export async function gradeAnswer(
   if (answer === null) return { correct: false, explanation: q.explanation, solution: q.solution }; // hết giờ
   const ok = gradeLocal(q.type, answer, q.answerKey);
   return { correct: ok, explanation: ok ? q.explanation : trapNote(q.traps, answer, q.explanation), solution: q.solution };
+}
+
+// ---------------------------------------------------------------------------
+// "Câu của cô" (migration 0072): câu thầy cô lớp em bật cho lớp luyện ở Kho câu hỏi.
+// Đáp án không gửi về trình duyệt — lấy câu và chấm qua /api/hoc-sinh/cau-cua-co.
+export const isTeacherQuestionId = (id: string) => id.startsWith('tq-');
+
+export async function fetchTeacherQuestions(lessonId: string, signal?: AbortSignal): Promise<Question[]> {
+  try {
+    const res = await fetch(`/api/hoc-sinh/cau-cua-co?lessonId=${encodeURIComponent(lessonId)}`, { signal, cache: 'no-store' });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { questions?: Question[] };
+    return Array.isArray(body.questions) ? body.questions : [];
+  } catch {
+    return [];
+  }
+}
+
+async function gradeTeacherQuestion(id: string, answer: AnswerValue): Promise<GradeResult> {
+  try {
+    const res = await fetch('/api/hoc-sinh/cau-cua-co', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, answer }) });
+    const body = (await res.json().catch(() => ({}))) as { correct?: boolean; explanation?: string; error?: string };
+    if (!res.ok) return { correct: false, explanation: body.error ?? 'Chưa chấm được câu này, em thử lại sau nhé.' };
+    return { correct: body.correct === true, explanation: body.explanation };
+  } catch {
+    return { correct: false, explanation: 'Mất kết nối nên chưa chấm được câu này.' };
+  }
+}
+
+/**
+ * Trộn "Câu của cô" vào bộ câu của bài: thay một phần câu của app bằng câu của cô (cùng cấp độ nếu được).
+ * Mức Cơ bản / Khá: tối đa khoảng 30% số câu; mức Giỏi: tối đa một nửa. Cùng seed thì cùng cách trộn.
+ */
+export function mixTeacherQuestions(base: Question[], extra: Question[], muc: Muc, seed?: number): Question[] {
+  if (!extra.length || !base.length) return base;
+  const seen = new Set(base.map((q) => q.prompt.trim().toLowerCase()));
+  const pool = extra.filter((q) => !seen.has(q.prompt.trim().toLowerCase()));
+  if (!pool.length) return base;
+  let s = (seed ?? 7) >>> 0 || 7;
+  const rand = () => ((s = (s * 1103515245 + 12345) >>> 0) / 4294967296);
+  const order = pool.map((q) => ({ q, r: rand() })).sort((a, b) => a.r - b.r).map((x) => x.q);
+  const take = Math.min(order.length, Math.max(1, Math.round(base.length * (muc >= 3 ? 0.5 : 0.3))));
+  const out = [...base];
+  const replaced = new Set<number>();
+  for (const t of order.slice(0, take)) {
+    // ưu tiên thay câu cùng cấp độ, không có thì câu gần cấp độ nhất (chưa bị thay)
+    let best = -1;
+    for (let i = 0; i < out.length; i++) {
+      if (replaced.has(i)) continue;
+      if (best < 0 || Math.abs(out[i].level - t.level) < Math.abs(out[best].level - t.level)) best = i;
+    }
+    if (best < 0) break;
+    out[best] = t;
+    replaced.add(best);
+  }
+  return out;
 }

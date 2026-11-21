@@ -18,5 +18,7 @@ export function useMyBank(subject: SubjectCode, grade: number) {
   }, [subject, grade, apply]);
   const add = (rows: MyQuestion[]) => apply([...rows, ...(mine ?? [])]);
   const remove = (ids: string[]) => { const s = new Set(ids); apply((mine ?? []).filter((q) => !s.has(q.id))); };
-  return { mine, error, ver, add, remove };
+  /** Đổi cờ "cho lớp luyện trong bài học" trong danh sách đang giữ (sau khi đã lưu lên máy chủ) */
+  const markForClass = (ids: string[], on: boolean) => { const s = new Set(ids); apply((mine ?? []).map((q) => (s.has(q.id) ? { ...q, for_class: on } : q))); };
+  return { mine, error, ver, add, remove, markForClass };
 }

@@ -7,6 +7,8 @@ import { answerOf, checkMath, draftId, type Draft, type DraftType } from './pars
 export type MyQuestion = {
   id: string; subject: SubjectCode; grade: number; lesson_id: string | null; lesson_title: string; muc: Muc; type: DraftType;
   prompt: string; options: string[]; answer: Record<string, unknown>; explanation: string; source: string; created_at: string;
+  /** Học sinh lớp cô gặp câu này khi luyện bài (migration 0072) */
+  for_class?: boolean;
 };
 
 const isMissing = (e: { code?: string; message?: string } | null) =>
@@ -14,18 +16,28 @@ const isMissing = (e: { code?: string; message?: string } | null) =>
 export function bankError(e: unknown): string {
   const err = e as { code?: string; message?: string } | null;
   if (isMissing(err)) return 'Máy chủ chưa có "Ngân hàng của tôi" — cần chạy migration 0044_teacher_questions.sql trên Supabase.';
+  if (err?.code === '42703' || /for_class/.test(err?.message ?? '')) return 'Máy chủ chưa có "Câu của cô trong bài học" — cần chạy migration 0072_teacher_questions_for_class.sql trên Supabase.';
   const m = err?.message ?? (e instanceof Error ? e.message : '');
   if (/too_many/.test(m)) return 'Ngân hàng tối đa 3000 câu — xoá bớt câu cũ nhé.';
   if (/row-level security/i.test(m)) return 'Chỉ tài khoản giáo viên mới lưu được câu hỏi.';
   return m && m.length < 200 ? m : 'Chưa lưu được, thử lại sau.';
 }
 
+const COLS = 'id, subject, grade, lesson_id, lesson_title, muc, type, prompt, options, answer, explanation, source, created_at';
 export async function listMine(subject: SubjectCode, grade: number): Promise<MyQuestion[]> {
-  const { data, error } = await createClient().from('teacher_questions')
-    .select('id, subject, grade, lesson_id, lesson_title, muc, type, prompt, options, answer, explanation, source, created_at')
+  const read = (cols: string) => createClient().from('teacher_questions').select(cols)
     .eq('subject', subject).eq('grade', grade).order('created_at', { ascending: false }).limit(3000);
+  let { data, error } = await read(`${COLS}, for_class`);
+  // Máy chủ chưa chạy migration 0072: vẫn đọc được kho, chỉ chưa có "Câu của cô" trong bài học
+  if (error?.code === '42703') ({ data, error } = await read(COLS));
   if (error) throw error;
-  return (data ?? []) as MyQuestion[];
+  return (data ?? []) as unknown as MyQuestion[];
+}
+
+/** Bật / tắt "Câu của cô" trong bài học cho các câu đã chọn */
+export async function setForClass(ids: string[], on: boolean) {
+  const { error } = await createClient().from('teacher_questions').update({ for_class: on }).in('id', ids);
+  if (error) throw error;
 }
 
 const sig = (q: { prompt: string }) => `tq#${q.prompt.trim().toLowerCase()}`;

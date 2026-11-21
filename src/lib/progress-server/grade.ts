@@ -7,6 +7,7 @@ import { lessonBonus, questionPoints } from '@/lib/levels';
 import { isPracticeId, questionById } from '@/lib/practice';
 import { matchTrap } from '@/lib/practice/advanced/engine';
 import { eligiblePool, generatorFor } from '@/lib/sets';
+import type { TeacherKey } from '@/lib/bank/for-class-server';
 import type { AnswerValue } from '@/lib/types';
 
 // Chấm lại bài làm ở MÁY CHỦ. Trình duyệt chỉ gửi mã câu + câu trả lời + thời gian;
@@ -38,7 +39,8 @@ function allowedFor(lessonId: string, questionId: string): boolean {
   return q.lessonId === lessonId || eligiblePool(lessonId).some((e) => e.id === questionId);
 }
 
-export function gradeLessonSubmission(lessonId: string, submitted: SubmittedAnswer[]): GradedLesson | { error: string } {
+/** teacher: đáp án "Câu của cô" em được phép làm (đã kiểm lớp ở /api/tien-do, xem src/lib/bank/for-class-server.ts) */
+export function gradeLessonSubmission(lessonId: string, submitted: SubmittedAnswer[], teacher?: Map<string, TeacherKey>): GradedLesson | { error: string } {
   const lesson = getLesson(lessonId);
   if (!lesson) return { error: 'unknown_lesson' };
   if (!Array.isArray(submitted) || submitted.length === 0 || submitted.length > MAX_QUESTIONS) return { error: 'invalid_answers' };
@@ -51,10 +53,14 @@ export function gradeLessonSubmission(lessonId: string, submitted: SubmittedAnsw
   for (const a of submitted) {
     if (!a || typeof a.questionId !== 'string' || ids.has(a.questionId)) return { error: 'invalid_answers' };
     ids.add(a.questionId);
-    if (!allowedFor(lessonId, a.questionId)) return { error: 'question_not_in_lesson' };
+    const tk = teacher?.get(a.questionId);
+    if (tk ? tk.lessonId !== lessonId : !allowedFor(lessonId, a.questionId)) return { error: 'question_not_in_lesson' };
 
     let type, key, level, limit, traps;
-    if (isPracticeId(a.questionId)) {
+    if (tk) {
+      ({ type, key, level, limit } = tk);
+      traps = undefined;
+    } else if (isPracticeId(a.questionId)) {
       const g = questionById(a.questionId);
       if (!g) return { error: 'invalid_answers' };
       ({ type, key, level, traps } = g);
