@@ -61,7 +61,16 @@ function MucMixField({ mix, onChange }: { mix: MucMix; onChange: (m: MucMix) => 
         <label><input type="radio" checked={mix.by === 'count'} onChange={() => onChange({ ...mix, by: 'count' })} /> Theo số câu</label>
         <label><input type="radio" checked={mix.by === 'pct'} onChange={() => onChange({ ...mix, by: 'pct' })} /> Theo %</label>
         {mix.by === 'pct' && (
-          <label className="mb-mix-total">Tổng <select value={mix.total} onChange={(e) => onChange({ ...mix, total: Number(e.target.value) })}>{[5, 10, 15, 20].filter((n) => n <= MAX_TOTAL).map((n) => <option key={n} value={n}>{n} câu</option>)}</select></label>
+          <label className="mb-mix-total">Tổng
+            {/* chọn nhanh trong danh sách hoặc gõ số câu (1–20) */}
+            <input type="number" min={1} max={MAX_TOTAL} list="mb-mix-totals" value={mix.total || ''}
+              onChange={(e) => onChange({ ...mix, total: Math.max(0, Math.min(MAX_TOTAL, Math.round(Number(e.target.value) || 0))) })} aria-label="Tổng số câu" /> câu
+            <datalist id="mb-mix-totals">{[5, 10, 15, 20].filter((n) => n <= MAX_TOTAL).map((n) => <option key={n} value={n} />)}</datalist>
+            <select value="" onChange={(e) => e.target.value && onChange({ ...mix, total: Number(e.target.value) })} aria-label="Chọn nhanh tổng số câu">
+              <option value="">Chọn nhanh</option>
+              {[5, 8, 10, 12, 15, 20].filter((n) => n <= MAX_TOTAL).map((n) => <option key={n} value={n}>{n} câu</option>)}
+            </select>
+          </label>
         )}
       </div>
       <div className="mb-mix-row">
@@ -121,9 +130,18 @@ export function DraftCard({ d, n, lessons, subject, grade, onChange, onRemove, o
                 onChange={(e) => set({ correct: d.type === 'single_choice' ? [o] : e.target.checked ? [...d.correct, o] : d.correct.filter((c) => c !== o) })} />
               <span>{'ABCDEFGH'[i]}.</span>
               <input value={o} onChange={(e) => { const v = e.target.value; const opts = d.options.map((x, k) => (k === i ? v : x)); set({ options: opts, correct: d.correct.map((c) => (c === o ? v : c)) }); }} aria-label={`Phương án ${'ABCDEFGH'[i]}`} />
+              {d.options.length > 2 && (
+                <button type="button" className="mb-opt-x" title="Xoá phương án này" aria-label={`Xoá phương án ${'ABCDEFGH'[i]}`}
+                  onClick={(e) => { e.preventDefault(); set({ options: d.options.filter((_, k) => k !== i), correct: d.options.filter((x) => x === o).length > 1 ? d.correct : d.correct.filter((c) => c !== o) }); }}><X aria-hidden="true" /></button>
+              )}
             </label>
           ))}
-          {d.options.length < 6 && <button type="button" className="mini-btn" onClick={() => set({ options: [...d.options, ''] })}>+ Phương án</button>}
+          <div className="mb-opt-tools">
+            {d.options.length < 8 && <button type="button" className="mini-btn" onClick={() => set({ options: [...d.options, ''] })}>+ Phương án</button>}
+            {d.options.some((o) => !o.trim()) && d.options.filter((o) => o.trim()).length >= 2 && (
+              <button type="button" className="mini-btn" onClick={() => set({ options: d.options.filter((o) => o.trim()) })}>Bỏ phương án trống</button>
+            )}
+          </div>
         </div>
       )}
       {d.type === 'true_false' && (
