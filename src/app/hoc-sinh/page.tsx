@@ -9,6 +9,7 @@ import { DailyChest, StickerShelf } from '@/components/learn/KidRewards';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import SignOutButton from '@/components/classroom/SignOutButton';
 import RoomJoin from '@/components/classroom/RoomJoin';
+import BattleJoin from '@/components/classroom/BattleJoin';
 import KnowledgeMap from '@/components/student/KnowledgeMap';
 import { mapHrefs, mapOfGrade, mapState } from '@/components/student/knowledge-map-progress';
 import { getViewer } from '@/lib/auth/viewer';
@@ -214,6 +215,7 @@ export default async function StudentHome() {
         <section className="dash-section student-rooms" id="phong-thi" aria-label="Phòng thi lớp">
           <h2>🌼 Phòng thi lớp</h2>
           {!locked && <RoomJoin />}
+          {!locked && <BattleJoin />}
           {rooms.length > 0 && (
             <ul className="task-list">
               {rooms.map((r) => {

@@ -5,7 +5,7 @@ export type ToolKey =
   | 'so-lop' | 'goi-ten' | 'ke-hoach' | 'giao-bai' | 'phieu-bai-tap' | 'phieu-chinh-ta'
   | 'lo-hong' | 'de-kiem-tra' | 'phong-thi' | 'nhan-xet' | 'ket-qua-truong' | 'phieu-tien-bo' | 'thu-khen' | 'lop'
   | 'nhom' | 'thi-dua' | 'hen-gio' | 'danh-ba' | 'bai-giang-3d' | 'tin-nhan' | 'trien-lam' | 'luyen-chu' | 'bang-trang'
-  | 'lich' | 'thu-chi' | 'quy-lop' | 'tieng-anh' | 'kho-cau-hoi';
+  | 'lich' | 'thu-chi' | 'quy-lop' | 'tieng-anh' | 'kho-cau-hoi' | 'dau-cap';
 export type ToolTone = 'green' | 'yellow' | 'blue' | 'violet' | 'red' | 'coral';
 export type Tool = { key: ToolKey; label: string; desc: string; group: string; tone: ToolTone; path: string; keywords: string };
 
@@ -27,6 +27,7 @@ const ALL: Tool[] = [
   { key: 'lo-hong', label: 'Lỗ hổng kiến thức', desc: 'Dạng bài lớp hay sai', group: 'Dạy học', tone: 'red', path: 'lo-hong', keywords: 'lo hong hay sai kem' },
   { key: 'de-kiem-tra', label: 'Ma trận & đề kiểm tra', desc: 'Đề A/B, xuất Word', group: 'Dạy học', tone: 'green', path: 'de-kiem-tra', keywords: 'ma tran de kiem tra dinh ky' },
   { key: 'phong-thi', label: 'Phòng thi lớp', desc: 'Mã phòng, đề riêng mỗi em', group: 'Dạy học', tone: 'yellow', path: 'phong-thi', keywords: 'phong thi lop ma phong kiem tra truc tuyen ra hoa huy hieu cu' },
+  { key: 'dau-cap', label: 'Đấu cặp', desc: 'Bốc thăm chia cặp, loại trực tiếp', group: 'Dạy học', tone: 'coral', path: 'dau-cap', keywords: 'dau cap thi dau loai truc tiep boc tham chia cap battle doi khang phong dau vo dich' },
   { key: 'nhan-xet', label: 'Nhận xét học sinh', desc: 'Tuần, học kỳ, cả năm', group: 'Đánh giá', tone: 'blue', path: 'nhan-xet', keywords: 'nhan xet vnedu hoc ky' },
   { key: 'ket-qua-truong', label: 'Kết quả trên trường', desc: 'Điểm định kỳ, khen thưởng', group: 'Đánh giá', tone: 'violet', path: 'ket-qua-truong', keywords: 'ket qua diem dinh ky khen thuong' },
   { key: 'tin-nhan', label: 'Tin nhắn phụ huynh', desc: 'Xin phép nghỉ, hỏi han', group: 'Phụ huynh', tone: 'coral', path: 'tin-nhan', keywords: 'tin nhan phu huynh xin phep nghi hoc hoi han tra loi hop thu' },

@@ -147,8 +147,8 @@ Thay cho mô hình vòng loại toàn quốc, EduChain Kids tổ chức **theo m
 - Công nhận bằng **Huy hiệu Cú** theo mốc, không xếp thứ hạng cá nhân toàn quốc:
   🦉 **Cú Vàng** ≥ 9 · 🦉 **Cú Bạc** ≥ 8 · 🦉 **Cú Đồng** ≥ 7 · 🦉 **Cú Chăm** (hoàn thành chặng, khen sự cố gắng).
 - **Thi đua theo lớp/nhóm** (trang Thi đua `td-`): cộng sao của cả nhóm, khen nhóm tiến bộ nhiều nhất — không chỉ nhóm điểm cao nhất.
-- **Lớp 1–3 không xét thời gian** khi bằng điểm (cùng huy hiệu). Lớp 4–5 chỉ xét thời gian ở chặng Kết trái / Mùa vàng.
-- **Không có bảng xếp hạng cá nhân cho học sinh** ở mọi lớp: em chỉ thấy kết quả của mình, phụ huynh thấy của con, **giáo viên xem được cả lớp**.
+- **Lớp 1–3 không xét thời gian** khi bằng điểm (cùng huy hiệu). Lớp 4–5 chỉ xét thời gian ở chặng Kết trái / Mùa vàng. **Ngoại lệ duy nhất:** chế độ **Đấu cặp Mắt Xích** (mục 8.2) xét thời gian ở mọi lớp khi bằng số câu đúng.
+- **Không có bảng xếp hạng cá nhân cho học sinh** ở mọi lớp: em chỉ thấy kết quả của mình, phụ huynh thấy của con, **giáo viên xem được cả lớp**. (Sơ đồ nhánh của Đấu cặp chỉ chiếu trên màn hình của cô trong buổi đấu, không lưu thành bảng xếp hạng.)
 - Giấy khen / thư khen tự động in được (trang Thư khen), có **lời nhận xét theo kỹ năng**.
 
 **Công bằng (thay cho “Hội đồng giám sát”)**
@@ -174,6 +174,22 @@ Thay cho mô hình vòng loại toàn quốc, EduChain Kids tổ chức **theo m
 | **Ai thấy kết quả** | Em thấy của mình · phụ huynh thấy của con · **chỉ cô xem bảng cả lớp**. Không bảng xếp hạng cho học sinh |
 | **Cô nhận được** | Bảng điểm lớp, phổ điểm, **kỹ năng cả lớp còn yếu** (gom theo `skill_code`), danh sách bài bị gắn cờ, nút in **thư khen / giấy khen** theo huy hiệu, đưa điểm vào **sổ lớp** |
 | **Tự động gắn cờ** | Điểm 10 mà thời gian < 30% thời lượng; rời trang / đổi tab ≥ 3 lần. Cờ chỉ để cô xem lại, không tự trừ điểm hay hủy bài |
+
+### 8.2 Đấu cặp Mắt Xích — phòng đấu loại trực tiếp của lớp (chốt 11/2026)
+
+Hoạt động **vui, tại lớp**, sau một chương hoặc cuối tuần. **Không ghi điểm vào sổ lớp**, không tính huy hiệu Cú.
+
+| Mục | Quy định |
+|---|---|
+| **Ai tạo** | Giáo viên dạy lớp. Chọn môn, các bài (một chương / một tuần), số câu mỗi trận (lớp 1–2 mặc định 5, lớp 3–5 mặc định 7) và số giây mỗi câu |
+| **Vào phòng** | Em đăng nhập, nhập **mã phòng 6 ký tự**; chỉ vào được khi phòng còn ở **sảnh chờ** (đã bốc thăm thì không vào thêm) |
+| **Bốc thăm** | Cô bấm nút trên màn chiếu, **máy chủ** ghép cặp ngẫu nhiên. Số em lẻ: một em được **vé đi tiếp**, ưu tiên em chưa nhận vé |
+| **Một trận** | Hai em làm **cùng bộ câu** (đảo thứ tự câu và phương án cho từng em), mỗi em trên máy mình; các trận trong một vòng chạy cùng lúc. Không hiện đúng/sai từng câu; em thấy bạn kia đã làm đến câu mấy |
+| **Phân định** | 1) Đúng nhiều câu hơn thắng → 2) bằng nhau: **tổng thời gian ít hơn** thắng (mọi lớp, kể cả lớp 1–3) → 3) vẫn bằng: em nộp câu cuối trước thắng. Thời gian do **máy chủ đo** từ lúc gửi câu đến lúc nhận đáp án; hết giờ một câu tính sai và đủ giờ của câu đó |
+| **Độ khó theo vòng** | Vòng đầu chủ yếu Mức 1–2, càng về sau càng nhiều Mức 3; câu đã ra ở vòng trước không lặp lại |
+| **Loại trực tiếp** | Thua là **dừng lại** ở vòng đó. Lời Milo cho em dừng lại luôn khen cố gắng (“Em đã vào tới vòng 3, Milo tự hào lắm!”), không dùng chữ “thua”, “bị loại” |
+| **Cô điều khiển** | Bốc thăm vòng tiếp khi mọi trận xong; **xử thắng** khi em mất mạng / bỏ dở; **đấu lại** một trận (bộ câu mới); đóng phòng |
+| **Ai thấy gì** | Màn chiếu của cô: sơ đồ nhánh, kết quả từng trận. Em: trận của mình, vòng em dừng lại, nhà vô địch khi kết thúc. Không có bảng xếp hạng lưu lại |
 
 ---
 
