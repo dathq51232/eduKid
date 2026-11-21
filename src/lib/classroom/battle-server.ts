@@ -2,138 +2,44 @@ import 'server-only';
 import { randomInt } from 'node:crypto';
 import type { createAdminClient } from '@/lib/supabase/admin';
 import type { ExamItem } from './assignments';
-import { applyTimeouts, decide, pairUp, type BattleStatus, type Prog, type WinReason } from './battle';
+import { decidePair, pairUp, shuffled, type Sub, type WinReason } from './battle';
 
-// ĐẤU CẶP MẮT XÍCH — phần máy chủ (migration 0073). Mọi bảng chỉ service_role đọc/ghi; API kiểm quyền trước khi gọi.
-// Trận được "chốt" ở bất kỳ lần đọc / ghi nào (giáo viên xem bảng, em lấy câu / nộp câu): câu quá giờ tự tính sai,
-// cả hai xong → phân định, đánh dấu em dừng lại; mọi trận của vòng xong mà chỉ còn 1 em → nhà vô địch.
+// ĐẤU CẶP trong PHÒNG THI LỚP — phần máy chủ (migration 0073). Mỗi vòng = một phòng thi (exam_rooms, battle_id, battle_round).
+// Phân định khi đọc (cô xem bảng, em xem kết quả): hai em đã nộp → so câu đúng rồi thời gian; phòng hết giờ mà một em
+// không nộp → em kia thắng. Vòng xong mà còn đúng 1 em → nhà vô địch.
 
 type Admin = ReturnType<typeof createAdminClient>;
-export type RoomRow = {
-  id: string; class_id: string; code: string; title: string; subject: string; grade: number; lessons: string[];
-  n_questions: number; sec_per_q: number; status: BattleStatus; round: number; champion: string | null; created_at: string;
-};
-export type PlayerRow = { student_id: string; display_name: string; byes: number; out_round: number | null; joined_at: string };
-export type MatchRow = {
-  id: string; round: number; slot: number; a: string; b: string | null; questions: ExamItem[]; status: 'playing' | 'done';
-  winner: string | null; reason: WinReason | null; started_at: string; finished_at: string | null;
-};
-export type ProgRow = Prog & { match_id: string; student_id: string };
+export type BattleRow = { id: string; class_id: string; title: string; subject: string; plan: Record<string, unknown>; minutes: number; status: 'playing' | 'done' | 'closed'; round: number; champion: string | null; created_at: string };
+export type PairRow = { id: string; battle_id: string; round: number; slot: number; a: string; b: string | null; room_id: string | null; winner: string | null; reason: WinReason | null; decided_at: string | null };
+type RoomLite = { id: string; code: string; status: string; opens_at: string; closes_at: string };
+type ResRow = Sub & { room_id: string; student_id: string };
 
-const ROOM_COLS = 'id, class_id, code, title, subject, grade, lessons, n_questions, sec_per_q, status, round, champion, created_at';
-const MATCH_COLS = 'id, round, slot, a, b, questions, status, winner, reason, started_at, finished_at';
-const PROG_COLS = 'match_id, student_id, i, served_at, answers, correct, time_ms, finished_at';
+const BATTLE_COLS = 'id, class_id, title, subject, plan, minutes, status, round, champion, created_at';
+const PAIR_COLS = 'id, battle_id, round, slot, a, b, room_id, winner, reason, decided_at';
 
-/** Bảng chưa có (chưa chạy migration 0073) */
-export const isMissingTable = (e: { code?: string; message?: string } | null) =>
-  !!e && (e.code === '42P01' || e.code === 'PGRST205' || /battle_|does not exist|schema cache/i.test(e.message ?? ''));
+export const isMissingTable = (e: { code?: string; message?: string } | null | undefined) =>
+  !!e && (e.code === '42P01' || e.code === 'PGRST205' || e.code === '42703' || /battle|does not exist|schema cache/i.test(e.message ?? ''));
 
-export async function loadRoom(admin: Admin, id: string) {
-  return admin.from('battle_rooms').select(ROOM_COLS).eq('id', id).maybeSingle<RoomRow>();
-}
-
-export async function loadAll(admin: Admin, room: RoomRow) {
-  const [{ data: players }, { data: matches }] = await Promise.all([
-    admin.from('battle_players').select('student_id, display_name, byes, out_round, joined_at').eq('room_id', room.id).order('joined_at'),
-    admin.from('battle_matches').select(MATCH_COLS).eq('room_id', room.id).order('round').order('slot'),
-  ]);
-  const ms = (matches ?? []) as MatchRow[];
-  const { data: progs } = ms.length ? await admin.from('battle_progress').select(PROG_COLS).in('match_id', ms.map((m) => m.id)) : { data: [] };
-  return { players: (players ?? []) as PlayerRow[], matches: ms, progs: (progs ?? []) as ProgRow[] };
-}
-
-/** Lưu tiến độ một em (chỉ khi câu đang làm vẫn là `fromI` — tránh hai yêu cầu ghi đè nhau) */
-export async function saveProg(admin: Admin, p: ProgRow, fromI: number) {
-  const { data } = await admin.from('battle_progress')
-    .update({ i: p.i, served_at: p.served_at, answers: p.answers, correct: p.correct, time_ms: p.time_ms, finished_at: p.finished_at })
-    .eq('match_id', p.match_id).eq('student_id', p.student_id).eq('i', fromI).select('i');
-  return (data ?? []).length > 0;
-}
-
-/** Kết thúc một trận (chỉ một yêu cầu thắng được nhờ điều kiện status = 'playing') và đánh dấu em dừng lại */
-export async function finishMatch(admin: Admin, room: RoomRow, m: MatchRow, winner: string, reason: WinReason) {
-  const { data } = await admin.from('battle_matches').update({ status: 'done', winner, reason, finished_at: new Date().toISOString() })
-    .eq('id', m.id).eq('status', 'playing').select('id');
-  if (!(data ?? []).length) return false;
-  const loser = m.a === winner ? m.b : m.a;
-  if (loser) await admin.from('battle_players').update({ out_round: m.round }).eq('room_id', room.id).eq('student_id', loser).is('out_round', null);
-  m.status = 'done'; m.winner = winner; m.reason = reason;
-  return true;
-}
-
-/**
- * Chốt các trận đang đấu của vòng hiện tại: câu quá giờ → sai; hai em xong → phân định.
- * Vòng xong mà chỉ còn một em → phòng kết thúc, có nhà vô địch. Trả về true nếu có thay đổi.
- */
-export async function settle(admin: Admin, room: RoomRow, matches: MatchRow[], progs: ProgRow[]): Promise<boolean> {
-  if (room.status !== 'playing') return false;
-  const now = Date.now();
-  const secMs = room.sec_per_q * 1000;
-  let changed = false;
-  for (const m of matches.filter((x) => x.round === room.round && x.status === 'playing')) {
-    const n = m.questions.length;
-    const mine = progs.filter((p) => p.match_id === m.id);
-    for (const p of mine) {
-      const t = applyTimeouts(p, n, secMs, now);
-      if (t && (await saveProg(admin, { ...p, ...t }, p.i))) { Object.assign(p, t); changed = true; }
-    }
-    const pa = mine.find((p) => p.student_id === m.a);
-    const pb = m.b ? mine.find((p) => p.student_id === m.b) : undefined;
-    if (pa?.finished_at && pb?.finished_at) {
-      const d = decide(pa, pb);
-      if (await finishMatch(admin, room, m, d.winner === 'a' ? m.a : m.b!, d.reason)) changed = true;
-    }
-  }
-  if (await closeRoundIfDone(admin, room, matches)) changed = true;
-  return changed;
-}
-
-/** Mọi trận của vòng xong: còn đúng 1 em → nhà vô địch, phòng kết thúc */
-export async function closeRoundIfDone(admin: Admin, room: RoomRow, matches: MatchRow[]) {
-  const cur = matches.filter((x) => x.round === room.round);
-  if (room.status !== 'playing' || !cur.length || cur.some((x) => x.status !== 'done')) return false;
-  const winners = cur.map((x) => x.winner).filter(Boolean) as string[];
-  if (winners.length !== 1) return false;
-  const { data } = await admin.from('battle_rooms').update({ status: 'done', champion: winners[0] }).eq('id', room.id).eq('status', 'playing').select('id');
-  if ((data ?? []).length) { room.status = 'done'; room.champion = winners[0]; return true; }
-  return false;
-}
-
-/** Số ngẫu nhiên [0, 1) từ crypto — dùng để bốc thăm */
 export const cryptoRand = () => randomInt(0, 2 ** 32) / 2 ** 32;
 
-/** Bốc thăm vòng tiếp: ghép cặp ngẫu nhiên, mỗi trận một bộ câu; em lẻ nhận vé đi tiếp */
-export async function drawRound(admin: Admin, room: RoomRow, players: PlayerRow[], sets: ExamItem[][]): Promise<{ error?: string }> {
-  const alive = players.filter((p) => p.out_round === null);
-  if (alive.length < 2) return { error: 'too_few' };
-  const { pairs, bye } = pairUp(alive.map((p) => ({ id: p.student_id, byes: p.byes })), cryptoRand);
-  if (sets.length < pairs.length) return { error: 'bad_sets' };
-  const round = room.round + 1;
-  // chuyển vòng trước (điều kiện round cũ) để hai lần bấm cùng lúc không tạo hai vòng
-  const { data: moved } = await admin.from('battle_rooms').update({ round, status: 'playing' }).eq('id', room.id).eq('round', room.round).in('status', ['lobby', 'playing']).select('id');
-  if (!(moved ?? []).length) return { error: 'round_running' };
-  room.round = round; room.status = 'playing';
-  const now = new Date().toISOString();
-  const rows = pairs.map(([a, b], slot) => ({ room_id: room.id, round, slot, a, b, questions: sets[slot], status: 'playing' }));
-  if (bye) rows.push({ room_id: room.id, round, slot: pairs.length, a: bye, b: null as unknown as string, questions: [], status: 'done' });
-  const { data: made, error } = await admin.from('battle_matches').insert(rows).select('id, a, b, slot');
-  if (error || !made) return { error: 'db' };
-  const progRows = (made as { id: string; a: string; b: string | null }[]).filter((m) => m.b).flatMap((m) => [
-    { match_id: m.id, student_id: m.a }, { match_id: m.id, student_id: m.b! },
-  ]);
-  if (progRows.length) await admin.from('battle_progress').insert(progRows);
-  if (bye) {
-    const byeMatch = (made as { id: string; b: string | null }[]).find((m) => !m.b);
-    if (byeMatch) await admin.from('battle_matches').update({ winner: bye, reason: 've', finished_at: now }).eq('id', byeMatch.id);
-    const p = players.find((x) => x.student_id === bye);
-    await admin.from('battle_players').update({ byes: (p?.byes ?? 0) + 1 }).eq('room_id', room.id).eq('student_id', bye);
-  }
-  return {};
+function rng(seed: number) {
+  let s = (seed ^ 0x9e3779b9) >>> 0 || 1;
+  return () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
 }
 
-/** Bộ câu hợp lệ: 3–10 câu, câu nào cũng có đề và đáp án */
-export function cleanSet(v: unknown, n: number): ExamItem[] | null {
-  if (!Array.isArray(v) || v.length < Math.min(3, n) || v.length > 10) return null;
+/** Đề chung của cặp → bản của một em: đảo câu trong từng mức (câu dễ vẫn ở đầu) và đảo phương án */
+function paperFor(base: ExamItem[], seed: number): ExamItem[] {
+  const r = rng(seed);
+  return [1, 2, 3].flatMap((k) => shuffled(base.filter((q) => (q.muc ?? 1) === k), r)).map((q) => {
+    if (q.type === 'grouping') return { ...q, left: shuffled(q.left ?? [], r) };
+    if (['single_choice', 'multiple_choice', 'matching', 'pair_grid'].includes(q.type)) return { ...q, options: shuffled(q.options ?? [], r) };
+    return q;
+  });
+}
+
+/** Bộ câu hợp lệ: 3–40 câu, câu nào cũng có đề và đáp án */
+export function cleanSet(v: unknown): ExamItem[] | null {
+  if (!Array.isArray(v) || v.length < 3 || v.length > 40) return null;
   const out: ExamItem[] = [];
   for (const x of v) {
     const q = x as ExamItem;
@@ -143,13 +49,132 @@ export function cleanSet(v: unknown, n: number): ExamItem[] | null {
       statements: Array.isArray(q.statements) ? q.statements.map(String) : undefined, answer: q.answer,
       explanation: typeof q.explanation === 'string' ? q.explanation.slice(0, 2000) : undefined,
       lessonTitle: typeof q.lessonTitle === 'string' ? q.lessonTitle.slice(0, 200) : undefined,
-      muc: q.muc === 1 || q.muc === 2 || q.muc === 3 ? q.muc : undefined, pts: 1 });
+      muc: q.muc === 1 || q.muc === 2 || q.muc === 3 ? q.muc : undefined, pts: Number.isFinite(q.pts) && q.pts > 0 ? Math.min(q.pts, 10) : 1 });
   }
   return out;
 }
 
-/** Mã phòng 6 ký tự (bỏ chữ dễ nhầm I, O, 0, 1) */
-export function newCode() {
+function newCode() {
   const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   return Array.from({ length: 6 }, () => abc[randomInt(0, abc.length)]).join('');
+}
+
+/**
+ * Tạo một vòng: bốc thăm (crypto), tạo phòng thi của vòng, đề chung cho từng cặp (mỗi em đảo câu / phương án),
+ * em lẻ nhận vé đi tiếp. Trả về mã phòng.
+ */
+export async function createRound(admin: Admin, p: {
+  battle: BattleRow; round: number; players: { id: string; byes: number }[]; sets: ExamItem[][];
+  opens: string; closes: string; userId: string;
+}): Promise<{ code?: string; error?: string }> {
+  if (p.players.length < 2) return { error: 'too_few' };
+  const { pairs, bye } = pairUp(p.players, cryptoRand);
+  if (p.sets.length < pairs.length) return { error: 'bad_sets' };
+  const n = Math.max(...p.sets.slice(0, pairs.length).map((s) => s.length));
+  let room: { id: string; code: string } | null = null;
+  for (let k = 0; k < 8 && !room; k++) {
+    const { data, error } = await admin.from('exam_rooms').insert({
+      class_id: p.battle.class_id, code: newCode(), title: `${p.battle.title} · Vòng ${p.round}`.slice(0, 200), subject: p.battle.subject,
+      n_questions: n, minutes: p.battle.minutes, opens_at: p.opens, closes_at: p.closes,
+      matrix: { ...p.battle.plan, mode: 'chung', battle: true }, created_by: p.userId, battle_id: p.battle.id, battle_round: p.round,
+    }).select('id, code').single();
+    if (data) room = data as { id: string; code: string };
+    else if (error?.code !== '23505') return { error: isMissingTable(error) ? 'missing_table' : 'db' };
+  }
+  if (!room) return { error: 'db' };
+  const salt = randomInt(0, 2 ** 31);
+  const papers = pairs.flatMap(([a, b], k) => [a, b].map((sid, j) => ({ room_id: room!.id, student_id: sid, questions: paperFor(p.sets[k], salt + k * 7 + j) })));
+  const { error: pe } = await admin.from('exam_room_papers').insert(papers);
+  if (pe) { await admin.from('exam_rooms').delete().eq('id', room.id); return { error: 'db' }; }
+  const now = new Date().toISOString();
+  const rows = pairs.map(([a, b], slot) => ({ battle_id: p.battle.id, round: p.round, slot, a, b, room_id: room!.id }));
+  if (bye) rows.push({ battle_id: p.battle.id, round: p.round, slot: pairs.length, a: bye, b: null as unknown as string, room_id: null as unknown as string, winner: bye, reason: 've', decided_at: now } as never);
+  const { error: re } = await admin.from('battle_pairs').insert(rows);
+  if (re) return { error: 'db' };
+  return { code: room.code };
+}
+
+/** Đọc đầy đủ một nhóm đấu cặp: các cặp, phòng của từng vòng, kết quả nộp bài */
+export async function loadBattles(admin: Admin, filter: { classId?: string; id?: string }) {
+  let q = admin.from('battles').select(BATTLE_COLS).order('created_at', { ascending: false }).limit(10);
+  if (filter.id) q = q.eq('id', filter.id);
+  if (filter.classId) q = q.eq('class_id', filter.classId);
+  const { data: battles, error } = await q;
+  if (error) return { error };
+  const bs = (battles ?? []) as BattleRow[];
+  if (!bs.length) return { battles: bs, pairs: [] as PairRow[], rooms: [] as RoomLite[], results: [] as ResRow[] };
+  const { data: pairs } = await admin.from('battle_pairs').select(PAIR_COLS).in('battle_id', bs.map((b) => b.id)).order('round').order('slot');
+  const ps = (pairs ?? []) as PairRow[];
+  const roomIds = [...new Set(ps.map((x) => x.room_id).filter(Boolean))] as string[];
+  const [{ data: rooms }, { data: results }] = roomIds.length
+    ? await Promise.all([
+      admin.from('exam_rooms').select('id, code, status, opens_at, closes_at').in('id', roomIds),
+      admin.from('exam_room_results').select('room_id, student_id, correct, duration_ms, created_at').in('room_id', roomIds),
+    ])
+    : [{ data: [] }, { data: [] }];
+  return { battles: bs, pairs: ps, rooms: (rooms ?? []) as RoomLite[], results: (results ?? []) as ResRow[] };
+}
+
+/** Phân định các cặp đủ điều kiện; vòng xong mà còn 1 em → nhà vô địch. Trả về true nếu có thay đổi. */
+export async function settle(admin: Admin, d: { battles: BattleRow[]; pairs: PairRow[]; rooms: RoomLite[]; results: ResRow[] }) {
+  let changed = false;
+  const now = Date.now();
+  for (const b of d.battles.filter((x) => x.status === 'playing')) {
+    const cur = d.pairs.filter((x) => x.battle_id === b.id && x.round === b.round);
+    for (const p of cur.filter((x) => !x.winner && x.b && x.room_id)) {
+      const room = d.rooms.find((r) => r.id === p.room_id);
+      const ended = !room || room.status !== 'open' || Date.parse(room.closes_at) < now;
+      const sub = (sid: string) => d.results.find((r) => r.room_id === p.room_id && r.student_id === sid) ?? null;
+      const dec = decidePair(sub(p.a), sub(p.b!), ended);
+      if (!dec) continue;
+      const winner = dec.winner === 'a' ? p.a : p.b!;
+      const { data } = await admin.from('battle_pairs').update({ winner, reason: dec.reason, decided_at: new Date().toISOString() })
+        .eq('id', p.id).is('winner', null).select('id');
+      if ((data ?? []).length) { p.winner = winner; p.reason = dec.reason; changed = true; }
+    }
+    if (cur.length && cur.every((x) => x.winner)) {
+      const winners = [...new Set(cur.map((x) => x.winner!))];
+      if (winners.length === 1) {
+        const { data } = await admin.from('battles').update({ status: 'done', champion: winners[0] }).eq('id', b.id).eq('status', 'playing').select('id');
+        if ((data ?? []).length) { b.status = 'done'; b.champion = winners[0]; changed = true; }
+      }
+    }
+  }
+  return changed;
+}
+
+/** Tên các em (bảng students) */
+export async function namesOf(admin: Admin, ids: string[]) {
+  const uniq = [...new Set(ids)];
+  if (!uniq.length) return new Map<string, string>();
+  const { data } = await admin.from('students').select('id, display_name').in('id', uniq);
+  return new Map(((data ?? []) as { id: string; display_name: string }[]).map((s) => [s.id, s.display_name]));
+}
+
+/** Trạng thái đấu cặp gửi cho trang của cô (đã phân định các cặp đủ điều kiện) */
+export async function battleView(admin: Admin, filter: { classId?: string; id?: string }) {
+  let d = await loadBattles(admin, filter);
+  if ('error' in d) return { error: d.error };
+  if (await settle(admin, d)) { const again = await loadBattles(admin, filter); if (!('error' in again)) d = again; }
+  const names = await namesOf(admin, d.pairs.flatMap((p) => [p.a, p.b].filter(Boolean) as string[]));
+  const res = (room: string | null, sid: string | null) => {
+    const r = room && sid ? d.results.find((x) => x.room_id === room && x.student_id === sid) : undefined;
+    return r ? { correct: r.correct, ms: r.duration_ms } : null;
+  };
+  return {
+    battles: d.battles.map((b) => {
+      const mine = d.pairs.filter((p) => p.battle_id === b.id);
+      const rounds = [...new Set(mine.map((p) => p.round))].sort((x, y) => x - y).map((round) => {
+        const ps = mine.filter((p) => p.round === round);
+        const room = d.rooms.find((r) => r.id === ps.find((p) => p.room_id)?.room_id) ?? null;
+        return {
+          round, room: room && { id: room.id, code: room.code, opens: room.opens_at, closes: room.closes_at, status: room.status },
+          pairs: ps.map((p) => ({ id: p.id, a: p.a, b: p.b, aName: names.get(p.a) ?? '', bName: p.b ? names.get(p.b) ?? '' : null,
+            winner: p.winner, reason: p.reason, ra: res(p.room_id, p.a), rb: res(p.room_id, p.b) })),
+        };
+      });
+      return { id: b.id, title: b.title, subject: b.subject, status: b.status, round: b.round, minutes: b.minutes, plan: b.plan,
+        created_at: b.created_at, championName: b.champion ? names.get(b.champion) ?? '' : null, rounds };
+    }),
+  };
 }

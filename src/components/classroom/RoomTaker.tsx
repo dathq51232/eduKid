@@ -8,6 +8,7 @@ import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Clock, Send, Volume2, XC
 import QuestionRenderer from '@/components/questions/QuestionRenderer';
 import EmojiText from '@/components/EmojiText';
 import VoiceHelp from '@/components/VoiceHelp';
+import BattleInfo from './BattleInfo';
 import { segmentsFor, speakableQuestion, speakSegments, stopSpeaking, type Segment } from '@/lib/speech';
 import { createClient } from '@/lib/supabase/client';
 import { answerLabel, SUBJECT_NAME, toQuestion } from '@/lib/classroom/assignments';
@@ -144,6 +145,7 @@ export default function RoomTaker({ id }: { id: string }) {
     return (
       <>
         {header}
+        <BattleInfo roomId={id} submitted />
         <section className="dash-card room-result">
           <div className={`room-owl is-${owl.key}`} aria-hidden="true"><EmojiText text={owl.key === 'try' ? '🌱' : '🦉'} /></div>
           <div>
@@ -186,6 +188,7 @@ export default function RoomTaker({ id }: { id: string }) {
     return (
       <>
         {header}
+        <BattleInfo roomId={id} submitted={false} />
         <section className="dash-card exam-start">
           {room.is_open ? (
             <>

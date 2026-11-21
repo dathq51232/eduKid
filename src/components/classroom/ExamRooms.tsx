@@ -2,8 +2,9 @@
 
 // PHÒNG THI LỚP (chặng “Ra hoa”, docs/BAN-SAC-EDUCHAINKIDS.md mục 8.1) — trang của cô:
 // tạo phòng (sinh đề riêng cho từng em ngay trên máy cô), phát mã, xem kết quả, cho làm lại, xem cờ bất thường.
+// Tuỳ chọn ĐẤU CẶP (mục 8.2, migration 0073): bốc thăm chia cặp, mỗi vòng một phòng thi, loại trực tiếp (BattlePanel).
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { DoorOpen, Eye, Flag, Lock, RotateCcw, Settings2, Trash2, Unlock, Users } from 'lucide-react';
+import { DoorOpen, Eye, Flag, Lock, RotateCcw, Settings2, Swords, Trash2, Unlock, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useGradeContent } from '@/components/learn/GradeReady';
 import { SUBJECT_NAME, type ExamItem } from '@/lib/classroom/assignments';
@@ -11,6 +12,8 @@ import { bookLessons, defaultMatrix, totals, type Matrix } from '@/lib/exams/mat
 import { commonPaperFor, paperByPlan, previewPaper, roomPaper, seedFor, slotItem, type RoomMode, type RoomPlan } from '@/lib/classroom/rooms-build';
 import RoomRules, { RATIOS } from './RoomRules';
 import RoomPreview, { draftProblems, type RoomDraft } from './RoomPreview';
+import BattlePanel from './BattlePanel';
+import { battleError } from '@/lib/classroom/battle';
 import {
   FLAG_LABEL, ROOM_RATIO, lessonStats, owlOf, roomDefaults, roomError, toLocalInput, whenLabel,
   type RoomDetailRow, type RoomRow,
@@ -21,6 +24,7 @@ import '@/styles/btn.css';
 import '@/styles/dash.css';
 import '@/styles/mini.css';
 import '@/styles/room.css';
+import '@/styles/bt.css';
 
 type Student = { id: string; name: string };
 const fmt = (n: number) => String(Math.round(n * 10) / 10).replace('.', ',');
@@ -37,6 +41,7 @@ export default function ExamRooms({ classId, className, grade, students }: { cla
   const [err, setErr] = useState('');
   const [msg, setMsg] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [battleTick, setBattleTick] = useState(0); // tạo đấu cặp mới → khung Đấu cặp tải lại
 
   const load = useCallback(async () => {
     const { data, error } = await createClient().rpc('teacher_list_rooms', { p_class: classId });
@@ -48,9 +53,14 @@ export default function ExamRooms({ classId, className, grade, students }: { cla
   return (
     <>
       <CreateRoom classId={classId} className={className} grade={grade} students={students} subjects={subjects}
-        onCreated={(code) => { setMsg(`Đã tạo phòng thi. Mã phòng: ${code} — đọc hoặc viết mã lên bảng cho các em.`); void load(); }} />
+        onCreated={(code, battle) => {
+          setMsg(battle ? `Đã bốc thăm chia cặp và mở vòng 1. Mã phòng vòng 1: ${code} — các em làm lúc nào cũng được trong giờ mở; cặp nào hai em nộp xong là có kết quả.`
+            : `Đã tạo phòng thi. Mã phòng: ${code} — đọc hoặc viết mã lên bảng cho các em.`);
+          void load(); if (battle) setBattleTick((t) => t + 1);
+        }} />
       {msg && <p className="adm-alert is-ok" role="status">{msg}</p>}
       {err && <p className="adm-alert is-error" role="alert">{err}</p>}
+      <BattlePanel classId={classId} grade={grade} refresh={battleTick} onChanged={() => void load()} />
       <section className="dash-section">
         <h2><DoorOpen aria-hidden="true" /> Phòng thi của lớp</h2>
         {rooms === null ? <p className="dash-muted">Đang tải…</p> : rooms.length === 0 ? <p className="dash-muted">Chưa có phòng thi nào. Tạo phòng ở trên.</p> : (
@@ -69,7 +79,7 @@ export default function ExamRooms({ classId, className, grade, students }: { cla
 const newSeed = () => Math.floor(Math.random() * 2 ** 31);
 
 function CreateRoom({ classId, className, grade, students, subjects, onCreated }: {
-  classId: string; className: string; grade: number; students: Student[]; subjects: SubjectCode[]; onCreated: (code: string) => void;
+  classId: string; className: string; grade: number; students: Student[]; subjects: SubjectCode[]; onCreated: (code: string, battle?: boolean) => void;
 }) {
   const def = roomDefaults(grade);
   const [subject, setSubject] = useState<SubjectCode>(subjects[0] ?? 'toan');
@@ -96,6 +106,8 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
   const [custom, setCustom] = useState<Matrix | null>(null);
   const [showRules, setShowRules] = useState(false);
   const [drafts, setDrafts] = useState<RoomDraft[] | null>(null);
+  // Đấu cặp: bốc thăm chia cặp, mỗi cặp chung một đề, loại trực tiếp qua từng vòng (mỗi vòng một phòng thi)
+  const [battle, setBattle] = useState(false);
 
   const chosen = useMemo(() => lessons.filter((l) => picked.includes(l.unit.code)), [lessons, picked]);
   const auto: Matrix | null = useMemo(() => {
@@ -105,7 +117,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
   const matrix = custom ?? auto;
   const t = matrix ? totals(matrix) : null;
   const have = t?.questions ?? 0;
-  const autoTitle = `Phòng thi ${SUBJECT_NAME[subject]}${chosen.length ? ` – ${units.filter((u) => picked.includes(u.code)).map((u) => u.title).slice(0, 2).join(', ')}` : ''}`;
+  const autoTitle = `${battle ? 'Đấu cặp' : 'Phòng thi'} ${SUBJECT_NAME[subject]}${chosen.length ? ` – ${units.filter((u) => picked.includes(u.code)).map((u) => u.title).slice(0, 2).join(', ')}` : ''}`;
   const problems = drafts ? draftProblems(drafts) : 0;
   const editedCount = drafts ? drafts.reduce((a, d) => a + d.slots.filter((s) => s.edited).length, 0) : 0;
 
@@ -140,6 +152,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
     if (problems) return setErr(`Còn ${problems} câu trong đề xem trước có đáp án chưa chấm được — sửa lại hoặc đổi câu đó.`);
     const o = new Date(opens), c = new Date(closes);
     if (Number.isNaN(o.getTime()) || Number.isNaN(c.getTime()) || c <= o) return setErr('Giờ đóng phải sau giờ mở.');
+    if (battle) return void createBattle(o, c);
     setBusy(true);
     const salt = Date.now() >>> 0;
     const plan: RoomPlan = { ...matrix, mode };
@@ -167,6 +180,26 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
     onCreated(row?.code ?? '');
   };
 
+  /** Đấu cặp: máy cô sinh một đề cho mỗi cặp theo quy tắc; máy chủ bốc thăm, tạo phòng vòng 1 và gán đề cho từng cặp */
+  const createBattle = async (o: Date, c: Date) => {
+    if (!matrix) return;
+    if (students.length < 2) return setErr('Cần ít nhất 2 em để chia cặp.');
+    const sets = Array.from({ length: Math.floor(students.length / 2) }, () => roomPaper(matrix, newSeed()).items);
+    if (sets.some((s) => s.length < Math.min(3, have))) return setErr('Ngân hàng chưa đủ câu cho các chủ đề đã chọn — chọn thêm chủ đề hoặc giảm số câu.');
+    setBusy(true);
+    try {
+      const res = await fetch('/api/giao-vien/dau-cap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        classId, title: (title.trim() || autoTitle).slice(0, 180), subject, minutes, opens: o.toISOString(), closes: c.toISOString(),
+        plan: matrix, students: students.map((s) => s.id), sets,
+      }) });
+      const d = (await res.json().catch(() => ({}))) as { code?: string; error?: string };
+      if (!res.ok) return setErr(battleError(d.error ?? ''));
+      setPicked([]); setTitle(''); setDrafts(null); setCustom(null);
+      onCreated(d.code ?? '', true);
+    } catch { setErr('Mất kết nối, thử lại sau.'); }
+    finally { setBusy(false); }
+  };
+
   return (
     <form className="dash-card room-create" onSubmit={create}>
       <h2>🌼 Tạo phòng thi mới · lớp {className}</h2>
@@ -190,6 +223,12 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
         <label className="adm-field"><span>Đóng lúc</span><input type="datetime-local" value={closes} onChange={(e) => setCloses(e.target.value)} required /></label>
         <label className="adm-field room-title"><span>Tên phòng (tuỳ chọn)</span><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={autoTitle} maxLength={200} /></label>
       </div>
+      <label className={`bt-toggle${battle ? ' is-on' : ''}`}>
+        <input type="checkbox" checked={battle} onChange={(e) => { if (!dropDrafts()) return; setBattle(e.target.checked); }} />
+        <Swords aria-hidden="true" />
+        <span><b>Đấu cặp — bốc thăm chia cặp, loại trực tiếp</b>
+          <small>Máy bốc thăm chia cặp, mỗi cặp làm chung một đề (mỗi em đảo thứ tự câu, phương án). Các em làm lúc nào cũng được trong giờ mở — không cần vào cùng lúc. Đúng nhiều câu hơn thắng; bằng câu thì ai làm nhanh hơn thắng. Em thắng vào vòng sau (đề mới, khó hơn) đến khi có nhà vô địch.</small></span>
+      </label>
       <fieldset className="room-units">
         <legend>Chủ đề kiểm tra</legend>
         {units.length === 0 ? <p className="dash-muted">Đang tải ngân hàng bài…</p> : units.map((u) => (
@@ -217,7 +256,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
         )}
       </section>
 
-      <section className="room-step" aria-label="Xem trước đề">
+      {!battle && <section className="room-step" aria-label="Xem trước đề">
         <div className="room-step-head">
           <h3><span className="room-step-no">2</span><Eye aria-hidden="true" /> Xem trước và sửa đề</h3>
           <span className="dash-muted">{!matrix ? 'Sau khi chọn chủ đề, bấm “Xem trước đề” để xem từng đề, đổi câu, sửa câu hỏi và đáp án.'
@@ -228,11 +267,12 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
           <RoomPreview drafts={drafts} matrix={matrix} students={students} onChange={setDrafts}
             onRegenerate={(sid) => setDrafts((ds) => ds && ds.map((d) => (d.student === sid ? { student: sid, slots: previewPaper(matrix, newSeed()).slots } : d)))} />
         )}
-      </section>
+      </section>}
 
       {err && <p className="adm-alert is-error" role="alert">{err}</p>}
       <button type="submit" className="btn btn-yellow" disabled={busy || !picked.length || problems > 0}>
-        <DoorOpen aria-hidden="true" /> {busy ? 'Đang tạo đề cho từng em…' : `Tạo phòng cho ${students.length} em${drafts ? ' với đề đã duyệt' : ''}`}
+        {battle ? <Swords aria-hidden="true" /> : <DoorOpen aria-hidden="true" />} {busy ? (battle ? 'Đang bốc thăm chia cặp…' : 'Đang tạo đề cho từng em…')
+          : battle ? `Bốc thăm chia cặp & mở vòng 1 cho ${students.length} em` : `Tạo phòng cho ${students.length} em${drafts ? ' với đề đã duyệt' : ''}`}
       </button>
     </form>
   );
