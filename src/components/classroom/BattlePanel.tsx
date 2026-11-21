@@ -5,7 +5,8 @@
 // Ở đây: sơ đồ nhánh từng vòng (kết quả từng cặp, ai thắng, vì sao), xử thắng cặp chưa phân định, bốc thăm mở vòng sau
 // (máy cô sinh đề mới, khó hơn, từ cùng các bài), kết thúc. Tự tải lại mỗi 20 giây khi đang mở trang.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Crown, Gavel, Lock, RefreshCw, Shuffle, Swords } from 'lucide-react';
+import { ChevronDown, Crown, Gavel, Lock, RefreshCw, Search, Shuffle, Swords, X } from 'lucide-react';
+import { fold } from '@/lib/classroom/teacher-nav';
 import { SUBJECT_NAME } from '@/lib/classroom/assignments';
 import type { Matrix } from '@/lib/exams/matrix';
 import { battleSets } from '@/lib/classroom/battle-build';
@@ -22,6 +23,7 @@ export type BattleView = {
   plan: Partial<Matrix>; created_at: string; championName: string | null; rounds: Round[];
 };
 
+type Show = 'all' | 'wait' | 'done';
 const STATUS: Record<string, string> = { playing: 'Đang đấu', done: 'Đã có vô địch', closed: 'Đã kết thúc' };
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -68,6 +70,15 @@ function BattleCard({ b, grade, onUpdate, reload }: { b: BattleView; grade: numb
   const winners = useMemo(() => (cur?.pairs ?? []).filter((p) => p.winner).length, [cur]);
   const roundDone = !!cur && cur.pairs.every((p) => p.winner);
   const canNext = b.status === 'playing' && roundDone && winners >= 2;
+  // Mỗi vòng là một mục thu gọn (mặc định chỉ mở vòng đang đấu); ô tìm theo tên (không dấu cũng được) + lọc trạng thái cặp
+  const [q, setQ] = useState('');
+  const [show, setShow] = useState<Show>('all');
+  const [openRounds, setOpenRounds] = useState<Set<number>>(() => new Set([b.round]));
+  useEffect(() => { setOpenRounds((s) => (s.has(b.round) ? s : new Set(s).add(b.round))); }, [b.round]);
+  const toggleRound = (n: number) => setOpenRounds((s) => { const t = new Set(s); if (t.has(n)) t.delete(n); else t.add(n); return t; });
+  const key = fold(q);
+  const match = (p: Pair) => (show === 'all' || (show === 'done') === !!p.winner)
+    && (!key || fold(p.aName).includes(key) || fold(p.bName ?? '').includes(key));
 
   const post = async (body: object, label: string) => {
     setBusy(label); setErr('');
@@ -98,35 +109,61 @@ function BattleCard({ b, grade, onUpdate, reload }: { b: BattleView; grade: numb
       {b.championName && <p className="bt-champ"><Crown aria-hidden="true" /> Nhà vô địch: <b>{b.championName}</b> 🎉</p>}
       {open && (
         <>
-          <div className="bt-bracket" aria-label="Sơ đồ nhánh">
-            {b.rounds.map((r) => {
+          <div className="bt-tools">
+            <label className="bt-search">
+              <Search aria-hidden="true" />
+              <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm tên em…" aria-label="Tìm em trong đấu cặp" />
+              {q && <button type="button" onClick={() => setQ('')} aria-label="Xoá ô tìm"><X aria-hidden="true" /></button>}
+            </label>
+            <select value={show} onChange={(e) => setShow(e.target.value as Show)} aria-label="Lọc cặp đấu">
+              <option value="all">Tất cả cặp</option>
+              <option value="wait">Chưa phân định</option>
+              <option value="done">Đã phân định</option>
+            </select>
+          </div>
+          <div className="bt-rounds" aria-label="Sơ đồ nhánh">
+            {[...b.rounds].reverse().map((r) => {
               const alive = r.pairs.reduce((n, p) => n + (p.b ? 2 : 1), 0);
+              const decided = r.pairs.filter((p) => p.winner).length;
+              const pairs = r.pairs.filter(match);
+              const filtering = !!key || show !== 'all';
+              if (filtering && !pairs.length) return null;
+              const isOpen = filtering || openRounds.has(r.round);
               return (
-                <section key={r.round} className="bt-col">
-                  <h3>Vòng {r.round} · {roundName(alive)}</h3>
-                  {r.room && <p className="bt-roominfo">Mã <code>{r.room.code}</code> · đóng {whenLabel(r.room.closes)}</p>}
-                  <ol>
-                    {r.pairs.map((p, k) => (
-                      <li key={p.id} className={`bt-match${p.winner ? ' is-done' : ' is-playing'}`} style={{ animationDelay: `${Math.min(k, 12) * 60}ms` }}>
-                        {!p.b ? <p className="bt-line is-win"><span>{p.aName}</span><em>🎟️ vé đi tiếp</em></p> : (
-                          <>
-                            <Line name={p.aName} r={p.ra} win={p.winner === p.a} done={!!p.winner} />
-                            <Line name={p.bName ?? ''} r={p.rb} win={p.winner === p.b} done={!!p.winner} />
-                            {p.reason && <small className="bt-why">{REASON_LABEL[p.reason]}</small>}
-                            {!p.winner && r.round === b.round && b.status === 'playing' && (
-                              <div className="bt-match-tools">
-                                <button type="button" className="mini-btn" disabled={!!busy} onClick={() => force(p, p.a, p.aName)}><Gavel aria-hidden="true" /> {p.aName.split(' ').pop()} thắng</button>
-                                <button type="button" className="mini-btn" disabled={!!busy} onClick={() => force(p, p.b!, p.bName ?? '')}><Gavel aria-hidden="true" /> {(p.bName ?? '').split(' ').pop()} thắng</button>
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </li>
-                    ))}
-                  </ol>
+                <section key={r.round} className={`bt-round${isOpen ? ' is-open' : ''}`}>
+                  <button type="button" className="bt-round-head" aria-expanded={isOpen} disabled={filtering} onClick={() => toggleRound(r.round)}>
+                    <ChevronDown aria-hidden="true" className="bt-chev" />
+                    <b>Vòng {r.round} · {roundName(alive)}</b>
+                    <span className="bt-round-meta">
+                      {r.room && <>Mã <code>{r.room.code}</code> · đóng {whenLabel(r.room.closes)} · </>}
+                      {filtering ? `${pairs.length} cặp khớp` : `${decided}/${r.pairs.length} cặp đã phân định`}
+                    </span>
+                  </button>
+                  {isOpen && (
+                    <ol className="bt-pairs">
+                      {pairs.map((p) => (
+                        <li key={p.id} className={`bt-match${p.winner ? ' is-done' : ' is-playing'}`}>
+                          {!p.b ? <p className="bt-line is-win"><span>{p.aName}</span><em>🎟️ vé đi tiếp</em></p> : (
+                            <>
+                              <Line name={p.aName} r={p.ra} win={p.winner === p.a} done={!!p.winner} />
+                              <Line name={p.bName ?? ''} r={p.rb} win={p.winner === p.b} done={!!p.winner} />
+                              {p.reason && <small className="bt-why">{REASON_LABEL[p.reason]}</small>}
+                              {!p.winner && r.round === b.round && b.status === 'playing' && (
+                                <div className="bt-match-tools">
+                                  <button type="button" className="mini-btn" disabled={!!busy} onClick={() => force(p, p.a, p.aName)}><Gavel aria-hidden="true" /> {p.aName.split(' ').pop()} thắng</button>
+                                  <button type="button" className="mini-btn" disabled={!!busy} onClick={() => force(p, p.b!, p.bName ?? '')}><Gavel aria-hidden="true" /> {(p.bName ?? '').split(' ').pop()} thắng</button>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
                 </section>
               );
             })}
+            {(!!key || show !== 'all') && !b.rounds.some((r) => r.pairs.some(match)) && <p className="dash-muted">Không có cặp nào khớp.</p>}
           </div>
           {b.status === 'playing' && (
             <div className="bt-next">
