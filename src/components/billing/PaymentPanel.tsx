@@ -11,6 +11,12 @@ import '@/styles/dash.css';
 import '@/styles/mini.css';
 import '@/styles/pay.css';
 
+/** Năm học chứa ngày hết hạn: 15/1/2027 hoặc 31/5/2027 → "2026–2027" (giờ Việt Nam) */
+const vnDate = (iso: string) => new Date(Date.parse(iso) + 7 * 3600_000);
+const schoolYear = (iso: string) => { const y = vnDate(iso).getUTCFullYear(); return `${y - 1}–${y}`; };
+/** Học kỳ hết ngày 15/1 là HK1, hết 31/5 là HK2 (mua từ 16/12 được học luôn hết HK2) */
+const termName = (iso: string) => `${vnDate(iso).getUTCMonth() === 0 ? 'Học kỳ 1' : 'Học kỳ 2'} năm học ${schoolYear(iso)}`;
+
 type Req = { id: string; code: string; plan: Plan; amount: number; created_at: string };
 
 function CopyLine({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
@@ -61,7 +67,7 @@ export default function PaymentPanel({ info, offer }: { info: BillingPublic; off
           <button key={p} type="button" className={`pay-plan${req?.plan === p ? ' is-on' : ''}`} onClick={() => void choose(p)} disabled={busy !== null}>
             <span className="pay-plan-name">{PLAN_NAME[p]}</span>
             <strong>{vnd(p === 'term' ? offer.price_term : offer.price_year)}</strong>
-            <span className="pay-plan-note">{p === 'term' ? `Học đến hết ${fmtDay(offer.term_end)}` : `Học đến hết ${fmtDay(offer.year_end)}`}</span>
+            <span className="pay-plan-note">{p === 'term' ? `${termName(offer.term_end)} · học đến hết ${fmtDay(offer.term_end)}` : `Cả năm học ${schoolYear(offer.year_end)} · học đến hết ${fmtDay(offer.year_end)}`}</span>
             {p === 'year' && offer.price_term * 2 > offer.price_year && <span className="pay-plan-save">Tiết kiệm {vnd(offer.price_term * 2 - offer.price_year)} so với đóng 2 học kỳ</span>}
             <span className="pay-plan-cta"><QrIcon aria-hidden="true" /> {busy === p ? 'Đang tạo mã…' : 'Lấy mã chuyển khoản'}</span>
           </button>
