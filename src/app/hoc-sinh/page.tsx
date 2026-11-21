@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { BookOpen, CheckCircle2, Map as MapIcon, ChevronRight, ClipboardList, Clock, Crown, CreditCard, Flame, Gamepad2, Lock, PenLine, Rocket, RotateCcw, Sparkles, Star, Trophy, Users } from 'lucide-react';
+import { BookOpen, CheckCircle2, Map as MapIcon, ChevronRight, ClipboardList, Clock, Crown, Flame, Gamepad2, Lock, PenLine, Rocket, RotateCcw, Sparkles, Star, Trophy, Users } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import GalleryTeaser from '@/components/gallery/GalleryTeaser';
 import KidWorld, { KidThemeSection, ThemedMilo } from '@/components/learn/KidWorld';
@@ -13,7 +13,6 @@ import KnowledgeMap from '@/components/student/KnowledgeMap';
 import { mapHrefs, mapOfGrade, mapState } from '@/components/student/knowledge-map-progress';
 import { getViewer } from '@/lib/auth/viewer';
 import { learningGate } from '@/lib/auth/gate';
-import { fmtDay } from '@/lib/billing';
 import { MUC_NAME, SUBJECT_NAME, dueInfo, lessonHref, type MyAssignment } from '@/lib/classroom/assignments';
 import { owlOf, whenLabel, type MyRoom } from '@/lib/classroom/rooms';
 import { createClient } from '@/lib/supabase/server';
@@ -64,7 +63,8 @@ export default async function StudentHome() {
     classLocked ? PAY
       : t.kind === 'exam' ? `/hoc-sinh/de/${t.id}`
       : t.lesson_code && t.subject ? (locked && t.status !== 'open' ? PAY : lessonHref(t.lesson_code, t.subject, t.grade, t.muc)) : null;
-  const PAY = gate.reason === 'plan_locked' ? '/hoc-sinh#tam-khoa' : '/hoc-sinh/dong-phi';
+  // Học phí là việc của ba mẹ: em chỉ được nhắc mở Góc Phụ huynh (thẻ học phí ở đó)
+  const PAY = gate.reason === 'plan_locked' ? '/hoc-sinh#tam-khoa' : '/phu-huynh#hoc-phi';
   const tasks = ((assigned ?? []) as MyAssignment[]);
   const todo = tasks.filter((t) => t.status === 'open' && !t.done)
     .sort((a, b) => (a.due_at ?? '9999').localeCompare(b.due_at ?? '9999'));
@@ -107,13 +107,7 @@ export default async function StudentHome() {
           <p id="tam-khoa" className="adm-alert is-warn tuition-banner" role="status"><Lock aria-hidden="true" /> Tài khoản của em đang tạm khoá vì lớp đã hết thời gian dùng thử. Bài em đã làm vẫn được giữ nguyên — khi thầy cô mở thêm chỗ, em học tiếp được ngay.</p>
         )}
         {gate.reason === 'expired' && (
-          <p className="adm-alert is-warn tuition-banner" role="status"><Lock aria-hidden="true" /> Hết thời gian học các bài tự chọn. Em vẫn làm được bài cô giao và phòng thi lớp; nhờ bố mẹ đóng học phí để luyện tập thêm các bài khác nhé! <Link href={PAY} className="btn btn-yellow btn-sm"><CreditCard aria-hidden="true" /> Đóng học phí</Link></p>
-        )}
-        {gate.reason === 'trial' && (
-          <p className="adm-alert is-info tuition-banner">Em đang học thử miễn phí đến {fmtDay(gate.until)}. <Link href={PAY}>Xem học phí →</Link></p>
-        )}
-        {gate.reason === 'paid' && (
-          <p className="dash-muted tuition-banner">Đã đóng học phí — học đến hết {fmtDay(gate.until)}. <Link href={PAY}>Học phí</Link></p>
+          <p className="adm-alert is-warn tuition-banner" role="status"><Lock aria-hidden="true" /> Các bài tự chọn đang tạm nghỉ. Em vẫn làm được bài cô giao và phòng thi lớp nhé! Nhờ ba mẹ mở Góc Phụ huynh để em luyện thêm. <Link href={PAY} className="btn btn-yellow btn-sm"><Users aria-hidden="true" /> Góc Phụ huynh</Link></p>
         )}
 
         <section className="sd-hero">
@@ -134,8 +128,8 @@ export default async function StudentHome() {
             <h2 id="sd-next-t"><Sparkles aria-hidden="true" /> Hôm nay em làm gì?</h2>
             {locked && (classLocked || !next || !nextHref) ? (
               <div className="sd-next-card is-lock">
-                <div><b>Nhờ bố mẹ đóng học phí</b><span>để học tiếp các bài mới nhé.</span></div>
-                <Link href={PAY} className="btn btn-yellow"><Lock aria-hidden="true" /> Đóng học phí</Link>
+                <div><b>Nhờ ba mẹ mở Góc Phụ huynh</b><span>để em luyện tiếp các bài mới nhé.</span></div>
+                <Link href={PAY} className="btn btn-yellow"><Users aria-hidden="true" /> Góc Phụ huynh</Link>
               </div>
             ) : next && nextHref ? (
               <div className={`sd-next-card${nextDue?.overdue ? ' is-over' : ''}`}>

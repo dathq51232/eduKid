@@ -265,3 +265,31 @@
   .ph-feed li { grid-template-columns: 30px minmax(0, 1fr); }
   .ph-feed-rs { grid-column: 2; justify-self: start; }
 }
+/* ---------- thẻ học phí — thông báo từ EduChain Kids (Góc Phụ huynh) ---------- */
+.ph-fee { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; padding: 20px 22px; border-radius: 22px; color: #1e2b4a;
+  background: linear-gradient(120deg, #fff6d6, #ffe7a8 60%, #ffd98a); box-shadow: inset 0 0 0 2px #f5c451, 0 10px 28px rgb(217 119 6 / .18); }
+.ph-fee.is-expired { background: linear-gradient(120deg, #ffe9e3, #ffd4c4 60%, #ffc2a8); box-shadow: inset 0 0 0 2px #f59e7b, 0 10px 28px rgb(220 80 40 / .18); }
+.ph-fee-from { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
+.ph-fee-from img { border-radius: 8px; }
+.ph-fee-from b { font-weight: 800; color: #2457c5; }
+.ph-fee-badge { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; background: #1e2b4a; color: #ffd978; font-style: normal; font-weight: 800; font-size: 13px; }
+.ph-fee-badge svg { width: 14px; height: 14px; }
+.ph-fee h2 { margin: 0; font-size: clamp(20px, 3vw, 26px); line-height: 1.25; }
+.ph-fee-lead, .ph-fee-price, .ph-fee-note, .ph-fee-safe { margin: 0; }
+.ph-fee-lead { font-size: 16px; max-width: 70ch; }
+.ph-fee-price { font-size: 15px; }
+.ph-fee-price b { font-size: 22px; color: #b45309; }
+.ph-fee.is-expired .ph-fee-price b { color: #c2410c; }
+.ph-fee-note { font-size: 14px; font-weight: 700; }
+.ph-fee-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.ph-fee .ph-fee-cta { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; white-space: normal; text-align: left; font-size: 16px; animation: ph-fee-nudge 2.6s ease-in-out 3 1s; }
+.ph-fee-cta svg { width: 18px; height: 18px; flex: none; }
+.ph-fee-safe { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #5c4a1e; }
+.ph-fee-safe svg { width: 16px; height: 16px; flex: none; color: #16a34a; }
+.ph-fee-paid { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 10px 14px; border-radius: 14px; background: rgb(22 163 74 / .1); font-size: 14px; }
+.ph-fee-paid svg { width: 18px; height: 18px; color: #16a34a; flex: none; }
+.ph-fee-paid a { margin-left: auto; font-weight: 700; }
+@keyframes ph-fee-nudge { 0%, 100% { transform: none; } 50% { transform: translateY(-2px) scale(1.03); } }
+:root[data-theme="dark"] .ph-fee { color: #1e2b4a; }
+@media (prefers-reduced-motion: reduce) { .ph-fee-cta { animation: none; } }
+@media (max-width: 560px) { .ph-fee { padding: 16px; } .ph-fee-badge { margin-left: 0; } .ph-fee-cta { width: 100%; justify-content: center; } }

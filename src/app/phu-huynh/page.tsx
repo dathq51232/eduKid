@@ -17,6 +17,9 @@ import SignOutButton from '@/components/classroom/SignOutButton';
 import { STATUS_LABEL } from '@/lib/classroom/diary';
 import type { Contact } from '@/lib/classroom/class-tools';
 import { getViewer } from '@/lib/auth/viewer';
+import { learningGate } from '@/lib/auth/gate';
+import TuitionCard from '@/components/parent/TuitionCard';
+import type { BillingOffer } from '@/lib/billing';
 import GuidedTour, { TourHelpButton } from '@/components/tour/GuidedTour';
 import { createClient } from '@/lib/supabase/server';
 import { KIND_INFO, KIND_ORDER, buildActivities, type ChessRow, type GameRow, type LessonRow, type RecentRow } from '@/lib/parent/activity';
@@ -104,7 +107,7 @@ export default async function ParentsPage() {
     const supabase = await createClient();
     const sid = viewer.studentId;
     const [{ data: ov, error: ovErr }, { data: diary }, { data: results }, { data: me }, { data: oldContacts }, { data: msgs, error: msgErr },
-      { data: games }, { data: chess }, { data: recent, error: recentErr }, { data: homework }] = await Promise.all([
+      { data: games }, { data: chess }, { data: recent, error: recentErr }, { data: homework }, gate, { data: offerRows }] = await Promise.all([
       supabase.rpc('parent_overview'), // migration 0033
       supabase.rpc('parent_diary_recent', { p_days: 30 }), // migration 0031
       supabase.from('lesson_results').select('lesson_title, lesson_code, subject_code, score, total, points, created_at').order('created_at', { ascending: false }).limit(100),
@@ -116,7 +119,11 @@ export default async function ParentsPage() {
       supabase.from('chess_games').select('variant, white, black, result, finished_at, created_at').eq('status', 'finished').or(`white.eq.${sid},black.eq.${sid}`).order('finished_at', { ascending: false }).limit(30),
       supabase.rpc('student_recent_results', { p_days: 30 }),
       supabase.rpc('student_my_assignments'),
+      // Học phí (0018, 0074–0075): thẻ thông báo của EduChain Kids — chỉ ba mẹ thấy, trang của em không nói chuyện tiền
+      learningGate(supabase, viewer.userId),
+      supabase.rpc('student_billing_offer'),
     ]);
+    const offer = ((offerRows ?? []) as BillingOffer[])[0] ?? null;
     const o = (ovErr ? null : ov) as Overview | null;
     const childName = o?.child?.name ?? (me as { display_name?: string } | null)?.display_name ?? viewer.displayName;
     const cls = o?.class ?? null;
@@ -181,6 +188,8 @@ export default async function ParentsPage() {
               ) : <b className="is-wait">Cô chưa ghi Sổ lớp</b>}
             </div>
           </section>
+
+          <TuitionCard gate={gate} offer={offer} childName={childName} />
 
           {newReplies > 0 && (
             <a href="#pm-title" className="ph-alert"><Bell aria-hidden="true" /> <span><b>{cls?.teacher ? `Cô ${cls.teacher.trim().split(/\s+/).slice(-1)[0]}` : 'Cô'} vừa trả lời {newReplies} tin nhắn</b> của gia đình · Xem ngay</span></a>
