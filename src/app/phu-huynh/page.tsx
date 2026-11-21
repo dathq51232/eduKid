@@ -19,6 +19,7 @@ import type { Contact } from '@/lib/classroom/class-tools';
 import { getViewer } from '@/lib/auth/viewer';
 import { learningGate } from '@/lib/auth/gate';
 import TuitionCard from '@/components/parent/TuitionCard';
+import { progressRecap } from '@/lib/parent/recap';
 import type { BillingOffer } from '@/lib/billing';
 import GuidedTour, { TourHelpButton } from '@/components/tour/GuidedTour';
 import { createClient } from '@/lib/supabase/server';
@@ -189,7 +190,7 @@ export default async function ParentsPage() {
             </div>
           </section>
 
-          <TuitionCard gate={gate} offer={offer} childName={childName} />
+          <TuitionCard gate={gate} offer={offer} childName={childName} recap={gate.reason === 'trial' || gate.reason === 'expired' ? progressRecap(acts, 14) : null} />
 
           {newReplies > 0 && (
             <a href="#pm-title" className="ph-alert"><Bell aria-hidden="true" /> <span><b>{cls?.teacher ? `Cô ${cls.teacher.trim().split(/\s+/).slice(-1)[0]}` : 'Cô'} vừa trả lời {newReplies} tin nhắn</b> của gia đình · Xem ngay</span></a>

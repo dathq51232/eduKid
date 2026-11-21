@@ -293,3 +293,10 @@
 :root[data-theme="dark"] .ph-fee { color: #1e2b4a; }
 @media (prefers-reduced-motion: reduce) { .ph-fee-cta { animation: none; } }
 @media (max-width: 560px) { .ph-fee { padding: 16px; } .ph-fee-badge { margin-left: 0; } .ph-fee-cta { width: 100%; justify-content: center; } }
+/* tóm tắt tiến bộ trong thẻ học phí */
+.ph-recap { display: grid; gap: 6px; padding: 12px 14px; border-radius: 16px; background: rgb(255 255 255 / .72); }
+.ph-recap p { margin: 0; font-size: 15px; overflow-wrap: anywhere; }
+.ph-recap-stats { list-style: none; margin: 2px 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ph-recap-stats li { display: grid; justify-items: center; padding: 6px 4px; border-radius: 12px; background: #fff; text-align: center; }
+.ph-recap-stats strong { font-size: 22px; color: #2457c5; line-height: 1.1; }
+.ph-recap-stats span { font-size: 12px; color: #5c4a1e; }

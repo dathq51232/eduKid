@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Clock, Lock, QrCode, ShieldCheck } from 'lucide-react';
 import { PLAN_NAME, fmtDay, vnd, type BillingOffer, type Gate } from '@/lib/billing';
+import type { Recap } from '@/lib/parent/recap';
 
 /** Số ngày của một học kỳ (để quy ra "mỗi ngày") */
 const TERM_DAYS = 135;
@@ -13,7 +14,7 @@ const perDay = (price: number) => {
   return d < 1000 ? 'chưa tới 1.000đ' : `khoảng ${vnd(Math.ceil(d / 500) * 500)}`;
 };
 
-export default function TuitionCard({ gate, offer, childName }: { gate: Gate; offer: BillingOffer | null; childName: string }) {
+export default function TuitionCard({ gate, offer, childName, recap }: { gate: Gate; offer: BillingOffer | null; childName: string; recap?: Recap | null }) {
   if (gate.reason === 'free' || gate.reason === 'not_student') return null;
   const name = childName.trim().split(/\s+/).slice(-1)[0] || 'con';
 
@@ -49,6 +50,7 @@ export default function TuitionCard({ gate, offer, childName }: { gate: Gate; of
           ? <>{name} vẫn làm đủ bài cô giao và phòng thi lớp. Mở gói học để con tiếp tục <b>luyện tập theo lộ trình riêng</b>, chuyên đề nâng cao, English Journey và trò chơi trí tuệ.</>
           : <>{name} đang học thử miễn phí đến <b>{fmtDay(gate.until)}</b>. Mở gói học trước hạn để con không bị gián đoạn — ba mẹ theo dõi tiến bộ của con ngay tại đây.</>}
       </p>
+      {recap && <RecapBox recap={recap} name={name} />}
       {offer && price && (
         <p className="ph-fee-price">
           <b>{vnd(price)}</b> / {fixed === 'year' ? 'năm học' : 'học kỳ'} · {perDay(fixed === 'year' ? price / 2 : price)} mỗi ngày
@@ -63,5 +65,30 @@ export default function TuitionCard({ gate, offer, childName }: { gate: Gate; of
       </div>
       <p className="ph-fee-safe"><ShieldCheck aria-hidden="true" /> Quét mã QR ngân hàng, tiền chuyển thẳng cho EduChain Kids — thầy cô không thu hộ. Đóng phí là tự nguyện.</p>
     </section>
+  );
+}
+
+/** Milo tóm tắt N ngày học của con — giá trị trước, giá sau */
+function RecapBox({ recap: r, name }: { recap: Recap; name: string }) {
+  if (!r.total) {
+    return (
+      <div className="ph-recap is-empty">
+        <b>📋 Milo tóm tắt {r.days} ngày qua</b>
+        <p>{name} chưa bắt đầu luyện tập. Ba mẹ ngồi cùng con 10 phút mở một bài đầu tiên nhé — Milo sẽ ghi lại từng bước tiến bộ của con.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="ph-recap">
+      <b>📋 Milo tóm tắt {r.days} ngày học của {name}</b>
+      <ul className="ph-recap-stats">
+        <li><strong>{r.activeDays}</strong><span>ngày có học</span></li>
+        <li><strong>{r.lessons}</strong><span>bài đã làm</span></li>
+        <li><strong>{r.avg === null ? '—' : `${r.avg}%`}</strong><span>câu đúng</span></li>
+      </ul>
+      {r.strong.length > 0 && <p>⭐ <b>Đã vững:</b> {r.strong.join(' · ')}</p>}
+      {r.weak.length > 0 && <p>🌱 <b>Cần luyện thêm:</b> {r.weak.join(' · ')}</p>}
+      {!r.strong.length && !r.weak.length && r.total > r.lessons && <p>🎮 Con đã chơi {r.total - r.lessons} lượt trò chơi trí tuệ, cờ.</p>}
+    </div>
   );
 }

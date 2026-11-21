@@ -106,6 +106,9 @@ export default async function StudentHome() {
         {gate.reason === 'plan_locked' && (
           <p id="tam-khoa" className="adm-alert is-warn tuition-banner" role="status"><Lock aria-hidden="true" /> Tài khoản của em đang tạm khoá vì lớp đã hết thời gian dùng thử. Bài em đã làm vẫn được giữ nguyên — khi thầy cô mở thêm chỗ, em học tiếp được ngay.</p>
         )}
+        {gate.reason === 'trial' && gate.until && Date.parse(gate.until) - nowMs < 3 * 86_400_000 && (
+          <p className="adm-alert is-info tuition-banner" role="status">⭐ Milo vừa gửi ba mẹ bản tóm tắt những ngày em học chăm. Nhờ ba mẹ mở Góc Phụ huynh xem nhé! <Link href="/phu-huynh#hoc-phi" className="btn btn-yellow btn-sm"><Users aria-hidden="true" /> Góc Phụ huynh</Link></p>
+        )}
         {gate.reason === 'expired' && (
           <p className="adm-alert is-warn tuition-banner" role="status"><Lock aria-hidden="true" /> Các bài tự chọn đang tạm nghỉ. Em vẫn làm được bài cô giao và phòng thi lớp nhé! Nhờ ba mẹ mở Góc Phụ huynh để em luyện thêm. <Link href={PAY} className="btn btn-yellow btn-sm"><Users aria-hidden="true" /> Góc Phụ huynh</Link></p>
         )}
