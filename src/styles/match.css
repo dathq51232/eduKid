@@ -3,7 +3,10 @@
 .match-board { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .match-col { display: grid; gap: 10px; align-content: start; margin: 0; padding: 0; list-style: none; }
 .match-cell { display: grid; width: 100%; min-height: 60px; place-items: center; gap: 2px; padding: 8px 12px; border: 2px solid var(--line-strong); border-bottom-width: 4px; border-radius: 14px; background: var(--bg-ffffff); color: var(--ink); font: inherit; font-family: var(--font-display, 'Quicksand'), sans-serif; font-size: 20px; font-weight: 800; line-height: 1.2; cursor: pointer; }
-.match-illustration { display: block; max-width: 72px; max-height: 60px; object-fit: contain; }
+img.match-illustration { display: block; max-width: 72px; max-height: 60px; object-fit: contain; }
+/* chữ trong ô (không có hình): xuống dòng theo cả ô, không tràn */
+.match-text { display: block; max-width: 100%; min-width: 0; overflow-wrap: anywhere; text-align: center; }
+.match-cell { min-width: 0; }
 .match-cell:disabled { cursor: default; }
 .match-cell.is-active { background: var(--bg-fff3d1); outline: 3px solid var(--yellow); outline-offset: 2px; }
 .match-pair { font-family: var(--font-body, 'Quicksand'), sans-serif; font-size: 14px; font-weight: 500; color: var(--muted); }

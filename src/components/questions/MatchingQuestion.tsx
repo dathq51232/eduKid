@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { shuffle } from '@/lib/shuffle';
 import type { AnswerValue, Question } from '@/lib/types';
 import IllustrationIcon from '@/components/IllustrationIcon';
+import { illustrationIconSrc } from '@/lib/illustration-icons';
 import '@/styles/match.css';
 import '@/styles/question.css';
 
@@ -69,7 +70,8 @@ export default function MatchingQuestion({ question, answer, onAnswerChange, isS
                   disabled={isSubmitted}
                   onClick={() => pickLeft(left)}
                 >
-                  <IllustrationIcon value={left} alt={left} className="match-illustration" />
+                  {/* có hình minh hoạ thì hiện hình; không có thì hiện chữ (không dùng khung ảnh 72px — chữ dài sẽ bị bóp, tràn ô) */}
+                  {illustrationIconSrc(left) ? <IllustrationIcon value={left} alt={left} className="match-illustration" /> : <span className="match-text"><EmojiText text={left} /></span>}
                   {paired && <span className="match-pair">→ {pairs[left]}</span>}
                 </button>
               </li>
