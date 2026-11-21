@@ -4,13 +4,17 @@
 //  · Kho của app: câu soạn sẵn + câu bộ sinh câu tạo (lessonPool, đã bỏ câu có hình) — tính khi mở bài, không tính cả khối một lúc;
 //  · Câu của tôi: câu thầy cô đã lưu (teacher_questions). Nút "Đưa vào bài học của lớp" (migration 0072): học sinh lớp
 //    thầy cô dạy gặp các câu này khi luyện đúng bài đó ở trang Làm bài (trộn với câu của app, chấm ở máy chủ).
+//  · Bấm "Sửa" ở một câu của app: mở khung sửa (máy kiểm chạy ngay), lưu thành câu của tôi — câu gốc của app giữ nguyên,
+//    bản sửa đi theo quy tắc trộn "Câu của cô" ở trên (tick sẵn "Đưa vào bài học của lớp").
 // Tick câu (hoặc "Chọn 10 câu trộn mức") ở bất kỳ bài nào rồi giao cho lớp làm trên app (AssignPaperForm — học sinh làm,
 // máy chủ chấm, thầy cô xem thống kê từng câu ở Giao bài về nhà).
 import { useMemo, useState } from 'react';
-import { BookOpenCheck, ChevronDown, GraduationCap, Shuffle } from 'lucide-react';
+import { BookOpenCheck, ChevronDown, GraduationCap, Pencil, Shuffle } from 'lucide-react';
 import AssignPaperForm from '@/components/classroom/AssignPaperForm';
 import type { ExamItem } from '@/lib/classroom/assignments';
-import { bankError, setForClass, type MyQuestion } from '@/lib/bank/client';
+import { bankError, saveDrafts, setForClass, type MyQuestion } from '@/lib/bank/client';
+import { draftId, draftProblem, type Draft, type DraftType } from '@/lib/bank/parse';
+import { DraftCard } from './MyBankPanel';
 import { MUC_LEVEL } from '@/lib/bank/check';
 import { lessonPool, type BookLesson, type ExamQuestion, type Muc } from '@/lib/exams/matrix';
 import type { SubjectCode } from '@/lib/types';
@@ -43,6 +47,16 @@ const fromApp = (lessonId: string, q: ExamQuestion): Row => ({
   item: { type: q.type, prompt: q.prompt, options: q.options, left: q.left, blanks: q.blanks, statements: q.statements, answer: q.answer, explanation: q.explanation, lessonTitle: q.lessonTitle, muc: q.muc, pts: 1 },
 });
 
+const EDITABLE: string[] = ['single_choice', 'multiple_choice', 'true_false', 'fill_blank'];
+/** Câu của app → bản nháp để thầy cô sửa (chỉ 4 dạng câu của Kho; dạng khác trả null) */
+function draftFromApp(r: Row, lessonId: string): Draft | null {
+  const it = r.item;
+  if (!EDITABLE.includes(it.type)) return null;
+  const k = (it.answer ?? {}) as { correct?: string | string[]; accepted?: string[] };
+  const correct = Array.isArray(k.accepted) ? k.accepted : Array.isArray(k.correct) ? k.correct : k.correct ? [k.correct] : [];
+  return { id: draftId(), type: it.type as DraftType, prompt: it.prompt, options: it.options ?? [], correct, muc: r.muc, lessonId, explanation: it.explanation ?? '', source: 'Sửa từ kho app', include: true };
+}
+
 /** 10 câu trộn mức (khoảng 4 M1 · 4 M2 · 2 M3, thiếu mức nào lấy bù mức khác) */
 function mixPick(rows: Row[], n = 10): Row[] {
   const by: Record<Muc, Row[]> = { 1: [], 2: [], 3: [] };
@@ -55,8 +69,9 @@ function mixPick(rows: Row[], n = 10): Row[] {
   return out.sort((a, b) => a.muc - b.muc);
 }
 
-export default function PracticeSets({ classId, subject, lessons, mine, onForClass }: {
-  classId: string; subject: SubjectCode; lessons: BookLesson[]; mine: MyQuestion[] | null; onForClass?: (ids: string[], on: boolean) => void;
+export default function PracticeSets({ classId, subject, grade, lessons, mine, onForClass, onSaved }: {
+  classId: string; subject: SubjectCode; grade: number; lessons: BookLesson[]; mine: MyQuestion[] | null;
+  onForClass?: (ids: string[], on: boolean) => void; onSaved?: (rows: MyQuestion[]) => void;
 }) {
   const [src, setSrc] = useState<Src>('app');
   const [pick, setPick] = useState<Map<string, Row>>(new Map());
@@ -64,6 +79,32 @@ export default function PracticeSets({ classId, subject, lessons, mine, onForCla
   const [more, setMore] = useState(SHOW);
   const [busy, setBusy] = useState('');
   const [fcErr, setFcErr] = useState('');
+  // Sửa một câu của app: bản nháp đang sửa (gắn với mã dòng), có đưa vào bài học của lớp không
+  const [edit, setEdit] = useState<{ rowId: string; d: Draft; toClass: boolean } | null>(null);
+  const [editMsg, setEditMsg] = useState('');
+  const startEdit = (r: Row, lessonId: string) => {
+    const d = draftFromApp(r, lessonId);
+    setEditMsg(d ? '' : 'Dạng câu này (ghép, sắp xếp, nhiều ô trống…) chưa sửa được trong Kho — chọn câu khác hoặc tự soạn ở mục Thêm câu của tôi.');
+    setEdit(d ? { rowId: r.id, d, toClass: true } : null);
+  };
+  const saveEdit = async () => {
+    if (!edit) return;
+    const problem = draftProblem(edit.d);
+    if (problem) { setEditMsg(problem); return; }
+    setBusy('edit'); setEditMsg('');
+    try {
+      const rows = await saveDrafts(subject, grade, [edit.d], (id) => lessons.find((l) => l.id === id)?.title ?? '');
+      let saved = rows;
+      if (edit.toClass && rows.length) {
+        try { await setForClass(rows.map((x) => x.id), true); saved = rows.map((x) => ({ ...x, for_class: true })); }
+        catch (e) { setFcErr(bankError(e)); }
+      }
+      onSaved?.(saved);
+      setEdit(null);
+      setEditMsg(edit.toClass ? 'Đã lưu bản sửa vào Câu của tôi và đưa vào bài học của lớp.' : 'Đã lưu bản sửa vào Câu của tôi.');
+    } catch (e) { setEditMsg(bankError(e)); }
+    finally { setBusy(''); }
+  };
   /** Bật / tắt "Câu của cô" trong bài học cho các câu (mã m:<uuid>) */
   const shareRows = async (rows: Row[], on: boolean, key: string) => {
     const ids = rows.map((r) => r.id.slice(2));
@@ -143,15 +184,34 @@ export default function PracticeSets({ classId, subject, lessons, mine, onForCla
                         : <button type="button" className="mini-btn qb-fc-btn" disabled={!!busy} onClick={() => void shareRows(rows.filter((r) => !r.forClass), true, g.id)}><BookOpenCheck aria-hidden="true" /> {busy === g.id ? 'Đang lưu…' : `Đưa ${rows.filter((r) => !r.forClass).length} câu vào bài học của lớp`}</button>)}
                     </div>
                   )}
+                  {editMsg && !edit && <p className="dash-muted qb-ed-msg" role="status">{editMsg}</p>}
                   <ol className="qb-ps-qs">
                     {shown.map((r) => (
-                      <li key={r.id}>
+                      <li key={r.id} className={edit?.rowId === r.id ? 'is-edit' : ''}>
+                        <div className="qb-ps-q">
                         <label>
                           <input type="checkbox" checked={pick.has(r.id)} onChange={(e) => toggle([r], e.target.checked)} />
                           <span className={`mb-m m${r.muc}`}>M{r.muc}</span>
                           {r.forClass && <BookOpenCheck className="qb-fc-ico" aria-label="Đang ở bài học của lớp" />}
                           <span className="mb-q"><b>{r.prompt}</b><small>{r.detail}</small></span>
                         </label>
+                        {src === 'app' && g.id && edit?.rowId !== r.id && (
+                          <button type="button" className="mini-btn qb-ed-btn" onClick={() => startEdit(r, g.id)} aria-label={`Sửa câu: ${r.prompt}`}><Pencil aria-hidden="true" /> Sửa</button>
+                        )}
+                        </div>
+                        {edit?.rowId === r.id && (
+                          <div className="qb-ed">
+                            <DraftCard d={edit.d} n={1} lessons={lessons} subject={subject} grade={grade}
+                              onChange={(d) => setEdit({ ...edit, d })} onRemove={() => setEdit(null)} />
+                            <div className="qb-ed-bar">
+                              <label><input type="checkbox" checked={edit.toClass} onChange={(e) => setEdit({ ...edit, toClass: e.target.checked })} /> Đưa vào bài học của lớp</label>
+                              <button type="button" className="btn btn-primary btn-sm" disabled={!!busy} onClick={() => void saveEdit()}>{busy === 'edit' ? 'Đang lưu…' : 'Lưu thành câu của tôi'}</button>
+                              <button type="button" className="mini-btn" onClick={() => { setEdit(null); setEditMsg(''); }}>Huỷ</button>
+                            </div>
+                            {editMsg && <p className="adm-alert is-error" role="alert">{editMsg}</p>}
+                            <p className="dash-muted qb-ed-note">Câu gốc của app giữ nguyên. Bản sửa lưu vào <b>Câu của tôi</b>; nếu tick ở trên, học sinh lớp gặp bản sửa khi luyện bài này (trộn theo quy tắc Câu của cô).</p>
+                          </div>
+                        )}
                       </li>
                     ))}
                   </ol>

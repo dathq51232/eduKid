@@ -237,18 +237,25 @@ async function gradeTeacherQuestion(id: string, answer: AnswerValue): Promise<Gr
 /**
  * Trộn "Câu của cô" vào bộ câu của bài: thay một phần câu của app bằng câu của cô (cùng cấp độ nếu được).
  * Mức Cơ bản / Khá: tối đa khoảng 30% số câu; mức Giỏi: tối đa một nửa. Cùng seed thì cùng cách trộn.
+ * Câu của cô trùng đề với một câu trong bộ (bản cô sửa từ câu của app) thì thay đúng câu đó, không tính vào hạn mức.
  */
 export function mixTeacherQuestions(base: Question[], extra: Question[], muc: Muc, seed?: number): Question[] {
   if (!extra.length || !base.length) return base;
-  const seen = new Set(base.map((q) => q.prompt.trim().toLowerCase()));
-  const pool = extra.filter((q) => !seen.has(q.prompt.trim().toLowerCase()));
-  if (!pool.length) return base;
+  const norm = (q: Question) => q.prompt.trim().toLowerCase();
+  const out = [...base];
+  const replaced = new Set<number>();
+  const used = new Set<string>();
+  for (const t of extra) {
+    const i = out.findIndex((q, k) => !replaced.has(k) && norm(q) === norm(t));
+    if (i >= 0 && !used.has(norm(t))) { out[i] = t; replaced.add(i); used.add(norm(t)); }
+  }
+  const seen = new Set(base.map(norm));
+  const pool = extra.filter((q) => !seen.has(norm(q)) && !used.has(norm(q)));
+  if (!pool.length) return out;
   let s = (seed ?? 7) >>> 0 || 7;
   const rand = () => ((s = (s * 1103515245 + 12345) >>> 0) / 4294967296);
   const order = pool.map((q) => ({ q, r: rand() })).sort((a, b) => a.r - b.r).map((x) => x.q);
   const take = Math.min(order.length, Math.max(1, Math.round(base.length * (muc >= 3 ? 0.5 : 0.3))));
-  const out = [...base];
-  const replaced = new Set<number>();
   for (const t of order.slice(0, take)) {
     // ưu tiên thay câu cùng cấp độ, không có thì câu gần cấp độ nhất (chưa bị thay)
     let best = -1;

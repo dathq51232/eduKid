@@ -11,6 +11,7 @@ import { MUC_NAME, type BookLesson, type Muc } from '@/lib/exams/matrix';
 import { ACCEPT_DOCS, draftId, draftProblem, extractFile, extractedText, parseExtracted, parseText, type Draft, type DraftType, type Extracted } from '@/lib/bank/parse';
 import { bankError, deleteMine, generateWithAi, machineDrafts, saveDrafts, type MyQuestion } from '@/lib/bank/client';
 import { draftIssues, MUC_LEVEL } from '@/lib/bank/check';
+import { DEFAULT_MIX, MAX_PER_MUC, MAX_TOTAL, MUCS, mixPlan, pctSum, planTotal, type MucMix } from '@/lib/bank/muc-mix';
 import type { SubjectCode } from '@/lib/types';
 import '@/styles/adm.css';
 import '@/styles/gm.css';
@@ -45,7 +46,51 @@ function VariantRow({ d, onMake }: { d: Draft; onMake: (locked: number[]) => voi
   );
 }
 
-function DraftCard({ d, n, lessons, subject, grade, onChange, onRemove, onVariants }: { d: Draft; n: number; lessons: BookLesson[]; subject: SubjectCode; grade: number; onChange: (d: Draft) => void; onRemove: () => void; onVariants?: (locked: number[]) => void }) {
+/** Trộn 3 mức khi sinh câu: theo số câu từng mức, hoặc theo % trên tổng số câu */
+function MucMixField({ mix, onChange }: { mix: MucMix; onChange: (m: MucMix) => void }) {
+  const plan = mixPlan(mix);
+  const total = planTotal(plan);
+  const sum = pctSum(mix.pct);
+  const setN = (m: Muc, v: number) => onChange({ ...mix, count: { ...mix.count, [m]: v } });
+  const setP = (m: Muc, v: number) => onChange({ ...mix, pct: { ...mix.pct, [m]: v } });
+  const only = (m: Muc) => onChange({ ...mix, by: 'count', count: { 1: 0, 2: 0, 3: 0, [m]: Math.min(MAX_PER_MUC, Math.max(total, 5)) } });
+  return (
+    <fieldset className="mb-mix">
+      <legend>Mức câu hỏi</legend>
+      <div className="mb-mix-by" role="radiogroup" aria-label="Cách chia mức">
+        <label><input type="radio" checked={mix.by === 'count'} onChange={() => onChange({ ...mix, by: 'count' })} /> Theo số câu</label>
+        <label><input type="radio" checked={mix.by === 'pct'} onChange={() => onChange({ ...mix, by: 'pct' })} /> Theo %</label>
+        {mix.by === 'pct' && (
+          <label className="mb-mix-total">Tổng <select value={mix.total} onChange={(e) => onChange({ ...mix, total: Number(e.target.value) })}>{[5, 10, 15, 20].filter((n) => n <= MAX_TOTAL).map((n) => <option key={n} value={n}>{n} câu</option>)}</select></label>
+        )}
+      </div>
+      <div className="mb-mix-row">
+        {MUCS.map((m) => (
+          <label key={m} className="mb-mix-cell">
+            <span className={`mb-m m${m}`}>M{m}</span>
+            <small>{MUC_NAME[m]}</small>
+            {mix.by === 'count'
+              ? <input type="number" min={0} max={MAX_PER_MUC} value={mix.count[m]} onChange={(e) => setN(m, Number(e.target.value))} aria-label={`Số câu mức ${m}`} />
+              : <span className="mb-mix-pct"><input type="number" min={0} max={100} step={5} value={mix.pct[m]} onChange={(e) => setP(m, Number(e.target.value))} aria-label={`Phần trăm mức ${m}`} />%</span>}
+            {mix.by === 'pct' && <em>= {plan[m]} câu</em>}
+          </label>
+        ))}
+      </div>
+      <div className="mb-mix-quick">
+        <span>Nhanh:</span>
+        {MUCS.map((m) => <button key={m} type="button" className="mini-btn" onClick={() => only(m)}>Chỉ M{m}</button>)}
+        <button type="button" className="mini-btn" onClick={() => onChange({ ...mix, by: 'pct', pct: { 1: 40, 2: 40, 3: 20 }, total: 10 })}>4 · 4 · 2</button>
+        <button type="button" className="mini-btn" onClick={() => onChange({ ...mix, by: 'pct', pct: { 1: 30, 2: 40, 3: 30 }, total: 10 })}>3 · 4 · 3</button>
+      </div>
+      <p className={`dash-muted mb-mix-sum${(mix.by === 'pct' && sum !== 100) || !total ? ' is-warn' : ''}`}>
+        Sẽ sinh <b>{total} câu</b>: {MUCS.filter((m) => plan[m]).map((m) => `${plan[m]} câu M${m}`).join(' · ') || 'chưa chọn câu nào'}
+        {mix.by === 'pct' && sum !== 100 && <> — tổng đang là {sum}%, máy chia lại theo tỉ lệ</>}
+      </p>
+    </fieldset>
+  );
+}
+
+export function DraftCard({ d, n, lessons, subject, grade, onChange, onRemove, onVariants }: { d: Draft; n: number; lessons: BookLesson[]; subject: SubjectCode; grade: number; onChange: (d: Draft) => void; onRemove: () => void; onVariants?: (locked: number[]) => void }) {
   const set = (p: Partial<Draft>) => onChange({ ...d, ...p });
   const choice = d.type === 'single_choice' || d.type === 'multiple_choice';
   const problem = draftProblem(d);
@@ -117,7 +162,10 @@ export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, 
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error' | 'info'; text: string } | null>(null);
-  const [ai, setAi] = useState({ muc: 3 as Muc, count: 5, kind: 'mix' as 'choice' | 'open' | 'mix', useDoc: true, note: '' });
+  const [ai, setAi] = useState({ kind: 'mix' as 'choice' | 'open' | 'mix', useDoc: true, note: '' });
+  const [mix, setMix] = useState<MucMix>(DEFAULT_MIX);
+  const plan = mixPlan(mix);
+  const planText = MUCS.filter((m) => plan[m]).map((m) => `${plan[m]} câu M${m}`).join(' · ');
   const [filter, setFilter] = useState('');
   const [pick, setPick] = useState<Set<string>>(new Set());
   const fileRef = useRef<HTMLInputElement>(null);
@@ -152,19 +200,32 @@ export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, 
     setBusy('AI đang soạn câu hỏi… (10–40 giây)'); setMsg(null);
     try {
       const source = ai.useDoc && doc ? extractedText(doc).slice(0, 14000) : '';
-      const ds = await generateWithAi({ subject, grade, lessonId, lessonTitle: titleOf(lessonId), muc: ai.muc, count: ai.count, kind: ai.kind, source, note: ai.note });
+      // mỗi mức một lượt gọi AI (mức nào 0 câu thì bỏ qua)
+      const ds: Draft[] = [];
+      for (const m of MUCS) {
+        if (!plan[m]) continue;
+        ds.push(...await generateWithAi({ subject, grade, lessonId, lessonTitle: titleOf(lessonId), muc: m, count: plan[m], kind: ai.kind, source, note: ai.note }));
+      }
       setDrafts((cur) => [...ds, ...cur]);
-      setMsg({ kind: 'ok', text: `AI đã soạn ${ds.length} câu. Cô đọc kỹ, sửa nếu cần rồi lưu — đặc biệt kiểm tra đáp án.` });
+      setMsg({ kind: 'ok', text: `AI đã soạn ${ds.length} câu (${planText}). Cô đọc kỹ, sửa nếu cần rồi lưu — đặc biệt kiểm tra đáp án.` });
     } catch (e) { setMsg({ kind: 'error', text: `${e instanceof Error ? e.message : 'AI chưa trả lời được.'} Trong lúc chờ, bấm “Sinh bằng máy (miễn phí)” để lấy câu từ bộ sinh câu của app.` }); }
     finally { setBusy(''); }
   };
   const runMachine = () => {
     const skip = new Set([...drafts.map((d) => d.prompt.trim().toLowerCase()), ...(mine ?? []).map((q) => q.prompt.trim().toLowerCase())]);
-    const ds = machineDrafts(lessonId, ai.muc, ai.count, skip);
+    const ds: Draft[] = [];
+    const short: string[] = [];
+    for (const m of MUCS) {
+      if (!plan[m]) continue;
+      const got = machineDrafts(lessonId, m, plan[m], skip);
+      got.forEach((d) => skip.add(d.prompt.trim().toLowerCase()));
+      if (got.length < plan[m]) short.push(`M${m} chỉ còn ${got.length}/${plan[m]}`);
+      ds.push(...got);
+    }
     setDrafts((cur) => [...ds, ...cur]);
     setMsg(ds.length
-      ? { kind: 'ok', text: `Máy đã sinh ${ds.length} câu ${MUC_NAME[ai.muc]} cho bài “${titleOf(lessonId)}” (miễn phí, không cần AI). Bấm lần nữa để có câu khác.` }
-      : { kind: 'info', text: `Bộ sinh câu của app chưa có thêm câu ${MUC_NAME[ai.muc]} cho bài này — thử mức khác, bài khác hoặc dùng AI.` });
+      ? { kind: short.length ? 'info' : 'ok', text: `Máy đã sinh ${ds.length} câu cho bài “${titleOf(lessonId)}” (miễn phí, không cần AI)${short.length ? ` — ${short.join(', ')} câu mới` : ''}. Bấm lần nữa để có câu khác.` }
+      : { kind: 'info', text: 'Bộ sinh câu của app chưa có thêm câu ở các mức đã chọn cho bài này — thử mức khác, bài khác hoặc dùng AI.' });
   };
   const chosen = drafts.filter((d) => d.include);
   const bad = chosen.filter((d) => draftProblem(d));
@@ -264,17 +325,16 @@ export default function MyBankPanel({ subject, grade, lessons, defaultLessonId, 
           {tab === 'ai' && (
             <section className="mb-sec">
               {lessonSelect}
+              <MucMixField mix={mix} onChange={setMix} />
               <div className="mb-grid">
-                <label className="mb-f"><span>Mức</span><select value={ai.muc} onChange={(e) => setAi({ ...ai, muc: Number(e.target.value) as Muc })}>{([1, 2, 3] as Muc[]).map((m) => <option key={m} value={m}>{MUC_NAME[m]}</option>)}</select></label>
-                <label className="mb-f"><span>Số câu</span><select value={ai.count} onChange={(e) => setAi({ ...ai, count: Number(e.target.value) })}>{[3, 5, 8, 10].map((n) => <option key={n} value={n}>{n} câu</option>)}</select></label>
                 <label className="mb-f"><span>Dạng câu</span><select value={ai.kind} onChange={(e) => setAi({ ...ai, kind: e.target.value as typeof ai.kind })}><option value="mix">Trộn trắc nghiệm + tự luận</option><option value="choice">Trắc nghiệm</option><option value="open">Tự luận / bài toán có lời văn</option></select></label>
               </div>
               <label className="mb-check"><input type="checkbox" checked={ai.useDoc && !!doc} disabled={!doc} onChange={(e) => setAi({ ...ai, useDoc: e.target.checked })} />
                 {doc ? <>Dựa vào tài liệu đã nạp: <b>{doc.name}</b></> : <>Chưa nạp tài liệu (mục “Nạp tài liệu”) — AI soạn theo tên bài</>}</label>
               <label className="mb-f"><span>Yêu cầu thêm <small>(không bắt buộc)</small></span><input value={ai.note} maxLength={500} onChange={(e) => setAi({ ...ai, note: e.target.value })} placeholder="VD: bài toán về tiền Việt Nam; ngữ liệu về mùa thu; không dùng số quá 1000" /></label>
               <div className="mb-row">
-                <button type="button" className="btn btn-primary btn-sm" disabled={!!busy || !lessonId} onClick={() => void runAi()}><Sparkles aria-hidden="true" /> Sinh câu bằng AI</button>
-                <button type="button" className="btn btn-outline btn-sm" disabled={!!busy || !lessonId} onClick={runMachine} title="Lấy câu từ bộ sinh câu tự động của app — không cần API key, không tốn lượt"><Cpu aria-hidden="true" /> Sinh bằng máy (miễn phí)</button>
+                <button type="button" className="btn btn-primary btn-sm" disabled={!!busy || !lessonId || !planTotal(plan)} onClick={() => void runAi()} title={MUCS.filter((m) => plan[m]).length > 1 ? `Mỗi mức một lượt AI (${MUCS.filter((m) => plan[m]).length} lượt)` : undefined}><Sparkles aria-hidden="true" /> Sinh câu bằng AI</button>
+                <button type="button" className="btn btn-outline btn-sm" disabled={!!busy || !lessonId || !planTotal(plan)} onClick={runMachine} title="Lấy câu từ bộ sinh câu tự động của app — không cần API key, không tốn lượt"><Cpu aria-hidden="true" /> Sinh bằng máy (miễn phí)</button>
               </div>
               <p className="dash-muted mb-note">Dùng API key Gemini / OpenAI của cô (nối ở Trợ lý AI). AI có thể sai: app tự tính lại phép tính môn Toán và đánh dấu câu nghi sai, cô vẫn cần đọc kỹ trước khi lưu. Chỉ nạp tài liệu cô được phép dùng.</p>
             </section>

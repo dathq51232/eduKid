@@ -815,7 +815,7 @@ function LamBaiContent() {
           <div className="question-top">
             <div className="question-meta">
               <span className="lesson-tag">Câu {current + 1}/{order.length}</span>
-              <span className={`level-chip is-l${q.level}`}>{LEVELS[q.level].code} · {LEVELS[q.level].name}</span>
+              {/* Không hiện mức độ (L1–L5) trên từng câu: em chỉ cần biết câu số mấy; mức vẫn dùng để tính giờ, tính điểm */}
               {q.byTeacher && <span className="qz-by-teacher" title="Câu do thầy cô lớp em soạn">Câu thầy cô gửi</span>}
               {item.status === 'skipped' && !submitted && <span className="skip-tag">Câu để sau</span>}
             </div>

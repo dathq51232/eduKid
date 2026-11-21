@@ -42,7 +42,7 @@ export default function QuestionBankStudio({ classId, grade }: { classId: string
         </div>
       </header>
 
-      <PracticeSets key={`ps-${subject}-${grade}`} classId={classId} subject={subject} lessons={lessons} mine={bank.mine} onForClass={bank.markForClass} />
+      <PracticeSets key={`ps-${subject}-${grade}`} classId={classId} subject={subject} grade={grade} lessons={lessons} mine={bank.mine} onForClass={bank.markForClass} onSaved={bank.add} />
 
       <h2 className="qb-sect">Thêm câu của tôi</h2>
       <ol className="qb-steps" aria-label="Các bước">

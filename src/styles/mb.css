@@ -154,3 +154,39 @@
   :root:not([data-theme="light"]) .qb-fc-tag { background: #1e2a4a; color: #a9c4ff; }
   :root:not([data-theme="light"]) .qb-fc-ico, :root:not([data-theme="light"]) .qb-fc-btn, :root:not([data-theme="light"]) .qb-fc-note svg { color: #a9c4ff; border-color: #a9c4ff; }
 }
+
+/* Trộn 3 mức khi sinh câu (theo số câu hoặc %) */
+.mb-mix { margin: 0 0 10px; padding: 10px 12px; border: 1px solid var(--line, #e5e7eb); border-radius: 12px; display: grid; gap: 8px; min-width: 0; }
+.mb-mix legend { padding: 0 4px; font-weight: 700; }
+.mb-mix-by { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; }
+.mb-mix-by label { display: inline-flex; gap: 5px; align-items: center; }
+.mb-mix-total select { margin-left: 4px; }
+.mb-mix-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mb-mix-cell { display: grid; gap: 3px; justify-items: start; padding: 8px; border-radius: 10px; background: rgb(0 0 0 / .03); }
+.mb-mix-cell small { color: var(--muted); font-size: 12px; }
+.mb-mix-cell input { width: 64px; }
+.mb-mix-cell em { font-style: normal; font-size: 12px; color: var(--muted); }
+.mb-mix-pct { display: inline-flex; align-items: center; gap: 3px; }
+.mb-mix-quick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+.mb-mix-sum { margin: 0; }
+.mb-mix-sum.is-warn { color: #b45309; }
+:root[data-theme="dark"] .mb-mix-cell { background: rgb(255 255 255 / .05); }
+:root[data-theme="dark"] .mb-mix-sum.is-warn { color: #fcd34d; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .mb-mix-cell { background: rgb(255 255 255 / .05); }
+  :root:not([data-theme="light"]) .mb-mix-sum.is-warn { color: #fcd34d; }
+}
+@media (max-width: 520px) { .mb-mix-row { grid-template-columns: 1fr; } }
+
+/* Sửa câu của app ngay trong Kho (lưu thành câu của tôi) */
+.qb-ps-q { display: flex; align-items: flex-start; gap: 6px; }
+.qb-ps-q > label { flex: 1; min-width: 0; }
+.qb-ed-btn { flex: none; }
+.qb-ed-btn svg { width: 14px; height: 14px; }
+.qb-ps-qs li.is-edit { background: rgb(29 78 216 / .04); border-radius: 10px; }
+.qb-ed { margin: 6px 0 10px; display: grid; gap: 8px; }
+.qb-ed-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.qb-ed-bar label { display: inline-flex; gap: 5px; align-items: center; font-weight: 600; }
+.qb-ed-note, .qb-ed-msg { margin: 0; }
+:root[data-theme="dark"] .qb-ps-qs li.is-edit { background: rgb(169 196 255 / .06); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .qb-ps-qs li.is-edit { background: rgb(169 196 255 / .06); } }
