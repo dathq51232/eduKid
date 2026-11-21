@@ -258,3 +258,4 @@
   background: linear-gradient(180deg, color-mix(in srgb, var(--acc) 13%, var(--surface)), var(--surface) 160px);
 }
 .tdy-mine-2 > .uw { align-content: start; } /* 2 ô cao bằng nhau: nội dung dồn lên đầu, không giãn cách giữa các dòng */
+.tdy-head .tdy-share { margin-left: auto; }

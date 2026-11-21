@@ -19,6 +19,7 @@ import type { Contact } from '@/lib/classroom/class-tools';
 import { getViewer } from '@/lib/auth/viewer';
 import { learningGate } from '@/lib/auth/gate';
 import TuitionCard from '@/components/parent/TuitionCard';
+import ShareApp from '@/components/ShareApp';
 import { progressRecap } from '@/lib/parent/recap';
 import type { BillingOffer } from '@/lib/billing';
 import GuidedTour, { TourHelpButton } from '@/components/tour/GuidedTour';
@@ -189,6 +190,8 @@ export default async function ParentsPage() {
               ) : <b className="is-wait">Cô chưa ghi Sổ lớp</b>}
             </div>
           </section>
+
+          <div className="ph-share-row"><span>Thấy app hữu ích? Giới thiệu cho ba mẹ khác trong lớp nhé!</span><ShareApp who="parent" /></div>
 
           <TuitionCard gate={gate} offer={offer} childName={childName} recap={gate.reason === 'trial' || gate.reason === 'expired' ? progressRecap(acts, 14) : null} />
 

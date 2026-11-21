@@ -1,0 +1,25 @@
+/* Nút "Chia sẻ app" (share-) — trang giáo viên, Góc Phụ huynh. Hoạt ảnh chỉ dùng transform / opacity. */
+.share-app { position: relative; display: inline-block; }
+.share-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 0; border-radius: 999px;
+  background: linear-gradient(120deg, #0068ff, #2f8bff); color: #fff; font: inherit; font-weight: 800; font-size: 14px; cursor: pointer;
+  box-shadow: 0 4px 12px rgb(0 104 255 / .3); }
+.share-btn:hover { transform: translateY(-1px); }
+.share-btn svg { width: 16px; height: 16px; }
+.share-pop { position: absolute; right: 0; top: calc(100% + 8px); z-index: 40; width: min(360px, calc(100vw - 32px)); display: grid; gap: 10px;
+  padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink);
+  box-shadow: 0 16px 40px rgb(15 23 42 / .22); animation: share-in .16s ease-out; text-align: left; }
+.share-app.is-left .share-pop { right: auto; left: 0; }
+.share-pop-hd { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.share-x { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 999px; background: var(--surface-2); color: var(--muted); cursor: pointer; }
+.share-x svg { width: 16px; height: 16px; }
+.share-text { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+.share-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.share-act { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--line-strong, var(--line)); border-radius: 12px;
+  background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+.share-act svg { width: 16px; height: 16px; flex: none; }
+.share-act.is-zalo { border-color: #0068ff; background: #0068ff; color: #fff; }
+.share-hint { color: var(--muted); font-size: 12px; }
+@keyframes share-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .share-pop { animation: none; } .share-btn:hover { transform: none; } }
+@media (max-width: 560px) { .share-pop { position: fixed; left: 16px; right: 16px; top: auto; bottom: 16px; width: auto; } }
+.share-hint.is-warn { color: #b45309; }

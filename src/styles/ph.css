@@ -300,3 +300,6 @@
 .ph-recap-stats li { display: grid; justify-items: center; padding: 6px 4px; border-radius: 12px; background: #fff; text-align: center; }
 .ph-recap-stats strong { font-size: 22px; color: #2457c5; line-height: 1.1; }
 .ph-recap-stats span { font-size: 12px; color: #5c4a1e; }
+/* hàng "Chia sẻ app" ngay dưới phần chào */
+.ph-share-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; }
+.ph-share-row > span { color: var(--muted); font-size: 14px; }

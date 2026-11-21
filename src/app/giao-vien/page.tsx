@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import ShareApp from '@/components/ShareApp';
 import Link from 'next/link';
 import type { Inbox } from '@/lib/classroom/messages';
 import { redirect } from 'next/navigation';
@@ -207,6 +208,7 @@ export default async function TeacherHome() {
           <p className="tdy-date">{dateLabel} <span className="tdy-lunar" title={`Ngày ${lunar.day} tháng ${LUNAR_MONTH_NAME[lunar.month]} năm ${canChiYear(lunar.year)}`}><Moon aria-hidden="true" /> {lunar.day}/{lunar.month}{lunar.leap ? ' nhuận' : ''} {canChiYear(lunar.year)}</span></p>
           <h1>Chào {firstName} <span aria-hidden="true">👋</span></h1>
         </div>
+        <ShareApp who="teacher" className="tdy-share" />
       </header>
 
       {!active && (
