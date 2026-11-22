@@ -34,3 +34,10 @@
 .cm-roster thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); box-shadow: inset 0 -1px 0 var(--line); }
 .cm-find-none { padding: 22px 12px; text-align: center; color: var(--muted); }
 @media (max-width: 560px) { .cm-find { flex-wrap: wrap; } .cm-find-n { width: 100%; } }
+/* Lên lớp năm học mới */
+.cm-promote { display: grid; gap: 10px; max-width: 640px; padding: 16px; border: 1.5px solid var(--brand-blue); border-radius: 16px; background: var(--surface); }
+.cm-promote p { margin: 0; line-height: 1.55; }
+.cm-promote label { display: grid; gap: 5px; font-size: 14px; font-weight: 700; color: var(--muted); }
+.cm-promote input { min-height: 44px; max-width: 260px; padding: 8px 12px; border: 1.5px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; font-weight: 700; }
+.class-manager .dash-archive { flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+.class-manager .dash-archive .btn.btn-primary { color: #fff; box-shadow: 0 4px 0 rgb(0 0 0 / .18); }

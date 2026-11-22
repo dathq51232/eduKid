@@ -17,6 +17,8 @@ export default async function TimerPage({ params }: { params: Promise<{ id: stri
     <>
       <LearnHeader />
       <main className="dash wrap ct-page">
+        {/* Trang chiếu bảng: tiêu đề chỉ cho trình đọc màn hình, không chiếm chỗ đồng hồ */}
+        <h1 className="sr-only">Hẹn giờ — lớp {p.cls.name}</h1>
         <ClassTimer className={p.cls.name} />
       </main>
     </>

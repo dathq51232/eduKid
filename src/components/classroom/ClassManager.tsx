@@ -108,6 +108,26 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
     return data;
   };
 
+  // Lên lớp cuối năm: tạo lớp năm học mới (khối +1, mã lớp mới), chuyển các em đang học sang, lưu trữ lớp này.
+  const [promote, setPromote] = useState<{ name: string; err: string } | null>(null);
+  const nextName = cls.name.replace(new RegExp(`^${cls.grade}`), String(cls.grade + 1));
+  const doPromote = async () => {
+    if (!promote) return;
+    setBusy('promote');
+    const { data, error } = await createClient().rpc('teacher_promote_class', { p_class: cls.id, p_name: promote.name.trim() });
+    setBusy(null);
+    if (error) {
+      const m = error.message;
+      const err = m.includes('name_taken') ? `Trường đã có lớp tên “${promote.name.trim()}” — đặt tên khác.`
+        : m.includes('too_many_classes') ? 'Tài khoản đã có 20 lớp — liên hệ quản trị để mở thêm.'
+        : m.includes('Could not find the function') || m.includes('does not exist') ? 'Máy chủ chưa cập nhật (migration 0077) — liên hệ quản trị.'
+        : 'Chưa lên lớp được. Vui lòng thử lại.';
+      setPromote({ ...promote, err });
+      return;
+    }
+    router.push(`/giao-vien/lop/${data as string}`);
+  };
+
   const addStudents = async (e: React.FormEvent) => {
     e.preventDefault();
     const list = parsePastedNames(names);
@@ -326,6 +346,22 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
       </section>
 
       <section className="dash-section no-print dash-archive">
+        {cls.status === 'active' && active.length > 0 && (cls.grade < 5 ? (
+          !promote ? (
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => setPromote({ name: nextName, err: '' })}>Lên lớp năm học mới → lớp {cls.grade + 1}</button>
+          ) : (
+            <div className="cm-promote">
+              <p><b>Lên lớp {cls.grade + 1}:</b> tạo lớp mới có <b>mã lớp mới</b>, chuyển {active.length} em đang học sang. Các em <b>giữ nguyên PIN</b>, kết quả học và liên kết phụ huynh; sơ đồ chỗ ngồi, tổ thi đua, nhóm Zalo được mang sang. Lớp {cls.name} được lưu trữ (vẫn xem lại được).</p>
+              <label>Tên lớp mới<input value={promote.name} maxLength={80} onChange={(e) => setPromote({ name: e.target.value, err: '' })} /></label>
+              {promote.err && <p className="adm-alert is-error" role="alert">{promote.err}</p>}
+              <div className="row-actions">
+                <button type="button" className="btn btn-primary btn-sm" disabled={busy !== null || !promote.name.trim()} onClick={() => void doPromote()}>{busy === 'promote' ? 'Đang chuyển…' : `Xác nhận lên lớp ${promote.name.trim()}`}</button>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setPromote(null)}>Thôi</button>
+              </div>
+              <p className="dash-muted">Sau khi lên lớp: in lại thẻ đăng nhập (mã lớp mới) cho các em.</p>
+            </div>
+          )
+        ) : <p className="dash-muted">Lớp 5 cuối năm: các em ra trường — bấm “Lưu trữ lớp” để cất lớp.</p>)}
         <button type="button" className="btn btn-outline btn-sm" onClick={() => rpc('arch', 'teacher_set_class_status', { p_class: cls.id, p_active: cls.status !== 'active' }, cls.status === 'active' ? 'Đã lưu trữ lớp.' : 'Đã mở lại lớp.')}>
           {cls.status === 'active' ? 'Lưu trữ lớp (cuối năm học)' : 'Mở lại lớp'}
         </button>

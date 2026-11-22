@@ -1,0 +1,24 @@
+/* Sổ chủ nhiệm (scn-) — dùng chung ô nhập/in với hop.css */
+.scn-sec { display: grid; gap: 12px; margin-bottom: 14px; }
+.scn-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.scn-row h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 19px; }
+.scn-row h2 svg { width: 20px; height: 20px; }
+.scn-year { grid-auto-flow: column; align-items: center; }
+.scn-year input { width: 130px; }
+.scn-months { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.scn-months button { position: relative; flex: none; min-width: 52px; min-height: 42px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 800; cursor: pointer; }
+.scn-months button.has::after { content: ""; position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: #22c55e; }
+.scn-months button.is-on { border-color: var(--brand-blue); background: var(--brand-blue); color: #fff; }
+.scn-add { display: flex; gap: 8px; }
+.scn-add select { flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px; border: 1.5px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; }
+.scn-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.scn-card { display: grid; gap: 10px; padding: 14px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface); }
+.scn-card.is-done { opacity: .75; }
+.scn-card header { display: flex; align-items: center; gap: 6px; }
+.scn-card header b { flex: 1; font-size: 16px; }
+.scn-card .mini-btn svg { width: 15px; height: 15px; }
+.scn-note { display: flex; gap: 6px; }
+.scn-note input { flex: 1; min-width: 0; }
+.scn-log { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.scn-log time { color: var(--muted); font-weight: 700; margin-right: 4px; }
+@media print { .scn-pw { break-inside: avoid; margin-bottom: 3mm; } .scn-pw p { margin: 1mm 0; } }
