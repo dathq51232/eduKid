@@ -23,7 +23,7 @@ import '@/styles/tone.css';
 /** Biểu tượng 3D của từng công cụ (public/emoji/tool/<khoá>.webp) */
 export const TOOL_ICON: Record<ToolKey, IconComp> = Object.fromEntries(
   (['so-lop', 'goi-ten', 'ke-hoach', 'giao-bai', 'phieu-bai-tap', 'phieu-chinh-ta', 'lo-hong', 'de-kiem-tra', 'phong-thi', 'nhan-xet', 'ket-qua-truong', 'phieu-tien-bo',
-    'thu-khen', 'lop', 'nhom', 'thi-dua', 'hen-gio', 'danh-ba', 'bai-giang-3d', 'tin-nhan', 'trien-lam', 'luyen-chu', 'bang-trang', 'lich', 'thu-chi', 'quy-lop', 'tieng-anh', 'kho-cau-hoi'] as ToolKey[]).map((k) => [k, icon3d(k)]).concat([['hop-ph', icon3d('g-phu-huynh')], ['chu-nhiem', icon3d('g-tren-lop')]]),
+    'thu-khen', 'lop', 'nhom', 'thi-dua', 'hen-gio', 'danh-ba', 'bai-giang-3d', 'tin-nhan', 'trien-lam', 'luyen-chu', 'bang-trang', 'lich', 'thu-chi', 'quy-lop', 'tieng-anh', 'kho-cau-hoi'] as ToolKey[]).map((k) => [k, icon3d(k)]).concat([['hop-ph', icon3d('g-phu-huynh')], ['chu-nhiem', icon3d('g-tren-lop')], ['van-ban', icon3d('ke-hoach')]]),
 ) as Record<ToolKey, IconComp>;
 /** Biểu tượng của nhóm công cụ (cột trái gọn) */
 export const GROUP_ICON: Record<string, IconComp> = { 'Trên lớp': icon3d('g-tren-lop'), 'Dạy học': icon3d('g-day-hoc'), 'Đánh giá': icon3d('g-danh-gia'), 'Phụ huynh': icon3d('g-phu-huynh'), 'Tiện ích': icon3d('g-tien-ich'), Lớp: icon3d('lop') };

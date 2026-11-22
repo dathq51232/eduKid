@@ -1,0 +1,59 @@
+/* Văn bản & in ấn (vb-) */
+.vb-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 16px; align-items: start; }
+.vb-form, .vb-norm, .vb-xl { display: grid; gap: 14px; }
+.vb-kinds { display: flex; flex-wrap: wrap; gap: 6px; }
+.vb-kinds button { min-height: 40px; padding: 6px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+.vb-kinds button.is-on { border-color: var(--brand-blue); background: var(--brand-blue); color: #fff; }
+.vb-org { padding: 10px 14px; border: 1.5px dashed var(--line-strong); border-radius: 14px; }
+.vb-org summary { cursor: pointer; font-weight: 800; }
+.vb-org summary small { color: var(--muted); font-weight: 600; }
+.vb-org[open] summary { margin-bottom: 10px; }
+.vb-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.vb-fields .vb-wide { grid-column: 1 / -1; }
+.vb label { display: grid; gap: 5px; font-size: 13.5px; font-weight: 700; color: var(--muted); }
+.vb input:not([type="checkbox"]):not([type="file"]), .vb textarea, .vb select { min-height: 44px; padding: 8px 12px; border: 1.5px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; font-weight: 500; }
+.vb textarea { resize: vertical; line-height: 1.5; }
+.vb-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.vb-acts svg { width: 16px; height: 16px; }
+.vb-upload { position: relative; cursor: pointer; }
+.vb-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.vb-check { grid-auto-flow: column; justify-content: start; align-items: center; gap: 8px; }
+.vb-check input { width: 20px; height: 20px; }
+.vb-ok { display: flex; align-items: center; gap: 6px; margin: 0; color: #16a34a; font-weight: 700; }
+.vb-ok svg { width: 18px; height: 18px; }
+.vb-issues { padding: 10px 14px; border-radius: 14px; background: rgb(245 158 11 / .1); border: 1px solid rgb(245 158 11 / .35); }
+.vb-issues summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; cursor: pointer; font-weight: 800; }
+.vb-issues summary svg { width: 18px; height: 18px; }
+.vb-issues summary small { color: var(--muted); font-weight: 600; }
+.vb-issues ul { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; font-size: 14px; }
+.vb-issues li span { display: block; color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vb-issues em { color: var(--muted); }
+.vb-text { width: 100%; font-family: 'Times New Roman', Times, serif !important; font-size: 16px !important; }
+/* Giấy xem trước: A4 thu nhỏ, chữ Times New Roman như bản in */
+.vb-paper-wrap { position: sticky; top: 90px; max-height: calc(100vh - 110px); overflow: auto; padding: 14px; border-radius: 18px; background: var(--surface-2); }
+.vb-paper { box-sizing: border-box; width: 100%; max-width: 640px; min-height: 860px; margin: 0 auto; padding: 46px 34px 46px 64px; background: #fff; color: #000; font-family: 'Times New Roman', Times, serif; font-size: 12px; line-height: 1.3; box-shadow: 0 6px 24px rgb(0 0 0 / .18); }
+.vb-paper [style*="font-size:14pt"] { font-size: 12.5px !important; }
+.vb-paper [style*="font-size:13pt"] { font-size: 11.6px !important; }
+.vb-paper [style*="font-size:12pt"] { font-size: 10.8px !important; }
+.vb-paper [style*="font-size:11pt"] { font-size: 10px !important; }
+.vb-paper table { width: 100%; border-collapse: collapse; }
+.vb-xl-prev { overflow: auto; max-height: 520px; padding: 14px; border-radius: 14px; background: #fff; color: #000; }
+.vb-sheet { font-family: 'Times New Roman', Times, serif; }
+.vb-sheet h2 { margin: 0 0 8px; text-align: center; font-size: 1.35em; text-transform: uppercase; }
+.vb-sheet table { width: 100%; border-collapse: collapse; }
+.vb-sheet th, .vb-sheet td { padding: 3px 5px; vertical-align: middle; text-align: left; }
+.vb-sheet th { font-weight: bold; text-align: center; background: #f2f2f2; }
+.vb-sheet td.n { text-align: right; white-space: nowrap; }
+.vb-sheet.is-grid th, .vb-sheet.is-grid td { border: 1px solid #555; }
+.vb-print { display: none; }
+@media (max-width: 960px) { .vb-grid { grid-template-columns: 1fr; } .vb-paper-wrap { position: static; max-height: none; } }
+@media (max-width: 560px) { .vb-fields { grid-template-columns: 1fr; } .vb-paper { padding: 24px 16px 24px 28px; min-height: 0; } }
+/* In: phần vb-print gắn thẳng vào <body> → ẩn mọi thứ khác; giữ nguyên cỡ chữ pt của văn bản */
+@media print {
+  body:has(> .vb-print) > :not(.vb-print) { display: none !important; }
+  .vb-print { display: block; color: #000; background: #fff; font-family: 'Times New Roman', Times, serif; font-size: 14pt; line-height: 1.25; }
+  .vb-print table { width: 100%; border-collapse: collapse; }
+  .vb-print thead { display: table-header-group; }
+  .vb-print tr { break-inside: avoid; }
+  .vb-print .vb-sheet th { background: #f2f2f2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
