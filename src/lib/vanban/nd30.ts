@@ -86,11 +86,13 @@ export const SAMPLE: Record<DocKind, Pick<Doc, 'subject' | 'to' | 'body' | 'reci
 };
 
 const pad = (n: number) => String(n).padStart(2, '0');
+/** Địa danh gõ toàn chữ thường / IN HOA → viết hoa chữ đầu mỗi tiếng ("đức linh" → "Đức Linh") */
+const properPlace = (s: string) => { const v = s.trim(); return v && (v === v.toLocaleLowerCase('vi') || v === v.toLocaleUpperCase('vi')) ? v.toLocaleLowerCase('vi').replace(/(^|\s)(\p{L})/gu, (_, a: string, b: string) => a + b.toLocaleUpperCase('vi')) : v; };
 /** "Tân Định, ngày 05 tháng 01 năm 2026" — ngày < 10 và tháng 1, 2 thêm số 0 (NĐ30) */
 export function dateLine(place: string, iso: string) {
   const [y, m, d] = iso.split('-').map(Number);
   if (!y || !m || !d) return `${place || '……'}, ngày … tháng … năm ……`;
-  return `${place || '……'}, ngày ${pad(d)} tháng ${m < 3 ? pad(m) : m} năm ${y}`;
+  return `${properPlace(place) || '……'}, ngày ${pad(d)} tháng ${m < 3 ? pad(m) : m} năm ${y}`;
 }
 /** "Số: 05/TB-THTĐ" — số < 10 thêm 0; chưa có số thì chừa trống để vào sổ */
 export function numberLine(kind: DocKind, no: string, abbr: string) {

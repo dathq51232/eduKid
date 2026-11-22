@@ -15,6 +15,7 @@ export const FIELDS: Record<DocKind, Field[]> = {
   'thong-bao': [
     { key: 'what', label: 'Thông báo về việc', placeholder: 'tổ chức họp phụ huynh đầu năm', wide: true },
     { key: 'when', label: WHEN_WHERE, placeholder: '7 giờ 30, Chủ nhật 15/9/2026 tại phòng học lớp 1A1', wide: true },
+    { key: 'purpose', label: 'Mục đích', placeholder: 'tạo sân chơi lành mạnh, rèn luyện sức khoẻ cho học sinh', extra: true },
     { key: 'who', label: 'Đối tượng', placeholder: 'phụ huynh học sinh lớp 1A1', extra: true },
     { key: 'req', label: 'Đề nghị / lưu ý', placeholder: 'đến đúng giờ, mang theo sổ liên lạc', extra: true },
   ],
@@ -44,6 +45,7 @@ export const FIELDS: Record<DocKind, Field[]> = {
     { key: 'when', label: WHEN_WHERE, placeholder: '7 giờ 30, Chủ nhật 15/9/2026 tại phòng học lớp 1A1', wide: true },
     { key: 'who', label: 'Người được mời', placeholder: 'Quý phụ huynh học sinh lớp 1A1', extra: true },
     { key: 'items', label: 'Nội dung (cách nhau dấu ;)', placeholder: 'thông qua kế hoạch năm học; bầu Ban đại diện', extra: true },
+    { key: 'purpose', label: 'Mục đích', placeholder: 'trao đổi, thống nhất kế hoạch phối hợp giáo dục', extra: true },
   ],
   'to-trinh': [
     { key: 'what', label: 'Đề nghị', placeholder: 'mua bổ sung 10 bộ bàn ghế học sinh', wide: true },
@@ -71,96 +73,143 @@ const list = (s?: string) => (s ?? '').split(/[;\n]+/).map((x) => t(x)).filter(B
 
 export type Composed = { subject: string; to?: string; body: string };
 
-/** Tên đơn vị in hoa (dòng đầu văn bản) → cách viết trong câu: "TRƯỜNG TIỂU HỌC TÂN ĐỊNH" → "Trường Tiểu học Tân Định" */
+
+/** Tên riêng (tên trường, địa danh) gõ toàn chữ thường hoặc toàn IN HOA → viết hoa đúng:
+ *  "trường tiểu học tôn đức thắng" / "TRƯỜNG TIỂU HỌC TÔN ĐỨC THẮNG" → "Trường Tiểu học Tôn Đức Thắng"; gõ đúng sẵn thì giữ nguyên */
 export function unitName(raw: string): string {
   const s = raw.trim().replace(/\s+/g, ' ');
-  if (!s || s !== s.toLocaleUpperCase('vi')) return s;
+  if (!s || (s !== s.toLocaleUpperCase('vi') && s !== s.toLocaleLowerCase('vi'))) return s;
   return s.toLocaleLowerCase('vi').replace(/(^|\s)(\p{L})/gu, (_, a: string, b: string) => a + b.toLocaleUpperCase('vi'))
     .replace(/Tiểu Học/g, 'Tiểu học').replace(/Trung Học Cơ Sở/g, 'Trung học cơ sở').replace(/Trung Học Phổ Thông/g, 'Trung học phổ thông')
     .replace(/Mầm Non/g, 'Mầm non').replace(/^Ubnd /, 'UBND ');
 }
 
+/** Năm học theo ngày văn bản: từ tháng 8 sang năm học mới (vd 22/11/2026 → "2026–2027") */
+function schoolYearOf(iso: string) {
+  const [y, m] = iso.split('-').map(Number);
+  if (!y || !m) return '';
+  const a = m >= 8 ? y : y - 1;
+  return `${a}–${a + 1}`;
+}
+
 /**
- * Sinh trích yếu + nội dung. ctx: tên đơn vị / lớp, họ tên và chức vụ người viết (dùng cho đơn, tờ trình).
- * Kết thúc văn bản bằng "./." theo NĐ30.
+ * Sinh trích yếu + nội dung đúng bố cục văn bản hành chính. Chỉ thêm câu chung, đúng thể thức (căn cứ, mục đích,
+ * tổ chức thực hiện…) — không bịa số liệu. ctx: tên đơn vị, lớp, người ký, chức vụ, ngày văn bản (để ghi năm học).
+ * Kết thúc bằng "./." theo NĐ30.
  */
-export function compose(kind: DocKind, f: Facts, ctx: { unit: string; className: string; signer: string; role: string }): Composed {
+export function compose(kind: DocKind, f: Facts, ctx: { unit: string; className: string; signer: string; role: string; date?: string }): Composed {
   const ww = kind === 'don' ? { when: t(f.when), where: '' } : splitWhenWhere(t(f.when));
   const what = t(f.what), when = ww.when, where = cap(t(f.where) || ww.where), who = t(f.who), purpose = t(f.purpose), req = t(f.req), basis = t(f.basis), issues = t(f.issues);
   const items = list(f.items);
+  const isClass = !ctx.unit.trim();
   const unit = unitName(ctx.unit) || `Lớp ${ctx.className}`;
+  const year = schoolYearOf(ctx.date ?? '');
+  const plan = `Kế hoạch giáo dục năm học${year ? ` ${year}` : ''}${isClass ? ' của nhà trường' : ` của ${unit}`}`;
+  const W = what ? low(what) : '';
+  // "tổ chức thi đua…" đã có động từ; "họp phụ huynh…" thì thêm "tổ chức"
+  const act = /^(tổ chức|thực hiện|triển khai|phát động|tham gia)\s/i.test(W) ? W : `tổ chức ${W || 'hoạt động'}`;
   const L: string[] = [];
   switch (kind) {
     case 'thong-bao': {
-      L.push(`${unit} thông báo ${what ? low(what) : 'nội dung'} như sau:`);
+      L.push(`Căn cứ ${plan};`);
+      L.push(`Nhằm ${purpose ? low(purpose) : 'triển khai thực hiện tốt các hoạt động giáo dục theo kế hoạch, tạo môi trường học tập, rèn luyện tích cực cho học sinh'}, ${unit} thông báo ${act} như sau:`);
       let n = 0;
       if (when) L.push(`${++n}. Thời gian: ${when}.`);
       if (where) L.push(`${++n}. Địa điểm: ${where}.`);
-      if (who) L.push(`${++n}. Đối tượng: ${who}.`);
-      if (req) L.push(`Đề nghị ${who ? low(who) : 'các cá nhân có liên quan'} ${low(req)}.`);
-      L.push(`Trân trọng thông báo./.`);
-      return { subject: what ? `Về việc ${low(what)}` : '', body: L.join('\n') };
+      L.push(`${++n}. Đối tượng tham gia: ${who ? who : isClass ? `học sinh ${low(unit)}` : 'học sinh các lớp và các cá nhân có liên quan'}.`);
+      L.push(`${++n}. Nội dung: ${cap(act)}${items.length ? ` (${items.map(low).join('; ')})` : ''}.`);
+      L.push(`${++n}. Tổ chức thực hiện:`);
+      L.push(`- Giáo viên chủ nhiệm phổ biến nội dung thông báo đến học sinh và cha mẹ học sinh; hướng dẫn học sinh chuẩn bị chu đáo, tham gia đầy đủ.`);
+      L.push(`- Các bộ phận liên quan phối hợp chuẩn bị cơ sở vật chất, đảm bảo an toàn, trật tự trong quá trình tổ chức.`);
+      if (req) L.push(`- ${cap(req)}.`);
+      L.push(`Đề nghị các cá nhân, bộ phận có liên quan nghiêm túc thực hiện. Trân trọng thông báo./.`);
+      return { subject: what ? `Về việc ${act}` : '', body: L.join('\n') };
     }
     case 'ke-hoach': {
+      L.push(`Căn cứ ${plan};`);
+      L.push(`${unit} xây dựng kế hoạch ${act} như sau:`);
       L.push('I. MỤC ĐÍCH, YÊU CẦU');
-      L.push(purpose ? `- ${cap(purpose)}.` : `- ${/^tổ chức /i.test(what) ? cap(what) : `Tổ chức ${what ? low(what) : 'hoạt động'}`} đạt hiệu quả, an toàn, thiết thực.`);
-      L.push('- Huy động sự tham gia tích cực của học sinh, phối hợp chặt chẽ với cha mẹ học sinh.');
-      L.push('II. THỜI GIAN, ĐỊA ĐIỂM');
-      if (when) L.push(`- Thời gian: ${when}.`);
-      if (where) L.push(`- Địa điểm: ${where}.`);
-      L.push('III. NỘI DUNG');
-      (items.length ? items : ['nội dung chính của hoạt động']).forEach((x, i) => L.push(`${i + 1}. ${cap(x)}.`));
-      L.push('IV. TỔ CHỨC THỰC HIỆN');
-      L.push(who ? `- ${cap(who)} chịu trách nhiệm triển khai, theo dõi và báo cáo kết quả.` : '- Giáo viên chủ nhiệm triển khai, theo dõi và báo cáo kết quả.');
-      L.push(`Trên đây là kế hoạch ${what ? low(what) : 'thực hiện'}. Trong quá trình thực hiện, nếu có vướng mắc sẽ kịp thời báo cáo để điều chỉnh./.`);
-      return { subject: what ? cap(what) : '', body: L.join('\n') };
+      L.push('1. Mục đích');
+      L.push(purpose ? `- ${cap(purpose)}.` : `- ${cap(act)} nhằm tạo sân chơi bổ ích, góp phần giáo dục toàn diện cho học sinh.`);
+      L.push('- Phát huy tính tích cực, chủ động của học sinh; tăng cường phối hợp giữa nhà trường, giáo viên và cha mẹ học sinh.');
+      L.push('2. Yêu cầu');
+      L.push('- Tổ chức nghiêm túc, đúng kế hoạch, đảm bảo an toàn, tiết kiệm, hiệu quả.');
+      L.push('- Có sự phân công cụ thể, phối hợp chặt chẽ giữa các cá nhân, bộ phận liên quan.');
+      if (when || where) {
+        L.push('II. THỜI GIAN, ĐỊA ĐIỂM');
+        if (when) L.push(`- Thời gian: ${when}.`);
+        if (where) L.push(`- Địa điểm: ${where}.`);
+      }
+      const r = (i: number) => ['I', 'II', 'III', 'IV', 'V', 'VI'][i];
+      let k = when || where ? 2 : 1;
+      L.push(`${r(k++)}. NỘI DUNG`);
+      (items.length ? items : [act]).forEach((x, i) => L.push(`${i + 1}. ${cap(x)}.`));
+      L.push(`${r(k++)}. TỔ CHỨC THỰC HIỆN`);
+      L.push(who ? `- ${cap(who)}: chịu trách nhiệm triển khai, theo dõi và tổng hợp kết quả.` : '- Giáo viên chủ nhiệm: triển khai kế hoạch đến học sinh, theo dõi và tổng hợp kết quả.');
+      L.push('- Các bộ phận liên quan: phối hợp chuẩn bị điều kiện, cơ sở vật chất theo phân công.');
+      L.push('- Cha mẹ học sinh: phối hợp động viên, hỗ trợ học sinh tham gia.');
+      L.push(`Trên đây là kế hoạch ${act}. Trong quá trình thực hiện, nếu có vướng mắc, các cá nhân, bộ phận kịp thời báo cáo để điều chỉnh cho phù hợp./.`);
+      return { subject: what ? cap(act) : '', body: L.join('\n') };
     }
     case 'bao-cao': {
-      L.push(`${basis ? `Thực hiện ${basis}, ` : ''}${unit} báo cáo ${what ? low(what) : 'kết quả'}${when ? ` ${when}` : ''} như sau:`);
+      L.push(basis ? `Thực hiện ${basis};` : `Căn cứ ${plan};`);
+      L.push(`${unit} báo cáo ${W || 'kết quả thực hiện nhiệm vụ'} như sau:`);
       L.push('I. KẾT QUẢ ĐẠT ĐƯỢC');
       (items.length ? items : ['kết quả chính']).forEach((x, i) => L.push(`${i + 1}. ${cap(x)}.`));
-      if (issues) { L.push('II. TỒN TẠI, HẠN CHẾ'); list(issues).forEach((x) => L.push(`- ${cap(x)}.`)); }
-      if (req) { L.push(`${issues ? 'III' : 'II'}. PHƯƠNG HƯỚNG, ĐỀ XUẤT`); list(req).forEach((x) => L.push(`- ${cap(x)}.`)); }
-      L.push(`Trên đây là báo cáo ${what ? low(what) : 'kết quả'} của ${unit}./.`);
+      L.push('II. TỒN TẠI, HẠN CHẾ VÀ NGUYÊN NHÂN');
+      (issues ? list(issues) : ['một số nội dung còn cần tiếp tục theo dõi, hỗ trợ trong thời gian tới']).forEach((x) => L.push(`- ${cap(x)}.`));
+      L.push('III. PHƯƠNG HƯỚNG, ĐỀ XUẤT');
+      (req ? list(req) : ['tiếp tục phát huy kết quả đạt được, khắc phục tồn tại, hạn chế', 'tăng cường phối hợp với cha mẹ học sinh trong giáo dục học sinh']).forEach((x) => L.push(`- ${cap(x)}.`));
+      L.push(`Trên đây là báo cáo ${W || 'kết quả thực hiện nhiệm vụ'} của ${unit}./.`);
       return { subject: what ? cap(what) : '', body: L.join('\n') };
     }
     case 'bien-ban': {
       if (when) L.push(`Thời gian: ${when}.`);
       if (where) L.push(`Địa điểm: ${where}.`);
       L.push(`Thành phần: ${who || '…'}.`);
-      L.push(`Chủ trì: ${ctx.signer.trim() || '…'}${ctx.role.trim() ? ` – ${low(ctx.role.trim())}` : ''}.`);
+      L.push(`Chủ trì: ${ctx.signer.trim() || '…'}${ctx.role.trim() ? ` – ${low(ctx.role.trim())}` : ''}. Thư ký: …`);
       L.push('Nội dung:');
       (items.length ? items : ['nội dung cuộc họp']).forEach((x, i) => L.push(`${i + 1}. ${cap(x)}.`));
+      L.push('Ý kiến thảo luận:');
+      L.push('- Các thành viên tham dự trao đổi, thống nhất các nội dung trên.');
       L.push('Kết luận:');
-      L.push(`- ${req ? cap(req) : 'Các thành viên thống nhất với các nội dung trên'}.`);
+      L.push(`- ${req ? cap(req) : 'Thống nhất các nội dung đã thảo luận; các cá nhân, bộ phận liên quan triển khai thực hiện'}.`);
       L.push('Buổi họp kết thúc lúc … giờ … cùng ngày. Biên bản đã được đọc lại cho các thành viên cùng nghe và thống nhất thông qua./.');
       return { subject: what ? cap(what) : '', body: L.join('\n') };
     }
     case 'giay-moi': {
-      L.push(`${unit} trân trọng kính mời ${who ? who : 'Quý vị'} đến dự ${what ? low(what) : 'buổi làm việc'}.`);
+      const guest = who || (isClass ? `Quý phụ huynh học sinh ${low(unit)}` : 'Quý vị');
+      L.push(`Thực hiện ${plan}, ${unit} ${act}.`);
+      L.push(`${unit} trân trọng kính mời ${guest} đến dự.`);
       if (when) L.push(`Thời gian: ${when}.`);
       if (where) L.push(`Địa điểm: ${where}.`);
-      if (items.length) L.push(`Nội dung: ${items.map(low).join('; ')}.`);
-      L.push('Rất mong Quý vị sắp xếp thời gian đến dự đầy đủ, đúng giờ./.');
-      return { subject: what ? `Dự ${low(what)}` : '', to: who || undefined, body: L.join('\n') };
+      L.push(`Nội dung: ${items.length ? items.map(low).join('; ') : `theo chương trình ${W || 'buổi làm việc'}`}.`);
+      if (purpose) L.push(`Mục đích: ${low(purpose)}.`);
+      L.push('Sự có mặt của Quý vị góp phần quan trọng vào thành công của chương trình. Rất mong Quý vị sắp xếp thời gian đến dự đầy đủ, đúng giờ.');
+      L.push('Trân trọng kính mời./.');
+      return { subject: what ? `Dự ${W}` : '', to: guest, body: L.join('\n') };
     }
     case 'to-trinh': {
       // chức danh người phê duyệt giữ viết hoa (Hiệu trưởng, Ban giám hiệu…)
       const boss = who ? cap(who) : 'Hiệu trưởng';
+      L.push(`Căn cứ ${plan};`);
       L.push('Căn cứ tình hình thực tế của đơn vị;');
-      L.push(`${unit} kính trình ${boss} xem xét việc ${what ? low(what) : 'đề nghị dưới đây'}, cụ thể như sau:`);
-      if (purpose) L.push(`1. Lý do: ${cap(purpose)}.`);
-      L.push(`${purpose ? 2 : 1}. Nội dung đề nghị: ${what ? cap(what) : '…'}.`);
-      if (req) L.push(`${purpose ? 3 : 2}. Kinh phí dự kiến: ${req}.`);
+      L.push(`${unit} kính trình ${boss} xem xét việc ${W || 'đề nghị dưới đây'}, cụ thể như sau:`);
+      let n = 0;
+      if (purpose) L.push(`${++n}. Lý do: ${cap(purpose)}.`);
+      L.push(`${++n}. Nội dung đề nghị: ${what ? cap(what) : '…'}.`);
+      if (req) L.push(`${++n}. Kinh phí dự kiến: ${req}.`);
+      L.push(`${++n}. Hiệu quả: việc ${W || 'đề nghị'} nhằm đáp ứng yêu cầu thực tế, đảm bảo điều kiện cho hoạt động dạy và học.`);
       L.push(`Kính trình ${boss} xem xét, phê duyệt./.`);
-      return { subject: what ? `Về việc đề nghị ${low(what)}` : '', to: who ? cap(who) : undefined, body: L.join('\n') };
+      return { subject: what ? `Về việc đề nghị ${W}` : '', to: boss, body: L.join('\n') };
     }
     case 'don': {
       L.push(`Tôi tên là: ${ctx.signer.trim() || '…'}.`);
       L.push(`Chức vụ: ${ctx.role.trim() ? `${ctx.role.trim()}${ctx.className ? ` lớp ${ctx.className}` : ''}` : '…'}.`);
+      if (ctx.unit.trim()) L.push(`Đơn vị công tác: ${unit}.`);
       L.push(`Nay tôi làm đơn này kính đề nghị Hiệu trưởng cho tôi được nghỉ phép ${when ? when : '…'}.`);
       L.push(`Lý do: ${purpose ? low(purpose) : '…'}.`);
-      if (who) L.push(`Trong thời gian nghỉ, tôi đã bàn giao công việc cho ${who}.`);
+      L.push(who ? `Trong thời gian nghỉ, tôi đã bàn giao công việc cho ${who} và sẽ phối hợp khi cần.` : 'Trong thời gian nghỉ, tôi sẽ bàn giao công việc theo sự phân công của nhà trường.');
       L.push('Tôi xin hứa sẽ đi làm lại đúng thời hạn. Kính mong Hiệu trưởng xem xét, chấp thuận./.');
       return { subject: '', body: L.join('\n') };
     }

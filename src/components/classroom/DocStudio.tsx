@@ -205,7 +205,7 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
   );
   const generate = () => {
     if (dirtyBody() && !window.confirm('Thay nội dung đang soạn bằng nội dung tự sinh?')) return;
-    const c = compose(doc.kind, facts, { unit: org.name, className, signer: org.signer, role: org.role });
+    const c = compose(doc.kind, facts, { unit: org.name, className, signer: org.signer, role: org.role, date: doc.date });
     setDoc((d) => ({ ...d, body: c.body, subject: c.subject || d.subject, to: c.to ?? d.to }));
     setLastGen(c.body);
     setFlash('Đã sinh nội dung — xem bản xem trước bên phải, sửa lại nếu cần.');
