@@ -56,6 +56,41 @@ export function checkText(text: string): Issue[] {
   return out;
 }
 
+/* ---------------------------------------------------------- ô bảng tính */
+const CELL_RULES = new Set(['space', 'trim', 'before-punct', 'after-punct', 'paren', 'bullet', 'motto', 'nation', 'date', 'date-pad']);
+/** Viết hoa chữ đầu mỗi tiếng: "nguyễn  văn AN" → "Nguyễn Văn An" */
+export const titleCaseVi = (s: string) => s.trim().replace(/\s+/g, ' ').toLocaleLowerCase('vi').replace(/(^|\s)(\p{L})/gu, (_, a: string, b: string) => a + b.toLocaleUpperCase('vi'));
+/** Cột họ tên: tiêu đề có "họ", "tên", "học sinh", "phụ huynh", "giáo viên", "người" */
+export const isNameHeader = (h: string) => /(họ\s*(và|&)?\s*tên|^tên\b|học sinh|phụ huynh|giáo viên|người\s)/i.test(h.trim()) && !/(trường|lớp|môn|bài|đăng nhập|tài khoản)/i.test(h);
+
+/** Chuẩn hoá một ô: dấu cách, dấu câu, ngày "5/1/2026" → "05/01/2026"; cột họ tên viết hoa từng tiếng */
+export function fixCell(v: string, name = false): string {
+  if (!v || !v.trim()) return v;
+  let s = v.replace(/\r\n?/g, '\n').split('\n').map((line) => {
+    let t = line;
+    for (const r of RULES) if (r.fix && CELL_RULES.has(r.id) && r.find.test(t)) t = r.fix(t);
+    return t;
+  }).join('\n');
+  // ngày đứng riêng trong ô: 5/1/2026, 5-1-2026, 5.1.2026 → 05/01/2026
+  s = s.replace(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/, (m, d: string, mo: string, y: string) => (Number(d) <= 31 && Number(mo) <= 12 ? `${d.padStart(2, '0')}/${mo.padStart(2, '0')}/${y}` : m));
+  if (name && /^[\p{L}\s.'-]+$/u.test(s) && s.trim().split(/\s+/).length <= 6) s = titleCaseVi(s);
+  return s;
+}
+
+/** Chuẩn hoá cả bảng: tự nhận dòng tiêu đề (dòng đầu có ≥ 2 ô chữ) để biết cột họ tên. changes: [dòng, cột, cũ, mới] */
+export function fixRows(rows: string[][]): { rows: string[][]; changes: [number, number, string, string][] } {
+  const hi = rows.findIndex((r) => r.filter((c) => c?.trim()).length >= 2);
+  const nameCols = new Set<number>();
+  if (hi >= 0) rows[hi].forEach((h, c) => { if (h && isNameHeader(h)) nameCols.add(c); });
+  const changes: [number, number, string, string][] = [];
+  const out = rows.map((r, ri) => r.map((v, ci) => {
+    const nv = fixCell(v ?? '', ri > hi && nameCols.has(ci));
+    if (nv !== (v ?? '')) changes.push([ri, ci, v ?? '', nv]);
+    return nv;
+  }));
+  return { rows: out, changes };
+}
+
 /** Sửa tự động mọi lỗi sửa được; trả về văn bản mới và số chỗ đã sửa */
 export function fixText(text: string): { text: string; fixed: number } {
   let fixed = 0;

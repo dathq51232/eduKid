@@ -57,3 +57,9 @@
   .vb-print tr { break-inside: avoid; }
   .vb-print .vb-sheet th { background: #f2f2f2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+/* Chuẩn hoá Excel: danh sách ô đã sửa */
+.vb-xlfix { display: grid; gap: 10px; padding: 14px; border-radius: 14px; background: rgb(34 197 94 / .08); border: 1px solid rgb(34 197 94 / .3); }
+.vb-xlfix p { margin: 0; }
+.vb-xlfix summary { cursor: pointer; font-weight: 700; }
+.vb-xlfix ul { display: grid; gap: 4px; max-height: 260px; overflow: auto; margin: 8px 0 0; padding: 0; list-style: none; font-size: 14px; }
+.vb-xlfix s { color: var(--muted); }
