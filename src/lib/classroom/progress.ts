@@ -73,7 +73,8 @@ export type ClassLessonRow = {
 
 export function lessonsOfClass(results: LessonResult[]): ClassLessonRow[] {
   const byLesson = new Map<string, LessonResult[]>();
-  for (const r of results) byLesson.set(r.lesson_code, [...(byLesson.get(r.lesson_code) ?? []), r]);
+  // push thay vì chép lại mảng mỗi dòng (trước đây O(n²) với vài nghìn kết quả)
+  for (const r of results) { const l = byLesson.get(r.lesson_code); if (l) l.push(r); else byLesson.set(r.lesson_code, [r]); }
   const rows: ClassLessonRow[] = [];
   for (const [code, list] of byLesson) {
     const bestByStudent = new Map<string, number>();

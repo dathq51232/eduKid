@@ -1,35 +1,23 @@
 import Link from 'next/link';
 import { BarChart3 } from 'lucide-react';
-import CsvButton from '@/components/classroom/CsvButton';
-import { fmtDateTime, lessonsOfClass, percent, subjectLabel, type LessonResult } from '@/lib/classroom/progress';
+import ClassResultsCsv from '@/components/classroom/ClassResultsCsv';
+import { fmtDateTime, subjectLabel, type ClassLessonRow } from '@/lib/classroom/progress';
 import '@/styles/dash.css';
 import '@/styles/mini.css';
 import '@/styles/score.css';
 
-// Tiến độ theo bài của cả lớp (máy chủ dựng sẵn; dữ liệu đã được RLS giới hạn trong lớp của giáo viên).
-export default function ClassProgress({ classId, className, results, names }: { classId: string; className: string; results: LessonResult[]; names: Map<string, string> }) {
-  const rows = lessonsOfClass(results);
+// Tiến độ theo bài của cả lớp. rows do database tổng hợp sẵn (teacher_class_lesson_stats, migration 0078);
+// CSV chi tiết chỉ tải khi cô bấm nút.
+export default function ClassProgress({ classId, className, rows, names }: { classId: string; className: string; rows: ClassLessonRow[]; names: Map<string, string> }) {
   const total = names.size;
-  const csvRows = results.map((r) => [
-    names.get(r.student_id) ?? '',
-    r.lesson_title ?? r.lesson_code,
-    subjectLabel(r.subject_code),
-    r.score,
-    r.total,
-    percent(r.score, r.total),
-    r.points,
-    r.duration_ms ? Math.round(r.duration_ms / 1000) : null,
-    fmtDateTime(r.created_at),
-  ]);
 
   return (
     <section className="dash-section class-progress no-print" aria-labelledby="class-progress-title">
       <div className="dash-card-head">
         <h2 id="class-progress-title"><BarChart3 aria-hidden="true" /> Tiến độ theo bài</h2>
-        <CsvButton
+        <ClassResultsCsv
           filename={`ket-qua-lop-${className.replace(/[^\p{L}\p{N}]+/gu, '-')}.csv`}
-          header={['Học sinh', 'Bài', 'Môn', 'Số câu đúng', 'Tổng số câu', '% đúng', 'Điểm', 'Thời gian (giây)', 'Lúc làm']}
-          rows={csvRows}
+          students={[...names].map(([id, name]) => ({ id, name }))}
         />
       </div>
       {rows.length === 0 ? (

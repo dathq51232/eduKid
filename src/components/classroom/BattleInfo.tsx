@@ -26,7 +26,8 @@ export default function BattleInfo({ roomId, submitted }: { roomId: string; subm
   useEffect(() => { void load(); }, [load, submitted]);
   useEffect(() => {
     if (!submitted || b?.phase !== 'cho') return;
-    const t = setInterval(() => void load(), 15_000);
+    // chỉ hỏi khi tab đang mở (em chuyển sang app khác thì thôi gọi máy chủ)
+    const t = setInterval(() => { if (document.visibilityState === 'visible') void load(); }, 15_000);
     return () => clearInterval(t);
   }, [submitted, b?.phase, load]);
 

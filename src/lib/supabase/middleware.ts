@@ -23,7 +23,7 @@ export async function updateSession(request: NextRequest) {
   // (mỗi lần chuyển trang đỡ một lượt gọi mạng). Trang đọc người dùng từ token (getViewer), API quyền cao xác thực lại bằng getUser (getVerifiedViewer); RLS vẫn kiểm tra.
   const path = request.nextUrl.pathname;
   const gated = GATED.includes(path) || path.startsWith('/hoc-sinh/de/');
-  const exp = sessionExpiry(request);
+  const { exp, sub } = sessionInfo(request);
   const fresh = Boolean(exp && exp * 1000 - Date.now() > 5 * 60_000);
   if (!gated && fresh) return response;
 
@@ -43,9 +43,15 @@ export async function updateSession(request: NextRequest) {
   // Trang học + token còn hạn: hỏi thẳng cổng học (my_learning_gate) — PostgREST tự kiểm chữ ký token, nên khỏi gọi
   // Supabase Auth trước (mỗi lần học sinh mở bài đỡ một vòng mạng). Token giả / bị thu hồi -> hàm báo lỗi -> đi đường đầy đủ bên dưới.
   let gate: Gate | null = null;
+  let fromCache = false;
   if (gated && fresh) {
-    const { data, error } = await supabase.rpc('my_learning_gate');
-    gate = parseGate(data, error);
+    // Đã kiểm tra "còn được học" trong 5 phút gần đây (cookie có ký số, gắn với đúng tài khoản): khỏi hỏi database.
+    gate = sub ? await readGateCache(request, sub) : null;
+    fromCache = Boolean(gate);
+    if (!gate) {
+      const { data, error } = await supabase.rpc('my_learning_gate');
+      gate = parseGate(data, error);
+    }
   }
 
   if (!gate) {
@@ -60,6 +66,12 @@ export async function updateSession(request: NextRequest) {
       return redirect;
     }
     if (data.user && gated) gate = await learningGate(supabase, data.user.id);
+  }
+  // Chỉ nhớ kết quả "còn được học": hết hạn thì không nhớ, để đóng phí xong là học được ngay.
+  if (gate?.active && !fromCache) {
+    const uid = sub ?? null;
+    const v = uid ? await signGate(uid, gate) : null;
+    if (v) response.cookies.set(GATE_COOKIE, v, { path: '/', httpOnly: true, sameSite: 'lax', secure: true, maxAge: GATE_TTL_S });
   }
 
   // Học sinh: (1) hết hạn học phí -> chỉ còn trang của em + trang đóng phí; (2) chỉ học nội dung KHỐI CỦA MÌNH.
@@ -129,22 +141,59 @@ export function requiresLogin(pathname: string): boolean {
   return LOGIN_REQUIRED.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-/** Hạn của access token trong cookie phiên Supabase (giây, epoch) — chỉ đọc để quyết định có cần làm mới phiên không,
- *  KHÔNG dùng để xác thực. Cookie có thể bị chia nhỏ (.0, .1…) và có tiền tố "base64-". */
-function sessionExpiry(request: NextRequest): number | null {
+/** Hạn (giây, epoch) và mã người dùng (sub) của access token trong cookie phiên Supabase — chỉ đọc để quyết định có cần
+ *  làm mới phiên / dùng cookie cổng học không, KHÔNG dùng để xác thực. Cookie có thể bị chia nhỏ (.0, .1…) và có tiền tố "base64-". */
+function sessionInfo(request: NextRequest): { exp: number | null; sub: string | null } {
   try {
     const all = request.cookies.getAll().filter((c) => c.name.startsWith('sb-') && /-auth-token(\.\d+)?$/.test(c.name));
-    if (!all.length) return null;
+    if (!all.length) return { exp: null, sub: null };
     const raw = all.sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true })).map((c) => c.value).join('');
-    let json = raw;
-    if (raw.startsWith('base64-')) {
-      const b64 = raw.slice(7).replace(/-/g, '+').replace(/_/g, '/');
-      const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4));
-      json = new TextDecoder().decode(Uint8Array.from(bin, (ch) => ch.charCodeAt(0)));
-    }
-    const v = JSON.parse(json) as { expires_at?: number } | null;
-    return typeof v?.expires_at === 'number' ? v.expires_at : null;
+    const json = raw.startsWith('base64-') ? b64decode(raw.slice(7)) : raw;
+    const v = JSON.parse(json) as { expires_at?: number; access_token?: string } | null;
+    let sub: string | null = null;
+    const part = v?.access_token?.split('.')[1];
+    if (part) { const p = JSON.parse(b64decode(part)) as { sub?: unknown }; if (typeof p.sub === 'string') sub = p.sub; }
+    return { exp: typeof v?.expires_at === 'number' ? v.expires_at : null, sub };
   } catch {
-    return null;
+    return { exp: null, sub: null };
   }
+}
+
+function b64decode(s: string): string {
+  const b64 = s.replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4));
+  return new TextDecoder().decode(Uint8Array.from(bin, (ch) => ch.charCodeAt(0)));
+}
+
+/* ---------------------------------------------------------- cookie cổng học (giảm gọi my_learning_gate) */
+// Giá trị: "<sub>.<is_student 0|1>.<grade|->.<hết hạn ms>.<HMAC-SHA256>" — ký bằng khoá bí mật của máy chủ nên không tự sửa được;
+// gắn với sub của phiên → đổi tài khoản trên cùng máy thì cookie cũ vô hiệu. Không có khoá bí mật thì không dùng cookie này.
+const GATE_COOKIE = 'edukid_gate';
+const GATE_TTL_S = 300;
+const gateSecret = () => process.env.GATE_CACHE_SECRET || process.env.STUDENT_PIN_PEPPER || '';
+
+async function hmac(text: string): Promise<string | null> {
+  const secret = gateSecret();
+  if (!secret) return null;
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(text)));
+  return btoa(String.fromCharCode(...sig)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function signGate(sub: string, gate: Gate): Promise<string | null> {
+  const body = `${sub}.${gate.is_student ? 1 : 0}.${gate.grade ?? '-'}.${Date.now() + GATE_TTL_S * 1000}`;
+  const sig = await hmac(body);
+  return sig ? `${body}.${sig}` : null;
+}
+
+async function readGateCache(request: NextRequest, sub: string): Promise<Gate | null> {
+  const v = request.cookies.get(GATE_COOKIE)?.value;
+  if (!v) return null;
+  const parts = v.split('.');
+  if (parts.length !== 5 || parts[0] !== sub || Number(parts[3]) < Date.now()) return null;
+  const sig = await hmac(parts.slice(0, 4).join('.'));
+  if (!sig || sig !== parts[4]) return null;
+  const isStudent = parts[1] === '1';
+  const grade = parts[2] === '-' ? null : Number(parts[2]);
+  return { is_student: isStudent, grade, active: true, reason: isStudent ? 'paid' : 'not_student', until: null };
 }

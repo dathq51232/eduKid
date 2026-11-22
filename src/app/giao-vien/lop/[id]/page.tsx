@@ -9,7 +9,9 @@ import FeeWaivers from '@/components/classroom/FeeWaivers';
 import ClassFeePlan from '@/components/classroom/ClassFeePlan';
 import ClassProgress from '@/components/classroom/ClassProgress';
 import { ClassLeaderboard } from '@/components/achievements/LiveAchievements';
-import type { LessonResult } from '@/lib/classroom/progress';
+import { lessonsOfClass, type ClassLessonRow, type LessonResult } from '@/lib/classroom/progress';
+
+type StatRow = { lesson_code: string; title: string; subject: string | null; students: number; attempts: number; avg_best: number; low_students: string[] | null; last: string };
 import { getViewer } from '@/lib/auth/viewer';
 import { createClient } from '@/lib/supabase/server';
 import { classRoster, warmClass } from '@/lib/classroom/class-page';
@@ -37,7 +39,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   const supabase = await createClient();
   // Mọi truy vấn chạy cùng một lượt (trước đây 4 lượt nối tiếp). Lớp không được phân công: RLS / hàm teacher_* không trả gì.
   const rosterP = classRoster(id);
-  const [{ data: cls }, { data: roster }, { data: summary }, { data: pinRows, error: pinErr }, { data: billing }, { data: planRows }, { data: lockedRows }, { data: results }] = await Promise.all([
+  const [{ data: cls }, { data: roster }, { data: summary }, { data: pinRows, error: pinErr }, { data: billing }, { data: planRows }, { data: lockedRows }, { data: lessonRows }] = await Promise.all([
     supabase.from('classes').select('id, name, grade, join_code, status').eq('id', id).maybeSingle(),
     rosterP,
     supabase.rpc('class_results_summary', { p_class: id }),
@@ -50,15 +52,17 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
     // em đang tạm khoá vì hết chỗ trong gói (migration 0045); chưa chạy migration thì bỏ qua
     supabase.rpc('teacher_locked_students', { p_class: id }),
     // RLS chỉ trả kết quả của học sinh thuộc lớp giáo viên được phân công; chờ danh sách em rồi hỏi ngay
-    rosterP.then(async ({ data }) => {
-      const ids = ((data ?? []) as RosterRow[]).filter((r) => r.membership_status === 'active').map((r) => r.student_id);
-      return ids.length
-        ? await supabase.from('lesson_results')
-            .select('id, student_id, lesson_code, lesson_title, subject_code, grade, muc, score, total, points, duration_ms, created_at')
-            .in('student_id', ids)
-            .order('created_at', { ascending: false })
-            .limit(5000)
-        : { data: [] };
+    // Tiến độ theo bài: database tổng hợp sẵn (0078) → vài chục dòng thay vì 5.000 dòng kết quả.
+    // Chưa chạy migration 0078 thì quay về cách cũ (tải kết quả rồi gom ở máy chủ web).
+    supabase.rpc('teacher_class_lesson_stats', { p_class: id }).then(async ({ data, error }) => {
+      if (!error) return { data: ((data ?? []) as StatRow[]).map((r): ClassLessonRow => ({ lesson_code: r.lesson_code, title: r.title, subject: r.subject, students: r.students, attempts: r.attempts, avgBestPercent: r.avg_best, lowStudents: r.low_students ?? [], last: r.last })) };
+      const { data: rows } = await rosterP;
+      const ids = ((rows ?? []) as RosterRow[]).filter((r) => r.membership_status === 'active').map((r) => r.student_id);
+      if (!ids.length) return { data: [] as ClassLessonRow[] };
+      const { data: res } = await supabase.from('lesson_results')
+        .select('id, student_id, lesson_code, lesson_title, subject_code, grade, muc, score, total, points, duration_ms, created_at')
+        .in('student_id', ids).order('created_at', { ascending: false }).limit(5000);
+      return { data: lessonsOfClass((res ?? []) as LessonResult[]) };
     }),
   ]);
   if (!cls) notFound(); // lớp không tồn tại HOẶC không được phân công — trả cùng một kết quả
@@ -107,7 +111,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
           </section>
         )}
         <ClassLeaderboard classId={id} />
-        <ClassProgress classId={id} className={(cls as { name: string }).name} results={(results ?? []) as LessonResult[]} names={names} />
+        <ClassProgress classId={id} className={(cls as { name: string }).name} rows={lessonRows ?? []} names={names} />
       </main>
     </>
   );
