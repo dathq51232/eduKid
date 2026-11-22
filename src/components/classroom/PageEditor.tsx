@@ -2,13 +2,16 @@
 
 // Xem trước & sửa thẳng trên trang A4 (Văn bản & in ấn) — thiết kế cho thầy cô lớn tuổi: nút to có chữ, phóng to được,
 // đường đỏ mảnh đánh dấu chỗ sang trang (ước tính). Đầu trang, chân trang, số trang dùng chung cho In / PDF và Word.
-import { useEffect, useRef, useState } from 'react';
-import { AlignCenter, AlignJustify, AlignLeft, AlignRight, ArrowLeft, Bold, FileText, Italic, Minus, Plus, Printer, Redo2, Underline, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Italic, Minus, Plus, Redo2, Underline, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
 import type { PageDeco } from '@/lib/docx-write';
+import type { Sheet } from '@/lib/xlsx-read';
 
 export type PageSetup = Required<Omit<PageDeco, 'landscape'>> & { landscape: boolean; fontSize: number };
 /** Mặc định theo NĐ30: số trang giữa lề trên, không hiện ở trang đầu */
 export const DEFAULT_SETUP: PageSetup = { header: '', footer: '', pageNum: 'top', pageFmt: 'num', hideFirst: true, landscape: false, fontSize: 14 };
+/** Bảng tính: "Trang 1/3" dưới chân (bảng nhiều trang dễ xếp thứ tự) */
+export const SHEET_SETUP: PageSetup = { ...DEFAULT_SETUP, pageNum: 'bottom', pageFmt: 'trang-tong', hideFirst: false };
 
 const cssStr = (s: string) => `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, ' ')}"`;
 const numCss = (f: PageSetup['pageFmt']) => (f === 'trang' ? '"Trang " counter(page)' : f === 'trang-tong' ? '"Trang " counter(page) "/" counter(pages)' : 'counter(page)');
@@ -101,6 +104,16 @@ export function ZoomBar({ zoom, onZoom }: { zoom: number; onZoom: (z: number) =>
   );
 }
 
+/** Zoom vừa khung lúc mở (điện thoại / máy tính bảng thu nhỏ trang) */
+function useFitZoom(ref: React.RefObject<HTMLElement | null>, pageMm: number) {
+  const [zoom, setZoom] = useState(0.9);
+  useEffect(() => {
+    const w = ref.current?.closest('.vbe-main')?.clientWidth ?? 900;
+    setZoom(Math.min(1, Math.max(0.5, +((w - 40) / (pageMm * 3.78)).toFixed(1))));
+  }, [ref, pageMm]);
+  return [zoom, setZoom] as const;
+}
+
 /* ---------------------------------------------------------- sửa văn bản trên trang */
 const CMDS: { cmd: string; label: string; Icon: typeof Bold }[] = [
   { cmd: 'bold', label: 'Đậm', Icon: Bold },
@@ -114,48 +127,133 @@ const CMDS: { cmd: string; label: string; Icon: typeof Bold }[] = [
   { cmd: 'redo', label: 'Làm lại', Icon: Redo2 },
 ];
 
-export function DocEditor({ initialHtml, title, onBack, onPrint, onWord, initialSetup }: {
-  initialHtml: string; title: string; onBack: () => void;
-  onPrint: (html: string, setup: PageSetup) => void; onWord: (html: string, setup: PageSetup) => void; initialSetup?: Partial<PageSetup>;
-}) {
-  const [setup, setSetup] = useState<PageSetup>({ ...DEFAULT_SETUP, ...initialSetup });
-  const [zoom, setZoom] = useState(1);
+/**
+ * Sửa văn bản trên trang. initialHtml chỉ đặt lúc mở (đổi văn bản thì đổi `key`); mỗi lần sửa báo onChange(html) để
+ * nơi gọi giữ bản mới nhất (chuyển tab, in, tải Word đều dùng bản này). Thanh nút hành động do nơi gọi truyền vào.
+ */
+export function DocEditor({ initialHtml, setup, onChange, actions }: { initialHtml: string; setup: PageSetup; onChange: (html: string) => void; actions?: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
-  // nội dung chỉ đặt một lần — sau đó thầy cô sửa thẳng trên trang (không ghi đè khi giao diện vẽ lại)
-  useEffect(() => { if (ref.current) ref.current.innerHTML = initialHtml; }, [initialHtml]);
-  // vừa khung màn hình lúc mở (điện thoại / máy tính bảng thu nhỏ trang)
-  useEffect(() => { const w = ref.current?.closest('.vbe-scroll')?.clientWidth ?? 800; setZoom(Math.min(1, Math.max(0.5, +((w - 24) / 800).toFixed(1)))); }, []);
-  const html = () => `<html><body>${ref.current?.innerHTML ?? ''}</body></html>`;
-  const run = (cmd: string) => { ref.current?.focus(); document.execCommand(cmd, false); };
+  const [zoom, setZoom] = useFitZoom(ref, setup.landscape ? 297 : 210);
+  // bản mới nhất + hàm báo lên luôn ở ref: khi đóng trình sửa (chuyển tab) vẫn báo đủ chỗ vừa sửa, không phụ thuộc lần vẽ lại
+  const latest = useRef(initialHtml);
+  const report = useRef(onChange);
+  report.current = onChange;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ đặt nội dung lúc mở; sau đó thầy cô sửa thẳng trên trang
+  useEffect(() => { if (ref.current) ref.current.innerHTML = initialHtml; }, []);
+  // báo ngay mỗi lần sửa (không chờ): chuyển tab liền sau khi gõ thì trình sửa ở tab kia vẫn mở đúng bản mới nhất
+  const changed = () => {
+    latest.current = ref.current?.innerHTML ?? latest.current;
+    report.current(latest.current);
+  };
+  const run = (cmd: string) => { ref.current?.focus(); document.execCommand(cmd, false); changed(); };
 
   return (
-    <section className="vbe">
-      <div className="vbe-top">
-        <button type="button" className="btn btn-outline btn-sm" onClick={onBack}><ArrowLeft aria-hidden="true" /> Quay lại</button>
-        <h2>{title}</h2>
-        <div className="vbe-out">
-          <button type="button" className="btn btn-primary" onClick={() => onWord(html(), setup)}><FileText aria-hidden="true" /> Tải Word</button>
-          <button type="button" className="btn btn-outline" onClick={() => onPrint(html(), setup)}><Printer aria-hidden="true" /> In / lưu PDF</button>
-        </div>
+    <div className="vbe-main">
+      <div className="vbe-tools" role="toolbar" aria-label="Định dạng chữ">
+        {actions}
+        {CMDS.map(({ cmd, label, Icon }) => (
+          // onMouseDown + preventDefault: giữ nguyên vùng chữ đang bôi đen khi bấm nút
+          <button key={cmd} type="button" onMouseDown={(e) => { e.preventDefault(); run(cmd); }}><Icon aria-hidden="true" /> {label}</button>
+        ))}
+        <ZoomBar zoom={zoom} onZoom={setZoom} />
       </div>
-      <div className="vbe-body">
-        <aside className="vbe-side">
-          <SetupPanel setup={setup} onChange={setSetup} />
-          <p className="vbe-tip">Bấm vào chữ trên trang để sửa như trong Word. Đường đỏ mảnh là chỗ sang trang (ước tính).</p>
-        </aside>
-        <div className="vbe-main">
-          <div className="vbe-tools" role="toolbar" aria-label="Định dạng chữ">
-            {CMDS.map(({ cmd, label, Icon }) => (
-              // onMouseDown + preventDefault: giữ nguyên vùng chữ đang bôi đen khi bấm nút
-              <button key={cmd} type="button" onMouseDown={(e) => { e.preventDefault(); run(cmd); }}><Icon aria-hidden="true" /> {label}</button>
-            ))}
-            <ZoomBar zoom={zoom} onZoom={setZoom} />
-          </div>
-          <Paper setup={setup} zoom={zoom}>
-            <div ref={ref} className="vbe-edit" contentEditable suppressContentEditableWarning spellCheck={false} aria-label="Nội dung văn bản — bấm để sửa" />
-          </Paper>
-        </div>
+      <Paper setup={setup} zoom={zoom}>
+        <div ref={ref} className="vbe-edit" contentEditable suppressContentEditableWarning spellCheck={false} onInput={changed} aria-label="Nội dung văn bản — bấm để sửa" />
+      </Paper>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------- sửa bảng tính trên trang */
+export type SheetView = { title: string; head: number; grid: boolean };
+export const DEFAULT_VIEW: SheetView = { title: '', head: 1, grid: true };
+
+export function trimSheet(s: Sheet): string[][] {
+  let rows = s.rows.map((r) => r.map((c) => c ?? ''));
+  while (rows.length && rows[rows.length - 1].every((c) => !c.trim())) rows = rows.slice(0, -1);
+  const width = Math.max(0, ...rows.map((r) => { let w = r.length; while (w && !r[w - 1]?.trim()) w--; return w; }));
+  return rows.map((r) => Array.from({ length: width }, (_, i) => r[i] ?? ''));
+}
+const isNum = (c: string) => /^-?[\d.,]+%?$/.test(c.trim());
+/** dòng đầu chỉ có một ô chữ (tiêu đề gộp, vd "DANH SÁCH LỚP 1A1") → dùng làm tiêu đề in */
+const autoTitleOf = (rows: string[][]) => (rows.length > 2 && (rows[0]?.length ?? 0) > 1 && rows[0].filter((c) => c.trim()).length === 1 ? rows[0].find((c) => c.trim())!.trim() : '');
+const fontFor = (cols: number) => (cols > 14 ? 8 : cols > 10 ? 9 : cols > 7 ? 10.5 : 12);
+
+function spans(merges: Sheet['merges']) {
+  const span = new Map<string, [number, number]>(), hidden = new Set<string>();
+  for (const [r1, c1, r2, c2] of merges) {
+    span.set(`${r1},${c1}`, [r2 - r1 + 1, c2 - c1 + 1]);
+    for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) if (r !== r1 || c !== c1) hidden.add(`${r},${c}`);
+  }
+  return { span, hidden };
+}
+
+/** HTML bảng để in (thead lặp lại mỗi trang) */
+export function sheetHtml(sheet: Sheet, view: SheetView): string {
+  const rows = trimSheet(sheet);
+  if (!rows.length) return '';
+  const { span, hidden } = spans(sheet.merges);
+  const auto = autoTitleOf(rows), start = auto ? 1 : 0, h = Math.min(start + view.head, rows.length), t = view.title.trim() || auto;
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>');
+  const tr = (r: string[], i: number, tag: 'th' | 'td') => `<tr>${r.map((c, j) => {
+    if (hidden.has(`${i},${j}`)) return '';
+    const sp = span.get(`${i},${j}`);
+    return `<${tag}${sp ? ` rowspan="${sp[0]}" colspan="${sp[1]}"` : ''}${tag === 'td' && isNum(c) ? ' class="n"' : ''}>${esc(c)}</${tag}>`;
+  }).join('')}</tr>`;
+  return `<div class="vb-sheet${view.grid ? ' is-grid' : ''}" style="font-size:${fontFor(rows[0].length)}pt">${t ? `<h2>${esc(t)}</h2>` : ''}<table><thead>${rows.slice(start, h).map((r, i) => tr(r, i + start, 'th')).join('')}</thead><tbody>${rows.slice(h).map((r, i) => tr(r, i + h, 'td')).join('')}</tbody></table></div>`;
+}
+
+/** Sửa bảng: bấm ô để sửa chữ; chọn trang tính, tiêu đề, số dòng tên cột lặp lại, kẻ khung */
+export function SheetEditor({ sheets, idx, onIdx, onSheets, view, onView, setup, actions }: {
+  sheets: Sheet[]; idx: number; onIdx: (i: number) => void; onSheets: (s: Sheet[]) => void;
+  view: SheetView; onView: (v: SheetView) => void; setup: PageSetup; actions?: React.ReactNode;
+}) {
+  const sheet = sheets[idx] ?? sheets[0];
+  const rows = useMemo(() => (sheet ? trimSheet(sheet) : []), [sheet]);
+  const { span, hidden } = useMemo(() => spans(sheet?.merges ?? []), [sheet]);
+  const ref = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useFitZoom(ref, setup.landscape ? 297 : 210);
+  if (!sheet) return null;
+  const auto = autoTitleOf(rows), start = auto ? 1 : 0, h = Math.min(start + view.head, rows.length), cols = rows[0]?.length ?? 0;
+  const edit = (r: number, c: number, v: string) => {
+    if (rows[r]?.[c] === v) return;
+    const next = sheet.rows.map((row, i) => (i === r ? Array.from({ length: Math.max(row.length, c + 1) }, (_, j) => (j === c ? v : row[j] ?? '')) : row));
+    onSheets(sheets.map((s) => (s === sheet ? { ...s, rows: next } : s)));
+  };
+  const cell = (c: string, r: number, j: number, Tag: 'th' | 'td') => {
+    if (hidden.has(`${r},${j}`)) return null;
+    const sp = span.get(`${r},${j}`);
+    return (
+      <Tag key={j} rowSpan={sp?.[0]} colSpan={sp?.[1]} className={Tag === 'td' && isNum(c) ? 'n' : undefined}
+        contentEditable suppressContentEditableWarning onBlur={(e) => edit(r, j, e.currentTarget.innerText.replace(/\n$/, ''))}>{c}</Tag>
+    );
+  };
+  return (
+    <div className="vbe-main" ref={ref}>
+      <div className="vbe-tools">
+        {actions}
+        {sheets.length > 1 && (
+          <label className="vbe-pick">Trang tính
+            <select value={sheets.indexOf(sheet)} onChange={(e) => onIdx(Number(e.target.value))}>{sheets.map((s, i) => <option key={i} value={i}>{s.name}</option>)}</select>
+          </label>
+        )}
+        <label className="vbe-pick">Dòng tên cột lặp lại
+          <select value={view.head} onChange={(e) => onView({ ...view, head: Number(e.target.value) })}>{[0, 1, 2, 3, 4].map((n) => <option key={n} value={n}>{n === 0 ? 'Không lặp' : `${n} dòng`}</option>)}</select>
+        </label>
+        <label className="vbe-pick vbe-checkbox"><input type="checkbox" checked={view.grid} onChange={(e) => onView({ ...view, grid: e.target.checked })} /> Kẻ khung</label>
+        <ZoomBar zoom={zoom} onZoom={setZoom} />
       </div>
-    </section>
+      <label className="vbe-title">Tiêu đề in ở đầu bảng<input value={view.title} maxLength={150} placeholder={auto || sheet.name} onChange={(e) => onView({ ...view, title: e.target.value })} /></label>
+      <Paper setup={{ ...setup, fontSize: fontFor(cols) }} zoom={zoom}>
+        <div className={`vb-sheet${view.grid ? ' is-grid' : ''}`}>
+          {(view.title.trim() || auto) && <h2>{view.title.trim() || auto}</h2>}
+          <table>
+            <thead>{rows.slice(start, h).map((r, i) => <tr key={i}>{r.map((c, j) => cell(c, i + start, j, 'th'))}</tr>)}</thead>
+            <tbody>{rows.slice(h).map((r, i) => <tr key={i + h}>{r.map((c, j) => cell(c, i + h, j, 'td'))}</tr>)}</tbody>
+          </table>
+        </div>
+      </Paper>
+      <p className="vbe-tip">Bấm vào ô trên trang để sửa chữ. {rows.length} dòng × {cols} cột · chữ {fontFor(cols)}pt cho vừa trang.</p>
+    </div>
   );
 }

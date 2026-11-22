@@ -48,3 +48,15 @@
 .vbe-page .vb-sheet td[contenteditable]:focus, .vbe-page .vb-sheet th[contenteditable]:focus { outline: 2px solid #3b82f6; outline-offset: -2px; background: #eff6ff; }
 @media (max-width: 1100px) { .vbe-body { grid-template-columns: 1fr; } .vbe-side { position: static; } }
 @media (max-width: 560px) { .vbe-zoom { margin-left: 0; } .vbe-tools > button { flex: 1 1 calc(50% - 6px); justify-content: center; } }
+/* Chuẩn hoá / Cấu hình in ấn: thanh mở file, ô dán chữ, chọn trang tính */
+.vbe-open { min-height: 52px; font-size: 17px; }
+.vbe-doc { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 16px; }
+.vbe-doc svg { width: 20px; height: 20px; }
+.vbe-paste { display: grid; gap: 10px; padding: 12px 14px; border: 1.5px dashed var(--line-strong); border-radius: 14px; }
+.vbe-paste summary { cursor: pointer; font-weight: 800; font-size: 16px; }
+.vbe-paste[open] summary { margin-bottom: 4px; }
+.vbe-paste .btn { justify-self: start; }
+.vbe-pick { display: inline-flex !important; align-items: center; gap: 6px !important; font-size: 15px !important; color: var(--ink) !important; }
+.vbe-pick select { min-height: 46px; }
+.vbe-checkbox input { width: 22px; height: 22px; }
+.vbe-title { max-width: 520px; }

@@ -1,29 +1,43 @@
 'use client';
 
-// Văn bản & in ấn: (1) Mẫu văn bản đúng thể thức NĐ30 → Word / PDF; (2) Chuẩn hoá văn bản dán vào hoặc file .docx;
-// (3) In bảng Excel đẹp (khổ ngang, lặp dòng tiêu đề, vừa chiều ngang). Mọi xử lý chạy trên máy cô — file không gửi đi đâu.
-import { useEffect, useMemo, useState } from 'react';
+// Văn bản & in ấn — 3 bước đơn giản cho thầy cô:
+//   (1) Mẫu văn bản đúng thể thức NĐ30;
+//   (2) Chuẩn hoá: tải file Word / Excel (hoặc dán chữ) → hiện ngay bản đã chuẩn hoá trên trang A4 để xem & sửa;
+//   (3) Cấu hình in ấn (Word và Excel): đầu trang, chân trang, số trang, khổ giấy → In / PDF, tải Word / Excel.
+// "Tài liệu đang làm" dùng chung giữa (2) và (3). Mọi xử lý chạy trên máy cô — file không gửi đi đâu.
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCircle2, ClipboardCheck, Copy, FileSpreadsheet, FileText, PenLine, Printer, Sparkles, Upload, Wand2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ClipboardCheck, FileSpreadsheet, FileText, PenLine, Printer, Sparkles, Upload, Wand2, X } from 'lucide-react';
 import { KINDS, SAMPLE, buildHtml, fileName, kindOf, type Doc, type DocKind, type Org } from '@/lib/vanban/nd30';
-import { checkText, fixRows, fixText, type Issue } from '@/lib/vanban/check';
+import { checkText, fixInline, fixRows, fixText, type Issue } from '@/lib/vanban/check';
 import { buildXlsx, range, sheetName } from '@/lib/xlsx';
-import { htmlToDocx } from '@/lib/docx-write';
-import { readDocx } from '@/lib/docx-read';
+import { htmlToDocx, type DocImage } from '@/lib/docx-write';
+import { readDocxFull } from '@/lib/docx-read';
 import { readXlsxAll, type Sheet } from '@/lib/xlsx-read';
 import { asciiFilename } from '@/lib/filename';
-import { DEFAULT_SETUP, DocEditor, Paper, SetupPanel, ZoomBar, pageCss, type PageSetup } from '@/components/classroom/PageEditor';
-import '@/styles/vbe.css';
+import { DEFAULT_SETUP, DEFAULT_VIEW, DocEditor, SHEET_SETUP, SetupPanel, SheetEditor, pageCss, sheetHtml, trimSheet, type PageSetup, type SheetView } from '@/components/classroom/PageEditor';
 import '@/styles/adm.css';
 import '@/styles/btn.css';
 import '@/styles/dash.css';
 import '@/styles/mini.css';
 import '@/styles/ct.css';
 import '@/styles/vb.css';
+import '@/styles/vbe.css';
 
-type Tab = 'mau' | 'chuan-hoa' | 'excel';
+type Tab = 'mau' | 'chuan-hoa' | 'in-an';
+type Change = { sheet: string; r: number; c: number; from: string; to: string };
+/** Tài liệu đang làm (dùng chung Chuẩn hoá ↔ Cấu hình in ấn). id đổi = mở trình sửa mới */
+type Work =
+  | { id: number; kind: 'doc'; name: string; file: string; html: string; images: Map<string, DocImage>; fixed: number }
+  | { id: number; kind: 'sheet'; name: string; file: string; sheets: Sheet[]; changes: Change[] };
+
 const ORG_KEY = 'van-ban:don-vi';
 const today = () => new Date().toISOString().slice(0, 10);
+const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const bodyOf = (html: string) => /<body>([\s\S]*)<\/body>/.exec(html)?.[1] ?? html;
+const baseName = (n: string) => n.replace(/\.(docx|xlsx)$/i, '') || 'van-ban';
+let seq = 0;
 
 function download(bytes: Uint8Array | string, name: string, type: string) {
   const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type }));
@@ -32,19 +46,74 @@ function download(bytes: Uint8Array | string, name: string, type: string) {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-const bodyOf = (html: string) => /<body>([\s\S]*)<\/body>/.exec(html)?.[1] ?? html;
+/** Văn bản thuần → các đoạn NĐ30 (căn đều, lùi đầu dòng 1 cm, cách đoạn 6pt) */
+const paraHtml = (text: string) => text.split('\n').filter((l) => l.trim()).map((l) => `<p style="margin:0;margin-top:6pt;text-align:justify;text-indent:1cm;line-height:1.2">${l.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`).join('');
+/** Ô chữ dạng số (không có số 0 ở đầu như số điện thoại) → ghi lại thành số trong file Excel */
+const asCell = (v: string): string | number => (/^-?(0|[1-9]\d*)(\.\d+)?$/.test(v.trim()) && v.trim().length < 16 ? Number(v.trim()) : v);
+/** Chữ thuần của HTML (mỗi đoạn / ô một dòng) — để kiểm tra lỗi còn lại và đưa vào mẫu */
+function htmlText(html: string) {
+  const d = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+  return [...d.body.querySelectorAll('p, li, td, th, h1, h2, h3')].filter((e) => !e.querySelector('p, li, td')).map((e) => e.textContent ?? '').filter((t) => t.trim()).join('\n');
+}
+/** Sửa chữ trong HTML của file Word, giữ nguyên đậm / nghiêng / bảng / hình. Trả về số đoạn chữ đã sửa */
+function fixHtml(html: string): { html: string; fixed: number } {
+  const d = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+  const walk = d.createTreeWalker(d.body, NodeFilter.SHOW_TEXT);
+  let fixed = 0;
+  let prev: Node | null = null;
+  for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+    const v = n.nodeValue ?? '';
+    let nv = fixInline(v);
+    // dấu cách trước dấu câu nằm ở chỗ giáp hai đoạn định dạng khác nhau: "<b>thông báo</b> , các"
+    if (prev && /\S$/.test(prev.nodeValue ?? '') && /^\s+[,.;:!?)]/.test(nv)) nv = nv.replace(/^\s+/, '');
+    if (nv !== v) { n.nodeValue = nv; fixed++; }
+    if (nv.trim()) prev = n;
+  }
+  return { html: d.body.innerHTML, fixed };
+}
+const MIME: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', bmp: 'image/bmp' };
+
+/** Đọc file Word / Excel thành tài liệu đang làm; normalize = chuẩn hoá luôn (tab Chuẩn hoá) */
+async function loadWork(file: File, normalize: boolean): Promise<Work> {
+  const buf = await file.arrayBuffer();
+  if (/\.xlsx$/i.test(file.name)) {
+    const all = (await readXlsxAll(buf)).filter((s) => !s.hidden && s.rows.some((r) => r.some((c) => c?.trim())));
+    if (!all.length) throw new Error('File không có trang tính nào có dữ liệu.');
+    const changes: Change[] = [];
+    const sheets = all.map((s) => {
+      if (!normalize) return s;
+      const f = fixRows(s.rows);
+      f.changes.forEach(([r, c, from, to]) => changes.push({ sheet: s.name, r, c, from, to }));
+      return { ...s, rows: f.rows };
+    });
+    return { id: ++seq, kind: 'sheet', name: file.name, file: baseName(file.name), sheets, changes };
+  }
+  if (!/\.docx$/i.test(file.name)) throw new Error('Chỉ mở được file Word .docx hoặc Excel .xlsx (file .doc / .xls: mở bằng Word / Excel rồi “Lưu thành” định dạng mới).');
+  const full = await readDocxFull(buf);
+  // hình trong file: hiện trên trang bằng đường dẫn tạm, xuất Word lại bằng nội dung gốc (khoá data-img)
+  const images = new Map<string, DocImage>();
+  for (const [path, bytes] of full.media) images.set(path, { bytes, mime: MIME[path.split('.').pop()?.toLowerCase() ?? ''] ?? 'image/png' });
+  let html = full.blocks.map((b) => b.html).join('');
+  html = html.replace(/<img data-img="([^"]+)"/g, (m, p: string) => {
+    const img = images.get(p);
+    return img ? `${m} src="${URL.createObjectURL(new Blob([img.bytes as BlobPart], { type: img.mime }))}"` : m;
+  });
+  let fixed = 0;
+  if (normalize) { const r = fixHtml(html); html = r.html; fixed = r.fixed; }
+  return { id: ++seq, kind: 'doc', name: file.name, file: baseName(file.name), html, images, fixed };
+}
 
 export default function DocStudio({ teacher, className }: { teacher: string; className: string }) {
   const [tab, setTab] = useState<Tab>('mau');
   const [org, setOrg] = useState<Org>({ parent: '', name: '', abbr: '', place: '', role: 'Giáo viên chủ nhiệm', onBehalf: '', signer: teacher });
   const [doc, setDoc] = useState<Doc>({ kind: 'thong-bao', no: '', date: today(), ...SAMPLE['thong-bao'] });
   const [printHtml, setPrintHtml] = useState<{ html: string; css: string } | null>(null);
-  // đang sửa thẳng trên trang (từ Mẫu văn bản hoặc Chuẩn hoá)
-  const [editing, setEditing] = useState<{ html: string; title: string; file: string } | null>(null);
   const [flash, setFlash] = useState('');
-  // bảng đã chuẩn hoá ở tab Chuẩn hoá → mở sẵn ở tab In bảng Excel
-  const [xlIn, setXlIn] = useState<{ file: string; sheets: Sheet[] } | null>(null);
+  // tài liệu đang làm + cài đặt trang + cách hiện bảng
+  const [work, setWork] = useState<Work | null>(null);
+  const [setup, setSetup] = useState<PageSetup>(DEFAULT_SETUP);
+  const [view, setView] = useState<SheetView>(DEFAULT_VIEW);
+  const [sheetIdx, setSheetIdx] = useState(0);
 
   // thông tin đơn vị lưu trên máy cô (dùng lại cho mọi văn bản)
   useEffect(() => { try { const v = localStorage.getItem(ORG_KEY); if (v) setOrg((o) => ({ ...o, ...(JSON.parse(v) as Partial<Org>) })); } catch { /* bỏ qua */ } }, []);
@@ -58,15 +127,41 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
 
   const html = useMemo(() => buildHtml(org, doc), [org, doc]);
   const issues = useMemo(() => checkText([doc.subject, doc.to, doc.body, doc.recipients].join('\n')), [doc]);
-  const print = (h: string, setup: PageSetup) => { setPrintHtml({ html: h, css: pageCss(setup) }); window.setTimeout(() => { window.print(); setPrintHtml(null); }, 80); };
-  const word = (h: string, setup: PageSetup, file: string, title: string) => { download(htmlToDocx(h, new Map(), { title, fontSize: setup.fontSize, deco: setup }), `${file}.docx`, DOCX); setFlash('Đã tải file Word — mở bằng Word để ký, đóng dấu hoặc sửa tiếp.'); };
-  const saveWord = () => word(html, DEFAULT_SETUP, fileName(doc), kindOf(doc.kind).label);
+
+  /** Mở tài liệu mới: đặt lại cài đặt trang (bảng nhiều cột → khổ ngang) */
+  const open = (w: Work) => {
+    setWork(w); setSheetIdx(0); setView(DEFAULT_VIEW);
+    setSetup(w.kind === 'sheet' ? { ...SHEET_SETUP, landscape: (trimSheet(w.sheets[0])[0]?.length ?? 0) > 6 } : DEFAULT_SETUP);
+  };
+  const close = () => { if (window.confirm('Đóng tài liệu này? Những chỗ đã sửa sẽ không được giữ (hãy tải về trước).')) setWork(null); };
+  const docHtml = useCallback((h: string) => setWork((w) => (w && w.kind === 'doc' && w.html !== h ? { ...w, html: h } : w)), []);
+  const setSheets = (sheets: Sheet[]) => setWork((w) => (w && w.kind === 'sheet' ? { ...w, sheets } : w));
+
+  const print = (h: string, s: PageSetup) => { setPrintHtml({ html: h, css: pageCss(s) }); window.setTimeout(() => { window.print(); setPrintHtml(null); }, 80); };
+  const saveWord = (h: string, s: PageSetup, file: string, title: string, images: Map<string, DocImage> = new Map()) => {
+    download(htmlToDocx(`<html><body>${bodyOf(h)}</body></html>`, images, { title, fontSize: s.fontSize, deco: s }), `${file}.docx`, DOCX);
+    setFlash('Đã tải file Word — mở bằng Word để ký, đóng dấu hoặc sửa tiếp.');
+  };
+  const saveExcel = (w: Extract<Work, { kind: 'sheet' }>) => {
+    const used = new Set<string>();
+    download(buildXlsx(w.sheets.map((s) => ({ name: sheetName(s.name, used), rows: s.rows.map((r) => r.map((c) => asCell(c ?? ''))), merges: s.merges.map(([r1, c1, r2, c2]) => range(r1, c1, r2, c2)) }))), `${w.file}-da-sua.xlsx`, XLSX);
+    setFlash('Đã tải file Excel (giữ chữ, số, ô gộp; màu nền, công thức, độ rộng cột gốc không giữ lại).');
+  };
+  const printWork = () => {
+    if (!work) return;
+    if (work.kind === 'doc') print(work.html, setup);
+    else print(sheetHtml(work.sheets[sheetIdx] ?? work.sheets[0], view), setup);
+  };
   const fixDoc = () => {
     let total = 0;
     const f = (s: string) => { const r = fixText(s); total += r.fixed; return r.text; };
     setDoc((d) => ({ ...d, subject: f(d.subject), to: f(d.to), body: f(d.body), recipients: f(d.recipients) }));
     setFlash(total ? `Đã sửa ${total} chỗ.` : 'Không có lỗi sửa tự động được.');
   };
+
+  const tabBtn = (t: Tab, label: string, Icon: typeof FileText) => (
+    <button type="button" role="tab" aria-selected={tab === t} className={tab === t ? 'is-on' : ''} onClick={() => setTab(t)}><Icon aria-hidden="true" /> {label}</button>
+  );
 
   return (
     <div className="ct vb">
@@ -75,19 +170,14 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
           <p className="ct-sub">Lớp {className} · thể thức theo Nghị định 30/2020/NĐ-CP · file xử lý ngay trên máy, không gửi đi đâu</p>
           <h1>Văn bản & in ấn</h1>
         </div>
-        <div className="ct-seg" role="tablist" aria-label="Chọn việc" hidden={Boolean(editing)}>
-          <button type="button" role="tab" aria-selected={tab === 'mau'} className={tab === 'mau' ? 'is-on' : ''} onClick={() => setTab('mau')}><FileText aria-hidden="true" /> Mẫu văn bản</button>
-          <button type="button" role="tab" aria-selected={tab === 'chuan-hoa'} className={tab === 'chuan-hoa' ? 'is-on' : ''} onClick={() => setTab('chuan-hoa')}><Wand2 aria-hidden="true" /> Chuẩn hoá</button>
-          <button type="button" role="tab" aria-selected={tab === 'excel'} className={tab === 'excel' ? 'is-on' : ''} onClick={() => setTab('excel')}><FileSpreadsheet aria-hidden="true" /> In bảng Excel</button>
+        <div className="ct-seg" role="tablist" aria-label="Chọn việc">
+          {tabBtn('mau', 'Mẫu văn bản', FileText)}
+          {tabBtn('chuan-hoa', 'Chuẩn hoá', Wand2)}
+          {tabBtn('in-an', 'Cấu hình in ấn', Printer)}
         </div>
       </div>
       {flash && <p className="adm-alert is-ok no-print" role="status" onClick={() => setFlash('')}>{flash}</p>}
 
-      {editing ? (
-        <DocEditor initialHtml={editing.html} title={editing.title}
-          onBack={() => { if (window.confirm('Quay lại? Những chỗ vừa sửa trên trang sẽ không được giữ (hãy Tải Word hoặc In trước).')) setEditing(null); }}
-          onPrint={(h, s) => print(h, s)} onWord={(h, s) => word(h, s, editing.file, editing.title)} />
-      ) : <>
       {tab === 'mau' && (
         <div className="vb-grid no-print">
           <section className="dash-card vb-form">
@@ -115,9 +205,9 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
               {doc.kind !== 'don' && doc.kind !== 'bien-ban' && <label className="vb-wide">Nơi nhận (mỗi nơi một dòng)<textarea rows={3} value={doc.recipients} maxLength={1000} onChange={(e) => setD({ recipients: e.target.value })} /></label>}
             </div>
             <div className="vb-acts">
-              <button type="button" className="btn btn-primary btn-sm" onClick={saveWord}><FileText aria-hidden="true" /> Tải Word</button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => saveWord(html, DEFAULT_SETUP, fileName(doc), kindOf(doc.kind).label)}><FileText aria-hidden="true" /> Tải Word</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => print(html, DEFAULT_SETUP)}><Printer aria-hidden="true" /> In / lưu PDF</button>
-              <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditing({ html: bodyOf(html), title: kindOf(doc.kind).label, file: fileName(doc) })}><PenLine aria-hidden="true" /> Sửa trực tiếp trên trang</button>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => { open({ id: ++seq, kind: 'doc', name: kindOf(doc.kind).label, file: fileName(doc), html: bodyOf(html), images: new Map(), fixed: 0 }); setTab('in-an'); }}><PenLine aria-hidden="true" /> Sửa trên trang & cấu hình in</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={fixDoc}><Sparkles aria-hidden="true" /> Sửa lỗi trình bày</button>
             </div>
             <IssueList issues={issues} />
@@ -128,11 +218,49 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
         </div>
       )}
 
-      {tab === 'chuan-hoa' && <Normalizer onEdit={(h) => setEditing({ html: h, title: 'Văn bản đã chuẩn hoá', file: 'van-ban-chuan-hoa' })} onPrintSheets={(x) => { setXlIn(x); setTab('excel'); }} onUse={(text) => { setDoc((d) => ({ ...d, body: stripHeader(text) })); setTab('mau'); setFlash('Đã đưa nội dung vào mẫu — chọn loại văn bản, điền trích yếu rồi tải Word / PDF.'); }} onFlash={setFlash} />}
+      {tab === 'chuan-hoa' && (
+        <NormalizeTab work={work} onOpen={open} onClose={close} onFlash={setFlash}>
+          {work && (work.kind === 'doc' ? (
+            <DocEditor key={work.id} initialHtml={work.html} setup={setup} onChange={docHtml} actions={<>
+              <button type="button" className="vbe-primary" onClick={() => setTab('in-an')}><Printer aria-hidden="true" /> Cấu hình in ấn <ArrowRight aria-hidden="true" /></button>
+              <button type="button" onClick={() => saveWord(work.html, setup, `${work.file}-chuan-hoa`, work.name, work.images)}><FileText aria-hidden="true" /> Tải Word</button>
+              <button type="button" onClick={() => { setDoc((d) => ({ ...d, body: stripHeader(htmlText(work.html)) })); setTab('mau'); setFlash('Đã đưa nội dung vào mẫu — chọn loại văn bản, điền trích yếu rồi tải Word / PDF.'); }}>Đưa vào mẫu văn bản</button>
+            </>} />
+          ) : (
+            <SheetEditor sheets={work.sheets} idx={sheetIdx} onIdx={setSheetIdx} onSheets={setSheets} view={view} onView={setView} setup={setup} actions={<>
+              <button type="button" className="vbe-primary" onClick={() => setTab('in-an')}><Printer aria-hidden="true" /> Cấu hình in ấn <ArrowRight aria-hidden="true" /></button>
+              <button type="button" onClick={() => saveExcel(work)}><FileSpreadsheet aria-hidden="true" /> Tải Excel</button>
+            </>} />
+          ))}
+        </NormalizeTab>
+      )}
 
-      {tab === 'excel' && <ExcelPrint key={xlIn?.file ?? ''} initial={xlIn} onPrint={print} />}
-
-      </>}
+      {tab === 'in-an' && (
+        <section className="dash-card vb-norm no-print">
+          <FileBar work={work} label="Mở file Word / Excel để in" normalize={false} onOpen={open} onClose={close} onFlash={setFlash} />
+          {!work ? (
+            <p className="dash-muted">Mở file Word hoặc Excel (hoặc chuẩn hoá ở bước trước) để đặt đầu trang, chân trang, số trang, khổ giấy rồi in hay lưu PDF. Bảng nhiều trang tự lặp lại dòng tên cột ở mỗi trang.</p>
+          ) : (
+            <div className="vbe-body">
+              <aside className="vbe-side">
+                <SetupPanel setup={setup} onChange={setSetup} showFont={work.kind === 'doc'} />
+                <p className="vbe-tip">Trên trang vẫn sửa được chữ. Đường đỏ mảnh là chỗ sang trang (ước tính). Bản in và file Word dùng đúng cài đặt bên trên.</p>
+              </aside>
+              {work.kind === 'doc' ? (
+                <DocEditor key={work.id} initialHtml={work.html} setup={setup} onChange={docHtml} actions={<>
+                  <button type="button" className="vbe-primary" onClick={printWork}><Printer aria-hidden="true" /> In / lưu PDF</button>
+                  <button type="button" onClick={() => saveWord(work.html, setup, work.file, work.name, work.images)}><FileText aria-hidden="true" /> Tải Word</button>
+                </>} />
+              ) : (
+                <SheetEditor sheets={work.sheets} idx={sheetIdx} onIdx={setSheetIdx} onSheets={setSheets} view={view} onView={setView} setup={setup} actions={<>
+                  <button type="button" className="vbe-primary" onClick={printWork}><Printer aria-hidden="true" /> In / lưu PDF</button>
+                  <button type="button" onClick={() => saveExcel(work)}><FileSpreadsheet aria-hidden="true" /> Tải Excel</button>
+                </>} />
+              )}
+            </div>
+          )}
+        </section>
+      )}
 
       {printHtml && createPortal(
         <div className="vb-print">
@@ -148,238 +276,78 @@ function IssueList({ issues, fixLabel = 'Sửa lỗi trình bày' }: { issues: I
   if (!issues.length) return <p className="vb-ok"><CheckCircle2 aria-hidden="true" /> Không thấy lỗi trình bày thường gặp.</p>;
   return (
     <details className="vb-issues" open={issues.length <= 6}>
-      <summary><ClipboardCheck aria-hidden="true" /> {issues.length} chỗ nên sửa {issues.some((i) => i.fixable) && <small>(bấm “{fixLabel}” để sửa tự động)</small>}</summary>
+      <summary><ClipboardCheck aria-hidden="true" /> {issues.length} chỗ nên sửa {issues.some((i) => i.fixable) && fixLabel && <small>(bấm “{fixLabel}” để sửa tự động)</small>}</summary>
       <ul>{issues.slice(0, 40).map((i, k) => <li key={k}><b>Dòng {i.line}:</b> {i.msg}{!i.fixable && <em> — cần sửa tay</em>}<span>{i.sample}</span></li>)}</ul>
     </details>
   );
 }
 
-/** bỏ quốc hiệu, tiêu ngữ, số, ngày tháng… ở đầu văn bản dán vào (mẫu tự thêm lại đúng thể thức) */
+/** bỏ quốc hiệu, tiêu ngữ, số, ngày tháng… ở đầu văn bản (mẫu tự thêm lại đúng thể thức) */
 function stripHeader(text: string) {
   return text.split('\n').filter((l) => !/^(CỘNG HÒA XÃ HỘI|Độc lập - Tự do|Số: |.{0,40}, ngày \d{2} tháng|[─_-]{4,}$)/.test(l.trim())).join('\n').trim();
 }
 
-/** Văn bản thuần → các đoạn NĐ30 (căn đều, lùi đầu dòng 1 cm, cách đoạn 6pt) */
-const paraHtml = (text: string) => text.split('\n').filter((l) => l.trim()).map((l) => `<p style="margin:0;margin-top:6pt;text-align:justify;text-indent:1cm;line-height:1.2">${l.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`).join('');
-
-/* ---------------------------------------------------------- (2) chuẩn hoá văn bản */
-type XlFixed = { file: string; sheets: Sheet[]; changes: { sheet: string; r: number; c: number; from: string; to: string }[] };
-
-/** Ô chữ dạng số (không có số 0 ở đầu như số điện thoại) → ghi lại thành số trong file Excel */
-const asCell = (v: string): string | number => (/^-?(0|[1-9]\d*)(\.\d+)?$/.test(v.trim()) && v.trim().length < 16 ? Number(v.trim()) : v);
-
-function Normalizer({ onUse, onFlash, onPrintSheets, onEdit }: { onUse: (text: string) => void; onFlash: (m: string) => void; onPrintSheets: (x: { file: string; sheets: Sheet[] }) => void; onEdit: (html: string) => void }) {
-  const [text, setText] = useState('');
+/** Nút mở file + tên tài liệu đang làm (đóng / mở file khác) */
+function FileBar({ work, label, normalize, onOpen, onClose, onFlash }: { work: Work | null; label: string; normalize: boolean; onOpen: (w: Work) => void; onClose: () => void; onFlash: (m: string) => void }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const [xl, setXl] = useState<XlFixed | null>(null);
-  const issues = useMemo(() => checkText(text), [text]);
-
-  const load = async (file: File) => {
-    setErr(''); setBusy(true); setXl(null);
+  const pick = async (f: File) => {
+    if (work && !window.confirm('Mở file mới sẽ thay tài liệu đang làm. Tiếp tục?')) return;
+    setErr(''); setBusy(true);
     try {
-      const buf = await file.arrayBuffer();
-      if (/\.xlsx$/i.test(file.name)) {
-        // Excel: chuẩn hoá từng ô của mọi trang tính có dữ liệu
-        const all = (await readXlsxAll(buf)).filter((s) => !s.hidden && s.rows.some((r) => r.some((c) => c?.trim())));
-        if (!all.length) throw new Error('File không có trang tính nào có dữ liệu.');
-        const changes: XlFixed['changes'] = [];
-        const sheets = all.map((s) => {
-          const f = fixRows(s.rows);
-          f.changes.forEach(([r, c, from, to]) => changes.push({ sheet: s.name, r, c, from, to }));
-          return { ...s, rows: f.rows };
-        });
-        setXl({ file: file.name, sheets, changes });
-        onFlash(changes.length ? `Đã chuẩn hoá ${changes.length} ô trong ${sheets.length} trang tính.` : 'Bảng đã gọn gàng — không có ô nào cần sửa.');
-      } else {
-        const blocks = await readDocx(buf);
-        setText(blocks.map((b) => (b.t === 'p' ? b.text : b.rows.map((r) => r.join(' | ')).join('\n'))).join('\n'));
-      }
+      const w = await loadWork(f, normalize);
+      onOpen(w);
+      if (normalize) onFlash(w.kind === 'sheet'
+        ? (w.changes.length ? `Đã chuẩn hoá ${w.changes.length} ô trong ${w.sheets.length} trang tính — xem và sửa ngay trên trang bên dưới.` : 'Bảng đã gọn gàng — không có ô nào cần sửa.')
+        : (w.fixed ? `Đã chuẩn hoá ${w.fixed} chỗ — xem và sửa ngay trên trang bên dưới.` : 'Văn bản đã gọn gàng — không có chỗ nào cần sửa tự động.'));
     } catch (e) { setErr(e instanceof Error ? e.message : 'Không đọc được file.'); }
     setBusy(false);
   };
-  const saveXl = () => {
-    if (!xl) return;
-    const used = new Set<string>();
-    const bytes = buildXlsx(xl.sheets.map((s) => ({
-      name: sheetName(s.name, used),
-      rows: s.rows.map((r) => r.map(asCell)),
-      merges: s.merges.map(([r1, c1, r2, c2]) => range(r1, c1, r2, c2)),
-    })));
-    download(bytes, xl.file.replace(/\.xlsx$/i, '') + '-chuan-hoa.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  };
-  const fix = () => { const r = fixText(text); setText(r.text); onFlash(r.fixed ? `Đã sửa ${r.fixed} chỗ.` : 'Không có lỗi sửa tự động được.'); };
-  const word = () => {
-    const html = `<html><body>${paraHtml(text)}</body></html>`;
-    download(htmlToDocx(html, new Map(), { title: 'Văn bản', fontSize: 14 }), 'van-ban-chuan-hoa.docx', DOCX);
-  };
-
   return (
-    <section className="dash-card vb-norm no-print">
+    <>
       <div className="vb-acts">
-        <label className="btn btn-outline btn-sm vb-upload"><Upload aria-hidden="true" /> {busy ? 'Đang đọc…' : 'Mở file Word / Excel'}
-          <input type="file" accept=".docx,.xlsx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(e) => { const f = e.target.files?.[0]; if (f) void load(f); e.target.value = ''; }} />
+        <label className="btn btn-outline vb-upload vbe-open"><Upload aria-hidden="true" /> {busy ? 'Đang đọc…' : work ? 'Mở file khác' : label}
+          <input type="file" accept=".docx,.xlsx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(e) => { const f = e.target.files?.[0]; if (f) void pick(f); e.target.value = ''; }} />
         </label>
-        <span className="dash-muted">.docx, .xlsx — hoặc dán văn bản vào ô dưới</span>
+        {work ? (
+          <span className="vbe-doc">{work.kind === 'doc' ? <FileText aria-hidden="true" /> : <FileSpreadsheet aria-hidden="true" />} <b>{work.name}</b>
+            <button type="button" className="mini-btn" onClick={onClose}><X aria-hidden="true" /> Đóng</button></span>
+        ) : <span className="dash-muted">File .docx hoặc .xlsx</span>}
       </div>
       {err && <p className="adm-alert is-error" role="alert">{err}</p>}
-      {xl && (
-        <div className="vb-xlfix">
-          <p><b>{xl.file}</b> · {xl.sheets.length} trang tính · <b>{xl.changes.length}</b> ô đã chuẩn hoá (dấu cách, dấu câu, ngày dd/mm/yyyy, viết hoa cột họ tên).</p>
-          {xl.changes.length > 0 && (
-            <details open={xl.changes.length <= 8}>
-              <summary>Xem các ô đã sửa</summary>
-              <ul>{xl.changes.slice(0, 60).map((c, i) => <li key={i}><b>{xl.sheets.length > 1 ? `${c.sheet}!` : ''}{range(c.r, c.c, c.r, c.c).split(':')[0]}</b> <s>{c.from}</s> → {c.to}</li>)}</ul>
-              {xl.changes.length > 60 && <p className="dash-muted">… và {xl.changes.length - 60} ô khác.</p>}
-            </details>
-          )}
-          <div className="vb-acts">
-            <button type="button" className="btn btn-primary btn-sm" onClick={saveXl}><FileSpreadsheet aria-hidden="true" /> Tải Excel đã chuẩn hoá</button>
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => onPrintSheets({ file: xl.file, sheets: xl.sheets })}><Printer aria-hidden="true" /> In bảng này →</button>
-          </div>
-          <p className="dash-muted">File tải về giữ chữ, số, ô gộp; màu nền, công thức và độ rộng cột gốc không giữ lại — nên dùng bản này để in hoặc dán lại vào file gốc.</p>
-        </div>
-      )}
-      <textarea className="vb-text" rows={14} value={text} maxLength={60000} placeholder="Dán văn bản cần kiểm tra vào đây…" onChange={(e) => setText(e.target.value)} aria-label="Văn bản cần chuẩn hoá" />
-      {text.trim() && (
-        <>
-          <IssueList issues={issues} fixLabel="Sửa tự động" />
-          <div className="vb-acts">
-            <button type="button" className="btn btn-primary btn-sm" onClick={fix}><Sparkles aria-hidden="true" /> Sửa tự động</button>
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => void navigator.clipboard.writeText(text).then(() => onFlash('Đã chép văn bản.'), () => onFlash('Máy chưa cho chép — bôi đen rồi chép tay.'))}><Copy aria-hidden="true" /> Chép</button>
-            <button type="button" className="btn btn-outline btn-sm" onClick={word}><FileText aria-hidden="true" /> Tải Word (Times New Roman 14, lề NĐ30)</button>
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => onEdit(paraHtml(text))}><PenLine aria-hidden="true" /> Xem trước & sửa trên trang</button>
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => onUse(text)}>Đưa vào mẫu văn bản →</button>
-          </div>
-          <p className="dash-muted">Đọc file Word chỉ lấy chữ (bảng thành dòng “ô | ô”); hình và định dạng gốc không giữ lại. Bản tải về dùng font, cỡ chữ, lề theo NĐ30.</p>
-        </>
-      )}
-    </section>
+    </>
   );
 }
 
-/* ---------------------------------------------------------- (3) in bảng Excel */
-function trimSheet(s: Sheet) {
-  let rows = s.rows.map((r) => r.map((c) => c ?? ''));
-  while (rows.length && rows[rows.length - 1].every((c) => !c.trim())) rows = rows.slice(0, -1);
-  const width = Math.max(0, ...rows.map((r) => { let w = r.length; while (w && !r[w - 1]?.trim()) w--; return w; }));
-  return rows.map((r) => Array.from({ length: width }, (_, i) => r[i] ?? ''));
-}
-
-function ExcelPrint({ onPrint, initial }: { onPrint: (html: string, setup: PageSetup) => void; initial?: { file: string; sheets: Sheet[] } | null }) {
-  const [sheets, setSheets] = useState<Sheet[]>(initial?.sheets ?? []);
-  const [idx, setIdx] = useState(0);
-  const [file, setFile] = useState(initial?.file ?? '');
-  const [err, setErr] = useState('');
-  const [title, setTitle] = useState('');
-  const [head, setHead] = useState(1);
-  const [grid, setGrid] = useState(true);
-  const [zoom, setZoom] = useState(0.8);
-  // bảng in: số trang dưới chân "Trang 1/3" (bảng nhiều trang dễ xếp thứ tự), khổ tự chọn theo số cột
-  const [setup, setSetup] = useState<PageSetup>({ ...DEFAULT_SETUP, pageNum: 'bottom', pageFmt: 'trang-tong', hideFirst: false });
-  // dữ liệu đang sửa (bấm vào ô để sửa thẳng trên trang)
-  const [data, setData] = useState<string[][]>([]);
-
-  const sheet = sheets[idx];
-  useEffect(() => {
-    const d = sheet ? trimSheet(sheet) : [];
-    setData(d);
-    setSetup((s) => ({ ...s, landscape: (d[0]?.length ?? 0) > 6 }));
-  }, [sheet]);
-  const rows = data;
-  const cols = rows[0]?.length ?? 0;
-  // dòng đầu chỉ có một ô chữ (tiêu đề gộp, vd "DANH SÁCH LỚP 1A1") → dùng làm tiêu đề in, dòng lặp lại bắt đầu từ dòng sau
-  const autoTitle = rows.length > 2 && cols > 1 && rows[0].filter((c) => c.trim()).length === 1 ? rows[0].find((c) => c.trim())!.trim() : '';
-  const start = autoTitle ? 1 : 0;
-  const fs = cols > 14 ? 8 : cols > 10 ? 9 : cols > 7 ? 10.5 : 12;
-  const h = Math.min(start + head, rows.length);
-  const shownTitle = title.trim() || autoTitle;
-
-  const load = async (f: File) => {
-    setErr('');
-    try {
-      const all = (await readXlsxAll(await f.arrayBuffer())).filter((s) => !s.hidden && s.rows.some((r) => r.some((c) => c?.trim())));
-      if (!all.length) { setErr('File không có trang tính nào có dữ liệu.'); return; }
-      setSheets(all); setIdx(0); setFile(f.name); setTitle('');
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Không đọc được file.'); }
+/* ---------------------------------------------------------- (2) chuẩn hoá */
+function NormalizeTab({ work, onOpen, onClose, onFlash, children }: { work: Work | null; onOpen: (w: Work) => void; onClose: () => void; onFlash: (m: string) => void; children: React.ReactNode }) {
+  const [text, setText] = useState('');
+  const fromText = () => {
+    const r = fixText(text);
+    onOpen({ id: ++seq, kind: 'doc', name: 'Văn bản đã chuẩn hoá', file: 'van-ban', html: paraHtml(r.text), images: new Map(), fixed: r.fixed });
+    onFlash(r.fixed ? `Đã chuẩn hoá ${r.fixed} chỗ — xem và sửa ngay trên trang bên dưới.` : 'Văn bản đã gọn gàng — không có chỗ nào cần sửa tự động.');
   };
-
-  // ô gộp: ô đầu nhận rowspan/colspan, các ô bị gộp bỏ đi
-  const { span, hidden } = useMemo(() => {
-    const sp = new Map<string, [number, number]>(), hd = new Set<string>();
-    for (const [r1, c1, r2, c2] of sheet?.merges ?? []) {
-      sp.set(`${r1},${c1}`, [r2 - r1 + 1, c2 - c1 + 1]);
-      for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) if (r !== r1 || c !== c1) hd.add(`${r},${c}`);
-    }
-    return { span: sp, hidden: hd };
-  }, [sheet]);
-  const isNum = (c: string) => /^-?[\d.,]+%?$/.test(c.trim());
-
-  const tableHtml = useMemo(() => {
-    if (!rows.length) return '';
-    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>');
-    const tr = (r: string[], i: number, tag: 'th' | 'td') => `<tr>${r.map((c, j) => {
-      if (hidden.has(`${i},${j}`)) return '';
-      const sp = span.get(`${i},${j}`);
-      return `<${tag}${sp ? ` rowspan="${sp[0]}" colspan="${sp[1]}"` : ''}${tag === 'td' && isNum(c) ? ' class="n"' : ''}>${esc(c)}</${tag}>`;
-    }).join('')}</tr>`;
-    return `<div class="vb-sheet${grid ? ' is-grid' : ''}" style="font-size:${fs}pt">${shownTitle ? `<h2>${esc(shownTitle)}</h2>` : ''}<table><thead>${rows.slice(start, h).map((r, i) => tr(r, i + start, 'th')).join('')}</thead><tbody>${rows.slice(h).map((r, i) => tr(r, i + h, 'td')).join('')}</tbody></table></div>`;
-  }, [rows, h, grid, shownTitle, fs, start, span, hidden]);
-
-  const editCell = (r: number, c: number, v: string) => setData((d) => (d[r]?.[c] === v ? d : d.map((row, i) => (i === r ? row.map((x, j) => (j === c ? v : x)) : row))));
-  const saveXl = () => {
-    if (!sheet) return;
-    const bytes = buildXlsx([{ name: sheetName(sheet.name), rows: rows.map((r) => r.map(asCell)), merges: sheet.merges.map(([r1, c1, r2, c2]) => range(r1, c1, r2, c2)) }]);
-    download(bytes, (file.replace(/\.xlsx$/i, '') || 'bang') + '-da-sua.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  };
-  const cell = (c: string, r: number, j: number, Tag: 'th' | 'td') => {
-    if (hidden.has(`${r},${j}`)) return null;
-    const sp = span.get(`${r},${j}`);
-    return (
-      <Tag key={j} rowSpan={sp?.[0]} colSpan={sp?.[1]} className={Tag === 'td' && isNum(c) ? 'n' : undefined}
-        contentEditable suppressContentEditableWarning onBlur={(e) => editCell(r, j, e.currentTarget.innerText.replace(/\n$/, ''))}>{c}</Tag>
-    );
-  };
-
+  const remaining = useMemo(() => (work?.kind === 'doc' ? checkText(htmlText(work.html)).filter((i) => !i.fixable) : []), [work]);
   return (
-    <section className="dash-card vb-xl no-print">
-      <div className="vb-acts">
-        <label className="btn btn-outline btn-sm vb-upload"><Upload aria-hidden="true" /> {file ? 'Mở file khác' : 'Mở file Excel (.xlsx)'}
-          <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(e) => { const f = e.target.files?.[0]; if (f) void load(f); e.target.value = ''; }} />
-        </label>
-        {file && <span className="dash-muted">{file} · {rows.length} dòng × {cols} cột</span>}
-      </div>
-      {err && <p className="adm-alert is-error" role="alert">{err}</p>}
-      {!sheet ? <p className="dash-muted">Danh sách lớp, bảng điểm, bảng thu quỹ… mở vào đây để sửa, in vừa trang, dòng tên cột lặp lại ở mỗi trang.</p> : (
-        <div className="vbe-body">
-          <aside className="vbe-side">
-            <div className="vb-fields vb-xl-opts">
-              {sheets.length > 1 && <label className="vb-wide">Trang tính<select value={idx} onChange={(e) => setIdx(Number(e.target.value))}>{sheets.map((s, i) => <option key={i} value={i}>{s.name}</option>)}</select></label>}
-              <label className="vb-wide">Tiêu đề in ở đầu<input value={title} maxLength={150} placeholder={autoTitle || sheet.name} onChange={(e) => setTitle(e.target.value)} /></label>
-              <label>Dòng tên cột lặp lại<select value={head} onChange={(e) => setHead(Number(e.target.value))}>{[0, 1, 2, 3, 4].map((n) => <option key={n} value={n}>{n === 0 ? 'Không lặp' : `${n} dòng`}</option>)}</select></label>
-              <label className="vb-check"><input type="checkbox" checked={grid} onChange={(e) => setGrid(e.target.checked)} /> Kẻ khung</label>
-            </div>
-            <SetupPanel setup={setup} onChange={setSetup} showFont={false} />
-            <p className="vbe-tip">Bấm vào ô trên trang để sửa chữ. Chữ {fs}pt để vừa {cols} cột.</p>
-          </aside>
-          <div className="vbe-main">
-            <div className="vbe-tools">
-              <button type="button" className="vbe-primary" onClick={() => onPrint(tableHtml, setup)}><Printer aria-hidden="true" /> In / lưu PDF</button>
-              <button type="button" onClick={saveXl}><FileSpreadsheet aria-hidden="true" /> Tải Excel đã sửa</button>
-              <ZoomBar zoom={zoom} onZoom={setZoom} />
-            </div>
-            <Paper setup={{ ...setup, fontSize: fs }} zoom={zoom}>
-              <div className={`vb-sheet${grid ? ' is-grid' : ''}`}>
-                {shownTitle && <h2>{shownTitle}</h2>}
-                <table>
-                  <thead>{rows.slice(start, h).map((r, i) => <tr key={i}>{r.map((c, j) => cell(c, i + start, j, 'th'))}</tr>)}</thead>
-                  <tbody>{rows.slice(h).map((r, i) => <tr key={i}>{r.map((c, j) => cell(c, i + h, j, 'td'))}</tr>)}</tbody>
-                </table>
-              </div>
-            </Paper>
-          </div>
-        </div>
+    <section className="dash-card vb-norm no-print">
+      <FileBar work={work} label="Mở file Word / Excel để chuẩn hoá" normalize onOpen={onOpen} onClose={onClose} onFlash={onFlash} />
+      {!work && (
+        <details className="vbe-paste">
+          <summary>Hoặc dán văn bản vào đây</summary>
+          <textarea className="vb-text" rows={10} value={text} maxLength={60000} placeholder="Dán văn bản cần chuẩn hoá…" onChange={(e) => setText(e.target.value)} aria-label="Văn bản cần chuẩn hoá" />
+          <button type="button" className="btn btn-primary" disabled={!text.trim()} onClick={fromText}><Sparkles aria-hidden="true" /> Chuẩn hoá & xem trước</button>
+        </details>
       )}
+      {!work && <p className="dash-muted">Chuẩn hoá: bỏ dấu cách thừa, sửa dấu câu, ngày tháng (05/01/2026), quốc hiệu – tiêu ngữ, “Số:”, “Kính gửi:”… File Word giữ nguyên chữ đậm, nghiêng, bảng, hình; file Excel còn viết hoa đúng cột họ tên.</p>}
+      {work?.kind === 'sheet' && work.changes.length > 0 && (
+        <details className="vb-xlfix">
+          <summary>Xem {work.changes.length} ô đã sửa</summary>
+          <ul>{work.changes.slice(0, 80).map((c, i) => <li key={i}><b>{work.sheets.length > 1 ? `${c.sheet}!` : ''}{range(c.r, c.c, c.r, c.c).split(':')[0]}</b> <s>{c.from}</s> → {c.to}</li>)}</ul>
+          {work.changes.length > 80 && <p className="dash-muted">… và {work.changes.length - 80} ô khác.</p>}
+        </details>
+      )}
+      {remaining.length > 0 && <IssueList issues={remaining} fixLabel="" />}
+      {children}
     </section>
   );
 }

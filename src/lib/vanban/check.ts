@@ -56,6 +56,23 @@ export function checkText(text: string): Issue[] {
   return out;
 }
 
+/* ---------------------------------------------------------- chữ trong file Word (giữ định dạng) */
+// Sửa từng đoạn chữ bên trong HTML của file Word: KHÔNG cắt khoảng trắng đầu/cuối (đoạn chữ đậm/nghiêng nằm cạnh nhau),
+// không viết hoa đầu dòng (đoạn chữ có thể nằm giữa câu).
+const INLINE_RULES = new Set(['space', 'before-punct', 'after-punct', 'paren', 'cap-sentence', 'motto', 'nation', 'number', 'number-colon', 'date', 'date-pad', 'kinh-gui', 'noi-nhan']);
+export function fixInline(s: string): string {
+  if (!s.trim()) return s;
+  let t = s;
+  for (const r of RULES) {
+    if (!r.fix || !INLINE_RULES.has(r.id) || !r.find.test(t)) continue;
+    if (r.id === 'motto' && /Độc lập - Tự do - Hạnh phúc/.test(t)) continue;
+    if (r.id === 'nation' && t.includes('CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM')) continue;
+    if (skipCorrect(r.id, t)) continue;
+    t = r.fix(t);
+  }
+  return t;
+}
+
 /* ---------------------------------------------------------- ô bảng tính */
 const CELL_RULES = new Set(['space', 'trim', 'before-punct', 'after-punct', 'paren', 'bullet', 'motto', 'nation', 'date', 'date-pad']);
 /** Viết hoa chữ đầu mỗi tiếng: "nguyễn  văn AN" → "Nguyễn Văn An" */
