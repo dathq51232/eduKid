@@ -3,61 +3,66 @@
 import type { DocKind } from './nd30';
 
 export type FieldKey = 'what' | 'when' | 'where' | 'who' | 'purpose' | 'items' | 'issues' | 'req' | 'basis';
-export type Field = { key: FieldKey; label: string; placeholder: string; wide?: boolean };
+export type Field = { key: FieldKey; label: string; placeholder: string; wide?: boolean; extra?: boolean };
 export type Facts = Partial<Record<FieldKey, string>>;
 
-/** Các ô "Thông tin chính" của từng loại văn bản */
+const WHEN_WHERE = 'Thời gian & địa điểm';
+/**
+ * Các ô của từng loại văn bản: chỉ 2–3 ô chính hiện sẵn; ô `extra` nằm trong "Thêm chi tiết (không bắt buộc)".
+ * Ô "Thời gian & địa điểm" gõ tự nhiên: "7 giờ 30, Chủ nhật 15/9 tại phòng học lớp 1A1" — tự tách ở chữ "tại".
+ */
 export const FIELDS: Record<DocKind, Field[]> = {
   'thong-bao': [
     { key: 'what', label: 'Thông báo về việc', placeholder: 'tổ chức họp phụ huynh đầu năm', wide: true },
-    { key: 'when', label: 'Thời gian', placeholder: '7 giờ 30, Chủ nhật 15/9/2026' },
-    { key: 'where', label: 'Địa điểm', placeholder: 'Phòng học lớp 1A1' },
-    { key: 'who', label: 'Đối tượng', placeholder: 'phụ huynh học sinh lớp 1A1' },
-    { key: 'req', label: 'Đề nghị / lưu ý', placeholder: 'đến đúng giờ, mang theo sổ liên lạc' },
+    { key: 'when', label: WHEN_WHERE, placeholder: '7 giờ 30, Chủ nhật 15/9/2026 tại phòng học lớp 1A1', wide: true },
+    { key: 'who', label: 'Đối tượng', placeholder: 'phụ huynh học sinh lớp 1A1', extra: true },
+    { key: 'req', label: 'Đề nghị / lưu ý', placeholder: 'đến đúng giờ, mang theo sổ liên lạc', extra: true },
   ],
   'ke-hoach': [
     { key: 'what', label: 'Kế hoạch', placeholder: 'tổ chức Ngày hội đọc sách', wide: true },
-    { key: 'purpose', label: 'Mục đích', placeholder: 'khơi dậy niềm yêu thích đọc sách cho học sinh', wide: true },
-    { key: 'when', label: 'Thời gian', placeholder: 'từ 21/4 đến 25/4/2026' },
-    { key: 'where', label: 'Địa điểm', placeholder: 'thư viện trường' },
-    { key: 'items', label: 'Nội dung chính (cách nhau dấu ;)', placeholder: 'trưng bày sách; thi kể chuyện; đổi sách cũ', wide: true },
-    { key: 'who', label: 'Người phụ trách', placeholder: 'GVCN lớp 1A1 và Ban đại diện CMHS' },
+    { key: 'items', label: 'Các việc chính (cách nhau dấu ;)', placeholder: 'trưng bày sách; thi kể chuyện; đổi sách cũ', wide: true },
+    { key: 'when', label: WHEN_WHERE, placeholder: 'từ 21/4 đến 25/4/2026 tại thư viện trường', wide: true },
+    { key: 'purpose', label: 'Mục đích', placeholder: 'khơi dậy niềm yêu thích đọc sách', extra: true },
+    { key: 'who', label: 'Người phụ trách', placeholder: 'GVCN và Ban đại diện CMHS', extra: true },
   ],
   'bao-cao': [
-    { key: 'what', label: 'Báo cáo về', placeholder: 'kết quả học tập học kỳ I', wide: true },
-    { key: 'when', label: 'Kỳ / thời gian', placeholder: 'học kỳ I năm học 2026–2027' },
-    { key: 'basis', label: 'Căn cứ (nếu có)', placeholder: 'Kế hoạch số 12/KH-THTĐ' },
+    { key: 'what', label: 'Báo cáo về', placeholder: 'kết quả học tập học kỳ I năm học 2026–2027', wide: true },
     { key: 'items', label: 'Kết quả đạt được (cách nhau dấu ;)', placeholder: '30/32 em hoàn thành tốt môn Toán; lớp đạt giải Nhì văn nghệ', wide: true },
-    { key: 'issues', label: 'Tồn tại, hạn chế', placeholder: '2 em đọc còn chậm', wide: true },
-    { key: 'req', label: 'Đề xuất, phương hướng', placeholder: 'tăng cường kèm cặp đầu giờ', wide: true },
+    { key: 'issues', label: 'Tồn tại, hạn chế', placeholder: '2 em đọc còn chậm', extra: true },
+    { key: 'req', label: 'Đề xuất', placeholder: 'tăng cường kèm cặp đầu giờ', extra: true },
+    { key: 'basis', label: 'Căn cứ', placeholder: 'Kế hoạch số 12/KH-THTĐ', extra: true },
   ],
   'bien-ban': [
     { key: 'what', label: 'Biên bản', placeholder: 'họp phụ huynh đầu năm học', wide: true },
-    { key: 'when', label: 'Thời gian', placeholder: '7 giờ 30, ngày 15/9/2026' },
-    { key: 'where', label: 'Địa điểm', placeholder: 'Phòng học lớp 1A1' },
-    { key: 'who', label: 'Thành phần', placeholder: 'GVCN, 30/32 phụ huynh', wide: true },
+    { key: 'when', label: WHEN_WHERE, placeholder: '7 giờ 30, ngày 15/9/2026 tại phòng học lớp 1A1', wide: true },
     { key: 'items', label: 'Nội dung đã bàn (cách nhau dấu ;)', placeholder: 'kế hoạch năm học; bầu Ban đại diện CMHS', wide: true },
-    { key: 'req', label: 'Kết luận', placeholder: 'thống nhất kế hoạch, bầu 3 thành viên Ban đại diện', wide: true },
+    { key: 'who', label: 'Thành phần', placeholder: 'GVCN, 30/32 phụ huynh', extra: true },
+    { key: 'req', label: 'Kết luận', placeholder: 'thống nhất kế hoạch, bầu 3 thành viên Ban đại diện', extra: true },
   ],
   'giay-moi': [
     { key: 'what', label: 'Mời dự', placeholder: 'họp phụ huynh đầu năm học', wide: true },
-    { key: 'who', label: 'Người được mời', placeholder: 'Quý phụ huynh học sinh lớp 1A1' },
-    { key: 'when', label: 'Thời gian', placeholder: '7 giờ 30, Chủ nhật 15/9/2026' },
-    { key: 'where', label: 'Địa điểm', placeholder: 'Phòng học lớp 1A1' },
-    { key: 'items', label: 'Nội dung (cách nhau dấu ;)', placeholder: 'thông qua kế hoạch năm học; bầu Ban đại diện', wide: true },
+    { key: 'when', label: WHEN_WHERE, placeholder: '7 giờ 30, Chủ nhật 15/9/2026 tại phòng học lớp 1A1', wide: true },
+    { key: 'who', label: 'Người được mời', placeholder: 'Quý phụ huynh học sinh lớp 1A1', extra: true },
+    { key: 'items', label: 'Nội dung (cách nhau dấu ;)', placeholder: 'thông qua kế hoạch năm học; bầu Ban đại diện', extra: true },
   ],
   'to-trinh': [
     { key: 'what', label: 'Đề nghị', placeholder: 'mua bổ sung 10 bộ bàn ghế học sinh', wide: true },
     { key: 'purpose', label: 'Lý do', placeholder: 'bàn ghế cũ hư hỏng, không đảm bảo an toàn', wide: true },
-    { key: 'req', label: 'Kinh phí / nguồn (nếu có)', placeholder: '12.000.000 đồng từ nguồn chi thường xuyên', wide: true },
-    { key: 'who', label: 'Người phê duyệt', placeholder: 'Hiệu trưởng' },
+    { key: 'req', label: 'Kinh phí dự kiến', placeholder: '12.000.000 đồng', extra: true },
+    { key: 'who', label: 'Người phê duyệt', placeholder: 'Hiệu trưởng', extra: true },
   ],
   don: [
-    { key: 'when', label: 'Nghỉ từ ngày – đến ngày', placeholder: 'từ 20/11 đến hết 22/11/2026 (3 ngày)', wide: true },
+    { key: 'when', label: 'Nghỉ ngày nào', placeholder: 'từ 20/11 đến hết 22/11/2026 (3 ngày)', wide: true },
     { key: 'purpose', label: 'Lý do', placeholder: 'giải quyết việc gia đình', wide: true },
-    { key: 'who', label: 'Người nhận bàn giao', placeholder: 'cô Trần Thị Hoa, GV lớp 1A2' },
+    { key: 'who', label: 'Người nhận bàn giao', placeholder: 'cô Trần Thị Hoa, GV lớp 1A2', extra: true },
   ],
 };
+
+/** "7 giờ 30, Chủ nhật 15/9 tại phòng học lớp 1A1" → thời gian + địa điểm (tách ở chữ "tại" cuối cùng) */
+export function splitWhenWhere(s: string): { when: string; where: string } {
+  const m = /^(.*\S)\s*,?\s+tại\s+(.+)$/i.exec(s.trim());
+  return m ? { when: m[1].replace(/,$/, ''), where: m[2] } : { when: s.trim(), where: '' };
+}
 
 const t = (s?: string) => (s ?? '').trim().replace(/[.;,\s]+$/, '');
 const cap = (s: string) => (s ? s[0].toLocaleUpperCase('vi') + s.slice(1) : s);
@@ -80,7 +85,8 @@ export function unitName(raw: string): string {
  * Kết thúc văn bản bằng "./." theo NĐ30.
  */
 export function compose(kind: DocKind, f: Facts, ctx: { unit: string; className: string; signer: string; role: string }): Composed {
-  const what = t(f.what), when = t(f.when), where = t(f.where), who = t(f.who), purpose = t(f.purpose), req = t(f.req), basis = t(f.basis), issues = t(f.issues);
+  const ww = kind === 'don' ? { when: t(f.when), where: '' } : splitWhenWhere(t(f.when));
+  const what = t(f.what), when = ww.when, where = cap(t(f.where) || ww.where), who = t(f.who), purpose = t(f.purpose), req = t(f.req), basis = t(f.basis), issues = t(f.issues);
   const items = list(f.items);
   const unit = unitName(ctx.unit) || `Lớp ${ctx.className}`;
   const L: string[] = [];
@@ -97,7 +103,7 @@ export function compose(kind: DocKind, f: Facts, ctx: { unit: string; className:
     }
     case 'ke-hoach': {
       L.push('I. MỤC ĐÍCH, YÊU CẦU');
-      L.push(purpose ? `- ${cap(purpose)}.` : `- Tổ chức ${what ? low(what) : 'hoạt động'} đạt hiệu quả, an toàn, thiết thực.`);
+      L.push(purpose ? `- ${cap(purpose)}.` : `- ${/^tổ chức /i.test(what) ? cap(what) : `Tổ chức ${what ? low(what) : 'hoạt động'}`} đạt hiệu quả, an toàn, thiết thực.`);
       L.push('- Huy động sự tham gia tích cực của học sinh, phối hợp chặt chẽ với cha mẹ học sinh.');
       L.push('II. THỜI GIAN, ĐỊA ĐIỂM');
       if (when) L.push(`- Thời gian: ${when}.`);

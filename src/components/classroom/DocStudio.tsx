@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, ClipboardCheck, FileSpreadsheet, FileText, PenLine, Printer, Sparkles, Undo2, Upload, Wand2, X } from 'lucide-react';
 import { KINDS, SAMPLE, buildHtml, fileName, kindOf, type Doc, type DocKind, type Org } from '@/lib/vanban/nd30';
-import { FIELDS, compose, unitName, type Facts } from '@/lib/vanban/compose';
+import { FIELDS, compose, unitName, type Facts, type Field } from '@/lib/vanban/compose';
 
 /** Loại văn bản có dòng “Kính gửi” */
 const NEEDS_TO: DocKind[] = ['to-trinh', 'giay-moi', 'don'];
@@ -198,6 +198,11 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
     setDoc((d) => ({ ...d, kind, ...SAMPLE[kind] }));
     setFacts({}); setLastGen('');
   };
+  const factInput = (f: Field) => (
+    <label key={`${doc.kind}-${f.key}`} className={f.wide ? 'vb-wide' : ''}>{f.label}
+      <input value={facts[f.key] ?? ''} maxLength={300} placeholder={f.placeholder} onChange={(e) => setFacts((x) => ({ ...x, [f.key]: e.target.value }))} />
+    </label>
+  );
   const generate = () => {
     if (dirtyBody() && !window.confirm('Thay nội dung đang soạn bằng nội dung tự sinh?')) return;
     const c = compose(doc.kind, facts, { unit: org.name, className, signer: org.signer, role: org.role });
@@ -319,13 +324,16 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
             {/* Thông tin chính → Tự sinh nội dung (theo loại văn bản, đúng văn phong) */}
             <div className="vb-facts">
               <div className="vb-facts-hd"><b>Thông tin chính</b><span>Điền vài ý, bấm “Tự sinh nội dung” — sửa lại tuỳ ý.</span></div>
+              {/* 2–3 ô chính hiện sẵn; ô phụ trong "Thêm chi tiết" (không bắt buộc) */}
               <div className="vb-fields">
-                {FIELDS[doc.kind].map((f) => (
-                  <label key={`${doc.kind}-${f.key}`} className={f.wide ? 'vb-wide' : ''}>{f.label}
-                    <input value={facts[f.key] ?? ''} maxLength={300} placeholder={f.placeholder} onChange={(e) => setFacts((x) => ({ ...x, [f.key]: e.target.value }))} />
-                  </label>
-                ))}
+                {FIELDS[doc.kind].filter((f) => !f.extra).map((f) => factInput(f))}
               </div>
+              {FIELDS[doc.kind].some((f) => f.extra) && (
+                <details className="vb-more" key={doc.kind}>
+                  <summary>Thêm chi tiết <small>(không bắt buộc: {FIELDS[doc.kind].filter((f) => f.extra).map((f) => f.label.toLowerCase()).join(', ')})</small></summary>
+                  <div className="vb-fields">{FIELDS[doc.kind].filter((f) => f.extra).map((f) => factInput(f))}</div>
+                </details>
+              )}
               <button type="button" className="btn btn-primary vb-gen" onClick={generate} disabled={!Object.values(facts).some((v) => v?.trim())}><Sparkles aria-hidden="true" /> Tự sinh nội dung</button>
             </div>
             <div className="vb-fields vb-fields-3">

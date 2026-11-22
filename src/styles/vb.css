@@ -79,3 +79,6 @@
 .vb-rec textarea { width: 100%; margin-top: 8px; }
 .vb-org summary small { overflow-wrap: anywhere; }
 @media (max-width: 560px) { .vb-fields-3 { grid-template-columns: 1fr 1fr; } }
+.vb-more summary { cursor: pointer; font-weight: 700; font-size: 14.5px; }
+.vb-more summary small { color: var(--muted); font-weight: 600; }
+.vb-more[open] summary { margin-bottom: 8px; }
