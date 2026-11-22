@@ -41,3 +41,7 @@
   .hop-pre { white-space: pre-wrap; }
   .hop-sigs { display: flex; justify-content: space-around; margin-top: 10mm; text-align: center; }
 }
+textarea.hop-preview { width: 100%; border: 1.5px solid var(--line-strong); font-weight: 500; }
+.hop-hint { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-size: 13.5px; }
+textarea.hop-preview { width: 100%; border: 1.5px solid var(--line-strong); font-weight: 500; }
+.hop-hint { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-size: 13.5px; }

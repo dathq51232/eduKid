@@ -98,6 +98,29 @@ export default function ClassDiary({ classId, className, students, initialTab = 
   const goDay = async (d: string) => { if (state === 'dirty') await save(); setSelected(null); setDay(d); };
 
   const changeAnnouncement = (v: string) => { setAnnouncement(v); touch(); };
+
+  // Việc chung chuyển từ trang khác (vd Họp phụ huynh → "Đưa vào thông báo chung"): thêm vào hôm nay sau khi sổ đã tải xong
+  // Giữ trong ref tới khi bản đã lưu có dòng này: nếu sổ tải lại (ghi đè announcement) thì thêm lại, không mất.
+  const pending = useRef<string | null>(null);
+  const pendingNoted = useRef(false);
+  useEffect(() => {
+    // chỉ ghi khi có giá trị: effect chạy 2 lần (StrictMode) thì lần sau không xoá mất dòng đã đọc
+    try { const k = `so-lop:them-viec:${classId}`; const v = (sessionStorage.getItem(k) ?? '').trim(); if (v) { pending.current = v; sessionStorage.removeItem(k); } } catch { /* bỏ qua */ }
+  }, [classId]);
+  useEffect(() => {
+    const t = pending.current;
+    if (!t || state !== 'idle' || day !== todayIso()) return;
+    if (announcement.split('\n').some((x) => x.trim() === t)) {
+      if (!pendingNoted.current) setFlash('Lời mời này đã có trong thông báo chung hôm nay.');
+      pending.current = null; // đã nằm trong bản đã lưu
+      return;
+    }
+    if (announcement.length + t.length + 1 > 1500) { pending.current = null; setFlash('Thông báo chung đã quá dài — xoá bớt việc cũ rồi thêm lại.'); return; }
+    setAnnouncement(announcement ? `${announcement}\n${t}` : t); touch();
+    if (!pendingNoted.current) setFlash('Đã thêm vào “Việc chung hôm nay” — bấm Sao chép thông báo để gửi nhóm Zalo.');
+    pendingNoted.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chạy lại mỗi khi sổ hôm nay tải/lưu xong
+  }, [state, day, announcement]);
   const update = (id: string, f: (e: Entry) => Entry) => { setEntries((x) => ({ ...x, [id]: f(x[id] ?? emptyEntry()) })); touch(); };
   const setStatus = (id: string, status: Status) => update(id, (e) => ({ ...e, status }));
   const toggleTag = (id: string, t: string) => update(id, (e) => ({ ...e, tags: e.tags.includes(t) ? e.tags.filter((x) => x !== t) : [...e.tags, t] }));

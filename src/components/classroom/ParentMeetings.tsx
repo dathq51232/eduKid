@@ -4,7 +4,8 @@
 // Lưu trong class_tool_state (tool = 'hop-ph', migration 0077); chỉ giáo viên của lớp đọc/ghi.
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { CalendarPlus, ClipboardCheck, Copy, FileText, Mail, Printer, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { CalendarPlus, ClipboardCheck, Copy, FileText, Mail, Megaphone, Printer, RotateCcw, Trash2 } from 'lucide-react';
 import { saveLabel, schoolYear, uid, useClassTool } from '@/lib/classroom/use-class-tool';
 import '@/styles/adm.css';
 import '@/styles/btn.css';
@@ -16,6 +17,8 @@ import '@/styles/hop.css';
 type Meeting = {
   id: string; title: string; date: string; time: string; place: string; agenda: string;
   attended: string[]; chair: string; secretary: string; opinions: string; conclusion: string;
+  /** thư mời giáo viên đã sửa tay; '' = tự ghép từ thông tin buổi họp */
+  invite: string;
 };
 type State = { meetings: Meeting[] };
 type Tab = 'moi' | 'diem-danh' | 'bien-ban';
@@ -28,13 +31,14 @@ const AGENDA: Record<string, string> = {
 };
 const today = () => new Date().toISOString().slice(0, 10);
 const fmt = (d: string) => (d ? d.split('-').reverse().join('/') : '…/…/……');
-const blank = (title: string): Meeting => ({ id: uid(), title, date: today(), time: '07:30', place: '', agenda: AGENDA[title] ?? '', attended: [], chair: '', secretary: '', opinions: '', conclusion: '' });
+const blank = (title: string): Meeting => ({ id: uid(), title, date: today(), time: '07:30', place: '', agenda: AGENDA[title] ?? '', attended: [], chair: '', secretary: '', opinions: '', conclusion: '', invite: '' });
 const norm = (raw: Partial<State> | null): State => ({ meetings: Array.isArray(raw?.meetings) ? raw.meetings.map((m) => ({ ...blank(''), ...m })) : [] });
 
 export default function ParentMeetings({ classId, className, teacher, students }: { classId: string; className: string; teacher: string; students: { id: string; name: string }[] }) {
   const { data, update, loaded, missing, save } = useClassTool<State>(classId, 'hop-ph', { meetings: [] }, norm);
   const [curId, setCurId] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('moi');
+  const router = useRouter();
   const [flash, setFlash] = useState('');
   const [printing, setPrinting] = useState<'moi' | 'bien-ban' | null>(null);
   const cur = data.meetings.find((m) => m.id === curId) ?? data.meetings[0] ?? null;
@@ -49,16 +53,25 @@ export default function ParentMeetings({ classId, className, teacher, students }
   const present = useMemo(() => new Set(cur?.attended ?? []), [cur]);
   const absent = students.filter((s) => !present.has(s.id));
   const agendaLines = (cur?.agenda ?? '').split('\n').map((x) => x.trim()).filter(Boolean);
-  const invite = cur ? [
+  const autoInvite = cur ? [
     `THƯ MỜI ${cur.title.toUpperCase()}`,
     `Kính gửi: Quý phụ huynh học sinh lớp ${className}`,
-    `GVCN lớp ${className} trân trọng kính mời Quý phụ huynh đến dự ${cur.title.toLowerCase()} năm học ${schoolYear()}.`,
+    // tên buổi đã có "năm học" (vd "đầu năm học") thì không lặp "năm học" lần nữa
+    `GVCN lớp ${className} trân trọng kính mời Quý phụ huynh đến dự ${cur.title.toLowerCase()}${/năm học$/i.test(cur.title.trim()) ? ' ' : ' năm học '}${schoolYear()}.`,
     `⏰ Thời gian: ${cur.time || '…'} ngày ${fmt(cur.date)}`,
     `📍 Địa điểm: ${cur.place || '…'}`,
     agendaLines.length ? `Nội dung:\n${agendaLines.map((l) => `- ${l}`).join('\n')}` : '',
     'Rất mong Quý phụ huynh sắp xếp thời gian đến dự đầy đủ, đúng giờ. Trân trọng!',
     teacher ? `GVCN: ${teacher}` : '',
   ].filter(Boolean).join('\n') : '';
+  const invite = cur?.invite.trim() ? cur.invite : autoInvite;
+  // Một dòng cho "Việc chung hôm nay" ở Sổ lớp → Tin nhắn phụ huynh → Gửi cả lớp
+  const toNotice = () => {
+    if (!cur) return;
+    const line = `Mời phụ huynh dự ${cur.title.toLowerCase()} lúc ${cur.time || '…'} ngày ${fmt(cur.date)}${cur.place.trim() ? ` tại ${cur.place.trim()}` : ''}.`;
+    try { sessionStorage.setItem(`so-lop:them-viec:${classId}`, line); } catch { setFlash('Trình duyệt chặn lưu tạm — hãy chép thư mời rồi dán vào Sổ lớp.'); return; }
+    router.push(`/giao-vien/lop/${classId}/so-lop?tab=tin-nhan`);
+  };
 
   return (
     <div className="ct hop">
@@ -108,9 +121,15 @@ export default function ParentMeetings({ classId, className, teacher, students }
             {tab === 'moi' && (
               <div className="hop-pane">
                 <label>Nội dung họp (mỗi ý một dòng)<textarea rows={5} value={cur.agenda} maxLength={3000} onChange={(e) => set({ agenda: e.target.value })} /></label>
-                <pre className="hop-preview" aria-label="Thư mời sẽ gửi">{invite}</pre>
+                <label>Thư mời (sửa thẳng ở đây được)
+                  <textarea className="hop-preview" rows={Math.min(16, invite.split('\n').length + 1)} value={invite} maxLength={4000} onChange={(e) => set({ invite: e.target.value })} />
+                </label>
+                {cur.invite.trim() !== '' && cur.invite !== autoInvite && (
+                  <p className="dash-muted hop-hint">Thư mời đã sửa tay — đổi ngày, giờ, nội dung ở trên sẽ không tự cập nhật. <button type="button" className="mini-btn" onClick={() => set({ invite: '' })}><RotateCcw aria-hidden="true" /> Tạo lại theo thông tin trên</button></p>
+                )}
                 <div className="hop-acts">
                   <button type="button" className="btn btn-primary btn-sm" onClick={() => void copy(invite, 'Đã chép thư mời — dán vào nhóm Zalo lớp.')}><Copy aria-hidden="true" /> Chép gửi nhóm Zalo</button>
+                  <button type="button" className="btn btn-outline btn-sm" onClick={toNotice}><Megaphone aria-hidden="true" /> Đưa vào thông báo chung (Sổ lớp)</button>
                   <button type="button" className="btn btn-outline btn-sm" disabled={!students.length} onClick={() => print('moi')}><Printer aria-hidden="true" /> In phiếu mời từng em ({students.length})</button>
                 </div>
               </div>
