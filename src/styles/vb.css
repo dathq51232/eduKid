@@ -51,6 +51,9 @@
 /* In: phần vb-print gắn thẳng vào <body> → ẩn mọi thứ khác; giữ nguyên cỡ chữ pt của văn bản */
 @media print {
   body:has(> .vb-print) > :not(.vb-print) { display: none !important; }
+  /* giao diện tối / nền lưới của app không được in ra lề giấy (lỗi "lề đen" khi lưu PDF) */
+  html:has(> body > .vb-print), body:has(> .vb-print) { background: #fff !important; background-image: none !important; color: #000 !important; color-scheme: light !important; }
+  body:has(> .vb-print)::before, body:has(> .vb-print)::after { display: none !important; }
   .vb-print { display: block; color: #000; background: #fff; font-family: 'Times New Roman', Times, serif; font-size: 14pt; line-height: 1.25; }
   .vb-print table { width: 100%; border-collapse: collapse; }
   .vb-print thead { display: table-header-group; }

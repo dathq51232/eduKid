@@ -30,6 +30,9 @@
 /* In: phần hop-print được gắn thẳng vào <body> (portal) → ẩn mọi thứ khác, không sinh trang trắng */
 @media print {
   body:has(> .hop-print) > :not(.hop-print) { display: none !important; }
+  /* giao diện tối / nền lưới của app không được in ra lề giấy (lỗi "lề đen" khi lưu PDF) */
+  html:has(> body > .hop-print), body:has(> .hop-print) { background: #fff !important; background-image: none !important; color: #000 !important; color-scheme: light !important; }
+  body:has(> .hop-print)::before, body:has(> .hop-print)::after { display: none !important; }
   .hop-print { display: block; width: 100%; color: #000; background: #fff; font-family: 'Times New Roman', serif; font-size: 13pt; }
   .hop-slip { break-inside: avoid; padding: 10mm 12mm; border-bottom: 1px dashed #888; }
   .hop-slip h2 { margin: 0 0 4mm; text-align: center; font-size: 15pt; }
