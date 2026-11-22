@@ -9,6 +9,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, ClipboardCheck, FileSpreadsheet, FileText, PenLine, Printer, Sparkles, Undo2, Upload, Wand2, X } from 'lucide-react';
 import { KINDS, SAMPLE, buildHtml, fileName, kindOf, type Doc, type DocKind, type Org } from '@/lib/vanban/nd30';
+import { FIELDS, compose, unitName, type Facts } from '@/lib/vanban/compose';
+
+/** Loại văn bản có dòng “Kính gửi” */
+const NEEDS_TO: DocKind[] = ['to-trinh', 'giay-moi', 'don'];
 import { checkText, fixInline, fixRows, fixText, type Issue } from '@/lib/vanban/check';
 import { buildXlsx, range, sheetName } from '@/lib/xlsx';
 import { htmlToDocx, type DocImage } from '@/lib/docx-write';
@@ -185,10 +189,21 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
   useEffect(() => { try { const v = localStorage.getItem(ORG_KEY); if (v) setOrg((o) => ({ ...o, ...(JSON.parse(v) as Partial<Org>) })); } catch { /* bỏ qua */ } }, []);
   const setO = (patch: Partial<Org>) => setOrg((o) => { const n = { ...o, ...patch }; try { localStorage.setItem(ORG_KEY, JSON.stringify(n)); } catch { /* bỏ qua */ } return n; });
   const setD = (patch: Partial<Doc>) => setDoc((d) => ({ ...d, ...patch }));
+  // Thông tin chính để tự sinh nội dung; lastGen: nội dung vừa sinh (sửa tay rồi mới hỏi trước khi ghi đè)
+  const [facts, setFacts] = useState<Facts>({});
+  const [lastGen, setLastGen] = useState('');
+  const dirtyBody = () => Boolean(doc.body.trim()) && doc.body !== SAMPLE[doc.kind].body && doc.body !== lastGen;
   const pickKind = (kind: DocKind) => {
-    const dirty = doc.body.trim() && doc.body !== SAMPLE[doc.kind].body;
-    if (dirty && !window.confirm('Đổi loại văn bản sẽ thay nội dung đang soạn bằng nội dung mẫu. Tiếp tục?')) return;
+    if (dirtyBody() && !window.confirm('Đổi loại văn bản sẽ thay nội dung đang soạn bằng nội dung mẫu. Tiếp tục?')) return;
     setDoc((d) => ({ ...d, kind, ...SAMPLE[kind] }));
+    setFacts({}); setLastGen('');
+  };
+  const generate = () => {
+    if (dirtyBody() && !window.confirm('Thay nội dung đang soạn bằng nội dung tự sinh?')) return;
+    const c = compose(doc.kind, facts, { unit: org.name, className, signer: org.signer, role: org.role });
+    setDoc((d) => ({ ...d, body: c.body, subject: c.subject || d.subject, to: c.to ?? d.to }));
+    setLastGen(c.body);
+    setFlash('Đã sinh nội dung — xem bản xem trước bên phải, sửa lại nếu cần.');
   };
 
   const html = useMemo(() => buildHtml(org, doc), [org, doc]);
@@ -287,7 +302,10 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
               {KINDS.map((k) => <button key={k.id} type="button" role="radio" aria-checked={doc.kind === k.id} className={doc.kind === k.id ? 'is-on' : ''} onClick={() => pickKind(k.id)}>{k.label}</button>)}
             </div>
             <details className="vb-org" open={!org.name}>
-              <summary>Thông tin đơn vị & người ký <small>(lưu trên máy này, dùng lại cho mọi văn bản)</small></summary>
+              {/* đã điền: thu gọn thành một dòng tóm tắt, bấm để sửa */}
+              <summary>{org.name.trim()
+                ? <><b>{unitName(org.name)}</b> · {org.signer || '…'}{org.role ? ` (${org.role})` : ''} <small className="vb-edit-link">Sửa</small></>
+                : <>Thông tin đơn vị & người ký <small>(điền một lần, lưu trên máy này)</small></>}</summary>
               <div className="vb-fields">
                 <label>Cơ quan chủ quản<input value={org.parent} maxLength={100} placeholder="UBND XÃ …" onChange={(e) => setO({ parent: e.target.value })} /></label>
                 <label>Tên đơn vị<input value={org.name} maxLength={100} placeholder="TRƯỜNG TIỂU HỌC …" onChange={(e) => setO({ name: e.target.value })} /></label>
@@ -298,14 +316,33 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
                 <label className="vb-wide">Họ tên người ký<input value={org.signer} maxLength={80} onChange={(e) => setO({ signer: e.target.value })} /></label>
               </div>
             </details>
-            <div className="vb-fields">
-              {doc.kind !== 'don' && <label>Số (để trống nếu chờ vào sổ)<input value={doc.no} maxLength={10} inputMode="numeric" onChange={(e) => setD({ no: e.target.value })} /></label>}
-              <label>Ngày<input type="date" value={doc.date} onChange={(e) => setD({ date: e.target.value })} /></label>
-              {doc.kind !== 'don' && <label className="vb-wide">Trích yếu<input value={doc.subject} maxLength={200} onChange={(e) => setD({ subject: e.target.value })} /></label>}
-              <label className="vb-wide">Kính gửi (mỗi nơi một dòng, để trống nếu không có)<textarea rows={2} value={doc.to} maxLength={500} onChange={(e) => setD({ to: e.target.value })} /></label>
-              <label className="vb-wide">Nội dung (mỗi dòng một đoạn; “I.”, “1.” là đề mục; “-” là gạch đầu dòng)<textarea rows={12} value={doc.body} maxLength={20000} onChange={(e) => setD({ body: e.target.value })} /></label>
-              {doc.kind !== 'don' && doc.kind !== 'bien-ban' && <label className="vb-wide">Nơi nhận (mỗi nơi một dòng)<textarea rows={3} value={doc.recipients} maxLength={1000} onChange={(e) => setD({ recipients: e.target.value })} /></label>}
+            {/* Thông tin chính → Tự sinh nội dung (theo loại văn bản, đúng văn phong) */}
+            <div className="vb-facts">
+              <div className="vb-facts-hd"><b>Thông tin chính</b><span>Điền vài ý, bấm “Tự sinh nội dung” — sửa lại tuỳ ý.</span></div>
+              <div className="vb-fields">
+                {FIELDS[doc.kind].map((f) => (
+                  <label key={`${doc.kind}-${f.key}`} className={f.wide ? 'vb-wide' : ''}>{f.label}
+                    <input value={facts[f.key] ?? ''} maxLength={300} placeholder={f.placeholder} onChange={(e) => setFacts((x) => ({ ...x, [f.key]: e.target.value }))} />
+                  </label>
+                ))}
+              </div>
+              <button type="button" className="btn btn-primary vb-gen" onClick={generate} disabled={!Object.values(facts).some((v) => v?.trim())}><Sparkles aria-hidden="true" /> Tự sinh nội dung</button>
             </div>
+            <div className="vb-fields vb-fields-3">
+              {doc.kind !== 'don' && <label>Số<input value={doc.no} maxLength={10} inputMode="numeric" placeholder="chờ vào sổ" onChange={(e) => setD({ no: e.target.value })} /></label>}
+              <label>Ngày<input type="date" value={doc.date} onChange={(e) => setD({ date: e.target.value })} /></label>
+              {NEEDS_TO.includes(doc.kind) && <label>Kính gửi<input value={doc.to} maxLength={200} onChange={(e) => setD({ to: e.target.value })} /></label>}
+            </div>
+            <div className="vb-fields">
+              {doc.kind !== 'don' && <label className="vb-wide">Trích yếu<input value={doc.subject} maxLength={200} onChange={(e) => setD({ subject: e.target.value })} /></label>}
+              <label className="vb-wide">Nội dung <small>(mỗi dòng một đoạn; “I.”, “1.” là đề mục; “-” là gạch đầu dòng)</small><textarea rows={9} value={doc.body} maxLength={20000} onChange={(e) => setD({ body: e.target.value })} /></label>
+            </div>
+            {doc.kind !== 'don' && doc.kind !== 'bien-ban' && (
+              <details className="vb-org vb-rec">
+                <summary>Nơi nhận <small>({doc.recipients.split('\n').filter((x) => x.trim()).map((x) => x.trim().replace(/[;.]$/, '')).join(', ') || 'chưa có'})</small></summary>
+                <textarea rows={3} value={doc.recipients} maxLength={1000} aria-label="Nơi nhận, mỗi nơi một dòng" onChange={(e) => setD({ recipients: e.target.value })} />
+              </details>
+            )}
             <IssueList issues={issues} />
           </section>
           <section className="vb-paper-wrap" aria-label="Xem trước văn bản">

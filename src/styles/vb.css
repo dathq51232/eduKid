@@ -66,3 +66,16 @@
 .vb-xlfix summary { cursor: pointer; font-weight: 700; }
 .vb-xlfix ul { display: grid; gap: 4px; max-height: 260px; overflow: auto; margin: 8px 0 0; padding: 0; list-style: none; font-size: 14px; }
 .vb-xlfix s { color: var(--muted); }
+/* Mẫu văn bản rút gọn: ô Thông tin chính + nút Tự sinh nội dung */
+.vb-facts { display: grid; gap: 10px; padding: 12px 14px; border-radius: 14px; background: rgb(59 130 246 / .08); border: 1.5px solid rgb(59 130 246 / .35); }
+.vb-facts-hd { display: grid; gap: 2px; }
+.vb-facts-hd b { font-size: 16px; }
+.vb-facts-hd span { color: var(--muted); font-size: 13.5px; }
+.vb-gen { justify-self: start; min-height: 48px; font-size: 16px; }
+.vb-gen svg { width: 18px; height: 18px; }
+.vb-fields-3 { grid-template-columns: 1fr 1fr 1fr; }
+.vb label small { font-weight: 600; }
+.vb-edit-link { margin-left: 6px; color: var(--brand-blue) !important; font-weight: 800 !important; }
+.vb-rec textarea { width: 100%; margin-top: 8px; }
+.vb-org summary small { overflow-wrap: anywhere; }
+@media (max-width: 560px) { .vb-fields-3 { grid-template-columns: 1fr 1fr; } }
