@@ -1,40 +1,64 @@
-/* Xem trước & sửa trên trang A4 (vbe-) — nút to, chữ rõ cho thầy cô lớn tuổi */
-.ct-seg[hidden] { display: none !important; }
-.vbe { display: grid; gap: 14px; }
-.vbe-top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.vbe-top h2 { flex: 1; margin: 0; font-size: 20px; }
-.vbe-out { display: flex; flex-wrap: wrap; gap: 8px; }
-.vbe-out .btn, .vbe-top .btn { min-height: 50px; font-size: 17px; }
-.vbe-out svg, .vbe-top svg { width: 20px; height: 20px; }
-.vbe-body { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
-.vbe-side { display: grid; gap: 14px; position: sticky; top: 90px; }
-.vbe-main { display: grid; gap: 10px; min-width: 0; }
-.vbe-tip { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); color: var(--muted); font-size: 14.5px; line-height: 1.5; }
-/* cài đặt trang */
-.vbe-setup { display: grid; gap: 12px; }
-.vbe-setup label { display: grid; gap: 5px; font-size: 15px; font-weight: 700; color: var(--ink); }
-.vbe-setup label small { color: var(--muted); font-weight: 600; font-size: 13px; }
-.vbe-setup input:not([type="checkbox"]) { min-height: 48px; padding: 8px 12px; border: 1.5px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; }
-.vbe-setup fieldset { display: grid; gap: 8px; margin: 0; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 14px; }
-.vbe-setup legend { padding: 0 4px; font-size: 15px; font-weight: 800; }
-.vbe-seg { display: flex; flex-wrap: wrap; gap: 6px; }
-.vbe-seg button { flex: 1 1 auto; min-height: 46px; padding: 6px 12px; border: 1.5px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
-.vbe-seg button[aria-pressed="true"] { border-color: var(--brand-blue); background: var(--brand-blue); color: #fff; }
-.vbe-font { align-items: center; }
-.vbe-font button { flex: 0 0 52px; display: grid; place-items: center; }
-.vbe-font b { flex: 1; text-align: center; font-size: 20px; }
-.vbe-check { grid-auto-flow: column; justify-content: start; align-items: center; gap: 10px; font-weight: 600 !important; }
-.vbe-check input { width: 22px; height: 22px; }
-/* thanh công cụ: nút to có chữ */
-.vbe-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px; border-radius: 16px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); position: sticky; top: 76px; z-index: 5; }
-.vbe-tools > button, .vbe-zoom button { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 6px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
-.vbe-tools > button:hover, .vbe-zoom button:hover { border-color: var(--brand-blue); }
-.vbe-tools svg, .vbe-zoom svg { width: 20px; height: 20px; }
-.vbe-tools .vbe-primary { border-color: var(--brand-blue); background: var(--brand-blue); color: #fff; }
-.vbe-zoom { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
-.vbe-zoom b { min-width: 52px; text-align: center; font-size: 16px; }
-/* trang A4 thật (mm) — phóng to / thu nhỏ bằng zoom; đường đỏ mảnh mỗi 297 mm = chỗ sang trang (ước tính) */
-.vbe-scroll { overflow: auto; max-height: calc(100vh - 170px); padding: 16px; border-radius: 18px; background: var(--surface-2); }
+/* Văn bản & in ấn — khung soạn kiểu Word / Excel (vbe-): ribbon nhóm công cụ + trang A4 */
+.vbe-ws { display: grid; gap: 10px; }
+
+/* ---- ribbon ---- */
+.vbe-ribbon { border-radius: 16px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); position: sticky; top: 70px; z-index: 6; }
+.vbe-ribbon-lite { position: static; margin-bottom: 12px; }
+.vbe-rtabs { display: flex; align-items: flex-end; gap: 2px; padding: 6px 10px 0; border-bottom: 1px solid var(--line); }
+.vbe-rtabs > button { min-height: 40px; padding: 6px 16px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--muted); font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; }
+.vbe-rtabs > button[aria-selected="true"] { color: var(--brand-blue); border-bottom-color: var(--brand-blue); }
+.vbe-rbody { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; padding: 6px 4px; overflow-x: auto; }
+.vbe-rg { display: grid; grid-template-rows: 1fr auto; padding: 0 10px; border-right: 1px solid var(--line); }
+.vbe-rg:last-child { border-right: 0; }
+.vbe-rg-items { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.vbe-rg-label { padding-top: 4px; text-align: center; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .02em; }
+/* nút ribbon: biểu tượng trên, chữ dưới */
+.vbe-rb { display: inline-grid; justify-items: center; align-content: center; gap: 3px; min-width: 62px; min-height: 58px; padding: 4px 8px; border: 1.5px solid transparent; border-radius: 10px; background: transparent; color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; line-height: 1.15; text-align: center; cursor: pointer; }
+.vbe-rb svg { width: 22px; height: 22px; }
+.vbe-rb span { max-width: 110px; }
+.vbe-rb:hover:not(:disabled) { background: var(--surface-2); border-color: var(--line); }
+.vbe-rb[aria-pressed="true"] { background: rgb(59 130 246 / .14); border-color: rgb(59 130 246 / .5); color: var(--brand-blue); }
+.vbe-rb.is-primary { background: var(--brand-blue); color: #fff; }
+.vbe-rb.is-primary:hover { filter: brightness(1.08); background: var(--brand-blue); }
+.vbe-rb:disabled { opacity: .45; cursor: default; }
+.vbe-rb.vb-upload { position: relative; }
+/* ô chọn / nhập trong ribbon */
+.vbe-field { display: grid; gap: 3px; font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.vbe-field select, .vbe-field input { min-height: 38px; padding: 4px 10px; border: 1.5px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; }
+.vbe-field.vbe-wide input { width: 210px; }
+.vbe-tick { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--ink); cursor: pointer; }
+.vbe-tick input { width: 20px; height: 20px; }
+.vbe-size { display: inline-grid; grid-template-columns: 34px 34px 34px; grid-template-rows: auto auto; align-items: center; justify-items: center; column-gap: 2px; margin-left: 4px; }
+.vbe-size button { width: 34px; height: 34px; display: grid; place-items: center; border: 1.5px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.vbe-size button svg { width: 16px; height: 16px; }
+.vbe-size b { font-size: 17px; }
+.vbe-size span { grid-column: 1 / -1; font-size: 13px; font-weight: 700; color: var(--ink); }
+.vbe-paper-ic { display: block; width: 16px; height: 21px; border: 2px solid currentColor; border-radius: 2px; }
+.vbe-paper-ic.is-land { width: 21px; height: 16px; margin: 2px 0 3px; }
+/* thu phóng: góc phải hàng thẻ ribbon */
+.vbe-zoom { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; padding-bottom: 4px; }
+.vbe-zoom button { width: 38px; height: 38px; display: grid; place-items: center; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.vbe-zoom button svg { width: 18px; height: 18px; }
+.vbe-zoom b { min-width: 48px; text-align: center; font-size: 15px; }
+
+/* ---- thông tin tài liệu, trang mở đầu ---- */
+.vbe-info { display: grid; gap: 8px; }
+.vbe-doc { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 15px; }
+.vbe-doc svg { width: 18px; height: 18px; }
+.vbe-done { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: rgb(34 197 94 / .12); color: #16a34a; font-size: 13.5px; font-weight: 800; }
+.vbe-done svg { width: 16px; height: 16px; }
+.vbe-err { margin: 6px 0 0; }
+.vbe-landing { display: grid; gap: 12px; justify-items: start; }
+.vbe-open { min-height: 56px; font-size: 18px; }
+.vbe-open svg { width: 22px; height: 22px; }
+.vbe-paste { display: grid; gap: 10px; width: 100%; padding: 12px 14px; border: 1.5px dashed var(--line-strong); border-radius: 14px; }
+.vbe-paste summary { cursor: pointer; font-weight: 800; font-size: 16px; }
+.vbe-paste .btn { justify-self: start; }
+
+/* ---- trang A4 thật (mm) — zoom; đường đỏ mảnh mỗi 297 mm = chỗ sang trang (ước tính) ---- */
+.vbe-main { display: grid; gap: 8px; min-width: 0; }
+.vbe-tip { margin: 0; color: var(--muted); font-size: 13.5px; }
+.vbe-scroll { overflow: auto; max-height: calc(100vh - 230px); padding: 16px; border-radius: 16px; background: var(--surface-2); }
 .vbe-page { position: relative; box-sizing: border-box; width: 210mm; min-height: 297mm; margin: 0 auto; padding: 20mm 15mm 20mm 30mm; background: #fff repeating-linear-gradient(to bottom, transparent 0, transparent calc(297mm - 1px), #f43f5e calc(297mm - 1px), #f43f5e 297mm); color: #000; font-family: 'Times New Roman', Times, serif; line-height: 1.3; box-shadow: 0 6px 24px rgb(0 0 0 / .2); }
 .vbe-page.is-land { width: 297mm; min-height: 210mm; padding: 15mm 12mm; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(210mm - 1px), #f43f5e calc(210mm - 1px), #f43f5e 210mm); }
 .vbe-hd, .vbe-ft { position: absolute; left: 30mm; right: 15mm; display: grid; justify-items: center; gap: 1mm; color: #555; font-size: 11pt; pointer-events: none; }
@@ -46,25 +70,31 @@
 .vbe-edit:focus { box-shadow: 0 0 0 2px rgb(59 130 246 / .25); border-radius: 2px; }
 .vbe-edit table { width: 100%; border-collapse: collapse; }
 .vbe-page .vb-sheet td[contenteditable]:focus, .vbe-page .vb-sheet th[contenteditable]:focus { outline: 2px solid #3b82f6; outline-offset: -2px; background: #eff6ff; }
-@media (max-width: 1100px) { .vbe-body { grid-template-columns: 1fr; } .vbe-side { position: static; } }
-@media (max-width: 560px) { .vbe-zoom { margin-left: 0; } .vbe-tools > button { flex: 1 1 calc(50% - 6px); justify-content: center; } }
-/* Chuẩn hoá / Cấu hình in ấn: thanh mở file, ô dán chữ, chọn trang tính */
-.vbe-open { min-height: 52px; font-size: 17px; }
-.vbe-doc { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 16px; }
-.vbe-doc svg { width: 20px; height: 20px; }
-.vbe-paste { display: grid; gap: 10px; padding: 12px 14px; border: 1.5px dashed var(--line-strong); border-radius: 14px; }
-.vbe-paste summary { cursor: pointer; font-weight: 800; font-size: 16px; }
-.vbe-paste[open] summary { margin-bottom: 4px; }
-.vbe-paste .btn { justify-self: start; }
-.vbe-pick { display: inline-flex !important; align-items: center; gap: 6px !important; font-size: 15px !important; color: var(--ink) !important; }
-.vbe-pick select { min-height: 46px; }
-.vbe-checkbox input { width: 22px; height: 22px; }
-.vbe-title { max-width: 520px; }
-/* Thanh "Chuẩn hoá theo mẫu" — nút to, rõ */
-.vbe-normbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 14px 16px; border-radius: 16px; background: rgb(59 130 246 / .1); border: 1.5px solid rgb(59 130 246 / .4); }
-.vbe-normbar > span { flex: 1 1 320px; color: var(--ink); font-size: 15px; line-height: 1.5; }
-.vbe-normbtn { min-height: 56px; padding: 10px 26px; font-size: 18px; }
-.vbe-normbtn svg { width: 22px; height: 22px; }
-.vbe-normbar.is-done { background: rgb(34 197 94 / .1); border-color: rgb(34 197 94 / .4); }
-.vbe-done { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
-.vbe-done svg { width: 22px; height: 22px; color: #16a34a; flex: none; }
+@media (max-width: 720px) {
+  .vbe-ribbon { position: static; }
+  .vbe-rg { padding: 4px 6px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .vbe-rbody { display: grid; }
+  .vbe-field.vbe-wide input { width: 100%; }
+}
+/* ribbon gọn một hàng: nút nhỏ xếp 2 hàng, khoảng cách hẹp */
+.vbe-rb { min-width: 54px; padding: 4px 6px; }
+.vbe-rg { padding: 0 7px; }
+.vbe-rg-items { gap: 2px; }
+.vbe-rb.is-small { display: inline-flex; align-items: center; justify-content: flex-start; gap: 6px; min-width: 0; min-height: 27px; padding: 2px 8px; font-size: 13px; }
+.vbe-rb.is-small svg { width: 17px; height: 17px; flex: none; }
+.vbe-grid2 { display: grid; grid-template-columns: auto auto; gap: 2px 4px; }
+.vbe-grid1 { display: grid; gap: 2px; }
+/* cỡ chữ gọn trong lưới 2×2 của nhóm Phông chữ; nhãn dài xuống 2 dòng */
+.vbe-size { display: inline-flex; align-items: center; gap: 3px; grid-template-columns: none; margin-left: 0; }
+.vbe-size button { width: 27px; height: 27px; border-radius: 7px; }
+.vbe-size button svg { width: 14px; height: 14px; }
+.vbe-size b { min-width: 24px; text-align: center; font-size: 15px; }
+.vbe-rb:not(.is-small) span { max-width: 78px; }
+/* ô nhập một dòng: nhãn bên trái (Đầu trang / Chân trang) */
+.vbe-inline { display: grid; grid-template-columns: 78px 190px; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--ink); }
+.vbe-inline input { min-height: 30px; padding: 3px 8px; border: 1.5px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; font-weight: 500; }
+@media (max-width: 720px) { .vbe-inline { grid-template-columns: 78px 1fr; } }
+.vbe-inline select { min-height: 30px; padding: 2px 6px; border: 1.5px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; }
+.vbe-tick-col { font-size: 12.5px; line-height: 1.2; }
+/* hai thẻ ribbon cao bằng nhau: chuyển thẻ không làm trang nhảy */
+.vbe-ws .vbe-rbody { min-height: 129px; }

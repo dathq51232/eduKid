@@ -7,7 +7,7 @@
 // "Tài liệu đang làm" dùng chung giữa (2) và (3). Mọi xử lý chạy trên máy cô — file không gửi đi đâu.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, CheckCircle2, ClipboardCheck, FileSpreadsheet, FileText, PenLine, Printer, Sparkles, Undo2, Upload, Wand2, X } from 'lucide-react';
+import { CheckCircle2, ClipboardCheck, FileSpreadsheet, FileText, PenLine, Printer, Sparkles, Undo2, Upload, Wand2, X } from 'lucide-react';
 import { KINDS, SAMPLE, buildHtml, fileName, kindOf, type Doc, type DocKind, type Org } from '@/lib/vanban/nd30';
 import { checkText, fixInline, fixRows, fixText, type Issue } from '@/lib/vanban/check';
 import { buildXlsx, range, sheetName } from '@/lib/xlsx';
@@ -15,7 +15,7 @@ import { htmlToDocx, type DocImage } from '@/lib/docx-write';
 import { readDocxFull } from '@/lib/docx-read';
 import { readXlsxAll, type Sheet } from '@/lib/xlsx-read';
 import { asciiFilename } from '@/lib/filename';
-import { DEFAULT_SETUP, DEFAULT_VIEW, DocEditor, SHEET_SETUP, SetupPanel, SheetEditor, pageCss, sheetHtml, trimSheet, type PageSetup, type SheetView } from '@/components/classroom/PageEditor';
+import { DEFAULT_SETUP, DEFAULT_VIEW, RbBtn, RbGroup, SHEET_SETUP, Workspace, pageCss, sheetHtml, trimSheet, type PageSetup, type SheetView } from '@/components/classroom/PageEditor';
 import '@/styles/adm.css';
 import '@/styles/btn.css';
 import '@/styles/dash.css';
@@ -266,6 +266,21 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
       {flash && <p className="adm-alert is-ok no-print" role="status" onClick={() => setFlash('')}>{flash}</p>}
 
       {tab === 'mau' && (
+        <>
+        <div className="vbe-ribbon vbe-ribbon-lite no-print">
+          <div className="vbe-rbody">
+            <RbGroup label="Tệp">
+              <RbBtn primary icon={<FileText aria-hidden="true" />} label="Tải Word" onClick={() => saveWord(html, DEFAULT_SETUP, fileName(doc), kindOf(doc.kind).label)} />
+              <RbBtn icon={<Printer aria-hidden="true" />} label="In / PDF" onClick={() => print(html, DEFAULT_SETUP)} />
+            </RbGroup>
+            <RbGroup label="Soạn tiếp">
+              <RbBtn icon={<PenLine aria-hidden="true" />} label="Sửa trên trang & cấu hình in" onClick={() => { open({ id: ++seq, kind: 'doc', name: kindOf(doc.kind).label, file: fileName(doc), html: bodyOf(html), images: new Map(), fixed: 0, orig: null }); setTab('in-an'); }} />
+            </RbGroup>
+            <RbGroup label="Kiểm tra">
+              <RbBtn icon={<Sparkles aria-hidden="true" />} label="Sửa lỗi trình bày" onClick={fixDoc} />
+            </RbGroup>
+          </div>
+        </div>
         <div className="vb-grid no-print">
           <section className="dash-card vb-form">
             <div className="vb-kinds" role="radiogroup" aria-label="Loại văn bản">
@@ -291,60 +306,46 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
               <label className="vb-wide">Nội dung (mỗi dòng một đoạn; “I.”, “1.” là đề mục; “-” là gạch đầu dòng)<textarea rows={12} value={doc.body} maxLength={20000} onChange={(e) => setD({ body: e.target.value })} /></label>
               {doc.kind !== 'don' && doc.kind !== 'bien-ban' && <label className="vb-wide">Nơi nhận (mỗi nơi một dòng)<textarea rows={3} value={doc.recipients} maxLength={1000} onChange={(e) => setD({ recipients: e.target.value })} /></label>}
             </div>
-            <div className="vb-acts">
-              <button type="button" className="btn btn-primary btn-sm" onClick={() => saveWord(html, DEFAULT_SETUP, fileName(doc), kindOf(doc.kind).label)}><FileText aria-hidden="true" /> Tải Word</button>
-              <button type="button" className="btn btn-outline btn-sm" onClick={() => print(html, DEFAULT_SETUP)}><Printer aria-hidden="true" /> In / lưu PDF</button>
-              <button type="button" className="btn btn-outline btn-sm" onClick={() => { open({ id: ++seq, kind: 'doc', name: kindOf(doc.kind).label, file: fileName(doc), html: bodyOf(html), images: new Map(), fixed: 0, orig: null }); setTab('in-an'); }}><PenLine aria-hidden="true" /> Sửa trên trang & cấu hình in</button>
-              <button type="button" className="btn btn-outline btn-sm" onClick={fixDoc}><Sparkles aria-hidden="true" /> Sửa lỗi trình bày</button>
-            </div>
             <IssueList issues={issues} />
           </section>
           <section className="vb-paper-wrap" aria-label="Xem trước văn bản">
             <div className="vb-paper" dangerouslySetInnerHTML={{ __html: bodyOf(html) }} />
           </section>
         </div>
+        </>
       )}
 
-      {tab === 'chuan-hoa' && (
-        <NormalizeTab work={work} onOpen={open} onClose={close} onFlash={setFlash} onNormalize={normalizeWork} onRestore={restoreWork}>
-          {work && (work.kind === 'doc' ? (
-            <DocEditor key={work.id} initialHtml={work.html} setup={setup} onChange={docHtml} actions={<>
-              <button type="button" className="vbe-primary" onClick={() => setTab('in-an')}><Printer aria-hidden="true" /> Cấu hình in ấn <ArrowRight aria-hidden="true" /></button>
-              <button type="button" onClick={() => saveWord(work.html, setup, `${work.file}-chuan-hoa`, work.name, work.images)}><FileText aria-hidden="true" /> Tải Word</button>
-              <button type="button" onClick={() => { setDoc((d) => ({ ...d, body: stripHeader(htmlText(work.html)) })); setTab('mau'); setFlash('Đã đưa nội dung vào mẫu — chọn loại văn bản, điền trích yếu rồi tải Word / PDF.'); }}>Đưa vào mẫu văn bản</button>
-            </>} />
-          ) : (
-            <SheetEditor sheets={work.sheets} idx={sheetIdx} onIdx={setSheetIdx} onSheets={setSheets} view={view} onView={setView} setup={setup} actions={<>
-              <button type="button" className="vbe-primary" onClick={() => setTab('in-an')}><Printer aria-hidden="true" /> Cấu hình in ấn <ArrowRight aria-hidden="true" /></button>
-              <button type="button" onClick={() => saveExcel(work)}><FileSpreadsheet aria-hidden="true" /> Tải Excel</button>
-            </>} />
-          ))}
-        </NormalizeTab>
-      )}
-
-      {tab === 'in-an' && (
-        <section className="dash-card vb-norm no-print">
-          <FileBar work={work} label="Mở file Word / Excel để in" normalize={false} onOpen={open} onClose={close} onFlash={setFlash} />
+      {(tab === 'chuan-hoa' || tab === 'in-an') && (
+        <section className="vb-norm no-print">
           {!work ? (
-            <p className="dash-muted">Mở file Word hoặc Excel (hoặc chuẩn hoá ở bước trước) để đặt đầu trang, chân trang, số trang, khổ giấy rồi in hay lưu PDF. Bảng nhiều trang tự lặp lại dòng tên cột ở mỗi trang.</p>
+            <Landing normalize={tab === 'chuan-hoa'} onOpen={(w) => { open(w); setFlash(tab === 'chuan-hoa' ? 'Đã mở file — xem bản gốc bên dưới, bấm “Chuẩn hoá theo mẫu” để đưa về đúng mẫu.' : 'Đã mở file — đặt khổ giấy, số trang, đầu & chân trang ở thẻ “Bố cục trang”.'); }} />
           ) : (
-            <div className="vbe-body">
-              <aside className="vbe-side">
-                <SetupPanel setup={setup} onChange={setSetup} showFont={work.kind === 'doc'} />
-                <p className="vbe-tip">Trên trang vẫn sửa được chữ. Đường đỏ mảnh là chỗ sang trang (ước tính). Bản in và file Word dùng đúng cài đặt bên trên.</p>
-              </aside>
-              {work.kind === 'doc' ? (
-                <DocEditor key={work.id} initialHtml={work.html} setup={setup} onChange={docHtml} actions={<>
-                  <button type="button" className="vbe-primary" onClick={printWork}><Printer aria-hidden="true" /> In / lưu PDF</button>
-                  <button type="button" onClick={() => saveWord(work.html, setup, work.file, work.name, work.images)}><FileText aria-hidden="true" /> Tải Word</button>
-                </>} />
-              ) : (
-                <SheetEditor sheets={work.sheets} idx={sheetIdx} onIdx={setSheetIdx} onSheets={setSheets} view={view} onView={setView} setup={setup} actions={<>
-                  <button type="button" className="vbe-primary" onClick={printWork}><Printer aria-hidden="true" /> In / lưu PDF</button>
-                  <button type="button" onClick={() => saveExcel(work)}><FileSpreadsheet aria-hidden="true" /> Tải Excel</button>
-                </>} />
-              )}
-            </div>
+            <Workspace key={`${tab}-${work.id}`} startTab={tab === 'in-an' ? 'layout' : 'home'} setup={setup} onSetup={setSetup}
+              {...(work.kind === 'doc'
+                ? { kind: 'doc' as const, docKey: work.id, html: work.html, onHtml: docHtml }
+                : { kind: 'sheet' as const, sheets: work.sheets, idx: sheetIdx, onIdx: setSheetIdx, onSheets: setSheets, view, onView: setView })}
+              fileGroup={<>
+                <OpenBtn onOpen={(w) => { if (window.confirm('Mở file mới sẽ thay tài liệu đang làm. Tiếp tục?')) { open(w); setFlash('Đã mở file mới.'); } }} />
+                <RbBtn icon={work.kind === 'doc' ? <FileText aria-hidden="true" /> : <FileSpreadsheet aria-hidden="true" />} label={work.kind === 'doc' ? 'Tải Word' : 'Tải Excel'}
+                  onClick={() => (work.kind === 'doc' ? saveWord(work.html, setup, work.file, work.name, work.images) : saveExcel(work))} />
+                <RbBtn primary icon={<Printer aria-hidden="true" />} label="In / PDF" onClick={printWork} />
+                <RbBtn icon={<X aria-hidden="true" />} label="Đóng" onClick={close} />
+              </>}
+              outGroup={<>
+                <RbBtn icon={work.kind === 'doc' ? <FileText aria-hidden="true" /> : <FileSpreadsheet aria-hidden="true" />} label={work.kind === 'doc' ? 'Tải Word' : 'Tải Excel'}
+                  onClick={() => (work.kind === 'doc' ? saveWord(work.html, setup, work.file, work.name, work.images) : saveExcel(work))} />
+                <RbBtn primary icon={<Printer aria-hidden="true" />} label="In / PDF" onClick={printWork} />
+              </>}
+              extraGroup={tab === 'chuan-hoa' ? {
+                label: 'Chuẩn hoá',
+                node: <>
+                  {!work.orig
+                    ? <RbBtn primary icon={<Sparkles aria-hidden="true" />} label="Chuẩn hoá theo mẫu" onClick={normalizeWork} />
+                    : <RbBtn icon={<Undo2 aria-hidden="true" />} label="Về bản gốc" onClick={restoreWork} />}
+                  {work.kind === 'doc' && <RbBtn icon={<PenLine aria-hidden="true" />} label="Đưa vào mẫu" onClick={() => { setDoc((d) => ({ ...d, body: stripHeader(htmlText(work.html)) })); setTab('mau'); setFlash('Đã đưa nội dung vào mẫu — chọn loại văn bản, điền trích yếu rồi tải Word / PDF.'); }} />}
+                </>,
+              } : undefined}
+              below={<WorkInfo work={work} />} />
           )}
         </section>
       )}
@@ -374,77 +375,55 @@ function stripHeader(text: string) {
   return text.split('\n').filter((l) => !/^(CỘNG HÒA XÃ HỘI|Độc lập - Tự do|Số: |.{0,40}, ngày \d{2} tháng|[─_-]{4,}$)/.test(l.trim())).join('\n').trim();
 }
 
-/** Nút mở file + tên tài liệu đang làm (đóng / mở file khác) */
-function FileBar({ work, label, normalize, onOpen, onClose, onFlash }: { work: Work | null; label: string; normalize: boolean; onOpen: (w: Work) => void; onClose: () => void; onFlash: (m: string) => void }) {
+/** Nút "Mở file" trên ribbon (Word .docx / Excel .xlsx) */
+function OpenBtn({ onOpen, big }: { onOpen: (w: Work) => void; big?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const pick = async (f: File) => {
-    if (work && !window.confirm('Mở file mới sẽ thay tài liệu đang làm. Tiếp tục?')) return;
     setErr(''); setBusy(true);
-    try {
-      const w = await loadWork(f, normalize);
-      onOpen(w);
-      if (!normalize) onFlash(work ? 'Đã mở file mới.' : 'Đã mở file — xem bản gốc bên dưới.');
-      else onFlash(w.kind === 'sheet'
-        ? (w.changes.length ? `Đã chuẩn hoá ${w.changes.length} ô trong ${w.sheets.length} trang tính — xem và sửa ngay trên trang bên dưới.` : 'Bảng đã gọn gàng — không có ô nào cần sửa.')
-        : (w.fixed ? `Đã chuẩn hoá ${w.fixed} chỗ — xem và sửa ngay trên trang bên dưới.` : 'Văn bản đã gọn gàng — không có chỗ nào cần sửa tự động.'));
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Không đọc được file.'); }
+    try { onOpen(await loadWork(f, false)); } catch (e) { setErr(e instanceof Error ? e.message : 'Không đọc được file.'); }
     setBusy(false);
   };
   return (
     <>
-      <div className="vb-acts">
-        <label className="btn btn-outline vb-upload vbe-open"><Upload aria-hidden="true" /> {busy ? 'Đang đọc…' : work ? 'Mở file khác' : label}
-          <input type="file" accept=".docx,.xlsx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(e) => { const f = e.target.files?.[0]; if (f) void pick(f); e.target.value = ''; }} />
-        </label>
-        {work ? (
-          <span className="vbe-doc">{work.kind === 'doc' ? <FileText aria-hidden="true" /> : <FileSpreadsheet aria-hidden="true" />} <b>{work.name}</b>
-            <button type="button" className="mini-btn" onClick={onClose}><X aria-hidden="true" /> Đóng</button></span>
-        ) : <span className="dash-muted">File .docx hoặc .xlsx</span>}
-      </div>
-      {err && <p className="adm-alert is-error" role="alert">{err}</p>}
+      <label className={big ? 'btn btn-primary vb-upload vbe-open' : 'vbe-rb vb-upload'}>
+        <Upload aria-hidden="true" /><span>{busy ? 'Đang đọc…' : big ? 'Mở file Word / Excel' : 'Mở file'}</span>
+        <input type="file" accept=".docx,.xlsx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(e) => { const f = e.target.files?.[0]; if (f) void pick(f); e.target.value = ''; }} />
+      </label>
+      {err && <p className="adm-alert is-error vbe-err" role="alert">{err}</p>}
     </>
   );
 }
 
-/* ---------------------------------------------------------- (2) chuẩn hoá */
-function NormalizeTab({ work, onOpen, onClose, onFlash, onNormalize, onRestore, children }: { work: Work | null; onOpen: (w: Work) => void; onClose: () => void; onFlash: (m: string) => void; onNormalize: () => void; onRestore: () => void; children: React.ReactNode }) {
+/** Chưa có tài liệu: nút mở file to; ở Chuẩn hoá thêm ô dán chữ */
+function Landing({ normalize, onOpen }: { normalize: boolean; onOpen: (w: Work) => void }) {
   const [text, setText] = useState('');
-  const fromText = () => {
-    const r = fixText(text);
-    onOpen({ id: ++seq, kind: 'doc', name: 'Văn bản đã chuẩn hoá', file: 'van-ban', html: paraHtml(r.text), images: new Map(), fixed: r.fixed, orig: null });
-    onFlash(r.fixed ? `Đã chuẩn hoá ${r.fixed} chỗ — xem và sửa ngay trên trang bên dưới.` : 'Văn bản đã gọn gàng — không có chỗ nào cần sửa tự động.');
-  };
-  const remaining = useMemo(() => (work?.kind === 'doc' ? checkText(htmlText(work.html)).filter((i) => !i.fixable) : []), [work]);
   return (
-    <section className="dash-card vb-norm no-print">
-      <FileBar work={work} label="Mở file Word / Excel để chuẩn hoá" normalize={false} onOpen={onOpen} onClose={onClose} onFlash={onFlash} />
-      {work && (
-        <div className={`vbe-normbar${work.orig ? ' is-done' : ''}`}>
-          {!work.orig ? (
-            <>
-              <button type="button" className="btn btn-primary vbe-normbtn" onClick={onNormalize}><Sparkles aria-hidden="true" /> Chuẩn hoá theo mẫu</button>
-              <span>{work.kind === 'doc'
-                ? 'Đưa cả văn bản về một kiểu: Times New Roman, cùng cỡ chữ, chữ đen, căn đều, lùi đầu dòng; sửa dấu câu, ngày tháng. Giữ chữ đậm, nghiêng, bảng, hình.'
-                : 'Sửa dấu cách, dấu câu, ngày tháng (05/01/2026), viết hoa đúng cột họ tên ở mọi trang tính.'}</span>
-            </>
-          ) : (
-            <>
-              <span className="vbe-done"><CheckCircle2 aria-hidden="true" /> Đã chuẩn hoá {work.kind === 'doc' ? `${work.fixed} chỗ` : `${work.changes.length} ô`} — xem và sửa tiếp trên trang bên dưới.</span>
-              <button type="button" className="btn btn-outline btn-sm" onClick={onRestore}><Undo2 aria-hidden="true" /> Về bản gốc</button>
-            </>
-          )}
-        </div>
-      )}
-      {!work && (
+    <div className="dash-card vbe-landing">
+      <OpenBtn big onOpen={onOpen} />
+      <p className="dash-muted">{normalize
+        ? 'Mở file Word hoặc Excel để xem bản gốc, rồi bấm “Chuẩn hoá theo mẫu”: một font, cùng cỡ chữ, chữ đen, căn đều, lùi đầu dòng; sửa dấu câu, ngày tháng. Giữ chữ đậm, nghiêng, bảng, hình.'
+        : 'Mở file Word hoặc Excel (hoặc chuẩn hoá ở bước trước) để đặt khổ giấy, số trang, đầu & chân trang rồi in hay lưu PDF. Bảng nhiều trang tự lặp lại dòng tên cột.'}</p>
+      {normalize && (
         <details className="vbe-paste">
           <summary>Hoặc dán văn bản vào đây</summary>
-          <textarea className="vb-text" rows={10} value={text} maxLength={60000} placeholder="Dán văn bản cần chuẩn hoá…" onChange={(e) => setText(e.target.value)} aria-label="Văn bản cần chuẩn hoá" />
-          <button type="button" className="btn btn-primary" disabled={!text.trim()} onClick={fromText}><Sparkles aria-hidden="true" /> Chuẩn hoá & xem trước</button>
+          <textarea className="vb-text" rows={10} value={text} maxLength={60000} placeholder="Dán văn bản…" onChange={(e) => setText(e.target.value)} aria-label="Văn bản cần chuẩn hoá" />
+          <button type="button" className="btn btn-primary" disabled={!text.trim()} onClick={() => onOpen({ id: ++seq, kind: 'doc', name: 'Văn bản dán vào', file: 'van-ban', html: paraHtml(text), images: new Map(), fixed: 0, orig: null })}><FileText aria-hidden="true" /> Mở trên trang</button>
         </details>
       )}
-      {!work && <p className="dash-muted">Chuẩn hoá: bỏ dấu cách thừa, sửa dấu câu, ngày tháng (05/01/2026), quốc hiệu – tiêu ngữ, “Số:”, “Kính gửi:”… File Word giữ nguyên chữ đậm, nghiêng, bảng, hình; file Excel còn viết hoa đúng cột họ tên.</p>}
-      {work?.kind === 'sheet' && work.changes.length > 0 && (
+    </div>
+  );
+}
+
+/** Dưới ribbon: tên file, các ô Excel đã sửa, lỗi còn lại cần sửa tay */
+function WorkInfo({ work }: { work: Work }) {
+  const remaining = useMemo(() => (work.kind === 'doc' && work.orig ? checkText(htmlText(work.html)).filter((i) => !i.fixable) : []), [work]);
+  return (
+    <div className="vbe-info">
+      <span className="vbe-doc">{work.kind === 'doc' ? <FileText aria-hidden="true" /> : <FileSpreadsheet aria-hidden="true" />} <b>{work.name}</b>
+        {work.orig && <span className="vbe-done"><CheckCircle2 aria-hidden="true" /> Đã chuẩn hoá {work.kind === 'doc' ? `${work.fixed} chỗ` : `${work.changes.length} ô`}</span>}
+      </span>
+      {work.kind === 'sheet' && work.changes.length > 0 && (
         <details className="vb-xlfix">
           <summary>Xem {work.changes.length} ô đã sửa</summary>
           <ul>{work.changes.slice(0, 80).map((c, i) => <li key={i}><b>{work.sheets.length > 1 ? `${c.sheet}!` : ''}{range(c.r, c.c, c.r, c.c).split(':')[0]}</b> <s>{c.from}</s> → {c.to}</li>)}</ul>
@@ -452,7 +431,6 @@ function NormalizeTab({ work, onOpen, onClose, onFlash, onNormalize, onRestore, 
         </details>
       )}
       {remaining.length > 0 && <IssueList issues={remaining} fixLabel="" />}
-      {children}
-    </section>
+    </div>
   );
 }
