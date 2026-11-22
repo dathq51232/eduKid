@@ -5,6 +5,8 @@ export type Issue = { line: number; rule: string; msg: string; sample: string; f
 type Rule = { id: string; msg: string; find: RegExp; fix?: (line: string) => string };
 
 const RULES: Rule[] = [
+  // ",," ";;" "!!" "??" → một dấu; ".." → "." (giữ dấu ba chấm "...")
+  { id: 'double-punct', msg: 'Dấu câu bị lặp (,, .. !! ??)', find: /([,;:!?])\1+|(?<!\.)\.\.(?!\.)/, fix: (s) => s.replace(/([,;:!?])\1+/g, '$1').replace(/(?<!\.)\.\.(?!\.)/g, '.') },
   { id: 'space', msg: 'Nhiều dấu cách liền nhau', find: /\S {2,}\S/, fix: (s) => s.replace(/(\S) {2,}/g, '$1 ') },
   { id: 'trim', msg: 'Dấu cách thừa ở đầu / cuối dòng', find: /^\s+\S|\S\s+$/, fix: (s) => s.trim() },
   { id: 'before-punct', msg: 'Dấu cách trước dấu câu', find: /\S\s+[,.;:!?)](?!\.)/, fix: (s) => s.replace(/(\S)\s+([,;:!?)])/g, '$1$2').replace(/([^\s.])\s+\.(?!\.)/g, '$1.') },
@@ -59,7 +61,7 @@ export function checkText(text: string): Issue[] {
 /* ---------------------------------------------------------- chữ trong file Word (giữ định dạng) */
 // Sửa từng đoạn chữ bên trong HTML của file Word: KHÔNG cắt khoảng trắng đầu/cuối (đoạn chữ đậm/nghiêng nằm cạnh nhau),
 // không viết hoa đầu dòng (đoạn chữ có thể nằm giữa câu).
-const INLINE_RULES = new Set(['space', 'before-punct', 'after-punct', 'paren', 'cap-sentence', 'motto', 'nation', 'number', 'number-colon', 'date', 'date-pad', 'kinh-gui', 'noi-nhan']);
+const INLINE_RULES = new Set(['double-punct', 'space', 'before-punct', 'after-punct', 'paren', 'cap-sentence', 'motto', 'nation', 'number', 'number-colon', 'date', 'date-pad', 'kinh-gui', 'noi-nhan']);
 export function fixInline(s: string): string {
   if (!s.trim()) return s;
   let t = s;
@@ -74,7 +76,7 @@ export function fixInline(s: string): string {
 }
 
 /* ---------------------------------------------------------- ô bảng tính */
-const CELL_RULES = new Set(['space', 'trim', 'before-punct', 'after-punct', 'paren', 'bullet', 'motto', 'nation', 'date', 'date-pad']);
+const CELL_RULES = new Set(['double-punct', 'space', 'trim', 'before-punct', 'after-punct', 'paren', 'bullet', 'motto', 'nation', 'date', 'date-pad']);
 /** Viết hoa chữ đầu mỗi tiếng: "nguyễn  văn AN" → "Nguyễn Văn An" */
 export const titleCaseVi = (s: string) => s.trim().replace(/\s+/g, ' ').toLocaleLowerCase('vi').replace(/(^|\s)(\p{L})/gu, (_, a: string, b: string) => a + b.toLocaleUpperCase('vi'));
 /** Cột họ tên: tiêu đề có "họ", "tên", "học sinh", "phụ huynh", "giáo viên", "người" */

@@ -7,7 +7,7 @@
 // "Tài liệu đang làm" dùng chung giữa (2) và (3). Mọi xử lý chạy trên máy cô — file không gửi đi đâu.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, CheckCircle2, ClipboardCheck, FileSpreadsheet, FileText, PenLine, Printer, Sparkles, Upload, Wand2, X } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ClipboardCheck, FileSpreadsheet, FileText, PenLine, Printer, Sparkles, Undo2, Upload, Wand2, X } from 'lucide-react';
 import { KINDS, SAMPLE, buildHtml, fileName, kindOf, type Doc, type DocKind, type Org } from '@/lib/vanban/nd30';
 import { checkText, fixInline, fixRows, fixText, type Issue } from '@/lib/vanban/check';
 import { buildXlsx, range, sheetName } from '@/lib/xlsx';
@@ -28,8 +28,9 @@ type Tab = 'mau' | 'chuan-hoa' | 'in-an';
 type Change = { sheet: string; r: number; c: number; from: string; to: string };
 /** Tài liệu đang làm (dùng chung Chuẩn hoá ↔ Cấu hình in ấn). id đổi = mở trình sửa mới */
 type Work =
-  | { id: number; kind: 'doc'; name: string; file: string; html: string; images: Map<string, DocImage>; fixed: number }
-  | { id: number; kind: 'sheet'; name: string; file: string; sheets: Sheet[]; changes: Change[] };
+  | { id: number; kind: 'doc'; name: string; file: string; html: string; images: Map<string, DocImage>; fixed: number; orig: string | null }
+  | { id: number; kind: 'sheet'; name: string; file: string; sheets: Sheet[]; changes: Change[]; orig: Sheet[] | null };
+// orig: bản trước khi bấm Chuẩn hoá (null = chưa chuẩn hoá) — để "Về bản gốc"
 
 const ORG_KEY = 'van-ban:don-vi';
 const today = () => new Date().toISOString().slice(0, 10);
@@ -71,6 +72,70 @@ function fixHtml(html: string): { html: string; fixed: number } {
   }
   return { html: d.body.innerHTML, fixed };
 }
+const P_BODY = 'margin:0;margin-top:6pt;text-align:justify;text-indent:1cm;line-height:1.2';
+const P_HEAD = 'margin:0;margin-top:12pt;margin-bottom:4pt;font-weight:bold';
+const P_CELL = 'margin:0;text-align:left';
+/**
+ * Chuẩn hoá cả file Word theo mẫu NĐ30: một font Times New Roman, một cỡ chữ (theo cài đặt trang), chữ đen,
+ * đoạn căn đều – lùi đầu dòng 1 cm – cách đoạn 6pt; dòng IN HOA ngắn là đề mục (in đậm, dòng đầu căn giữa);
+ * bỏ màu chữ, cỡ chữ, phông, căn lề lộn xộn và đoạn trống; GIỮ đậm / nghiêng / gạch chân, bảng (kẻ khung), hình.
+ * Sau đó sửa chữ (dấu cách, dấu câu lặp, ngày tháng…). Trả về số chỗ đã sửa.
+ */
+function normalizeHtml(html: string): { html: string; fixed: number } {
+  const d = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+  const body = d.body;
+  let fmt = 0;
+  // 1. chữ: chỉ giữ đậm / nghiêng / gạch chân; bỏ span, font, liên kết, màu, cỡ chữ
+  for (const el of [...body.querySelectorAll('span, font, a, strong, b, em, i, u, mark, small, big, sup, sub')].reverse()) {
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'sup' || tag === 'sub') { if (el.getAttribute('style')) { el.removeAttribute('style'); fmt++; } continue; }
+    const st = (el.getAttribute('style') ?? '').toLowerCase();
+    const bold = tag === 'b' || tag === 'strong' || /font-weight:\s*(bold|[6-9]00)/.test(st);
+    const ital = tag === 'i' || tag === 'em' || /font-style:\s*italic/.test(st);
+    const und = tag === 'u' || /text-decoration[^;]*underline/.test(st);
+    if (st || el.getAttribute('color') || el.getAttribute('size') || el.getAttribute('face')) fmt++;
+    let node: Node = d.createDocumentFragment();
+    while (el.firstChild) node.appendChild(el.firstChild);
+    for (const t of [und && 'u', ital && 'i', bold && 'b']) if (t) { const w = d.createElement(t); w.appendChild(node); node = w; }
+    el.replaceWith(node);
+  }
+  // 2. đề mục h1–h6 → đoạn in đậm
+  for (const h of [...body.querySelectorAll('h1, h2, h3, h4, h5, h6')]) {
+    const p = d.createElement('p');
+    while (h.firstChild) p.appendChild(h.firstChild);
+    p.setAttribute('data-head', '1');
+    h.replaceWith(p); fmt++;
+  }
+  // 3. bảng: kẻ khung đen, chữ căn trái
+  for (const t of body.querySelectorAll('table')) { t.setAttribute('border', '1'); t.setAttribute('style', 'width:100%;border-collapse:collapse;margin-top:6pt'); }
+  for (const c of body.querySelectorAll('td, th')) { c.setAttribute('style', 'border:1px solid #000;padding:2pt 4pt;vertical-align:top'); c.removeAttribute('bgcolor'); }
+  // 4. đoạn văn (khối lá: không chứa khối khác)
+  let first = true;
+  for (const b of [...body.querySelectorAll('p, div, li')]) {
+    if (b.querySelector('p, div, li, table')) { b.removeAttribute('style'); continue; }
+    const t = (b.textContent ?? '').replace(/\s+/g, ' ').trim();
+    if (!t && !b.querySelector('img')) { b.remove(); fmt++; continue; }
+    const old = b.getAttribute('style') ?? '';
+    ['style', 'class', 'align'].forEach((a) => b.removeAttribute(a));
+    let style: string;
+    if (b.closest('td, th')) style = P_CELL;
+    else if (b.querySelector('img') && !t) style = 'margin:6pt 0;text-align:center';
+    else {
+      // IN HOA, ngắn → đề mục; đề mục đầu tiên của văn bản (tiêu đề) căn giữa
+      const caps = t.length <= 90 && /\p{L}/u.test(t) && t === t.toLocaleUpperCase('vi');
+      const head = b.hasAttribute('data-head') || caps || /^[IVX]+\.\s/.test(t);
+      style = head ? `${P_HEAD};text-align:${first ? 'center' : 'left'}` : P_BODY;
+      if (head && caps) b.innerHTML = b.innerHTML.replace(/<\/?b>/g, '');
+    }
+    first = false;
+    b.removeAttribute('data-head');
+    if (style !== old) fmt++;
+    b.setAttribute('style', style);
+  }
+  // 5. sửa chữ (giữ định dạng)
+  const r = fixHtml(body.innerHTML);
+  return { html: r.html, fixed: fmt + r.fixed };
+}
 const MIME: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', bmp: 'image/bmp' };
 
 /** Đọc file Word / Excel thành tài liệu đang làm; normalize = chuẩn hoá luôn (tab Chuẩn hoá) */
@@ -86,7 +151,7 @@ async function loadWork(file: File, normalize: boolean): Promise<Work> {
       f.changes.forEach(([r, c, from, to]) => changes.push({ sheet: s.name, r, c, from, to }));
       return { ...s, rows: f.rows };
     });
-    return { id: ++seq, kind: 'sheet', name: file.name, file: baseName(file.name), sheets, changes };
+    return { id: ++seq, kind: 'sheet', name: file.name, file: baseName(file.name), sheets, changes, orig: normalize ? all : null };
   }
   if (!/\.docx$/i.test(file.name)) throw new Error('Chỉ mở được file Word .docx hoặc Excel .xlsx (file .doc / .xls: mở bằng Word / Excel rồi “Lưu thành” định dạng mới).');
   const full = await readDocxFull(buf);
@@ -99,8 +164,9 @@ async function loadWork(file: File, normalize: boolean): Promise<Work> {
     return img ? `${m} src="${URL.createObjectURL(new Blob([img.bytes as BlobPart], { type: img.mime }))}"` : m;
   });
   let fixed = 0;
-  if (normalize) { const r = fixHtml(html); html = r.html; fixed = r.fixed; }
-  return { id: ++seq, kind: 'doc', name: file.name, file: baseName(file.name), html, images, fixed };
+  const orig = html;
+  if (normalize) { const r = normalizeHtml(html); html = r.html; fixed = r.fixed; }
+  return { id: ++seq, kind: 'doc', name: file.name, file: baseName(file.name), html, images, fixed, orig: normalize ? orig : null };
 }
 
 export default function DocStudio({ teacher, className }: { teacher: string; className: string }) {
@@ -132,6 +198,27 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
   const open = (w: Work) => {
     setWork(w); setSheetIdx(0); setView(DEFAULT_VIEW);
     setSetup(w.kind === 'sheet' ? { ...SHEET_SETUP, landscape: (trimSheet(w.sheets[0])[0]?.length ?? 0) > 6 } : DEFAULT_SETUP);
+  };
+  /** Bấm "Chuẩn hoá theo mẫu": văn bản → normalizeHtml; bảng → fixRows mọi trang tính. Giữ bản gốc để "Về bản gốc" */
+  const normalizeWork = () => {
+    if (!work || work.orig) return;
+    if (work.kind === 'doc') {
+      const r = normalizeHtml(work.html);
+      setWork({ ...work, id: ++seq, orig: work.html, html: r.html, fixed: r.fixed });
+      setSetup((s) => ({ ...s, fontSize: 14 }));
+      setFlash(r.fixed ? `Đã chuẩn hoá ${r.fixed} chỗ theo mẫu NĐ30.` : 'Văn bản đã đúng mẫu — không có chỗ nào cần sửa.');
+    } else {
+      const changes: Change[] = [];
+      const sheets = work.sheets.map((s) => { const f = fixRows(s.rows); f.changes.forEach(([r, c, from, to]) => changes.push({ sheet: s.name, r, c, from, to })); return { ...s, rows: f.rows }; });
+      setWork({ ...work, orig: work.sheets, sheets, changes });
+      setFlash(changes.length ? `Đã chuẩn hoá ${changes.length} ô trong ${sheets.length} trang tính.` : 'Bảng đã gọn gàng — không có ô nào cần sửa.');
+    }
+  };
+  const restoreWork = () => {
+    if (!work?.orig) return;
+    if (work.kind === 'doc') setWork({ ...work, id: ++seq, html: work.orig, orig: null, fixed: 0 });
+    else setWork({ ...work, sheets: work.orig, orig: null, changes: [] });
+    setFlash('Đã trả về bản gốc.');
   };
   const close = () => { if (window.confirm('Đóng tài liệu này? Những chỗ đã sửa sẽ không được giữ (hãy tải về trước).')) setWork(null); };
   const docHtml = useCallback((h: string) => setWork((w) => (w && w.kind === 'doc' && w.html !== h ? { ...w, html: h } : w)), []);
@@ -207,7 +294,7 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
             <div className="vb-acts">
               <button type="button" className="btn btn-primary btn-sm" onClick={() => saveWord(html, DEFAULT_SETUP, fileName(doc), kindOf(doc.kind).label)}><FileText aria-hidden="true" /> Tải Word</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => print(html, DEFAULT_SETUP)}><Printer aria-hidden="true" /> In / lưu PDF</button>
-              <button type="button" className="btn btn-outline btn-sm" onClick={() => { open({ id: ++seq, kind: 'doc', name: kindOf(doc.kind).label, file: fileName(doc), html: bodyOf(html), images: new Map(), fixed: 0 }); setTab('in-an'); }}><PenLine aria-hidden="true" /> Sửa trên trang & cấu hình in</button>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => { open({ id: ++seq, kind: 'doc', name: kindOf(doc.kind).label, file: fileName(doc), html: bodyOf(html), images: new Map(), fixed: 0, orig: null }); setTab('in-an'); }}><PenLine aria-hidden="true" /> Sửa trên trang & cấu hình in</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={fixDoc}><Sparkles aria-hidden="true" /> Sửa lỗi trình bày</button>
             </div>
             <IssueList issues={issues} />
@@ -219,7 +306,7 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
       )}
 
       {tab === 'chuan-hoa' && (
-        <NormalizeTab work={work} onOpen={open} onClose={close} onFlash={setFlash}>
+        <NormalizeTab work={work} onOpen={open} onClose={close} onFlash={setFlash} onNormalize={normalizeWork} onRestore={restoreWork}>
           {work && (work.kind === 'doc' ? (
             <DocEditor key={work.id} initialHtml={work.html} setup={setup} onChange={docHtml} actions={<>
               <button type="button" className="vbe-primary" onClick={() => setTab('in-an')}><Printer aria-hidden="true" /> Cấu hình in ấn <ArrowRight aria-hidden="true" /></button>
@@ -297,7 +384,8 @@ function FileBar({ work, label, normalize, onOpen, onClose, onFlash }: { work: W
     try {
       const w = await loadWork(f, normalize);
       onOpen(w);
-      if (normalize) onFlash(w.kind === 'sheet'
+      if (!normalize) onFlash(work ? 'Đã mở file mới.' : 'Đã mở file — xem bản gốc bên dưới.');
+      else onFlash(w.kind === 'sheet'
         ? (w.changes.length ? `Đã chuẩn hoá ${w.changes.length} ô trong ${w.sheets.length} trang tính — xem và sửa ngay trên trang bên dưới.` : 'Bảng đã gọn gàng — không có ô nào cần sửa.')
         : (w.fixed ? `Đã chuẩn hoá ${w.fixed} chỗ — xem và sửa ngay trên trang bên dưới.` : 'Văn bản đã gọn gàng — không có chỗ nào cần sửa tự động.'));
     } catch (e) { setErr(e instanceof Error ? e.message : 'Không đọc được file.'); }
@@ -320,17 +408,34 @@ function FileBar({ work, label, normalize, onOpen, onClose, onFlash }: { work: W
 }
 
 /* ---------------------------------------------------------- (2) chuẩn hoá */
-function NormalizeTab({ work, onOpen, onClose, onFlash, children }: { work: Work | null; onOpen: (w: Work) => void; onClose: () => void; onFlash: (m: string) => void; children: React.ReactNode }) {
+function NormalizeTab({ work, onOpen, onClose, onFlash, onNormalize, onRestore, children }: { work: Work | null; onOpen: (w: Work) => void; onClose: () => void; onFlash: (m: string) => void; onNormalize: () => void; onRestore: () => void; children: React.ReactNode }) {
   const [text, setText] = useState('');
   const fromText = () => {
     const r = fixText(text);
-    onOpen({ id: ++seq, kind: 'doc', name: 'Văn bản đã chuẩn hoá', file: 'van-ban', html: paraHtml(r.text), images: new Map(), fixed: r.fixed });
+    onOpen({ id: ++seq, kind: 'doc', name: 'Văn bản đã chuẩn hoá', file: 'van-ban', html: paraHtml(r.text), images: new Map(), fixed: r.fixed, orig: null });
     onFlash(r.fixed ? `Đã chuẩn hoá ${r.fixed} chỗ — xem và sửa ngay trên trang bên dưới.` : 'Văn bản đã gọn gàng — không có chỗ nào cần sửa tự động.');
   };
   const remaining = useMemo(() => (work?.kind === 'doc' ? checkText(htmlText(work.html)).filter((i) => !i.fixable) : []), [work]);
   return (
     <section className="dash-card vb-norm no-print">
-      <FileBar work={work} label="Mở file Word / Excel để chuẩn hoá" normalize onOpen={onOpen} onClose={onClose} onFlash={onFlash} />
+      <FileBar work={work} label="Mở file Word / Excel để chuẩn hoá" normalize={false} onOpen={onOpen} onClose={onClose} onFlash={onFlash} />
+      {work && (
+        <div className={`vbe-normbar${work.orig ? ' is-done' : ''}`}>
+          {!work.orig ? (
+            <>
+              <button type="button" className="btn btn-primary vbe-normbtn" onClick={onNormalize}><Sparkles aria-hidden="true" /> Chuẩn hoá theo mẫu</button>
+              <span>{work.kind === 'doc'
+                ? 'Đưa cả văn bản về một kiểu: Times New Roman, cùng cỡ chữ, chữ đen, căn đều, lùi đầu dòng; sửa dấu câu, ngày tháng. Giữ chữ đậm, nghiêng, bảng, hình.'
+                : 'Sửa dấu cách, dấu câu, ngày tháng (05/01/2026), viết hoa đúng cột họ tên ở mọi trang tính.'}</span>
+            </>
+          ) : (
+            <>
+              <span className="vbe-done"><CheckCircle2 aria-hidden="true" /> Đã chuẩn hoá {work.kind === 'doc' ? `${work.fixed} chỗ` : `${work.changes.length} ô`} — xem và sửa tiếp trên trang bên dưới.</span>
+              <button type="button" className="btn btn-outline btn-sm" onClick={onRestore}><Undo2 aria-hidden="true" /> Về bản gốc</button>
+            </>
+          )}
+        </div>
+      )}
       {!work && (
         <details className="vbe-paste">
           <summary>Hoặc dán văn bản vào đây</summary>
