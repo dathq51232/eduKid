@@ -78,6 +78,14 @@
   .ph-top .ph-ghost { min-height: 48px; padding: 0 16px; border-radius: 14px; font-size: 15px; }
   .ph-top .ph-ghost svg { width: 18px; height: 18px; }
 }
+.ph-pill { white-space: nowrap; flex-shrink: 0; }
+/* iPad dọc/ngang (641–1180px): đủ chỗ cho nhãn "Góc phụ huynh" nhưng không đủ cho chữ trên 5 nút
+   → nút chỉ còn icon 48×48 (giữ aria-label/title), tránh thanh trên tràn ngang */
+@media (min-width: 641px) and (max-width: 1180px) {
+  .ph-top .ph-ghost { width: 48px; padding: 0; gap: 0; justify-content: center; font-size: 0; }
+  .ph-top .ph-ghost span { display: none; }
+  .ph-top .ph-ghost svg { width: 20px; height: 20px; }
+}
 @media (max-width: 640px) {
   .ph-top-in.wrap { width: calc(100% - 24px); }
   .ph-top-in { min-height: 60px; gap: 6px; flex-wrap: nowrap; }
@@ -90,7 +98,7 @@
 .ph-hero-av { width: 88px; height: 88px; border-radius: 24px; background: #fff; display: grid; place-items: center; overflow: hidden; }
 .ph-hero-txt { position: relative; z-index: 1; min-width: 0; }
 .ph-hero-txt small { opacity: .85; font-size: 14px; }
-.ph-hero h1 { margin: 2px 0 8px; font-size: clamp(24px, 3vw, 30px); color: #fff; }
+.ph-hero h1 { margin: 2px 0 8px; font-size: clamp(21px, 5.6vw, 30px); line-height: 1.2; color: #fff; text-wrap: balance; }
 .ph-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .ph-chips span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgb(255 255 255 / .18); font-size: 13.5px; }
 .ph-chips svg { width: 15px; height: 15px; }

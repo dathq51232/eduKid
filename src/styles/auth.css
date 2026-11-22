@@ -35,7 +35,11 @@
 .pin-dots span.is-on { background: var(--brand-blue); box-shadow: none; }
 .role-pick label.is-on { background: var(--blue-soft); color: var(--brand-blue); box-shadow: inset 0 0 0 2px var(--brand-blue); }
 .auth-tab { font-size: 15px; white-space: nowrap; }
-@media (max-width: 480px) { .auth-tab { white-space: normal; font-size: 14px; } }
+/* Điện thoại: icon nằm trên chữ để "Phụ huynh", "Giáo viên" không bị gãy 2 dòng */
+@media (max-width: 480px) {
+  .auth-tabs-login .auth-tab { flex-direction: column; gap: 2px; min-height: 54px; padding: 6px 4px; font-size: 14px; }
+  .auth-tabs-login .auth-tab svg { width: 18px; height: 18px; }
+}
 .sr-tabs { max-width: 420px; margin: 16px 0; }
 .sr-award-form .btn { justify-self: start; }
 .sr-top .sr-tabs { margin: 0; max-width: 620px; flex: 1 1 420px; }

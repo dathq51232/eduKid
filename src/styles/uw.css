@@ -7,6 +7,12 @@
 .uw-hd h2 { margin: 0; font-size: 17px; }
 .uw-more { display: inline-flex; align-items: center; margin-left: auto; color: var(--brand-blue); font-size: 13.5px; font-weight: 700; text-decoration: none; white-space: nowrap; }
 .uw-more svg { width: 16px; height: 16px; }
+/* Màn cảm ứng: vùng bấm "Mở lịch", "Sổ thu chi"… tối thiểu 40px; ô nhập 16px để iPhone không tự phóng to */
+@media (pointer: coarse) {
+  .uw-more { min-height: 40px; padding-inline: 6px; }
+  .uw-quick input { font-size: 16px; }
+  .uw-eye { width: 40px; height: 40px; }
+}
 .uw-eye { display: grid; place-items: center; width: 32px; height: 32px; margin-left: auto; border: 0; border-radius: 9px; background: var(--surface-2); color: var(--muted); cursor: pointer; }
 .uw-eye + .uw-more { margin-left: 0; }
 .uw-eye svg { width: 17px; height: 17px; }
