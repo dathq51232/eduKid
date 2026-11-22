@@ -85,7 +85,7 @@ export default function PaymentPanel({ info, offer }: { info: BillingPublic; off
             {info.account_name && <CopyLine label="Chủ tài khoản" value={info.account_name} />}
             <CopyLine label="Số tiền" value={String(req.amount)} mono />
             <CopyLine label="Nội dung" value={req.code} mono />
-            <p className="pay-warn">Ghi <strong>đúng nội dung {req.code}</strong> để nhà trường nhận ra khoản đóng của em. Sau khi nhận tiền, quản trị xác nhận và em học tiếp được ngay (trong giờ làm việc).</p>
+            <p className="pay-warn">Ghi <strong>đúng nội dung {req.code}</strong> để EduChain Kids nhận ra khoản đóng của em. Sau khi nhận tiền, quản trị xác nhận và em học tiếp được ngay (trong giờ làm việc).</p>
             {info.note && <p className="dash-muted">{info.note}</p>}
           </div>
         </section>
