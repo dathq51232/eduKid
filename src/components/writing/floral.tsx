@@ -2,6 +2,7 @@
 // Vẽ trong ô 100 x 100, dáng cho góc trên-trái: cành hoa ôm theo mép trên và mép trái; góc khác lật gương.
 // Màu gradient khai báo trong <FloralDefs /> (mỗi SVG có dùng hoa văn đều chèn một lần; id giống nhau nên trùng không sao).
 import { createContext, useContext, useId, type ReactNode } from 'react';
+import { cosR, sinR } from '@/lib/trig';
 
 // Mỗi SVG dùng tiền tố id riêng cho gradient: id trùng giữa nhiều SVG thì trình duyệt lấy cái đầu tiên —
 // nếu cái đó nằm trong vùng đang ẩn (vd. lúc in) thì hoa mất màu.
@@ -77,8 +78,8 @@ function Blossom({ x, y, r, fill, notch, stamen = '#facc15', a = 0, stroke = '#0
         const t = (i * 30 * Math.PI) / 180, l = r * (0.42 + (i % 3) * 0.08);
         return (
           <g key={i}>
-            <line x1="0" y1="0" x2={l * Math.cos(t)} y2={l * Math.sin(t)} stroke={stamen} strokeWidth="0.35" strokeOpacity=".9" />
-            <circle cx={l * Math.cos(t)} cy={l * Math.sin(t)} r={r * 0.05} fill="#b45309" />
+            <line x1="0" y1="0" x2={l * cosR(t)} y2={l * sinR(t)} stroke={stamen} strokeWidth="0.35" strokeOpacity=".9" />
+            <circle cx={l * cosR(t)} cy={l * sinR(t)} r={r * 0.05} fill="#b45309" />
           </g>
         );
       })}
@@ -116,7 +117,7 @@ function Daisy({ x, y, r, a = 0 }: { x: number; y: number; r: number; a?: number
     <g transform={`translate(${x} ${y}) rotate(${a})`}>
       {Array.from({ length: 18 }, (_, i) => <ellipse key={i} cx="0" cy={-r * 0.55} rx={r * 0.14} ry={r * 0.5} fill={u('white')} stroke="#94a3b8" strokeWidth="0.25" transform={`rotate(${i * 20})`} />)}
       <circle r={r * 0.3} fill={u('eye')} />
-      {Array.from({ length: 10 }, (_, i) => <circle key={i} cx={r * 0.17 * Math.cos(i * 2.4)} cy={r * 0.17 * Math.sin(i * 2.4)} r={r * 0.03} fill="#92400e" />)}
+      {Array.from({ length: 10 }, (_, i) => <circle key={i} cx={r * 0.17 * cosR(i * 2.4)} cy={r * 0.17 * sinR(i * 2.4)} r={r * 0.03} fill="#92400e" />)}
     </g>
   );
 }
@@ -128,7 +129,7 @@ function Sunflower({ x, y, r }: { x: number; y: number; r: number }) {
       {Array.from({ length: 16 }, (_, i) => <path key={`o${i}`} d={petalD(r, r * 0.26)} fill={u('sun')} stroke="#b45309" strokeOpacity=".4" strokeWidth="0.3" transform={`rotate(${i * 22.5})`} />)}
       {Array.from({ length: 16 }, (_, i) => <path key={`i${i}`} d={petalD(r * 0.8, r * 0.22)} fill={u('sun')} stroke="#b45309" strokeOpacity=".4" strokeWidth="0.3" transform={`rotate(${i * 22.5 + 11})`} />)}
       <circle r={r * 0.42} fill={u('seed')} />
-      {Array.from({ length: 34 }, (_, i) => { const rr = r * 0.38 * Math.sqrt((i + 0.5) / 34), t = i * 2.39996; return <circle key={i} cx={rr * Math.cos(t)} cy={rr * Math.sin(t)} r={r * 0.025} fill="#a16207" fillOpacity=".8" />; })}
+      {Array.from({ length: 34 }, (_, i) => { const rr = r * 0.38 * Math.sqrt((i + 0.5) / 34), t = i * 2.39996; return <circle key={i} cx={rr * cosR(t)} cy={rr * sinR(t)} r={r * 0.025} fill="#a16207" fillOpacity=".8" />; })}
     </g>
   );
 }
@@ -249,8 +250,8 @@ export function Floral({ id }: { id: string }): ReactNode {
       // lá sen tròn có khía + gân toả, hoa sen nhiều lớp cánh, nụ sen
       const pad = (cx: number, cy: number, r: number, rot: number) => (
         <g transform={`translate(${cx} ${cy}) rotate(${rot})`}>
-          <path d={`M0 0 L${r * Math.cos(0.22)} ${-r * Math.sin(0.22)} A${r} ${r} 0 1 0 ${r * Math.cos(0.22)} ${r * Math.sin(0.22)} Z`} fill={u('lotusleaf')} stroke="#166534" strokeWidth="0.4" />
-          {Array.from({ length: 9 }, (_, i) => { const t = 0.45 + (i * (2 * Math.PI - 0.9)) / 8; return <line key={i} x1="0" y1="0" x2={r * 0.92 * Math.cos(t)} y2={r * 0.92 * Math.sin(t)} stroke="#dcfce7" strokeWidth="0.35" strokeOpacity=".8" />; })}
+          <path d={`M0 0 L${r * cosR(0.22)} ${-r * sinR(0.22)} A${r} ${r} 0 1 0 ${r * cosR(0.22)} ${r * sinR(0.22)} Z`} fill={u('lotusleaf')} stroke="#166534" strokeWidth="0.4" />
+          {Array.from({ length: 9 }, (_, i) => { const t = 0.45 + (i * (2 * Math.PI - 0.9)) / 8; return <line key={i} x1="0" y1="0" x2={r * 0.92 * cosR(t)} y2={r * 0.92 * sinR(t)} stroke="#dcfce7" strokeWidth="0.35" strokeOpacity=".8" />; })}
         </g>
       );
       return (<g>

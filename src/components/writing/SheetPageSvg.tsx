@@ -7,6 +7,7 @@ import { FloralScope, Floral } from './floral';
 import { PageFrame } from './frames';
 import { cornerBox, cornerSize, FALLBACK_FONT, fallbackScale, fontFamily, textSegments, type Corner, type FontId, type SheetLayout, type SheetPage, type SheetSettings } from '@/lib/writing/sheet';
 import '@/styles/ws.css';
+import { cosR, sinR } from '@/lib/trig';
 
 export const MOTIFS: { id: string; label: string }[] = [
   { id: 'hoa', label: 'Chùm hoa' }, { id: 'la', label: 'Cành lá' }, { id: 'sao', label: 'Ngôi sao' }, { id: 'buom', label: 'Bướm' },
@@ -52,7 +53,7 @@ export function Motif({ id, color }: { id: string; color: string }) {
       </g>);
     case 'sao': {
       const star = (x: number, y: number, r: number, f: string) => {
-        const p = Array.from({ length: 10 }, (_, i) => { const a = (Math.PI / 5) * i - Math.PI / 2; const rr = i % 2 ? r * 0.45 : r; return `${x + rr * Math.cos(a)},${y + rr * Math.sin(a)}`; }).join(' ');
+        const p = Array.from({ length: 10 }, (_, i) => { const a = (Math.PI / 5) * i - Math.PI / 2; const rr = i % 2 ? r * 0.45 : r; return `${x + rr * cosR(a)},${y + rr * sinR(a)}`; }).join(' ');
         return <polygon points={p} fill={f} stroke={c1} strokeWidth="0.8" strokeLinejoin="round" />;
       };
       return <g>{star(20, 20, 16, '#facc15')}{star(50, 14, 9, c2)}{star(14, 50, 9, c2)}{star(42, 40, 6, c3)}{star(66, 30, 4, '#facc15')}{star(28, 66, 4, '#facc15')}</g>;
@@ -77,7 +78,7 @@ export function Motif({ id, color }: { id: string; color: string }) {
     case 'mat-troi':
       return (<g>
         <g transform="translate(8 8)">
-          {Array.from({ length: 12 }, (_, i) => <line key={i} x1="26" y1="26" x2={26 + 26 * Math.cos((i * Math.PI) / 6)} y2={26 + 26 * Math.sin((i * Math.PI) / 6)} stroke="#f59e0b" strokeWidth="2.6" strokeLinecap="round" />)}
+          {Array.from({ length: 12 }, (_, i) => <line key={i} x1="26" y1="26" x2={26 + 26 * cosR((i * Math.PI) / 6)} y2={26 + 26 * sinR((i * Math.PI) / 6)} stroke="#f59e0b" strokeWidth="2.6" strokeLinecap="round" />)}
           <circle cx="26" cy="26" r="16" fill="#facc15" stroke="#f59e0b" strokeWidth="1.5" />
           <circle cx="20" cy="23" r="1.8" fill="#7c2d12" /><circle cx="32" cy="23" r="1.8" fill="#7c2d12" />
           <path d="M19 30 Q26 36 33 30" stroke="#7c2d12" strokeWidth="1.6" fill="none" strokeLinecap="round" />

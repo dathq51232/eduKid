@@ -135,7 +135,9 @@ function useClassTimer(soundOwner: () => boolean) {
 }
 
 /* ====================================================================== mặt đồng hồ hoạt hình */
-const pt = (cx: number, cy: number, r: number, deg: number) => [cx + r * Math.sin((deg * Math.PI) / 180), cy - r * Math.cos((deg * Math.PI) / 180)];
+// Làm tròn 2 chữ số: sin/cos trên máy chủ (Node) và trình duyệt có thể lệch chữ số cuối → lỗi hydrate
+const r2 = (n: number) => Math.round(n * 100) / 100;
+const pt = (cx: number, cy: number, r: number, deg: number) => [r2(cx + r * Math.sin((deg * Math.PI) / 180)), r2(cy - r * Math.cos((deg * Math.PI) / 180))];
 /** Hình quạt phần thời gian còn lại: từ kim (đã chạy) quay về số 12 */
 function wedge(cx: number, cy: number, r: number, frac: number) {
   if (frac >= 0.999) return `M${cx - r},${cy}a${r},${r} 0 1,0 ${2 * r},0a${r},${r} 0 1,0 ${-2 * r},0`;
