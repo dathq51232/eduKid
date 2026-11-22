@@ -155,7 +155,7 @@ function pPrXml(p: PP, pbb: boolean, extra = '') {
 
 type Ctx = {
   images: Map<string, DocImage>;
-  rels: { id: string; target: string; type: 'image' }[];
+  rels: { id: string; target: string; type: 'image' | 'header' | 'footer' }[];
   media: [string, Uint8Array][];
   imgIds: Map<string, string>;
   pid: number;
@@ -390,21 +390,67 @@ const enc = (s: string) => new TextEncoder().encode(s);
  * HTML → file .docx. images: khoá của <img data-img="…"> (hoặc src) → nội dung hình.
  * Mặc định: Times New Roman 14, A4 dọc; khối <div class="Land"> thành phần trang ngang.
  */
-export function htmlToDocx(html: string, images: Map<string, DocImage> = new Map(), opts: { title?: string; fontSize?: number } = {}): Uint8Array {
+/** Đầu trang / chân trang / số trang (Văn bản & in ấn). pageNum 'top' + hideFirst = đúng NĐ30 (số trang giữa lề trên, không hiện ở trang 1) */
+export type PageDeco = {
+  header?: string;
+  footer?: string;
+  pageNum?: 'none' | 'top' | 'bottom';
+  /** '1' | 'Trang 1' | 'Trang 1/3' */
+  pageFmt?: 'num' | 'trang' | 'trang-tong';
+  hideFirst?: boolean;
+  landscape?: boolean;
+};
+
+const W_NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+const fld = (code: string) => `<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> ${code} </w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>1</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r>`;
+const hfPara = (inner: string, sz: number) => `<w:p><w:pPr><w:jc w:val="center"/><w:rPr><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr></w:pPr>${inner}</w:p>`;
+const hfText = (s: string) => `<w:r><w:t xml:space="preserve">${x(s)}</w:t></w:r>`;
+/** Nội dung một đầu/chân trang: dòng chữ (nếu có) + dòng số trang (nếu có) */
+function hfXml(tag: 'hdr' | 'ftr', text: string, num: string | null): string {
+  const t = text.trim() ? hfPara(hfText(text.trim()), 24) : '';
+  const n = num ? hfPara(num, 26) : '';
+  // NĐ30: số trang ở lề trên đứng trước; ở chân trang thì chữ trước, số sau
+  const body = tag === 'hdr' ? n + t : t + n;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:${tag} ${W_NS}>${body || '<w:p/>'}</w:${tag}>`;
+}
+
+export function htmlToDocx(html: string, images: Map<string, DocImage> = new Map(), opts: { title?: string; fontSize?: number; deco?: PageDeco } = {}): Uint8Array {
   const root = parseHtml(html);
   const body = root.kids.find((k): k is El => isEl(k) && k.tag === 'html')?.kids.find((k): k is El => isEl(k) && k.tag === 'body') ?? root;
-  const ctx: Ctx = { images, rels: [], media: [], imgIds: new Map(), pid: 0, width: PORTRAIT_W, pendingBreak: false };
+  const deco = opts.deco;
+  const ctx: Ctx = { images, rels: [], media: [], imgIds: new Map(), pid: 0, width: deco?.landscape ? LAND_W : PORTRAIT_W, pendingBreak: false };
   let xml = blocks(body.kids, {}, {}, ctx).join('');
   // văn bản kết thúc bằng phần trang ngang / lịch báo giảng: phần đó là phần cuối (không thêm phần trống → không có trang trắng)
-  let last = sect(null);
+  let last = sect(deco?.landscape ? 'land' : null);
   const m = /<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"\/><w:rPr><w:sz w:val="2"\/><w:szCs w:val="2"\/><\/w:rPr><w:sectPr>((?:(?!<w:p>).)*?)<\/w:sectPr><\/w:pPr><\/w:p>$/.exec(xml);
   if (m) { xml = `${xml.slice(0, m.index)}<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr></w:pPr></w:p>`; last = m[1]; }
   const sz = Math.round((opts.fontSize ?? 14) * 2);
   const W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
-  const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document ${W}><w:body>${xml}<w:sectPr>${last}</w:sectPr></w:body></w:document>`;
+  // đầu / chân trang: bản thường + bản trang đầu (titlePg, không có số trang) khi hideFirst
+  const hf: [string, string][] = [];
+  let refs = '', titlePg = '';
+  if (deco && (deco.header?.trim() || deco.footer?.trim() || (deco.pageNum && deco.pageNum !== 'none'))) {
+    const num = deco.pageNum && deco.pageNum !== 'none'
+      ? (deco.pageFmt === 'trang' ? `${hfText('Trang ')}${fld('PAGE')}` : deco.pageFmt === 'trang-tong' ? `${hfText('Trang ')}${fld('PAGE')}${hfText('/')}${fld('NUMPAGES')}` : fld('PAGE'))
+      : null;
+    const add = (name: string, xmlStr: string, type: 'headerReference' | 'footerReference', kind: 'default' | 'first') => {
+      const id = `rIdHf${hf.length + 1}`;
+      hf.push([name, xmlStr]);
+      ctx.rels.push({ id, target: name, type: type === 'headerReference' ? 'header' : 'footer' });
+      refs += `<w:${type} w:type="${kind}" r:id="${id}"/>`;
+    };
+    add('header1.xml', hfXml('hdr', deco.header ?? '', deco.pageNum === 'top' ? num : null), 'headerReference', 'default');
+    add('footer1.xml', hfXml('ftr', deco.footer ?? '', deco.pageNum === 'bottom' ? num : null), 'footerReference', 'default');
+    if (deco.hideFirst && num) {
+      add('header2.xml', hfXml('hdr', deco.header ?? '', null), 'headerReference', 'first');
+      add('footer2.xml', hfXml('ftr', deco.footer ?? '', null), 'footerReference', 'first');
+      titlePg = '<w:titlePg/>';
+    }
+  }
+  const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document ${W}><w:body>${xml}<w:sectPr>${refs}${last}${titlePg}</w:sectPr></w:body></w:document>`;
   const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/><w:lang w:val="vi-VN" w:eastAsia="en-US" w:bidi="ar-SA"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:tblPr><w:tblInd w:w="0" w:type="dxa"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="108" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style></w:styles>`;
-  const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>${ctx.rels.map((r) => `<Relationship Id="${r.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${r.target}"/>`).join('')}</Relationships>`;
-  const types = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpg" ContentType="image/jpeg"/><Default Extension="png" ContentType="image/png"/><Default Extension="gif" ContentType="image/gif"/><Default Extension="bmp" ContentType="image/bmp"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>`;
+  const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>${ctx.rels.map((r) => `<Relationship Id="${r.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/${r.type}" Target="${r.target}"/>`).join('')}</Relationships>`;
+  const types = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpg" ContentType="image/jpeg"/><Default Extension="png" ContentType="image/png"/><Default Extension="gif" ContentType="image/gif"/><Default Extension="bmp" ContentType="image/bmp"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>${hf.map(([n]) => `<Override PartName="/word/${n}" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.${n.startsWith('header') ? 'header' : 'footer'}+xml"/>`).join('')}</Types>`;
   const root2 = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>`;
   const core = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${x(opts.title ?? 'Kế hoạch bài dạy')}</dc:title><dc:creator>EduChain Kids</dc:creator></cp:coreProperties>`;
   return zipStore([
@@ -414,6 +460,7 @@ export function htmlToDocx(html: string, images: Map<string, DocImage> = new Map
     [enc('word/document.xml'), enc(doc)],
     [enc('word/styles.xml'), enc(styles)],
     [enc('word/_rels/document.xml.rels'), enc(rels)],
+    ...hf.map(([n, b]) => [enc(`word/${n}`), enc(b)] as [Uint8Array, Uint8Array]),
     ...ctx.media.map(([n, b]) => [enc(n), b] as [Uint8Array, Uint8Array]),
   ]);
 }
