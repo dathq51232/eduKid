@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, Contact, Eye, EyeOff, KeyRound, Lock, LockOpen, Printer, RotateCcw, UserMinus, UserPlus, Users } from 'lucide-react';
+import { ChevronDown, Contact, Eye, EyeOff, KeyRound, Lock, LockOpen, Printer, RotateCcw, Search, UserMinus, UserPlus, Users, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { parsePastedNames } from '@/lib/classroom/names';
 import ContactAdmin from '@/components/ContactAdmin';
@@ -40,6 +40,8 @@ type Card = { id: string; name: string; pin: string };
 type Cls = { id: string; name: string; grade: number; join_code: string; status: string };
 
 const VIEW_KEY = 'gv-bang-hoc-sinh';
+/** Bỏ dấu tiếng Việt + chữ thường để tìm tên ("Đạt" → "dat") */
+const foldVi = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
 const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }).replace(/-/g, '/') : '—');
 
 export type BillingRow = { student_id: string; active: boolean; reason: 'free' | 'paid' | 'trial' | 'expired'; until: string | null };
@@ -71,7 +73,7 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
     try { if (localStorage.getItem(VIEW_KEY) === 'profile') setView('profile'); } catch { /* bỏ qua */ }
   }, []);
   const pickView = (v: 'learn' | 'profile') => { setView(v); try { localStorage.setItem(VIEW_KEY, v); } catch { /* bỏ qua */ } };
-  const active = roster.filter((r) => r.membership_status === 'active');
+  const active = useMemo(() => roster.filter((r) => r.membership_status === 'active'), [roster]);
   // Còn thêm được bao nhiêu em: tối đa 40 / lớp và trong gói của giáo viên (tính trên mọi lớp)
   const room = Math.max(0, Math.min(40 - active.length, plan ? plan.limit - plan.used : 40));
   const capLabel = plan ? `${plan.used}/${plan.limit} học sinh của gói` : `${active.length}/40`;
@@ -85,6 +87,12 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
   useEffect(() => setOrigin(window.location.origin), []);
   const loginUrl = `${origin}/dang-nhap?lop=${cls.join_code}`;
   const byId = useMemo(() => new Map(summary.map((s) => [s.student_id, s])), [summary]);
+  // Tìm nhanh tên học sinh: không phân biệt hoa/thường, có dấu hay không ("khang", "Khang", "khàng")
+  const [q, setQ] = useState('');
+  const shown = useMemo(() => {
+    const key = foldVi(q.trim());
+    return active.map((r, i) => ({ r, no: i + 1 })).filter(({ r }) => !key || foldVi(r.display_name).includes(key));
+  }, [active, q]);
 
   const rpc = async (key: string, fn: string, args: Record<string, unknown>, ok: string) => {
     setBusy(key);
@@ -245,19 +253,31 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
         {active.length === 0 ? <p className="dash-muted">Lớp chưa có học sinh.</p> : view === 'profile' ? (
           <StudentProfiles classId={cls.id} className={cls.name} students={active.map((r) => ({ id: r.student_id, name: r.display_name }))} />
         ) : (
-          <div className="table-scroll">
+          <>
+          <div className="cm-find">
+            <span className="cm-find-box">
+              <Search aria-hidden="true" />
+              <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Gõ tên để tìm nhanh, vd: khang" aria-label="Tìm học sinh theo tên" enterKeyHint="search" />
+              {q && <button type="button" className="cm-find-x" onClick={() => setQ('')} aria-label="Xoá ô tìm"><X aria-hidden="true" /></button>}
+            </span>
+            <span className="cm-find-n" aria-live="polite">{q ? `${shown.length}/${active.length} em` : `${active.length} em · cuộn để xem`}</span>
+          </div>
+          <div className="table-scroll cm-roster">
             <table className="roster-table">
               <thead>
                 <tr><th className="roster-no" scope="col">STT</th><th>Học sinh</th><th>PIN</th><th>Trạng thái</th>{showBilling && <th>Học phí</th>}<th>Bài đã làm</th><th>Đúng TB</th><th>Điểm</th><th>Gần nhất</th><th><span className="sr-only">Thao tác</span></th></tr>
               </thead>
               <tbody>
-                {active.map((r, i) => {
+                {shown.length === 0 && (
+                  <tr><td colSpan={showBilling ? 10 : 9} className="cm-find-none">Không có em nào tên “{q.trim()}”.</td></tr>
+                )}
+                {shown.map(({ r, no }) => {
                   const st = statusOf(r);
                   const s = byId.get(r.student_id);
                   const locked = r.locked_until && Date.parse(r.locked_until) > Date.now();
                   return (
                     <tr key={r.student_id}>
-                      <td className="roster-no">{i + 1}</td>
+                      <td className="roster-no">{no}</td>
                       <th scope="row"><Link href={`/giao-vien/lop/${cls.id}/hoc-sinh/${r.student_id}`} className="student-link" title="Xem tiến độ chi tiết">{r.display_name}</Link></th>
                       <td className="pin-cell">{pins[r.student_id] ? (showPins ? <b className="pin-value">{pins[r.student_id]}</b> : <span aria-label="PIN đang ẩn">••••••</span>) : <span className="dash-muted" title="PIN tạo trước khi bật lưu PIN — bấm “Đặt PIN mới” để có PIN xem lại được">Chưa lưu</span>}</td>
                       <td><span className={`status-chip tone-${st.tone}`}>{st.label}</span>{lockedIds.includes(r.student_id) && <> <span className="status-chip tone-coral" title="Hết thời gian dùng thử: em nằm ngoài số chỗ của gói — liên hệ quản trị để mở">Tạm khoá (gói)</span></>}</td>
@@ -289,6 +309,7 @@ export default function ClassManager({ cls, roster, summary, pins = {}, top, bil
               </tbody>
             </table>
           </div>
+          </>
         )}
         {left.length > 0 && (
           <details className="left-list">
