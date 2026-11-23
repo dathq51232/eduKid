@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "check:content": "tsx scripts/check-content.ts",
+    "check:office": "tsx scripts/check-office.ts",
     "check:knowledge": "tsx scripts/check-knowledge.ts",
     "check:noi-dung": "node scripts/check-noi-dung.mjs",
     "check:deck-layout": "tsx scripts/check-deck-layout.ts",

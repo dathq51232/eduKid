@@ -40,7 +40,7 @@ export default function NotificationBell({ initial }: { initial: number }) {
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => { if (box.current && !box.current.contains(e.target as Node)) setOpen(false); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.preventDefault(); setOpen(false); } }; // đã xử lý: lớp bên dưới (vd. bảng Văn phòng ảo) không đóng theo
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
     return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };

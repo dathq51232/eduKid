@@ -1,0 +1,88 @@
+/* Kiểu riêng khu vực "vpo-" — Văn phòng ảo (Quản trị › Văn phòng ảo) */
+.vpo { position: relative; }
+.vpo-skip { position: absolute; left: 0; top: 0; z-index: 5; padding: 6px 12px; border-radius: 10px; background: var(--blue); color: #fff; font-weight: 700; text-decoration: none; }
+/* ẩn hẳn khi chưa focus (vẫn đọc được bằng trình đọc màn hình); chỉ hiện khi đi tới bằng phím Tab */
+.vpo-skip:not(:focus) { clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; padding: 0; }
+.vpo-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.vpo-seg { display: inline-flex; padding: 3px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.vpo-seg button { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; border: 0; border-radius: 9px; background: none; color: var(--ink); font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; }
+.vpo-seg button[aria-pressed="true"] { background: var(--surface); color: var(--blue); box-shadow: 0 1px 3px rgb(var(--ink-rgb) / .15); }
+.vpo-seg button:disabled { opacity: .45; cursor: default; }
+.vpo-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.vpo-btn.is-pri { background: var(--blue); border-color: var(--blue); color: #fff; }
+.vpo-btn:hover { border-color: var(--blue); }
+.vpo-icon-btn { display: grid; place-items: center; width: 36px; height: 36px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.vpo-note { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--surface-2); color: var(--muted); font-size: 14px; }
+.vpo-note svg { flex: none; margin-top: 2px; }
+.vpo-muted { color: var(--muted); font-size: 14px; }
+
+/* bố cục: khung chính + bảng thông tin bên phải (màn hẹp: xếp dưới) */
+.vpo-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
+.vpo-body.is-open { grid-template-columns: minmax(0, 1fr) 360px; }
+.vpo-main { display: grid; gap: 8px; min-width: 0; }
+.vpo-hint { margin: 0; color: var(--muted); font-size: 13px; }
+
+/* sân khấu 3D (canvas + lớp ghim do engine tạo) */
+.vpo-stage { position: relative; height: min(72vh, 640px); min-height: 380px; overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: linear-gradient(#f7f3ea, #e9eef7); }
+.vpo-stage .s3d-canvas { position: absolute; inset: 0; }
+.vpo-stage-msg { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; color: var(--muted); font-weight: 600; }
+.vpo-stage .s3d-pin:focus-visible b { outline: 3px solid var(--brand-yellow); outline-offset: 3px; }
+
+/* dạng thẻ */
+.vpo-grid-wrap { display: grid; gap: 18px; outline: none; }
+.vpo-group h2 { margin: 0 0 8px; font-size: 17px; }
+.vpo-group.is-cntt h2 { color: var(--blue); }
+.vpo-group.is-marketing h2 { color: #c2410c; }
+.vpo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.vpo-card { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 4px 12px; width: 100%; padding: 12px; border: 1.5px solid var(--line); border-left: 5px solid var(--vpo-dept, var(--blue)); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.vpo-group.is-lanh-dao .vpo-card { --vpo-dept: var(--brand-yellow); }
+.vpo-group.is-marketing .vpo-card { --vpo-dept: #f97316; }
+.vpo-card:hover, .vpo-card[aria-pressed="true"] { border-color: var(--blue); background: var(--blue-soft); }
+.vpo-card:focus-visible { outline: 3px solid var(--brand-yellow); outline-offset: 2px; }
+.vpo-card img, .vpo-card .milo { width: 44px; height: 44px; grid-row: span 2; }
+.vpo-card-t { display: grid; min-width: 0; }
+.vpo-card-t b { font-size: 15px; }
+.vpo-card-t small { color: var(--muted); font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
+.vpo-card .vpo-badge { justify-self: start; }
+
+.vpo-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 700; vertical-align: middle; }
+.vpo-badge.is-toan-quyen { background: #fff3d1; color: #6b4a00; }
+.vpo-badge.is-sua-ma { background: #fde8e6; color: #8c1d18; }
+.vpo-badge.is-ghi-tai-lieu { background: #e7eefc; color: #1d3f8f; }
+.vpo-badge.is-chi-doc { background: #e2f5ec; color: #0f5c3e; }
+
+/* bảng thông tin */
+.vpo-panel { display: grid; gap: 6px; padding: 16px; border: 1px solid var(--line); border-top: 5px solid var(--blue); border-radius: 16px; background: var(--surface); box-shadow: 0 6px 24px rgb(var(--ink-rgb) / .1); outline: none; max-height: min(80vh, 720px); overflow-y: auto; }
+.vpo-panel.is-lanh-dao { border-top-color: var(--brand-yellow); }
+.vpo-panel.is-marketing { border-top-color: #f97316; }
+.vpo-panel:focus-visible { box-shadow: 0 0 0 3px var(--brand-yellow); }
+.vpo-panel-h { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 12px; align-items: start; }
+.vpo-panel-h small { color: var(--muted); font-size: 12.5px; }
+.vpo-panel-h h2 { margin: 0; font-size: 18px; }
+.vpo-panel h3 { margin: 10px 0 0; font-size: 14px; color: var(--muted); }
+.vpo-panel p { margin: 0; font-size: 14.5px; }
+.vpo-panel code { display: inline-block; margin-right: 6px; padding: 1px 6px; border-radius: 6px; background: var(--surface-2); font-size: 13px; }
+.vpo-list { margin: 0; padding-left: 18px; font-size: 14.5px; }
+.vpo-recent { display: flex; align-items: flex-start; gap: 8px; }
+.vpo-recent span { display: grid; min-width: 0; }
+.vpo-recent b { overflow-wrap: anywhere; }
+.vpo-recent small { color: var(--muted); }
+.vpo-cmds { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.vpo-cmd { display: grid; gap: 6px; }
+.vpo-cmd textarea { width: 100%; box-sizing: border-box; min-height: 36px; padding: 8px 10px; resize: vertical; line-height: 1.4; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface-2); color: var(--ink); font: inherit; font-size: 14px; }
+.vpo-cmd .vpo-btn { justify-self: start; }
+.vpo-cmd-msg { min-height: 1em; color: var(--green); font-size: 13px; }
+
+:root[data-theme="dark"] .vpo-group.is-marketing h2 { color: #fdba74; }
+:root[data-theme="dark"] .vpo-group.is-cntt h2 { color: var(--brand-blue); }
+
+@media (max-width: 900px) {
+  .vpo-body.is-open { grid-template-columns: minmax(0, 1fr); }
+  .vpo-panel { max-height: none; }
+}
+@media (max-width: 720px) {
+  .vpo-stage { height: 62vh; min-height: 320px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vpo-skip { transition: none; }
+}
