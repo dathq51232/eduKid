@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { CalendarDays, Clock3, Dices, MonitorPlay, NotebookPen, Timer, UsersRound } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { FEATURES } from '@/lib/features';
 import { SUBJECT_NAMES } from '@/lib/plans/generate';
 import { loadSched, type SchedSlot } from '@/lib/plans/sched-store';
 import LessonIdeas from './LessonIdeas';
@@ -154,7 +155,7 @@ export default function TodaySchedule(p: Props & { headingId: string; grade?: nu
   const titleKey = titles.join('|');
   const [peers, setPeers] = useState<Record<string, number>>({});
   useEffect(() => {
-    if (!titles.length) return;
+    if (!FEATURES.community || !titles.length) return;
     let live = true;
     let sb: ReturnType<typeof createClient> | null = null;
     try { sb = createClient(); } catch { return; }

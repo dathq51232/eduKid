@@ -24,6 +24,7 @@ import type { DeckRow } from '@/components/deck/DeckHome';
 import type { LibraryMeta } from '@/lib/plans/library';
 import { ToolIcon } from '@/components/classroom/tool-icons';
 import { SharePlanButton } from '@/components/community/ShareButtons';
+import { FEATURES } from '@/lib/features';
 import { shareError, takeCopy } from '@/lib/community/share';
 import '@/styles/adm.css';
 import '@/styles/kh.css';
@@ -444,7 +445,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
               {planId && <button type="button" className="btn btn-outline btn-sm" disabled={busy || !canSave} onClick={() => void save(true)}>Lưu thành bản mới</button>}
               <button type="button" className="btn btn-outline btn-sm" onClick={duplicate}><Copy aria-hidden="true" /> Nhân bản cho tiết khác</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={exportPlan}><FileDown aria-hidden="true" /> Xem trước &amp; tải Word</button>
-              <SharePlanButton className="btn btn-outline btn-sm" planId={dirty ? null : planId} plan={plan} disabledHint="Lưu giáo án trước rồi mới chia sẻ" />
+              {FEATURES.community && <SharePlanButton className="btn btn-outline btn-sm" planId={dirty ? null : planId} plan={plan} disabledHint="Lưu giáo án trước rồi mới chia sẻ" />}
             </div>
           </div>
 

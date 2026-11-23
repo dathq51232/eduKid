@@ -264,7 +264,7 @@ export default async function TeacherHome() {
                 spark={k.spark} students={k.students} todayIso={todayIso} planText={planText}
                 kpi={{ practiced: k.practiced, rate: k.rate, delta, open: k.open, openFirst: k.openFirst }} />
               {/* ⑥ Cộng đồng: tài liệu đồng nghiệp mới đăng + tin nhắn — tải riêng, không chặn trang */}
-              <Suspense fallback={null}><CommunityFeedCard /></Suspense>
+              {FEATURES.community && <Suspense fallback={null}><CommunityFeedCard /></Suspense>}
             </div>
           </div>
 

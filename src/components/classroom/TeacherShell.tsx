@@ -127,6 +127,7 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
   // Tin nhắn đồng nghiệp chưa đọc (Cộng đồng, migration 0080): chấm đỏ cạnh mục Cộng đồng (tải lại khi đổi trang)
   const [chatUnread, setChatUnread] = useState(0);
   useEffect(() => {
+    if (!FEATURES.community) return;
     let sb: ReturnType<typeof createClient> | null = null;
     try { sb = createClient(); } catch { return; }
     void sb.rpc('chat_unread_total').then(({ data, error }) => { if (!error) setChatUnread(Number(data ?? 0)); });
@@ -171,11 +172,11 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
         );
       })}
       {/* Nhánh Cộng đồng: không thuộc lớp nào nên tách khỏi các nhóm công cụ của lớp bằng một vạch */}
-      <span className="tsh-sep" role="separator" aria-hidden="true" />
-      <Link href={COMMUNITY_HREF} className={`tsh-nav${inCommunity ? ' is-on' : ''}`} aria-current={inCommunity ? 'page' : undefined} title="Cộng đồng giáo viên">
+      {FEATURES.community && <span className="tsh-sep" role="separator" aria-hidden="true" />}
+      {FEATURES.community && <Link href={COMMUNITY_HREF} className={`tsh-nav${inCommunity ? ' is-on' : ''}`} aria-current={inCommunity ? 'page' : undefined} title="Cộng đồng giáo viên">
         <span className="tsh-ic tone-violet"><UsersRound aria-hidden="true" /></span><span className="tsh-nav-t">Cộng đồng</span>
         {chatUnread > 0 && <span className="tsh-badge" aria-label={`${chatUnread} tin nhắn đồng nghiệp chưa đọc`}>{chatUnread > 99 ? '99+' : chatUnread}</span>}
-      </Link>
+      </Link>}
     </>
   );
   const groupTools = active && curGroup ? toolsOfGroup(curGroup) : [];
@@ -255,7 +256,7 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
           <Link href="/" aria-label="Trang chủ"><BrandLogo size={26} /></Link>
           {active && <span className="tsh-mtop-class">Lớp {active.name}</span>}
           <button type="button" className="tsh-icon-btn" data-tour="tim-nhanh" aria-label="Tìm nhanh" onClick={() => setPalette(true)}><Search aria-hidden="true" /></button>
-          <Link href={COMMUNITY_HREF} className={`tsh-icon-btn${inCommunity ? ' is-on' : ''}`} aria-label={chatUnread ? `Cộng đồng giáo viên, ${chatUnread} tin chưa đọc` : 'Cộng đồng giáo viên'} aria-current={inCommunity ? 'page' : undefined}><UsersRound aria-hidden="true" />{chatUnread > 0 && <span className="tsh-tab-dot" aria-hidden="true" />}</Link>
+          {FEATURES.community && <Link href={COMMUNITY_HREF} className={`tsh-icon-btn${inCommunity ? ' is-on' : ''}`} aria-label={chatUnread ? `Cộng đồng giáo viên, ${chatUnread} tin chưa đọc` : 'Cộng đồng giáo viên'} aria-current={inCommunity ? 'page' : undefined}><UsersRound aria-hidden="true" />{chatUnread > 0 && <span className="tsh-tab-dot" aria-hidden="true" />}</Link>}
           <TourHelpButton className="tsh-icon-btn" />
           <button type="button" className="tsh-icon-btn" aria-label="Mở menu" onClick={() => setDrawer(true)}><Menu aria-hidden="true" /></button>
         </div>
@@ -344,7 +345,7 @@ function CommandPalette({ classId, onClose }: { classId: string | null; onClose:
       for (const t of tools) out.push({ id: `t-${t.key}`, group: 'Công cụ', label: t.label, hint: t.desc, href: toolHref(t, classId), Icon: TOOL_ICON[t.key] });
     }
     if (!f || fold('hom nay trang chinh').includes(f)) out.push({ id: 'home', group: 'Trang', label: 'Hôm nay', hint: 'Trang chính của thầy cô', href: '/giao-vien', Icon: LayoutGrid });
-    if (!f || fold('cong dong dong nghiep kho chia se giao an bai giang').includes(f)) out.push({ id: 'cong-dong', group: 'Trang', label: 'Cộng đồng', hint: 'Kho chia sẻ của đồng nghiệp', href: COMMUNITY_HREF, Icon: UsersRound });
+    if (FEATURES.community && (!f || fold('cong dong dong nghiep kho chia se giao an bai giang').includes(f))) out.push({ id: 'cong-dong', group: 'Trang', label: 'Cộng đồng', hint: 'Kho chia sẻ của đồng nghiệp', href: COMMUNITY_HREF, Icon: UsersRound });
     return out;
   }, [q, roster, classId]);
 

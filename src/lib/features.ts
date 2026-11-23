@@ -10,4 +10,8 @@ export const FEATURES = {
   billing: process.env.NEXT_PUBLIC_FEATURE_THU_PHI !== 'off',
   /** Trợ lý AI dùng API key của giáo viên (migration 0030) — đang TẮT; bật lại: NEXT_PUBLIC_FEATURE_TRO_LY_AI=on rồi Redeploy */
   ai: process.env.NEXT_PUBLIC_FEATURE_TRO_LY_AI === 'on',
+  /** Cộng đồng giáo viên (EduChainKids Community: kho chia sẻ, tin nhắn, đăng tài liệu — migration 0079–0081) — đang TẮT để tập trung
+   *  thu hút người dùng giai đoạn đầu. Ẩn mục Cộng đồng, thẻ trên trang Hôm nay, nút Chia sẻ, dòng "đồng nghiệp đã soạn" và chặn
+   *  đường dẫn /giao-vien/cong-dong. Bật lại: NEXT_PUBLIC_FEATURE_CONG_DONG=on rồi Redeploy. */
+  community: process.env.NEXT_PUBLIC_FEATURE_CONG_DONG === 'on',
 } as const;
