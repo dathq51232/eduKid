@@ -28,6 +28,7 @@ import AnimTimeline from './AnimTimeline';
 import DeckPrint from './DeckPrint';
 import ImageCrop from './ImageCrop';
 import DeckComments from './DeckComments';
+import { ShareDeckButton } from '@/components/community/ShareButtons';
 import { ownerComments } from '@/lib/deck/review';
 import { TEXT_STYLES, stickerName } from '@/lib/deck/sticker-names';
 import { F3D_CATS, F3D_VI, f3dSrc } from '@/lib/deck/f3d-catalog';
@@ -547,6 +548,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
         <span className="cv-grow" />
         <button type="button" className="cv-tb" onClick={toggleFocus} aria-pressed={focus} title={focus ? 'Hiện menu giáo viên' : 'Soạn tập trung: ẩn menu giáo viên cho trang soạn rộng hơn'} aria-label={focus ? 'Hiện menu giáo viên' : 'Soạn tập trung'}>{focus ? <PanelLeftOpen aria-hidden="true" /> : <PanelLeftClose aria-hidden="true" />}</button>
         <button type="button" className={`cv-btn${panel === 'cmt' ? ' is-on' : ''}`} onClick={() => setPanel(panel === 'cmt' ? null : 'cmt')} title="Góp ý theo trang của tổ chuyên môn"><MessageSquare aria-hidden="true" /> Góp ý{cmtTotal > 0 && <span className="cv-badge">{cmtTotal}</span>}</button>
+        <ShareDeckButton className="cv-btn" deckId={deckId} getDeck={() => deckRef.current} beforeShare={flush} />
         <button type="button" className="cv-btn" onClick={() => setPrinting(true)} title="Lưu PDF, in bản phát tay hoặc kèm ghi chú"><FileDown aria-hidden="true" /> Tải về / In</button>
         <button type="button" className="cv-btn" onClick={() => setPreview(true)}><Play aria-hidden="true" /> Xem thử trang</button>
         <OfflineSaveButton kind="deck" id={deckId} className="cv-btn" run={async (pg) => { await flush(); return saveDeckOffline({ deck: deckRef.current, deckId, classId }, pg); }} />

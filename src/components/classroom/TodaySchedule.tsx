@@ -7,7 +7,8 @@
 // Nhiều bài cùng một tiết gộp một dòng.
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, Clock3, Dices, MonitorPlay, NotebookPen, Timer } from 'lucide-react';
+import { CalendarDays, Clock3, Dices, MonitorPlay, NotebookPen, Timer, UsersRound } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 import { SUBJECT_NAMES } from '@/lib/plans/generate';
 import { loadSched, type SchedSlot } from '@/lib/plans/sched-store';
 import LessonIdeas from './LessonIdeas';
@@ -125,7 +126,7 @@ export function NowBar(p: Props & { side?: React.ReactNode }) {
 }
 
 /** ② Dòng thời gian các tiết; hết tiết hôm nay thì chuyển sang "Ngày mai dạy" */
-export default function TodaySchedule(p: Props & { headingId: string }) {
+export default function TodaySchedule(p: Props & { headingId: string; grade?: number }) {
   const { today, next, min, allPast } = useSlots(p.classId, p.day, p.tomorrow, p.saved, p.savedTomorrow);
   const [pick, setPick] = useState<Row | null>(null);
   const [ver, setVer] = useState(0); // đổi khi lựa chọn gợi ý thay đổi → vẽ lại dấu ✓
@@ -148,6 +149,20 @@ export default function TodaySchedule(p: Props & { headingId: string }) {
   const [showPast, setShowPast] = useState(false);
   const past = showTomorrow ? [] : view.groups.filter((g) => whenOf(g, min) === 'past');
   const shown = showPast ? view.groups : view.groups.filter((g) => !past.includes(g));
+  // "Đồng nghiệp đã soạn": số bài đồng nghiệp đăng trên Cộng đồng cho từng tiết (hàm community_peer_counts, migration 0081)
+  const titles = useMemo(() => [...new Set(view.groups.flatMap((g) => g.items.map((r) => r.title)))].slice(0, 20), [view]);
+  const titleKey = titles.join('|');
+  const [peers, setPeers] = useState<Record<string, number>>({});
+  useEffect(() => {
+    if (!titles.length) return;
+    let live = true;
+    let sb: ReturnType<typeof createClient> | null = null;
+    try { sb = createClient(); } catch { return; }
+    void sb.rpc('community_peer_counts', { p_grade: p.grade ?? null, p_titles: titles }).then(({ data, error }) => { if (live && !error) setPeers((data ?? {}) as Record<string, number>); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ hỏi lại khi danh sách tên bài đổi
+  }, [titleKey, p.grade]);
+  const peerHref = (title: string) => `/giao-vien/cong-dong?q=${encodeURIComponent(title.slice(0, 80))}${p.grade ? `&khoi=${p.grade}` : ''}`;
 
   return (
     <>
@@ -177,9 +192,12 @@ export default function TodaySchedule(p: Props & { headingId: string }) {
                 <span className="tdy-slot-t">{periodLabel(g)}{t && <small>{hhmm(t[0])}</small>}{w === 'now' && <em className="tdy-now">Đang dạy</em>}</span>
                 <span className="tdy-slot-list">
                   {g.items.map((r) => (
-                    <button key={r.key} type="button" className="tdy-slot-s is-btn" onClick={() => onRow(r)} title="Bấm để xem gợi ý cách dạy tiết này">
-                      <b>{r.subject} <i className="tdy-slot-ic" aria-hidden="true">{hasPick(r) ? '✅' : '💡'}</i></b><span>{r.title}</span>
-                    </button>
+                    <span key={r.key} className="tdy-slot-item">
+                      <button type="button" className="tdy-slot-s is-btn" onClick={() => onRow(r)} title="Bấm để xem gợi ý cách dạy tiết này">
+                        <b>{r.subject} <i className="tdy-slot-ic" aria-hidden="true">{hasPick(r) ? '✅' : '💡'}</i></b><span>{r.title}</span>
+                      </button>
+                      {peers[r.title] > 0 && <Link href={peerHref(r.title)} className="tdy-peer" title="Bài đồng nghiệp đã chia sẻ cho bài này trên Cộng đồng"><UsersRound aria-hidden="true" /> {peers[r.title]} bài đồng nghiệp đã soạn</Link>}
+                    </span>
                   ))}
                 </span>
                 {!allSaved && w !== 'past'

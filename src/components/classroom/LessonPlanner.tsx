@@ -23,6 +23,8 @@ import PlanWeekBoard from './PlanWeekBoard';
 import type { DeckRow } from '@/components/deck/DeckHome';
 import type { LibraryMeta } from '@/lib/plans/library';
 import { ToolIcon } from '@/components/classroom/tool-icons';
+import { SharePlanButton } from '@/components/community/ShareButtons';
+import { shareError, takeCopy } from '@/lib/community/share';
 import '@/styles/adm.css';
 import '@/styles/kh.css';
 import '@/styles/planner.css';
@@ -109,6 +111,21 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
     setSaved((data ?? []) as Saved[]);
   }, []);
   useEffect(() => { void refresh(); }, [refresh]);
+
+  // "Sao chép về sửa" từ Cộng đồng (?tu-cong-dong=<mã tài nguyên>): mở giáo án của đồng nghiệp thành giáo án mới (chưa lưu)
+  useEffect(() => {
+    const u = new URL(window.location.href);
+    const rid = u.searchParams.get('tu-cong-dong');
+    if (!rid) return;
+    u.searchParams.delete('tu-cong-dong'); window.history.replaceState(null, '', u);
+    void takeCopy(createClient(), rid).then((t) => {
+      const p = (t.snapshot as { plan?: unknown }).plan;
+      if (t.kind !== 'giao_an' || !isPlan(p)) throw new Error('not_plan');
+      setPlan({ ...p, className, date: todayIso(), period: p.period ?? 1 });
+      setPlanId(null); setDirty(true); history.current = []; setFull(true);
+      setMsg({ kind: 'info', text: `Đã chép giáo án “${t.title}” của đồng nghiệp. Thầy cô sửa theo lớp mình, chọn ngày dạy rồi bấm Lưu.` });
+    }).catch((e: Error) => setMsg({ kind: 'error', text: shareError(e.message) }));
+  }, [className]);
 
   // hoàn tác: lưu trạng thái trước mỗi đợt sửa (gộp các lần gõ liên tiếp trong 1 giây)
   const history = useRef<LessonPlan[]>([]);
@@ -427,6 +444,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
               {planId && <button type="button" className="btn btn-outline btn-sm" disabled={busy || !canSave} onClick={() => void save(true)}>Lưu thành bản mới</button>}
               <button type="button" className="btn btn-outline btn-sm" onClick={duplicate}><Copy aria-hidden="true" /> Nhân bản cho tiết khác</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={exportPlan}><FileDown aria-hidden="true" /> Xem trước &amp; tải Word</button>
+              <SharePlanButton className="btn btn-outline btn-sm" planId={dirty ? null : planId} plan={plan} disabledHint="Lưu giáo án trước rồi mới chia sẻ" />
             </div>
           </div>
 

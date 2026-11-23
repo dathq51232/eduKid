@@ -7,9 +7,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, FileText, Image as ImageIcon, LogOut, MessageCirclePlus, Paperclip, Search, SendHorizontal, Trash2, UserPlus, Users, X } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FileText, Image as ImageIcon, LogOut, MessageCirclePlus, Paperclip, Search, SendHorizontal, Trash2, UserPlus, Users, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { ACCEPT, fileProblem, fileUrl, fmtSize, isImage, uploadFile, type FileMeta } from '@/lib/community/files';
+import { ACCEPT, cachedObjectUrl, fileProblem, fmtSize, isImage, openFile, splitLinks, uploadFile, type FileMeta } from '@/lib/community/files';
 import { fold } from '@/lib/classroom/teacher-nav';
 import '@/styles/cdg.css';
 
@@ -35,19 +35,19 @@ function timeLabel(iso: string, withDay = false) {
   return withDay ? `${hm} · ${dm}` : dm;
 }
 
-/** File trong tin nhắn: ảnh hiện thu nhỏ, tài liệu hiện tên + cỡ; bấm để mở bằng link ký (10 phút) */
+/** File trong tin nhắn: ảnh hiện thu nhỏ, tài liệu hiện tên + cỡ; bấm để mở. File đã mở được lưu tạm trên máy, lần sau không tải lại. */
 function FileChip({ f }: { f: FileMeta }) {
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
     if (!isImage(f.mime)) return;
-    let live = true;
-    void fileUrl(createClient(), f.path).then((u) => { if (live) setSrc(u); });
-    return () => { live = false; };
-  }, [f.path, f.mime]);
-  const open = async () => { const u = await fileUrl(createClient(), f.path); if (u) window.open(u, '_blank', 'noopener'); };
+    let live = true; let made: string | null = null;
+    void cachedObjectUrl(createClient(), f).then((u) => { made = u; if (live) setSrc(u); });
+    return () => { live = false; if (made) URL.revokeObjectURL(made); };
+  }, [f]);
+  const open = () => { void openFile(createClient(), f); };
   if (isImage(f.mime)) return (
     <button type="button" className="cdg-msg-img" onClick={open} title={`Mở ảnh ${f.name}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- ảnh qua link ký Supabase, hết hạn sau 10 phút: không qua bộ tối ưu ảnh */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- ảnh lấy từ bộ nhớ đệm trên máy (blob:), không qua bộ tối ưu ảnh */}
       {src ? <img src={src} alt={f.name} loading="lazy" /> : <span><ImageIcon aria-hidden="true" /> {f.name}</span>}
     </button>
   );
@@ -56,6 +56,13 @@ function FileChip({ f }: { f: FileMeta }) {
       <FileText aria-hidden="true" /><span><b>{f.name}</b><small>{fmtSize(f.size)}</small></span>
     </button>
   );
+}
+
+/** Nội dung tin: liên kết Drive / OneDrive / YouTube / Canva bấm được, kèm nhãn nguồn */
+function Body({ text }: { text: string }) {
+  return <p>{splitLinks(text).map((part, i) => ('link' in part
+    ? <a key={i} className="cdg-msg-link" href={part.link.url} target="_blank" rel="noopener noreferrer"><ExternalLink aria-hidden="true" /><span><b>{part.link.source}</b><small>{part.text}</small></span></a>
+    : <span key={i}>{part.text}</span>))}</p>;
 }
 
 export default function ChatApp({ meId }: { meId: string }) {
@@ -221,7 +228,7 @@ export default function ChatApp({ meId }: { meId: string }) {
           <div className="cdg-chat-empty">
             <MessageCirclePlus aria-hidden="true" />
             <h2>Trao đổi với đồng nghiệp cùng trường</h2>
-            <p>Nhắn riêng hoặc lập nhóm tổ chuyên môn; gửi giáo án, đề, ảnh (Word, Excel, PowerPoint, PDF, ảnh — tối đa 20 MB).</p>
+            <p>Nhắn riêng hoặc lập nhóm tổ chuyên môn; gửi giáo án, đề, ảnh (tối đa 20 MB). File lớn hơn: dán liên kết Google Drive, OneDrive, YouTube.</p>
             <div className="cdg-row"><button type="button" className="cdg-btn" onClick={() => openPicker('rieng')}>Nhắn riêng</button><button type="button" className="cdg-btn is-ghost" onClick={() => openPicker('nhom')}>Tạo nhóm</button></div>
           </div>
         ) : (
@@ -246,7 +253,7 @@ export default function ChatApp({ meId }: { meId: string }) {
                       <div className="cdg-bubble">
                         {m.deleted ? <i className="cdg-recalled">Tin đã thu hồi</i> : <>
                           {m.file && <FileChip f={m.file} />}
-                          {m.body && <p>{m.body}</p>}
+                          {m.body && <Body text={m.body} />}
                         </>}
                         <span className="cdg-msg-time">{timeLabel(m.createdAt, true)}</span>
                       </div>
@@ -261,7 +268,7 @@ export default function ChatApp({ meId }: { meId: string }) {
             <form className="cdg-compose" onSubmit={(e) => { e.preventDefault(); void send(); }}>
               <input ref={fileInput} type="file" accept={ACCEPT} hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void send(f); }} />
               <button type="button" className="cdg-icon" onClick={() => fileInput.current?.click()} disabled={busy} title="Gửi file (tối đa 20 MB)" aria-label="Gửi file"><Paperclip aria-hidden="true" /></button>
-              <textarea value={text} onChange={(e) => setText(e.target.value)} rows={1} maxLength={4000} placeholder={busy ? 'Đang gửi…' : 'Nhập tin nhắn… (Enter để gửi, Shift+Enter xuống dòng)'}
+              <textarea value={text} onChange={(e) => setText(e.target.value)} rows={1} maxLength={4000} placeholder={busy ? 'Đang gửi…' : 'Nhập tin nhắn hoặc dán liên kết Drive/YouTube… (Enter để gửi)'}
                 aria-label="Nội dung tin nhắn" onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); void send(); } }} />
               <button type="submit" className="cdg-send" disabled={busy || !text.trim()} aria-label="Gửi"><SendHorizontal aria-hidden="true" /></button>
             </form>

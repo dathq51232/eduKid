@@ -1,13 +1,13 @@
 // Thẻ "Cộng đồng" ở góc phải trang Hôm nay: 5 tài nguyên đồng nghiệp mới đăng + số tin nhắn chưa đọc.
 // Máy chủ dựng (bọc Suspense ở trang để không chặn phần còn lại). Chưa chạy migration 0079/0080: không hiện gì.
 import Link from 'next/link';
-import { BookOpen, ChevronRight, ClipboardList, FileQuestion, FileText, MessageCircle, Paperclip, Presentation, UsersRound } from 'lucide-react';
+import { BookOpen, ChevronRight, ClipboardList, FileQuestion, FileText, Link2, MessageCircle, Paperclip, Presentation, UsersRound } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { KIND_LABEL, type ResourceCard, type ResourceKind } from '@/lib/community/types';
 import '@/styles/cdg.css';
 
 const KIND_ICON: Record<ResourceKind, typeof BookOpen> = {
-  bai_giang: Presentation, giao_an: FileText, de_kiem_tra: ClipboardList, phieu: BookOpen, cau_hoi: FileQuestion, tai_lieu: Paperclip,
+  bai_giang: Presentation, giao_an: FileText, de_kiem_tra: ClipboardList, phieu: BookOpen, cau_hoi: FileQuestion, tai_lieu: Paperclip, lien_ket: Link2,
 };
 const ago = (iso: string) => {
   const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));

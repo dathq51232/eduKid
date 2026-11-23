@@ -1,28 +1,28 @@
-// Thẻ tài nguyên Cộng đồng — dùng chung cho Kho chia sẻ, Đã đăng, Đã lưu (sau này: hồ sơ, trang Hôm nay).
-import { BookOpen, ClipboardList, Copy, FileQuestion, FileText, Paperclip, Presentation, Bookmark, EyeOff, ShieldCheck, School, Globe } from 'lucide-react';
+// Thẻ tài nguyên Cộng đồng — dùng chung cho Kho chia sẻ, Đã đăng, Đã lưu. Bấm vào thẻ → trang chi tiết (xem trước, sao chép, mở file).
+import { BookOpen, ClipboardList, Copy, FileQuestion, FileText, Link2, Paperclip, Presentation, Bookmark, EyeOff, ShieldCheck, School, Globe } from 'lucide-react';
 import { KIND_LABEL, LICENSE_INFO, type ResourceCard as Card, type ResourceKind } from '@/lib/community/types';
-import OpenFileButton from './OpenFileButton';
+import Link from 'next/link';
+import { fmtSize } from '@/lib/community/files';
 import '@/styles/cdg.css';
 
 const KIND_ICON: Record<ResourceKind, typeof BookOpen> = {
-  bai_giang: Presentation, giao_an: FileText, de_kiem_tra: ClipboardList, phieu: BookOpen, cau_hoi: FileQuestion, tai_lieu: Paperclip,
+  bai_giang: Presentation, giao_an: FileText, de_kiem_tra: ClipboardList, phieu: BookOpen, cau_hoi: FileQuestion, tai_lieu: Paperclip, lien_ket: Link2,
 };
 
 export default function ResourceCard({ r, subjectName }: { r: Card; subjectName: string }) {
   const Icon = KIND_ICON[r.kind] ?? FileText;
   const lic = LICENSE_INFO[r.license];
-  const meta = [subjectName, r.grade ? `Lớp ${r.grade}` : '', r.book].filter(Boolean).join(' · ');
+  const meta = [subjectName, r.grade ? `Lớp ${r.grade}` : '', r.slides ? `${r.slides} trang` : '', r.file ? fmtSize(r.file.size) : '', r.link?.host.replace(/^www\./, '')].filter(Boolean).join(' · ');
   return (
     <article className={`cdg-card kind-${r.kind}`}>
       <div className="cdg-card-top">
         <span className="cdg-kind"><Icon aria-hidden="true" /> {KIND_LABEL[r.kind]}</span>
         {r.status !== 'hien' && <span className="cdg-flag"><EyeOff aria-hidden="true" /> {r.status === 'an' ? 'Đang ẩn' : 'Đã gỡ'}</span>}
       </div>
-      <h3 className="cdg-title">{r.title}</h3>
+      <h3 className="cdg-title"><Link href={`/giao-vien/cong-dong/${r.id}`} className="cdg-stretch">{r.title}</Link></h3>
       {meta && <p className="cdg-meta">{meta}</p>}
-      {r.lessonRef && <p className="cdg-ref">{r.lessonRef}</p>}
+      {r.lessonRef && r.lessonRef !== r.title && <p className="cdg-ref">{r.lessonRef}</p>}
       {r.summary && <p className="cdg-sum">{r.summary}</p>}
-      {r.file && <OpenFileButton file={r.file} />}
       <div className="cdg-badges">
         <span className={`cdg-lic is-${r.license}`} title={lic.desc}><ShieldCheck aria-hidden="true" /> {lic.short}</span>
         <span className="cdg-vis" title={r.visibility === 'truong' ? 'Giáo viên cùng trường' : 'Mọi giáo viên EduChain'}>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { MessageCircle, Search, Share2, ShieldCheck, Copy, Sparkles } from 'lucide-react';
+import { Copy, MessageCircle, Presentation, Search, Sparkles, Upload } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import ResourceCard from '@/components/community/ResourceCard';
@@ -9,7 +9,8 @@ import CommunityTabs, { tabHref } from '@/components/community/CommunityTabs';
 import PublishFile from '@/components/community/PublishFile';
 import { getViewer } from '@/lib/auth/viewer';
 import { listResources } from '@/lib/community/data';
-import { KIND_LABEL, LICENSE_INFO, TAB_LABEL, type CommunityTab, type ResourceKind } from '@/lib/community/types';
+import { KIND_LABEL, TAB_LABEL, type CommunityTab, type ResourceKind } from '@/lib/community/types';
+import { teacherClasses } from '@/lib/classroom/teacher-home';
 import { SUBJECT_NAMES } from '@/lib/plans/generate';
 import '@/styles/dash.css';
 import '@/styles/cdg.css';
@@ -23,6 +24,7 @@ type SP = Promise<Record<string, string | string[] | undefined>>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
 const TABS: CommunityTab[] = ['kho', 'da_dang', 'da_luu'];
 const SUBJECTS = Object.entries(SUBJECT_NAMES).filter(([k]) => k !== 'khac') as [string, string][];
+const KIND_ORDER: ResourceKind[] = ['bai_giang', 'giao_an', 'tai_lieu', 'lien_ket', 'de_kiem_tra', 'phieu'];
 
 export default async function CommunityPage({ searchParams }: { searchParams: SP }) {
   const viewer = await getViewer();
@@ -37,9 +39,20 @@ export default async function CommunityPage({ searchParams }: { searchParams: SP
   const g = Number(one(sp.khoi));
   const grade = g >= 1 && g <= 5 ? g : null;
   const kind = (one(sp.loai) in KIND_LABEL ? one(sp.loai) : '') as ResourceKind | '';
-  const res = await listResources({ tab, q, subject, grade, kind });
+  const [res, classes] = await Promise.all([listResources({ tab, q, subject, grade, kind }), teacherClasses().catch(() => [])]);
+  const classGrade = (classes.find((c) => c.status === 'active') ?? classes[0])?.grade ?? null;
   const filtered = Boolean(q || subject || grade || kind);
-  const hrefTab = tabHref;
+  // giữ các điều kiện lọc khi bấm chip loại tài nguyên
+  const kindHref = (k: ResourceKind | '') => {
+    const u = new URLSearchParams();
+    if (tab !== 'kho') u.set('tab', tab);
+    if (q) u.set('q', q);
+    if (subject) u.set('mon', subject);
+    if (grade) u.set('khoi', String(grade));
+    if (k) u.set('loai', k);
+    const s = u.toString();
+    return `/giao-vien/cong-dong${s ? `?${s}` : ''}`;
+  };
 
   return (
     <main className="cdg">
@@ -47,10 +60,10 @@ export default async function CommunityPage({ searchParams }: { searchParams: SP
         <div>
           <p className="cdg-kicker">EduChainKids Community</p>
           <h1>Cộng đồng giáo viên</h1>
-          <p className="cdg-lead">Chia sẻ tri thức · Kết nối đồng nghiệp · Cùng phát triển. Bài thầy cô đăng luôn ghi tên tác giả và giấy phép thầy cô chọn.</p>
+          <p className="cdg-lead">Tài liệu đồng nghiệp chia sẻ — tìm theo môn, khối, bài; mở ra sửa được ngay, luôn ghi tên tác giả.</p>
         </div>
         <div className="cdg-head-acts">
-          <PublishFile meId={viewer.userId} subjects={SUBJECTS} />
+          <PublishFile meId={viewer.userId} subjects={SUBJECTS} grade={classGrade} />
           <Link href="/giao-vien/cong-dong/tin-nhan" className="cdg-btn is-ghost"><MessageCircle aria-hidden="true" /> Tin nhắn</Link>
         </div>
       </header>
@@ -59,6 +72,7 @@ export default async function CommunityPage({ searchParams }: { searchParams: SP
 
       <form className="cdg-filter" action="/giao-vien/cong-dong" role="search">
         {tab !== 'kho' && <input type="hidden" name="tab" value={tab} />}
+        {kind && <input type="hidden" name="loai" value={kind} />}
         <label className="cdg-q">
           <Search aria-hidden="true" />
           <input name="q" defaultValue={q} placeholder="Tìm tên bài, chủ đề…" aria-label="Tìm tài nguyên" />
@@ -71,19 +85,20 @@ export default async function CommunityPage({ searchParams }: { searchParams: SP
           <option value="">Mọi khối</option>
           {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>Lớp {n}</option>)}
         </select>
-        <select name="loai" defaultValue={kind} aria-label="Loại tài nguyên">
-          <option value="">Mọi loại</option>
-          {Object.entries(KIND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </select>
-        <button type="submit" className="cdg-btn">Lọc</button>
-        {filtered && <Link href={hrefTab(tab)} className="cdg-clear">Bỏ lọc</Link>}
+        <button type="submit" className="cdg-btn">Tìm</button>
       </form>
+      <nav className="cdg-chips" aria-label="Loại tài nguyên">
+        {(['', ...KIND_ORDER] as (ResourceKind | '')[]).map((k) => (
+          <Link key={k || 'all'} href={kindHref(k)} className={kind === k ? 'is-on' : ''} aria-current={kind === k ? 'true' : undefined}>{k ? KIND_LABEL[k] : 'Tất cả'}</Link>
+        ))}
+        {filtered && <Link href={tabHref(tab)} className="cdg-clear">Bỏ lọc</Link>}
+      </nav>
 
       {!res.ready ? (
         <section className="cdg-empty" role="status">
           <h2>{res.reason === 'chua_cai' ? 'Cộng đồng chưa được bật trên máy chủ' : 'Chưa tải được kho chia sẻ'}</h2>
           <p>{res.reason === 'chua_cai'
-            ? 'Quản trị cần chạy migration supabase/migrations/0079_community_core.sql trên Supabase, rồi tải lại trang.'
+            ? 'Quản trị cần chạy các migration 0079–0081 (thư mục supabase/migrations) trên Supabase, rồi tải lại trang.'
             : 'Thầy cô thử tải lại trang sau ít phút.'}</p>
         </section>
       ) : res.items.length ? (
@@ -97,11 +112,10 @@ export default async function CommunityPage({ searchParams }: { searchParams: SP
       ) : (
         <section className="cdg-empty is-start" role="status">
           <Sparkles className="cdg-empty-ic" aria-hidden="true" />
-          <h2>{tab === 'da_dang' ? 'Thầy cô chưa đăng bài nào' : 'Kho đang chờ bài chia sẻ đầu tiên'}</h2>
-          <p>Bài giảng, giáo án, đề kiểm tra thầy cô soạn trong EduChain có thể chia sẻ cho đồng nghiệp — đồng nghiệp mở ra là chỉnh sửa tiếp được ngay, không phải tải file.</p>
+          <h2>{tab === 'da_dang' ? 'Thầy cô chưa chia sẻ bài nào' : 'Kho đang chờ bài chia sẻ đầu tiên'}</h2>
           <ol className="cdg-steps">
-            <li><Share2 aria-hidden="true" /><span><b>Đăng tài liệu</b>Bấm “Đăng tài liệu” ở trên: Word, PowerPoint, PDF, ảnh. Chia sẻ thẳng từ trình soạn bài giảng: sắp có.</span></li>
-            <li><ShieldCheck aria-hidden="true" /><span><b>Chọn giấy phép</b>{Object.values(LICENSE_INFO).map((l) => l.label).join(' · ')}.</span></li>
+            <li><Presentation aria-hidden="true" /><span><b>Từ trình soạn</b>Bài giảng hoặc Kế hoạch bài dạy → nút “Chia sẻ”.</span></li>
+            <li><Upload aria-hidden="true" /><span><b>Tài liệu sẵn có</b>Nút “Đăng tài liệu”: file ≤ 20 MB hoặc liên kết Drive, YouTube.</span></li>
             <li><Copy aria-hidden="true" /><span><b>Đồng nghiệp sao chép về sửa</b>Bản sửa luôn ghi tên tác giả gốc.</span></li>
           </ol>
         </section>

@@ -253,7 +253,7 @@ export default async function TeacherHome() {
                 <TodoList items={todo} day={todayIso} headingId="tdy-todo" calHref={`${base}/lich`} />
               </section>
               <section className="tdy-card tdy-sched" aria-labelledby="tdy-sched">
-                <TodaySchedule classId={active.id} day={todayIso} tomorrow={tomorrowIso} base={base} saved={todayPlans} savedTomorrow={tomorrowPlans} headingId="tdy-sched" />
+                <TodaySchedule classId={active.id} day={todayIso} tomorrow={tomorrowIso} base={base} saved={todayPlans} savedTomorrow={tomorrowPlans} headingId="tdy-sched" grade={active.grade} />
               </section>
               <LessonPlanAside classId={active.id} grade={active.grade} />
             </div>
