@@ -90,7 +90,9 @@
 .tdy-task.is-urgent { box-shadow: inset 3px 0 0 #ef4444; padding-left: 10px; margin-left: -10px; }
 .tdy-done { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); }
 .tdy-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
-.tdy-stack { display: grid; gap: 14px; }
+/* Cột thẻ: rãnh minmax(0,1fr) + min-width:0 để dòng nowrap bên trong (dải tiết học…) không đẩy thẻ tràn sang cột bên cạnh */
+.tdy-stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
+.tdy-stack > * { min-width: 0; }
 
 .tdy-line { color: var(--muted); font-size: 14px; font-weight: 600; padding: 4px 0; }
 .tdy-line a { color: var(--brand-blue); font-weight: 700; white-space: nowrap; }
