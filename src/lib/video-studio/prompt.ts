@@ -29,6 +29,9 @@ export type VsProject = {
   clips: VsClip[];
 };
 
+/** số từ lời đọc vừa một cảnh 8 giây (đọc thong thả cho các em: ~3,2 tiếng/giây tiếng Việt, ~2,5 từ/giây tiếng Anh) */
+export const wordLimit = (n: Narration) => (n === 'en' ? 20 : 26);
+
 export const uid = () => Math.random().toString(36).slice(2, 10);
 export const emptyClip = (settingId = 's-lop', cast: string[] = ['b-chain']): VsClip =>
   ({ id: uid(), settingId, cast, firstFrame: '', beats: ['', '', ''], dialogue: '', endFrame: '', overlay: '' });
@@ -111,7 +114,7 @@ export function checkProject(p: VsProject, lib: Lib): Check[] {
   const missing = p.clips.flatMap((c) => [...c.cast.filter((id) => !find(lib.characters, id)), ...(find(lib.settings, c.settingId) ? [] : [c.settingId])]);
   out.push({ ok: !missing.length, text: missing.length ? 'Có nhân vật / bối cảnh đã bị xoá khỏi thư viện' : 'Nhân vật và bối cảnh đều có trong thư viện' });
   if (voice.narration !== 'none') {
-    const limit = voice.narration === 'vi' ? 20 : 16;
+    const limit = wordLimit(voice.narration);
     const long = p.clips.map((c, i) => (c.dialogue.trim().split(/\s+/).filter(Boolean).length > limit ? i + 1 : 0)).filter(Boolean);
     const blank = p.clips.map((c, i) => (c.dialogue.trim() ? 0 : i + 1)).filter(Boolean);
     out.push({ ok: !long.length, text: long.length ? `Lời đọc cảnh ${long.join(', ')} dài quá ~${limit} từ cho 8 giây — rút gọn, đừng tăng tốc độ đọc` : `Lời đọc mỗi cảnh trong khoảng ${limit} từ` });
