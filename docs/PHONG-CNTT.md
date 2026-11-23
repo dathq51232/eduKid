@@ -25,6 +25,21 @@ xoá dữ liệu, tắt hook kiểm tra. Lệnh `git commit`, `git push`, `supab
 
 Phòng Marketing (bài viết, video, cộng đồng giáo viên, số liệu tăng trưởng): xem `docs/PHONG-MARKETING.md`.
 
+### Tiết kiệm token: chia việc theo cỡ (mặc định)
+
+Mỗi trợ lý riêng bắt đầu từ con số 0 (tự đọc lại mã, kế hoạch) — chạy nhiều trợ lý cho một việc tốn gấp nhiều lần.
+Vì vậy quy trình và 2 điểm duyệt giữ nguyên, nhưng **ai chạy** tuỳ cỡ việc:
+
+| Cỡ việc | Cách chạy |
+|---|---|
+| **Nhỏ** (sửa chữ, CSS, lỗi rõ) | Trợ lý chính làm thẳng; kiểm bằng tsc / eslint / check:*; không lập kế hoạch |
+| **Vừa** (đa số việc) | Trợ lý chính **đóng các vai ngay trong phiên** theo danh sách kiểm trong `.claude/agents/*.md`; kế hoạch ≤ 20 dòng viết trong khung chat để duyệt; rà soát gộp một lượt (QA + bảo mật + nội dung) |
+| **Lớn** (nhiều phần độc lập, phải đọc rất rộng) | Mới gọi trợ lý riêng; vai chỉ đọc dùng mô hình rẻ (sonnet / haiku, đặt sẵn trong file vai) |
+
+Quy tắc chung: kiểm bằng lệnh máy trước, chỉ đọc mã ở chỗ rủi ro (quyền, tiền, dữ liệu học sinh); chỉ `npm run build`
+khi sửa `next.config.ts` hoặc route đọc file; báo cáo ≤ 15 dòng, kế hoạch ≤ 40 dòng. Hạn mức tuần đã dùng trên 70%: bật `/tiet-kiem-token`.
+Muốn ép dùng trợ lý riêng cho một việc: nói rõ “gọi <tên vai>”.
+
 ## 2. Quy trình một việc (từ yêu cầu đến sản phẩm)
 
 ```

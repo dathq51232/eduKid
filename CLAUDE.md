@@ -10,6 +10,7 @@
   - Đề / phiếu: `src/components/exams/*`, `src/lib/exams/*`.
 - Kiểm tra trước khi giao: `npx tsc --noEmit -p .` và `npx eslint <thư mục đã sửa>`.
 - Sửa câu hỏi / kiến thức / bộ sinh câu / đề (`src/lib/content|practice|exams|curriculum`, `grading.ts`): BẮT BUỘC `npm run check:noi-dung` đạt hết (git pre-commit tự chạy bản nhanh). Viết phép tính bằng số trong kiến thức, nhận xét, lời giải phải tính đúng — `check:knowledge` tính lại tất cả. Quy trình: `docs/KIEM-TRA-NOI-DUNG.md`.
+- Phòng CNTT / Marketing (`docs/PHONG-CNTT.md`, `docs/PHONG-MARKETING.md`, vai ở `.claude/agents/`): giữ 2 điểm duyệt của Trưởng phòng, nhưng **tiết kiệm token** — việc nhỏ và vừa do trợ lý chính tự làm / tự đóng vai theo danh sách kiểm của vai, rà soát gộp một lượt; chỉ gọi trợ lý riêng cho việc lớn hoặc khi Trưởng phòng nói “gọi <tên vai>”. Báo cáo ≤ 15 dòng; chỉ `npm run build` khi sửa next.config.ts / route đọc file.
 - Hiệu năng: không setState theo từng khung hình / mỗi 100–200 ms cho cả trang (gom lại, chỉ cập nhật khi giá trị hiển thị đổi); hoạt ảnh nền chỉ dùng `transform`/`opacity` trên phần tử HTML riêng (không animate phần tử bên trong SVG toàn màn hình).
 
 ## graphify

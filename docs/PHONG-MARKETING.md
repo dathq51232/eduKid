@@ -23,6 +23,10 @@ Phòng Marketing **phối hợp** với Phòng CNTT (`docs/PHONG-CNTT.md`):
 - Phản hồi của giáo viên cần sửa app → `mkt-cong-dong` gom thành danh sách → `kien-truc-su` lập kế hoạch.
 - Cần thêm mẫu bài trong Quản trị › Marketing hay công cụ đo mới → giao Phòng CNTT.
 
+**Tiết kiệm token:** chia việc theo cỡ giống Phòng CNTT (`docs/PHONG-CNTT.md` › Tiết kiệm token). Bài viết, tin nhắn,
+báo cáo tuần thường là việc **vừa**: trợ lý chính đóng vai theo `.claude/agents/mkt-*.md` ngay trong phiên; chỉ gọi trợ lý riêng
+(mô hình sonnet) khi soạn cả loạt bài / kịch bản cho một chiến dịch dài.
+
 ## 2. Quy trình một chiến dịch
 
 ```

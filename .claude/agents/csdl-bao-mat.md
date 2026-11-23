@@ -20,3 +20,6 @@ Thử migration trên PGlite (Postgres chạy trong Node) với bảng / hàm gi
 
 ## Báo cáo
 Bảng: Mức (Chặn / Nên sửa / Góp ý) · Vị trí (file:dòng) · Vấn đề · Cách sửa. Kết luận một dòng: “Đạt — có thể chạy trên Supabase” hoặc “Chưa đạt”. Không chạy SQL trên Supabase thật.
+
+## Tiết kiệm token
+Báo cáo cuối tối đa 15 dòng: chỉ việc đã làm, lỗi (file:dòng), cái CHƯA kiểm được; không chép lại mã hay kế hoạch. Kiểm bằng lệnh máy (tsc, eslint, check:*) trước, chỉ đọc mã ở chỗ rủi ro; không chạy `npm run build` trừ khi sửa next.config.ts hoặc route đọc file. Kế hoạch tối đa 40 dòng.
