@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Search, Share2, ShieldCheck, Copy, Sparkles } from 'lucide-react';
+import { MessageCircle, Search, Share2, ShieldCheck, Copy, Sparkles } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import ResourceCard from '@/components/community/ResourceCard';
+import CommunityTabs, { tabHref } from '@/components/community/CommunityTabs';
+import PublishFile from '@/components/community/PublishFile';
 import { getViewer } from '@/lib/auth/viewer';
 import { listResources } from '@/lib/community/data';
 import { KIND_LABEL, LICENSE_INFO, TAB_LABEL, type CommunityTab, type ResourceKind } from '@/lib/community/types';
@@ -15,12 +17,12 @@ import '@/styles/cdg.css';
 export const metadata: Metadata = { title: 'Cộng đồng giáo viên · EduChain Kids' };
 export const dynamic = 'force-dynamic';
 
-// Nhánh Cộng đồng trong luồng giáo viên (EduChainKids Community) — giai đoạn 0: kho chia sẻ, đã đăng, đã lưu.
+// Nhánh Cộng đồng trong luồng giáo viên (EduChainKids Community): kho chia sẻ, đã đăng, đã lưu, đăng tài liệu (file), tin nhắn.
 // Dữ liệu: hàm community_list (migration 0079). Nút "Chia sẻ" trong trình soạn bài giảng / giáo án: giai đoạn 1.
 type SP = Promise<Record<string, string | string[] | undefined>>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
 const TABS: CommunityTab[] = ['kho', 'da_dang', 'da_luu'];
-const SUBJECTS = Object.entries(SUBJECT_NAMES).filter(([k]) => k !== 'khac');
+const SUBJECTS = Object.entries(SUBJECT_NAMES).filter(([k]) => k !== 'khac') as [string, string][];
 
 export default async function CommunityPage({ searchParams }: { searchParams: SP }) {
   const viewer = await getViewer();
@@ -37,7 +39,7 @@ export default async function CommunityPage({ searchParams }: { searchParams: SP
   const kind = (one(sp.loai) in KIND_LABEL ? one(sp.loai) : '') as ResourceKind | '';
   const res = await listResources({ tab, q, subject, grade, kind });
   const filtered = Boolean(q || subject || grade || kind);
-  const hrefTab = (t: CommunityTab) => (t === 'kho' ? '/giao-vien/cong-dong' : `/giao-vien/cong-dong?tab=${t}`);
+  const hrefTab = tabHref;
 
   return (
     <main className="cdg">
@@ -47,13 +49,13 @@ export default async function CommunityPage({ searchParams }: { searchParams: SP
           <h1>Cộng đồng giáo viên</h1>
           <p className="cdg-lead">Chia sẻ tri thức · Kết nối đồng nghiệp · Cùng phát triển. Bài thầy cô đăng luôn ghi tên tác giả và giấy phép thầy cô chọn.</p>
         </div>
+        <div className="cdg-head-acts">
+          <PublishFile meId={viewer.userId} subjects={SUBJECTS} />
+          <Link href="/giao-vien/cong-dong/tin-nhan" className="cdg-btn is-ghost"><MessageCircle aria-hidden="true" /> Tin nhắn</Link>
+        </div>
       </header>
 
-      <nav className="cdg-tabs" aria-label="Mục Cộng đồng">
-        {TABS.map((t) => (
-          <Link key={t} href={hrefTab(t)} className={t === tab ? 'is-on' : ''} aria-current={t === tab ? 'page' : undefined}>{TAB_LABEL[t]}</Link>
-        ))}
-      </nav>
+      <CommunityTabs on={tab} />
 
       <form className="cdg-filter" action="/giao-vien/cong-dong" role="search">
         {tab !== 'kho' && <input type="hidden" name="tab" value={tab} />}
@@ -98,7 +100,7 @@ export default async function CommunityPage({ searchParams }: { searchParams: SP
           <h2>{tab === 'da_dang' ? 'Thầy cô chưa đăng bài nào' : 'Kho đang chờ bài chia sẻ đầu tiên'}</h2>
           <p>Bài giảng, giáo án, đề kiểm tra thầy cô soạn trong EduChain có thể chia sẻ cho đồng nghiệp — đồng nghiệp mở ra là chỉnh sửa tiếp được ngay, không phải tải file.</p>
           <ol className="cdg-steps">
-            <li><Share2 aria-hidden="true" /><span><b>Chia sẻ từ trình soạn</b>Nút “Chia sẻ lên Cộng đồng” trong Bài giảng &amp; Kế hoạch bài dạy (sắp có).</span></li>
+            <li><Share2 aria-hidden="true" /><span><b>Đăng tài liệu</b>Bấm “Đăng tài liệu” ở trên: Word, PowerPoint, PDF, ảnh. Chia sẻ thẳng từ trình soạn bài giảng: sắp có.</span></li>
             <li><ShieldCheck aria-hidden="true" /><span><b>Chọn giấy phép</b>{Object.values(LICENSE_INFO).map((l) => l.label).join(' · ')}.</span></li>
             <li><Copy aria-hidden="true" /><span><b>Đồng nghiệp sao chép về sửa</b>Bản sửa luôn ghi tên tác giả gốc.</span></li>
           </ol>

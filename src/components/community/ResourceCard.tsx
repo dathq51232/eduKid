@@ -1,10 +1,11 @@
 // Thẻ tài nguyên Cộng đồng — dùng chung cho Kho chia sẻ, Đã đăng, Đã lưu (sau này: hồ sơ, trang Hôm nay).
-import { BookOpen, ClipboardList, Copy, FileQuestion, FileText, Presentation, Bookmark, EyeOff, ShieldCheck, School, Globe } from 'lucide-react';
+import { BookOpen, ClipboardList, Copy, FileQuestion, FileText, Paperclip, Presentation, Bookmark, EyeOff, ShieldCheck, School, Globe } from 'lucide-react';
 import { KIND_LABEL, LICENSE_INFO, type ResourceCard as Card, type ResourceKind } from '@/lib/community/types';
+import OpenFileButton from './OpenFileButton';
 import '@/styles/cdg.css';
 
 const KIND_ICON: Record<ResourceKind, typeof BookOpen> = {
-  bai_giang: Presentation, giao_an: FileText, de_kiem_tra: ClipboardList, phieu: BookOpen, cau_hoi: FileQuestion,
+  bai_giang: Presentation, giao_an: FileText, de_kiem_tra: ClipboardList, phieu: BookOpen, cau_hoi: FileQuestion, tai_lieu: Paperclip,
 };
 
 export default function ResourceCard({ r, subjectName }: { r: Card; subjectName: string }) {
@@ -21,6 +22,7 @@ export default function ResourceCard({ r, subjectName }: { r: Card; subjectName:
       {meta && <p className="cdg-meta">{meta}</p>}
       {r.lessonRef && <p className="cdg-ref">{r.lessonRef}</p>}
       {r.summary && <p className="cdg-sum">{r.summary}</p>}
+      {r.file && <OpenFileButton file={r.file} />}
       <div className="cdg-badges">
         <span className={`cdg-lic is-${r.license}`} title={lic.desc}><ShieldCheck aria-hidden="true" /> {lic.short}</span>
         <span className="cdg-vis" title={r.visibility === 'truong' ? 'Giáo viên cùng trường' : 'Mọi giáo viên EduChain'}>

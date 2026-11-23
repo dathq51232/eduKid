@@ -1,7 +1,7 @@
 // Cộng đồng giáo viên (EduChainKids Community) — kiểu dữ liệu, giấy phép, nhãn hiển thị.
 // Bảng & hàm ở supabase/migrations/0079_community_core.sql. Đọc dữ liệu phía máy chủ: src/lib/community/data.ts.
 
-export type ResourceKind = 'bai_giang' | 'giao_an' | 'de_kiem_tra' | 'phieu' | 'cau_hoi';
+export type ResourceKind = 'bai_giang' | 'giao_an' | 'de_kiem_tra' | 'phieu' | 'cau_hoi' | 'tai_lieu';
 export type License = 'xem' | 'dung' | 'sua' | 'bao_luu';
 export type Visibility = 'truong' | 'giao_vien';
 export type ResourceStatus = 'hien' | 'an' | 'go';
@@ -23,6 +23,8 @@ export type ResourceCard = {
   copies: number;
   createdAt: string;
   remixedFrom: string | null;
+  /** tài liệu dạng file (loại tai_lieu, migration 0080) */
+  file?: { path: string; name: string; size: number; mime: string } | null;
   mine: boolean;
   saved: boolean;
   author: { id: string; name: string; school: string | null };
@@ -34,6 +36,7 @@ export const KIND_LABEL: Record<ResourceKind, string> = {
   de_kiem_tra: 'Đề kiểm tra',
   phieu: 'Phiếu bài tập',
   cau_hoi: 'Bộ câu hỏi',
+  tai_lieu: 'Tài liệu',
 };
 
 /** Giấy phép tác giả chọn khi đăng — quyết định người khác được làm gì với tài nguyên */

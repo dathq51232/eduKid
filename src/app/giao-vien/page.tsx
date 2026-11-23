@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import ShareApp from '@/components/ShareApp';
 import Link from 'next/link';
+import { Suspense } from 'react';
+import CommunityFeedCard from '@/components/community/CommunityFeedCard';
 import type { Inbox } from '@/lib/classroom/messages';
 import { redirect } from 'next/navigation';
 import { BookCheck, Check, ChevronRight, Library, Moon, School, Send, UserRound } from 'lucide-react';
@@ -261,6 +263,8 @@ export default async function TeacherHome() {
                 unread={inbox?.unread ?? 0} pendingLeave={inbox?.pending_leave ?? 0} recentMsgs={inbox?.items.length ?? 0} contactGaps={contactGaps}
                 spark={k.spark} students={k.students} todayIso={todayIso} planText={planText}
                 kpi={{ practiced: k.practiced, rate: k.rate, delta, open: k.open, openFirst: k.openFirst }} />
+              {/* ⑥ Cộng đồng: tài liệu đồng nghiệp mới đăng + tin nhắn — tải riêng, không chặn trang */}
+              <Suspense fallback={null}><CommunityFeedCard /></Suspense>
             </div>
           </div>
 
