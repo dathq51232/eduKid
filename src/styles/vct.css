@@ -1,0 +1,60 @@
+/* Khu vực "vct-": Ví phí cộng tác của thầy cô (Thu chi cá nhân, migration 0082) + đợt chi trả của quản trị (vct-adm-) */
+.vct { --vct-acc: #16a34a; display: grid; gap: 12px; margin-bottom: 16px; border: 1px solid color-mix(in srgb, var(--vct-acc) 28%, var(--line));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--vct-acc) 8%, var(--surface)), var(--surface) 180px); box-shadow: inset 0 3px 0 var(--vct-acc), var(--shadow-sm); }
+.vct-head h2 { display: flex; align-items: center; gap: 8px; margin: 0; }
+.vct-head h2 svg { width: 22px; height: 22px; color: var(--vct-acc); }
+.vct-head p { margin: 4px 0 0; }
+.vct-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.vct-stat { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.vct-stat small { color: var(--muted); font-size: 13px; font-weight: 700; }
+.vct-stat b { font-size: 22px; font-variant-numeric: tabular-nums; }
+.vct-stat span { color: var(--muted); font-size: 12.5px; }
+.vct-stat.is-main { border-color: color-mix(in srgb, var(--vct-acc) 45%, var(--line)); background: color-mix(in srgb, var(--vct-acc) 10%, var(--surface)); }
+.vct-stat.is-main b { color: var(--vct-acc); font-size: 26px; }
+.vct-next { display: flex; align-items: flex-start; gap: 6px; margin: 0; color: var(--muted); font-size: 14px; }
+.vct-next svg { flex: none; width: 18px; height: 18px; margin-top: 1px; color: var(--vct-acc); }
+.vct-next b { color: var(--ink); }
+.vct-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.vct-table th, .vct-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+.vct-table th { color: var(--muted); font-size: 13px; }
+.vct-table td:last-child, .vct-table th:last-child { text-align: right; }
+.vct-tip { display: flex; gap: 10px; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, #f59e0b 12%, var(--surface)); }
+.vct-tip > svg { flex: none; width: 22px; height: 22px; color: #d97706; }
+.vct-tip p { margin: 4px 0; font-size: 14px; }
+.vct-tip a { color: var(--brand-blue); font-size: 14px; font-weight: 700; }
+.vct-account { display: grid; gap: 8px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.vct-account h3 { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 16px; }
+.vct-account h3 svg { width: 18px; height: 18px; color: var(--muted); }
+.vct-acc { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0; font-size: 15px; }
+.vct-empty { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.vct-empty svg { width: 26px; height: 26px; color: var(--vct-acc); }
+.vct-empty p { flex: 1 1 240px; margin: 0; font-size: 14.5px; }
+.vct-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.vct-form label { display: grid; gap: 4px; color: var(--muted); font-size: 13.5px; font-weight: 700; }
+.vct-form label small { font-weight: 500; }
+.vct-form input, .vct-form select { min-height: 42px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; }
+.vct-form .vct-agree { grid-column: 1 / -1; display: flex; gap: 8px; color: var(--ink); font-weight: 500; }
+.vct-agree input { flex: none; width: 18px; height: 18px; min-height: 0; margin-top: 2px; }
+.vct-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
+.vct-history summary { color: var(--brand-blue); font-size: 14px; font-weight: 700; cursor: pointer; }
+.vct-history ul { display: grid; gap: 4px; margin: 8px 0 0; padding: 0; list-style: none; }
+.vct-history li { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.vct-history em { margin-left: auto; font-style: normal; font-weight: 700; }
+.vct-history em.is-da_chi { color: var(--vct-acc); } .vct-history em.is-giu_lai { color: #b45309; }
+:root[data-theme="dark"] .vct { --vct-acc: #4ade80; }
+@media (max-width: 640px) {
+  .vct-stats { grid-template-columns: minmax(0, 1fr); }
+  .vct-form { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ===== Quản trị › Thu phí › Chi trả phí cộng tác ===== */
+.vct-adm-row { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+.vct-adm-row label { display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+.vct-adm-row input { min-height: 40px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; }
+.vct-adm-warn { color: #b45309; font-weight: 700; }
+.vct-adm-batch { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
+.vct-adm-batch h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-size: 16px; }
+.vct-adm-batch h3 small { color: var(--muted); font-weight: 600; }
+.vct-adm-st { padding: 2px 8px; border-radius: 99px; font-size: 12.5px; font-weight: 700; background: var(--surface-2); }
+.vct-adm-st.is-da_chi { background: color-mix(in srgb, #16a34a 18%, var(--surface)); }
+.vct-adm-st.is-giu_lai { background: color-mix(in srgb, #f59e0b 20%, var(--surface)); }

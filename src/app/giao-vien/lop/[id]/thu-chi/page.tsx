@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import PersonalMoney from '@/components/classroom/PersonalMoney';
+import CommissionWallet from '@/components/classroom/CommissionWallet';
 import { loadClassPage } from '@/lib/classroom/class-page';
 import '@/styles/ct.css';
 
@@ -17,6 +18,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     <>
       <LearnHeader />
       <main className="dash wrap ct-page">
+        <CommissionWallet classId={id} />
         <PersonalMoney />
       </main>
     </>

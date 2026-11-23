@@ -7,6 +7,8 @@ import QrCode from '@/components/billing/QrCode';
 import { createClient } from '@/lib/supabase/client';
 import { BANKS, KIND_NAME, PLAN_NAME, billingError, fmtDay, vietQrPayload, vnd, type Plan, type PriceKind } from '@/lib/billing';
 import WaiverAdmin from './WaiverAdmin';
+import PayoutAdmin from './PayoutAdmin';
+import { walletError } from '@/lib/wallet';
 import { useAdminUser } from './AdminContext';
 import '@/styles/adm.css';
 import '@/styles/auth.css';
@@ -101,6 +103,17 @@ export default function BillingAdmin() {
     const { error } = await supabase.rpc('admin_cancel_payment', { p_payment: p.id });
     if (error) return setMsg({ kind: 'error', text: billingError(error.message) });
     void loadRows(); void loadSettings();
+  };
+
+  // Bỏ phí cộng tác của một khoản (hoàn tiền / gian lận) — chỉ khi khoản chưa vào đợt chi (migration 0082)
+  const voidCommission = async (p: Pay) => {
+    const reason = window.prompt(`Bỏ phí cộng tác ${vnd(p.commission ?? 0)} của khoản ${p.code} (${p.student_name}) khỏi ví cô ${p.teacher_name ?? ''}?\nLý do (bắt buộc, ví dụ: đã hoàn tiền cho phụ huynh):`, '');
+    if (!reason?.trim()) return;
+    setBusy(true);
+    const { error } = await supabase.rpc('admin_commission_void', { p_payment: p.id, p_reason: reason.trim() });
+    setBusy(false);
+    if (error) return setMsg({ kind: 'error', text: walletError(error.message) });
+    setMsg({ kind: 'ok', text: `Đã bỏ phí cộng tác của ${p.code}.` });
   };
 
   if (!me.isAdmin) return <p className="adm-alert is-warn">Chỉ quản trị hệ thống quản lý thu phí.</p>;
@@ -208,6 +221,7 @@ export default function BillingAdmin() {
       ) : <p className="adm-alert is-info">Chưa có bảng giá theo học kỳ và đặc cách: chạy <code>supabase/migrations/0074_semester_pricing_waivers.sql</code> trên Supabase.</p>)}
 
       {hasPricing && <WaiverAdmin onChanged={() => void loadSettings()} />}
+      {hasPricing && <PayoutAdmin />}
 
       <section className="adm-card">
         <div className="adm-card-head"><h2>Các khoản đóng phí</h2><CsvButton filename="thu-phi.csv" header={['Mã CK', 'Học sinh', 'Lớp', 'Trường', 'Loại gói', 'Gói', 'Số tiền', 'Cô của lớp', 'Phí cộng tác', 'Trạng thái', 'Tạo lúc', 'Xác nhận lúc', 'Học đến']} rows={csvRows} /></div>
@@ -236,6 +250,9 @@ export default function BillingAdmin() {
                         <button type="button" className="button button-blue" disabled={busy} onClick={() => void confirm(r)}><Check size={16} aria-hidden="true" /> Xác nhận</button>
                         <button type="button" className="button button-white" disabled={busy} onClick={() => void cancel(r)}><X size={16} aria-hidden="true" /> Huỷ</button>
                       </>}
+                      {r.status === 'confirmed' && (r.commission ?? 0) > 0 && (
+                        <button type="button" className="button button-white" disabled={busy} title="Hoàn tiền cho phụ huynh / nghi gian lận: bỏ phí cộng tác của khoản này khỏi ví cô (chỉ khi chưa vào đợt chi)" onClick={() => void voidCommission(r)}><X size={16} aria-hidden="true" /> Bỏ phí cộng tác</button>
+                      )}
                     </td>
                   </tr>
                 ))}

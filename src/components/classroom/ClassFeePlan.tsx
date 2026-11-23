@@ -47,15 +47,20 @@ export default function ClassFeePlan({ classId }: { classId: string }) {
   return (
     <section className="dash-section fee-plan no-print" aria-labelledby="fee-h">
       <h2 id="fee-h"><Wallet aria-hidden="true" /> Học phí của lớp</h2>
-      <p className="dash-muted">Cô chọn khoản công bố cho phụ huynh lớp mình. Phụ huynh tự chuyển khoản cho app qua mã QR (cô không thu tiền). Cô nhận phí cộng tác {fee.commission_pct}% gói lớp học.</p>
+      <p className="dash-muted">Cô chọn khoản công bố cho phụ huynh lớp mình. Phụ huynh tự chuyển khoản cho app qua mã QR (cô không thu tiền). Cô nhận phí cộng tác {fee.commission_pct}% gói lớp học, tự cộng vào <b>Ví phí cộng tác</b> (mục Thu chi cá nhân), chi trả cuối học kỳ 1 và cuối học kỳ 2.</p>
       <div className="fee-plan-opts" role="radiogroup" aria-label="Gói học phí của lớp">
-        {(['choice', 'term', 'year'] as FeePlan[]).map((p) => (
-          <button key={p} type="button" role="radio" aria-checked={fee.fee_plan === p} className={`fee-plan-opt${fee.fee_plan === p ? ' is-on' : ''}`} disabled={busy} onClick={() => void choose(p)}>
-            <b>{FEE_PLAN_NAME[p]}</b>
+        {(['year', 'choice', 'term'] as FeePlan[]).map((p) => (
+          <button key={p} type="button" role="radio" aria-checked={fee.fee_plan === p} className={`fee-plan-opt${fee.fee_plan === p ? ' is-on' : ''}${p === 'year' ? ' is-best' : ''}`} disabled={busy} onClick={() => void choose(p)}>
+            <b>{FEE_PLAN_NAME[p]}{p === 'year' && <em className="fee-plan-best">Khuyên dùng</em>}</b>
             <span>{p === 'term' ? `${vnd(fee.price_term)} / em` : p === 'year' ? `${vnd(fee.price_year)} / em` : `${vnd(fee.price_term)} hoặc ${vnd(fee.price_year)}`}</span>
           </button>
         ))}
       </div>
+      {fee.price_year < 2 * fee.price_term && (
+        <p className="fee-plan-why">💡 Gói năm học: phụ huynh tiết kiệm <b>{vnd(2 * fee.price_term - fee.price_year)}/em</b> so với đóng 2 học kỳ, con học liền mạch cả năm;
+          cô nhận <b>{vnd(Math.floor((fee.price_year * fee.commission_pct) / 100))}/em</b> ngay ở đợt chi cuối học kỳ 1
+          (gói học kỳ: {vnd(Math.floor((fee.price_term * fee.commission_pct) / 100))}/em mỗi kỳ, tuỳ phụ huynh đóng tiếp).</p>
+      )}
       <div className="fee-plan-msg">
         <p>{text}</p>
         <button type="button" className="mini-btn" onClick={() => void copy()}>{copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />} {copied ? 'Đã chép' : 'Chép tin nhắn gửi phụ huynh'}</button>
