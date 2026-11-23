@@ -10,6 +10,7 @@ const STEPS = [
   ['Bộ sinh câu luyện tập', 'check-practice.ts', [fast ? '60' : '500']],
   ['Chuyên đề nâng cao (vét cạn đáp án)', 'check-advanced.ts', []],
   ['Chính tả từ ngữ trên phiếu', 'check-spelling.ts', []],
+  ['Tiếng Việt: chính tả & trình bày mọi câu chữ', 'check-tieng-viet.ts', [fast ? '5' : '20']],
   ['Đếm hình', 'check-count-shapes.ts', []],
   ['Đổi bộ câu hỏi không trùng', 'check-sets.ts', []],
   ['Ma trận & đề kiểm tra', 'check-exams.ts', []],

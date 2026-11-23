@@ -18,6 +18,7 @@ Bước nào lỗi thì lệnh in trích đoạn lỗi và thoát mã 1. Git **c
 | `check:knowledge` | **Đúng kiến thức**: tìm mọi phép tính / so sánh viết bằng số trong *Kiến thức cần nhớ*, nhận xét, lời giải, đáp án (thế đáp án vào chỗ trống), câu Đúng/Sai — của bài soạn sẵn, ngân hàng lớp 1 và bộ sinh câu — rồi **tính lại bằng phân số chính xác** (hiểu `1 000`, `2,5`, `2/3`, hỗn số, `%`, `dư`). Nhận xét ghi “đáp án là X” phải trùng đáp án đúng. Có tự kiểm: cố ý cài lỗi để chắc bộ kiểm tra còn bắt được |
 | `check:practice` | Bộ sinh câu: đủ 10 câu/2 câu mỗi mức, không trùng, đáp án tự chấm đúng & đáp án sai bị chấm sai, phạm vi số, thời gian |
 | `check:advanced` | Chuyên đề nâng cao: vét cạn để chắc đáp án đúng và duy nhất |
+| `check:tieng-viet` | **Chính tả & trình bày tiếng Việt** trong mọi câu chữ (đề, nhận xét, lời giải, đáp án đúng, kiến thức, mô tả bài, bộ sinh câu, kho từ phiếu chính tả): chữ dựng sẵn NFC, tiếng có vần thật, luật c/k · g/gh · ng/ngh, một dấu thanh đặt đúng chữ (nhận cả “hoà” lẫn “hòa”), danh sách lỗi hay gặp (“sử lý” → “xử lý”…), hai khoảng trắng, khoảng trắng trước dấu câu, lặp hư từ (“là là”). Luật ở `src/lib/content/verify-viet.ts`, có tự kiểm. Bỏ qua: câu cố ý nêu cách viết sai (có chữ “sai”, “nhầm”, “phải viết”, “chính tả”…), lựa chọn sai của câu chọn, tiếng không dấu (tiếng Anh, mã), tên phiên âm có gạch nối (Mát-xđa, Pa-xtơ) |
 | `check:spelling`, `check:count-shapes`, `check:sets`, `check:exams`, `check:games` | Chính tả từ trên phiếu, câu đếm hình, đổi bộ câu không trùng, ma trận đề đủ câu & đáp án sau khi trộn, trò chơi |
 
 ## Khi soạn / sửa nội dung
@@ -30,7 +31,7 @@ Bước nào lỗi thì lệnh in trích đoạn lỗi và thoát mã 1. Git **c
 
 ## Máy KHÔNG thay được người
 
-Nghĩa của từ, ngữ pháp Tiếng Anh, nội dung bài đọc, độ hợp lí của tình huống… vẫn cần giáo viên đọc lại. Khi rà tay, ưu tiên
+Từ dùng sai nghĩa nhưng viết đúng chính tả (“dành / giành”, “sát / sáp” ngoài danh sách lỗi hay gặp), ngữ pháp Tiếng Anh, nội dung bài đọc, độ hợp lí của tình huống… vẫn cần giáo viên đọc lại. Khi rà tay, ưu tiên
 câu mức L4–L5 và câu mới thêm; sửa xong vẫn chạy lại lệnh trên.
 
 ## Lỗi đã tìm & sửa (17/11/2026)

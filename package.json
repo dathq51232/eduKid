@@ -35,6 +35,7 @@
     "check:exams": "tsx scripts/check-exams.ts",
     "check:schedule": "tsx scripts/check-schedule.ts",
     "check:spelling": "tsx scripts/check-spelling.ts",
+    "check:tieng-viet": "tsx scripts/check-tieng-viet.ts",
     "check:count-shapes": "tsx scripts/check-count-shapes.ts",
     "check:chess": "tsx scripts/check-chess.ts",
     "check:xiangqi": "tsx scripts/check-xiangqi.ts",
