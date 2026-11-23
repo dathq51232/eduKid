@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  PanelLeftClose, PanelLeftOpen, BookCheck, Check, ChevronDown, Copy, Home, LayoutGrid, LogOut, Menu, MessageSquareHeart, Search, Users, X,
+  PanelLeftClose, PanelLeftOpen, BookCheck, Check, ChevronDown, Copy, Home, LayoutGrid, LogOut, Menu, MessageSquareHeart, Search, Users, UsersRound, X,
 } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import { icon3d, type IconComp } from '@/components/classroom/tool-icons';
@@ -31,6 +31,8 @@ const MINI_KEY = 'gv-cot-trai-gon';
 /** data-tour của từng nhóm công cụ (nội dung bước: src/lib/tour/steps.ts) */
 const GROUP_TOUR: Record<string, string> = { 'Trên lớp': 'nhom-tren-lop', 'Dạy học': 'nhom-day-hoc', 'Đánh giá': 'nhom-danh-gia', 'Phụ huynh': 'nhom-phu-huynh', 'Tiện ích': 'nhom-tien-ich' };
 export const USAGE_KEY = 'gv-dung-nhanh';
+/** Nhánh Cộng đồng giáo viên (migration 0079) — nằm trong /giao-vien để dùng chung khung này, không gắn với lớp */
+const COMMUNITY_HREF = '/giao-vien/cong-dong';
 
 type ShellClass = { id: string; name: string; grade: number; status: string; students: number; join_code?: string | null };
 type Props = { classes: ShellClass[]; teacherName: string; schoolName: string; children: React.ReactNode };
@@ -43,6 +45,7 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
   const fromPath = classIdOfPath(pathname);
   const active = classes.find((c) => c.id === fromPath) ?? classes.find((c) => c.status === 'active') ?? classes[0] ?? null;
   const current = toolOfPath(pathname);
+  const inCommunity = pathname.startsWith(COMMUNITY_HREF);
   const [drawer, setDrawer] = useState(false);
   const [palette, setPalette] = useState(false);
   const [unread, setUnread] = useState(0); // tin nhắn phụ huynh chưa đọc (migration 0037)
@@ -159,6 +162,11 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
           </Link>
         );
       })}
+      {/* Nhánh Cộng đồng: không thuộc lớp nào nên tách khỏi các nhóm công cụ của lớp bằng một vạch */}
+      <span className="tsh-sep" role="separator" aria-hidden="true" />
+      <Link href={COMMUNITY_HREF} className={`tsh-nav${inCommunity ? ' is-on' : ''}`} aria-current={inCommunity ? 'page' : undefined} title="Cộng đồng giáo viên">
+        <span className="tsh-ic tone-violet"><UsersRound aria-hidden="true" /></span><span className="tsh-nav-t">Cộng đồng</span>
+      </Link>
     </>
   );
   const groupTools = active && curGroup ? toolsOfGroup(curGroup) : [];
@@ -238,6 +246,7 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
           <Link href="/" aria-label="Trang chủ"><BrandLogo size={26} /></Link>
           {active && <span className="tsh-mtop-class">Lớp {active.name}</span>}
           <button type="button" className="tsh-icon-btn" data-tour="tim-nhanh" aria-label="Tìm nhanh" onClick={() => setPalette(true)}><Search aria-hidden="true" /></button>
+          <Link href={COMMUNITY_HREF} className={`tsh-icon-btn${inCommunity ? ' is-on' : ''}`} aria-label="Cộng đồng giáo viên" aria-current={inCommunity ? 'page' : undefined}><UsersRound aria-hidden="true" /></Link>
           <TourHelpButton className="tsh-icon-btn" />
           <button type="button" className="tsh-icon-btn" aria-label="Mở menu" onClick={() => setDrawer(true)}><Menu aria-hidden="true" /></button>
         </div>
@@ -326,6 +335,7 @@ function CommandPalette({ classId, onClose }: { classId: string | null; onClose:
       for (const t of tools) out.push({ id: `t-${t.key}`, group: 'Công cụ', label: t.label, hint: t.desc, href: toolHref(t, classId), Icon: TOOL_ICON[t.key] });
     }
     if (!f || fold('hom nay trang chinh').includes(f)) out.push({ id: 'home', group: 'Trang', label: 'Hôm nay', hint: 'Trang chính của thầy cô', href: '/giao-vien', Icon: LayoutGrid });
+    if (!f || fold('cong dong dong nghiep kho chia se giao an bai giang').includes(f)) out.push({ id: 'cong-dong', group: 'Trang', label: 'Cộng đồng', hint: 'Kho chia sẻ của đồng nghiệp', href: COMMUNITY_HREF, Icon: UsersRound });
     return out;
   }, [q, roster, classId]);
 

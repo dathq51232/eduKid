@@ -192,3 +192,8 @@
 :root[data-theme="dark"] .te .tone-blue { --te-c: #6d9af7; }
 html.dk-focus .tsh-side, html.dk-focus .tsh-gtabs, html.dk-focus .tsh-mtop, html.dk-focus .tsh-tabs, html.dk-focus .tsh-scrim { display: none !important; }
 html.dk-focus .tsh-main { padding-bottom: 0; }
+
+/* vạch tách nhánh Cộng đồng (không thuộc lớp) khỏi các nhóm công cụ của lớp */
+.tsh-sep { display: block; height: 1px; margin: 6px 10px; background: var(--line); }
+.tsh-mtop .tsh-icon-btn.is-on { color: var(--brand-blue); }
+.tsh-mtop a.tsh-icon-btn { justify-content: center; }

@@ -1,0 +1,69 @@
+/* Khu vực "cdg-": Cộng đồng giáo viên (EduChainKids Community) — trang /giao-vien/cong-dong và thẻ tài nguyên dùng chung.
+   Màu nhận diện nhánh: tím (--cdg-acc), pha từ --surface / --line nên tự hợp giao diện sáng và tối. */
+.cdg { --cdg-acc: #7c5cf0; display: grid; gap: 16px; max-width: 1240px; margin: 0 auto; padding: 24px 28px 60px; }
+.cdg-head { padding: 20px 22px; border: 1px solid color-mix(in srgb, var(--cdg-acc) 28%, var(--line)); border-radius: 18px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cdg-acc) 14%, var(--surface)), var(--surface) 70%); box-shadow: inset 0 3px 0 var(--cdg-acc), var(--shadow-sm); }
+.cdg-kicker { margin: 0 0 2px; color: var(--cdg-acc); font-size: 13px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.cdg-head h1 { margin: 0; font-size: clamp(24px, 3vw, 30px); line-height: 1.2; }
+.cdg-lead { max-width: 720px; margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+
+.cdg-tabs { display: flex; gap: 6px; overflow-x: auto; border-bottom: 1px solid var(--line); }
+.cdg-tabs a { flex: none; padding: 10px 14px; border-bottom: 3px solid transparent; color: var(--muted); font-size: 15px; font-weight: 700; text-decoration: none; }
+.cdg-tabs a:hover { color: var(--ink); }
+.cdg-tabs a.is-on { border-bottom-color: var(--cdg-acc); color: var(--ink); }
+
+.cdg-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cdg-q { flex: 1 1 260px; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.cdg-q svg { flex: none; width: 18px; height: 18px; color: var(--muted); }
+.cdg-q input { flex: 1; min-width: 0; border: 0; background: none; color: var(--ink); font: inherit; font-size: 15px; outline: none; }
+.cdg-q:focus-within { border-color: var(--cdg-acc); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cdg-acc) 22%, transparent); }
+.cdg-filter select { min-height: 44px; padding: 0 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14.5px; }
+.cdg-btn { min-height: 44px; padding: 0 18px; border: 0; border-radius: 12px; background: var(--cdg-acc); color: #fff; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+.cdg-btn:hover { filter: brightness(1.06); }
+.cdg-clear { color: var(--brand-blue); font-size: 14px; font-weight: 700; }
+
+.cdg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: 14px; }
+.cdg-card { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.cdg-card:hover { border-color: color-mix(in srgb, var(--cdg-acc, #7c5cf0) 40%, var(--line)); }
+.cdg-card-top { display: flex; align-items: center; gap: 8px; }
+.cdg-kind { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 99px; background: color-mix(in srgb, var(--cdg-acc, #7c5cf0) 14%, var(--surface)); color: var(--ink); font-size: 12.5px; font-weight: 700; }
+.cdg-kind svg, .cdg-flag svg { width: 14px; height: 14px; }
+.cdg-flag { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; color: var(--muted); font-size: 12.5px; font-weight: 700; }
+.cdg-title { margin: 2px 0 0; font-size: 16.5px; line-height: 1.35; overflow-wrap: anywhere; }
+.cdg-meta { margin: 0; color: var(--muted); font-size: 13.5px; font-weight: 600; }
+.cdg-ref { margin: 0; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cdg-sum { margin: 0; color: var(--muted); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cdg-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.cdg-lic, .cdg-vis { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 8px; background: var(--surface-2); font-size: 12.5px; font-weight: 700; }
+.cdg-lic svg, .cdg-vis svg { width: 14px; height: 14px; }
+.cdg-lic.is-sua { color: #15803d; } .cdg-lic.is-dung { color: #1d4ed8; } .cdg-lic.is-xem, .cdg-lic.is-bao_luu { color: #b45309; }
+.cdg-foot { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 8px; border-top: 1px dashed var(--line); }
+.cdg-author { display: grid; min-width: 0; font-size: 13.5px; }
+.cdg-author b, .cdg-author small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cdg-author small { color: var(--muted); font-size: 12.5px; }
+.cdg-stats { display: flex; gap: 10px; margin-left: auto; color: var(--muted); font-size: 13px; font-weight: 700; }
+.cdg-stats span { display: inline-flex; align-items: center; gap: 3px; }
+.cdg-stats svg { width: 15px; height: 15px; }
+.cdg-stats svg.is-on { color: var(--cdg-acc, #7c5cf0); fill: currentColor; }
+
+.cdg-empty { padding: 28px 22px; border: 1px dashed var(--line-strong); border-radius: 18px; background: var(--surface); text-align: center; }
+.cdg-empty h2 { margin: 0 0 6px; font-size: 18px; }
+.cdg-empty p { max-width: 620px; margin: 0 auto; color: var(--muted); font-size: 15px; }
+.cdg-empty-ic { width: 34px; height: 34px; margin-bottom: 6px; color: var(--cdg-acc); }
+.cdg-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 10px; max-width: 900px; margin: 18px auto 0; padding: 0; list-style: none; text-align: left; }
+.cdg-steps li { display: flex; gap: 10px; padding: 12px; border-radius: 14px; background: var(--surface-2); font-size: 14px; }
+.cdg-steps li > svg { flex: none; width: 22px; height: 22px; color: var(--cdg-acc); }
+.cdg-steps b { display: block; margin-bottom: 2px; }
+.cdg-steps span { color: var(--muted); }
+.cdg-steps span b { color: var(--ink); }
+
+:root[data-theme="dark"] .cdg { --cdg-acc: #a48bff; }
+:root[data-theme="dark"] .cdg-lic.is-sua { color: #6ee7a0; }
+:root[data-theme="dark"] .cdg-lic.is-dung { color: #93b4ff; }
+:root[data-theme="dark"] .cdg-lic.is-xem, :root[data-theme="dark"] .cdg-lic.is-bao_luu { color: #fbbf5a; }
+@media (max-width: 640px) {
+  .cdg { padding: 16px 16px 40px; }
+  .cdg-head { padding: 16px; }
+  .cdg-filter select { flex: 1 1 calc(50% - 8px); }
+  .cdg-btn { flex: 1 1 100%; }
+}
