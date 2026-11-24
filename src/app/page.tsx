@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, Mail, MessageCircle, Phone, Activity, BookOpen, Calculator, ClipboardList, FileText, Gamepad2, GraduationCap, Languages, ListChecks, Presentation, Star, Timer, Trophy, Users } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
@@ -10,6 +11,7 @@ import { GAMES } from '@/lib/games/catalog';
 import { SUBJECT_MASCOT } from '@/lib/mascots';
 import { CONTENT } from '@/lib/content';
 import type { SubjectCode } from '@/lib/types';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
 import '@/styles/ft.css';
 import '@/styles/home.css';
 import '@/styles/notebook.css';
@@ -68,10 +70,40 @@ function lessonsPerGrade(subject: SubjectCode): string {
   return lo === hi ? `${lo} bài mỗi lớp` : `${lo} – ${hi} bài mỗi lớp`;
 }
 
+export const metadata: Metadata = { alternates: { canonical: '/' } };
+
+// Dữ liệu có cấu trúc (schema.org) cho Google: tổ chức giáo dục + website
+const JSON_LD = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'EducationalOrganization',
+      '@id': `${SITE_URL}/#org`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      logo: `${SITE_URL}/brand/logo-mark-print.png`,
+      description: SITE_DESCRIPTION,
+      email: SITE_CONTACT.email,
+      telephone: `+84${SITE_CONTACT.phone.replace(/^0/, '')}`,
+      areaServed: 'VN',
+      audience: { '@type': 'EducationalAudience', educationalRole: ['student', 'teacher', 'parent'] },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: SITE_NAME,
+      inLanguage: 'vi-VN',
+      publisher: { '@id': `${SITE_URL}/#org` },
+    },
+  ],
+};
+
 export default function HomePage() {
   const totalLessons = CONTENT.length;
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD).replace(/</g, '\\u003c') }} />
       <LearnHeader />
       <main className="site-shell home">
         <HomeWelcome />

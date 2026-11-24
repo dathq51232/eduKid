@@ -49,7 +49,19 @@ const nextConfig: NextConfig = {
   },
   // game Robot lập trình đã gỡ (10/2026): link cũ đưa về trang trò chơi
   async redirects() {
-    return [{ source: '/tro-choi/robot-lap-trinh', destination: '/tro-choi', permanent: false }];
+    type Redirects = Awaited<ReturnType<NonNullable<NextConfig['redirects']>>>;
+    const list: Redirects = [{ source: '/tro-choi/robot-lap-trinh', destination: '/tro-choi', permanent: false }];
+    // Gom mọi tên miền phụ về tên miền chính (SEO: tránh trùng nội dung). CHỈ bật khi educhainkids.com đã gắn vào Vercel
+    // và chạy được: đặt CANONICAL_REDIRECT=on (Production) rồi Redeploy. Danh sách host cũ: CANONICAL_OLD_HOSTS (cách nhau dấu phẩy).
+    if (process.env.CANONICAL_REDIRECT === 'on') {
+      const target = (process.env.NEXT_PUBLIC_SITE_URL || 'https://educhainkids.com').replace(/\/+$/, '');
+      const oldHosts = (process.env.CANONICAL_OLD_HOSTS || 'www.educhainkids.com,educhain-kids-dev.vercel.app')
+        .split(',').map((h) => h.trim()).filter((h) => h && h !== new URL(target).host);
+      for (const host of oldHosts) {
+        list.push({ source: '/:path*', has: [{ type: 'host', value: host }], destination: `${target}/:path*`, permanent: true });
+      }
+    }
+    return list;
   },
 };
 

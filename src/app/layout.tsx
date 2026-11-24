@@ -4,6 +4,7 @@ import './globals.css';
 import VisitTracker from '@/components/VisitTracker';
 import SeasonLayer from '@/components/season/SeasonLayer';
 import { seasonScript } from '@/lib/season-ranges';
+import { IS_INDEXABLE, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from '@/lib/site';
 
 // Quicksand: phông chữ của bộ nhận diện EduChain Kids — nét tròn, thân thiện, có đủ dấu tiếng Việt.
 // Tiêu đề dùng Bold (700), nội dung Medium (500), phụ đề Regular (400), chú thích Light (300).
@@ -15,9 +16,25 @@ const display = Quicksand({
 });
 const body = display;
 
+// SEO chung: tên miền chính (link tuyệt đối cho ảnh xem trước), ảnh chia sẻ Facebook / Zalo, chặn lập chỉ mục ở bản xem trước.
+// Không đặt canonical ở đây (layout áp cho mọi trang con) — trang nào cần thì tự khai báo.
 export const metadata: Metadata = {
-  title: 'EduChain Kids — Học vui · Khám phá · Phát triển',
-  description: 'Nền tảng học tập cho học sinh tiểu học: học đúng chương trình, phát triển tư duy và khám phá thế giới theo cách vui vẻ nhất.',
+  metadataBase: new URL(SITE_URL),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: ['học tiểu học', 'bài tập lớp 1', 'bài tập lớp 2', 'bài tập lớp 3', 'bài tập lớp 4', 'bài tập lớp 5', 'toán tiểu học', 'tiếng Việt tiểu học', 'Kết nối tri thức', 'lịch báo giảng', 'nhận xét học sinh'],
+  openGraph: {
+    type: 'website',
+    locale: 'vi_VN',
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: [{ url: '/og.jpg', width: 1200, height: 630, alt: 'EduChain Kids — học vui cùng Milo' }],
+  },
+  twitter: { card: 'summary_large_image', title: SITE_TITLE, description: SITE_DESCRIPTION, images: ['/og.jpg'] },
+  robots: IS_INDEXABLE ? { index: true, follow: true } : { index: false, follow: false },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
