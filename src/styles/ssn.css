@@ -1,0 +1,72 @@
+/* Kiểu riêng khu vực "ssn-": giao diện theo mùa lễ (src/components/season/SeasonLayer.tsx, danh sách mùa ở src/lib/seasons.ts).
+   Màu theo mùa: chỉ đổi lại vài biến màu nhấn (không đụng --brand-blue chủ đạo để giữ độ tương phản chữ/nút).
+   Bộ chọn html:root[...] để thắng :root[data-theme] trong globals.css ở cả chế độ sáng lẫn tối. */
+
+html:root[data-season] { --ssn-a: var(--brand-coral); --ssn-b: var(--brand-yellow); }
+html:root[data-season="phu-nu"] { --ssn-a: #e64980; --ssn-b: #ffa8c5; --brand-coral: #f06595; }
+html:root[data-season="nha-giao"] { --ssn-a: #e8590c; --ssn-b: #ffd43b; }
+html:root[data-season="noel"] { --ssn-a: #d6336c; --ssn-b: #2f9e44; --brand-coral: #e03131; --brand-green: #2f9e44; }
+html:root[data-season="tet-duong"] { --ssn-a: #7048e8; --ssn-b: #ffc83d; }
+html:root[data-season="tet"] { --ssn-a: #e03131; --ssn-b: #fab005; --brand-coral: #e03131; --brand-yellow: #fcc419; }
+html:root[data-season="trung-thu"] { --ssn-a: #f08c00; --ssn-b: #ffd43b; }
+html:root[data-theme="dark"][data-season="noel"] { --brand-coral: #ff6b6b; --brand-green: #51cf66; }
+html:root[data-theme="dark"][data-season="tet"] { --brand-coral: #ff6b6b; }
+html:root[data-theme="dark"][data-season="phu-nu"] { --brand-coral: #f783ac; }
+
+/* ---- Hạt rơi: lớp cố định, không bắt chuột, chỉ transform/opacity ---- */
+.ssn-fall { position: fixed; inset: 0; z-index: 50; overflow: hidden; pointer-events: none; contain: strict; }
+.ssn-p { position: absolute; top: 0; display: block; opacity: 0; will-change: transform, opacity;
+  animation: ssnFall var(--ssn-d, 16s) linear var(--ssn-delay, 0s) infinite; }
+.ssn-dot { border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgb(140 175 230 / .55), 0 0 8px rgb(120 160 225 / .9); }
+.ssn-img { height: auto; }
+.ssn-conf { border-radius: 2px; height: auto !important; aspect-ratio: 1 / 1.6; }
+.ssn-fall.is-petals .ssn-p, .ssn-fall.is-confetti .ssn-p { animation-name: ssnSway; }
+.ssn-fall.is-lanterns .ssn-p { top: auto; bottom: 0; animation-name: ssnRise; animation-timing-function: ease-in-out; }
+@keyframes ssnFall {
+  0% { transform: translate3d(0, -8vh, 0); opacity: 0; }
+  10% { opacity: .85; }
+  50% { transform: translate3d(18px, 50vh, 0); }
+  90% { opacity: .8; }
+  100% { transform: translate3d(-10px, 106vh, 0); opacity: 0; }
+}
+@keyframes ssnSway {
+  0% { transform: translate3d(0, -8vh, 0) rotate(0deg); opacity: 0; }
+  10% { opacity: .9; }
+  35% { transform: translate3d(36px, 32vh, 0) rotate(90deg); }
+  65% { transform: translate3d(-28px, 66vh, 0) rotate(200deg); }
+  90% { opacity: .85; }
+  100% { transform: translate3d(14px, 106vh, 0) rotate(300deg); opacity: 0; }
+}
+@keyframes ssnRise {
+  0% { transform: translate3d(0, 8vh, 0); opacity: 0; }
+  15% { opacity: .7; }
+  85% { opacity: .6; }
+  100% { transform: translate3d(12px, -106vh, 0); opacity: 0; }
+}
+/* Điện thoại: bớt một nửa số hạt; người dùng tắt hiệu ứng / muốn giảm chuyển động / khi in: bỏ hẳn */
+@media (max-width: 640px) { .ssn-p:nth-child(2n) { display: none; } }
+html[data-season-fx="off"] .ssn-fall { display: none; }
+@media (prefers-reduced-motion: reduce) { .ssn-p { animation: none; display: none; } }
+@media print { .ssn-fall, .ssn-chip { display: none !important; } }
+
+/* ---- Nút mùa ở góc trái dưới + lời chào của Milo ---- */
+.ssn-chip { position: fixed; left: 16px; bottom: 16px; z-index: 55; display: flex; align-items: center; gap: 10px; max-width: min(380px, calc(100vw - 32px));
+  padding: 4px; border-radius: 22px; background: var(--surface); box-shadow: 0 6px 20px rgb(15 23 42 / .18), inset 0 0 0 2px var(--ssn-a); color: var(--ink); }
+.ssn-chip-btn { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; padding: 0; cursor: pointer;
+  background: radial-gradient(circle at 35% 30%, #fff, color-mix(in srgb, var(--ssn-b) 35%, #fff)); transition: transform .16s ease; }
+.ssn-chip-btn:hover { transform: rotate(-10deg) scale(1.06); }
+.ssn-chip-btn:focus-visible, .ssn-fx:focus-visible, .ssn-x:focus-visible { outline: 3px solid var(--brand-blue); outline-offset: 2px; }
+.ssn-chip-btn img { width: 30px; height: 30px; }
+.ssn-chip:not(.is-open) { background: transparent; box-shadow: none; padding: 0; }
+.ssn-chip:not(.is-open) .ssn-chip-btn { box-shadow: 0 4px 14px rgb(15 23 42 / .22), inset 0 0 0 2px var(--ssn-a); }
+.ssn-chip-body { display: grid; gap: 2px; min-width: 0; padding: 4px 0; font-size: 14px; line-height: 1.35; animation: ssnIn .22s ease both; }
+.ssn-chip-body b { color: var(--ssn-a); font-size: 13px; }
+.ssn-fx { justify-self: start; display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; min-height: 32px; padding: 4px 10px; border: 0; border-radius: 999px;
+  background: var(--surface-2); color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.ssn-fx svg { width: 14px; height: 14px; }
+.ssn-x { align-self: flex-start; display: grid; place-items: center; flex: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--ink); cursor: pointer; }
+.ssn-x svg { width: 16px; height: 16px; }
+@keyframes ssnIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+/* Thanh tab dưới của giáo viên trên điện thoại cao ~70px: đẩy nút lên trên */
+@media (max-width: 760px) { .ssn-chip { bottom: 84px; left: 12px; } }
+@media (prefers-reduced-motion: reduce) { .ssn-chip-btn, .ssn-chip-body { transition: none; animation: none; } }

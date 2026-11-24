@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Check, Palette, X } from 'lucide-react';
 import MiloMascot, { type MiloVariant } from '@/components/mascot/MiloMascot';
 import { KID_THEMES, kidTheme, saveKidTheme, useKidTheme, type KidThemeId } from '@/lib/kid-theme';
+import { useSeason, useSeasonFx } from '@/lib/use-season';
 import '@/styles/kt.css';
 import '@/styles/dash.css';
 import '@/styles/kw.css';
@@ -179,17 +180,22 @@ const BUBBLES = [[8, 9], [16, 13], [27, 7], [41, 11], [58, 8], [69, 12], [80, 10
 
 /** Cảnh nền cố định phía sau trang. page = trang thường (có lớp phủ dịu ở giữa cho chữ dễ đọc); không có = màn làm bài */
 export function KidScene({ theme, motion = true, page = false }: { theme: KidThemeId; motion?: boolean; page?: boolean }) {
-  if (theme === 'meadow') return null;
+  // Mùa lễ (Noel, Tết…): thêm vài đồ vật trôi vào cảnh, giữ nguyên chủ đề em đã chọn — chỉ ở trang thường, không ở màn làm bài
+  const season = useSeason();
+  const seasonFx = useSeasonFx();
+  const extra = page && seasonFx && season ? season.floaters : [];
+  if (theme === 'meadow' && !extra.length) return null;
   const t = kidTheme(theme);
+  const floaters = [...t.floaters, ...extra];
   return (
     <div className={`kw is-${theme}${motion ? ' is-live' : ''}${page ? ' is-page' : ''}`} aria-hidden="true">
-      <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice">
+      {theme !== 'meadow' && <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice">
         {theme === 'space' ? <SpaceScene /> : theme === 'jungle' ? <JungleScene /> : theme === 'ocean' ? <OceanScene /> : <CandyScene />}
-      </svg>
+      </svg>}
       {theme === 'space' && TWINKLE.map(([x, y], i) => <i key={i} className="kw-tw" style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${(i % 5) * 0.7}s` }} />)}
       {theme === 'ocean' && BUBBLES.map(([x, d], i) => <i key={i} className="kw-bub" style={{ left: `${x}%`, animationDuration: `${d}s`, animationDelay: `${-(i * 1.3)}s`, width: 10 + (i % 3) * 8, height: 10 + (i % 3) * 8 }} />)}
-      {page && <span className="kw-wash" />}
-      {t.floaters.map((f, i) => (
+      {page && theme !== 'meadow' && <span className="kw-wash" />}
+      {floaters.map((f, i) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img key={i} src={f.src} alt="" width={f.s} height={f.s} className={`kw-fl${f.keep ? ' is-keep' : ''}`} decoding="async" draggable={false}
           style={{ left: `${f.x}%`, top: `${f.y}%`, ['--kw-d' as string]: `${f.d}s`, ['--kw-delay' as string]: `${-i * 1.1}s` }} />

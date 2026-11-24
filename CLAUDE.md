@@ -8,6 +8,7 @@
   - Giáo viên: `src/app/giao-vien/lop/[id]/*`; kế hoạch bài dạy `src/components/classroom/LessonPlanner.tsx`, `PlanWorkspace.tsx`, `src/lib/plans/*` (giáo án, lịch báo giảng, xuất Word `src/lib/docx-write.ts`).
   - Bài giảng / thao giảng: `src/components/deck/DeckStudio.tsx` (trình soạn kiểu Canva), `SlideView.tsx` (vẽ trang, kéo/xoay/sửa chữ), `DeckPlayer.tsx` (trình chiếu), dữ liệu `src/lib/deck/types.ts`, bộ mẫu `theme-sets.ts`.
   - Đề / phiếu: `src/components/exams/*`, `src/lib/exams/*`.
+- Giao diện theo mùa lễ (Noel, Tết, 20/10, 20/11…): thêm / sửa mùa chỉ ở `src/lib/seasons.ts` (+ màu ở `src/styles/ssn.css`), xem `docs/GIAO-DIEN-THEO-MUA.md`; xem trước bằng `?mua=<id>`.
 - Kiểm tra trước khi giao: `npx tsc --noEmit -p .` và `npx eslint <thư mục đã sửa>`.
 - Sửa câu hỏi / kiến thức / bộ sinh câu / đề (`src/lib/content|practice|exams|curriculum`, `grading.ts`): BẮT BUỘC `npm run check:noi-dung` đạt hết (git pre-commit tự chạy bản nhanh). Viết phép tính bằng số trong kiến thức, nhận xét, lời giải phải tính đúng — `check:knowledge` tính lại tất cả. Quy trình: `docs/KIEM-TRA-NOI-DUNG.md`.
 - Phòng CNTT / Marketing (`docs/PHONG-CNTT.md`, `docs/PHONG-MARKETING.md`, vai ở `.claude/agents/`): giữ 2 điểm duyệt của Trưởng phòng, nhưng **tiết kiệm token** — việc nhỏ và vừa do trợ lý chính tự làm / tự đóng vai theo danh sách kiểm của vai, rà soát gộp một lượt; chỉ gọi trợ lý riêng cho việc lớn hoặc khi Trưởng phòng nói “gọi <tên vai>”. Báo cáo ≤ 15 dòng; chỉ `npm run build` khi sửa next.config.ts / route đọc file.
