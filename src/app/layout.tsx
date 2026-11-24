@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { Quicksand } from 'next/font/google';
 import './globals.css';
 import VisitTracker from '@/components/VisitTracker';
+import SeasonLayer from '@/components/season/SeasonLayer';
+import { seasonScript } from '@/lib/season-ranges';
 
 // Quicksand: phông chữ của bộ nhận diện EduChain Kids — nét tròn, thân thiện, có đủ dấu tiếng Việt.
 // Tiêu đề dùng Bold (700), nội dung Medium (500), phụ đề Regular (400), chú thích Light (300).
@@ -28,15 +30,20 @@ export const viewport: Viewport = {
 // Gắn chế độ sáng/tối trước khi trang hiện ra để không bị nháy màu.
 const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('educhain-theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t)}catch(e){}})();`;
 
+// Gắn mùa lễ (Noel, Tết, 20/11…) lên <html data-season> — danh sách mùa ở src/lib/seasons.ts.
+const SEASON_SCRIPT = seasonScript();
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="vi" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: SEASON_SCRIPT }} />
       </head>
       <body>
         {children}
         <VisitTracker />
+        <SeasonLayer />
       </body>
     </html>
   );

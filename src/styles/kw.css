@@ -24,3 +24,6 @@
 @media (prefers-reduced-motion: reduce) {
   .kw-bub { display: none; }
 }
+
+/* Đồng cỏ + mùa lễ: không vẽ cảnh, chỉ thêm đồ vật trôi của mùa (nền trang giữ nguyên) */
+.kw.is-meadow { background: transparent; }
