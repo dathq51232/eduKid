@@ -1,7 +1,7 @@
 // Mẫu trang theo hoạt động cho bài thao giảng: dùng hình dán có sẵn trong dự án (public/emoji, public/edu-icons).
 // Giáo viên thêm mẫu vào bài rồi sửa chữ, đổi hình tuỳ ý.
 import { f3dSrc } from './f3d-catalog';
-import { uid, type Anim, type El, type Slide } from './types';
+import { animDur, uid, type Anim, type El, type Slide } from './types';
 
 const ST = f3dSrc;
 const EM = f3dSrc;
@@ -19,7 +19,7 @@ const S = (m: Mk, shape: Extract<El, { kind: 'shape' }>['shape'], x: number, y: 
   const e = { id: uid(), kind: 'shape', shape, x, y, w, h, rot: 0, fill, stroke: '#ffffff', sw: 4, text, color: '#1f2937', size: Math.round(Math.min(w, h) * 0.45), ...o } as El;
   m.els.push(e); return e.id;
 };
-const A = (m: Mk, el: string, fx: Anim['fx'], start: Anim['start'] = 'click', o: Partial<Anim> = {}) => { m.anims.push({ id: uid(), el, fx, start, delay: 0, dur: 0.6, ...o }); };
+const A = (m: Mk, el: string, fx: Anim['fx'], start: Anim['start'] = 'click', o: Partial<Anim> = {}) => { m.anims.push({ id: uid(), el, fx, start, delay: 0, dur: animDur(fx), ...o }); };
 const slide = (bg: string, m: Mk, notes = '', sound?: string): Slide => ({ id: uid(), bg, els: m.els, anims: m.anims, trans: 'fade', notes, sound });
 
 export type Tpl = { id: string; title: string; desc: string; bg: string; preview: string[]; make: () => Slide[] };
@@ -30,7 +30,7 @@ export const SLIDE_TEMPLATES: Tpl[] = [
     make: () => { const m: Mk = { els: [], anims: [] };
       const t = T(m, 'Tên bài học', 160, 300, 1280, 170, 100); T(m, 'Môn · Lớp', 400, 500, 800, 80, 44, '#7c2d12', { font: 'quick' });
       const a = I(m, ST('sun'), 1280, 40, 220); const b = I(m, ST('star'), 120, 80, 130);
-      A(m, t, 'zoom', 'with', { dur: 0.8 }); A(m, a, 'spin-in', 'with', { delay: 0.3 }); A(m, b, 'pop', 'after', { sound: 'magic' });
+      A(m, t, 'zoom', 'with', {}); A(m, a, 'spin-in', 'with', { delay: 0.3 }); A(m, b, 'pop', 'after', { sound: 'magic' });
       return [slide('sun', m)]; },
   },
   {
@@ -86,7 +86,7 @@ export const SLIDE_TEMPLATES: Tpl[] = [
         const g = I(m, ST('wrapped-gift'), 170 + i * 470, 260, 300, { name: `Hộp quà ${i + 1}` });
         const n = T(m, String(i + 1), 170 + i * 470 + 115, 560, 70, 70, 48, '#ffffff', { bg: '#e11d48' });
         const c = S(m, 'bubble', 110 + i * 470, 250, 420, 330, '#ffffff', q, { stroke: '#f43f5e', sw: 5, size: 40 } as Partial<El>);
-        A(m, g, 'zoom-out', 'click', { trigger: g, sound: 'magic', dur: 0.5 });
+        A(m, g, 'zoom-out', 'click', { trigger: g, sound: 'magic' });
         A(m, n, 'fade-out', 'with', { trigger: g });
         A(m, c, 'pop', 'after', { trigger: g, sound: 'tada' });
       });
@@ -156,7 +156,7 @@ export const SLIDE_TEMPLATES: Tpl[] = [
       T(m, 'Vòng quay may mắn', 200, 30, 1200, 110, 76, '#9a3412');
       const w = S(m, 'wheel', 560, 170, 480, 480, '#fbbf24', '?', { stroke: '#f59e0b', sw: 6, size: 96, color: '#9a3412', shadow: true } as Partial<El>);
       const btn = S(m, 'arrow', 1120, 360, 260, 120, '#ef4444', 'Quay!', { stroke: '#b91c1c', sw: 5, size: 40, color: '#ffffff', rot: 180, shadow: true } as Partial<El>);
-      A(m, w, 'spin', 'click', { trigger: btn, dur: 2.4, sound: 'drum' });
+      A(m, w, 'spin', 'click', { trigger: btn, sound: 'drum' });
       A(m, w, 'pulse', 'after', { trigger: btn, sound: 'tada' });
       return [slide('peach', m, 'Bấm vào mũi tên "Quay!" để bánh xe quay, sau đó gọi một bạn trả lời.')]; },
   },
@@ -204,7 +204,7 @@ export const SLIDE_TEMPLATES: Tpl[] = [
         const c = i % 2, r = Math.floor(i / 2);
         S(m, 'round', c === 0 ? 60 : 1110, 180 + r * 270, 430, 240, '#ffffff', `Câu ${i + 1}: … ?`, { stroke: cols[i][1], sw: 5, size: 38, color: '#0f172a', shadow: true } as Partial<El>);
         const p = S(m, 'mystery', 520 + c * 280, 170 + r * 270, 280, 270, cols[i][0], `Mảnh ${i + 1}`, { stroke: cols[i][1], sw: 5, color: '#ffffff', size: 46, shadow: true } as Partial<El>);
-        A(m, p, 'zoom-out', 'click', { trigger: p, sound: 'magic', dur: 0.5 });
+        A(m, p, 'zoom-out', 'click', { trigger: p, sound: 'magic' });
       });
       return [slide('sun', m, 'Học sinh chọn mảnh ghép và trả lời câu hỏi tương ứng, cô bấm vào mảnh ghép đó để lật mở bức tranh.')]; },
   },
@@ -213,8 +213,8 @@ export const SLIDE_TEMPLATES: Tpl[] = [
     make: () => { const m: Mk = { els: [], anims: [] };
       const t = T(m, 'Cả lớp giỏi lắm!', 200, 40, 1200, 130, 92, '#b45309');
       const c = I(m, ST('trophy'), 600, 190, 400);
-      A(m, t, 'zoom', 'with'); A(m, c, 'drop', 'after', { sound: 'tada', dur: 1.2 });
-      [0, 1, 2, 3, 4].forEach((i) => { const s = I(m, ST('star'), 180 + i * 260, 640, 170); A(m, s, 'pop', 'after', { sound: 'star', dur: 0.4 }); });
+      A(m, t, 'zoom', 'with'); A(m, c, 'drop', 'after', { sound: 'tada' });
+      [0, 1, 2, 3, 4].forEach((i) => { const s = I(m, ST('star'), 180 + i * 260, 640, 170); A(m, s, 'pop', 'after', { sound: 'star' }); });
       return [slide('sun', m, 'Khen ngợi, nhận xét tiết học.', 'clap')]; },
   },
   {

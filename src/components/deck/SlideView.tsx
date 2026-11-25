@@ -655,6 +655,8 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
   const step = useRef(0);
   const fired = useRef(new Set<string>());
   const timers = useRef<number[]>([]);
+  // hiệu ứng nối tiếp ("sau khi …") đang chờ giờ chạy — bấm "Tiếp" thì cho hiện ngay
+  const pending = useRef<{ t: number; c: Step[number] }[]>([]);
   const hiddenRef = useRef(hidden); hiddenRef.current = hidden;
 
   const show = useCallback((id: string, v: boolean) => {
@@ -673,9 +675,25 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
         const a = n?.animate(fxFrames(c.anim.fx), { duration: c.anim.dur * 1000, easing: fxEasing(c.anim.fx, c.anim.ease), iterations: animIterations(c.anim) });
         if (g === 'out') { if (a) a.onfinish = () => show(c.anim.el, false); else show(c.anim.el, false); }
       };
-      if (instant || c.at <= 0) go(); else timers.current.push(window.setTimeout(go, c.at * 1000));
+      if (instant || c.at <= 0) go();
+      else {
+        const t = window.setTimeout(() => { pending.current = pending.current.filter((p) => p.t !== t); go(); }, c.at * 1000);
+        timers.current.push(t); pending.current.push({ t, c });
+      }
     }
   }, [show]);
+
+  /** Như PowerPoint: bấm "Tiếp" khi hiệu ứng còn chạy (mặc định 2,5–3,5 s) → hiệu ứng đang chạy hiện trọn ngay,
+   *  hiệu ứng nối tiếp đang chờ cũng hiện luôn; hiệu ứng lặp mãi (nhấn mạnh) để nguyên. */
+  const flush = useCallback(() => {
+    for (const n of nodes.current.values()) {
+      n.querySelector<HTMLElement>('.dk-a')?.getAnimations().forEach((a) => {
+        if (a.effect?.getTiming().iterations !== Infinity) a.finish();
+      });
+    }
+    const p = pending.current; pending.current = [];
+    for (const { t, c } of p) { clearTimeout(t); run([c], true); }
+  }, [run]);
 
   // vào trang: chạy nhóm tự chạy + âm thanh của trang, rồi chạy nhanh đến bước đã đi (khi đồng bộ)
   useEffect(() => {
@@ -694,6 +712,7 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
   const apply = useCallback((a: PlayAction): boolean => {
     switch (a.t) {
       case 'step': {
+        flush();
         if (step.current >= plan.steps.length) return false;
         run(plan.steps[step.current]); step.current++; return true;
       }
@@ -753,7 +772,7 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plan, run, slide.els]);
+  }, [plan, run, flush, slide.els]);
   useImperativeHandle(ref, () => ({ apply, stepsLeft: () => plan.steps.length - step.current, stepIndex: () => step.current }), [apply, plan]);
 
   /* ---------- kéo khi trình chiếu ---------- */

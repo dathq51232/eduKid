@@ -72,6 +72,16 @@ export const FX: { id: Fx; group: FxGroup; icon: string; label: string }[] = [
   { id: 'zoom-out', group: 'out', icon: '⤓', label: 'Thu nhỏ' },
 ];
 export const FX_BY_ID = Object.fromEntries(FX.map((f) => [f.id, f])) as Record<Fx, (typeof FX)[number]>;
+/**
+ * Thời lượng MẶC ĐỊNH của hiệu ứng (giây): 2,5–3,5 s cho học sinh tiểu học kịp nhìn theo; cô chỉnh ngắn / dài ở bảng Hiệu ứng.
+ * Khi chiếu, bấm "Tiếp" lúc hiệu ứng còn chạy thì hiệu ứng hiện trọn ngay (không phải chờ hết thời lượng).
+ */
+export const FX_DUR: Record<Fx, number> = {
+  fade: 2.5, float: 3, 'fly-left': 3, 'fly-right': 3, 'fly-up': 3, 'fly-down': 3, pop: 2.5, zoom: 3, 'spin-in': 3.5, drop: 3.5,
+  pulse: 2.5, shake: 2.5, wiggle: 3, blink: 2.5, grow: 3, spin: 3.5, jump: 3,
+  'fade-out': 2.5, 'fly-out': 3, 'zoom-out': 2.5,
+};
+export const animDur = (fx: Fx) => FX_DUR[fx] ?? 3;
 
 export type Start = 'click' | 'with' | 'after';
 export const START_LABEL: Record<Start, string> = { click: 'Khi bấm', with: 'Cùng lúc với trước', after: 'Sau hiệu ứng trước' };
@@ -191,7 +201,7 @@ export function normalizeDeck(raw: unknown, fallbackTitle = 'Bài thao giảng')
         .map((a) => ({ ...a, delay: Math.min(30, Math.max(0, num(a.delay, 0))), dur: Math.min(10, Math.max(0.2, num(a.dur, 0.6))), ease: (Object.keys(EASE_LABEL) as Ease[]).includes(a.ease as Ease) ? a.ease : undefined, rep: typeof a.rep === 'number' ? Math.min(5, Math.max(0, Math.round(a.rep))) : undefined, start: (['click', 'with', 'after'] as const).includes(a.start) ? a.start : 'click', trigger: a.trigger && ids.has(a.trigger) ? a.trigger : undefined })),
       trans: (Object.keys(TRANS_LABEL) as Trans[]).includes(s?.trans as Trans) ? (s.trans as Trans) : 'fade',
       notes: typeof s?.notes === 'string' ? s.notes : '', sound: typeof s?.sound === 'string' ? s.sound : undefined,
-      ...(typeof s?.transDur === 'number' ? { transDur: Math.min(3, Math.max(0.1, s.transDur)) } : {}),
+      ...(typeof s?.transDur === 'number' ? { transDur: Math.min(10, Math.max(0.1, s.transDur)) } : {}),
       ...(typeof s?.autoNext === 'number' && s.autoNext > 0 ? { autoNext: Math.min(120, Math.max(1, s.autoNext)) } : {}),
       scene: typeof s?.scene === 'string' ? s.scene : undefined,
       sceneVariant: (['cover', 'center', 'right', 'left', 'bottom', 'quiet'] as const).includes(s?.sceneVariant as SceneVariant) ? (s.sceneVariant as SceneVariant) : undefined,

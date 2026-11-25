@@ -4,7 +4,7 @@
 // “Đổi chủ đề cả bộ” đổi giao diện theo vai trò (role) của vật mà giữ nguyên nội dung đã soạn.
 import { f3dSrc as F } from './f3d-catalog';
 import { fit, shrinkToFit } from './fit';
-import { PHOTO_SRC, darkBg, uid, type Anim, type El, type FontKey, type Slide } from './types';
+import { PHOTO_SRC, animDur, darkBg, uid, type Anim, type El, type FontKey, type Slide } from './types';
 
 export type SetId = 'oli' | 'cosmos' | 'leaf' | 'lab' | 'vui' | 'sotay';
 export type ThemeSet = {
@@ -69,7 +69,7 @@ const shape = (m: Mk, kind: 'round' | 'circle', x: number, y: number, w: number,
   const e = { id: uid(), kind: 'shape', shape: kind, x, y, w, h, rot: 0, fill, stroke: fill, sw: 0, lock: true, role, ...o } as El;
   m.els.push(e); return e.id;
 };
-const anim = (m: Mk, el: string, fx: Anim['fx'], start: Anim['start'], o: Partial<Anim> = {}) => { m.anims.push({ id: uid(), el, fx, start, delay: 0, dur: 0.6, ...o }); };
+const anim = (m: Mk, el: string, fx: Anim['fx'], start: Anim['start'], o: Partial<Anim> = {}) => { m.anims.push({ id: uid(), el, fx, start, delay: 0, dur: animDur(fx), ...o }); };
 /** khung thẻ bo góc + lớp bóng lệch phía sau (khoá để khỏi kéo nhầm) */
 const card = (m: Mk, t: ThemeSet, x: number, y: number, w: number, h: number) => {
   if (!t.noBack) m.els.push({ id: uid(), kind: 'shape', shape: 'round', x: x + 16, y: y + 18, w, h, rot: t.tilt ?? 0, fill: t.back, stroke: t.back, sw: 0, lock: true, role: 'cardback' } as El);
@@ -111,7 +111,7 @@ export function makeSet(id: SetId, info: SetInfo, ct?: SetContent | null): Slide
     const mm = img(m, t.mascots[i] || t.mascots[0], 1180, 460, 380, 420, 'mascot', 'Bạn cú Milo');
     const dd = img(m, t.deco[1], 1360, 50, 140, 140, 'deco', 'Hình trang trí');
     step(m, t, label);
-    anim(m, tt, 'float', 'with', { dur: 0.6 }); anim(m, bar, 'fade', 'with', { delay: 0.15, dur: 0.5 }); anim(m, mm, 'float', 'with', { delay: 0.25, dur: 0.7 }); anim(m, dd, 'fade', 'with', { delay: 0.3, dur: 0.6 });
+    anim(m, tt, 'float', 'with', {}); anim(m, bar, 'fade', 'with', { delay: 0.15 }); anim(m, mm, 'float', 'with', { delay: 0.25 }); anim(m, dd, 'fade', 'with', { delay: 0.3 });
   }, notes);
   /** danh sách ý: số thứ tự trong vòng tròn màu nhấn (thay ngôi sao lặp lại) */
   const bullets = (m: Mk, L: number, lines: string[], size = 64, gap = 112) => {
@@ -132,7 +132,7 @@ export function makeSet(id: SetId, info: SetInfo, ct?: SetContent | null): Slide
       const tt = txt(m, name, 640, 230, 760, 270, fit(name, 760, 270, 110, 52), t.title, 'title');
       txt(m, info.sub, 646, 510, 760, 80, fit(info.sub, 760, 80, 46, 30), t.text, 'body', { font: 'quick' });
       img(m, t.deco[0], 1330, 90, 170, 170, 'deco', 'Hình trang trí');
-      anim(m, tt, 'float', 'with', { dur: 0.8 }); anim(m, mm, 'float', 'with', { delay: 0.25, dur: 0.8 });
+      anim(m, tt, 'float', 'with', {}); anim(m, mm, 'float', 'with', { delay: 0.25 });
     }, 'Giới thiệu tên bài. Hỏi: “Hôm nay chúng ta sẽ học gì nhỉ?”'),
     content(1, 'Khởi động', 'Ai nhanh hơn?', (m, L) => bullets(m, L, ct?.warm.length ? ct.warm : ['Câu hỏi 1 …', 'Câu hỏi 2 …', 'Câu hỏi 3 …']),
       'Trò chơi khởi động 2–3 phút: cô đọc câu hỏi, tổ nào giơ tay nhanh và đúng được cộng điểm thi đua.' + ansNote('Đáp án', ct?.warm ?? [], ct?.warmAns ?? [])),
@@ -173,7 +173,7 @@ export function makeSet(id: SetId, info: SetInfo, ct?: SetContent | null): Slide
       const home = ct?.home ? `Về nhà: ${ct.home}` : 'Về nhà: …';
       txt(m, home, 646, 450, 760, 120, 46, t.text, 'body', { font: 'quick' });
       const d = img(m, t.deco[2], 1250, 520, 150, 150, 'deco', 'Hình trang trí');
-      anim(m, tt, 'pop', 'with', { dur: 0.7 }); anim(m, mm, 'float', 'with', { delay: 0.25, dur: 0.8 }); anim(m, d, 'jump', 'after', { sound: 'tada' });
+      anim(m, tt, 'pop', 'with', {}); anim(m, mm, 'float', 'with', { delay: 0.25 }); anim(m, d, 'jump', 'after', { sound: 'tada' });
     }, 'Dặn dò bài về nhà, chuẩn bị bài sau.'),
   ];
 }

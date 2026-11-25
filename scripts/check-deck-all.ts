@@ -35,7 +35,8 @@ function checkSlide(s: Slide, where: string) {
       // ước lượng sát chữ Baloo/Quicksand thật (0,5 em/ký tự), chỉ báo khi tràn rõ (> 15%)
       if (!fits(e.text, e.w - pad.w, (e.h - pad.h) * 1.15, e.size, 1.15, 0.5)) errors.push({ kind: 'chữ tràn khung', where, detail: `"${e.text.slice(0, 50)}" cỡ ${e.size} trong ${e.w}×${e.h}` });
       if (e.size < MIN_ERR) errors.push({ kind: `chữ < ${MIN_ERR}px`, where, detail: `"${e.text.slice(0, 40)}" cỡ ${e.size}` });
-      else if (e.size < MIN_WARN) warns.push({ kind: `chữ < ${MIN_WARN}px`, where, detail: `"${e.text.slice(0, 40)}" cỡ ${e.size}` });
+      // nhãn bước trên thanh tiến trình (group 'tien-trinh') là dải điều hướng nhỏ của cô, không phải chữ cho học sinh đọc
+      else if (e.size < MIN_WARN && e.group !== 'tien-trinh') warns.push({ kind: `chữ < ${MIN_WARN}px`, where, detail: `"${e.text.slice(0, 40)}" cỡ ${e.size}` });
     }
     if (e.kind === 'shape' && e.text?.trim() && !e.drag && e.shape !== 'mystery') {
       const sz = e.size ?? 40;
