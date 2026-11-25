@@ -1,0 +1,38 @@
+# Kiểm tra tự động mỗi PR vào main (và mỗi lần main thay đổi): kiểu dữ liệu, eslint, bố cục slide.
+# PR đỏ thì KHÔNG merge. Build do Vercel chạy riêng (dòng "Vercel" trên PR) nên không build lại ở đây.
+# Câu hỏi / kiến thức có workflow riêng (noi-dung.yml) chỉ chạy khi PR sửa nội dung.
+name: Kiểm tra
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: kiem-tra-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  kiem-tra:
+    name: tsc · eslint · bố cục slide
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Kiểu dữ liệu (tsc)
+        run: npx tsc --noEmit -p .
+      - name: Eslint
+        run: npx eslint .
+      - name: Bố cục slide (mẫu trang)
+        run: npm run check:deck-layout
+      - name: Bố cục slide (mọi bài)
+        run: npm run check:deck-all
