@@ -249,6 +249,19 @@ function qPage(q: Q, mascot: string, scene: SceneKind, phase: PhaseId, head?: st
       if (!ans || !short(ans, 60)) return null;
       const body = q.type === 'multiple_choice' ? `${q.ask}\n${optionLines(q.options)}` : q.ask;
       if (head) title(m, head);
+      const hero = q.type === 'fill_blank' ? splitMath(q.ask) : null;
+      if (hero) {
+        // Toán: phép tính là tâm điểm (con số lớn giữa trang), lời dặn một dòng phía trên, đáp án che bên dưới
+        const top = head ? 150 : 60;
+        if (hero.lead) T(m, hero.lead, 230, top, 1140, 80, fit(hero.lead, 1120, 70, 44, 28), '#334155', { font: 'quick' });
+        S(m, 'round', 200, top + 96, 1200, 360 - (head ? 60 : 0), '#ffffff', '', { stroke: '#38bdf8', sw: 6, lock: true } as Partial<El>);
+        const ex = T(m, hero.expr, 240, top + 116, 1120, 320 - (head ? 60 : 0), fit(hero.expr, 1100, 300 - (head ? 60 : 0), 140, 56), '#0f172a', { font: 'baloo' });
+        A(m, ex, 'zoom', 'with', { sound: 'pop' });
+        T(m, 'Đáp án:', 420, 640, 260, 110, 50, '#7c2d12', { bg: '#fff7ed' });
+        T(m, ans, 700, 630, 480, 130, fit(ans, 460, 120, 80, 30), '#15803d', { bg: '#dcfce7' });
+        cover(m, 700, 630, 480, 130); pic();
+        return { title: `Hỏi – đáp (miếng che): ${q.ask.replace(/\n/g, ' ')}`, slide: page(m, phase, scene, (notes ? notes + '\n' : '') + 'Bấm miếng che “?” để mở đáp án.') };
+      }
       S(m, 'bubble', 230, head ? 150 : 60, 1140, 420, '#ffffff', '', { stroke: '#38bdf8', sw: 5, lock: true } as Partial<El>);
       T(m, body, 280, head ? 175 : 85, 1040, 300, fit(body, 1020, 290, 60, 28), '#0f172a', { font: 'baloo' });
       T(m, 'Đáp án:', 420, 640, 260, 110, 50, '#7c2d12', { bg: '#fff7ed' });
@@ -288,6 +301,19 @@ export function boardPage(sc: SceneKind | undefined): Slide {
   const b = { id: uid(), kind: 'teams', x: 200, y: 160, w: 1200, h: 680, rot: 0, title: '' } as El;
   m.els.push(b); A(m, b.id, 'fade', 'with', { sound: 'drum' });
   return { id: uid(), bg: 'white', els: m.els, anims: m.anims, trans: 'zoom', notes: 'Điểm thi đua tổ tuần này (cộng cả điểm trên lớp, bài thao giảng, bài tập). Khen tổ dẫn đầu.', sound: 'clap', scene: sc, sceneVariant: 'bottom', phase: PHASE_LABEL.cc };
+}
+
+/** Câu Toán dạng "lời dặn + phép tính" ("Tìm số thích hợp.\n? + 767 = 894") → tách để phép tính làm tâm điểm cỡ lớn.
+ *  Trả null khi phần cuối không phải phép tính ngắn (chỉ số, dấu phép tính, ô trống). */
+export function splitMath(ask: string): { lead: string; expr: string } | null {
+  const one = ask.replace(/\s*\n+\s*/g, '\n').trim();
+  let lead = '', expr = one;
+  const nl = one.lastIndexOf('\n');
+  if (nl > 0) { lead = one.slice(0, nl).trim(); expr = one.slice(nl + 1).trim(); }
+  else { const m = /^(.*[.:!?])\s+([^.:!?]*[\d?□][^.:!?]*=?[^.:!?]*)$/.exec(one); if (m && /[+\-−×x:÷=<>]/.test(m[2])) { lead = m[1].trim(); expr = m[2].trim(); } }
+  expr = expr.replace(/\s*(\.\.\.|…|_{2,})\s*/g, ' ? ').replace(/\s{2,}/g, ' ').trim();
+  if (expr.length > 32 || !/\d/.test(expr) || !/[+\-−×:÷=<>]/.test(expr) || !/^[\d\s?□+\-−×x:÷=.,()<>/]+$/.test(expr)) return null;
+  return { lead, expr };
 }
 
 /** các lựa chọn A. B. C. … xuống dòng gọn: lựa chọn ngắn xếp 2 cái một dòng, dài thì mỗi cái một dòng */
@@ -405,13 +431,15 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
   if (know?.example && !gaFormats.has('explore')) {
     const m = mk(); title(m, 'Cùng làm ví dụ', '#0369a1');
     const parts = know.example.split('→').map((s) => s.trim()).filter(Boolean);
-    const n = parts.length, w = Math.min(520, 1240 / n - 30);
+    const n = parts.length, w = Math.min(640, 1240 / n - 30);
+    // phép tính một dòng, cỡ lớn (không để vỡ "□ + 35 =" / "80"): co chữ theo bề ngang thay vì cho xuống dòng
+    const one = (t: string) => Math.min(fit(t, w - 20, 240, 88, 32), Math.floor((w - 40) / Math.max(1, t.length * 0.55)));
     parts.forEach((t, i) => {
       const x = 180 + i * (w + 40);
-      const id = T(m, t, x, 330, w, 220, fit(t, w - 20, 200, 64, 28), i === n - 1 ? '#15803d' : '#0f172a', { bg: '#ffffffe6' });
+      const id = T(m, t, x, 300, w, 260, Math.max(32, one(t)), i === n - 1 ? '#15803d' : '#0f172a', { bg: '#ffffffe6', font: 'baloo' });
       if (i > 0 && i < n - 1) A(m, id, 'fade', 'click', { sound: 'pop' });
-      if (i < n - 1) T(m, '➜', x + w, 400, 40, 80, 50, '#f59e0b');
-      if (i === n - 1 && n > 1) cover(m, x, 330, w, 220);
+      if (i < n - 1) T(m, '➜', x + w, 390, 40, 80, 50, '#f59e0b');
+      if (i === n - 1 && n > 1) cover(m, x, 300, w, 260);
     });
     add('kp', 'example', 'Ví dụ (miếng che đáp án)', page(m, 'kp', sc, 'Cùng học sinh làm từng bước, bấm miếng che để mở kết quả.'));
   }
@@ -499,11 +527,19 @@ export function buildPlan(lesson: ContentLesson, know: Knowledge, o: GenOpts, ga
     rows.forEach((q) => used.add(q));
     const math = lesson.subject === 'toan';
     const m = mk(); title(m, math ? 'Số ?' : 'Trả lời nhanh', '#1e3a8a');
-    const h = Math.min(150, 600 / rows.length - 16);
+    // lời dặn giống nhau ở mọi câu ("Tìm số thích hợp.") → ghi một lần dưới tiêu đề, mỗi dòng chỉ còn phép tính cỡ lớn
+    const parts = rows.map((q) => splitMath(q.ask));
+    const lead0 = parts[0]?.lead ?? '';
+    const shared = math && lead0 && parts.every((x) => x && x.lead === lead0);
+    if (shared) T(m, lead0, 340, 130, 920, 44, fit(lead0, 900, 40, 30, 22), '#334155', { font: 'quick' }); // ngay dưới dải tiêu đề (y 38–126)
+    const top = shared ? 184 : 170;
+    const h = Math.min(150, (shared ? 586 : 600) / rows.length - 16);
+    const ROW = ['#eff6ff', '#f0fdf4', '#fefce8', '#fdf2f8'];
     rows.forEach((q, i) => {
-      const y = 170 + i * (h + 16), ans = q.type === 'fill_blank' ? accepted(q) : correct(q);
-      const ask = q.ask.replace(/\n/g, ' ').replace(/\s*(\.\.\.|…|_{2,})\s*/g, ' ? ').trim();
-      T(m, ask, 200, y, 860, h, fit(ask, 840, h - 10, 60, 26), '#0f172a', { align: 'left', bg: '#f8fafc' });
+      const y = top + i * (h + 16), ans = q.type === 'fill_blank' ? accepted(q) : correct(q);
+      const ask = shared ? parts[i]!.expr : q.ask.replace(/\n/g, ' ').replace(/\s*(\.\.\.|…|_{2,})\s*/g, ' ? ').trim();
+      S(m, 'circle', 196, y + (h - 64) / 2, 64, 64, '#1e3a8a', String(i + 1), { color: '#ffffff', size: 34, lock: true } as Partial<El>);
+      T(m, ask, 276, y, 784, h, fit(ask, 764, h - 10, shared ? 80 : 60, 26), '#0f172a', { align: shared ? 'center' : 'left', bg: ROW[i % ROW.length], font: shared ? 'baloo' : 'quick' });
       const a = T(m, ans, 1100, y, 260, h, fit(ans, 240, h - 10, 72, 30), '#dc2626', { bg: '#fff7ed' });
       const c = S(m, 'mystery', 1100, y, 260, h, '#fde68a', '?', { stroke: '#f59e0b', sw: 5, color: '#92400e', size: Math.min(76, Math.round(h * 0.56)) } as Partial<El>);
       A(m, c, 'zoom-out', 'click', { sound: 'pop', dur: 0.35 }); A(m, a, 'pop', 'with');
@@ -799,12 +835,19 @@ export function planSlides(plan: LessonPlan, on: Set<string>, scenes: Record<str
 /** thanh tiến trình 5 bước của tiết dạy ở mép trên trang: bước hiện tại đậm, bước đã qua nhạt, bước sau xám */
 const STEP_IDS: PhaseId[] = ['kd', 'kp', 'lt', 'vd', 'cc'];
 export function progressEls(phase: PhaseId): El[] {
-  const cur = STEP_IDS.indexOf(phase), w = 92, gap = 10, x0 = (1600 - (5 * w + 4 * gap)) / 2;
-  return STEP_IDS.map((id, i) => {
-    const col = PHASES.find((p) => p.id === id)!.color;
-    return { id: uid(), kind: 'shape', shape: 'round', x: x0 + i * (w + gap), y: 8, w, h: 12, rot: 0, rad: 100,
-      fill: i <= cur ? col : '#cbd5e1', stroke: 'transparent', sw: 0, op: i === cur ? 1 : i < cur ? 0.5 : 0.7, lock: true, shadow: false, group: 'tien-trinh' } as El;
+  // bước đang học là viên thuốc có chữ (thay cho trang chia "KHỞI ĐỘNG"…), các bước khác là vạch nhỏ
+  const cur = STEP_IDS.indexOf(phase), w = 92, wOn = 170, gap = 10, x0 = (1600 - (4 * w + wOn + 4 * gap)) / 2;
+  let x = x0;
+  const out: El[] = [];
+  STEP_IDS.forEach((id, i) => {
+    const ph = PHASES.find((p) => p.id === id)!;
+    const on = i === cur, bw = on ? wOn : w;
+    out.push({ id: uid(), kind: 'shape', shape: 'round', x, y: on ? 2 : 11, w: bw, h: on ? 30 : 12, rot: 0, rad: 100,
+      fill: i <= cur ? ph.color : '#cbd5e1', stroke: 'transparent', sw: 0, op: on ? 1 : i < cur ? 0.5 : 0.7, lock: true, shadow: false, group: 'tien-trinh' } as El);
+    if (on) out.push({ id: uid(), kind: 'text', x, y: 2, w: bw, h: 30, rot: 0, text: id === 'cc' ? 'Củng cố' : ph.label, size: 20, color: '#ffffff', font: 'baloo', align: 'center', bg: '', lock: true, group: 'tien-trinh' } as El);
+    x += bw + gap;
   });
+  return out;
 }
 
 /** Đổi chủ đề cả bài: cảnh nền mọi trang + màu khung / nhãn / chữ trang chia theo chủ đề mới */
