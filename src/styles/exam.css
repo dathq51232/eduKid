@@ -69,6 +69,10 @@
 .exam-matrix .exam-unit { text-align: left; font-weight: 700; }
 .exam-matrix .exam-unit span, .exam-avail { display: block; color: var(--muted); font-size: 12px; font-weight: 500; }
 .exam-matrix input { width: 64px; min-height: 34px; padding: 2px 6px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg-ffffff); color: var(--ink); font: inherit; text-align: center; }
+/* Số tiết từng chủ đề + nút chia câu theo số tiết (ma trận theo thời lượng) */
+.exam-matrix .exam-periods { min-width: 96px; }
+.exam-period-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0 4px; }
+.exam-period-bar .dash-muted { flex: 1 1 260px; margin: 0; font-size: 14px; }
 .exam-points th { font-weight: 600; color: var(--muted); font-size: 13px; }
 .exam-warn { color: #b45309; } .exam-ok { color: #15803d; }
 .exam-papers { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }

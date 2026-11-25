@@ -3,7 +3,7 @@
 
 import { emojiHtml } from '../emoji-img';
 import { PAGE_MARGIN, WORD_BASE_STYLE, nd30HeaderHtml } from '../doc-style';
-import { MUCS, MUC_DESC, MUC_NAME, partOf, totals, type ExamQuestion, type Matrix, type Muc, type Paper } from './matrix';
+import { MUCS, MUC_DESC, MUC_NAME, partOf, totals, type ExamQuestion, type Matrix, type MatrixRow, type Muc, type Paper } from './matrix';
 
 export type ExamMeta = {
   school: string; title: string; subjectName: string; grade: number; className: string;
@@ -114,15 +114,19 @@ function matrixHtml(m: Matrix): string {
   const t = totals(m);
   const rows = m.rows.filter((r) => MUCS.some((k) => r.counts[k] > 0));
   const cell = (n: number, k: Muc) => (n ? `${n} câu<br/>${fmt(n * m.points[k])} đ` : '');
-  return `<table class="mx" border="1" cellspacing="0" cellpadding="4" width="100%"><tr><th rowspan="2">TT</th><th rowspan="2">Chủ đề / mạch kiến thức</th>${MUCS.map((k) => `<th>${MUC_NAME[k]}</th>`).join('')}<th rowspan="2">Tổng</th></tr>`
+  // có số tiết của mọi chủ đề: thêm cột Số tiết và tỉ lệ thời lượng (chủ đề dạy nhiều tiết → nhiều điểm)
+  const tiet = rows.length > 0 && rows.every((r) => (m.periods?.[r.unitCode] ?? 0) > 0);
+  const sumT = tiet ? rows.reduce((a, r) => a + (m.periods?.[r.unitCode] ?? 0), 0) : 0;
+  const tCol = (r: MatrixRow) => (tiet ? `<td class="n">${m.periods?.[r.unitCode]}<br/><span class="muted">${Math.round(((m.periods?.[r.unitCode] ?? 0) * 100) / sumT)}%</span></td>` : '');
+  return `<table class="mx" border="1" cellspacing="0" cellpadding="4" width="100%"><tr><th rowspan="2">TT</th><th rowspan="2">Chủ đề / mạch kiến thức</th>${tiet ? '<th rowspan="2">Số tiết<br/>(tỉ lệ)</th>' : ''}${MUCS.map((k) => `<th>${MUC_NAME[k]}</th>`).join('')}<th rowspan="2">Tổng</th></tr>`
     + `<tr>${MUCS.map((k) => `<th class="muted">${fmt(m.points[k])} đ/câu</th>`).join('')}</tr>`
     + rows.map((r, i) => {
       const n = MUCS.reduce((a, k) => a + r.counts[k], 0);
       const sc = MUCS.reduce((a, k) => a + r.counts[k] * m.points[k], 0);
-      return `<tr><td class="n">${i + 1}</td><td>${esc(r.unitTitle)}</td>${MUCS.map((k) => `<td class="n">${cell(r.counts[k], k)}</td>`).join('')}<td class="n">${n} câu<br/>${fmt(sc)} đ</td></tr>`;
+      return `<tr><td class="n">${i + 1}</td><td>${esc(r.unitTitle)}</td>${tCol(r)}${MUCS.map((k) => `<td class="n">${cell(r.counts[k], k)}</td>`).join('')}<td class="n">${n} câu<br/>${fmt(sc)} đ</td></tr>`;
     }).join('')
-    + `<tr><th colspan="2">Tổng</th>${MUCS.map((k) => `<th>${t.byMuc[k]} câu<br/>${fmt(t.byMuc[k] * m.points[k])} đ</th>`).join('')}<th>${t.questions} câu<br/>${fmt(t.score)} đ</th></tr>`
-    + `<tr><th colspan="2">Tỉ lệ</th>${MUCS.map((k) => `<th>${t.score ? Math.round((t.byMuc[k] * m.points[k] * 100) / t.score) : 0}%</th>`).join('')}<th>100%</th></tr></table>`
+    + `<tr><th colspan="2">Tổng</th>${tiet ? `<th>${sumT}</th>` : ''}${MUCS.map((k) => `<th>${t.byMuc[k]} câu<br/>${fmt(t.byMuc[k] * m.points[k])} đ</th>`).join('')}<th>${t.questions} câu<br/>${fmt(t.score)} đ</th></tr>`
+    + `<tr><th colspan="2">Tỉ lệ</th>${tiet ? '<th>100%</th>' : ''}${MUCS.map((k) => `<th>${t.score ? Math.round((t.byMuc[k] * m.points[k] * 100) / t.score) : 0}%</th>`).join('')}<th>100%</th></tr></table>`
     + `<p class="muted">${MUCS.map((k) => `<b>${MUC_NAME[k]}:</b> ${esc(MUC_DESC[k])}`).join('<br/>')}<br/><i>Theo quy định đánh giá học sinh tiểu học (Thông tư 27/2020/TT-BGDĐT).</i></p>`;
 }
 

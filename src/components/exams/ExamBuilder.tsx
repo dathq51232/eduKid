@@ -3,7 +3,7 @@
 import { downloadHtmlAsDocx } from '@/lib/doc-download';
 import EmojiText from '@/components/EmojiText';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FileDown, FilePenLine, FilePlus2, FolderOpen, Library, Printer, RefreshCw, Save, Shuffle, Table2, Trash2 } from 'lucide-react';
+import { FileDown, FilePenLine, FilePlus2, FolderOpen, Library, Printer, RefreshCw, Save, Scale, Shuffle, Table2, Trash2 } from 'lucide-react';
 import MyBankPanel from './MyBankPanel';
 import { useMyBank } from './useMyBank';
 import { createClient } from '@/lib/supabase/client';
@@ -12,10 +12,13 @@ import type { ExamItem } from '@/lib/classroom/assignments';
 import { schoolYearOf } from '@/lib/classroom/comments';
 import { EXAM_NAME, examsFor, type ExamCode } from '@/lib/classroom/school';
 import {
-  MUCS, MUC_DESC, MUC_NAME, available, bookLessons, buildPaper, defaultMatrix, outcomesIn, replaceSlot, shufflePaper, totals,
+  MUCS, MUC_DESC, MUC_NAME, available, bookLessons, buildPaper, defaultMatrix, outcomesIn, periodShare, replaceSlot, shufflePaper, totals,
   type BookLesson, type Matrix, type Muc, type Paper,
 } from '@/lib/exams/matrix';
 import { answerText, examDocument, printDoc } from '@/lib/exams/word';
+import { periodsFromPpct } from '@/lib/exams/periods';
+import { loadKhoi } from '@/lib/plans/lbg-store';
+import type { PpctItem } from '@/lib/plans/lbg';
 import { inlineStyles, useEditOnPage } from '@/lib/vanban/handoff';
 import { findOutcomeAny } from '@/lib/curriculum';
 import type { SubjectCode } from '@/lib/types';
@@ -75,6 +78,13 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
   const bank = useMyBank(subject, grade);
   const [bankOpen, setBankOpen] = useState(false);
   useEffect(() => { setMatrix((m) => (m ? { ...m } : m)); }, [bank.ver]);
+  // PPCT của khối (tổ trưởng nạp ở Lịch báo giảng) → tự điền số tiết từng chủ đề cho ma trận
+  const [ppct, setPpct] = useState<PpctItem[]>([]);
+  useEffect(() => {
+    let live = true;
+    loadKhoi(grade).then((k) => { if (live) setPpct(k.data.ppct ?? []); }).catch(() => { /* chưa có PPCT: thầy cô tự gõ số tiết */ });
+    return () => { live = false; };
+  }, [grade]);
 
   useEffect(() => { try { setSchool(localStorage.getItem(SCHOOL_KEY) ?? ''); } catch { /* bỏ qua */ } }, []);
   useEffect(() => { try { localStorage.setItem(SCHOOL_KEY, school); } catch { /* bỏ qua */ } }, [school]);
@@ -104,9 +114,34 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
 
   const makeMatrix = () => {
     if (!chosen.length) return setMsg({ kind: 'error', text: 'Chọn phạm vi bài cho đề.' });
-    setMatrix(defaultMatrix(chosen, total));
+    const periods = ppct.length ? periodsFromPpct(chosen, subject, ppct) : {};
+    const m = defaultMatrix(chosen, total, undefined, periods);
+    setMatrix(m);
     setPapers([]);
-    setMsg({ kind: 'info', text: 'Đã lập ma trận gợi ý (tỉ lệ 50% · 30% · 20%). Thầy cô chỉnh số câu, điểm từng mức rồi bấm "Tạo đề".' });
+    const nFilled = Object.keys(m.periods ?? {}).length;
+    setMsg({ kind: 'info', text: `Đã lập ma trận gợi ý (tỉ lệ 50% · 30% · 20%)${periodShare(m) ? ', số câu mỗi chủ đề chia theo số tiết trong PPCT của khối' : nFilled ? `; PPCT có số tiết của ${nFilled}/${m.rows.length} chủ đề — điền nốt cột “Số tiết” rồi bấm “Chia theo số tiết”` : '; điền cột “Số tiết” rồi bấm “Chia theo số tiết” để chia câu theo thời lượng'}. Thầy cô chỉnh số câu, điểm từng mức rồi bấm "Tạo đề".` });
+  };
+  /** Số tiết đã dạy của một chủ đề (0 = bỏ trống) */
+  const setPeriod = (ri: number, v: number) => setMatrix((m) => {
+    if (!m) return m;
+    const code = m.rows[ri].unitCode;
+    const periods = { ...(m.periods ?? {}) };
+    if (v > 0) periods[code] = Math.min(Math.round(v), 999); else delete periods[code];
+    return { ...m, periods };
+  });
+  /** Chia lại số câu từng chủ đề theo số tiết (giữ tổng số câu, điểm mỗi câu, YCCĐ đã bỏ) */
+  const splitByPeriods = () => {
+    if (!matrix) return;
+    if (!periodShare(matrix)) return setMsg({ kind: 'error', text: 'Điền số tiết cho tất cả chủ đề trước khi chia.' });
+    const n = totals(matrix).questions || total;
+    const fresh = defaultMatrix(chosen, n, undefined, matrix.periods);
+    const rows = fresh.rows.map((r) => {
+      const a = available(r.lessonIds, matrix.exclude);
+      return { ...r, counts: { 1: Math.min(r.counts[1], a[1]), 2: Math.min(r.counts[2], a[2]), 3: Math.min(r.counts[3], a[3]) } };
+    });
+    setMatrix({ ...matrix, rows, periods: fresh.periods });
+    setPapers([]);
+    setMsg({ kind: 'ok', text: `Đã chia ${n} câu theo số tiết của từng chủ đề. Xem cột “Nên có” để so điểm từng chủ đề.` });
   };
 
   const avail = useMemo(() => matrix?.rows.map((r) => available(r.lessonIds, matrix.exclude)) ?? [], [matrix]);
@@ -128,6 +163,8 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
     setPapers([]);
   };
   const t = matrix ? totals(matrix) : null;
+  const share = matrix ? periodShare(matrix) : null;
+  const sumPeriods = matrix ? matrix.rows.reduce((a, r) => a + (matrix.periods?.[r.unitCode] ?? 0), 0) : 0;
 
   const setCount = (ri: number, k: Muc, v: number) => setMatrix((m) => m && ({ ...m, rows: m.rows.map((r, i) => (i === ri ? { ...r, counts: { ...r.counts, [k]: Math.max(0, Math.min(v || 0, avail[ri]?.[k] ?? 0)) } } : r)) }));
   const setPoint = (k: Muc, v: number) => setMatrix((m) => m && ({ ...m, points: { ...m.points, [k]: Math.max(0, Math.min(v || 0, 10)) } }));
@@ -308,8 +345,8 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
           <div className="table-scroll">
             <table className="roster-table exam-matrix">
               <thead>
-                <tr><th>Chủ đề</th>{MUCS.map((k) => <th key={k}>{MUC_NAME[k]}</th>)}<th>Tổng</th></tr>
-                <tr className="exam-points"><th>Điểm mỗi câu</th>{MUCS.map((k) => (
+                <tr><th>Chủ đề</th><th title="Số tiết đã dạy của chủ đề (theo PPCT)">Số tiết</th>{MUCS.map((k) => <th key={k}>{MUC_NAME[k]}</th>)}<th>Tổng</th></tr>
+                <tr className="exam-points"><th>Điểm mỗi câu</th><th />{MUCS.map((k) => (
                   <th key={k}><input type="number" step={0.25} min={0} max={10} value={matrix.points[k]} aria-label={`Điểm mỗi câu ${MUC_NAME[k]}`} onChange={(e) => setPoint(k, Number(e.target.value))} /></th>
                 ))}<th /></tr>
               </thead>
@@ -317,20 +354,32 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
                 {matrix.rows.map((r, ri) => (
                   <tr key={r.unitCode}>
                     <td className="exam-unit">{r.unitTitle}<span>{r.lessonIds.length} bài</span></td>
+                    <td className="exam-periods">
+                      <input type="number" min={0} max={999} value={matrix.periods?.[r.unitCode] ?? ''} placeholder="—" aria-label={`Số tiết – ${r.unitTitle}`} onChange={(e) => setPeriod(ri, Number(e.target.value))} />
+                      {share && <span className="exam-avail">{String(share[ri].pct).replace('.', ',')}% · nên có {String(share[ri].points).replace('.', ',')} đ</span>}
+                    </td>
                     {MUCS.map((k) => (
                       <td key={k}>
                         <input type="number" min={0} max={avail[ri]?.[k] ?? 0} value={r.counts[k]} aria-label={`Số câu ${MUC_NAME[k]} – ${r.unitTitle}`} onChange={(e) => setCount(ri, k, Number(e.target.value))} />
                         <span className="exam-avail">có {avail[ri]?.[k] ?? 0}</span>
                       </td>
                     ))}
-                    <td>{MUCS.reduce((a, k) => a + r.counts[k], 0)} câu</td>
+                    <td>{MUCS.reduce((a, k) => a + r.counts[k], 0)} câu<span className="exam-avail">{String(Math.round(MUCS.reduce((a, k) => a + r.counts[k] * matrix.points[k], 0) * 100) / 100).replace('.', ',')} đ</span></td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr><th>Tổng</th>{MUCS.map((k) => <td key={k}>{t.byMuc[k]} câu · {Math.round(t.byMuc[k] * matrix.points[k] * 100) / 100} đ ({t.score ? Math.round((t.byMuc[k] * matrix.points[k] * 100) / t.score) : 0}%)</td>)}<td><strong className={Math.abs(t.score - 10) > 0.001 ? 'exam-warn' : 'exam-ok'}>{t.questions} câu · {t.score} điểm</strong></td></tr>
+                <tr><th>Tổng</th><td>{sumPeriods ? `${sumPeriods} tiết` : ''}</td>{MUCS.map((k) => <td key={k}>{t.byMuc[k]} câu · {Math.round(t.byMuc[k] * matrix.points[k] * 100) / 100} đ ({t.score ? Math.round((t.byMuc[k] * matrix.points[k] * 100) / t.score) : 0}%)</td>)}<td><strong className={Math.abs(t.score - 10) > 0.001 ? 'exam-warn' : 'exam-ok'}>{t.questions} câu · {t.score} điểm</strong></td></tr>
               </tfoot>
             </table>
+          </div>
+          <div className="exam-period-bar">
+            <button type="button" className="btn btn-outline btn-sm" onClick={splitByPeriods} disabled={!share}><Scale aria-hidden="true" /> Chia theo số tiết</button>
+            <span className="dash-muted">{share
+              ? 'Số câu, điểm mỗi chủ đề nên tỉ lệ với số tiết đã dạy (cột “nên có”). Chỉnh số tiết rồi bấm Chia theo số tiết.'
+              : ppct.length
+                ? 'Điền số tiết đã dạy cho tất cả chủ đề để chia câu theo thời lượng (PPCT của khối chưa có đủ bài trong phạm vi này).'
+                : 'Điền số tiết đã dạy cho từng chủ đề để chia câu theo thời lượng. Tổ trưởng nạp PPCT ở Kế hoạch bài dạy › Lịch báo giảng thì app tự điền.'}</span>
           </div>
           {Math.abs(t.score - 10) > 0.001 && <p className="adm-alert is-warn">Tổng điểm đang là {t.score}. Chỉnh số câu hoặc điểm mỗi câu cho đủ 10 điểm.</p>}
           <ul className="exam-muc-legend">

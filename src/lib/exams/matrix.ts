@@ -42,7 +42,22 @@ export type ExamQuestion = {
 /** Một hàng của ma trận = một chủ đề (unit) gồm các bài đã chọn */
 export type MatrixRow = { unitCode: string; unitTitle: string; lessonIds: string[]; counts: Record<Muc, number> };
 /** exclude: mã yêu cầu cần đạt KHÔNG lấy câu (giáo viên bỏ chọn) */
-export type Matrix = { rows: MatrixRow[]; points: Record<Muc, number>; exclude?: string[] };
+/** periods: số tiết đã dạy của từng chủ đề (unitCode → số tiết) — có thì số câu mỗi chủ đề chia theo số tiết */
+export type Matrix = { rows: MatrixRow[]; points: Record<Muc, number>; exclude?: string[]; periods?: Record<string, number> };
+
+/** Số tiết dùng để chia của từng hàng: đủ số tiết cho mọi chủ đề thì dùng số tiết, thiếu thì dùng số bài */
+export function rowWeights(rows: Pick<MatrixRow, 'unitCode' | 'lessonIds'>[], periods?: Record<string, number>): { w: number[]; byPeriods: boolean } {
+  const byPeriods = Boolean(periods) && rows.length > 0 && rows.every((r) => (periods?.[r.unitCode] ?? 0) > 0);
+  return { w: rows.map((r) => (byPeriods ? periods![r.unitCode] : r.lessonIds.length)), byPeriods };
+}
+
+/** Tỉ lệ và điểm "nên có" của từng chủ đề theo số tiết (tổng 10 điểm). null = chưa đủ số tiết */
+export function periodShare(m: Matrix, score = 10): { pct: number; points: number }[] | null {
+  const { w, byPeriods } = rowWeights(m.rows, m.periods);
+  if (!byPeriods) return null;
+  const sum = w.reduce((a, b) => a + b, 0) || 1;
+  return w.map((x) => ({ pct: Math.round((x * 1000) / sum) / 10, points: Math.round((x * score * 100) / sum) / 100 }));
+}
 
 export type BookLesson = Pick<ContentLesson, 'id' | 'title' | 'ref' | 'semester' | 'unit'>;
 
@@ -123,7 +138,7 @@ export function outcomesIn(lessonIds: string[]): { code: string; n: number }[] {
 }
 
 /** Ma trận mặc định: tổng `total` câu, tỉ lệ mức (mặc định 50/30/20), chia theo số bài của từng chủ đề */
-export function defaultMatrix(lessons: BookLesson[], total = 10, ratio: [number, number] = [0.5, 0.3]): Matrix {
+export function defaultMatrix(lessons: BookLesson[], total = 10, ratio: [number, number] = [0.5, 0.3], periods?: Record<string, number>): Matrix {
   const groups = new Map<string, MatrixRow>();
   for (const l of lessons) {
     const g = groups.get(l.unit.code) ?? { unitCode: l.unit.code, unitTitle: l.unit.title, lessonIds: [], counts: { 1: 0, 2: 0, 3: 0 } };
@@ -135,9 +150,11 @@ export function defaultMatrix(lessons: BookLesson[], total = 10, ratio: [number,
   target[3] = total - target[1] - target[2];
   const avail = rows.map((r) => available(r.lessonIds));
   const cap = avail.map((a) => a[1] + a[2] + a[3]);
-  // 1) Số câu mỗi chủ đề: theo tỉ lệ số bài (phần dư lớn nhất), mỗi chủ đề ít nhất 1 câu nếu đủ câu
-  const nLessons = rows.reduce((a, r) => a + r.lessonIds.length, 0) || 1;
-  const share = rows.map((r) => (total * r.lessonIds.length) / nLessons);
+  // 1) Số câu mỗi chủ đề: theo tỉ lệ số tiết đã dạy (đủ số tiết mọi chủ đề) hoặc số bài, chia phần dư lớn nhất;
+  //    mỗi chủ đề ít nhất 1 câu nếu đủ câu
+  const { w } = rowWeights(rows, periods);
+  const nW = w.reduce((a, b) => a + b, 0) || 1;
+  const share = w.map((x) => (total * x) / nW);
   const unit = share.map((x, i) => Math.min(Math.floor(x), cap[i]));
   if (total >= rows.length) unit.forEach((n, i) => { if (n === 0 && cap[i] > 0) unit[i] = 1; });
   let diff = total - unit.reduce((a, b) => a + b, 0);
@@ -177,7 +194,24 @@ export function defaultMatrix(lessons: BookLesson[], total = 10, ratio: [number,
       rows[i].counts[alt]++; if (left[i] > 0) left[i]--; short[m]--;
     }
   }
-  return { rows, points: { 1: 1, 2: 1, 3: 1 } };
+  // 4) Chủ đề còn thiếu câu (vd. không có câu mức 3 nên phần của nó bị dồn sang chủ đề khác): đổi chéo một câu cùng mức
+  //    từ chủ đề đang thừa sang chủ đề thiếu — tổng mỗi mức giữ nguyên, số câu mỗi chủ đề sát với tỉ lệ số tiết / số bài
+  const sum = (i: number) => MUCS.reduce((a, k) => a + rows[i].counts[k], 0);
+  for (let guard = 0; guard < 500; guard++) {
+    const i = rows.map((_, k) => k).filter((k) => sum(k) < unit[k]).sort((a, b) => (sum(a) - unit[a]) - (sum(b) - unit[b]))[0];
+    if (i === undefined) break;
+    let moved = false;
+    for (const k of MUCS) {
+      if (rows[i].counts[k] >= avail[i][k]) continue;
+      const j = rows.map((_, x) => x).filter((x) => x !== i && sum(x) > unit[x] && rows[x].counts[k] > 0).sort((a, b) => (sum(b) - unit[b]) - (sum(a) - unit[a]))[0];
+      if (j === undefined) continue;
+      rows[j].counts[k]--; rows[i].counts[k]++; moved = true;
+      break;
+    }
+    if (!moved) break;
+  }
+  const kept = periods ? Object.fromEntries(rows.filter((r) => (periods[r.unitCode] ?? 0) > 0).map((r) => [r.unitCode, periods[r.unitCode]])) : undefined;
+  return { rows, points: { 1: 1, 2: 1, 3: 1 }, ...(kept && Object.keys(kept).length ? { periods: kept } : {}) };
 }
 
 export function totals(m: Matrix) {
