@@ -10,7 +10,11 @@ import type { SubjectCode } from '../types';
 /** Thông tin một bài để soạn giáo án (máy chủ tạo bằng lessonInfos trong lessons.ts) */
 export type LessonInfo = {
   id: string; title: string; description: string; ref: string; semester: number;
-  outcomes: string[]; forms: string[]; knowledge: string[]; example: string;
+  /** YCCĐ trọng tâm của bài (đã lọc đúng bài, xem lessonOutcomes) */
+  outcomes: string[];
+  /** YCCĐ mở rộng — chỉ có ở câu L4–L5, dành cho học sinh hoàn thành tốt */
+  extend?: string[];
+  forms: string[]; knowledge: string[]; example: string;
 };
 
 export type ActivityKey = 'khoi-dong' | 'kham-pha' | 'luyen-tap' | 'van-dung';
@@ -118,9 +122,16 @@ export function generatePlan(input: PlanInput): LessonPlan {
   const weak = (input.weakForms ?? []).filter(Boolean).slice(0, 4);
   const appLink = lesson ? `bài “${title}” trên EduChain Kids` : 'bài luyện tập trên EduChain Kids';
 
+  // mô tả bài (đúng phạm vi bài) đứng đầu, rồi YCCĐ trọng tâm (bỏ câu trùng ý), cuối cùng là phần mở rộng
+  const same = (a: string, b: string) => noDot(a).toLowerCase() === noDot(b).toLowerCase();
+  // Toán: mô tả bài là một yêu cầu ("Tìm số hạng…"); Tiếng Việt / Tiếng Anh: mô tả là danh sách nội dung (bài đọc, từ vựng…)
+  const head = lesson?.description ? [subject === 'toan' ? lesson.description : `Nội dung bài: ${noDot(lesson.description)}.`] : [];
+  const main = [...head, ...outcomes.filter((o) => !head.some((h) => same(h, o)))];
+  const extend = uniq(lesson?.extend ?? []).filter((o) => !main.some((m) => same(m, o)));
   const knowledge = bullet([
-    ...(outcomes.length ? outcomes : [lesson?.description ?? 'Nêu yêu cầu cần đạt của bài.']),
+    ...(main.length ? main : ['Nêu yêu cầu cần đạt của bài.']),
     ...(know?.points.length ? [`Nắm được: ${know.points.slice(0, 3).map(noDot).join('; ')}.`] : []),
+    ...(extend.length ? ['Mở rộng (học sinh hoàn thành tốt):', ...extend.map((o) => `  + ${noDot(o)}.`)] : []),
   ]);
 
   const S = SUBJECT_NAMES[subject];
