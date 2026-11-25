@@ -89,6 +89,9 @@ Nhịp trang: xen kẽ trang nhiều chữ với trang hình/tương tác; khôn
 - Ý trong danh sách: ý đầu `with`, các ý sau `click` (cô điều khiển nhịp giảng).
 - Âm thanh chỉ dùng tên trong `src/lib/deck/sounds.ts`.
 - Hoạt ảnh chỉ dùng `transform`/`opacity` (luật hiệu năng của dự án).
+- Chuyển trang (`DeckPlayer` + `player.ts`): trang cũ giữ làm lớp bóng `.dp-ghost` nên không chớp nền. Kiểu: Mờ dần, **Biến hình (morph)** — vật chung ghép theo id → vai trò (hình/khối) → nội dung (`morphPairs`), trượt/đổi cỡ về chỗ mới, vật đổi nội dung vừa trượt vừa hoà trộn —, Đẩy sang, Phóng to, Lật trang. Bộ chủ đề dùng `morph` cho trang 2–7: giữ vị trí khung thẻ / Milo / nhãn bước ổn định giữa các trang để biến hình mượt.
+- Hiệu ứng vào trang mặc định `float` (Nổi lên) / `fade`; tránh `spin-in`, `fly-*` cho vật trang trí. Đường cong: vào = `EASE_OUT`, nhấn mạnh = ease-in-out.
+- Màu bộ chủ đề: mỗi `ThemeSet` có `back` (bóng thẻ), `accent` (gạch tiêu đề, số thứ tự `role: 'accent'`), `steps` (5 nhãn bước cùng họ màu, chữ trắng ≥ 4,5:1). Thêm bộ mới phải khai đủ 3 trường này.
 
 ## 7. Lỗi hay gặp (kiểm tra trước khi giao)
 

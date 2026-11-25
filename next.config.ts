@@ -34,7 +34,7 @@ const SECURITY_HEADERS = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Không gom tài liệu nội bộ / bí mật vào gói máy chủ (Vercel). Không route nào đọc các thư mục này lúc chạy;
-  // Văn phòng ảo (/quan-tri/van-phong) chỉ đọc docs/ khi chạy trên máy (next dev), trên production không gọi fs.
+  // (thư mục docs/, .claude/, data/… chỉ dùng khi phát triển trên máy).
   outputFileTracingExcludes: {
     '*': ['docs/**', '.claude/**', '.env*', 'data/**', 'CLAUDE.md', 'graphify-out/**', 'supabase/**'],
   },

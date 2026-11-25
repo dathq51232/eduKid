@@ -4,13 +4,16 @@
 // trộn thư (một mẫu → mỗi em một phiếu) — kèm lối tắt tới các mục in khác của lớp. Mọi xử lý trên máy, không gửi đi đâu.
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, FileText, IdCard, ListChecks, Mails, Printer, Tags, Users } from 'lucide-react';
+import { ArrowRight, FileSpreadsheet, FileText, IdCard, ListChecks, Mails, PenLine, Printer, Tags, Users } from 'lucide-react';
 import { RbBtn, RbGroup } from '@/components/classroom/PageEditor';
 import { TOOLS, toolHref, type ToolKey } from '@/lib/classroom/teacher-nav';
 import {
   LABEL_STYLES, MERGE_FIELDS, MERGE_PRESETS, ROSTER_KINDS, labelsHtml, mergeHtml, rosterHtml, tentHtml,
   type Ctx, type LabelStyle, type Printable, type Pupil, type RosterKind,
 } from '@/lib/vanban/class-print';
+import { rosterXlsx } from '@/lib/vanban/class-xlsx';
+import { downloadXlsx } from '@/lib/xlsx';
+import { asciiFilename } from '@/lib/filename';
 import '@/styles/cpr.css';
 
 type Mode = 'ds' | 'nhan' | 'the' | 'tron';
@@ -25,13 +28,15 @@ const MODES: { id: Mode; label: string; hint: string; Icon: typeof ListChecks }[
 const list = (s: string) => s.split(/[,;\n]/).map((x) => x.trim()).filter(Boolean).slice(0, 12);
 const ELSEWHERE: ToolKey[] = ['phieu-bai-tap', 'phieu-chinh-ta', 'de-kiem-tra', 'ke-hoach', 'luyen-chu', 'nhan-xet', 'phieu-tien-bo', 'thu-khen', 'hop-ph'];
 
-export default function ClassPrint({ classId, students, ctx, onPrint, onWord }: {
+export default function ClassPrint({ classId, students, ctx, onPrint, onWord, onEdit }: {
   classId: string;
   students: Pupil[];
   ctx: Ctx;
   onPrint: (p: Printable) => void;
   /** Xuất Word (chỉ danh sách lớp và trộn thư — nhãn, thẻ cần bố cục chính xác nên chỉ In / PDF) */
   onWord: (p: Printable, file: string, title: string) => void;
+  /** Mở bản in trong trình soạn (thẻ Mở file & in) để sửa trực tiếp như Word */
+  onEdit: (p: Printable, file: string, title: string) => void;
 }) {
   const [mode, setMode] = useState<Mode>('ds');
   const [skip, setSkip] = useState<Set<string>>(new Set());
@@ -80,10 +85,17 @@ export default function ClassPrint({ classId, students, ctx, onPrint, onWord }: 
     return mergeHtml({ title: mTitle, body: mBody, students: few, ctx, perPage });
   }, [mode, out, chosen, subjects, copies, style, ctx, mTitle, mBody, perPage]);
 
-  const word = () => {
-    if (mode === 'ds') onWord(out, `danh-sach-${rKind}-lop-${ctx.className}`, rTitle);
-    else if (mode === 'tron') onWord(mergeHtml({ title: mTitle, body: mBody, students: chosen, ctx, perPage: 1, forWord: true }), `${preset}-lop-${ctx.className}`, mTitle);
+  /** Danh sách lớp → Excel có sẵn công thức (đếm vắng P/K, tổng tiền) để thầy cô điền và tính ngay */
+  const excel = () => downloadXlsx(asciiFilename(`danh-sach-${rKind}-lop-${ctx.className}.xlsx`),
+    [rosterXlsx({ kind: rKind, title: rTitle, cols: list(rCols), month, year, weekends, students: chosen, ctx })]);
+  /** Bản dạng Word (danh sách, trộn thư) — dùng cho Tải Word và Sửa trên trang */
+  const wordOut = (): [Printable, string, string] | null => {
+    if (mode === 'ds') return [out, `danh-sach-${rKind}-lop-${ctx.className}`, rTitle];
+    if (mode === 'tron') return [mergeHtml({ title: mTitle, body: mBody, students: chosen, ctx, perPage: 1, forWord: true }), `${preset}-lop-${ctx.className}`, mTitle];
+    return null;
   };
+  const word = () => { const w = wordOut(); if (w) onWord(...w); };
+  const edit = () => { const w = wordOut(); if (w) onEdit(...w); };
   const count = mode === 'nhan' ? chosen.length * (list(subjects).length || Math.max(1, copies)) : chosen.length;
   const sheets = mode === 'nhan' ? Math.ceil(count / 10) : mode === 'tron' ? Math.ceil(count / perPage) : mode === 'the' ? count : 0;
   const others = TOOLS.filter((t) => ELSEWHERE.includes(t.key));
@@ -112,7 +124,13 @@ export default function ClassPrint({ classId, students, ctx, onPrint, onWord }: 
           <RbGroup label="Tệp">
             <RbBtn primary icon={<Printer aria-hidden="true" />} label="In / PDF" onClick={() => onPrint(out)} disabled={!chosen.length} />
             {(mode === 'ds' || mode === 'tron') && <RbBtn icon={<FileText aria-hidden="true" />} label="Tải Word" onClick={word} disabled={!chosen.length} />}
+            {mode === 'ds' && <RbBtn icon={<FileSpreadsheet aria-hidden="true" />} label="Tải Excel" onClick={excel} disabled={!chosen.length} />}
           </RbGroup>
+          {(mode === 'ds' || mode === 'tron') && (
+            <RbGroup label="Soạn tiếp">
+              <RbBtn icon={<PenLine aria-hidden="true" />} label="Sửa trên trang & cấu hình in" onClick={edit} disabled={!chosen.length} />
+            </RbGroup>
+          )}
         </div>
         <p className="cpr-count">{chosen.length}/{students.length} em{sheets ? ` · khoảng ${sheets} tờ A4` : ''}</p>
       </div>

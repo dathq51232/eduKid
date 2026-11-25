@@ -3,13 +3,14 @@
 import { downloadHtmlAsDocx } from '@/lib/doc-download';
 import EmojiText from '@/components/EmojiText';
 import { useEffect, useMemo, useState } from 'react';
-import { FileDown, Library, RefreshCw, Shuffle } from 'lucide-react';
+import { FileDown, FilePenLine, Library, RefreshCw, Shuffle } from 'lucide-react';
 import MyBankPanel from './MyBankPanel';
 import { useMyBank } from './useMyBank';
 import AssignPaperForm from '@/components/classroom/AssignPaperForm';
 import type { ExamItem } from '@/lib/classroom/assignments';
 import { bookLessons, buildPaper, defaultMatrix, replaceSlot, totals, type Matrix, type Paper } from '@/lib/exams/matrix';
 import { answerText, examDocument } from '@/lib/exams/word';
+import { inlineStyles, useEditOnPage } from '@/lib/vanban/handoff';
 import type { SubjectCode } from '@/lib/types';
 import { ToolIcon } from '@/components/classroom/tool-icons';
 import '@/styles/adm.css';
@@ -86,10 +87,12 @@ export default function WorksheetBuilder({ classId, className, grade, presetLess
     setPapers((ps) => ps.map((p, i) => (i === pi ? replaceSlot(matrix, p, si, newSeed(), avoid) : p)));
   };
 
+  const editOnPage = useEditOnPage();
   const download = (parts: { papers: boolean; keys: boolean }, suffix: string) => {
     if (!matrix) return;
     const meta = { school, title, subjectName: SUBJECT_NAME[subject], grade, className, yearLabel: '', minutes: 0, worksheet: true, topic };
     const html = examDocument(meta, matrix, papers, new Map(lessons.map((l) => [l.id, l.title])), { matrix: false, ...parts });
+    if (suffix === 'sua') return editOnPage?.({ name: title || 'Phiếu bài tập', file: `phieu-bai-tap-${SUBJECT_NAME[subject]}-lop${grade}`.replace(/\s+/g, '-'), html: inlineStyles(html), fontSize: 13 });
     void downloadHtmlAsDocx(`phieu-bai-tap-${SUBJECT_NAME[subject]}-lop${grade}-${suffix}`.replace(/\s+/g, '-'), html, title);
   };
 
@@ -165,6 +168,7 @@ export default function WorksheetBuilder({ classId, className, grade, presetLess
               <button type="button" className="btn btn-primary btn-sm" onClick={() => download({ papers: true, keys: true }, 'kem-dap-an')}><FileDown aria-hidden="true" /> Tải Word (phiếu + đáp án)</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ papers: true, keys: false }, 'phieu')}><FileDown aria-hidden="true" /> Chỉ phiếu</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ papers: false, keys: true }, 'dap-an')}><FileDown aria-hidden="true" /> Chỉ đáp án</button>
+              {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ papers: true, keys: true }, 'sua')} title="Mở phiếu và đáp án trong trình soạn văn bản để sửa trực tiếp như Word"><FilePenLine aria-hidden="true" /> Sửa trên trang &amp; cấu hình in</button>}
             </div>
           </div>
           <div className="exam-papers">

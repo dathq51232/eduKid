@@ -205,7 +205,7 @@ async function slideXml(s: Slide, i: number, hooks: PptxHooks, counter: { n: num
     }
   }
   if (s.notes?.trim()) notes.unshift(s.notes.trim());
-  const trans = s.trans === 'fade' || s.trans === 'flip' ? '<p:transition spd="med"><p:fade/></p:transition>' : s.trans === 'slide' ? '<p:transition spd="med"><p:push dir="l"/></p:transition>' : s.trans === 'zoom' ? '<p:transition spd="med"><p:zoom/></p:transition>' : '';
+  const trans = s.trans === 'fade' || s.trans === 'flip' || s.trans === 'morph' ? '<p:transition spd="med"><p:fade/></p:transition>' : s.trans === 'slide' ? '<p:transition spd="med"><p:push dir="l"/></p:transition>' : s.trans === 'zoom' ? '<p:transition spd="med"><p:zoom/></p:transition>' : '';
   const xml = `${HEAD}<p:sld ${NS}><p:cSld>${bg}<p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>${x.parts.join('')}</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>${trans}</p:sld>`;
   const rels = `${HEAD}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide" Target="../notesSlides/notesSlide${i + 1}.xml"/>${x.rels.join('')}</Relationships>`;
   return { xml, rels, media: x.media, notes: notes.join('\n') };

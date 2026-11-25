@@ -629,6 +629,8 @@ type Props = {
   onLink?: (n: number) => void;
   /** chạy sẵn đến bước số mấy (khi mở lại trang / cửa sổ chiếu mới mở) */
   startStep?: number;
+  /** chờ (giây) rồi mới chạy nhóm hiệu ứng tự chạy — để chuyển trang xong phần lớn đã */
+  autoDelay?: number;
   /** lớp trả lời đúng / làm xong trò chơi (để cô cộng điểm thi đua tổ) */
   onWin?: (what: string) => void;
   /** điểm các tổ cho Bảng thi đua tổ */
@@ -636,7 +638,7 @@ type Props = {
   /** hiện lưới và hút vật vào lưới khi kéo */
   snapGrid?: boolean;
 };
-const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, scale, assetUrl, speechSubject = 'tieng-viet', sel, onSelect, multi, onSelectMany, onChange, onEditText, editing, onAction, onLink, startStep = 0, onWin, board, snapGrid = false }, ref) {
+const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, scale, assetUrl, speechSubject = 'tieng-viet', sel, onSelect, multi, onSelectMany, onChange, onEditText, editing, onAction, onLink, startStep = 0, autoDelay = 0, onWin, board, snapGrid = false }, ref) {
   const winRef = useRef(onWin); winRef.current = onWin;
   const plan = useMemo(() => planSlide(slide), [slide]);
   const play = mode === 'play';
@@ -679,7 +681,8 @@ const SlideView = forwardRef<PlayApi, Props>(function SlideView({ slide, mode, s
   useEffect(() => {
     if (!play) return;
     playSound(slide.sound);
-    run(plan.auto, startStep > 0);
+    if (startStep > 0 || autoDelay <= 0) run(plan.auto, startStep > 0);
+    else timers.current.push(window.setTimeout(() => run(plan.auto), autoDelay * 1000));
     for (let i = 0; i < startStep && i < plan.steps.length; i++) run(plan.steps[i], true);
     step.current = Math.min(startStep, plan.steps.length);
     const t = timers.current;

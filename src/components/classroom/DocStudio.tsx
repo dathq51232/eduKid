@@ -6,7 +6,6 @@
 //   (3) In theo lớp: danh sách lớp, trộn thư, nhãn vở, thẻ tên từ danh sách học sinh + lối tắt tới các mục in khác (ClassPrint.tsx).
 // Mọi xử lý chạy trên máy cô — file không gửi đi đâu.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { CheckCircle2, ClipboardCheck, FileSpreadsheet, FileText, FolderOpen, PenLine, Printer, Sparkles, Undo2, Upload, Users, X } from 'lucide-react';
 import { KINDS, SAMPLE, buildHtml, fileName, kindOf, type Doc, type DocKind, type Org } from '@/lib/vanban/nd30';
@@ -18,9 +17,12 @@ import { checkText, fixInline, fixRows, fixText, type Issue } from '@/lib/vanban
 import { buildXlsx, range, sheetName } from '@/lib/xlsx';
 import { htmlToDocx, type DocImage } from '@/lib/docx-write';
 import { readDocxFull } from '@/lib/docx-read';
+import { fixLegacyText } from '@/lib/vn-legacy';
 import { readXlsxAll, type Sheet } from '@/lib/xlsx-read';
 import { asciiFilename } from '@/lib/filename';
 import ClassPrint from '@/components/classroom/ClassPrint';
+import { takeFromEditor } from '@/lib/vanban/handoff';
+import { printInFrame } from '@/lib/print-frame';
 import type { Ctx, Printable, Pupil } from '@/lib/vanban/class-print';
 import { DEFAULT_SETUP, DEFAULT_VIEW, RbBtn, RbGroup, SHEET_SETUP, Workspace, pageCss, sheetHtml, trimSheet, type PageSetup, type SheetView } from '@/components/classroom/PageEditor';
 import '@/styles/adm.css';
@@ -35,7 +37,7 @@ type Tab = 'mau' | 'file' | 'lop';
 type Change = { sheet: string; r: number; c: number; from: string; to: string };
 /** Tài liệu đang làm ở thẻ Mở file & in. id đổi = mở trình sửa mới */
 type Work =
-  | { id: number; kind: 'doc'; name: string; file: string; html: string; images: Map<string, DocImage>; fixed: number; orig: string | null }
+  | { id: number; kind: 'doc'; name: string; file: string; html: string; images: Map<string, DocImage>; fixed: number; orig: string | null; legacy?: number }
   | { id: number; kind: 'sheet'; name: string; file: string; sheets: Sheet[]; changes: Change[]; orig: Sheet[] | null };
 // orig: bản trước khi bấm Chuẩn hoá (null = chưa chuẩn hoá) — để "Về bản gốc"
 
@@ -46,6 +48,8 @@ const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 const bodyOf = (html: string) => /<body>([\s\S]*)<\/body>/.exec(html)?.[1] ?? html;
 const baseName = (n: string) => n.replace(/\.(docx|xlsx)$/i, '') || 'van-ban';
 let seq = 0;
+/** Chữ phông cũ (.VnTime, VNI) đã tự đổi sang Unicode khi mở file */
+const legacyNote = (w: Work) => (w.kind === 'doc' && w.legacy ? `; đã tự đổi ${w.legacy} đoạn chữ phông cũ (.VnTime / VNI) sang Unicode, phông Times New Roman` : '');
 
 function download(bytes: Uint8Array | string, name: string, type: string) {
   const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type }));
@@ -173,14 +177,13 @@ async function loadWork(file: File, normalize: boolean): Promise<Work> {
   let fixed = 0;
   const orig = html;
   if (normalize) { const r = normalizeHtml(html); html = r.html; fixed = r.fixed; }
-  return { id: ++seq, kind: 'doc', name: file.name, file: baseName(file.name), html, images, fixed, orig: normalize ? orig : null };
+  return { id: ++seq, kind: 'doc', name: file.name, file: baseName(file.name), html, images, fixed, orig: normalize ? orig : null, legacy: full.legacyRuns };
 }
 
 export default function DocStudio({ teacher, className, classId, students }: { teacher: string; className: string; classId: string; students: Pupil[] }) {
   const [tab, setTab] = useState<Tab>('mau');
   const [org, setOrg] = useState<Org>({ parent: '', name: '', abbr: '', place: '', role: 'Giáo viên chủ nhiệm', onBehalf: '', signer: teacher });
   const [doc, setDoc] = useState<Doc>({ kind: 'thong-bao', no: '', date: today(), ...SAMPLE['thong-bao'] });
-  const [printHtml, setPrintHtml] = useState<{ html: string; css: string } | null>(null);
   const [flash, setFlash] = useState('');
   // tài liệu đang làm + cài đặt trang + cách hiện bảng
   const [work, setWork] = useState<Work | null>(null);
@@ -190,6 +193,21 @@ export default function DocStudio({ teacher, className, classId, students }: { t
 
   // thông tin đơn vị lưu trên máy cô (dùng lại cho mọi văn bản)
   useEffect(() => { try { const v = localStorage.getItem(ORG_KEY); if (v) setOrg((o) => ({ ...o, ...(JSON.parse(v) as Partial<Org>) })); } catch { /* bỏ qua */ } }, []);
+  // "Sửa trên trang" từ mục khác của lớp (phiếu bài tập, chính tả, đề, giáo án…): mở bản in ngay trong trình soạn
+  useEffect(() => {
+    const h = takeFromEditor();
+    if (!h) return;
+    const images = h.images ?? new Map<string, DocImage>();
+    const html = h.html.replace(/<img([^>]*?) data-img="([^"]+)"/g, (m, pre: string, k: string) => {
+      const img = images.get(k);
+      return img && !/\ssrc=/.test(pre) ? `<img${pre} data-img="${k}" src="${URL.createObjectURL(new Blob([img.bytes as BlobPart], { type: img.mime }))}"` : m;
+    });
+    setWork({ id: ++seq, kind: 'doc', name: h.name, file: h.file, html, images, fixed: 0, orig: null });
+    setSetup({ ...DEFAULT_SETUP, landscape: Boolean(h.landscape), fontSize: h.fontSize ?? 13, pageNum: 'none' });
+    setTab('file');
+    setFlash(`Đã mở “${h.name}” — bấm vào chữ trên trang để sửa như Word, rồi In / PDF hoặc Tải Word.`);
+    try { window.history.replaceState(null, '', window.location.pathname); } catch { /* bỏ qua */ }
+  }, []);
   const setO = (patch: Partial<Org>) => setOrg((o) => { const n = { ...o, ...patch }; try { localStorage.setItem(ORG_KEY, JSON.stringify(n)); } catch { /* bỏ qua */ } return n; });
   const setD = (patch: Partial<Doc>) => setDoc((d) => ({ ...d, ...patch }));
   // Thông tin chính để tự sinh nội dung; lastGen: nội dung vừa sinh (sửa tay rồi mới hỏi trước khi ghi đè)
@@ -249,10 +267,18 @@ export default function DocStudio({ teacher, className, classId, students }: { t
   const docHtml = useCallback((h: string) => setWork((w) => (w && w.kind === 'doc' && w.html !== h ? { ...w, html: h } : w)), []);
   const setSheets = (sheets: Sheet[]) => setWork((w) => (w && w.kind === 'sheet' ? { ...w, sheets } : w));
 
-  const printRaw = (h: string, css: string) => { setPrintHtml({ html: h, css }); window.setTimeout(() => { window.print(); setPrintHtml(null); }, 80); };
-  const print = (h: string, s: PageSetup) => printRaw(h, pageCss(s));
+  // in trong khung riêng chỉ có văn bản: lề trắng, chữ không tràn khổ giấy, ngắt trang kiểu Word vẫn đúng (src/lib/print-frame.ts)
+  const printRaw = (h: string, css: string) => printInFrame(bodyOf(h), css, 'Văn bản');
+  const print = (h: string, s: PageSetup) => printRaw(h, `${pageCss(s)} body { font-size: ${s.fontSize}pt; }`);
   const printClass = (p: Printable) => printRaw(p.html, p.css);
   const wordClass = (p: Printable, file: string, title: string) => saveWord(p.html, { ...DEFAULT_SETUP, landscape: p.landscape, pageNum: 'none', fontSize: 13 }, file, title);
+  const editClass = (p: Printable, file: string, title: string) => {
+    if (work && !window.confirm('Mở bản này trong trình soạn sẽ thay tài liệu đang làm ở thẻ “Mở file & in”. Tiếp tục?')) return;
+    setWork({ id: ++seq, kind: 'doc', name: title, file, html: bodyOf(p.html), images: new Map(), fixed: 0, orig: null });
+    setSetup({ ...DEFAULT_SETUP, landscape: p.landscape, pageNum: 'none', fontSize: 13 });
+    setTab('file');
+    setFlash(`Đã mở “${title}” — bấm vào chữ trên trang để sửa như Word, rồi In / PDF hoặc Tải Word.`);
+  };
   const saveWord = (h: string, s: PageSetup, file: string, title: string, images: Map<string, DocImage> = new Map()) => {
     download(htmlToDocx(`<html><body>${bodyOf(h)}</body></html>`, images, { title, fontSize: s.fontSize, deco: s }), `${file}.docx`, DOCX);
     setFlash('Đã tải file Word — mở bằng Word để ký, đóng dấu hoặc sửa tiếp.');
@@ -374,14 +400,14 @@ export default function DocStudio({ teacher, className, classId, students }: { t
       {tab === 'file' && (
         <section className="vb-norm no-print">
           {!work ? (
-            <Landing onOpen={(w) => { open(w); setFlash('Đã mở file — bấm “Chuẩn hoá theo mẫu” để đưa về đúng thể thức; đặt khổ giấy, số trang, đầu & chân trang ở thẻ “Bố cục trang”.'); }} />
+            <Landing onOpen={(w) => { open(w); setFlash(`Đã mở file${legacyNote(w)} — bấm “Chuẩn hoá theo mẫu” để đưa về đúng thể thức; đặt khổ giấy, số trang, đầu & chân trang ở thẻ “Bố cục trang”.`); }} />
           ) : (
             <Workspace key={work.id} startTab="home" setup={setup} onSetup={setSetup}
               {...(work.kind === 'doc'
                 ? { kind: 'doc' as const, docKey: work.id, html: work.html, onHtml: docHtml }
                 : { kind: 'sheet' as const, sheets: work.sheets, idx: sheetIdx, onIdx: setSheetIdx, onSheets: setSheets, view, onView: setView })}
               fileGroup={<>
-                <OpenBtn onOpen={(w) => { if (window.confirm('Mở file mới sẽ thay tài liệu đang làm. Tiếp tục?')) { open(w); setFlash('Đã mở file mới.'); } }} />
+                <OpenBtn onOpen={(w) => { if (window.confirm('Mở file mới sẽ thay tài liệu đang làm. Tiếp tục?')) { open(w); setFlash(`Đã mở file mới${legacyNote(w)}.`); } }} />
                 <RbBtn icon={work.kind === 'doc' ? <FileText aria-hidden="true" /> : <FileSpreadsheet aria-hidden="true" />} label={work.kind === 'doc' ? 'Tải Word' : 'Tải Excel'}
                   onClick={() => (work.kind === 'doc' ? saveWord(work.html, setup, work.file, work.name, work.images) : saveExcel(work))} />
                 <RbBtn primary icon={<Printer aria-hidden="true" />} label="In / PDF" onClick={printWork} />
@@ -408,16 +434,10 @@ export default function DocStudio({ teacher, className, classId, students }: { t
 
       {tab === 'lop' && (
         <section className="no-print">
-          <ClassPrint classId={classId} students={students} ctx={ctx} onPrint={printClass} onWord={wordClass} />
+          <ClassPrint classId={classId} students={students} ctx={ctx} onPrint={printClass} onWord={wordClass} onEdit={editClass} />
         </section>
       )}
 
-      {printHtml && createPortal(
-        <div className="vb-print">
-          <style>{printHtml.css}</style>
-          <div dangerouslySetInnerHTML={{ __html: bodyOf(printHtml.html) }} />
-        </div>, document.body,
-      )}
     </div>
   );
 }
@@ -467,7 +487,7 @@ function Landing({ onOpen }: { onOpen: (w: Work) => void }) {
       <details className="vbe-paste">
         <summary>Hoặc dán văn bản vào đây</summary>
         <textarea className="vb-text" rows={10} value={text} maxLength={60000} placeholder="Dán văn bản…" onChange={(e) => setText(e.target.value)} aria-label="Văn bản cần chuẩn hoá" />
-        <button type="button" className="btn btn-primary" disabled={!text.trim()} onClick={() => onOpen({ id: ++seq, kind: 'doc', name: 'Văn bản dán vào', file: 'van-ban', html: paraHtml(text), images: new Map(), fixed: 0, orig: null })}><FileText aria-hidden="true" /> Mở trên trang</button>
+        <button type="button" className="btn btn-primary" disabled={!text.trim()} onClick={() => { const fx = fixLegacyText(text); onOpen({ id: ++seq, kind: 'doc', name: 'Văn bản dán vào', file: 'van-ban', html: paraHtml(fx.text), images: new Map(), fixed: 0, orig: null, legacy: fx.kind ? text.split('\n').filter((l) => l.trim()).length : 0 }); }}><FileText aria-hidden="true" /> Mở trên trang</button>
       </details>
     </div>
   );

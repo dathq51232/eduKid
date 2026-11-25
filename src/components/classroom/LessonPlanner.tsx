@@ -17,6 +17,7 @@ import ScheduleImport from './ScheduleImport';
 import LbgBuilder from './LbgBuilder';
 import type { Schedule } from '@/lib/plans/schedule';
 import PlanLibrary from './PlanLibrary';
+import PlanAugment from './PlanAugment';
 import DocPreview from './DocPreview';
 import PlanWorkspace from './PlanWorkspace';
 import PlanWeekBoard from './PlanWeekBoard';
@@ -43,12 +44,13 @@ const notReady = (m: string) => /function|does not exist|schema cache/i.test(m);
 const MIGRATION_HINT = 'Chưa bật lưu giáo án: chạy supabase/migrations/0021_lesson_plans.sql và 0022_lesson_plans_subjects.sql trên Supabase. Vẫn soạn và tải Word được.';
 const SUBJECT_HINT = 'Giáo án môn này cần chạy supabase/migrations/0022_lesson_plans_subjects.sql trên Supabase. Vẫn tải Word được.';
 // Bài giảng & 3D đã tách thành mục riêng (/giao-vien/lop/[id]/bai-giang-3d), cùng cấp Kế hoạch bài dạy.
-type Tab = 'tuan' | 'tao-lich' | 'kho' | 'da-luu' | 'mau';
-const TABS: Tab[] = ['tuan', 'tao-lich', 'kho', 'da-luu', 'mau'];
+type Tab = 'tuan' | 'tao-lich' | 'kho' | 'bo-sung' | 'da-luu' | 'mau';
+const TABS: Tab[] = ['tuan', 'tao-lich', 'kho', 'bo-sung', 'da-luu', 'mau'];
 const LEAD: Record<Tab, string> = {
   tuan: 'Mỗi tiết trong tuần là một thẻ: bấm để soạn giáo án, tạo bài giảng, mở phiếu của tiết đó.',
   'tao-lich': 'Tổ trưởng nạp PPCT và lịch tuần của khối, nhập thời khoá biểu từng lớp → app tạo lịch báo giảng mỗi tuần, báo chỗ lệch.',
   kho: 'Giáo án Word của trường, tách sẵn từng tiết — khi nạp lịch báo giảng, tiết nào có trong kho được dùng ngay.',
+  'bo-sung': 'Giữ nguyên giáo án Word của thầy cô, chỉ chèn thêm năng lực số, hỗ trợ học sinh hoà nhập, phân hoá vào cuối từng hoạt động.',
   'da-luu': 'Mọi giáo án đã lưu, kể cả của lớp cũ — mở, nhân bản cho lớp mới.',
   mau: 'Cách in lịch báo giảng tuần cho vừa 1 trang.',
 };
@@ -269,7 +271,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
   };
 
   const MENU: [Tab, string, number | null][] = [
-    ['tuan', '📅 Tuần dạy', null], ['tao-lich', '🧩 Tạo lịch báo giảng', null], ['kho', '📚 Kho giáo án', library.length],
+    ['tuan', '📅 Tuần dạy', null], ['tao-lich', '🧩 Tạo lịch báo giảng', null], ['kho', '📚 Kho giáo án', library.length], ['bo-sung', '✨ Bổ sung giáo án cũ', null],
     ['da-luu', '🗂 Đã lưu (tất cả)', saved.length], ['mau', '⚙️ Mẫu in lịch báo giảng', null],
   ];
   return (
@@ -322,6 +324,8 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
 
         {/* kho luôn gắn sẵn (để gợi ý giáo án từ kho khi nạp lịch), chỉ hiện ở mục Kho giáo án */}
         <div hidden={tab !== 'kho'}><PlanLibrary grade={grade} className={className} onOpen={openDraft} onChange={setLibrary} /></div>
+
+        {tab === 'bo-sung' && <PlanAugment />}
 
         {tab === 'da-luu' && (
       <section className="dash-section planner-card" aria-labelledby="pl-saved">

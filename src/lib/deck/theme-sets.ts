@@ -10,6 +10,9 @@ export type SetId = 'oli' | 'cosmos' | 'leaf' | 'lab' | 'vui' | 'sotay';
 export type ThemeSet = {
   id: SetId; name: string; sub: string; bg: string;
   card: string; edge: string; title: string; text: string;
+  /** bảng màu đi cùng bộ (11/2026): bóng thẻ (tông nhạt của viền), màu nhấn (gạch dưới tiêu đề, số thứ tự),
+   *  5 màu nhãn bước cùng độ đậm, cùng họ màu với bộ — chữ trắng trên nhãn đạt tương phản ≥ 4,5:1 */
+  back: string; accent: string; steps: [string, string, string, string, string];
   /** tư thế Milo cho 7 trang */ mascots: string[];
   /** hình trang trí: bìa, trang nội dung, trang cuối */ deco: [string, string, string];
   /** băng dính giấy dán 2 góc thẻ (kiểu sổ tay / scrapbook) */ tape?: [string, string];
@@ -19,19 +22,29 @@ export type ThemeSet = {
 const M = (n: string) => `/brand/milo${n ? `-${n}` : ''}.webp`;
 
 export const THEME_SETS: ThemeSet[] = [
-  { id: 'oli', name: 'Lớp học ô li', sub: 'Giấy kẻ ô · nâu kem', bg: 'oli', card: '#ffffff', edge: '#d6a07a', title: '#8b4a26', text: '#4a2b18',
+  // gỗ – đất nung: nâu kem, nhấn cam đất; nhãn bước tông đất trầm
+  { id: 'oli', name: 'Lớp học ô li', sub: 'Giấy kẻ ô · nâu kem', bg: 'oli', card: '#fffdf8', edge: '#d9a679', title: '#7a3e1d', text: '#4a2b18',
+    back: '#ecd2b4', accent: '#c8553d', steps: ['#b5452e', '#2f6f86', '#5a7426', '#86497a', '#93611a'],
     mascots: ['professor', 'artist', 'robot', 'doctor', 'professor', 'astronaut', ''].map(M), deco: [F('books'), F('pencil'), F('party-popper')], dash: 'dash', titleFont: 'hand' },
+  // đêm sao: thẻ chàm, chữ vàng kem; nhãn bước họ đá quý (hồng – tím – chàm – lam – ngọc)
   { id: 'cosmos', name: 'Phiêu lưu vũ trụ', sub: 'Trời sao · thẻ tối', bg: 'cosmos', card: '#1e1b4bee', edge: '#a78bfa', title: '#fde68a', text: '#e0e7ff', sw: 4,
+    back: '#7c3aed59', accent: '#9333ea', steps: ['#be185d', '#7c3aed', '#4f46e5', '#0369a1', '#0f766e'],
     mascots: ['astronaut', 'robot', 'astronaut', 'professor', 'robot', 'astronaut', ''].map(M), deco: [F('crescent-moon'), F('star'), F('star')] },
-  { id: 'leaf', name: 'Khu vườn xanh', sub: 'Lá cây · xanh bạc hà', bg: 'leaf', card: '#ffffff', edge: '#4ade80', title: '#15803d', text: '#14532d',
+  // lá non: xanh lá – ngọc – vàng rơm (màu liền kề, một điểm ấm)
+  { id: 'leaf', name: 'Khu vườn xanh', sub: 'Lá cây · xanh bạc hà', bg: 'leaf', card: '#ffffff', edge: '#6fcf97', title: '#166534', text: '#14532d',
+    back: '#c9efd6', accent: '#15803d', steps: ['#a16207', '#0e7490', '#15803d', '#0f766e', '#4d7c0f'],
     mascots: ['artist', '', 'doctor', 'artist', 'professor', 'artist', ''].map(M), deco: [F('seedling'), F('sunflower'), F('tulip')], sw: 10, noBack: true, titleFont: 'quick' },
-  { id: 'lab', name: 'Phòng thí nghiệm', sub: 'Giấy kẻ ô · xanh dương', bg: 'paper', card: '#ffffff', edge: '#38bdf8', title: '#0369a1', text: '#0c4a6e',
+  // phòng thí nghiệm: lam – chàm – ngọc (một họ màu lạnh)
+  { id: 'lab', name: 'Phòng thí nghiệm', sub: 'Giấy kẻ ô · xanh dương', bg: 'paper', card: '#ffffff', edge: '#7cc4ec', title: '#075985', text: '#0c4a6e',
+    back: '#d4ecfa', accent: '#0284c7', steps: ['#0e7490', '#0369a1', '#0f766e', '#4338ca', '#6d28d9'],
     mascots: ['doctor', 'robot', 'professor', 'doctor', 'robot', 'professor', ''].map(M), deco: [F('microscope'), F('light-bulb'), F('star')], dash: 'dot', titleFont: 'quick' },
-  // Kiểu template Canva (11/2026): khối màu bo cong tràn mép, hình dán 3D, nền kem ấm
-  { id: 'vui', name: 'Vui tươi', sub: 'Khối màu · kem cam', bg: 'blob', card: '#ffffff', edge: '#f08a1c', title: '#1e293b', text: '#334155',
+  // kẹo ngọt: cam – hồng – ngọc – tím cùng độ đậm, nền kem (kiểu template Canva: khối màu bo cong tràn mép)
+  { id: 'vui', name: 'Vui tươi', sub: 'Khối màu · kem cam', bg: 'blob', card: '#ffffff', edge: '#f59e5b', title: '#1e293b', text: '#334155',
+    back: '#ffe0bf', accent: '#ea580c', steps: ['#c2410c', '#be185d', '#0f766e', '#6d28d9', '#b45309'],
     mascots: ['', 'artist', 'professor', 'robot', 'doctor', 'professor', ''].map(M), deco: [F('red-apple'), F('star'), F('party-popper')] },
-  // Kiểu scrapbook: giấy be, thẻ giấy kem, băng dính giấy 2 góc, chữ nâu
+  // scrapbook cổ điển: giấy be, băng dính giấy, nhãn màu phai (gạch – xanh xám – rêu – mận – mù tạt)
   { id: 'sotay', name: 'Sổ tay ấm', sub: 'Giấy be · băng dính', bg: 'kraft', card: '#fdfbf4', edge: '#c9a27e', title: '#6b3d1a', text: '#5b3a1e',
+    back: '#e8d6bf', accent: '#a3472f', steps: ['#a3472f', '#3d6b74', '#5e7a34', '#7d4e6e', '#8a6a1f'],
     mascots: ['professor', 'artist', '', 'doctor', 'professor', 'artist', ''].map(M), deco: [F('books'), F('blossom'), F('backpack')], tape: ['#d6a078cc', '#9fd2abcc'], tilt: -1.5, titleFont: 'script' },
 ];
 export const SET_BY_ID = Object.fromEntries(THEME_SETS.map((t) => [t.id, t])) as Record<SetId, ThemeSet>;
@@ -52,16 +65,22 @@ const img = (m: Mk, src: string, x: number, y: number, w: number, h: number, rol
   const e = { id: uid(), kind: 'img', src, x, y, w, h, rot: 0, role, name } as El;
   m.els.push(e); return e.id;
 };
+const shape = (m: Mk, kind: 'round' | 'circle', x: number, y: number, w: number, h: number, fill: string, role: El['role'], o: Record<string, unknown> = {}) => {
+  const e = { id: uid(), kind: 'shape', shape: kind, x, y, w, h, rot: 0, fill, stroke: fill, sw: 0, lock: true, role, ...o } as El;
+  m.els.push(e); return e.id;
+};
 const anim = (m: Mk, el: string, fx: Anim['fx'], start: Anim['start'], o: Partial<Anim> = {}) => { m.anims.push({ id: uid(), el, fx, start, delay: 0, dur: 0.6, ...o }); };
 /** khung thẻ bo góc + lớp bóng lệch phía sau (khoá để khỏi kéo nhầm) */
 const card = (m: Mk, t: ThemeSet, x: number, y: number, w: number, h: number) => {
-  if (!t.noBack) m.els.push({ id: uid(), kind: 'shape', shape: 'round', x: x + 18, y: y + 20, w, h, rot: t.tilt ?? 0, fill: t.edge, stroke: t.edge, sw: 0, lock: true, role: 'cardback' } as El);
+  if (!t.noBack) m.els.push({ id: uid(), kind: 'shape', shape: 'round', x: x + 16, y: y + 18, w, h, rot: t.tilt ?? 0, fill: t.back, stroke: t.back, sw: 0, lock: true, role: 'cardback' } as El);
   m.els.push({ id: uid(), kind: 'shape', shape: 'round', x, y, w, h, rot: t.tilt ?? 0, fill: t.card, stroke: t.edge, sw: t.sw ?? 6, dash: t.dash, lock: true, role: 'card' } as El);
   m.els.push(...tapes(t, x, y, w));
 };
 /** 2 miếng băng dính giấy chéo ở 2 góc trên của thẻ */
 const tapes = (t: ThemeSet, x: number, y: number, w: number): El[] => (t.tape ?? []).map((c, k) => ({ id: uid(), kind: 'shape', shape: 'rect', x: k ? x + w - 150 : x - 40, y: y - 26, w: 190, h: 52, rot: k ? 24 : -26, fill: c, stroke: c, sw: 0, lock: true, role: 'tape' } as El));
-const step = (m: Mk, label: string) => txt(m, label, 64, 46, 80 + label.length * 26, 78, 40, '#ffffff', 'step', { bg: STEP_COLOR[label] ?? '#7c3aed', align: 'center' });
+/** màu nhãn bước theo bộ (cùng họ màu); nhãn lạ thì dùng màu chung */
+const stepColor = (t: ThemeSet, label: string) => t.steps[STEPS.indexOf((label === 'Củng cố' ? 'Tổng kết' : label) as (typeof STEPS)[number])] ?? STEP_COLOR[label] ?? t.accent;
+const step = (m: Mk, t: ThemeSet, label: string) => txt(m, label, 64, 46, 80 + label.length * 26, 78, 40, '#ffffff', 'step', { bg: stepColor(t, label), align: 'center' });
 
 export type SetInfo = { title: string; sub: string };
 /** nội dung của bài học điền vào bộ mẫu (lấy từ ngân hàng bài — xem setContentOf trong fromLesson.ts); không có thì để chữ mẫu */
@@ -80,26 +99,28 @@ export function makeSet(id: SetId, info: SetInfo, ct?: SetContent | null): Slide
   const page = (i: number, phase: string | undefined, build: (m: Mk) => void, notes: string): Slide => {
     const m: Mk = { els: [], anims: [] }; build(m);
     if (t.titleFont) m.els.forEach((e) => { if (e.role === 'title' && e.kind === 'text') e.font = t.titleFont!; });
-    return { id: uid(), bg: t.bg, els: m.els, anims: m.anims, trans: 'fade', notes, phase, mins: MINS[i] };
+    return { id: uid(), bg: t.bg, els: m.els, anims: m.anims, trans: i === 0 ? 'fade' : 'morph', notes, phase, mins: MINS[i] };
   };
   const content = (i: number, label: string, title: string, body: (m: Mk, L: number) => void, notes: string) => page(i, label, (m) => {
     card(m, t, 130, 130, 1340, 640);
-    const right = i % 2 === 1;
-    const L = right ? 220 : 470;
-    const tt = txt(m, title, L, 190, 940, 110, fit(title, 940, 110, 86, 48), t.title, 'title');
+    // trục chữ cố định x 220 ở mọi trang, Milo luôn đứng góc phải dưới → chuyển trang mắt không phải tìm lại chỗ đọc
+    const L = 220;
+    const tt = txt(m, title, L, 186, 940, 104, fit(title, 940, 104, 80, 48), t.title, 'title');
+    const bar = shape(m, 'round', L + 4, 298, 132, 12, t.accent, 'accent');
     body(m, L);
-    const mm = img(m, t.mascots[i], right ? 1180 : 30, 460, 380, 420, 'mascot', 'Bạn cú Milo');
+    const mm = img(m, t.mascots[i] || t.mascots[0], 1180, 460, 380, 420, 'mascot', 'Bạn cú Milo');
     const dd = img(m, t.deco[1], 1360, 50, 140, 140, 'deco', 'Hình trang trí');
-    step(m, label);
-    anim(m, tt, 'fade', 'with', { dur: 0.5 }); anim(m, mm, 'pop', 'after', { delay: 0.2 }); anim(m, dd, 'spin-in', 'with');
+    step(m, t, label);
+    anim(m, tt, 'float', 'with', { dur: 0.6 }); anim(m, bar, 'fade', 'with', { delay: 0.15, dur: 0.5 }); anim(m, mm, 'float', 'with', { delay: 0.25, dur: 0.7 }); anim(m, dd, 'fade', 'with', { delay: 0.3, dur: 0.6 });
   }, notes);
-  const bullets = (m: Mk, L: number, lines: string[], icon: string, size = 64, gap = 112) => {
+  /** danh sách ý: số thứ tự trong vòng tròn màu nhấn (thay ngôi sao lặp lại) */
+  const bullets = (m: Mk, L: number, lines: string[], size = 64, gap = 112) => {
     // câu dài (nội dung bài thật): dòng cao hơn, cùng một cỡ chữ cho cả danh sách (≥ 34 px)
     const long = lines.some((x) => x.length > 34);
     const g = long ? Math.min(140, Math.floor(420 / Math.max(1, lines.length))) : gap, h = long ? g - 14 : size + 20;
     const fs = long ? Math.min(...lines.map((x) => fit(x, 820, h, 52, 34))) : Math.round(size * 0.92);
     lines.forEach((x, j) => {
-      img(m, icon, L + 10, 340 + j * g, size, size, undefined, 'Ngôi sao');
+      shape(m, 'circle', L + 10, 336 + j * g, size, size, t.accent, 'accent', { text: String(j + 1), color: '#ffffff', size: Math.round(size * 0.56) });
       txt(m, x, L + size + 34, 330 + j * g, 820, h, fs, t.text, 'body');
     });
   };
@@ -111,9 +132,9 @@ export function makeSet(id: SetId, info: SetInfo, ct?: SetContent | null): Slide
       const tt = txt(m, name, 640, 230, 760, 270, fit(name, 760, 270, 110, 52), t.title, 'title');
       txt(m, info.sub, 646, 510, 760, 80, fit(info.sub, 760, 80, 46, 30), t.text, 'body', { font: 'quick' });
       img(m, t.deco[0], 1330, 90, 170, 170, 'deco', 'Hình trang trí');
-      anim(m, tt, 'zoom', 'with', { dur: 0.8 }); anim(m, mm, 'fly-left', 'with', { delay: 0.2 });
+      anim(m, tt, 'float', 'with', { dur: 0.8 }); anim(m, mm, 'float', 'with', { delay: 0.25, dur: 0.8 });
     }, 'Giới thiệu tên bài. Hỏi: “Hôm nay chúng ta sẽ học gì nhỉ?”'),
-    content(1, 'Khởi động', 'Ai nhanh hơn?', (m, L) => bullets(m, L, ct?.warm.length ? ct.warm : ['Câu hỏi 1 …', 'Câu hỏi 2 …', 'Câu hỏi 3 …'], F('star')),
+    content(1, 'Khởi động', 'Ai nhanh hơn?', (m, L) => bullets(m, L, ct?.warm.length ? ct.warm : ['Câu hỏi 1 …', 'Câu hỏi 2 …', 'Câu hỏi 3 …']),
       'Trò chơi khởi động 2–3 phút: cô đọc câu hỏi, tổ nào giơ tay nhanh và đúng được cộng điểm thi đua.' + ansNote('Đáp án', ct?.warm ?? [], ct?.warmAns ?? [])),
     content(2, 'Khám phá', 'Cùng khám phá', (m, L) => {
       if (ct?.explore) {
@@ -144,7 +165,7 @@ export function makeSet(id: SetId, info: SetInfo, ct?: SetContent | null): Slide
       txt(m, 'Đề bài: …\nHỏi: … ?', L, 330, 900, 180, 56, t.text, 'body');
       [0, 1, 2, 3].forEach((k) => img(m, F('pencil'), L + 20 + k * 160, 540, 120, 120, undefined, 'Hình minh hoạ'));
     }, 'Thảo luận nhóm đôi, trình bày bài giải. Liên hệ thực tế.' + (ct?.apply ? `\nĐáp án: ${ct.applyAns}` : '')),
-    content(5, 'Tổng kết', 'Hôm nay em học được', (m, L) => bullets(m, L, ct?.summary.length ? ct.summary : ['Điều thứ nhất …', 'Điều thứ hai …', 'Điều thứ ba …'], F('star'), 58, 100), 'Hỏi lại ý chính của bài. Khen các tổ, tổng kết điểm thi đua.'),
+    content(5, 'Tổng kết', 'Hôm nay em học được', (m, L) => bullets(m, L, ct?.summary.length ? ct.summary : ['Điều thứ nhất …', 'Điều thứ hai …', 'Điều thứ ba …'], 58, 100), 'Hỏi lại ý chính của bài. Khen các tổ, tổng kết điểm thi đua.'),
     page(6, undefined, (m) => {
       card(m, t, 220, 170, 1220, 520);
       const mm = img(m, t.mascots[6], 80, 150, 560, 620, 'mascot', 'Bạn cú Milo');
@@ -152,7 +173,7 @@ export function makeSet(id: SetId, info: SetInfo, ct?: SetContent | null): Slide
       const home = ct?.home ? `Về nhà: ${ct.home}` : 'Về nhà: …';
       txt(m, home, 646, 450, 760, 120, 46, t.text, 'body', { font: 'quick' });
       const d = img(m, t.deco[2], 1250, 520, 150, 150, 'deco', 'Hình trang trí');
-      anim(m, tt, 'pop', 'with'); anim(m, mm, 'fly-left', 'with', { delay: 0.2 }); anim(m, d, 'jump', 'after', { sound: 'tada' });
+      anim(m, tt, 'pop', 'with', { dur: 0.7 }); anim(m, mm, 'float', 'with', { delay: 0.25, dur: 0.8 }); anim(m, d, 'jump', 'after', { sound: 'tada' });
     }, 'Dặn dò bài về nhà, chuẩn bị bài sau.'),
   ];
 }
@@ -167,7 +188,9 @@ export function applySet(slides: Slide[], id: SetId): Slide[] {
     if (cardEl) els.splice(els.indexOf(cardEl) + 1, 0, ...tapes(t, cardEl.x, cardEl.y, cardEl.w));
     const mapped = els.map((e): El => {
       if (e.role === 'card' && e.kind === 'shape') return { ...e, fill: t.card, stroke: t.edge, sw: t.sw ?? 6, dash: t.dash, rot: t.tilt ?? 0, op: 1 };
-      if (e.role === 'cardback' && e.kind === 'shape') return { ...e, fill: t.edge, stroke: t.edge, rot: t.tilt ?? 0, hide: t.noBack || undefined };
+      if (e.role === 'cardback' && e.kind === 'shape') return { ...e, fill: t.back, stroke: t.back, rot: t.tilt ?? 0, hide: t.noBack || undefined };
+      if (e.role === 'accent' && e.kind === 'shape') return { ...e, fill: t.accent, stroke: t.accent };
+      if (e.role === 'step' && e.kind === 'text') return { ...e, bg: stepColor(t, e.text.trim()) };
       if (e.role === 'title' && e.kind === 'text') return { ...e, color: t.title, font: t.titleFont ?? e.font };
       if (e.role === 'divider' && e.kind === 'text') return { ...e, color: t.title, stroke: darkBg(t.bg) ? '#0f172a' : e.stroke };
       if (e.role === 'body' && e.kind === 'text') return { ...e, color: t.text };

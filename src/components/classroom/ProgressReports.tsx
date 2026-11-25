@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Check, ClipboardCopy, FileSpreadsheet, Printer, RotateCcw } from 'lucide-react';
+import { Check, ClipboardCopy, FilePenLine, FileSpreadsheet, Printer, RotateCcw } from 'lucide-react';
+import { useEditOnPage } from '@/lib/vanban/handoff';
+import { esc } from '@/lib/vanban/class-print';
 import { downloadXlsx, XS } from '@/lib/xlsx';
 import { nd30HeaderHtml, nd30SignHtml } from '@/lib/doc-style';
 import { SUBJECT_VI, buildReport, reportRanges, reportText, type CompactResult, type Range, type StudentReport } from '@/lib/classroom/report';
@@ -98,6 +100,21 @@ export default function ProgressReports({ classId, className, students, rows, te
     const ok = await copyText(approved.map((s) => drafts[s.id].text).join('\n\n———\n\n'));
     setMsg(ok ? { kind: 'ok', text: `Đã sao chép ${approved.length} lời nhắn đã duyệt.` } : { kind: 'error', text: 'Trình duyệt chặn sao chép.' });
   };
+  // Sửa trên trang: các phiếu đã duyệt (mỗi em một trang, đúng thể thức NĐ30) mở trong trình soạn văn bản của lớp
+  const editOnPage = useEditOnPage();
+  const openEditor = () => {
+    if (!editOnPage || !approved.length) return;
+    const page = (st: Student) => {
+      const lines = drafts[st.id].text.split('\n');
+      return nd30HeaderHtml({ school, place, dateIso: todayIso })
+        + '<p style="text-align:center;font-weight:bold;font-size:15pt;margin:14pt 0 2pt">PHIẾU BÁO TIẾN BỘ</p>'
+        + `<p style="text-align:center;font-style:italic;margin:0 0 10pt">Lớp ${esc(className)} · ${esc(range.label)}</p>`
+        + `<p style="margin:0 0 6pt"><b>Học sinh:</b> ${esc(st.name)}</p>`
+        + lines.map((l, k) => `<p style="margin:0 0 6pt;text-align:justify">${esc(k === lines.length - 1 ? l.replace(/\s*GVCN .*$/, '') : l)}</p>`).join('')
+        + nd30SignHtml('Giáo viên chủ nhiệm', teacher);
+    };
+    editOnPage({ name: `Phiếu báo tiến bộ · ${range.label}`, file: `phieu-tien-bo-lop-${className}`, html: approved.map(page).join('<br style="page-break-before:always" />'), fontSize: 14 });
+  };
   const exportXlsx = () => downloadXlsx(`phieu-tien-bo-lop-${className}.xlsx`, [{
     name: 'Phiếu báo tiến bộ', cols: [5, 28, 10, 10, 12, 90, 10],
     rows: [
@@ -154,6 +171,7 @@ export default function ProgressReports({ classId, className, students, rows, te
         <div className="planner-actions">
           <button type="button" className="btn btn-primary btn-sm" onClick={() => void copyApproved()}><ClipboardCopy aria-hidden="true" /> Sao chép {approved.length} lời nhắn đã duyệt</button>
           <button type="button" className="btn btn-outline btn-sm" onClick={() => window.print()}><Printer aria-hidden="true" /> In / lưu PDF (đã duyệt)</button>
+          {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={openEditor} disabled={!approved.length} title="Mở các phiếu đã duyệt trong trình soạn văn bản để sửa trực tiếp như Word"><FilePenLine aria-hidden="true" /> Sửa trên trang &amp; cấu hình in</button>}
           <button type="button" className="btn btn-outline btn-sm" onClick={exportXlsx}><FileSpreadsheet aria-hidden="true" /> Tải Excel</button>
           <button type="button" className="btn btn-outline btn-sm" onClick={regenAll}><RotateCcw aria-hidden="true" /> Viết lại tất cả</button>
         </div>

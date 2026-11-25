@@ -23,7 +23,7 @@ export type ElBase = {
   /** nhóm vật (chọn một vật trong nhóm là chọn cả nhóm) */
   group?: string;
   /** vai trò trong bố cục chủ đề (đổi chủ đề cả bài thì đổi màu theo): khung nội dung, nhãn bài, hình thức làm bài, chữ trang chia */
-  role?: 'card' | 'badge' | 'mode' | 'title' | 'divider' | 'cardback' | 'step' | 'body' | 'mascot' | 'deco' | 'tape' | 'photo';
+  role?: 'card' | 'badge' | 'mode' | 'title' | 'divider' | 'cardback' | 'step' | 'body' | 'mascot' | 'deco' | 'tape' | 'photo' | 'accent';
   /** độ trong suốt 0.1–1 (mặc định 1) */
   op?: number;
   /** lật ngang */
@@ -55,11 +55,11 @@ export type El = TextEl | ImgEl | ShapeEl | QuizEl | DropEl | SceneEl | SortEl |
 
 export type FxGroup = 'in' | 'em' | 'out';
 export type Fx =
-  | 'fade' | 'fly-left' | 'fly-right' | 'fly-up' | 'fly-down' | 'pop' | 'zoom' | 'spin-in' | 'drop'
+  | 'fade' | 'float' | 'fly-left' | 'fly-right' | 'fly-up' | 'fly-down' | 'pop' | 'zoom' | 'spin-in' | 'drop'
   | 'pulse' | 'shake' | 'wiggle' | 'blink' | 'grow' | 'spin' | 'jump'
   | 'fade-out' | 'fly-out' | 'zoom-out';
 export const FX: { id: Fx; group: FxGroup; icon: string; label: string }[] = [
-  { id: 'fade', group: 'in', icon: '✨', label: 'Hiện dần' }, { id: 'fly-left', group: 'in', icon: '⇢', label: 'Bay từ trái' },
+  { id: 'fade', group: 'in', icon: '✨', label: 'Hiện dần' }, { id: 'float', group: 'in', icon: '🫧', label: 'Nổi lên' }, { id: 'fly-left', group: 'in', icon: '⇢', label: 'Bay từ trái' },
   { id: 'fly-right', group: 'in', icon: '⇠', label: 'Bay từ phải' }, { id: 'fly-up', group: 'in', icon: '⇡', label: 'Bay từ dưới' },
   { id: 'fly-down', group: 'in', icon: '⇣', label: 'Rơi xuống' }, { id: 'pop', group: 'in', icon: '⤒', label: 'Nảy lên' },
   { id: 'zoom', group: 'in', icon: '🔍', label: 'Phóng to' }, { id: 'spin-in', group: 'in', icon: '⟲', label: 'Xoay vòng' },
@@ -89,8 +89,9 @@ export type Anim = {
   trigger?: string;
 };
 
-export type Trans = 'none' | 'fade' | 'slide' | 'zoom' | 'flip';
-export const TRANS_LABEL: Record<Trans, string> = { none: 'Không', fade: 'Mờ dần', slide: 'Trượt sang', zoom: 'Phóng to', flip: 'Lật trang' };
+/** chuyển trang kiểu PowerPoint: morph = Biến hình (vật giống nhau ở 2 trang trượt / đổi cỡ sang chỗ mới) */
+export type Trans = 'none' | 'fade' | 'morph' | 'slide' | 'zoom' | 'flip';
+export const TRANS_LABEL: Record<Trans, string> = { none: 'Không', fade: 'Mờ dần', morph: 'Biến hình (Morph)', slide: 'Đẩy sang', zoom: 'Phóng to', flip: 'Lật trang' };
 
 export type SceneKind = 'garden' | 'pond' | 'kitchen' | 'class' | 'yard' | 'sea' | 'space' | 'farm' | 'tet' | 'dino' | 'candy' | 'family';
 /** quiet: nền dịu cho trang nội dung — chỉ màu nền của cảnh + một hình nhỏ ở góc, để chữ và câu hỏi nổi bật */
