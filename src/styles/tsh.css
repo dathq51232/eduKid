@@ -197,3 +197,28 @@ html.dk-focus .tsh-main { padding-bottom: 0; }
 .tsh-sep { display: block; height: 1px; margin: 6px 10px; background: var(--line); }
 .tsh-mtop .tsh-icon-btn.is-on { color: var(--brand-blue); }
 .tsh-mtop a.tsh-icon-btn { justify-content: center; }
+
+/* ===== Hai khu công cụ (Soạn & dạy · Lớp chủ nhiệm) + Của tôi — tiêu đề khu ở cột trái ===== */
+.tsh-khu { display: grid; gap: 2px; }
+.tsh-khu + .tsh-khu { margin-top: 6px; }
+.tsh-khu-h { display: block; padding: 8px 12px 2px; color: var(--muted); font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.tsh-khu.is-me { padding-top: 6px; border-top: 1px dashed var(--line); }
+/* cột trái thu gọn: tiêu đề khu thành một vạch ngăn */
+.tsh.is-mini .tsh-khu-h { height: 1px; margin: 6px 10px; padding: 0; background: var(--line); }
+
+/* ===== Điện thoại: bảng công cụ của một khu (bấm khu ở thanh tab dưới) ===== */
+.tsh-sheet, .tsh-sheet-scrim { display: none; }
+@media (max-width: 900px) {
+  .tsh-sheet-scrim { display: block; position: fixed; inset: 0; z-index: 64; background: rgb(15 23 42 / .35); }
+  .tsh-sheet { display: grid; gap: 10px; position: fixed; left: 0; right: 0; bottom: calc(66px + env(safe-area-inset-bottom)); z-index: 65; max-height: min(70vh, 620px); overflow-y: auto;
+    padding: 12px 14px 14px; border-radius: 20px 20px 0 0; background: var(--surface); box-shadow: 0 -10px 30px rgb(15 23 42 / .2); animation: tsh-sheet-in .16s ease-out; }
+  .tsh-sheet-hd { display: flex; align-items: center; justify-content: space-between; }
+  .tsh-sheet-hd b { font-size: 17px; }
+  .tsh-sheet-g h3 { margin: 0 0 4px; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+  .tsh-sheet-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2px; }
+  .tsh-sheet-list .tsh-fly-i { min-height: 48px; }
+  .tsh-sheet-foot { margin: 0; text-align: center; font-size: 14px; }
+  .tsh-sheet-foot a { display: inline-block; padding: 8px; color: var(--brand-blue); font-weight: 700; }
+}
+@keyframes tsh-sheet-in { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .tsh-sheet { animation: none; } }

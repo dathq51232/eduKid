@@ -267,3 +267,26 @@
 .tdy-peer { display: inline-flex; align-items: center; gap: 4px; justify-self: start; max-width: 100%; padding: 2px 8px; border-radius: 99px; background: color-mix(in srgb, #7c5cf0 13%, var(--surface)); color: var(--ink); font-size: 12.5px; font-weight: 700; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tdy-peer svg { flex: none; width: 14px; height: 14px; color: #7c5cf0; }
 .tdy-peer:hover { background: color-mix(in srgb, #7c5cf0 22%, var(--surface)); }
+
+/* ===== Công cụ ghim + bảng Tuỳ chỉnh (ghim / ẩn công cụ) ===== */
+.tdy-quick-sec { display: grid; gap: 8px; scroll-margin-top: 80px; }
+.tdy-quick-hd { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.tdy-quick-hd .tdy-sect { margin-bottom: 0; }
+.tdy-quick-edit, .tdy-prefs .ct-link { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }
+.tdy-quick-edit svg, .tdy-prefs .ct-link svg { width: 16px; height: 16px; }
+.tdy-prefs { display: grid; gap: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.tdy-prefs > p { margin: 0; }
+.tdy-prefs-khu-hd { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.tdy-prefs-khu h3 { margin: 0; font-size: 15px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.tdy-prefs-g h4 { margin: 8px 0 4px; font-size: 14px; }
+.tdy-prefs-g ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px 12px; margin: 0; padding: 0; list-style: none; }
+.tdy-prefs-g li { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 2px 6px; border-radius: 10px; }
+.tdy-prefs-g li .tsh-ic { flex: none; width: 28px; height: 28px; border-radius: 8px; }
+.tdy-prefs-g li .tsh-ic svg { width: 16px; height: 16px; }
+.tdy-prefs-g li.is-hidden .tdy-prefs-name, .tdy-prefs-g li.is-hidden .tsh-ic { opacity: .45; }
+.tdy-prefs-name { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 600; }
+.tdy-prefs-btn { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); cursor: pointer; }
+.tdy-prefs-btn svg { width: 18px; height: 18px; }
+.tdy-prefs-btn.is-on { border-color: var(--brand-blue); background: var(--brand-blue); color: #fff; }
+.tdy-prefs-btn.is-off { color: #b45309; }
+.tdy-prefs-btn:focus-visible, .tdy-quick-edit:focus-visible { outline: 3px solid var(--brand-blue); outline-offset: 2px; }
