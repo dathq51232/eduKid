@@ -163,6 +163,11 @@ export function parseText(lines: string[], lessons: BookLesson[], fallback: stri
   if (kh >= 0) {
     const tail = lines.slice(kh + 1).join('  ');
     for (const m of tail.matchAll(/(?:câu\s*)?(\d{1,3})\s*[-.:)–]\s*([A-F](?:\s*,\s*[A-F])*)\b/gi)) key.set(Number(m[1]), m[2].toUpperCase());
+    // dòng "Câu 3: Đ", "Câu 4: 4 hộp có 24 cái bánh." — đáp án Đúng / Sai, đáp số, hướng dẫn chấm câu tự luận
+    for (const l of lines.slice(kh + 1)) {
+      const m = /^\s*(?:câu|bài)\s*(\d{1,3})\s*[-.:)–]\s*(.+?)\s*$/i.exec(clean(l));
+      if (m && !key.has(Number(m[1]))) key.set(Number(m[1]), m[2]);
+    }
   }
   let cur: Raw | null = null;
   let auto = 0;

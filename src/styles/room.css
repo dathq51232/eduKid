@@ -119,3 +119,12 @@
 .room-copy.is-ok { border-color: #22c55e; color: #15803d; }
 :root[data-theme="dark"] .room-copy.is-ok { color: #86efac; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .room-copy.is-ok { color: #86efac; } }
+/* Mã QR vào phòng + nút Excel bảng điểm */
+.room-qr { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-top: 12px; padding: 14px; border-radius: 14px; background: #fff; color: #111; }
+.room-qr .qr-code { flex: none; max-width: 100%; height: auto; }
+.room-qr > div { flex: 1 1 220px; min-width: 0; }
+.room-qr p { margin: 0 0 6px; }
+.room-qr .dash-muted { color: #475569; }
+.room-qr-code { font-size: 40px; font-weight: 900; letter-spacing: 6px; line-height: 1.1; }
+.room-qr-link { font-size: 12px; overflow-wrap: anywhere; }
+.room-excel { margin: 0 0 8px; }

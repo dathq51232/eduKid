@@ -128,3 +128,7 @@
 :root[data-theme="dark"] .exam-muc.m1 { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
 :root[data-theme="dark"] .exam-muc.m2 { background: color-mix(in srgb, #1e40af 24%, var(--surface)); color: color-mix(in srgb, #1e40af 40%, #fff); }
 :root[data-theme="dark"] .exam-result-list li.is-wrong { background: color-mix(in srgb, #b91c1c 24%, var(--surface)); color: color-mix(in srgb, #b91c1c 40%, #fff); }
+/* Đề nhập từ Word: điểm mỗi câu theo mức */
+.exam-word-points { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 16px; }
+.exam-word-points .adm-field { max-width: 260px; }
+.exam-word-points p { margin: 0 0 8px; }
