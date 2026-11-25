@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { CalendarDays, Copy, FileDown, FileSpreadsheet, FilePlus2, MonitorPlay, Save, Sparkles, Trash2, Undo2, Maximize2, Minimize2, Upload, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
-  SUBJECT_NAMES, addDays, blankPlan, generatePlan, isPlan, mondayOf, subjectNameOf, viDate, weekdayVi,
-  type LessonInfo, type LessonPlan, type PlanSubject,
+  PLAN_KINDS, SUBJECT_NAMES, addDays, blankPlan, generatePlan, isPlan, kindOfTitle, mondayOf, subjectNameOf, viDate, weekdayVi,
+  type LessonInfo, type LessonPlan, type PlanKind, type PlanSubject,
 } from '@/lib/plans/generate';
 import { plansDocument } from '@/lib/plans/word';
 import { weekExport, weekSheet, loadWeekOpts, saveWeekOpts, DEFAULT_WEEK_OPTS, type WeekArgs, type WeekOpts } from '@/lib/plans/week-export';
@@ -84,6 +84,8 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
   const [subject, setSubject] = useState<SubjectCode>('toan');
   const lessons = useMemo(() => lessonsBySubject[subject] ?? [], [lessonsBySubject, subject]);
   const [lessonId, setLessonId] = useState('');
+  // loại tiết: 'auto' = đoán theo tên bài (Luyện tập / Ôn tập / Thực hành / Bài mới)
+  const [kindSel, setKindSel] = useState<PlanKind | 'auto'>('auto');
   const [date, setDate] = useState(todayIso);
   const [period, setPeriod] = useState(1);
   const [plan, setPlan] = useState<LessonPlan | null>(null);
@@ -159,7 +161,7 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
   const create = (blank = false) => {
     if (!confirmDiscard()) return;
     const base = blank ? blankPlan(subject, grade, className)
-      : (() => { const i = lessons.findIndex((l) => l.id === lessonId); return generatePlan({ subject, grade, className, lesson: lessons[i] ?? null, prevTitle: i > 0 ? lessons[i - 1].title : '', weakForms: weakForms[subject], date, period }); })();
+      : (() => { const i = lessons.findIndex((l) => l.id === lessonId); return generatePlan({ subject, grade, className, lesson: lessons[i] ?? null, prevTitle: i > 0 ? lessons[i - 1].title : '', weakForms: weakForms[subject], date, period, kind: kindSel === 'auto' ? undefined : kindSel }); })();
     setPlan({ ...base, date, period });
     setPlanId(null);
     setDirty(true);
@@ -409,6 +411,12 @@ export default function LessonPlanner({ classId, className, grade, school, weakF
           <label className="adm-field planner-lesson"><span>Bài</span>
             <select value={lessonId} onChange={(e) => setLessonId(e.target.value)}>
               {lessons.map((l) => <option key={l.id} value={l.id}>{l.title}</option>)}
+            </select>
+          </label>
+          <label className="adm-field"><span>Loại tiết</span>
+            <select value={kindSel} onChange={(e) => setKindSel(e.target.value as PlanKind | 'auto')}>
+              <option value="auto">Tự nhận ({PLAN_KINDS.find((k) => k.id === kindOfTitle(lessons.find((l) => l.id === lessonId)?.title ?? ''))?.label})</option>
+              {PLAN_KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}
             </select>
           </label>
           <label className="adm-field"><span>Ngày dạy</span><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>

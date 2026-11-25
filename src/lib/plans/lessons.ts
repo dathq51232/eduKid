@@ -2,8 +2,10 @@
 import { CONTENT, type ContentLesson } from '../content';
 import { knowledgeFor } from '../content/knowledge';
 import { findOutcomeAny, formsOf } from '../curriculum';
+import { blankText as blank } from '../knowledge-view';
 import type { SubjectCode } from '../types';
-import type { LessonInfo } from './generate';
+import type { LessonInfo, PlanSample } from './generate';
+import { sampleOf } from '../question-sample';
 
 const uniq = <T,>(a: T[]) => [...new Set(a)];
 
@@ -15,8 +17,6 @@ export function rangeOf(text: string): number | null {
   return nums.length ? Math.min(...nums) : null;
 }
 
-/** "{}" trong kiến thức cần nhớ là ô trống cần điền (trang làm bài hiện thành ô nhập) → giáo án hiện □ */
-const blank = (s: string) => s.replace(/\{\}/g, '□');
 
 /**
  * Yêu cầu cần đạt của một bài, lấy từ mã YCCĐ gắn trên câu hỏi. YCCĐ trong danh mục là của CẢ NĂM / chủ đề,
@@ -43,6 +43,25 @@ export function lessonOutcomes(l: ContentLesson): { core: string[]; extend: stri
   };
 }
 
+/**
+ * Câu mẫu thật của bài cho giáo án (đề + đáp án, đúng phạm vi, đã qua bộ kiểm tra nội dung): mỗi cấp độ L1–L5 một câu,
+ * tối đa 4 câu (L1, L2, L3, một câu L4–L5); bỏ câu cần hình / âm thanh, câu điền nhiều ô và câu dài (bài đọc).
+ */
+export function lessonSamples(l: ContentLesson): PlanSample[] {
+  const out: PlanSample[] = [];
+  for (const lv of [1, 2, 3, 4, 5]) {
+    if (lv === 5 && out.some((x) => x.lv === 4)) break;
+    for (const q of l.questions) {
+      if (q.level !== lv) continue;
+      const s = sampleOf(q);
+      if (!s || s.prompt.length > 160) continue;
+      out.push({ lv, prompt: s.prompt, answer: s.answer, ...(s.options.length > 2 ? { opts: s.options } : {}) });
+      break;
+    }
+  }
+  return out;
+}
+
 /** Bài theo sách của một môn – khối (không gồm đề ôn), đúng thứ tự trong sách, kèm YCCĐ, dạng bài, kiến thức cần nhớ */
 export function lessonInfos(subject: SubjectCode, grade: number): LessonInfo[] {
   const formMap = new Map(formsOf(subject).map((f) => [f.code, f.name]));
@@ -56,6 +75,7 @@ export function lessonInfos(subject: SubjectCode, grade: number): LessonInfo[] {
       forms: uniq(l.questions.map((q) => q.form)).map((c) => formMap.get(c)).filter((x): x is string => !!x),
       knowledge: (know?.points ?? []).map(blank),
       example: blank(know?.example ?? ''),
+      samples: lessonSamples(l),
     };
   });
 }

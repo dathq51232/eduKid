@@ -1,9 +1,11 @@
 import { Lightbulb } from 'lucide-react';
 import type { Knowledge } from '@/lib/content/knowledge';
+import { knowledgeView } from '@/lib/knowledge-view';
 import '@/styles/knowledge.css';
 
 /** Ô "Kiến thức cần nhớ" ở màn hình bắt đầu làm bài (mở sẵn, có thể thu gọn) */
-export default function KnowledgeCard({ knowledge }: { knowledge: Knowledge }) {
+export default function KnowledgeCard({ knowledge: raw }: { knowledge: Knowledge }) {
+  const knowledge = knowledgeView(raw); // "{}" → □
   return (
     <details className="knowledge-card" open>
       <summary>
