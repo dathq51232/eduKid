@@ -8,11 +8,6 @@
 .dh-blank b { display: flex; align-items: center; gap: 4px; font-size: 16px; } .dh-blank b svg { width: 18px; height: 18px; }
 .dh-blank small { display: block; color: var(--muted); font-size: 12.5px; }
 .dh-h { margin: 6px 0 0; font-size: 17px; } .dh-h span { font-size: 12px; background: var(--line); border-radius: 999px; padding: 1px 8px; } .dh-h small { color: var(--muted); font-size: 13px; font-weight: 600; }
-.dh-tpls { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-.dh-tpls button { width: 100%; display: grid; gap: 4px; padding: 0 0 10px; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--surface); color: var(--ink); text-align: left; cursor: pointer; font: inherit; }
-.dh-tpls button:hover:not(:disabled) { border-color: #a78bfa; box-shadow: 0 4px 14px #7c3aed22; }
-.dh-tpls .dh-pv { border-radius: 0; }
-.dh-tpls b, .dh-tpls small { padding: 0 12px; } .dh-tpls b { font-size: 14.5px; } .dh-tpls small { color: var(--muted); font-size: 12.5px; }
 @media (max-width: 700px) { .dh-new { grid-template-columns: 1fr; } }
 
 .dh-blank.is-lesson { border-color: #fcd34d; background: linear-gradient(135deg, #fffbeb, var(--surface)); }

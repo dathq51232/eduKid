@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable @next/next/no-img-element -- hình dán / biểu tượng nhỏ có sẵn trong dự án */
 
-// Tab "Bài thao giảng" trong trang Bài giảng 3D: bài của tôi + tạo bài trống / từ mẫu hoạt động.
+// Tab "Bài thao giảng" trong trang Bài giảng 3D: bài của tôi + tạo bài trống / từ bài học.
 import OfflineSaveButton from '@/components/offline/OfflineSaveButton';
 import { saveDeckOfflineById } from '@/lib/offline/save';
 import Link from 'next/link';
@@ -10,8 +10,7 @@ import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
 import { Copy, MonitorPlay, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { BGS, emptyDeck, type Deck } from '@/lib/deck/types';
-import { SLIDE_TEMPLATES, deckFromTemplate } from '@/lib/deck/templates';
+import { emptyDeck, type Deck } from '@/lib/deck/types';
 import '@/styles/adm.css';
 import '@/styles/ct.css';
 import '@/styles/dk.css';
@@ -58,7 +57,6 @@ export default function DeckHome({ classId, grade, decks, missing, openPlan }: {
   };
   const made = useMemo(() => new Set(list.map((r) => r.plan).filter((x): x is string => !!x)), [list]);
   const name = () => title.trim() || 'Bài thao giảng mới';
-  const fromTpl = (id: string) => { const D = emptyDeck(name(), grade); D.slides = deckFromTemplate(id, name()); void create(D, id); };
   const duplicate = async (r: DeckRow) => {
     if (!supabase) return; setBusy(r.id);
     const { data } = await supabase.from('slide_decks').select('data').eq('id', r.id).single();
@@ -108,19 +106,6 @@ export default function DeckHome({ classId, grade, decks, missing, openPlan }: {
           </li>
         ))}</ul>
       </>}
-
-      <h2 className="dh-h">Bắt đầu từ mẫu hoạt động <small>· bài mới gồm trang tiêu đề + trang mẫu, sửa thoải mái</small></h2>
-      <ul className="dh-tpls">{SLIDE_TEMPLATES.filter((t) => t.id !== 'title').map((t) => (
-        <li key={t.id}>
-          <button type="button" disabled={missing || !!busy} onClick={() => fromTpl(t.id)}>
-            <span className="dh-pv" style={{ background: BGS.find((b) => b.id === t.bg)?.css }}>
-              {t.preview.map((p) => (
-                <img key={p} src={p} alt="" />))}
-            </span>
-            <b>{busy === t.id ? 'Đang tạo…' : t.title}</b><small>{t.desc}</small>
-          </button>
-        </li>
-      ))}</ul>
     </div>
   );
 }

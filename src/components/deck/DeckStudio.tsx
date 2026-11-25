@@ -19,7 +19,7 @@ import {
 import { PHOTO_SRC } from '@/lib/deck/types';
 import { loadPraiseFonts } from '@/lib/praise/render';
 import { playSound, soundLabel, SOUNDS } from '@/lib/deck/sounds';
-import { SLIDE_TEMPLATES, STICKER_SETS } from '@/lib/deck/templates';
+import { STICKER_SETS } from '@/lib/deck/templates';
 import { LAYOUTS, relayout, relayoutBlocker } from '@/lib/deck/relayout';
 import { SCENES, SCENES_SORTED, SCENE_VARIANTS, accentOf, sceneGroups } from '@/lib/deck/scenes';
 import { WORK_MODES, applyTheme, badgeEl, cardEl, dividerSlide, modeEl, setContentOf, type WorkMode } from '@/lib/deck/fromLesson';
@@ -607,14 +607,6 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
                     <button key={s.id} type="button" title={s.phase ?? (i ? 'Trang cuối' : 'Trang bìa')} onClick={() => addSlides([makeSet(t.id, info, setCt)[i]])}>
                       <SlideFrame>{(k) => <SlideView slide={s} mode="thumb" scale={k} />}</SlideFrame></button>))}</div></div>
                 ))}
-                <p className="cv-ph">Trang mẫu theo hoạt động</p>
-                <div className="dk-tpls cv-tpls">{SLIDE_TEMPLATES.map((t) => (
-                  <button key={t.id} type="button" onClick={() => addSlides(t.make())}>
-                    <span className="dk-tpl-pv" style={{ background: BGS.find((b) => b.id === t.bg)?.css }}>{t.preview.map((p) => (
-                      // eslint-disable-next-line @next/next/no-img-element -- xem trước mẫu
-                      <img key={p} src={p} alt="" />))}</span>
-                    <b>{t.title}</b><small>{t.desc}</small>
-                  </button>))}</div>
                 <select className="cv-sel" aria-label="Thêm trang chia hoạt động" value="" onChange={(e) => { const v = e.target.value; if (v) addSlides([dividerSlide(v, slide.scene)]); }}>
                   <option value="">＋ Trang chia hoạt động…</option>{['Khởi động', 'Khám phá', 'Luyện tập', 'Thực hành', 'Vận dụng', 'Trò chơi', 'Củng cố', 'Dặn dò', 'Thảo luận nhóm', 'Cùng chia sẻ'].map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
