@@ -7,7 +7,7 @@ import { loadClassPage } from '@/lib/classroom/class-page';
 export const metadata: Metadata = { title: 'Văn bản & in ấn · EduChain Kids', robots: { index: false } };
 export const dynamic = 'force-dynamic';
 
-// Văn bản & in ấn: mẫu văn bản NĐ30, chuẩn hoá văn bản, in bảng Excel. Mọi xử lý trên trình duyệt; quyền: giáo viên của lớp.
+// Văn bản & in ấn: soạn văn bản NĐ30, mở file Word / Excel để chuẩn hoá & in, in theo lớp (danh sách, trộn thư, nhãn vở, thẻ tên). Mọi xử lý trên trình duyệt; quyền: giáo viên của lớp.
 export default async function DocStudioPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const p = await loadClassPage(id, 'van-ban');
@@ -18,7 +18,7 @@ export default async function DocStudioPage({ params }: { params: Promise<{ id: 
     <>
       <LearnHeader />
       <main className="dash wrap ct-page">
-        <DocStudio teacher={(me?.display_name as string | undefined) ?? ''} className={p.cls.name} />
+        <DocStudio teacher={(me?.display_name as string | undefined) ?? ''} className={p.cls.name} classId={p.cls.id} students={p.students} />
       </main>
     </>
   );

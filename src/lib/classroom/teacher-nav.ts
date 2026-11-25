@@ -39,7 +39,7 @@ const ALL: Tool[] = [
   { key: 'lich', label: 'Lịch âm dương', desc: 'Ngày âm, lễ, sinh nhật học sinh', group: 'Tiện ích', tone: 'yellow', path: 'lich', keywords: 'lich am duong am lich ngay le tet can chi doi ngay sinh nhat hoang dao' },
   { key: 'thu-chi', label: 'Thu chi cá nhân', desc: 'Sổ tiền riêng, chỉ mình xem', group: 'Tiện ích', tone: 'green', path: 'thu-chi', keywords: 'thu chi ca nhan so tien luong chi tieu tiet kiem' },
   { key: 'quy-lop', label: 'Quỹ lớp', desc: 'Khoản thu theo em, chi, tồn quỹ', group: 'Tiện ích', tone: 'coral', path: 'quy-lop', keywords: 'quy lop thu chi tien nop chua nop ton quy cong khai phu huynh' },
-  { key: 'van-ban', label: 'Văn bản & in ấn', desc: 'Mẫu NĐ30, chuẩn hoá, in Excel', group: 'Tiện ích', tone: 'blue', path: 'van-ban', keywords: 'van ban hanh chinh nghi dinh 30 nd30 the thuc mau thong bao ke hoach bao cao bien ban giay moi to trinh don xin nghi phep chuan hoa in excel pdf word' },
+  { key: 'van-ban', label: 'Văn bản & in ấn', desc: 'Mẫu NĐ30, in danh sách, nhãn vở, giấy mời', group: 'Tiện ích', tone: 'blue', path: 'van-ban', keywords: 'nhan vo the ten de ban danh sach lop diem danh thang ky nhan nop tien tron thu giay moi hop phu huynh giay bao phieu lien lac in theo lop van ban hanh chinh nghi dinh 30 nd30 the thuc mau thong bao ke hoach bao cao bien ban giay moi to trinh don xin nghi phep chuan hoa in excel pdf word' },
   { key: 'lop', label: 'Học sinh & mã lớp', desc: 'Thêm em, PIN, thẻ đăng nhập', group: 'Lớp', tone: 'blue', path: '', keywords: 'hoc sinh pin ma lop the dang nhap them em quan ly lop' },
 ];
 
