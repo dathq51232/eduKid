@@ -2,8 +2,8 @@
 
 import { downloadHtmlAsDocx } from '@/lib/doc-download';
 import EmojiText from '@/components/EmojiText';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FileDown, FilePenLine, FilePlus2, FolderOpen, Library, Printer, RefreshCw, Save, Scale, Shuffle, Table2, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FileDown, FilePenLine, FilePlus2, FileUp, FolderOpen, Library, Printer, RefreshCw, Save, Scale, Shuffle, Table2, Trash2 } from 'lucide-react';
 import MyBankPanel from './MyBankPanel';
 import { useMyBank } from './useMyBank';
 import { createClient } from '@/lib/supabase/client';
@@ -13,10 +13,11 @@ import { schoolYearOf } from '@/lib/classroom/comments';
 import { EXAM_NAME, examsFor, type ExamCode } from '@/lib/classroom/school';
 import {
   MUCS, MUC_DESC, MUC_NAME, available, bookLessons, buildPaper, defaultMatrix, outcomesIn, periodShare, replaceSlot, shufflePaper, totals,
-  type BookLesson, type Matrix, type Muc, type Paper,
+  type BookLesson, type ExamQuestion, type Matrix, type Muc, type Paper,
 } from '@/lib/exams/matrix';
 import { answerText, examDocument, printDoc } from '@/lib/exams/word';
 import { periodsFromPpct } from '@/lib/exams/periods';
+import { answerOf, extractFile, parseText } from '@/lib/bank/parse';
 import { loadKhoi } from '@/lib/plans/lbg-store';
 import type { PpctItem } from '@/lib/plans/lbg';
 import { inlineStyles, useEditOnPage } from '@/lib/vanban/handoff';
@@ -36,6 +37,8 @@ type Msg = { kind: 'ok' | 'error' | 'info'; text: string } | null;
 type MixMode = 'khac' | 'tron';
 type Data = { school: string; minutes: number; fromId: string; toId: string; total: number; nPapers: number; mode?: MixMode; matrix: Matrix; papers: Paper[] };
 const CODES = 'ABCD';
+/** Hàng ma trận của đề nhập nguyên từ file Word của thầy cô (không chọn câu theo ma trận) */
+const WORD_UNIT = 'de-word';
 
 const SUBJECT_NAME: Record<SubjectCode, string> = { toan: 'Toán', 'tieng-viet': 'Tiếng Việt', 'tieng-anh': 'Tiếng Anh' };
 const KIND_NAME: Record<ExamKind, string> = { ...EXAM_NAME, khac: 'Kiểm tra khác' };
@@ -163,6 +166,7 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
     setPapers([]);
   };
   const t = matrix ? totals(matrix) : null;
+  const imported = Boolean(matrix?.rows.some((r) => r.unitCode === WORD_UNIT));
   const share = matrix ? periodShare(matrix) : null;
   const sumPeriods = matrix ? matrix.rows.reduce((a, r) => a + (matrix.periods?.[r.unitCode] ?? 0), 0) : 0;
 
@@ -185,6 +189,37 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
     setMsg(miss.length
       ? { kind: 'info', text: `Đã tạo đề, nhưng ${miss.length} ô ma trận chưa đủ câu khác nhau (ngân hàng còn ít câu cho chủ đề đó). Thầy cô giảm số câu ô đó, chọn cách “Trộn từ đề A”, hoặc tạo ít đề hơn.` }
       : { kind: 'ok', text: `Đã tạo ${out.length} đề${Math.abs(t.score - 10) > 0.001 ? ` — lưu ý tổng điểm đang là ${t.score}, chưa bằng 10` : ''}.` });
+  };
+
+  /** Mở đề Word / Excel / PDF có chữ của thầy cô: giữ nguyên thứ tự câu, đáp án; trộn thành nhiều đề nếu chọn > 1 đề */
+  const wordInput = useRef<HTMLInputElement>(null);
+  const openWordExam = async (file: File) => {
+    setBusy(true);
+    try {
+      const ex = await extractFile(file);
+      const lines = ex.kind === 'text' ? ex.lines : ex.rows.map((r) => r.filter(Boolean).join(' '));
+      const scope = chosen.length ? chosen : lessons;
+      const drafts = parseText(lines, scope, scope[0]?.id ?? '', file.name).filter((d) => d.prompt.trim());
+      if (!drafts.length) { setMsg({ kind: 'error', text: 'Không tìm thấy câu hỏi trong file. Đề cần đánh số “Câu 1”, “Câu 2”… (phương án A. B. C. D.; đáp án dưới mỗi câu hoặc bảng ĐÁP ÁN cuối đề).' }); return; }
+      const qs: ExamQuestion[] = drafts.map((d, i) => ({
+        key: `word#${i}#${d.prompt.slice(0, 40)}`, muc: d.muc, type: d.type, prompt: d.prompt.trim(),
+        options: d.type === 'single_choice' || d.type === 'multiple_choice' ? d.options.map((o) => o.trim()).filter(Boolean) : [],
+        answer: answerOf(d) as ExamQuestion['answer'], explanation: d.explanation.trim() || undefined,
+        lessonTitle: 'Đề của thầy cô',
+      }));
+      const counts: Record<Muc, number> = { 1: 0, 2: 0, 3: 0 };
+      qs.forEach((q) => { counts[q.muc]++; });
+      const pt = Math.round((10 / qs.length) * 100) / 100;
+      const m: Matrix = { rows: [{ unitCode: WORD_UNIT, unitTitle: `Đề của thầy cô (${file.name})`, lessonIds: [], counts }], points: { 1: pt, 2: pt, 3: pt } };
+      const base: Paper = { code: nPapers > 1 ? CODES[0] : '', slots: qs.map((q) => ({ row: 0, muc: q.muc, q })), missing: [] };
+      const out = [base, ...Array.from({ length: nPapers - 1 }, (_, i) => shufflePaper(base, newSeed(), CODES[i + 1]))];
+      setMatrix(m); setPapers(out); setExamId(null);
+      if (!title) setTitle(file.name.replace(/\.(docx|xlsx|pdf|txt)$/i, ''));
+      const noKey = drafts.filter((d) => !d.correct.length).length;
+      setMsg({ kind: noKey ? 'info' : 'ok', text: `Đã mở đề “${file.name}”: ${qs.length} câu${out.length > 1 ? `, trộn thành ${out.length} đề (đảo câu, đảo phương án)` : ''}.${noKey ? ` ${noKey} câu chưa có đáp án — điền thêm trong file Word khi tải về.` : ''} Mỗi câu ${String(pt).replace('.', ',')} điểm, chỉnh ở mục “Điểm mỗi câu”.` });
+    } catch (e) {
+      setMsg({ kind: 'error', text: e instanceof Error ? e.message : 'Không đọc được file.' });
+    } finally { setBusy(false); }
   };
 
   const swap = (pi: number, si: number) => {
@@ -333,13 +368,30 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
         </div>
         <p className="dash-muted">Phạm vi: {chosen.length} bài. Đề Tiếng Việt thường còn phần đọc thành tiếng và phần viết — thầy cô bổ sung trực tiếp trong file Word.</p>
         <div className="comments-actions">
-          <button type="button" className="btn btn-outline btn-sm" onClick={makeMatrix}><Table2 aria-hidden="true" /> {matrix ? 'Lập lại ma trận' : 'Lập ma trận'}</button>
+          <button type="button" className="btn btn-outline btn-sm" onClick={makeMatrix}><Table2 aria-hidden="true" /> {matrix && !imported ? 'Lập lại ma trận' : 'Lập ma trận'}</button>
+          <input ref={wordInput} type="file" accept=".docx,.xlsx,.pdf,.txt" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void openWordExam(f); }} />
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => wordInput.current?.click()} disabled={busy} title="Đề đã soạn sẵn: “Câu 1… A. B. C. D.”, đáp án dưới câu hoặc bảng ĐÁP ÁN cuối đề"><FileUp aria-hidden="true" /> Mở đề Word có sẵn</button>
           {examId && <button type="button" className="btn btn-outline btn-sm" onClick={() => resetFor(subject, kind)}><FilePlus2 aria-hidden="true" /> Đề mới</button>}
         </div>
         {msg && <p className={`adm-alert is-${msg.kind === 'ok' ? 'ok' : msg.kind === 'error' ? 'error' : 'info'}`} role="status">{msg.text}</p>}
       </section>
 
-      {matrix && t && (
+      {matrix && t && imported && (
+        <section className="dash-section" aria-label="Đề nhập từ Word">
+          <h2><FileUp aria-hidden="true" /> {matrix.rows[0].unitTitle}</h2>
+          <div className="exam-word-points">
+            {MUCS.filter((k) => matrix.rows[0].counts[k] > 0).map((k) => (
+              <label key={k} className="adm-field"><span>{MUC_NAME[k]} · {matrix.rows[0].counts[k]} câu · điểm mỗi câu</span>
+                <input type="number" step={0.25} min={0} max={10} value={matrix.points[k]} onChange={(e) => setPoint(k, Number(e.target.value))} />
+              </label>
+            ))}
+            <p><strong className={Math.abs(t.score - 10) > 0.001 ? 'exam-warn' : 'exam-ok'}>{t.questions} câu · {String(t.score).replace('.', ',')} điểm</strong></p>
+          </div>
+          <p className="dash-muted">Mức câu hỏi app đoán theo chữ của câu (ghi “(M2)”, “Mức 3” trong đề thì lấy đúng mức đó). Muốn trộn thành nhiều đề: chọn số đề ở trên rồi mở lại file.</p>
+        </section>
+      )}
+
+      {matrix && t && !imported && (
         <section className="dash-section" aria-label="Ma trận đề">
           <h2><Table2 aria-hidden="true" /> Ma trận</h2>
           <div className="table-scroll">
@@ -429,7 +481,7 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
                       <div className="exam-q-head">
                         <span className={`exam-muc m${s.muc}`}>M{s.muc}</span>
                         <span className="exam-q-lesson">{s.q.lessonTitle}</span>
-                        <button type="button" className="mini-btn" onClick={() => swap(pi, si)} aria-label={`Đổi câu ${si + 1}`}><RefreshCw aria-hidden="true" /> Đổi câu</button>
+                        {!imported && <button type="button" className="mini-btn" onClick={() => swap(pi, si)} aria-label={`Đổi câu ${si + 1}`}><RefreshCw aria-hidden="true" /> Đổi câu</button>}
                       </div>
                       <p className="exam-q-prompt"><EmojiText text={s.q.prompt} /></p>
                       {s.q.options.length > 0 && <p className="exam-q-opts"><EmojiText text={s.q.options.map((o, i) => `${'ABCDEFGH'[i]}. ${o}`).join('   ')} /></p>}

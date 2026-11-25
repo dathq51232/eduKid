@@ -4,7 +4,9 @@
 // tạo phòng (sinh đề riêng cho từng em ngay trên máy cô), phát mã, xem kết quả, cho làm lại, xem cờ bất thường.
 // Tuỳ chọn ĐẤU CẶP (mục 8.2, migration 0073): bốc thăm chia cặp, mỗi vòng một phòng thi, loại trực tiếp (BattlePanel).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Copy, DoorOpen, Eye, Flag, Lock, RotateCcw, Settings2, Swords, Trash2, Unlock, Users } from 'lucide-react';
+import { Check, Copy, DoorOpen, Eye, FileSpreadsheet, Flag, Lock, QrCode as QrIcon, RotateCcw, Settings2, Swords, Trash2, Unlock, Users } from 'lucide-react';
+import QrCode from '@/components/billing/QrCode';
+import { XS, downloadXlsx, range, type XCell } from '@/lib/xlsx';
 import { createClient } from '@/lib/supabase/client';
 import { useGradeContent } from '@/components/learn/GradeReady';
 import { SUBJECT_NAME, type ExamItem } from '@/lib/classroom/assignments';
@@ -289,6 +291,7 @@ function RoomCard({ room, open, onToggle, onChanged }: { room: RoomRow; open: bo
   const soon = room.status === 'open' && now < new Date(room.opens_at).getTime();
   const state = live ? 'Đang mở' : soon ? 'Sắp mở' : 'Đã đóng';
   const [busy, setBusy] = useState(false);
+  const [qr, setQr] = useState(false);
 
   const setStatus = async (o: boolean) => {
     setBusy(true);
@@ -316,14 +319,34 @@ function RoomCard({ room, open, onToggle, onChanged }: { room: RoomRow; open: bo
         </div>
         <div className="room-card-actions">
           <button type="button" className="btn btn-outline btn-sm" onClick={onToggle} aria-expanded={open}>{open ? 'Thu gọn' : 'Kết quả'}</button>
+          <button type="button" className="mini-btn" onClick={() => setQr((v) => !v)} aria-expanded={qr}><QrIcon aria-hidden="true" /> Mã QR</button>
           {room.status === 'open'
             ? <button type="button" className="mini-btn" onClick={() => setStatus(false)} disabled={busy}><Lock aria-hidden="true" /> Đóng phòng</button>
             : <button type="button" className="mini-btn" onClick={() => setStatus(true)} disabled={busy}><Unlock aria-hidden="true" /> Mở lại</button>}
           <button type="button" className="mini-btn is-danger" onClick={remove} disabled={busy} aria-label="Xoá phòng"><Trash2 aria-hidden="true" /></button>
         </div>
       </div>
+      {qr && <RoomQr code={room.code} title={room.title} />}
       {open && <RoomDetail room={room} onChanged={onChanged} />}
     </li>
+  );
+}
+
+/** Mã QR vào phòng: cô chiếu lên bảng, học sinh quét bằng máy tính bảng / điện thoại → vào thẳng phòng (đăng nhập trước nếu chưa) */
+function RoomQr({ code, title }: { code: string; title: string }) {
+  const [link, setLink] = useState('');
+  useEffect(() => { setLink(`${window.location.origin}/hoc-sinh?phong=${code}`); }, [code]);
+  if (!link) return null;
+  return (
+    <div className="room-qr">
+      <QrCode text={link} size={240} label={`Mã QR vào phòng ${code}`} />
+      <div>
+        <p><b>Quét để vào phòng “{title}”</b></p>
+        <p className="room-qr-code">{code}</p>
+        <p className="dash-muted">Em quét mã bằng máy tính bảng / điện thoại (đã đăng nhập tài khoản của em) là vào thẳng phòng; máy không quét được thì vào Trang của em, gõ mã phòng.</p>
+        <p className="dash-muted room-qr-link">{link}</p>
+      </div>
+    </div>
   );
 }
 
@@ -375,6 +398,40 @@ function RoomDetail({ room, onChanged }: { room: RoomRow; onChanged: () => void 
   for (const r of done) owls[owlOf(Number(r.score)).key]++;
   const weak = lessonStats(done.map((r) => r.answers)).filter((s) => s.n >= 2).slice(0, 5);
 
+  /** Bảng điểm Excel: mỗi em một dòng, điểm trung bình / cao nhất / thấp nhất bằng công thức */
+  const excel = () => {
+    const H = 3, first = H + 1, last = H + rows.length;
+    const head = ['STT', 'Học sinh', 'Trạng thái', 'Điểm', 'Huy hiệu', 'Sao', 'Thời gian làm', 'Cần xem'];
+    const out: XCell[][] = [
+      [{ v: room.title.toUpperCase(), s: XS.title }],
+      [{ v: `Mã phòng ${room.code} · ${SUBJECT_NAME[room.subject]} · ${room.n_questions} câu · ${room.minutes} phút`, s: XS.italic }],
+      [],
+      head.map((h) => ({ v: h, s: XS.headFill })),
+      ...rows.map((r, i): XCell[] => {
+        const owl = r.done ? owlOf(Number(r.score)) : null;
+        return [
+          { v: i + 1, s: XS.center }, { v: r.display_name, s: XS.text },
+          { v: !r.has_paper ? 'Chưa có đề' : r.done ? 'Đã nộp' : r.started_at ? 'Đang làm' : 'Chưa vào', s: XS.text },
+          { v: r.done ? Number(r.score) : '', s: XS.center },
+          { v: owl && owl.key !== 'try' ? owl.name : '', s: XS.text },
+          { v: r.done ? `${r.stars}/${r.max_stars}` : '', s: XS.center },
+          { v: r.done ? mins(r.duration_ms) : '', s: XS.center },
+          { v: r.flags.map((f) => FLAG_LABEL[f] ?? f).join('; '), s: XS.text },
+        ];
+      }),
+    ];
+    const col = `D${first + 1}:D${last + 1}`;
+    const stat = (label: string, f: string): XCell[] => [{ v: label, s: XS.boldText }, { v: '', s: XS.boldText }, { v: '', s: XS.boldText }, { f: `IF(COUNT(${col})=0,"",${f}(${col}))`, s: XS.centerBold }];
+    const sr = out.length;
+    out.push(stat('Điểm trung bình', 'AVERAGE'), stat('Điểm cao nhất', 'MAX'), stat('Điểm thấp nhất', 'MIN'));
+    out.push([{ f: `"Đã nộp: "&COUNT(${col})&"/${rows.length} em"`, s: XS.note }]);
+    downloadXlsx(`diem-phong-${room.code}.xlsx`, [{
+      name: `Phong ${room.code}`, rows: out, cols: [5, 26, 12, 8, 12, 8, 12, 22],
+      merges: [range(0, 0, 0, 7), range(1, 0, 1, 7), ...[0, 1, 2].map((k) => range(sr + k, 0, sr + k, 2)), range(sr + 3, 0, sr + 3, 7)],
+      freeze: { rows: H + 1, cols: 2 }, printTitleRows: [H, H], center: true,
+    }]);
+  };
+
   return (
     <div className="room-detail">
       {done.length > 0 && (
@@ -389,6 +446,7 @@ function RoomDetail({ room, onChanged }: { room: RoomRow; onChanged: () => void 
           )}
         </div>
       )}
+      <p className="room-excel"><button type="button" className="btn btn-outline btn-sm" onClick={excel} disabled={!rows.length}><FileSpreadsheet aria-hidden="true" /> Tải Excel bảng điểm</button></p>
       <div className="adm-table-wrap">
         <table className="adm-table room-table">
           <thead><tr><th>Học sinh</th><th>Trạng thái</th><th>Điểm</th><th>Huy hiệu</th><th>Sao</th><th>Thời gian</th><th>Cần xem</th><th /></tr></thead>

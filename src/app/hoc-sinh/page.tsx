@@ -33,10 +33,12 @@ type Result = { id: string; lesson_title: string | null; lesson_code: string; su
 /** Mục tiêu mỗi tuần: số ngày có học */
 const WEEK_GOAL = 5;
 
-export default async function StudentHome() {
+export default async function StudentHome({ searchParams }: { searchParams: Promise<{ phong?: string }> }) {
   const viewer = await getViewer();
   if (viewer.state === 'not_configured') return (<><LearnHeader /><main className="dash wrap"><NotConfigured title="Trang của em" /></main></>);
-  if (viewer.state === 'signed_out') redirect('/dang-nhap?next=/hoc-sinh');
+  // quét mã QR phòng thi khi chưa đăng nhập: đăng nhập xong quay lại đúng phòng
+  const phong = ((await searchParams).phong ?? '').replace(/[^0-9A-Za-z]/g, '').slice(0, 8);
+  if (viewer.state === 'signed_out') redirect(`/dang-nhap?next=${encodeURIComponent(phong ? `/hoc-sinh?phong=${phong}` : '/hoc-sinh')}`);
   if (!viewer.isStudent || !viewer.studentId) redirect('/sau-dang-nhap');
 
   const supabase = await createClient();

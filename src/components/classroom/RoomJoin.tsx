@@ -1,7 +1,8 @@
 'use client';
 
 // Ô nhập MÃ PHÒNG THI (6 ký tự cô đọc / viết lên bảng) ở trang của em.
-import { useState } from 'react';
+// Quét mã QR cô chiếu (đường dẫn /hoc-sinh?phong=MÃ): điền sẵn mã và tự vào phòng.
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DoorOpen } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -14,9 +15,8 @@ export default function RoomJoin() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  const go = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const c = code.replace(/\s/g, '').toUpperCase();
+  const join = useCallback(async (raw: string) => {
+    const c = raw.replace(/\s/g, '').toUpperCase();
     if (c.length !== 6) return setErr('Mã phòng có 6 ký tự.');
     setBusy(true); setErr('');
     const { data, error } = await createClient().rpc('student_join_room', { p_code: c });
@@ -25,7 +25,19 @@ export default function RoomJoin() {
     // nhớ mã vừa nhập (trong phiên) để màn Bắt đầu điền sẵn — máy chủ vẫn kiểm tra mã khi bắt đầu
     try { sessionStorage.setItem(`edukid:phong:${data as string}:code`, c); } catch { /* bỏ qua */ }
     router.push(`/hoc-sinh/phong-thi/${data as string}`);
-  };
+  }, [router]);
+  const go = (e: React.FormEvent) => { e.preventDefault(); void join(code); };
+  // vào từ mã QR: chạy một lần, rồi bỏ ?phong khỏi địa chỉ (bấm Quay lại không vào lại)
+  const auto = useRef(false);
+  useEffect(() => {
+    if (auto.current) return;
+    auto.current = true;
+    const c = new URLSearchParams(window.location.search).get('phong')?.replace(/[^0-9A-Za-z]/g, '').toUpperCase().slice(0, 8) ?? '';
+    if (!c) return;
+    setCode(c);
+    try { window.history.replaceState(null, '', window.location.pathname); } catch { /* bỏ qua */ }
+    void join(c);
+  }, [join]);
 
   return (
     <form className="room-join" onSubmit={go}>
