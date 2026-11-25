@@ -1,13 +1,14 @@
 'use client';
 
-// Văn bản & in ấn — 3 bước đơn giản cho thầy cô:
-//   (1) Mẫu văn bản đúng thể thức NĐ30;
-//   (2) Chuẩn hoá: tải file Word / Excel (hoặc dán chữ) → hiện ngay bản đã chuẩn hoá trên trang A4 để xem & sửa;
-//   (3) Cấu hình in ấn (Word và Excel): đầu trang, chân trang, số trang, khổ giấy → In / PDF, tải Word / Excel.
-// "Tài liệu đang làm" dùng chung giữa (2) và (3). Mọi xử lý chạy trên máy cô — file không gửi đi đâu.
+// Văn bản & in ấn — 3 thẻ cho thầy cô:
+//   (1) Soạn văn bản: mẫu đúng thể thức NĐ30, tự sinh nội dung;
+//   (2) Mở file & in: tải file Word / Excel (hoặc dán chữ) → chuẩn hoá theo mẫu, đặt khổ giấy, đầu / chân trang, số trang → In / PDF, tải về;
+//   (3) In theo lớp: danh sách lớp, trộn thư, nhãn vở, thẻ tên từ danh sách học sinh + lối tắt tới các mục in khác (ClassPrint.tsx).
+// Mọi xử lý chạy trên máy cô — file không gửi đi đâu.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCircle2, ClipboardCheck, FileSpreadsheet, FileText, PenLine, Printer, Sparkles, Undo2, Upload, Wand2, X } from 'lucide-react';
+import Link from 'next/link';
+import { CheckCircle2, ClipboardCheck, FileSpreadsheet, FileText, FolderOpen, PenLine, Printer, Sparkles, Undo2, Upload, Users, X } from 'lucide-react';
 import { KINDS, SAMPLE, buildHtml, fileName, kindOf, type Doc, type DocKind, type Org } from '@/lib/vanban/nd30';
 import { FIELDS, compose, unitName, type Facts, type Field } from '@/lib/vanban/compose';
 
@@ -19,6 +20,8 @@ import { htmlToDocx, type DocImage } from '@/lib/docx-write';
 import { readDocxFull } from '@/lib/docx-read';
 import { readXlsxAll, type Sheet } from '@/lib/xlsx-read';
 import { asciiFilename } from '@/lib/filename';
+import ClassPrint from '@/components/classroom/ClassPrint';
+import type { Ctx, Printable, Pupil } from '@/lib/vanban/class-print';
 import { DEFAULT_SETUP, DEFAULT_VIEW, RbBtn, RbGroup, SHEET_SETUP, Workspace, pageCss, sheetHtml, trimSheet, type PageSetup, type SheetView } from '@/components/classroom/PageEditor';
 import '@/styles/adm.css';
 import '@/styles/btn.css';
@@ -28,9 +31,9 @@ import '@/styles/ct.css';
 import '@/styles/vb.css';
 import '@/styles/vbe.css';
 
-type Tab = 'mau' | 'chuan-hoa' | 'in-an';
+type Tab = 'mau' | 'file' | 'lop';
 type Change = { sheet: string; r: number; c: number; from: string; to: string };
-/** Tài liệu đang làm (dùng chung Chuẩn hoá ↔ Cấu hình in ấn). id đổi = mở trình sửa mới */
+/** Tài liệu đang làm ở thẻ Mở file & in. id đổi = mở trình sửa mới */
 type Work =
   | { id: number; kind: 'doc'; name: string; file: string; html: string; images: Map<string, DocImage>; fixed: number; orig: string | null }
   | { id: number; kind: 'sheet'; name: string; file: string; sheets: Sheet[]; changes: Change[]; orig: Sheet[] | null };
@@ -173,7 +176,7 @@ async function loadWork(file: File, normalize: boolean): Promise<Work> {
   return { id: ++seq, kind: 'doc', name: file.name, file: baseName(file.name), html, images, fixed, orig: normalize ? orig : null };
 }
 
-export default function DocStudio({ teacher, className }: { teacher: string; className: string }) {
+export default function DocStudio({ teacher, className, classId, students }: { teacher: string; className: string; classId: string; students: Pupil[] }) {
   const [tab, setTab] = useState<Tab>('mau');
   const [org, setOrg] = useState<Org>({ parent: '', name: '', abbr: '', place: '', role: 'Giáo viên chủ nhiệm', onBehalf: '', signer: teacher });
   const [doc, setDoc] = useState<Doc>({ kind: 'thong-bao', no: '', date: today(), ...SAMPLE['thong-bao'] });
@@ -212,6 +215,8 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
   };
 
   const html = useMemo(() => buildHtml(org, doc), [org, doc]);
+  // thông tin chung cho In theo lớp (tên trường, người ký lấy từ Thông tin đơn vị)
+  const ctx: Ctx = useMemo(() => ({ unit: org.name, className, teacher: org.signer || teacher, place: org.place, date: doc.date }), [org.name, org.signer, org.place, className, teacher, doc.date]);
   const issues = useMemo(() => checkText([doc.subject, doc.to, doc.body, doc.recipients].join('\n')), [doc]);
 
   /** Mở tài liệu mới: đặt lại cài đặt trang (bảng nhiều cột → khổ ngang) */
@@ -244,7 +249,10 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
   const docHtml = useCallback((h: string) => setWork((w) => (w && w.kind === 'doc' && w.html !== h ? { ...w, html: h } : w)), []);
   const setSheets = (sheets: Sheet[]) => setWork((w) => (w && w.kind === 'sheet' ? { ...w, sheets } : w));
 
-  const print = (h: string, s: PageSetup) => { setPrintHtml({ html: h, css: pageCss(s) }); window.setTimeout(() => { window.print(); setPrintHtml(null); }, 80); };
+  const printRaw = (h: string, css: string) => { setPrintHtml({ html: h, css }); window.setTimeout(() => { window.print(); setPrintHtml(null); }, 80); };
+  const print = (h: string, s: PageSetup) => printRaw(h, pageCss(s));
+  const printClass = (p: Printable) => printRaw(p.html, p.css);
+  const wordClass = (p: Printable, file: string, title: string) => saveWord(p.html, { ...DEFAULT_SETUP, landscape: p.landscape, pageNum: 'none', fontSize: 13 }, file, title);
   const saveWord = (h: string, s: PageSetup, file: string, title: string, images: Map<string, DocImage> = new Map()) => {
     download(htmlToDocx(`<html><body>${bodyOf(h)}</body></html>`, images, { title, fontSize: s.fontSize, deco: s }), `${file}.docx`, DOCX);
     setFlash('Đã tải file Word — mở bằng Word để ký, đóng dấu hoặc sửa tiếp.');
@@ -278,9 +286,9 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
           <h1>Văn bản & in ấn</h1>
         </div>
         <div className="ct-seg" role="tablist" aria-label="Chọn việc">
-          {tabBtn('mau', 'Mẫu văn bản', FileText)}
-          {tabBtn('chuan-hoa', 'Chuẩn hoá', Wand2)}
-          {tabBtn('in-an', 'Cấu hình in ấn', Printer)}
+          {tabBtn('mau', 'Soạn văn bản', FileText)}
+          {tabBtn('file', 'Mở file & in', FolderOpen)}
+          {tabBtn('lop', 'In theo lớp', Users)}
         </div>
       </div>
       {flash && <p className="adm-alert is-ok no-print" role="status" onClick={() => setFlash('')}>{flash}</p>}
@@ -294,7 +302,7 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
               <RbBtn icon={<Printer aria-hidden="true" />} label="In / PDF" onClick={() => print(html, DEFAULT_SETUP)} />
             </RbGroup>
             <RbGroup label="Soạn tiếp">
-              <RbBtn icon={<PenLine aria-hidden="true" />} label="Sửa trên trang & cấu hình in" onClick={() => { open({ id: ++seq, kind: 'doc', name: kindOf(doc.kind).label, file: fileName(doc), html: bodyOf(html), images: new Map(), fixed: 0, orig: null }); setTab('in-an'); }} />
+              <RbBtn icon={<PenLine aria-hidden="true" />} label="Sửa trên trang & cấu hình in" onClick={() => { open({ id: ++seq, kind: 'doc', name: kindOf(doc.kind).label, file: fileName(doc), html: bodyOf(html), images: new Map(), fixed: 0, orig: null }); setTab('file'); }} />
             </RbGroup>
             <RbGroup label="Kiểm tra">
               <RbBtn icon={<Sparkles aria-hidden="true" />} label="Sửa lỗi trình bày" onClick={fixDoc} />
@@ -351,6 +359,9 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
                 <textarea rows={3} value={doc.recipients} maxLength={1000} aria-label="Nơi nhận, mỗi nơi một dòng" onChange={(e) => setD({ recipients: e.target.value })} />
               </details>
             )}
+            {doc.kind === 'bien-ban' && (
+              <p className="dash-muted">Biên bản <b>họp phụ huynh</b>? Dùng mục <Link href={`/giao-vien/lop/${classId}/hop-ph`}>Họp phụ huynh</Link> — có sẵn danh sách điểm danh và ý kiến phụ huynh.</p>
+            )}
             <IssueList issues={issues} />
           </section>
           <section className="vb-paper-wrap" aria-label="Xem trước văn bản">
@@ -360,12 +371,12 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
         </>
       )}
 
-      {(tab === 'chuan-hoa' || tab === 'in-an') && (
+      {tab === 'file' && (
         <section className="vb-norm no-print">
           {!work ? (
-            <Landing normalize={tab === 'chuan-hoa'} onOpen={(w) => { open(w); setFlash(tab === 'chuan-hoa' ? 'Đã mở file — xem bản gốc bên dưới, bấm “Chuẩn hoá theo mẫu” để đưa về đúng mẫu.' : 'Đã mở file — đặt khổ giấy, số trang, đầu & chân trang ở thẻ “Bố cục trang”.'); }} />
+            <Landing onOpen={(w) => { open(w); setFlash('Đã mở file — bấm “Chuẩn hoá theo mẫu” để đưa về đúng thể thức; đặt khổ giấy, số trang, đầu & chân trang ở thẻ “Bố cục trang”.'); }} />
           ) : (
-            <Workspace key={`${tab}-${work.id}`} startTab={tab === 'in-an' ? 'layout' : 'home'} setup={setup} onSetup={setSetup}
+            <Workspace key={work.id} startTab="home" setup={setup} onSetup={setSetup}
               {...(work.kind === 'doc'
                 ? { kind: 'doc' as const, docKey: work.id, html: work.html, onHtml: docHtml }
                 : { kind: 'sheet' as const, sheets: work.sheets, idx: sheetIdx, onIdx: setSheetIdx, onSheets: setSheets, view, onView: setView })}
@@ -381,7 +392,7 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
                   onClick={() => (work.kind === 'doc' ? saveWord(work.html, setup, work.file, work.name, work.images) : saveExcel(work))} />
                 <RbBtn primary icon={<Printer aria-hidden="true" />} label="In / PDF" onClick={printWork} />
               </>}
-              extraGroup={tab === 'chuan-hoa' ? {
+              extraGroup={{
                 label: 'Chuẩn hoá',
                 node: <>
                   {!work.orig
@@ -389,9 +400,15 @@ export default function DocStudio({ teacher, className }: { teacher: string; cla
                     : <RbBtn icon={<Undo2 aria-hidden="true" />} label="Về bản gốc" onClick={restoreWork} />}
                   {work.kind === 'doc' && <RbBtn icon={<PenLine aria-hidden="true" />} label="Đưa vào mẫu" onClick={() => { setDoc((d) => ({ ...d, body: stripHeader(htmlText(work.html)) })); setTab('mau'); setFlash('Đã đưa nội dung vào mẫu — chọn loại văn bản, điền trích yếu rồi tải Word / PDF.'); }} />}
                 </>,
-              } : undefined}
+              }}
               below={<WorkInfo work={work} />} />
           )}
+        </section>
+      )}
+
+      {tab === 'lop' && (
+        <section className="no-print">
+          <ClassPrint classId={classId} students={students} ctx={ctx} onPrint={printClass} onWord={wordClass} />
         </section>
       )}
 
@@ -440,22 +457,18 @@ function OpenBtn({ onOpen, big }: { onOpen: (w: Work) => void; big?: boolean }) 
   );
 }
 
-/** Chưa có tài liệu: nút mở file to; ở Chuẩn hoá thêm ô dán chữ */
-function Landing({ normalize, onOpen }: { normalize: boolean; onOpen: (w: Work) => void }) {
+/** Chưa có tài liệu: nút mở file to + ô dán chữ */
+function Landing({ onOpen }: { onOpen: (w: Work) => void }) {
   const [text, setText] = useState('');
   return (
     <div className="dash-card vbe-landing">
       <OpenBtn big onOpen={onOpen} />
-      <p className="dash-muted">{normalize
-        ? 'Mở file Word hoặc Excel để xem bản gốc, rồi bấm “Chuẩn hoá theo mẫu”: một font, cùng cỡ chữ, chữ đen, căn đều, lùi đầu dòng; sửa dấu câu, ngày tháng. Giữ chữ đậm, nghiêng, bảng, hình.'
-        : 'Mở file Word hoặc Excel (hoặc chuẩn hoá ở bước trước) để đặt khổ giấy, số trang, đầu & chân trang rồi in hay lưu PDF. Bảng nhiều trang tự lặp lại dòng tên cột.'}</p>
-      {normalize && (
-        <details className="vbe-paste">
-          <summary>Hoặc dán văn bản vào đây</summary>
-          <textarea className="vb-text" rows={10} value={text} maxLength={60000} placeholder="Dán văn bản…" onChange={(e) => setText(e.target.value)} aria-label="Văn bản cần chuẩn hoá" />
-          <button type="button" className="btn btn-primary" disabled={!text.trim()} onClick={() => onOpen({ id: ++seq, kind: 'doc', name: 'Văn bản dán vào', file: 'van-ban', html: paraHtml(text), images: new Map(), fixed: 0, orig: null })}><FileText aria-hidden="true" /> Mở trên trang</button>
-        </details>
-      )}
+      <p className="dash-muted">Mở file Word hoặc Excel. Bấm <b>“Chuẩn hoá theo mẫu”</b> để đưa về một font, cùng cỡ chữ, chữ đen, căn đều, lùi đầu dòng, sửa dấu câu, ngày tháng (giữ chữ đậm, nghiêng, bảng, hình). Thẻ <b>“Bố cục trang”</b>: khổ giấy, số trang, đầu & chân trang — rồi In / PDF. Bảng nhiều trang tự lặp lại dòng tên cột.</p>
+      <details className="vbe-paste">
+        <summary>Hoặc dán văn bản vào đây</summary>
+        <textarea className="vb-text" rows={10} value={text} maxLength={60000} placeholder="Dán văn bản…" onChange={(e) => setText(e.target.value)} aria-label="Văn bản cần chuẩn hoá" />
+        <button type="button" className="btn btn-primary" disabled={!text.trim()} onClick={() => onOpen({ id: ++seq, kind: 'doc', name: 'Văn bản dán vào', file: 'van-ban', html: paraHtml(text), images: new Map(), fixed: 0, orig: null })}><FileText aria-hidden="true" /> Mở trên trang</button>
+      </details>
     </div>
   );
 }
