@@ -9,6 +9,7 @@
   - Bài giảng / thao giảng: `src/components/deck/DeckStudio.tsx` (trình soạn kiểu Canva), `SlideView.tsx` (vẽ trang, kéo/xoay/sửa chữ), `DeckPlayer.tsx` (trình chiếu), dữ liệu `src/lib/deck/types.ts`, bộ mẫu `theme-sets.ts`.
   - Đề / phiếu: `src/components/exams/*`, `src/lib/exams/*`.
 - Giao diện theo mùa lễ (Noel, Tết, 20/10, 20/11…): thêm / sửa mùa chỉ ở `src/lib/seasons.ts` (+ màu ở `src/styles/ssn.css`), xem `docs/GIAO-DIEN-THEO-MUA.md`; xem trước bằng `?mua=<id>`.
+- **Trước khi tư vấn / đề xuất / ước lượng tính năng**: đọc `docs/TINH-NANG-DA-CO.md` và chạy `git fetch -q origin main && git log origin/main --oneline -15` (người dùng làm song song trên PC và điện thoại — đừng giả định app chưa có gì). Merge tính năng mới → thêm một dòng vào file đó trong cùng PR.
 - Kiểm tra trước khi giao: `npx tsc --noEmit -p .` và `npx eslint <thư mục đã sửa>`.
 - Sửa câu hỏi / kiến thức / bộ sinh câu / đề (`src/lib/content|practice|exams|curriculum`, `grading.ts`): BẮT BUỘC `npm run check:noi-dung` đạt hết (git pre-commit tự chạy bản nhanh). Viết phép tính bằng số trong kiến thức, nhận xét, lời giải phải tính đúng — `check:knowledge` tính lại tất cả. Quy trình: `docs/KIEM-TRA-NOI-DUNG.md`.
 - Phòng CNTT / Marketing (`docs/PHONG-CNTT.md`, `docs/PHONG-MARKETING.md`, vai ở `.claude/agents/`): giữ 2 điểm duyệt của Trưởng phòng, nhưng **tiết kiệm token** — việc nhỏ và vừa do trợ lý chính tự làm / tự đóng vai theo danh sách kiểm của vai, rà soát gộp một lượt; chỉ gọi trợ lý riêng cho việc lớn hoặc khi Trưởng phòng nói “gọi <tên vai>”. Báo cáo ≤ 15 dòng; chỉ `npm run build` khi sửa next.config.ts / route đọc file.
@@ -19,6 +20,7 @@
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
 
 Rules:
+- Nếu lệnh `graphify` không có (máy đám mây thường không cài) thì bỏ qua các luật graphify bên dưới, dùng `grep -n` / đọc đúng dòng; không cài graphify.
 - When graphify-out/graph.json exists, run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
