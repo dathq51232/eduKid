@@ -21,6 +21,7 @@ import { readDocxFull } from '@/lib/docx-read';
 import { readXlsxAll, type Sheet } from '@/lib/xlsx-read';
 import { asciiFilename } from '@/lib/filename';
 import ClassPrint from '@/components/classroom/ClassPrint';
+import { takeFromEditor } from '@/lib/vanban/handoff';
 import type { Ctx, Printable, Pupil } from '@/lib/vanban/class-print';
 import { DEFAULT_SETUP, DEFAULT_VIEW, RbBtn, RbGroup, SHEET_SETUP, Workspace, pageCss, sheetHtml, trimSheet, type PageSetup, type SheetView } from '@/components/classroom/PageEditor';
 import '@/styles/adm.css';
@@ -190,6 +191,21 @@ export default function DocStudio({ teacher, className, classId, students }: { t
 
   // thông tin đơn vị lưu trên máy cô (dùng lại cho mọi văn bản)
   useEffect(() => { try { const v = localStorage.getItem(ORG_KEY); if (v) setOrg((o) => ({ ...o, ...(JSON.parse(v) as Partial<Org>) })); } catch { /* bỏ qua */ } }, []);
+  // "Sửa trên trang" từ mục khác của lớp (phiếu bài tập, chính tả, đề, giáo án…): mở bản in ngay trong trình soạn
+  useEffect(() => {
+    const h = takeFromEditor();
+    if (!h) return;
+    const images = h.images ?? new Map<string, DocImage>();
+    const html = h.html.replace(/<img([^>]*?) data-img="([^"]+)"/g, (m, pre: string, k: string) => {
+      const img = images.get(k);
+      return img && !/\ssrc=/.test(pre) ? `<img${pre} data-img="${k}" src="${URL.createObjectURL(new Blob([img.bytes as BlobPart], { type: img.mime }))}"` : m;
+    });
+    setWork({ id: ++seq, kind: 'doc', name: h.name, file: h.file, html, images, fixed: 0, orig: null });
+    setSetup({ ...DEFAULT_SETUP, landscape: Boolean(h.landscape), fontSize: h.fontSize ?? 13, pageNum: 'none' });
+    setTab('file');
+    setFlash(`Đã mở “${h.name}” — bấm vào chữ trên trang để sửa như Word, rồi In / PDF hoặc Tải Word.`);
+    try { window.history.replaceState(null, '', window.location.pathname); } catch { /* bỏ qua */ }
+  }, []);
   const setO = (patch: Partial<Org>) => setOrg((o) => { const n = { ...o, ...patch }; try { localStorage.setItem(ORG_KEY, JSON.stringify(n)); } catch { /* bỏ qua */ } return n; });
   const setD = (patch: Partial<Doc>) => setDoc((d) => ({ ...d, ...patch }));
   // Thông tin chính để tự sinh nội dung; lastGen: nội dung vừa sinh (sửa tay rồi mới hỏi trước khi ghi đè)
@@ -253,6 +269,13 @@ export default function DocStudio({ teacher, className, classId, students }: { t
   const print = (h: string, s: PageSetup) => printRaw(h, pageCss(s));
   const printClass = (p: Printable) => printRaw(p.html, p.css);
   const wordClass = (p: Printable, file: string, title: string) => saveWord(p.html, { ...DEFAULT_SETUP, landscape: p.landscape, pageNum: 'none', fontSize: 13 }, file, title);
+  const editClass = (p: Printable, file: string, title: string) => {
+    if (work && !window.confirm('Mở bản này trong trình soạn sẽ thay tài liệu đang làm ở thẻ “Mở file & in”. Tiếp tục?')) return;
+    setWork({ id: ++seq, kind: 'doc', name: title, file, html: bodyOf(p.html), images: new Map(), fixed: 0, orig: null });
+    setSetup({ ...DEFAULT_SETUP, landscape: p.landscape, pageNum: 'none', fontSize: 13 });
+    setTab('file');
+    setFlash(`Đã mở “${title}” — bấm vào chữ trên trang để sửa như Word, rồi In / PDF hoặc Tải Word.`);
+  };
   const saveWord = (h: string, s: PageSetup, file: string, title: string, images: Map<string, DocImage> = new Map()) => {
     download(htmlToDocx(`<html><body>${bodyOf(h)}</body></html>`, images, { title, fontSize: s.fontSize, deco: s }), `${file}.docx`, DOCX);
     setFlash('Đã tải file Word — mở bằng Word để ký, đóng dấu hoặc sửa tiếp.');
@@ -408,7 +431,7 @@ export default function DocStudio({ teacher, className, classId, students }: { t
 
       {tab === 'lop' && (
         <section className="no-print">
-          <ClassPrint classId={classId} students={students} ctx={ctx} onPrint={printClass} onWord={wordClass} />
+          <ClassPrint classId={classId} students={students} ctx={ctx} onPrint={printClass} onWord={wordClass} onEdit={editClass} />
         </section>
       )}
 
