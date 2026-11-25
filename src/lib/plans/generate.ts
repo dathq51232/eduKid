@@ -15,6 +15,38 @@ export type LessonInfo = {
   /** YCCĐ mở rộng — chỉ có ở câu L4–L5, dành cho học sinh hoàn thành tốt */
   extend?: string[];
   forms: string[]; knowledge: string[]; example: string;
+  /** câu mẫu thật của bài (có đáp án, đúng phạm vi) theo cấp độ — làm ví dụ ở Khám phá và bài phân hoá ở Luyện tập */
+  samples?: PlanSample[];
+};
+/** lv: cấp độ L1–L5 của câu; opts: các lựa chọn (trắc nghiệm) */
+export type PlanSample = { lv: number; prompt: string; answer: string; opts?: string[] };
+
+/** Loại tiết: quyết định cách chia thời gian và trọng tâm từng hoạt động */
+export type PlanKind = 'moi' | 'luyen-tap' | 'on-tap' | 'thuc-hanh';
+export const PLAN_KINDS: { id: PlanKind; label: string }[] = [
+  { id: 'moi', label: 'Bài mới' },
+  { id: 'luyen-tap', label: 'Luyện tập' },
+  { id: 'on-tap', label: 'Ôn tập' },
+  { id: 'thuc-hanh', label: 'Thực hành, trải nghiệm' },
+];
+/** Đoán loại tiết theo tên bài ("Bài 8. Luyện tập chung" → luyện tập; "Ôn tập…" → ôn tập; "Thực hành…", "Em vui học Toán" → thực hành) */
+export function kindOfTitle(title: string): PlanKind {
+  const t = title.toLowerCase();
+  if (/ôn tập|ôn luyện|review/.test(t)) return 'on-tap';
+  if (/luyện tập/.test(t)) return 'luyen-tap';
+  if (/thực hành|em vui học|trải nghiệm|hoạt động thực tế|project/.test(t)) return 'thuc-hanh';
+  return 'moi';
+}
+/** Số phút từng hoạt động (tổng 35 phút) theo loại tiết */
+const MINUTES: Record<PlanKind, [number, number, number, number]> = {
+  moi: [5, 12, 13, 5], 'luyen-tap': [4, 6, 20, 5], 'on-tap': [5, 8, 17, 5], 'thuc-hanh': [5, 7, 18, 5],
+};
+/** Đánh giá thường xuyên theo từng hoạt động (Thông tư 27: nhận xét, không chấm điểm trong giờ) */
+const ASSESS: Record<ActivityKey, string> = {
+  'khoi-dong': 'Đánh giá: quan sát mức độ tham gia; khen, động viên kịp thời.',
+  'kham-pha': 'Đánh giá: vấn đáp — HS nêu được kiến thức trọng tâm, lấy được ví dụ.',
+  'luyen-tap': 'Đánh giá: sản phẩm (vở, bảng con, phiếu); chữa bài, nhận xét theo từng mức; HS tự đánh giá và nhận xét bài bạn.',
+  'van-dung': 'Đánh giá: HS trình bày cách làm, liên hệ thực tế; GV nhận xét, ghi nhận em tiến bộ.',
 };
 
 export type ActivityKey = 'khoi-dong' | 'kham-pha' | 'luyen-tap' | 'van-dung';
@@ -60,6 +92,8 @@ export type LessonPlan = {
   useOrig?: boolean;
   materials: { teacher: string; student: string };
   activities: PlanActivity[];
+  /** loại tiết đã dùng khi sinh (bài mới / luyện tập / ôn tập / thực hành) */
+  kind?: PlanKind;
   assessment: string;
   adjust: string;
 };
@@ -81,6 +115,17 @@ export const ACTIVITY_TITLES: Record<ActivityKey, string> = {
 const uniq = <T,>(a: T[]) => [...new Set(a)];
 const bullet = (a: string[]) => a.filter(Boolean).map((x) => (x.startsWith('  +') ? x : `- ${x}`)).join('\n');
 const noDot = (x: string) => x.trim().replace(/[.;]+$/, '');
+/** Câu mẫu trên một dòng: "Đề … (A. … / B. …) → Đáp án: …" */
+const oneLine = (x: string) => x.replace(/\s*\n+\s*/g, ' ').replace(/\s{2,}/g, ' ').trim();
+function sampleLine(q: PlanSample): string {
+  const opts = q.opts?.length ? ` (${q.opts.map((o, i) => `${'ABCDEF'[i]}. ${oneLine(o)}`).join('; ')})` : '';
+  return `${oneLine(q.prompt)}${opts} → Đáp án: ${oneLine(q.answer)}`;
+}
+/** Câu mẫu theo 3 mức phân hoá: cần hỗ trợ (L1–L2), đạt (L3), hoàn thành tốt (L4–L5) */
+function tiers(samples: PlanSample[]) {
+  const pick = (lo: number, hi: number) => samples.find((q) => q.lv >= lo && q.lv <= hi);
+  return { help: pick(1, 2), ok: pick(3, 3) ?? pick(2, 2), good: pick(4, 5) };
+}
 
 
 const COMPETENCE: Record<SubjectCode, string> = {
@@ -109,6 +154,8 @@ export type PlanInput = {
   date?: string;
   period?: number;
   week?: string;
+  /** loại tiết; bỏ trống = đoán theo tên bài */
+  kind?: PlanKind;
 };
 
 /** Tạo giáo án gợi ý cho một bài của app */
@@ -121,6 +168,12 @@ export function generatePlan(input: PlanInput): LessonPlan {
   const know = lesson && lesson.knowledge.length ? { points: lesson.knowledge, example: lesson.example } : undefined;
   const weak = (input.weakForms ?? []).filter(Boolean).slice(0, 4);
   const appLink = lesson ? `bài “${title}” trên EduChain Kids` : 'bài luyện tập trên EduChain Kids';
+  const kind: PlanKind = input.kind ?? kindOfTitle(title);
+  const [mKd, mKp, mLt, mVd] = MINUTES[kind];
+  const samples = lesson?.samples ?? [];
+  const tier = tiers(samples);
+  // ví dụ ở Khám phá: ví dụ của "Kiến thức cần nhớ", không có thì một câu mẫu dễ của bài
+  const exampleLine = know?.example ? know.example.replace(/\n/g, ' ; ') : tier.help ? sampleLine(tier.help) : '';
 
   // mô tả bài (đúng phạm vi bài) đứng đầu, rồi YCCĐ trọng tâm (bỏ câu trùng ý), cuối cùng là phần mở rộng
   const same = (a: string, b: string) => noDot(a).toLowerCase() === noDot(b).toLowerCase();
@@ -155,7 +208,7 @@ export function generatePlan(input: PlanInput): LessonPlan {
   const kp: Record<SubjectCode, PlanActivity> = {
     toan: {
       key: 'kham-pha', title: ACTIVITY_TITLES['kham-pha'], minutes: 12, goal: 'HS hình thành kiến thức mới qua quan sát, thao tác.',
-      teacher: bullet(['Đưa tình huống hoặc đồ dùng trực quan, yêu cầu HS quan sát và thao tác.', 'Đặt câu hỏi gợi mở để HS tự rút ra kiến thức.', ...(know?.points.length ? ['Chốt kiến thức:', ...know.points.map((p) => `  + ${p}`)] : ['Chốt kiến thức trọng tâm của bài.']), ...(know?.example ? [`Làm mẫu: ${know.example.replace(/\n/g, ' ; ')}`] : [])]),
+      teacher: bullet(['Đưa tình huống hoặc đồ dùng trực quan, yêu cầu HS quan sát và thao tác.', 'Đặt câu hỏi gợi mở để HS tự rút ra kiến thức.', ...(know?.points.length ? ['Chốt kiến thức:', ...know.points.map((p) => `  + ${p}`)] : ['Chốt kiến thức trọng tâm của bài.']), ...(exampleLine ? [`Làm mẫu: ${exampleLine}`] : [])]),
       student: bullet(['Quan sát, thao tác với đồ dùng, trao đổi nhóm đôi.', 'Nêu nhận xét, nhắc lại kiến thức.']),
     },
     'tieng-viet': {
@@ -169,13 +222,21 @@ export function generatePlan(input: PlanInput): LessonPlan {
       student: bullet(['Nghe, nhắc lại từ và mẫu câu.', 'Đóng vai theo cặp với mẫu câu mới.']),
     },
   };
+  const diff = [
+    ...(tier.help ? [`  + Mức 1 – cần hỗ trợ: ${sampleLine(tier.help)}`] : []),
+    ...(tier.ok ? [`  + Mức 2 – đạt: ${sampleLine(tier.ok)}`] : []),
+    ...(tier.good ? [`  + Mức 3 – hoàn thành tốt: ${sampleLine(tier.good)}`] : []),
+  ];
   const lt: PlanActivity = {
-    key: 'luyen-tap', title: ACTIVITY_TITLES['luyen-tap'], minutes: 13, goal: 'Củng cố kiến thức, rèn kĩ năng qua các dạng bài.',
+    key: 'luyen-tap', title: ACTIVITY_TITLES['luyen-tap'], minutes: mLt,
+    goal: kind === 'moi' ? 'Củng cố kiến thức, rèn kĩ năng qua các dạng bài.' : 'Rèn kĩ năng theo mức độ; mỗi HS được làm bài vừa sức và nâng dần.',
     teacher: bullet([
       'Giao lần lượt các dạng bài (cá nhân, nhóm đôi):',
       ...(forms.length ? forms.map((f) => `  + ${f}`) : ['  + Các bài tập trong sách giáo khoa']),
+      ...(diff.length ? ['Phân hoá theo mức (giao bài vừa sức, em làm xong mức này chuyển mức sau):', ...diff] : []),
       ...(weak.length ? ['Chú ý dạng lớp còn hay sai — cho làm thêm và chữa kĩ:', ...weak.map((w) => `  + ${w}`)] : []),
       'Theo dõi, giúp đỡ HS còn lúng túng; chữa bài, chốt cách làm.',
+      ASSESS['luyen-tap'],
     ]),
     student: bullet(['Làm bài vào vở / bảng con / phiếu.', 'Trình bày, nhận xét bài bạn; tự sửa lỗi.']),
   };
@@ -202,10 +263,39 @@ export function generatePlan(input: PlanInput): LessonPlan {
     week: input.week ?? '', date: input.date ?? '', period: input.period ?? 0, minutes: 35,
     goals: { knowledge, competence: `${COMPETENCE[subject]}\n${COMMON_COMPETENCE}`, quality: QUALITY },
     materials: { ...MATERIALS[subject] },
-    activities: [kd[subject], kp[subject], lt, vd[subject]],
+    activities: finish([kd[subject], kp[subject], lt, vd[subject]], kind, [mKd, mKp, mLt, mVd]),
+    kind,
     assessment: `Đánh giá thường xuyên bằng nhận xét: quan sát, vấn đáp trong giờ; sản phẩm học tập (vở, phiếu, bảng con); kết quả luyện tập trên EduChain Kids (số câu đúng, dạng còn sai). Môn ${S}.`,
     adjust: '',
   };
+}
+
+/** Khám phá của tiết luyện tập / ôn tập / thực hành: không dạy kiến thức mới mà nhắc lại, hệ thống hoá, hướng dẫn thao tác */
+const KP_GOAL: Record<PlanKind, string | null> = {
+  moi: null,
+  'luyen-tap': 'Nhắc lại kiến thức, cách làm đã học (không dạy kiến thức mới).',
+  'on-tap': 'Hệ thống hoá kiến thức trọng tâm của chủ đề; chỉ ra chỗ hay nhầm.',
+  'thuc-hanh': 'Hướng dẫn quy trình, thao tác; HS quan sát mẫu rồi nêu các bước.',
+};
+const KP_TEACHER: Record<PlanKind, string | null> = {
+  moi: null,
+  'luyen-tap': 'Hỏi nhanh để HS nhắc lại kiến thức và cách làm đã học; cho 1–2 HS làm mẫu trên bảng.',
+  'on-tap': 'Cùng HS lập sơ đồ / bảng hệ thống kiến thức của chủ đề; hỏi chỗ các em hay nhầm.',
+  'thuc-hanh': 'Làm mẫu thao tác (hoặc chiếu quy trình); HS quan sát rồi nêu lại các bước.',
+};
+/** Gắn số phút theo loại tiết, mục tiêu Khám phá theo loại tiết, và dòng đánh giá cuối mỗi hoạt động */
+function finish(acts: PlanActivity[], kind: PlanKind, mins: number[]): PlanActivity[] {
+  return acts.map((a, i) => {
+    const goal = a.key === 'kham-pha' && KP_GOAL[kind] ? KP_GOAL[kind]! : a.goal;
+    let teacher = a.teacher;
+    // tiết không dạy kiến thức mới: thay hai việc "tình huống / tự rút ra kiến thức" của tiết bài mới
+    if (a.key === 'kham-pha' && KP_TEACHER[kind]) {
+      teacher = teacher.split('\n').filter((l) => !/^- (Đưa tình huống|Đặt câu hỏi gợi mở để HS tự rút ra)/.test(l)).join('\n');
+      teacher = `- ${KP_TEACHER[kind]}\n${teacher}`;
+    }
+    if (!teacher.includes('Đánh giá:')) teacher = `${teacher}\n- ${ASSESS[a.key]}`;
+    return { ...a, minutes: mins[i] ?? a.minutes, goal, teacher };
+  });
 }
 
 /** Giáo án trống (bài giáo viên tự nhập, không có trong app) */
@@ -289,7 +379,7 @@ export function genericPlan(input: { subject: PlanSubject; grade: number; classN
       quality: QUALITY,
     },
     materials: { ...mat },
-    activities: review ? [
+    activities: finish(review ? [
       act('khoi-dong', 5, 'Tạo hứng thú, nhắc lại nội dung đã học trong tuần.', ['Trò chơi hỏi nhanh – đáp nhanh về các bài đã học trong tuần.'], ['Tham gia trò chơi.']),
       act('kham-pha', 8, 'Hệ thống lại kiến thức trọng tâm.', ['Cùng HS nhắc lại kiến thức trọng tâm của tuần; chốt lại những điểm dễ nhầm.'], ['Nhắc lại, nêu ví dụ.']),
       act('luyen-tap', 17, 'Luyện tập theo mức độ, kèm cặp HS còn chậm.', ['Chia nhóm theo mức: nhóm củng cố, nhóm nâng cao.', ...(app ? [`Cho HS luyện trên EduChain Kids: bài “${app.title}” (máy / máy tính bảng của lớp hoặc giao về nhà).`] : []), 'Theo dõi, kèm riêng HS còn lúng túng.'], ['Làm bài theo nhóm / cá nhân; tự sửa lỗi.']),
@@ -299,7 +389,8 @@ export function genericPlan(input: { subject: PlanSubject; grade: number; classN
       act('kham-pha', 12, 'Hình thành kiến thức, kĩ năng mới.', [o?.explore ?? 'Hình thành kiến thức mới qua quan sát, trao đổi.'], ['Quan sát, trao đổi nhóm đôi, trình bày.']),
       act('luyen-tap', 13, 'Luyện tập, thực hành.', [o?.practice ?? 'Luyện tập, thực hành.', 'Theo dõi, giúp đỡ HS; nhận xét, tuyên dương.'], ['Thực hành cá nhân / nhóm; nhận xét bạn.']),
       act('van-dung', 5, 'Vận dụng, liên hệ thực tế.', [o?.apply ?? 'Vận dụng vào thực tế.', 'Nhận xét tiết học, dặn dò.'], ['Liên hệ bản thân; ghi nhớ nhiệm vụ.']),
-    ],
+    ], review ? 'on-tap' : 'moi', review ? MINUTES['on-tap'] : MINUTES.moi),
+    kind: review ? 'on-tap' : 'moi',
     assessment: 'Đánh giá thường xuyên bằng nhận xét: quan sát, vấn đáp, sản phẩm học tập của học sinh.',
     adjust: '',
   };

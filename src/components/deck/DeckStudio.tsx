@@ -40,6 +40,7 @@ import '@/styles/cv.css';
 import '@/styles/dk.css';
 import '@/styles/btn.css';
 import '@/styles/pen.css';
+import { knowledgeView } from '@/lib/knowledge-view';
 
 /** bảng bên trái (kiểu Canva): mở từ cột biểu tượng hoặc từ thanh công cụ ngữ cảnh */
 type Panel = 'tpl' | 'el' | 'text' | 'act' | 'bg' | 'sound' | 'up' | 'anim' | 'pos' | 'edit' | 'cmt';
@@ -435,7 +436,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
     let live = true;
     void Promise.all([import('@/lib/content'), import('@/lib/content/knowledge')]).then(([c, k]) => {
       const l = c.CONTENT.find((x) => x.id === lessonId);
-      if (live && l) setSetCt(setContentOf(l, k.knowledgeFor(l.id)));
+      if (live && l) setSetCt(setContentOf(l, knowledgeView(k.knowledgeFor(l.id))));
     });
     return () => { live = false; };
   }, [tplOpen, lessonId, setCt]);

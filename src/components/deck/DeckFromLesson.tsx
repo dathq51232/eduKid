@@ -19,6 +19,7 @@ import '@/styles/dfl.css';
 import '@/styles/dk.css';
 import '@/styles/btn.css';
 import '@/styles/dh.css';
+import { knowledgeView } from '@/lib/knowledge-view';
 
 type Bank = { lessons: ContentLesson[]; byId: Map<string, ContentLesson>; know: (id: string) => Knowledge };
 type PlanRow = { id: string; subject: string; grade: number; title: string; teach_date: string | null; period: number | null };
@@ -70,7 +71,7 @@ export default function DeckFromLesson({ classId, grade, busy, made, onCreate, o
   useEffect(() => {
     let off = false;
     void Promise.all([import('@/lib/content'), import('@/lib/content/knowledge')]).then(([c, k]) => {
-      if (!off) setBank({ lessons: c.CONTENT, byId: new Map(c.CONTENT.map((l) => [l.id, l])), know: (id) => k.knowledgeFor(id) });
+      if (!off) setBank({ lessons: c.CONTENT, byId: new Map(c.CONTENT.map((l) => [l.id, l])), know: (id) => knowledgeView(k.knowledgeFor(id)) });
     });
     void (async () => {
       try {

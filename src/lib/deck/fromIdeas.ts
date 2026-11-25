@@ -10,6 +10,7 @@ import { pickScene } from './scenes';
 import { shrinkToFit } from './fit';
 import { otherWords, vansIn, wordsOf } from '@/lib/plans/van-bank';
 import type { ContentLesson } from '@/lib/content/types';
+import { knowledgeView } from '@/lib/knowledge-view';
 
 const PER_PHASE: Record<string, number> = { kd: 2, kp: 3, lt: 4, vd: 2 };
 /** trò Toán có sẵn cách sinh phép tính theo đúng hình thức trò (dùng specsOf) — chỉ cho số trong phạm vi 10 của lớp 1 */
@@ -291,8 +292,8 @@ export async function deckFromIdeas(subject: string, title: string, pick: Pick, 
     if (l) {
       srcTitle = l.title;
       lessonId = l.id;
-      lessonPlan = buildPlan(l, k.knowledgeFor(l.id), { mascot: MASCOTS[0].id, warmup: 'quiz', scene: 'class', seed: 1, tiet: tietOf(title) });
-      ctx = actCtx(l, k.knowledgeFor(l.id), { mascot: MASCOTS[0].id, warmup: 'quiz', scene: pickScene(`${title} ${subject}`, code === 'toan' ? 'garden' : 'class'), seed: 1 });
+      lessonPlan = buildPlan(l, knowledgeView(k.knowledgeFor(l.id)), { mascot: MASCOTS[0].id, warmup: 'quiz', scene: 'class', seed: 1, tiet: tietOf(title) });
+      ctx = actCtx(l, knowledgeView(k.knowledgeFor(l.id)), { mascot: MASCOTS[0].id, warmup: 'quiz', scene: pickScene(`${title} ${subject}`, code === 'toan' ? 'garden' : 'class'), seed: 1 });
     }
   }
   const bo = { dividers: false, mascot: MASCOTS[0].src, math: code === 'toan' };
