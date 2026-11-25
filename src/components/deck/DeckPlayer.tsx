@@ -9,13 +9,13 @@ import OfflineSaveButton from '@/components/offline/OfflineSaveButton';
 import { saveDeckOffline } from '@/lib/offline/save';
 import TeamAvatar from '@/components/classroom/TeamAvatar';
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Expand, MonitorUp, Volume2 } from 'lucide-react';
 import { listAssets, type TeacherAsset } from '@/lib/assets/client';
-import { SH, SW, type Deck } from '@/lib/deck/types';
+import { SH, SW, type Deck, type El, type Slide } from '@/lib/deck/types';
 import { loadPraiseFonts } from '@/lib/praise/render';
-import { transFrames } from '@/lib/deck/player';
+import { EASE_INOUT, EASE_OUT, contentKey, morphPairs, transDur } from '@/lib/deck/player';
 import { getVolume, playSound, setVolume, stopSounds } from '@/lib/deck/sounds';
 import { createClient } from '@/lib/supabase/client';
 import { SOURCE, TEAM_COLORS, normalizeTeams, teamTotals, vnDay, weekOf, type Point, type TeamsState } from '@/lib/classroom/class-tools';
@@ -36,6 +36,9 @@ type Msg =
 
 const INK = ['#ef4444', '#facc15', '#22c55e', '#3b82f6', '#ec4899', '#ffffff', '#111827'];
 const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+/** trang cũ giữ lại làm lớp "bóng" trong lúc chuyển trang (xem player.ts) */
+type Ghost = { key: number; old: Slide; to: Slide; dir: 1 | -1; pairs: Map<string, El> };
 
 /** Chiếu khi mất mạng (trang /chieu-offline): ảnh / âm thanh của cô đã tải về máy, không gọi máy chủ */
 export type DeckOffline = { urls: Map<string, string>; exitHref: string; audienceHref: (page: number) => string };
@@ -60,7 +63,9 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
   const ch = useRef<BroadcastChannel | null>(null);
   const showRef = useRef(show); showRef.current = show;
   const stageRef = useRef<HTMLDivElement>(null);
-  const frameRef = useRef<HTMLDivElement>(null);
+  const liveRef = useRef<HTMLDivElement>(null);
+  const ghostRef = useRef<HTMLDivElement>(null);
+  const [ghost, setGhost] = useState<Ghost | null>(null);
   const drawing = useRef<Stroke | null>(null);
   const [, force] = useState(0);
   const slide = deck.slides[show.slide];
@@ -103,16 +108,81 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
   }, [deckId, audience, send]);
 
   /* ---------- chuyển bước / trang ---------- */
-  const animateIn = useCallback((i: number) => {
-    const f = transFrames(deck.slides[i]?.trans ?? 'none');
-    if (f) frameRef.current?.animate(f, { duration: (deck.slides[i]?.transDur ?? 0.55) * 1000, easing: 'cubic-bezier(.2,.8,.3,1)' });
-  }, [deck.slides]);
+  // đổi trang (máy cô hoặc màn hình chiếu): giữ trang cũ làm lớp bóng trước khi vẽ khung đầu → không chớp nền
+  const lastSlide = useRef(show.slide);
+  useLayoutEffect(() => {
+    const from = lastSlide.current; lastSlide.current = show.slide;
+    if (from === show.slide) return;
+    const old = deck.slides[from], to = deck.slides[show.slide];
+    setGhost(!old || !to || to.trans === 'none' ? null : { key: Date.now(), old, to, dir: show.slide > from ? 1 : -1, pairs: to.trans === 'morph' ? morphPairs(old, to) : new Map() });
+  }, [show.slide, deck.slides]);
+  useEffect(() => {
+    if (!ghost) return;
+    const g = ghostRef.current, live = liveRef.current;
+    if (!g || !live) return;
+    // như PowerPoint: cô đã chọn kiểu chuyển trang thì chiếu đúng kiểu đó, kể cả khi Windows tắt hiệu ứng (máy trường hay tắt)
+    const t = ghost.to.trans;
+    const D = transDur(ghost.to) * 1000, d = ghost.dir;
+    const list: Animation[] = [];
+    const A = (el: Element | null, k: Keyframe[], o: KeyframeAnimationOptions) => { const a = el?.animate(k, { fill: 'both', ...o }); if (a) list.push(a); };
+    const P = 'perspective(2400px) ';
+    switch (t) {
+      case 'slide': // Đẩy sang
+        A(g, [{ transform: 'none' }, { transform: `translateX(${-100 * d}%)` }], { duration: D, easing: EASE_INOUT });
+        A(live, [{ transform: `translateX(${100 * d}%)` }, { transform: 'none' }], { duration: D, easing: EASE_INOUT });
+        break;
+      case 'zoom':
+        A(g, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(1.06)' }], { duration: D, easing: EASE_OUT });
+        A(live, [{ opacity: 0, transform: 'scale(.94)' }, { opacity: 1, transform: 'none' }], { duration: D, easing: EASE_OUT });
+        break;
+      case 'flip': // nửa đầu trang cũ lật đi, nửa sau trang mới lật vào
+        A(g, [{ transform: `${P}rotateY(0deg)` }, { transform: `${P}rotateY(${-90 * d}deg)` }], { duration: D / 2, easing: 'cubic-bezier(.5,0,.75,0)' });
+        A(live, [{ transform: `${P}rotateY(${90 * d}deg)` }, { transform: `${P}rotateY(0deg)` }], { duration: D / 2, delay: D / 2, easing: 'cubic-bezier(.25,1,.5,1)' });
+        break;
+      case 'morph': { // Biến hình: vật chung trượt / đổi cỡ / xoay về chỗ mới; vật cũ mờ đi, vật mới hiện dần
+        // lớp bóng (nền cũ + vật chỉ có ở trang cũ) mờ trong nửa đầu; vật đổi nội dung có hoạt ảnh riêng ở dưới
+        const changedOld = new Set([...ghost.pairs.entries()].filter(([id, o]) => contentKey(o) !== contentKey(ghost.to.els.find((x) => x.id === id) ?? o)).map(([, o]) => o.id));
+        const sameBg = ghost.old.bg === ghost.to.bg && ghost.old.scene === ghost.to.scene && ghost.old.sceneVariant === ghost.to.sceneVariant;
+        if (!sameBg) A(g, [{ opacity: 1 }, { opacity: 0 }], { duration: D * 0.6, easing: 'ease-out' }); // khác nền: cả lớp bóng mờ dần
+        else g.querySelectorAll<HTMLElement>('.dk-slide > *').forEach((c) => { if (!changedOld.has(c.dataset.id ?? '')) A(c, [{ opacity: 1 }, { opacity: 0 }], { duration: D * 0.5, easing: 'ease-out' }); });
+        for (const e of ghost.to.els) {
+          const node = live.querySelector<HTMLElement>(`[data-id="${CSS.escape(e.id)}"]`);
+          if (!node) continue;
+          const o = ghost.pairs.get(e.id);
+          if (!o) { A(node, [{ opacity: 0 }, { opacity: 0, offset: 0.35 }, { opacity: 1 }], { duration: D, easing: 'ease-out' }); continue; }
+          const dx = o.x + o.w / 2 - (e.x + e.w / 2), dy = o.y + o.h / 2 - (e.y + e.h / 2);
+          const sx = e.w ? o.w / e.w : 1, sy = e.h ? o.h / e.h : 1;
+          const moved = Math.abs(dx) + Math.abs(dy) >= 1 || Math.abs(sx - 1) >= 0.01 || Math.abs(sy - 1) >= 0.01 || (o.rot || 0) !== (e.rot || 0);
+          const changed = contentKey(o) !== contentKey(e); // đổi màu / đổi tư thế: hoà trộn trong lúc trượt
+          const from = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy}) rotate(${o.rot || 0}deg)`, to = `translate(0px, 0px) scale(1, 1) rotate(${e.rot || 0}deg)`;
+          if (moved || changed) A(node, [{ transform: from, opacity: changed ? 0 : 1 }, { transform: to, opacity: 1 }], { duration: D, easing: EASE_INOUT });
+          // bản cũ (nằm trong lớp bóng) đi cùng đường rồi mờ đi
+          if (changed) A(g.querySelector(`[data-id="${CSS.escape(o.id)}"]`), [{ transform: `translate(0px, 0px) scale(1, 1) rotate(${o.rot || 0}deg)`, opacity: 1 }, { transform: `translate(${-dx}px, ${-dy}px) scale(${1 / sx}, ${1 / sy}) rotate(${e.rot || 0}deg)`, opacity: 0 }], { duration: D, easing: EASE_INOUT });
+        }
+        break;
+      }
+      default: // Mờ dần: trang cũ mờ đi trên trang mới
+        A(g, [{ opacity: 1 }, { opacity: 0 }], { duration: D, easing: 'ease-in-out' });
+    }
+    const key = ghost.key;
+    const end = window.setTimeout(() => setGhost((x) => (x?.key === key ? null : x)), D + 60);
+    return () => { clearTimeout(end); list.forEach((a) => a.cancel()); };
+  }, [ghost]);
+  /** lớp bóng của trang cũ: Biến hình bỏ vật đã ghép cặp (vật đó trượt sang trang mới); cùng nền thì bóng trong suốt */
+  const ghostSlide = useMemo((): Slide | null => {
+    if (!ghost) return null;
+    const { old, to, pairs } = ghost;
+    if (to.trans !== 'morph') return { ...old, anims: [] };
+    // vật ghép cặp đã có ở trang mới nên bỏ khỏi bóng — trừ vật đổi nội dung (bản cũ mờ dần trong lúc trượt)
+    const paired = new Set([...pairs.entries()].filter(([id, o]) => contentKey(o) === contentKey(to.els.find((x) => x.id === id) ?? o)).map(([, o]) => o.id));
+    const sameBg = old.bg === to.bg && old.scene === to.scene && old.sceneVariant === to.sceneVariant;
+    return { ...old, anims: [], els: old.els.filter((e) => !paired.has(e.id)), ...(sameBg ? { bg: '#0000', scene: undefined } : {}) };
+  }, [ghost]);
   const go = useCallback((i: number, step = 0) => {
     if (i < 0 || i >= n) return;
     stopSounds();
     publish({ ...showRef.current, slide: i, step, nonce: showRef.current.nonce + 1, spot: null });
-    requestAnimationFrame(() => animateIn(i));
-  }, [n, publish, animateIn]);
+  }, [n, publish]);
   const next = useCallback(() => {
     if (audience) { send({ type: 'cmd', c: 'next' }); return; }
     if (api.current?.apply({ t: 'step' })) {
@@ -313,13 +383,16 @@ export default function DeckPlayer({ classId, deckId, deck, students, start = 0,
       <SlideFrame className="dp-frame">{(k) => (
         <div
           className={`dp-stage${!tool ? ' is-nav-ready' : ''}`}
-          ref={(el) => { stageRef.current = el; frameRef.current = el; }}
+          ref={stageRef}
           style={{ width: SW * k, height: SH * k }}
           onClick={onStageClick}
           onContextMenu={onStageContextMenu}
         >
-          <SlideView key={`${slide.id}-${show.nonce}`} ref={api} slide={slide} mode="play" scale={k} assetUrl={assetUrl} speechSubject={deck.src?.subject ?? (/\benglish\b|tiếng anh/i.test(`${deck.title} ${deck.src?.lesson ?? ''}`) ? 'tieng-anh' : 'tieng-viet')} startStep={show.step}
-            onAction={onAction} onLink={(i) => { if (!audience) go(i - 1); }} onWin={onWin} board={show.teams ?? undefined} />
+          <div ref={liveRef} className="dp-live">
+            <SlideView key={`${slide.id}-${show.nonce}`} ref={api} slide={slide} mode="play" scale={k} assetUrl={assetUrl} speechSubject={deck.src?.subject ?? (/\benglish\b|tiếng anh/i.test(`${deck.title} ${deck.src?.lesson ?? ''}`) ? 'tieng-anh' : 'tieng-viet')} startStep={show.step} autoDelay={transDur(slide) * 0.55}
+              onAction={onAction} onLink={(i) => { if (!audience) go(i - 1); }} onWin={onWin} board={show.teams ?? undefined} />
+          </div>
+          {ghost && ghostSlide && <div ref={ghostRef} key={ghost.key} className="dp-ghost" aria-hidden="true"><SlideView slide={ghostSlide} mode="thumb" scale={k} assetUrl={assetUrl} /></div>}
           <svg className={`dp-ink${tool === 'pen' || tool === 'spot' || tool === 'laser' ? ' is-on' : ''}`} viewBox={`0 0 ${SW} ${SH}`} style={{ cursor: tool === 'pen' ? 'crosshair' : tool === 'spot' || tool === 'laser' ? 'none' : undefined }}
             onPointerDown={onOvDown} onPointerMove={onOvMove} onPointerUp={onOvUp} onPointerLeave={() => {
               if (tool === 'spot') publish({ ...showRef.current, spot: null });

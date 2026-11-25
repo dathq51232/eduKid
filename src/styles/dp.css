@@ -131,3 +131,7 @@
 .cv-th, .cv-pages button, .cv-set-pv, .dp-next { content-visibility: auto; contain-intrinsic-size: auto 140px auto 80px; }
 .dp-hint{align-items:center;flex-wrap:wrap}
 .dp-hint small{width:100%;opacity:.8;font-size:12px}
+/* chuyển trang: trang mới (dp-live) và lớp bóng trang cũ (dp-ghost) chồng khít khung, chỉ animate transform / opacity */
+.dp-live, .dp-ghost { position: absolute; inset: 0; }
+.dp-ghost { z-index: 2; pointer-events: none; }
+.dp-live, .dp-ghost { backface-visibility: hidden; }
