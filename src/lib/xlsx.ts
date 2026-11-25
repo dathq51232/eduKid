@@ -16,10 +16,15 @@ export const XS = {
   red: 9, // chữ đỏ, khung, căn trái, xuống dòng (vd tiết trống trong lịch báo giảng)
   boldText: 10, // đậm, khung, căn trái, xuống dòng
   redBold: 11, // đậm đỏ, khung, căn trái, xuống dòng
+  money: 12, // số có dấu phân cách nghìn (#,##0), khung, căn phải
+  moneyBold: 13, // như money nhưng đậm (dòng tổng)
+  headFill: 14, // tiêu đề cột: đậm, giữa, khung, xuống dòng, nền xám nhạt
+  centerBold: 15, // đậm, khung, căn giữa (ô đếm ở dòng tổng)
 } as const;
 export type XStyle = (typeof XS)[keyof typeof XS];
 export type XValue = string | number | null | undefined;
-export type XCell = XValue | { v: XValue; s: XStyle };
+/** Ô: giá trị thường, hoặc { v, s } có kiểu, hoặc { f, s } là công thức Excel (không có dấu "=", vd "SUM(C7:C38)") */
+export type XCell = XValue | { v: XValue; s: XStyle; f?: undefined } | { f: string; s: XStyle; v?: XValue };
 export type XSheet = {
   name: string;
   rows: XCell[][];
@@ -38,6 +43,8 @@ export type XSheet = {
   margins?: [number, number, number, number];
   /** căn giữa trang theo chiều ngang khi in */
   center?: boolean;
+  /** dòng tiêu đề lặp lại đầu mỗi trang khi in (0-based, từ – đến) */
+  printTitleRows?: [number, number];
 };
 
 export function colName(i: number): string {
@@ -79,9 +86,12 @@ function sheetXml(sh: XSheet): string {
     const h = sh.heights?.[r];
     const cells: string[] = [];
     row.forEach((cell, c) => {
-      const { v, s } = cell !== null && typeof cell === 'object' ? cell : { v: cell, s: XS.plain as XStyle };
+      const { v, s, f } = cell !== null && typeof cell === 'object' ? cell : { v: cell, s: XS.plain as XStyle, f: undefined };
       const sa = s ? ` s="${s}"` : '';
-      if (v === null || v === undefined || v === '') {
+      if (f) {
+        // công thức: Excel tự tính khi mở file (calcPr fullCalcOnLoad trong workbook.xml)
+        cells.push(`<c r="${ref(r, c)}"${sa}><f>${esc(f)}</f></c>`);
+      } else if (v === null || v === undefined || v === '') {
         if (s) cells.push(`<c r="${ref(r, c)}"${sa}/>`);
       } else if (typeof v === 'number' && Number.isFinite(v)) {
         cells.push(`<c r="${ref(r, c)}"${sa}><v>${v}</v></c>`);
@@ -111,11 +121,12 @@ const STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
   + '<font><sz val="11"/><color rgb="FFFF0000"/><name val="Times New Roman"/><family val="1"/></font>'
   + '<font><b/><sz val="11"/><color rgb="FFFF0000"/><name val="Times New Roman"/><family val="1"/></font>'
   + '</fonts>'
-  + '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>'
+  + '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>'
+  + '<fill><patternFill patternType="solid"><fgColor rgb="FFF2F2F2"/><bgColor indexed="64"/></patternFill></fill></fills>'
   + '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'
   + '<border><left style="thin"><color auto="1"/></left><right style="thin"><color auto="1"/></right><top style="thin"><color auto="1"/></top><bottom style="thin"><color auto="1"/></bottom><diagonal/></border></borders>'
   + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
-  + '<cellXfs count="12">'
+  + '<cellXfs count="16">'
   + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
   + '<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'
   + '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
@@ -128,9 +139,21 @@ const STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
   + '<xf numFmtId="0" fontId="4" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
   + '<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
   + '<xf numFmtId="0" fontId="5" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
+  + '<xf numFmtId="3" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>'
+  + '<xf numFmtId="3" fontId="1" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>'
+  + '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'
+  + '<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'
   + '</cellXfs>'
   + '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
   + '</styleSheet>';
+
+/** Dòng tiêu đề lặp lại khi in (Print_Titles) của từng trang tính */
+function definedNames(sheets: XSheet[], names: string[]): string {
+  const list = sheets.map((s, i) => (s.printTitleRows
+    ? `<definedName name="_xlnm.Print_Titles" localSheetId="${i}">'${esc(names[i].replace(/'/g, "''"))}'!$${s.printTitleRows[0] + 1}:$${s.printTitleRows[1] + 1}</definedName>`
+    : '')).join('');
+  return list ? `<definedNames>${list}</definedNames>` : '';
+}
 
 /** Dựng nội dung file .xlsx */
 export function buildXlsx(sheets: XSheet[]): Uint8Array {
@@ -145,7 +168,8 @@ export function buildXlsx(sheets: XSheet[]): Uint8Array {
       + '</Types>'],
     ['_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
     ['xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'
-      + names.map((n, i) => `<sheet name="${esc(n)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets></workbook>'],
+      + names.map((n, i) => `<sheet name="${esc(n)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets>'
+      + definedNames(sheets, names) + '<calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>'],
     ['xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
       + sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')
       + `<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
