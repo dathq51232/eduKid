@@ -1,0 +1,44 @@
+# Kiểm tra câu hỏi & kiến thức ĐẦY ĐỦ (khoảng 5–6 phút) — chỉ chạy khi PR sửa nội dung, bộ sinh câu, đề,
+# chấm điểm, danh mục chương trình hoặc các bộ kiểm tra. Quy trình: docs/KIEM-TRA-NOI-DUNG.md
+name: Nội dung
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/content/**'
+      - 'src/lib/practice/**'
+      - 'src/lib/exams/**'
+      - 'src/lib/curriculum/**'
+      - 'src/lib/grading.ts'
+      - 'scripts/check-*'
+  push:
+    branches: [main]
+    paths:
+      - 'src/lib/content/**'
+      - 'src/lib/practice/**'
+      - 'src/lib/exams/**'
+      - 'src/lib/curriculum/**'
+      - 'src/lib/grading.ts'
+      - 'scripts/check-*'
+
+concurrency:
+  group: noi-dung-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  noi-dung:
+    name: Câu hỏi & kiến thức (check:noi-dung)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check:noi-dung
