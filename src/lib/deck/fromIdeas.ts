@@ -2,7 +2,7 @@
 // Mỗi hoạt động (Khởi động → Vận dụng): trang chia hoạt động (mốc phút) → trang hướng dẫn hoạt động đã chọn
 // → (hoạt động thi đua: bảng thi đua tổ) → các trang nội dung bài học của đúng hoạt động đó.
 // Trang hướng dẫn gắn công cụ cho màn hình của cô (Slide.tool): hẹn giờ thảo luận / gọi tên.
-import { emptyDeck, uid, type Deck, type El, type SceneKind, type Slide } from './types';
+import { animDur, emptyDeck, uid, type Deck, type El, type SceneKind, type Slide } from './types';
 import { MASCOTS, bareScene, actCtx, activityPages, badgeEl, boardEls, boardPage, buildPlan, dividerSlide, planSlides, tietOf, type ActCtx, type ActivitySpec, type PhaseId } from './fromLesson';
 import { planOf, type LessonIdea, type Pick } from '@/lib/plans/idea-bank';
 import { F3D_VI, f3dSrc } from './f3d-catalog';
@@ -120,7 +120,7 @@ const img0 = (src: string, x: number, y: number, w: number): El => ({ id: uid(),
 const img = (name: string, x: number, y: number, w: number): El => ({ id: uid(), kind: 'img', src: f3dSrc(name), x, y, w, h: w, rot: 0, name, shadow: true } as El);
 type Anims = Slide['anims'];
 const anim = (anims: Anims, el: El, fx: 'pop' | 'zoom' | 'fly-up' | 'drop', start: 'click' | 'with' | 'after', sound?: string) =>
-  anims.push({ id: uid(), el: el.id, fx, start, delay: start === 'after' ? 0.05 : 0, dur: 0.45, ...(sound ? { sound } : {}) });
+  anims.push({ id: uid(), el: el.id, fx, start, delay: start === 'after' ? 0.05 : 0, dur: animDur(fx), ...(sound ? { sound } : {}) });
 
 /** một nhóm đồ vật xếp trên Khay đếm Montessori (5 vật/hàng — chuẩn Subitizing Tiểu học) */
 function groupEls(n: number, obj: string, x: number, y: number, w: number, els: El[], anims: Anims, first: boolean) {
@@ -262,7 +262,7 @@ function activitySlides(n: number, phase: { n: string; c: string }, x: LessonIde
     const m = img0(MASCOTS[n % MASCOTS.length].src, 1330, 640, 200);
     const b = { id: uid(), kind: 'shape', shape: 'bubble', x: 980, y: 560, w: 380, h: 120, rot: 0, fill: '#fffbeb', stroke: phase.c, sw: 4, text: `Cùng chơi: ${x.t}!`, color: '#1f2937', size: 26 } as El;
     slides[0].els.push(m, b);
-    slides[0].anims.unshift({ id: uid(), el: m.id, fx: 'fly-right', start: 'with', delay: 0, dur: 0.6 }, { id: uid(), el: b.id, fx: 'pop', start: 'after', delay: 0.1, dur: 0.4 });
+    slides[0].anims.unshift({ id: uid(), el: m.id, fx: 'fly-right', start: 'with', delay: 0, dur: animDur('fly-right') }, { id: uid(), el: b.id, fx: 'pop', start: 'after', delay: 0.1, dur: animDur('pop') });
   }
   slides[0] = {
     ...slides[0], mins: x.m,

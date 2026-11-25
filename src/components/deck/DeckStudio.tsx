@@ -16,7 +16,8 @@ import {
   BGS, EASE_LABEL, FONTS, FX, FX_BY_ID, MAX_ELS, MAX_SLIDES, SH, START_LABEL, SW, TRANS_LABEL, darkBg, elLabel, newSlide, uid,
   type Anim, type Deck, type Ease, type El, type FontKey, type Fx, type SceneKind, type ShapeKind, type Slide, type Start, type Trans,
 } from '@/lib/deck/types';
-import { PHOTO_SRC } from '@/lib/deck/types';
+import { PHOTO_SRC, animDur } from '@/lib/deck/types';
+import { TRANS_DUR } from '@/lib/deck/player';
 import { loadPraiseFonts } from '@/lib/praise/render';
 import { playSound, soundLabel, SOUNDS } from '@/lib/deck/sounds';
 import { STICKER_SETS } from '@/lib/deck/templates';
@@ -249,7 +250,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   /* ---------- thêm vật ---------- */
   const addEl = (e: El, anim?: Fx) => {
     if (slide.els.length >= MAX_ELS) { setMsg({ kind: 'error', text: `Mỗi trang tối đa ${MAX_ELS} vật.` }); return; }
-    setSlide((s) => ({ ...s, els: [...s.els, e], anims: anim ? [...s.anims, { id: uid(), el: e.id, fx: anim, start: 'click', delay: 0, dur: 0.6 }] : s.anims }));
+    setSlide((s) => ({ ...s, els: [...s.els, e], anims: anim ? [...s.anims, { id: uid(), el: e.id, fx: anim, start: 'click', delay: 0, dur: animDur(anim) }] : s.anims }));
     setSel(e.id); setPane('props');
   };
   const dark = darkBg(slide.bg);
@@ -312,7 +313,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
   /* ---------- hiệu ứng ---------- */
   const addAnim = (fx: Fx) => {
     if (!selEl) { setMsg({ kind: 'info', text: 'Chọn một vật trên trang trước, rồi bấm hiệu ứng.' }); return; }
-    const a: Anim = { id: uid(), el: selEl.id, fx, start: trigMode ? 'click' : startMode, delay: 0, dur: fx === 'spin' ? 1.2 : 0.6, trigger: trigMode || undefined };
+    const a: Anim = { id: uid(), el: selEl.id, fx, start: trigMode ? 'click' : startMode, delay: 0, dur: animDur(fx), trigger: trigMode || undefined };
     setSlide((s) => ({ ...s, anims: [...s.anims, a] }));
     setAnimSel(a.id); setPane('anim');
   };
@@ -325,7 +326,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
     const have = new Set(s.anims.filter((a) => FX_BY_ID[a.fx].group === 'in').map((a) => a.el));
     const els = s.els.filter((e) => !have.has(e.id) && e.role !== 'card').sort((a, b) => a.y - b.y || a.x - b.x);
     if (!els.length) { setMsg({ kind: 'info', text: 'Mọi vật trên trang đã có hiệu ứng xuất hiện.' }); return s; }
-    const add: Anim[] = els.map((e, i) => ({ id: uid(), el: e.id, fx, start: 'after', delay: i ? 0.1 : 0.3, dur: 0.6 }));
+    const add: Anim[] = els.map((e, i) => ({ id: uid(), el: e.id, fx, start: 'after', delay: i ? 0.1 : 0.3, dur: animDur(fx) }));
     setMsg({ kind: 'ok', text: `Đã thêm hiệu ứng cho ${els.length} vật: tự hiện lần lượt khi vào trang. Chỉnh thời gian ở dòng thời gian dưới trang.` });
     return { ...s, anims: [...add, ...s.anims] };
   });
@@ -898,7 +899,7 @@ export default function DeckStudio({ classId, deckId, initial }: { classId: stri
                 <label className="cv-pl"><input type="checkbox" checked={!!slide.autoNext} onChange={(e) => setSlide((s) => ({ ...s, autoNext: e.target.checked ? 5 : undefined }))} /> Tự sang bước / trang sau</label>
                 {!!slide.autoNext && <label className="cv-pl"><input type="range" min={1} max={60} value={slide.autoNext} onChange={(e) => setSlide((s) => ({ ...s, autoNext: Number(e.target.value) }), false)} onPointerUp={() => commit(deckRef.current)} aria-label="Số giây tự sang" /> <b>{slide.autoNext} giây</b></label>}
                 <label className="cv-pl">Chuyển trang <select value={slide.trans} onChange={(e) => setSlide((s) => ({ ...s, trans: e.target.value as Trans }))}>{(Object.keys(TRANS_LABEL) as Trans[]).map((t) => <option key={t} value={t}>{TRANS_LABEL[t]}</option>)}</select>
-                  <input type="number" min={0.1} max={3} step={0.1} value={slide.transDur ?? 0.55} onChange={(e) => setSlide((s) => ({ ...s, transDur: Math.min(3, Math.max(0.1, Number(e.target.value) || 0.55)) }))} aria-label="Thời gian chuyển trang (giây)" /> s</label>
+                  <input type="number" min={0.1} max={10} step={0.1} value={slide.transDur ?? TRANS_DUR[slide.trans] ?? 3} onChange={(e) => setSlide((s) => ({ ...s, transDur: Math.min(10, Math.max(0.1, Number(e.target.value) || TRANS_DUR[s.trans] || 3)) }))} aria-label="Thời gian chuyển trang (giây)" /> s</label>
                 <button type="button" className="cv-link" onClick={() => commit({ ...deckRef.current, slides: deckRef.current.slides.map((x) => ({ ...x, trans: slide.trans, transDur: slide.transDur, autoNext: slide.autoNext })) })}>Áp dụng chuyển trang &amp; tự sang cho mọi trang</button>
               </>}
               {foot === 'note' && <>
@@ -1114,7 +1115,7 @@ function AnimList({ slide, sel, setSel, patch, move, del, myAudio }: {
             </select></label>
             <label>Bắt đầu<select value={a.start} onChange={(v) => patch(a.id, { start: v.target.value as Start })}>{(Object.keys(START_LABEL) as Start[]).map((s) => <option key={s} value={s}>{START_LABEL[s]}</option>)}</select></label>
             <div className="dk-xy">
-              <label>Thời lượng (giây)<input type="number" min={0.2} max={10} step={0.1} value={a.dur} onChange={(v) => patch(a.id, { dur: Math.min(10, Math.max(0.2, Number(v.target.value) || 0.6)) })} /></label>
+              <label>Thời lượng (giây)<input type="number" min={0.2} max={10} step={0.1} value={a.dur} onChange={(v) => patch(a.id, { dur: Math.min(10, Math.max(0.2, Number(v.target.value) || animDur(a.fx))) })} /></label>
               <label>Chờ trước (giây)<input type="number" min={0} max={30} step={0.1} value={a.delay} onChange={(v) => patch(a.id, { delay: Math.min(30, Math.max(0, Number(v.target.value) || 0)) })} /></label>
             </div>
             <div className="dk-xy">

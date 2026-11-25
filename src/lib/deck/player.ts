@@ -87,8 +87,9 @@ export const fxEasing = (fx: Fx, ease?: Ease) => {
    - Lật trang (Flip): nửa đầu trang cũ lật đi, nửa sau trang mới lật vào.
    - Biến hình (Morph): vật có mặt ở cả hai trang trượt / đổi cỡ / xoay sang chỗ mới; vật chỉ có ở trang cũ mờ đi, vật mới hiện dần. */
 /** thời lượng mặc định (giây) của từng kiểu chuyển trang */
-export const TRANS_DUR: Record<Trans, number> = { none: 0, fade: 0.5, morph: 0.9, slide: 0.65, zoom: 0.55, flip: 0.8 };
-export const transDur = (s?: Slide) => (s && s.trans !== 'none' ? s.transDur ?? TRANS_DUR[s.trans] ?? 0.5 : 0);
+/** thời lượng chuyển trang MẶC ĐỊNH (giây, 2,5–3,5 s); cô chỉnh từng trang ở bảng Chuyển trang */
+export const TRANS_DUR: Record<Trans, number> = { none: 0, fade: 2.5, morph: 3.5, slide: 3, zoom: 3, flip: 3.5 };
+export const transDur = (s?: Slide) => (s && s.trans !== 'none' ? s.transDur ?? TRANS_DUR[s.trans] ?? 3 : 0);
 
 /** khoá ghép cặp vật giữa 2 trang cho Biến hình: cùng id → cùng vai trò (duy nhất) → cùng nội dung (duy nhất) */
 // chữ chỉ ghép khi cùng nội dung (chữ khác nhau thì hoà trộn); hình / khối ghép theo vai trò dù đổi màu, đổi tư thế
