@@ -17,6 +17,7 @@ import { checkText, fixInline, fixRows, fixText, type Issue } from '@/lib/vanban
 import { buildXlsx, range, sheetName } from '@/lib/xlsx';
 import { htmlToDocx, type DocImage } from '@/lib/docx-write';
 import { readDocxFull } from '@/lib/docx-read';
+import { fixLegacyText } from '@/lib/vn-legacy';
 import { readXlsxAll, type Sheet } from '@/lib/xlsx-read';
 import { asciiFilename } from '@/lib/filename';
 import ClassPrint from '@/components/classroom/ClassPrint';
@@ -36,7 +37,7 @@ type Tab = 'mau' | 'file' | 'lop';
 type Change = { sheet: string; r: number; c: number; from: string; to: string };
 /** Tài liệu đang làm ở thẻ Mở file & in. id đổi = mở trình sửa mới */
 type Work =
-  | { id: number; kind: 'doc'; name: string; file: string; html: string; images: Map<string, DocImage>; fixed: number; orig: string | null }
+  | { id: number; kind: 'doc'; name: string; file: string; html: string; images: Map<string, DocImage>; fixed: number; orig: string | null; legacy?: number }
   | { id: number; kind: 'sheet'; name: string; file: string; sheets: Sheet[]; changes: Change[]; orig: Sheet[] | null };
 // orig: bản trước khi bấm Chuẩn hoá (null = chưa chuẩn hoá) — để "Về bản gốc"
 
@@ -47,6 +48,8 @@ const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 const bodyOf = (html: string) => /<body>([\s\S]*)<\/body>/.exec(html)?.[1] ?? html;
 const baseName = (n: string) => n.replace(/\.(docx|xlsx)$/i, '') || 'van-ban';
 let seq = 0;
+/** Chữ phông cũ (.VnTime, VNI) đã tự đổi sang Unicode khi mở file */
+const legacyNote = (w: Work) => (w.kind === 'doc' && w.legacy ? `; đã tự đổi ${w.legacy} đoạn chữ phông cũ (.VnTime / VNI) sang Unicode, phông Times New Roman` : '');
 
 function download(bytes: Uint8Array | string, name: string, type: string) {
   const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type }));
@@ -174,7 +177,7 @@ async function loadWork(file: File, normalize: boolean): Promise<Work> {
   let fixed = 0;
   const orig = html;
   if (normalize) { const r = normalizeHtml(html); html = r.html; fixed = r.fixed; }
-  return { id: ++seq, kind: 'doc', name: file.name, file: baseName(file.name), html, images, fixed, orig: normalize ? orig : null };
+  return { id: ++seq, kind: 'doc', name: file.name, file: baseName(file.name), html, images, fixed, orig: normalize ? orig : null, legacy: full.legacyRuns };
 }
 
 export default function DocStudio({ teacher, className, classId, students }: { teacher: string; className: string; classId: string; students: Pupil[] }) {
@@ -397,14 +400,14 @@ export default function DocStudio({ teacher, className, classId, students }: { t
       {tab === 'file' && (
         <section className="vb-norm no-print">
           {!work ? (
-            <Landing onOpen={(w) => { open(w); setFlash('Đã mở file — bấm “Chuẩn hoá theo mẫu” để đưa về đúng thể thức; đặt khổ giấy, số trang, đầu & chân trang ở thẻ “Bố cục trang”.'); }} />
+            <Landing onOpen={(w) => { open(w); setFlash(`Đã mở file${legacyNote(w)} — bấm “Chuẩn hoá theo mẫu” để đưa về đúng thể thức; đặt khổ giấy, số trang, đầu & chân trang ở thẻ “Bố cục trang”.`); }} />
           ) : (
             <Workspace key={work.id} startTab="home" setup={setup} onSetup={setSetup}
               {...(work.kind === 'doc'
                 ? { kind: 'doc' as const, docKey: work.id, html: work.html, onHtml: docHtml }
                 : { kind: 'sheet' as const, sheets: work.sheets, idx: sheetIdx, onIdx: setSheetIdx, onSheets: setSheets, view, onView: setView })}
               fileGroup={<>
-                <OpenBtn onOpen={(w) => { if (window.confirm('Mở file mới sẽ thay tài liệu đang làm. Tiếp tục?')) { open(w); setFlash('Đã mở file mới.'); } }} />
+                <OpenBtn onOpen={(w) => { if (window.confirm('Mở file mới sẽ thay tài liệu đang làm. Tiếp tục?')) { open(w); setFlash(`Đã mở file mới${legacyNote(w)}.`); } }} />
                 <RbBtn icon={work.kind === 'doc' ? <FileText aria-hidden="true" /> : <FileSpreadsheet aria-hidden="true" />} label={work.kind === 'doc' ? 'Tải Word' : 'Tải Excel'}
                   onClick={() => (work.kind === 'doc' ? saveWord(work.html, setup, work.file, work.name, work.images) : saveExcel(work))} />
                 <RbBtn primary icon={<Printer aria-hidden="true" />} label="In / PDF" onClick={printWork} />
@@ -484,7 +487,7 @@ function Landing({ onOpen }: { onOpen: (w: Work) => void }) {
       <details className="vbe-paste">
         <summary>Hoặc dán văn bản vào đây</summary>
         <textarea className="vb-text" rows={10} value={text} maxLength={60000} placeholder="Dán văn bản…" onChange={(e) => setText(e.target.value)} aria-label="Văn bản cần chuẩn hoá" />
-        <button type="button" className="btn btn-primary" disabled={!text.trim()} onClick={() => onOpen({ id: ++seq, kind: 'doc', name: 'Văn bản dán vào', file: 'van-ban', html: paraHtml(text), images: new Map(), fixed: 0, orig: null })}><FileText aria-hidden="true" /> Mở trên trang</button>
+        <button type="button" className="btn btn-primary" disabled={!text.trim()} onClick={() => { const fx = fixLegacyText(text); onOpen({ id: ++seq, kind: 'doc', name: 'Văn bản dán vào', file: 'van-ban', html: paraHtml(fx.text), images: new Map(), fixed: 0, orig: null, legacy: fx.kind ? text.split('\n').filter((l) => l.trim()).length : 0 }); }}><FileText aria-hidden="true" /> Mở trên trang</button>
       </details>
     </div>
   );

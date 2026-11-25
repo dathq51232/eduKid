@@ -4,6 +4,7 @@
 // và xuất lại Word đúng như bản giáo viên đã soạn. Chạy được trên trình duyệt và Node ≥ 18.
 
 import { unzip } from './xlsx-read';
+import { fixLegacyXml } from './docx-legacy';
 
 export type DocBlock =
   /** html: đoạn văn đã chuyển sang HTML (hình ghi là <img data-img="word/media/…">) */
@@ -15,6 +16,8 @@ export type DocxFull = {
   blocks: DocBlock[];
   /** hình trong file: đường dẫn trong gói (vd "word/media/image1.jpg") → nội dung */
   media: Map<string, Uint8Array>;
+  /** số đoạn chữ phông cũ (.VnTime / VNI) đã tự đổi sang Unicode */
+  legacyRuns: number;
 };
 
 const unxml = (s: string) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'")
@@ -289,8 +292,11 @@ export async function readDocxFull(buf: ArrayBuffer | Uint8Array): Promise<DocxF
     const id = /Id="([^"]*)"/.exec(m[0])?.[1], target = /Target="([^"]*)"/.exec(m[0])?.[1];
     if (id && target && /\/image"/.test(m[0]) && !/TargetMode="External"/.test(m[0])) rels.set(id, target.startsWith('/') ? target.slice(1) : `word/${target.replace(/^\.\//, '')}`);
   }
-  const ctx: Ctx = { ...parseStyles(dec.decode(files.get('word/styles.xml') ?? new Uint8Array())), rels };
-  let xml = dec.decode(raw);
+  const stylesXml = dec.decode(files.get('word/styles.xml') ?? new Uint8Array());
+  const ctx: Ctx = { ...parseStyles(stylesXml), rels };
+  // chữ phông cũ (.VnTime, VNI-Times) → Unicode trước khi đọc, để "Gi¸o ¸n" hiện đúng "Giáo án"
+  const fixed = fixLegacyXml(dec.decode(raw), stylesXml);
+  let xml = fixed.xml;
   const b = xml.indexOf('<w:body>');
   const e = xml.lastIndexOf('</w:body>');
   xml = xml.slice(b >= 0 ? b + 8 : 0, e > 0 ? e : undefined)
@@ -328,7 +334,7 @@ export async function readDocxFull(buf: ArrayBuffer | Uint8Array): Promise<DocxF
   }
   const media = new Map<string, Uint8Array>();
   for (const [k, v] of files) if (k.startsWith('word/media/')) media.set(k, v);
-  return { blocks, media };
+  return { blocks, media, legacyRuns: fixed.runs };
 }
 
 /** Chỉ các khối (chữ + HTML) */
