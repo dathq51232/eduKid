@@ -241,9 +241,26 @@ function merge(segs: Segment[]): Segment[] {
   return out;
 }
 
+/**
+ * Chữ cái / âm ghép đứng riêng trong bài Tiếng Việt → đọc theo ÂM như sách Tiếng Việt 1 (Kết nối tri thức),
+ * không đọc tên chữ cái kiểu "xê", "bê", "giê hát": c → "cờ", gh → "gờ kép", ngh → "ngờ kép", k → "ca"…
+ * Chỉ đổi khi chữ đứng một mình ("Điền c hay k", đáp án "ng" / "ngh"); tiếng có vần ("bê", "cá") giữ nguyên.
+ */
+const VI_LETTER_SOUND: Record<string, string> = {
+  ngh: 'ngờ kép', gh: 'gờ kép', ng: 'ngờ', nh: 'nhờ', ch: 'chờ', gi: 'di', kh: 'khờ', ph: 'phờ', qu: 'quờ', th: 'thờ', tr: 'trờ',
+  b: 'bờ', c: 'cờ', d: 'dờ', đ: 'đờ', g: 'gờ', h: 'hờ', k: 'ca', l: 'lờ', m: 'mờ', n: 'nờ', p: 'pờ', q: 'cu', r: 'rờ', s: 'sờ', t: 'tờ', v: 'vờ', x: 'xờ',
+  ă: 'á', â: 'ớ', y: 'i dài',
+};
+const VI_LETTER_RE = /(?<![\p{L}\p{N}])(ngh|gh|ng|nh|ch|gi|kh|ph|qu|th|tr|[bcdđghklmnpqrstvxăây])(?![\p{L}\p{N}])/giu;
+export function letterSounds(text: string): string {
+  return text.replace(VI_LETTER_RE, (m) => VI_LETTER_SOUND[m.toLowerCase()] ?? m);
+}
+
 // Chia đoạn đọc theo môn học ('auto' = không rõ môn: lời nhắn, tiêu đề, nội dung chung).
 export function segmentsFor(text: string, subject: SubjectCode | 'auto'): Segment[] {
-  return splitEnglishVietnamese(text, subject !== 'tieng-anh');
+  const segs = splitEnglishVietnamese(text, subject !== 'tieng-anh');
+  // Tiếng Việt: chữ cái đứng riêng đọc theo âm (Toán giữ nguyên vì a, b, c là tên biến / nhãn)
+  return subject === 'tieng-viet' ? segs.map((g) => (g.lang === 'vi' ? { ...g, text: letterSounds(g.text) } : g)) : segs;
 }
 
 /** Đọc một đoạn bất kỳ, tự chọn giọng Anh / Việt theo từng đoạn. */
@@ -281,7 +298,8 @@ export function speakableQuestion(
   const readOptions = ['single_choice', 'true_false', 'multiple_choice'].includes(q.type) ? (q.options ?? []) : [];
   const extra = [
     ...(q.blanks ?? []).map((line) => line.replace(/\{\}/g, ' mấy ')),
-    ...(q.statements ?? []).map((t, i) => `${String.fromCharCode(97 + i)}: ${t}`),
+    // nhãn ý Đúng/Sai: Tiếng Việt đọc "Ý 1, Ý 2…" (chữ a, b, c đứng riêng sẽ bị đọc theo âm "bờ", "cờ")
+    ...(q.statements ?? []).map((t, i) => (subject === 'tieng-viet' ? `Ý ${i + 1}: ${t}` : `${String.fromCharCode(97 + i)}: ${t}`)),
   ];
   const text = [prompt, ...extra].map((t) => (/[.!?:]$/.test(t.trim()) ? t : `${t}.`)).join(' ');
   return questionSegments(text, readOptions, subject);
