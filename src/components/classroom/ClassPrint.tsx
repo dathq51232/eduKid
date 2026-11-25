@@ -4,13 +4,16 @@
 // trộn thư (một mẫu → mỗi em một phiếu) — kèm lối tắt tới các mục in khác của lớp. Mọi xử lý trên máy, không gửi đi đâu.
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, FileText, IdCard, ListChecks, Mails, PenLine, Printer, Tags, Users } from 'lucide-react';
+import { ArrowRight, FileSpreadsheet, FileText, IdCard, ListChecks, Mails, PenLine, Printer, Tags, Users } from 'lucide-react';
 import { RbBtn, RbGroup } from '@/components/classroom/PageEditor';
 import { TOOLS, toolHref, type ToolKey } from '@/lib/classroom/teacher-nav';
 import {
   LABEL_STYLES, MERGE_FIELDS, MERGE_PRESETS, ROSTER_KINDS, labelsHtml, mergeHtml, rosterHtml, tentHtml,
   type Ctx, type LabelStyle, type Printable, type Pupil, type RosterKind,
 } from '@/lib/vanban/class-print';
+import { rosterXlsx } from '@/lib/vanban/class-xlsx';
+import { downloadXlsx } from '@/lib/xlsx';
+import { asciiFilename } from '@/lib/filename';
 import '@/styles/cpr.css';
 
 type Mode = 'ds' | 'nhan' | 'the' | 'tron';
@@ -82,6 +85,9 @@ export default function ClassPrint({ classId, students, ctx, onPrint, onWord, on
     return mergeHtml({ title: mTitle, body: mBody, students: few, ctx, perPage });
   }, [mode, out, chosen, subjects, copies, style, ctx, mTitle, mBody, perPage]);
 
+  /** Danh sách lớp → Excel có sẵn công thức (đếm vắng P/K, tổng tiền) để thầy cô điền và tính ngay */
+  const excel = () => downloadXlsx(asciiFilename(`danh-sach-${rKind}-lop-${ctx.className}.xlsx`),
+    [rosterXlsx({ kind: rKind, title: rTitle, cols: list(rCols), month, year, weekends, students: chosen, ctx })]);
   /** Bản dạng Word (danh sách, trộn thư) — dùng cho Tải Word và Sửa trên trang */
   const wordOut = (): [Printable, string, string] | null => {
     if (mode === 'ds') return [out, `danh-sach-${rKind}-lop-${ctx.className}`, rTitle];
@@ -118,6 +124,7 @@ export default function ClassPrint({ classId, students, ctx, onPrint, onWord, on
           <RbGroup label="Tệp">
             <RbBtn primary icon={<Printer aria-hidden="true" />} label="In / PDF" onClick={() => onPrint(out)} disabled={!chosen.length} />
             {(mode === 'ds' || mode === 'tron') && <RbBtn icon={<FileText aria-hidden="true" />} label="Tải Word" onClick={word} disabled={!chosen.length} />}
+            {mode === 'ds' && <RbBtn icon={<FileSpreadsheet aria-hidden="true" />} label="Tải Excel" onClick={excel} disabled={!chosen.length} />}
           </RbGroup>
           {(mode === 'ds' || mode === 'tron') && (
             <RbGroup label="Soạn tiếp">
