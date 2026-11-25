@@ -135,7 +135,7 @@ export default function DocPreview({ title, filename, html, onClose, onSaveOrig,
           <span className="planner-spacer" />
           <button type="button" className={`btn btn-sm ${editing ? 'btn-primary' : 'btn-outline'}`} onClick={toggleEdit} disabled={!imgs}><PencilLine aria-hidden="true" /> {editing ? 'Xong sửa' : 'Sửa trực tiếp'}</button>
           {onSaveOrig && edited && html.includes('data-orig') && <button type="button" className="btn btn-outline btn-sm" onClick={saveOrig}><Save aria-hidden="true" /> Lưu sửa vào giáo án</button>}
-          {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={openEditor} disabled={!imgs} title="Mở trong trình soạn văn bản: sửa như Word, đặt khổ giấy, đầu / chân trang, số trang"><FilePenLine aria-hidden="true" /> Sửa trên trang</button>}
+          {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={openEditor} disabled={!imgs} title="Mở trong trình soạn văn bản: sửa như Word, đặt khổ giấy, đầu / chân trang, số trang"><FilePenLine aria-hidden="true" /> Sửa trên trang &amp; cấu hình in</button>}
           <button type="button" className="btn btn-outline btn-sm" onClick={print} disabled={!imgs}><Printer aria-hidden="true" /> In / PDF</button>
           <button type="button" className="btn btn-primary btn-sm" onClick={download} disabled={!imgs || busy}><FileDown aria-hidden="true" /> Tải file Word (.docx)</button>
           {extra}

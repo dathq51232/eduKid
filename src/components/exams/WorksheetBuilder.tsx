@@ -168,7 +168,7 @@ export default function WorksheetBuilder({ classId, className, grade, presetLess
               <button type="button" className="btn btn-primary btn-sm" onClick={() => download({ papers: true, keys: true }, 'kem-dap-an')}><FileDown aria-hidden="true" /> Tải Word (phiếu + đáp án)</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ papers: true, keys: false }, 'phieu')}><FileDown aria-hidden="true" /> Chỉ phiếu</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ papers: false, keys: true }, 'dap-an')}><FileDown aria-hidden="true" /> Chỉ đáp án</button>
-              {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ papers: true, keys: true }, 'sua')} title="Mở phiếu và đáp án trong trình soạn văn bản để sửa trực tiếp như Word"><FilePenLine aria-hidden="true" /> Sửa trên trang</button>}
+              {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ papers: true, keys: true }, 'sua')} title="Mở phiếu và đáp án trong trình soạn văn bản để sửa trực tiếp như Word"><FilePenLine aria-hidden="true" /> Sửa trên trang &amp; cấu hình in</button>}
             </div>
           </div>
           <div className="exam-papers">

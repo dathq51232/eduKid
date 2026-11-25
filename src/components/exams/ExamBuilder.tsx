@@ -362,7 +362,7 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
               <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ matrix: false, papers: true, keys: false }, 'de')}><FileDown aria-hidden="true" /> Chỉ đề</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ matrix: false, papers: false, keys: true }, 'dap-an')}><FileDown aria-hidden="true" /> Chỉ đáp án</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ matrix: true, papers: true, keys: true }, 'pdf')}><Printer aria-hidden="true" /> In / lưu PDF</button>
-              {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ matrix: true, papers: true, keys: true }, 'sua')} title="Mở ma trận, đề, đáp án trong trình soạn văn bản để sửa trực tiếp như Word"><FilePenLine aria-hidden="true" /> Sửa trên trang</button>}
+              {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ matrix: true, papers: true, keys: true }, 'sua')} title="Mở ma trận, đề, đáp án trong trình soạn văn bản để sửa trực tiếp như Word"><FilePenLine aria-hidden="true" /> Sửa trên trang &amp; cấu hình in</button>}
               <button type="button" className="btn btn-outline btn-sm" onClick={() => void save()} disabled={busy}><Save aria-hidden="true" /> {examId ? 'Lưu thay đổi' : 'Lưu đề'}</button>
             </div>
           </div>

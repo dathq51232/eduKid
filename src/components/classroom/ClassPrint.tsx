@@ -118,8 +118,12 @@ export default function ClassPrint({ classId, students, ctx, onPrint, onWord, on
           <RbGroup label="Tệp">
             <RbBtn primary icon={<Printer aria-hidden="true" />} label="In / PDF" onClick={() => onPrint(out)} disabled={!chosen.length} />
             {(mode === 'ds' || mode === 'tron') && <RbBtn icon={<FileText aria-hidden="true" />} label="Tải Word" onClick={word} disabled={!chosen.length} />}
-            {(mode === 'ds' || mode === 'tron') && <RbBtn icon={<PenLine aria-hidden="true" />} label="Sửa trên trang" onClick={edit} disabled={!chosen.length} />}
           </RbGroup>
+          {(mode === 'ds' || mode === 'tron') && (
+            <RbGroup label="Soạn tiếp">
+              <RbBtn icon={<PenLine aria-hidden="true" />} label="Sửa trên trang & cấu hình in" onClick={edit} disabled={!chosen.length} />
+            </RbGroup>
+          )}
         </div>
         <p className="cpr-count">{chosen.length}/{students.length} em{sheets ? ` · khoảng ${sheets} tờ A4` : ''}</p>
       </div>

@@ -163,7 +163,7 @@ export default function ParentMeetings({ classId, className, teacher, students }
                   <button type="button" className="btn btn-primary btn-sm" onClick={() => void copy(invite, 'Đã chép thư mời — dán vào nhóm Zalo lớp.')}><Copy aria-hidden="true" /> Chép gửi nhóm Zalo</button>
                   <button type="button" className="btn btn-outline btn-sm" onClick={toNotice}><Megaphone aria-hidden="true" /> Đưa vào thông báo chung (Sổ lớp)</button>
                   <button type="button" className="btn btn-outline btn-sm" disabled={!students.length} onClick={() => print('moi')}><Printer aria-hidden="true" /> In phiếu mời từng em ({students.length})</button>
-                  {editOnPage && <button type="button" className="btn btn-outline btn-sm" disabled={!students.length} onClick={() => openEditor('moi')}><FilePenLine aria-hidden="true" /> Sửa trên trang</button>}
+                  {editOnPage && <button type="button" className="btn btn-outline btn-sm" disabled={!students.length} onClick={() => openEditor('moi')}><FilePenLine aria-hidden="true" /> Sửa trên trang &amp; cấu hình in</button>}
                 </div>
               </div>
             )}
@@ -201,7 +201,7 @@ export default function ParentMeetings({ classId, className, teacher, students }
                 <label>Kết luận, thống nhất<textarea rows={4} value={cur.conclusion} maxLength={4000} onChange={(e) => set({ conclusion: e.target.value })} /></label>
                 <div className="hop-acts">
                   <button type="button" className="btn btn-primary btn-sm" onClick={() => print('bien-ban')}><Printer aria-hidden="true" /> In / lưu PDF biên bản</button>
-                  {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={() => openEditor('bien-ban')}><FilePenLine aria-hidden="true" /> Sửa trên trang</button>}
+                  {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={() => openEditor('bien-ban')}><FilePenLine aria-hidden="true" /> Sửa trên trang &amp; cấu hình in</button>}
                 </div>
               </div>
             )}

@@ -171,7 +171,7 @@ export default function ProgressReports({ classId, className, students, rows, te
         <div className="planner-actions">
           <button type="button" className="btn btn-primary btn-sm" onClick={() => void copyApproved()}><ClipboardCopy aria-hidden="true" /> Sao chép {approved.length} lời nhắn đã duyệt</button>
           <button type="button" className="btn btn-outline btn-sm" onClick={() => window.print()}><Printer aria-hidden="true" /> In / lưu PDF (đã duyệt)</button>
-          {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={openEditor} disabled={!approved.length} title="Mở các phiếu đã duyệt trong trình soạn văn bản để sửa trực tiếp như Word"><FilePenLine aria-hidden="true" /> Sửa trên trang</button>}
+          {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={openEditor} disabled={!approved.length} title="Mở các phiếu đã duyệt trong trình soạn văn bản để sửa trực tiếp như Word"><FilePenLine aria-hidden="true" /> Sửa trên trang &amp; cấu hình in</button>}
           <button type="button" className="btn btn-outline btn-sm" onClick={exportXlsx}><FileSpreadsheet aria-hidden="true" /> Tải Excel</button>
           <button type="button" className="btn btn-outline btn-sm" onClick={regenAll}><RotateCcw aria-hidden="true" /> Viết lại tất cả</button>
         </div>
