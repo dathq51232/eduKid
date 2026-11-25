@@ -174,6 +174,7 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
+          <p className="home-lib-link">Thầy cô, ba mẹ muốn xem trước nội dung? <Link href="/hoc">Thư viện bài học lớp 1–5 <ArrowRight aria-hidden="true" /></Link></p>
         </section>
 
         {/* ---------------------------------------------- Cách học + câu hỏi mẫu trên trang vở */}
@@ -308,6 +309,7 @@ export default function HomePage() {
               <h2><i style={{ background: '#22a447' }} />Học tập</h2>
               <ul>
                 <li><a href="#subjects">Toán · Tiếng Việt · Tiếng Anh</a></li>
+                <li><Link href="/hoc">Thư viện bài học lớp 1–5</Link></li>
                 <li><a href="#how-it-works">Cách học 10 phút mỗi ngày</a></li>
                 <li><Link href="/tro-choi">Trò chơi trí tuệ</Link></li>
                 <li><Link href="/thanh-tich">Thành tích &amp; huy hiệu</Link></li>
