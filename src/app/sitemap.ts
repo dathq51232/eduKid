@@ -2,12 +2,14 @@ import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/site';
 import { SKILL_GROUPS } from '@/lib/skills/hub';
 import { GAMES } from '@/lib/games/catalog';
+import { HOC_GROUPS, hocHref } from '@/lib/hoc/catalog';
 
-// /sitemap.xml — chỉ các trang công khai. Thêm trang công khai mới (vd. trang bài học /hoc/...) thì bổ sung ở đây.
+// /sitemap.xml — chỉ các trang công khai (kể cả thư viện bài học /hoc: mỗi môn – lớp và từng bài). Thêm trang công khai mới thì bổ sung ở đây.
 type Entry = [path: string, priority: number, freq: 'daily' | 'weekly' | 'monthly'];
 
 const STATIC: Entry[] = [
   ['/', 1, 'weekly'],
+  ['/hoc', 0.9, 'weekly'],
   ['/chon-bai', 0.9, 'weekly'],
   ['/ky-nang', 0.8, 'monthly'],
   ['/tro-choi', 0.8, 'monthly'],
@@ -26,6 +28,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const entries: Entry[] = [
     ...STATIC,
+    ...HOC_GROUPS.flatMap((g): Entry[] => [
+      [hocHref(g), 0.8, 'weekly'],
+      ...g.lessons.map((l): Entry => [hocHref(g, l), 0.7, 'monthly']),
+    ]),
     ...GAMES.map((g): Entry => [`/tro-choi/${g.slug}`, 0.6, 'monthly']),
     ...SKILL_GROUPS.flatMap((g): Entry[] => [
       [`/ky-nang/${g.id}`, 0.6, 'monthly'],

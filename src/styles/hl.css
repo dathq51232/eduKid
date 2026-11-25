@@ -1,0 +1,61 @@
+/* Kiểu riêng khu vực "hl-": Thư viện bài học công khai /hoc (src/app/hoc) */
+.hl { display: grid; gap: 18px; padding-block: 18px 48px; max-width: 980px; }
+.hl-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 14px; color: var(--muted); }
+.hl-crumbs a { color: var(--brand-blue); font-weight: 600; }
+.hl-crumbs svg { width: 14px; height: 14px; }
+.hl-head { display: grid; gap: 8px; }
+.hl-head h1 { margin: 0; font-size: clamp(26px, 4vw, 36px); line-height: 1.2; color: var(--ink); }
+.hl-head p { margin: 0; font-size: 17px; line-height: 1.55; color: var(--ink); }
+.hl-eyebrow { color: var(--muted) !important; font-size: 14px !important; font-weight: 600; }
+.hl-cta { justify-self: start; margin-top: 6px; display: inline-flex; align-items: center; gap: 8px; }
+.hl-cta svg, .hl-cta-box svg { width: 18px; height: 18px; }
+
+/* trang chọn lớp, môn */
+.hl-grade h2, .hl-sem h2 { margin: 6px 0 10px; font-size: 22px; color: var(--ink); }
+.hl-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.hl-card { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 12px 14px; border-radius: 16px; background: var(--surface);
+  border: 1.5px solid var(--line); color: var(--ink); text-decoration: none; }
+.hl-card:hover, .hl-card:focus-visible { border-color: var(--hl-tone, var(--brand-blue)); }
+.hl-card > svg:first-child { flex: none; width: 26px; height: 26px; color: var(--hl-tone, var(--brand-blue)); }
+.hl-card span { display: grid; flex: 1; }
+.hl-card small { color: var(--muted); }
+.hl-card .hl-go { width: 18px; height: 18px; color: var(--muted); }
+.hl-card.is-math { --hl-tone: #2457c5; } .hl-card.is-viet { --hl-tone: #e8590c; } .hl-card.is-eng { --hl-tone: #7048e8; }
+
+/* trang môn – lớp */
+.hl-unit h3 { margin: 14px 0 6px; font-size: 16px; color: var(--muted); }
+.hl-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.hl-list a { display: grid; gap: 2px; padding: 10px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); text-decoration: none; }
+.hl-list a:hover, .hl-list a:focus-visible { border-color: var(--brand-blue); }
+.hl-list small { color: var(--muted); font-size: 14px; }
+.hl-other { margin: 8px 0 0; color: var(--muted); line-height: 1.8; }
+.hl-other a { color: var(--brand-blue); font-weight: 600; }
+
+/* trang bài */
+.hl-box { display: grid; gap: 10px; padding: 18px 20px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); }
+.hl-box h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; color: var(--ink); }
+.hl-box h2 svg { width: 22px; height: 22px; color: #e8a400; }
+.hl-know { background: color-mix(in srgb, #ffc83d 12%, var(--surface)); border-color: color-mix(in srgb, #ffc83d 45%, var(--line)); }
+.hl-know ul { display: grid; gap: 6px; margin: 0; padding-left: 22px; font-size: 17px; line-height: 1.5; }
+.hl-example { margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--surface); font: inherit; font-size: 17px; white-space: pre-wrap; }
+.hl-note { margin: 0; color: var(--muted); }
+.hl-qs { display: grid; gap: 14px; margin: 0; padding-left: 22px; }
+.hl-q { margin: 0 0 6px; font-size: 17px; font-weight: 600; line-height: 1.5; white-space: pre-line; }
+.hl-opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; margin: 0 0 6px; padding: 0; list-style: none; }
+.hl-opts li { padding: 6px 10px; border-radius: 10px; background: var(--surface-2); }
+.hl-ans summary { cursor: pointer; min-height: 32px; color: var(--brand-blue); font-weight: 700; }
+.hl-ans p { margin: 4px 0 0; line-height: 1.5; }
+.hl-more { margin: 0; color: var(--muted); font-size: 14px; }
+.hl-cta-box { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-radius: 20px;
+  background: color-mix(in srgb, var(--brand-blue) 10%, var(--surface)); }
+.hl-cta-box p { margin: 0; }
+.hl-cta-box .btn { display: inline-flex; align-items: center; gap: 8px; }
+.hl-pager { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.hl-pager a { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); text-decoration: none; }
+.hl-pager a:hover, .hl-pager a:focus-visible { border-color: var(--brand-blue); }
+.hl-pager span { display: grid; }
+.hl-pager small { color: var(--muted); }
+.hl-pager svg { flex: none; width: 18px; height: 18px; color: var(--brand-blue); }
+.hl-next { justify-content: flex-end; text-align: right; }
+@media (max-width: 720px) { .hl-cards { grid-template-columns: 1fr; } .hl-pager { grid-template-columns: 1fr; } }
+.hl-passage { margin: 0; padding: 12px 16px; border-left: 4px solid #e8590c; border-radius: 0 14px 14px 0; background: var(--surface-2); font-size: 17px; line-height: 1.6; white-space: pre-line; }

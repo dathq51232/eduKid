@@ -318,3 +318,7 @@
   .home-roles a { flex: 1 1 0; justify-content: center; gap: 4px; padding-inline: 6px; font-size: 14px; white-space: nowrap; }
   .home-roles svg { width: 15px; height: 15px; }
 }
+/* Liên kết tới Thư viện bài học công khai /hoc (dưới mục "Hôm nay mình học gì?") */
+.home-lib-link { margin: 14px 0 0; text-align: center; color: var(--muted); font-size: 16px; }
+.home-lib-link a { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--brand-blue); font-weight: 700; }
+.home-lib-link svg { width: 16px; height: 16px; }
