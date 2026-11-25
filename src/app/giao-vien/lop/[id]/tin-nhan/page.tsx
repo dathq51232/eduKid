@@ -2,11 +2,12 @@ import type { Metadata } from 'next';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
 import TeacherInbox from '@/components/classroom/TeacherInbox';
+import ParentLinkTabs from '@/components/classroom/ParentLinkTabs';
 import { loadClassPage } from '@/lib/classroom/class-page';
 import type { Inbox } from '@/lib/classroom/messages';
 import '@/styles/ct.css';
 
-export const metadata: Metadata = { title: 'Tin nhắn phụ huynh · EduChain Kids', robots: { index: false } };
+export const metadata: Metadata = { title: 'Liên lạc phụ huynh · Tin nhắn · EduChain Kids', robots: { index: false } };
 export const dynamic = 'force-dynamic';
 
 // Hộp thư phụ huynh của lớp (migration 0037) — chỉ giáo viên dạy lớp đọc được (kiểm tra trong database).
@@ -20,6 +21,7 @@ export default async function InboxPage({ params }: { params: Promise<{ id: stri
     <>
       <LearnHeader />
       <main className="dash wrap ct-page">
+        <ParentLinkTabs classId={p.cls.id} on="tin-nhan" />
         <TeacherInbox classId={p.cls.id} className={p.cls.name} initial={inbox ?? { unread: 0, pending_leave: 0, items: [] }} missing={Boolean(error)} />
       </main>
     </>

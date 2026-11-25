@@ -1,11 +1,13 @@
 'use client';
 
-// Các ô có tương tác của trang "Hôm nay": việc cần làm (tích được, nhớ trên máy) và "Dùng nhanh" (tự sắp theo số lần dùng).
+// Các ô có tương tác của trang "Hôm nay": việc cần làm (tích được, nhớ trên máy) và "Công cụ ghim" (thầy cô tự ghim tối đa 6;
+// chưa ghim thì tự sắp theo số lần dùng) kèm bảng Tuỳ chỉnh để ghim / ẩn công cụ.
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check, Coffee, ListTodo, Undo2 } from 'lucide-react';
+import { Check, Coffee, Eye, EyeOff, ListTodo, Pin, RotateCcw, Settings2, Undo2, Wrench } from 'lucide-react';
 import { dayLabel, dueReminders, useCalendarNotes, type Occurrence } from '@/lib/calendar-notes';
-import { TOOLS, quickTools, toolHref, type ToolKey } from '@/lib/classroom/teacher-nav';
+import { KHU, TOOLS, groupsOfKhu, quickTools, toolHref, toolsOfGroup, type ToolKey } from '@/lib/classroom/teacher-nav';
+import { MAX_PINS, UNHIDEABLE, resetToolPrefs, setKhuHidden, toggleHidden, togglePin, useToolPrefs } from '@/lib/classroom/tool-prefs';
 import { TOOL_ICON, USAGE_KEY } from '@/components/classroom/TeacherShell';
 import type { TodayItem } from '@/lib/classroom/today';
 import '@/styles/ct.css';
@@ -98,24 +100,95 @@ export function TodoList({ items: base, day, headingId, calHref }: { items: Toda
   );
 }
 
+/** "Công cụ ghim": công cụ thầy cô ghim (tối đa 6); chưa ghim thì 6 công cụ mở nhiều nhất trên máy này (bỏ công cụ đã ẩn) */
 export function QuickTools({ classId }: { classId: string }) {
-  const [keys, setKeys] = useState<ToolKey[]>(() => quickTools({}));
-  useEffect(() => { try { setKeys(quickTools(JSON.parse(localStorage.getItem(USAGE_KEY) ?? '{}'))); } catch { /* bỏ qua */ } }, []);
+  const prefs = useToolPrefs();
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [edit, setEdit] = useState(false);
+  useEffect(() => { try { setCounts(JSON.parse(localStorage.getItem(USAGE_KEY) ?? '{}') as Record<string, number>); } catch { /* bỏ qua */ } }, []);
+  const auto = !prefs.pins.length;
+  const keys = auto ? quickTools(counts, 30).filter((k) => !prefs.hidden.includes(k)).slice(0, MAX_PINS) : prefs.pins;
   return (
-    <ul className="tdy-quick">
-      {keys.map((k) => {
-        const t = TOOLS.find((x) => x.key === k);
-        if (!t) return null;
-        const Icon = TOOL_ICON[k];
+    <>
+      <div className="tdy-quick-hd">
+        <h2 id="tdy-quick-h" className="tdy-sect"><Wrench aria-hidden="true" /> Công cụ ghim <span>· {auto ? 'tự xếp theo số lần dùng' : `${prefs.pins.length}/${MAX_PINS} đã ghim`}</span></h2>
+        <button type="button" className="ct-link tdy-quick-edit" aria-expanded={edit} onClick={() => setEdit((v) => !v)}><Settings2 aria-hidden="true" /> {edit ? 'Xong' : 'Tuỳ chỉnh'}</button>
+      </div>
+      <ul className="tdy-quick">
+        {keys.map((k) => {
+          const t = TOOLS.find((x) => x.key === k);
+          if (!t) return null;
+          const Icon = TOOL_ICON[k];
+          return (
+            <li key={k}>
+              <Link href={toolHref(t, classId)} className="tdy-tool">
+                <span className={`tsh-ic tone-${t.tone}`}><Icon aria-hidden="true" /></span>
+                <span><b>{t.label}</b><small>{t.desc}</small></span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+      {edit && <ToolPrefsEditor />}
+    </>
+  );
+}
+
+/** Bảng tuỳ chỉnh: ghim (tối đa 6) và ẩn từng công cụ, ẩn cả khu "Lớp chủ nhiệm" (giáo viên bộ môn) */
+function ToolPrefsEditor() {
+  const prefs = useToolPrefs();
+  const [msg, setMsg] = useState('');
+  const pin = (k: ToolKey) => { setMsg(togglePin(k) ? '' : `Đã ghim đủ ${MAX_PINS} công cụ — bỏ ghim một công cụ trước.`); };
+  return (
+    <div className="tdy-prefs" role="region" aria-label="Tuỳ chỉnh công cụ">
+      <p className="dash-muted">Ghim tối đa {MAX_PINS} công cụ hay dùng để hiện ở trang này. Công cụ đã ẩn không hiện trong menu nhưng vẫn mở được bằng ô tìm nhanh (Ctrl + K). Lưu trên máy này.</p>
+      {msg && <p className="adm-alert" role="status">{msg}</p>}
+      {KHU.map((khu) => {
+        const groups = groupsOfKhu(khu.key);
+        const all = groups.flatMap((g) => toolsOfGroup(g.key)).filter((t) => !UNHIDEABLE.includes(t.key));
+        const allHidden = all.length > 0 && all.every((t) => prefs.hidden.includes(t.key));
         return (
-          <li key={k}>
-            <Link href={toolHref(t, classId)} className="tdy-tool">
-              <span className={`tsh-ic tone-${t.tone}`}><Icon aria-hidden="true" /></span>
-              <span><b>{t.label}</b><small>{t.desc}</small></span>
-            </Link>
-          </li>
+          <section key={khu.key} className="tdy-prefs-khu">
+            <div className="tdy-prefs-khu-hd">
+              <h3>{khu.label}</h3>
+              {khu.key !== 'day' && (
+                <button type="button" className="ct-link" onClick={() => setKhuHidden(khu.key, !allHidden)}>
+                  {allHidden ? <><Eye aria-hidden="true" /> Hiện cả khu</> : <><EyeOff aria-hidden="true" /> Ẩn cả khu</>}
+                </button>
+              )}
+            </div>
+            {groups.map((g) => (
+              <div key={g.key} className="tdy-prefs-g">
+                <h4>{g.label}</h4>
+                <ul>
+                  {toolsOfGroup(g.key).map((t) => {
+                    const pinned = prefs.pins.includes(t.key);
+                    const hidden = prefs.hidden.includes(t.key);
+                    const Icon = TOOL_ICON[t.key];
+                    return (
+                      <li key={t.key} className={hidden ? 'is-hidden' : ''}>
+                        <span className={`tsh-ic tone-${t.tone}`}><Icon aria-hidden="true" /></span>
+                        <span className="tdy-prefs-name">{t.label}</span>
+                        <button type="button" className={`tdy-prefs-btn${pinned ? ' is-on' : ''}`} aria-pressed={pinned} onClick={() => pin(t.key)}
+                          aria-label={`${pinned ? 'Bỏ ghim' : 'Ghim'} ${t.label}`} title={pinned ? 'Bỏ ghim' : 'Ghim lên trang Hôm nay'}>
+                          <Pin aria-hidden="true" />
+                        </button>
+                        {!UNHIDEABLE.includes(t.key) && (
+                          <button type="button" className={`tdy-prefs-btn${hidden ? ' is-off' : ''}`} aria-pressed={hidden} onClick={() => toggleHidden(t.key)}
+                            aria-label={`${hidden ? 'Hiện' : 'Ẩn'} ${t.label}`} title={hidden ? 'Hiện lại trong menu' : 'Ẩn khỏi menu'}>
+                            {hidden ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </section>
         );
       })}
-    </ul>
+      <button type="button" className="ct-link" onClick={() => { if (window.confirm('Bỏ hết ghim và hiện lại mọi công cụ?')) resetToolPrefs(); }}><RotateCcw aria-hidden="true" /> Đặt lại như ban đầu</button>
+    </div>
   );
 }

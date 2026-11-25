@@ -292,3 +292,5 @@
 
 /* Hộp Cắt ảnh */
 .icr { width: min(860px, 96vw); }
+/* Liên lạc phụ huynh: thẻ Tin nhắn ↔ Danh bạ (ParentLinkTabs) */
+.ct-seg-links { justify-self: start; width: fit-content; max-width: 100%; overflow-x: auto; margin-bottom: 4px; }

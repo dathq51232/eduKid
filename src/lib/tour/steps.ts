@@ -3,7 +3,7 @@
 // Bước có target mà không tìm thấy phần tử đang hiện thì tự bỏ qua. Đổi nội dung lớn → tăng số cuối mã tour (-v2)
 // để người dùng cũ được xem lại.
 export type TourStep = { target?: string; title: string; body: string };
-export type TourId = 'gv-moi-v1' | 'gv-lop-v1' | 'ph-tai-khoan-v1' | 'ph-con-v1';
+export type TourId = 'gv-moi-v1' | 'gv-lop-v2' | 'ph-tai-khoan-v1' | 'ph-con-v1';
 
 export const TOURS: Record<TourId, TourStep[]> = {
   // Giáo viên chưa có lớp
@@ -14,15 +14,13 @@ export const TOURS: Record<TourId, TourStep[]> = {
     { target: 'huong-dan', title: 'Xem lại hướng dẫn', body: 'Khi đã tạo lớp, menu sẽ hiện đủ các công cụ và có hướng dẫn tiếp theo. Bấm nút này bất cứ lúc nào để xem lại.' },
   ],
   // Giáo viên đã có lớp (cũng hiện ngay sau khi tạo lớp đầu tiên)
-  'gv-lop-v1': [
-    { title: 'Lớp đã sẵn sàng!', body: 'Cùng xem nhanh các công cụ để dạy trên lớp, giao bài và liên lạc với phụ huynh.' },
+  'gv-lop-v2': [
+    { title: 'Lớp đã sẵn sàng!', body: 'Công cụ chia làm hai khu: Soạn & dạy và Lớp chủ nhiệm. Cùng xem nhanh nhé.' },
     { target: 'lop', title: 'Lớp và mã lớp', body: 'Bấm mã lớp để chép gửi phụ huynh, học sinh. Bấm “Học sinh” để thêm em, đặt PIN và in thẻ đăng nhập.' },
     { target: 'viec-nhanh', title: 'Việc hằng ngày', body: 'Điểm danh, gọi tên ngẫu nhiên và giao bài ngay từ trang Hôm nay.' },
-    { target: 'nhom-tren-lop', title: 'Trên lớp', body: 'Sổ lớp, gọi tên – dò bài, chia nhóm, thi đua tổ và hẹn giờ chiếu bảng.' },
-    { target: 'nhom-day-hoc', title: 'Dạy học', body: 'Kế hoạch bài dạy (giáo án, lịch báo giảng), bài giảng và trình chiếu, giao bài về nhà, phiếu bài tập, đề kiểm tra.' },
-    { target: 'nhom-danh-gia', title: 'Đánh giá', body: 'Viết nhận xét học sinh theo tuần, học kỳ và ghi kết quả trên trường.' },
-    { target: 'nhom-phu-huynh', title: 'Phụ huynh', body: 'Tin nhắn và đơn xin nghỉ của phụ huynh, danh bạ, phiếu báo tiến bộ, thư khen. Số đỏ là tin chưa đọc.' },
-    { target: 'nhom-tien-ich', title: 'Tiện ích', body: 'Lịch âm dương, sinh nhật học sinh, quỹ lớp và sổ thu chi riêng của thầy cô.' },
+    { target: 'khu-day', title: 'Soạn & dạy', body: 'Soạn bài (giáo án, lịch báo giảng, bài giảng), phiếu & đề, công cụ trên lớp (bảng trắng, gọi tên, hẹn giờ) và việc sau giờ học (giao bài, lỗ hổng kiến thức).' },
+    { target: 'khu-cn', title: 'Lớp chủ nhiệm', body: 'Học sinh & sổ, đánh giá & khen (nhận xét, thư khen), liên lạc và họp phụ huynh, văn phòng lớp (in danh sách, nhãn vở, giấy mời, quỹ lớp). Số đỏ là tin phụ huynh chưa đọc.' },
+    { target: 'cong-cu', title: 'Ghim công cụ hay dùng', body: 'Bấm “Tuỳ chỉnh” để ghim tối đa 6 công cụ lên trang này, hoặc ẩn những công cụ không dùng (vẫn tìm được bằng Ctrl + K).' },
     { target: 'tim-nhanh', title: 'Tìm nhanh', body: 'Nhấn Ctrl + K rồi gõ tên em hoặc tên công cụ để mở ngay.' },
     { target: 'huong-dan', title: 'Xem lại bất cứ lúc nào', body: 'Bấm nút này để xem lại hướng dẫn. Chúc thầy cô một năm học thật vui!' },
   ],

@@ -6,7 +6,7 @@ import CommunityFeedCard from '@/components/community/CommunityFeedCard';
 import type { Inbox } from '@/lib/classroom/messages';
 import { redirect } from 'next/navigation';
 import { BookCheck, Check, ChevronRight, Library, Moon, School, Send, UserRound } from 'lucide-react';
-import { TodoList } from '@/components/classroom/TeacherToday';
+import { QuickTools, TodoList } from '@/components/classroom/TeacherToday';
 import TodaySchedule, { NowBar } from '@/components/classroom/TodaySchedule';
 import { LUNAR_MONTH_NAME, canChiYear, solarToLunar } from '@/lib/utils/lunar';
 import ClassPulse, { type Birthday } from '@/components/classroom/ClassPulse';
@@ -244,6 +244,11 @@ export default async function TeacherHome() {
               <Link href={`${base}/giao-bai`} className="tdy-btn is-opt"><Send aria-hidden="true" /> Giao bài</Link>
               <Link href={`${base}/kho-cau-hoi`} className="tdy-btn is-opt" title="Nạp Word, Excel, PDF → tách câu → máy kiểm → cô duyệt"><Library aria-hidden="true" /> Kho câu hỏi</Link>
             </>} />
+
+          {/* Công cụ ghim: thầy cô tự ghim tối đa 6 công cụ hay dùng (Tuỳ chỉnh: ghim / ẩn công cụ khỏi menu) */}
+          <section id="cong-cu" className="tdy-quick-sec" aria-labelledby="tdy-quick-h" data-tour="cong-cu">
+            <QuickTools classId={active.id} />
+          </section>
 
           {/* Trái (~60%) = việc phải làm: ② Việc hôm nay → ③ Hôm nay dạy (+ tiết đã chọn gợi ý).
               Phải (~40%) = xem nhanh: ④ Tuần này (lịch, nhắc hẹn) → ⑤ Lớp mình. Điện thoại: một cột theo đúng thứ tự này. */}

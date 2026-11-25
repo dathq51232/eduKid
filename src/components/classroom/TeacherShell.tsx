@@ -16,7 +16,8 @@ import { MiniTimer } from '@/components/classroom/ClassTimer';
 import AiAssistant from '@/components/classroom/AiAssistant';
 import { FEATURES } from '@/lib/features';
 import GuidedTour, { TourHelpButton } from '@/components/tour/GuidedTour';
-import { GROUPS, TOOLS, classIdOfPath, fold, groupOfTool, lastToolOf, rememberTool, toolHref, toolOfPath, toolsOfGroup, type Tool, type ToolKey } from '@/lib/classroom/teacher-nav';
+import { GROUPS, KHU, TOOLS, classIdOfPath, fold, groupOfTool, groupsOfKhu, khuOfGroup, lastToolOf, rememberTool, toolHref, toolOfPath, toolsOfGroup, type KhuKey, type Tool, type ToolKey } from '@/lib/classroom/teacher-nav';
+import { useToolPrefs } from '@/lib/classroom/tool-prefs';
 import '@/styles/tsh.css';
 import '@/styles/tone.css';
 
@@ -26,10 +27,16 @@ export const TOOL_ICON: Record<ToolKey, IconComp> = Object.fromEntries(
     'thu-khen', 'lop', 'nhom', 'thi-dua', 'hen-gio', 'danh-ba', 'bai-giang-3d', 'tin-nhan', 'trien-lam', 'luyen-chu', 'bang-trang', 'lich', 'thu-chi', 'quy-lop', 'tieng-anh', 'kho-cau-hoi'] as ToolKey[]).map((k) => [k, icon3d(k)]).concat([['hop-ph', icon3d('g-phu-huynh')], ['chu-nhiem', icon3d('g-tren-lop')], ['van-ban', icon3d('ke-hoach')]]),
 ) as Record<ToolKey, IconComp>;
 /** Biểu tượng của nhóm công cụ (cột trái gọn) */
-export const GROUP_ICON: Record<string, IconComp> = { 'Trên lớp': icon3d('g-tren-lop'), 'Dạy học': icon3d('g-day-hoc'), 'Đánh giá': icon3d('g-danh-gia'), 'Phụ huynh': icon3d('g-phu-huynh'), 'Tiện ích': icon3d('g-tien-ich'), Lớp: icon3d('lop') };
+export const GROUP_ICON: Record<string, IconComp> = {
+  'Soạn bài': icon3d('g-day-hoc'), 'Phiếu & đề': icon3d('phieu-bai-tap'), 'Trên lớp': icon3d('g-tren-lop'), 'Sau giờ học': icon3d('giao-bai'),
+  'Học sinh & sổ': icon3d('lop'), 'Đánh giá & khen': icon3d('g-danh-gia'), 'Phụ huynh': icon3d('g-phu-huynh'), 'Văn phòng lớp': icon3d('quy-lop'),
+  'Của tôi': icon3d('g-tien-ich'),
+};
+/** Biểu tượng của khu trên thanh tab điện thoại */
+const KHU_ICON: Record<KhuKey, IconComp> = { day: icon3d('g-day-hoc'), cn: icon3d('g-tren-lop'), me: icon3d('g-tien-ich') };
 const MINI_KEY = 'gv-cot-trai-gon';
-/** data-tour của từng nhóm công cụ (nội dung bước: src/lib/tour/steps.ts) */
-const GROUP_TOUR: Record<string, string> = { 'Trên lớp': 'nhom-tren-lop', 'Dạy học': 'nhom-day-hoc', 'Đánh giá': 'nhom-danh-gia', 'Phụ huynh': 'nhom-phu-huynh', 'Tiện ích': 'nhom-tien-ich' };
+/** data-tour của từng khu (nội dung bước: src/lib/tour/steps.ts) */
+const KHU_TOUR: Record<KhuKey, string> = { day: 'khu-day', cn: 'khu-cn', me: 'khu-me' };
 export const USAGE_KEY = 'gv-dung-nhanh';
 /** Nhánh Cộng đồng giáo viên (migration 0079) — nằm trong /giao-vien để dùng chung khung này, không gắn với lớp */
 const COMMUNITY_HREF = '/giao-vien/cong-dong';
@@ -56,6 +63,12 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
     try { await navigator.clipboard.writeText(code); setCodeCopied(true); window.setTimeout(() => setCodeCopied(false), 1600); } catch { /* trình duyệt chặn: vẫn đọc được mã */ }
   };
   const curGroup = groupOfTool(current);
+  const curKhu = khuOfGroup(curGroup);
+  // công cụ thầy cô đã ẩn (Hôm nay › Tuỳ chỉnh): bỏ khỏi menu, trừ công cụ đang mở
+  const prefs = useToolPrefs();
+  const vis = useCallback((g: string) => toolsOfGroup(g).filter((t) => t.key === current || !prefs.hidden.includes(t.key)), [current, prefs.hidden]);
+  // điện thoại: bảng các nhóm, công cụ của một khu (bấm khu ở thanh tab dưới)
+  const [sheet, setSheet] = useState<KhuKey | null>(null);
   // cột trái thu gọn thành dải biểu tượng (nhớ trên máy này)
   const [mini, setMini] = useState(false);
   useEffect(() => { try { setMini(localStorage.getItem(MINI_KEY) === '1'); } catch { /* bỏ qua */ } }, []);
@@ -89,7 +102,7 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
     const show = () => {
       const r = el.getBoundingClientRect();
       const side = el.closest('.tsh-side')?.getBoundingClientRect();
-      const h = 58 + toolsOfGroup(g).length * 50;
+      const h = 58 + vis(g).length * 50;
       setFly({ g, left: (side?.right ?? r.right) + 6, top: Math.max(8, Math.min(r.top - 6, window.innerHeight - h - 8)) });
     };
     // đang mở bảng nhóm khác: chờ một nhịp rồi mới đổi, để rê chéo sang bảng không bị nhảy nhóm
@@ -99,13 +112,14 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
   useEffect(() => { setFly(null); }, [pathname]);
   const groupHref = (g: string) => {
     if (!active) return '/giao-vien';
-    const t = TOOLS.find((x) => x.key === lastHref[g]) ?? toolsOfGroup(g)[0];
+    const list = vis(g);
+    const t = list.find((x) => x.key === lastHref[g]) ?? list[0];
     return t ? toolHref(t, active.id) : '/giao-vien';
   };
 
   // đếm số lần mở từng công cụ (cho mục "Dùng nhanh" ở trang Hôm nay)
   useEffect(() => {
-    setDrawer(false); setSwitcher(false);
+    setDrawer(false); setSwitcher(false); setSheet(null);
     if (!current) return;
     rememberTool(current);
     if (current === 'lop') return;
@@ -159,16 +173,26 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
       <Link href="/giao-vien" className={`tsh-nav${pathname === '/giao-vien' ? ' is-on' : ''}`} aria-current={pathname === '/giao-vien' ? 'page' : undefined} title="Hôm nay">
         <span className="tsh-ic tone-blue"><Home aria-hidden="true" /></span><span className="tsh-nav-t">Hôm nay</span>
       </Link>
-      {active && GROUPS.filter((g) => toolsOfGroup(g.key).length).map((g) => {
-        const Icon = GROUP_ICON[g.key] ?? LayoutGrid;
-        const on = curGroup === g.key;
-        const n = toolsOfGroup(g.key).length;
+      {active && KHU.map((k) => {
+        const groups = groupsOfKhu(k.key).filter((g) => vis(g.key).length);
+        if (!groups.length) return null;
         return (
-          <Link key={g.key} href={groupHref(g.key)} data-tour={GROUP_TOUR[g.key]} className={`tsh-nav tsh-gnav${on ? ' is-on' : ''}${fly?.g === g.key ? ' is-fly' : ''}`} aria-current={on ? 'true' : undefined}
-            onMouseEnter={(e) => openFly(g.key, e.currentTarget)} onMouseLeave={() => closeFly()}>
-            <span className={`tsh-ic tone-${g.tone}`}><Icon aria-hidden="true" /></span><span className="tsh-nav-t">{g.label}</span>
-            {g.key === 'Phụ huynh' && unread > 0 ? <span className="tsh-badge" aria-label={`${unread} tin chưa đọc`}>{unread}</span> : n > 1 ? <span className="tsh-count" aria-hidden="true">{n}</span> : null}
-          </Link>
+          <div key={k.key} className={`tsh-khu is-${k.key}`} role="group" aria-label={k.label}>
+            {/* "Của tôi" chỉ có một nhóm cùng tên: không cần tiêu đề khu, chỉ một vạch ngăn */}
+            {k.key !== 'me' && <span className="tsh-khu-h" data-tour={KHU_TOUR[k.key]}><span className="tsh-nav-t">{k.label}</span></span>}
+            {groups.map((g) => {
+              const Icon = GROUP_ICON[g.key] ?? LayoutGrid;
+              const on = curGroup === g.key;
+              const n = vis(g.key).length;
+              return (
+                <Link key={g.key} href={groupHref(g.key)} className={`tsh-nav tsh-gnav${on ? ' is-on' : ''}${fly?.g === g.key ? ' is-fly' : ''}`} aria-current={on ? 'true' : undefined}
+                  onMouseEnter={(e) => openFly(g.key, e.currentTarget)} onMouseLeave={() => closeFly()}>
+                  <span className={`tsh-ic tone-${g.tone}`}><Icon aria-hidden="true" /></span><span className="tsh-nav-t">{g.label}</span>
+                  {g.key === 'Phụ huynh' && unread > 0 ? <span className="tsh-badge" aria-label={`${unread} tin chưa đọc`}>{unread}</span> : n > 1 ? <span className="tsh-count" aria-hidden="true">{n}</span> : null}
+                </Link>
+              );
+            })}
+          </div>
         );
       })}
       {/* Nhánh Cộng đồng: không thuộc lớp nào nên tách khỏi các nhóm công cụ của lớp bằng một vạch */}
@@ -179,7 +203,7 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
       </Link>}
     </>
   );
-  const groupTools = active && curGroup ? toolsOfGroup(curGroup) : [];
+  const groupTools = active && curGroup ? vis(curGroup) : [];
 
   // trình chiếu bài thao giảng: chiếm trọn màn hình, không có thanh công cụ
   if (/\/trinh-chieu(\/|$)/.test(pathname)) return <>{children}</>;
@@ -235,7 +259,7 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
       {fly && active && (
         <div className="tsh-fly" role="menu" aria-label={`Công cụ nhóm ${fly.g}`} style={{ top: fly.top, left: fly.left }} onMouseEnter={keepFly} onMouseLeave={() => closeFly(120)}>
           <b className="tsh-fly-h">{GROUPS.find((x) => x.key === fly.g)?.label ?? fly.g}</b>
-          {toolsOfGroup(fly.g).map((t) => {
+          {vis(fly.g).map((t) => {
             const Icon = TOOL_ICON[t.key];
             const on = current === t.key;
             return (
@@ -249,6 +273,34 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
         </div>
       )}
       {drawer && <div className="tsh-scrim" onClick={() => setDrawer(false)} aria-hidden="true" />}
+      {/* điện thoại: bảng công cụ của khu vừa bấm ở thanh tab dưới */}
+      {sheet && active && (
+        <>
+          <div className="tsh-sheet-scrim" onClick={() => setSheet(null)} aria-hidden="true" />
+          <div className="tsh-sheet" role="dialog" aria-label={KHU.find((k) => k.key === sheet)?.label}>
+            <div className="tsh-sheet-hd"><b>{KHU.find((k) => k.key === sheet)?.label}</b>
+              <button type="button" className="tsh-icon-btn" aria-label="Đóng" onClick={() => setSheet(null)}><X aria-hidden="true" /></button></div>
+            {groupsOfKhu(sheet).filter((g) => vis(g.key).length).map((g) => (
+              <section key={g.key} className="tsh-sheet-g">
+                <h3>{g.label}</h3>
+                <div className="tsh-sheet-list">
+                  {vis(g.key).map((t) => {
+                    const Icon = TOOL_ICON[t.key];
+                    return (
+                      <Link key={t.key} href={toolHref(t, active.id)} className={`tsh-fly-i${current === t.key ? ' is-on' : ''}`} aria-current={current === t.key ? 'page' : undefined}>
+                        <span className={`tsh-ic tone-${t.tone}`}><Icon aria-hidden="true" /></span>
+                        <span className="tsh-fly-t"><b>{t.label}</b>{t.desc && <small>{t.desc}</small>}</span>
+                        {t.key === 'tin-nhan' && unread > 0 && <span className="tsh-badge" aria-label={`${unread} tin chưa đọc`}>{unread}</span>}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+            <p className="tsh-sheet-foot"><Link href="/giao-vien#cong-cu">Ghim, ẩn công cụ</Link></p>
+          </div>
+        </>
+      )}
 
       <div className="tsh-main">
         {/* thanh trên trên điện thoại */}
@@ -282,15 +334,19 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
       {active && (
         <nav className="tsh-tabs" aria-label="Điều hướng giáo viên">
           <Link href="/giao-vien" className={pathname === '/giao-vien' ? 'is-on' : ''}><Home aria-hidden="true" />Hôm nay</Link>
-          {GROUPS.filter((g) => g.key !== 'Lớp' && toolsOfGroup(g.key).length).map((g) => {
-            const Icon = GROUP_ICON[g.key] ?? LayoutGrid;
+          {KHU.filter((k) => k.key !== 'me').map((k) => {
+            const Icon = KHU_ICON[k.key];
             return (
-              <Link key={g.key} href={groupHref(g.key)} data-tour={GROUP_TOUR[g.key]} className={curGroup === g.key ? 'is-on' : ''}>
-                <Icon aria-hidden="true" />{g.short}
-                {g.key === 'Phụ huynh' && unread > 0 && <span className="tsh-tab-dot" aria-label={`${unread} tin chưa đọc`} />}
-              </Link>
+              <button key={k.key} type="button" data-tour={KHU_TOUR[k.key]} className={curKhu === k.key || sheet === k.key ? 'is-on' : ''} aria-expanded={sheet === k.key} onClick={() => setSheet((v) => (v === k.key ? null : k.key))}>
+                <Icon aria-hidden="true" />{k.short}
+              </button>
             );
           })}
+          <Link href={groupHref('Phụ huynh')} className={curGroup === 'Phụ huynh' ? 'is-on' : ''}>
+            {(() => { const I = GROUP_ICON['Phụ huynh']; return <I aria-hidden="true" />; })()}Phụ huynh
+            {unread > 0 && <span className="tsh-tab-dot" aria-label={`${unread} tin chưa đọc`} />}
+          </Link>
+          <button type="button" onClick={() => setPalette(true)}><Search aria-hidden="true" />Tìm</button>
         </nav>
       )}
 
@@ -301,7 +357,7 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
       {FEATURES.ai && <AiAssistant />}
 
       {/* hướng dẫn lần đầu: chưa có lớp → tạo lớp; có lớp → giới thiệu các nhóm công cụ (tự mở ở trang Hôm nay) */}
-      <GuidedTour key={active ? 'lop' : 'moi'} id={active ? 'gv-lop-v1' : 'gv-moi-v1'} auto={pathname === '/giao-vien'} />
+      <GuidedTour key={active ? 'lop' : 'moi'} id={active ? 'gv-lop-v2' : 'gv-moi-v1'} auto={pathname === '/giao-vien'} />
 
       {palette && <CommandPalette classId={active?.id ?? null} onClose={() => setPalette(false)} />}
     </div>
