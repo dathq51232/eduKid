@@ -1508,7 +1508,9 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--brand-blue); ou
   .join-code-box { text-align: left; }
 }
 @media print {
-  body { background: #fff !important; }
+  /* Mọi bản in: giấy trắng, chữ đen — giao diện tối / nền lưới không được lọt ra lề giấy ("lề đen mực") */
+  :root, html, body { background: #fff !important; background-image: none !important; color-scheme: light !important; }
+  body { color: #000; }
   .learn-top, .no-print, .back-link, .dash-head, .adm-alert, .login-cards-wrap .dash-card-head button { display: none !important; }
   .login-cards-wrap { box-shadow: none; padding: 0; }
   .login-card { border-color: #999; color: #000; }

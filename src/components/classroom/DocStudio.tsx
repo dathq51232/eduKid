@@ -6,7 +6,6 @@
 //   (3) In theo lớp: danh sách lớp, trộn thư, nhãn vở, thẻ tên từ danh sách học sinh + lối tắt tới các mục in khác (ClassPrint.tsx).
 // Mọi xử lý chạy trên máy cô — file không gửi đi đâu.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { CheckCircle2, ClipboardCheck, FileSpreadsheet, FileText, FolderOpen, PenLine, Printer, Sparkles, Undo2, Upload, Users, X } from 'lucide-react';
 import { KINDS, SAMPLE, buildHtml, fileName, kindOf, type Doc, type DocKind, type Org } from '@/lib/vanban/nd30';
@@ -22,6 +21,7 @@ import { readXlsxAll, type Sheet } from '@/lib/xlsx-read';
 import { asciiFilename } from '@/lib/filename';
 import ClassPrint from '@/components/classroom/ClassPrint';
 import { takeFromEditor } from '@/lib/vanban/handoff';
+import { printInFrame } from '@/lib/print-frame';
 import type { Ctx, Printable, Pupil } from '@/lib/vanban/class-print';
 import { DEFAULT_SETUP, DEFAULT_VIEW, RbBtn, RbGroup, SHEET_SETUP, Workspace, pageCss, sheetHtml, trimSheet, type PageSetup, type SheetView } from '@/components/classroom/PageEditor';
 import '@/styles/adm.css';
@@ -181,7 +181,6 @@ export default function DocStudio({ teacher, className, classId, students }: { t
   const [tab, setTab] = useState<Tab>('mau');
   const [org, setOrg] = useState<Org>({ parent: '', name: '', abbr: '', place: '', role: 'Giáo viên chủ nhiệm', onBehalf: '', signer: teacher });
   const [doc, setDoc] = useState<Doc>({ kind: 'thong-bao', no: '', date: today(), ...SAMPLE['thong-bao'] });
-  const [printHtml, setPrintHtml] = useState<{ html: string; css: string } | null>(null);
   const [flash, setFlash] = useState('');
   // tài liệu đang làm + cài đặt trang + cách hiện bảng
   const [work, setWork] = useState<Work | null>(null);
@@ -265,8 +264,9 @@ export default function DocStudio({ teacher, className, classId, students }: { t
   const docHtml = useCallback((h: string) => setWork((w) => (w && w.kind === 'doc' && w.html !== h ? { ...w, html: h } : w)), []);
   const setSheets = (sheets: Sheet[]) => setWork((w) => (w && w.kind === 'sheet' ? { ...w, sheets } : w));
 
-  const printRaw = (h: string, css: string) => { setPrintHtml({ html: h, css }); window.setTimeout(() => { window.print(); setPrintHtml(null); }, 80); };
-  const print = (h: string, s: PageSetup) => printRaw(h, pageCss(s));
+  // in trong khung riêng chỉ có văn bản: lề trắng, chữ không tràn khổ giấy, ngắt trang kiểu Word vẫn đúng (src/lib/print-frame.ts)
+  const printRaw = (h: string, css: string) => printInFrame(bodyOf(h), css, 'Văn bản');
+  const print = (h: string, s: PageSetup) => printRaw(h, `${pageCss(s)} body { font-size: ${s.fontSize}pt; }`);
   const printClass = (p: Printable) => printRaw(p.html, p.css);
   const wordClass = (p: Printable, file: string, title: string) => saveWord(p.html, { ...DEFAULT_SETUP, landscape: p.landscape, pageNum: 'none', fontSize: 13 }, file, title);
   const editClass = (p: Printable, file: string, title: string) => {
@@ -435,12 +435,6 @@ export default function DocStudio({ teacher, className, classId, students }: { t
         </section>
       )}
 
-      {printHtml && createPortal(
-        <div className="vb-print">
-          <style>{printHtml.css}</style>
-          <div dangerouslySetInnerHTML={{ __html: bodyOf(printHtml.html) }} />
-        </div>, document.body,
-      )}
     </div>
   );
 }
