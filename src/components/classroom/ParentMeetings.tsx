@@ -5,7 +5,9 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { CalendarPlus, ClipboardCheck, Copy, FileText, Mail, Megaphone, Printer, RotateCcw, Trash2 } from 'lucide-react';
+import { CalendarPlus, ClipboardCheck, Copy, FilePenLine, FileText, Mail, Megaphone, Printer, RotateCcw, Trash2 } from 'lucide-react';
+import { useEditOnPage } from '@/lib/vanban/handoff';
+import { esc } from '@/lib/vanban/class-print';
 import { saveLabel, schoolYear, uid, useClassTool } from '@/lib/classroom/use-class-tool';
 import '@/styles/adm.css';
 import '@/styles/btn.css';
@@ -65,6 +67,36 @@ export default function ParentMeetings({ classId, className, teacher, students }
     teacher ? `GVCN: ${teacher}` : '',
   ].filter(Boolean).join('\n') : '';
   const invite = cur?.invite.trim() ? cur.invite : autoInvite;
+  // Sửa trên trang: phiếu mời từng em / biên bản mở trong trình soạn văn bản của lớp (sửa như Word rồi In / PDF, tải Word)
+  const editOnPage = useEditOnPage();
+  const openEditor = (what: 'moi' | 'bien-ban') => {
+    if (!editOnPage || !cur) return;
+    const P = (inner: string, st = '') => `<p style="margin:0 0 6pt;text-align:justify${st}">${inner}</p>`;
+    const C = (inner: string, st = '') => `<p style="margin:0 0 6pt;text-align:center${st}">${inner}</p>`;
+    const place = cur.place ? esc(cur.place) : '……………';
+    if (what === 'moi') {
+      const slips = students.map((s) => C('<b>THƯ MỜI</b>', ';font-size:15pt')
+        + P(`Kính gửi: Phụ huynh em <b>${esc(s.name)}</b> — lớp ${esc(className)}`)
+        + P(`GVCN trân trọng kính mời Quý phụ huynh đến dự <b>${esc(cur.title.toLowerCase())}</b>.`)
+        + P(`Thời gian: <b>${esc(cur.time)} ngày ${fmt(cur.date)}</b> · Địa điểm: <b>${place}</b>`)
+        + (agendaLines.length ? P(`Nội dung: ${esc(agendaLines.join('; '))}.`) : '')
+        + `<p style="margin:0 0 6pt;text-align:right;font-style:italic">GVCN${teacher ? `: ${esc(teacher)}` : ''}</p>`);
+      editOnPage({ name: `Thư mời ${cur.title.toLowerCase()}`, file: `thu-moi-hop-ph-lop-${className}`, html: slips.join('<p style="margin:10pt 0;text-align:center">- - - - - - - - - - - - - - - - - - - - ✂ - - - - - - - - - - - - - - - - - - - -</p>'), fontSize: 13 });
+      return;
+    }
+    const pre = (t: string) => esc(t || '……………………………………………').replace(/\n/g, '<br/>');
+    const html = C('<b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br/><b>Độc lập – Tự do – Hạnh phúc</b>')
+      + C(`<b>BIÊN BẢN ${esc(cur.title.toUpperCase())}</b>`, ';font-size:15pt;margin-top:14pt')
+      + C(`Lớp ${esc(className)} — Năm học ${schoolYear()}`)
+      + P(`<b>1. Thời gian:</b> ${esc(cur.time)} ngày ${fmt(cur.date)}. <b>Địa điểm:</b> ${place}`)
+      + P(`<b>2. Thành phần:</b> Chủ trì: ${esc(cur.chair || teacher || '……………')}. Thư ký: ${esc(cur.secretary || '……………')}.<br/>Phụ huynh có mặt: ${cur.attended.length}/${students.length}.${absent.length ? ` Vắng: ${esc(absent.map((s) => s.name).join(', '))}.` : ''}`)
+      + P('<b>3. Nội dung:</b>') + agendaLines.map((l, i) => P(`${i + 1}. ${esc(l)}`, ';text-indent:1cm')).join('')
+      + P('<b>4. Ý kiến phụ huynh:</b>') + P(pre(cur.opinions))
+      + P('<b>5. Kết luận, thống nhất:</b>') + P(pre(cur.conclusion))
+      + P('Buổi họp kết thúc lúc …… giờ …… cùng ngày. Biên bản đã được thông qua trước hội nghị.')
+      + `<table style="width:100%;border-collapse:collapse;margin-top:12pt"><tr><td style="width:50%;text-align:center;vertical-align:top"><b>THƯ KÝ</b><br/><br/><br/><br/>${esc(cur.secretary)}</td><td style="width:50%;text-align:center;vertical-align:top"><b>CHỦ TRÌ</b><br/><br/><br/><br/>${esc(cur.chair || teacher)}</td></tr></table>`;
+    editOnPage({ name: `Biên bản ${cur.title.toLowerCase()}`, file: `bien-ban-hop-ph-lop-${className}`, html, fontSize: 14 });
+  };
   // Một dòng cho "Việc chung hôm nay" ở Sổ lớp → Tin nhắn phụ huynh → Gửi cả lớp
   const toNotice = () => {
     if (!cur) return;
@@ -131,6 +163,7 @@ export default function ParentMeetings({ classId, className, teacher, students }
                   <button type="button" className="btn btn-primary btn-sm" onClick={() => void copy(invite, 'Đã chép thư mời — dán vào nhóm Zalo lớp.')}><Copy aria-hidden="true" /> Chép gửi nhóm Zalo</button>
                   <button type="button" className="btn btn-outline btn-sm" onClick={toNotice}><Megaphone aria-hidden="true" /> Đưa vào thông báo chung (Sổ lớp)</button>
                   <button type="button" className="btn btn-outline btn-sm" disabled={!students.length} onClick={() => print('moi')}><Printer aria-hidden="true" /> In phiếu mời từng em ({students.length})</button>
+                  {editOnPage && <button type="button" className="btn btn-outline btn-sm" disabled={!students.length} onClick={() => openEditor('moi')}><FilePenLine aria-hidden="true" /> Sửa trên trang</button>}
                 </div>
               </div>
             )}
@@ -168,6 +201,7 @@ export default function ParentMeetings({ classId, className, teacher, students }
                 <label>Kết luận, thống nhất<textarea rows={4} value={cur.conclusion} maxLength={4000} onChange={(e) => set({ conclusion: e.target.value })} /></label>
                 <div className="hop-acts">
                   <button type="button" className="btn btn-primary btn-sm" onClick={() => print('bien-ban')}><Printer aria-hidden="true" /> In / lưu PDF biên bản</button>
+                  {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={() => openEditor('bien-ban')}><FilePenLine aria-hidden="true" /> Sửa trên trang</button>}
                 </div>
               </div>
             )}

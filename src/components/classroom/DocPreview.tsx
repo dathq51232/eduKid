@@ -1,11 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FileDown, PencilLine, Printer, Save, X } from 'lucide-react';
+import { FileDown, FilePenLine, PencilLine, Printer, Save, X } from 'lucide-react';
 import { downloadDocx } from '@/lib/doc-download';
 import { htmlToDocx, type DocImage } from '@/lib/docx-write';
 import { imageKeys, loadImages, type LoadedImage } from '@/lib/plans/images';
 import { WORD_LAND_CSS } from '@/lib/plans/fit';
+import { inlineStyles, useEditOnPage } from '@/lib/vanban/handoff';
 import '@/styles/planner.css';
 import '@/styles/btn.css';
 import '@/styles/mini.css';
@@ -105,6 +106,16 @@ export default function DocPreview({ title, filename, html, onClose, onSaveOrig,
 
   const print = () => frame.current?.contentWindow?.print();
 
+  // Mở trong trình soạn của lớp (Văn bản & in ấn › Mở file & in): sửa như Word, đặt khổ giấy, đầu / chân trang
+  const editOnPage = useEditOnPage();
+  const openEditor = () => {
+    if (!editOnPage || !imgs) return;
+    const map = new Map<string, DocImage>();
+    for (const [k, v] of imgs) map.set(k, v);
+    const h = currentHtml();
+    editOnPage({ name: title, file: filename.replace(/\.docx$/i, ''), html: inlineStyles(h), images: map, landscape: /class="[^"]*\bLand\b/.test(h), fontSize });
+  };
+
   const saveOrig = () => {
     const d = frame.current?.contentDocument;
     const el = d?.querySelector('[data-orig]');
@@ -124,6 +135,7 @@ export default function DocPreview({ title, filename, html, onClose, onSaveOrig,
           <span className="planner-spacer" />
           <button type="button" className={`btn btn-sm ${editing ? 'btn-primary' : 'btn-outline'}`} onClick={toggleEdit} disabled={!imgs}><PencilLine aria-hidden="true" /> {editing ? 'Xong sửa' : 'Sửa trực tiếp'}</button>
           {onSaveOrig && edited && html.includes('data-orig') && <button type="button" className="btn btn-outline btn-sm" onClick={saveOrig}><Save aria-hidden="true" /> Lưu sửa vào giáo án</button>}
+          {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={openEditor} disabled={!imgs} title="Mở trong trình soạn văn bản: sửa như Word, đặt khổ giấy, đầu / chân trang, số trang"><FilePenLine aria-hidden="true" /> Sửa trên trang</button>}
           <button type="button" className="btn btn-outline btn-sm" onClick={print} disabled={!imgs}><Printer aria-hidden="true" /> In / PDF</button>
           <button type="button" className="btn btn-primary btn-sm" onClick={download} disabled={!imgs || busy}><FileDown aria-hidden="true" /> Tải file Word (.docx)</button>
           {extra}

@@ -3,7 +3,7 @@
 import { downloadHtmlAsDocx } from '@/lib/doc-download';
 import EmojiText from '@/components/EmojiText';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FileDown, FilePlus2, FolderOpen, Library, Printer, RefreshCw, Save, Shuffle, Table2, Trash2 } from 'lucide-react';
+import { FileDown, FilePenLine, FilePlus2, FolderOpen, Library, Printer, RefreshCw, Save, Shuffle, Table2, Trash2 } from 'lucide-react';
 import MyBankPanel from './MyBankPanel';
 import { useMyBank } from './useMyBank';
 import { createClient } from '@/lib/supabase/client';
@@ -16,6 +16,7 @@ import {
   type BookLesson, type Matrix, type Muc, type Paper,
 } from '@/lib/exams/matrix';
 import { answerText, examDocument, printDoc } from '@/lib/exams/word';
+import { inlineStyles, useEditOnPage } from '@/lib/vanban/handoff';
 import { findOutcomeAny } from '@/lib/curriculum';
 import type { SubjectCode } from '@/lib/types';
 import { ToolIcon } from '@/components/classroom/tool-icons';
@@ -192,11 +193,13 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
     void loadList();
   };
 
+  const editOnPage = useEditOnPage();
   const download = (parts: { matrix: boolean; papers: boolean; keys: boolean }, suffix: string) => {
     if (!matrix) return;
     const meta = { school, title: title || autoTitle, subjectName: SUBJECT_NAME[subject], grade, className, yearLabel: `${year}–${year + 1}`, minutes, outcomes: outcomeText };
     const html = examDocument(meta, matrix, papers, new Map(lessons.map((l) => [l.id, l.title])), parts);
     if (suffix === 'pdf') return printDoc(html);
+    if (suffix === 'sua') return editOnPage?.({ name: title || autoTitle, file: `${SUBJECT_NAME[subject]}-lop${grade}-${kind}`.replace(/\s+/g, '-'), html: inlineStyles(html), fontSize: 13 });
     void downloadHtmlAsDocx(`${SUBJECT_NAME[subject]}-lop${grade}-${kind}-${suffix}`.replace(/\s+/g, '-'), html, title);
   };
 
@@ -359,6 +362,7 @@ export default function ExamBuilder({ classId, className, grade }: { classId: st
               <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ matrix: false, papers: true, keys: false }, 'de')}><FileDown aria-hidden="true" /> Chỉ đề</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ matrix: false, papers: false, keys: true }, 'dap-an')}><FileDown aria-hidden="true" /> Chỉ đáp án</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ matrix: true, papers: true, keys: true }, 'pdf')}><Printer aria-hidden="true" /> In / lưu PDF</button>
+              {editOnPage && <button type="button" className="btn btn-outline btn-sm" onClick={() => download({ matrix: true, papers: true, keys: true }, 'sua')} title="Mở ma trận, đề, đáp án trong trình soạn văn bản để sửa trực tiếp như Word"><FilePenLine aria-hidden="true" /> Sửa trên trang</button>}
               <button type="button" className="btn btn-outline btn-sm" onClick={() => void save()} disabled={busy}><Save aria-hidden="true" /> {examId ? 'Lưu thay đổi' : 'Lưu đề'}</button>
             </div>
           </div>
