@@ -7,7 +7,9 @@
 // Nhiều bài cùng một tiết gộp một dòng.
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, Clock3, Dices, MonitorPlay, NotebookPen, Timer, UsersRound } from 'lucide-react';
+import { ArrowRight, BookOpen, Calculator, CalendarDays, ChevronLeft, ChevronRight, Clock3, Dices, MonitorPlay, NotebookPen, Play, Timer, UsersRound } from 'lucide-react';
+import { addDaysIso, mondayOf, schoolWeek } from '@/lib/classroom/school-week';
+import { DashIcon } from '@/components/classroom/dash-icons';
 import { createClient } from '@/lib/supabase/client';
 import { FEATURES } from '@/lib/features';
 import { SUBJECT_NAMES } from '@/lib/plans/generate';
@@ -214,5 +216,118 @@ export default function TodaySchedule(p: Props & { headingId: string; grade?: nu
       {pick && <LessonIdeas subject={pick.subject} title={pick.title} saved={pick.saved} onClose={() => setPick(null)} />}
       {view.groups.length > 0 && <p className="tdy-legend">💡 Bấm tên môn để xem gợi ý cách dạy · ✅ đã chọn gợi ý{view.unsaved ? ` · ${view.unsaved} tiết chưa lưu giáo án` : ''}</p>}
     </>
+  );
+}
+
+/* ================= Trang chủ giáo viên (bố cục dashboard 11/2026) ================= */
+
+/** Thẻ lớn "Tiết học tiếp theo": nhãn giờ, tên bài, tiết · lớp, nút Mở bài giảng. Hết tiết thì nhắc soạn cho ngày mai. */
+export function NextLessonCard(p: Props & { className: string }) {
+  const { today, next, min, allPast } = useSlots(p.classId, p.day, p.tomorrow, p.saved, p.savedTomorrow);
+  const now = min === null ? undefined : today.groups.find((g) => whenOf(g, min) === 'now');
+  const upcoming = min === null ? undefined : today.groups.find((g) => whenOf(g, min) === 'next');
+  const g = now ?? upcoming;
+  const desc = (x: Group) => x.items.map((r) => `${r.subject} – ${r.title}`).join(' · ');
+  let pill: string, title: string, sub: string, cta: { href: string; label: string };
+  if (min === null) {
+    pill = 'Tiết học tiếp theo'; title = 'Đang xem lịch dạy…'; sub = `Lớp ${p.className}`;
+    cta = { href: `${p.base}/bai-giang-3d`, label: 'Mở bài giảng' };
+  } else if (g) {
+    const t = slotOf(g.period, g.pm)!;
+    pill = now ? `Đang dạy · còn ${t[1] - min} phút` : `Tiết học tiếp theo · ${hhmm(t[0])}`;
+    title = desc(g); sub = `${periodLabel(g)} · Lớp ${p.className}`;
+    cta = { href: `${p.base}/bai-giang-3d`, label: 'Mở bài giảng' };
+  } else {
+    const n = next.groups.length;
+    pill = allPast ? 'Đã dạy xong hôm nay' : 'Hôm nay chưa có tiết';
+    title = n ? `Ngày mai có ${n} tiết` : 'Ngày mai chưa có lịch dạy';
+    sub = n ? (next.unsaved ? `${next.unsaved} tiết chưa lưu giáo án` : 'Đã soạn đủ giáo án') : `Lớp ${p.className} · nạp lịch báo giảng để xem tiết dạy`;
+    cta = { href: `${p.base}/ke-hoach`, label: n && !next.unsaved ? 'Xem giáo án' : 'Soạn giáo án' };
+  }
+  return (
+    <section className={`tdy-next${now ? ' is-live' : ''}`} aria-label="Tiết học tiếp theo">
+      <span className="tdy-next-pill">{now ? <span className="tdy-live-dot" aria-hidden="true" /> : <CalendarDays aria-hidden="true" />}{pill}</span>
+      <h2 className="tdy-next-title" title={title}>{title}</h2>
+      <p className="tdy-next-sub"><UsersRound aria-hidden="true" /> {sub}</p>
+      <div className="tdy-next-acts">
+        <Link href={cta.href} className="tdy-next-go"><Play aria-hidden="true" /> {cta.label} <ArrowRight aria-hidden="true" className="tdy-next-arrow" /></Link>
+        {now && <Link href={`${p.base}/goi-ten`} className="tdy-next-alt"><Dices aria-hidden="true" /> Gọi tên</Link>}
+      </div>
+    </section>
+  );
+}
+
+/** Số tiết hôm nay (máy chủ + lịch báo giảng trên máy) — dùng trong ô số liệu */
+export function TodayLessonCount(p: { classId: string; day: string; saved: SavedSlot[] }) {
+  const { today, min } = useSlots(p.classId, p.day, p.day, p.saved, []);
+  return <>{min === null ? '…' : today.groups.length}</>;
+}
+
+const DOW_SHORT = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+
+/** "Lịch tuần": dải 7 ngày (T2–CN, đổi tuần bằng ‹ ›), bấm một ngày để xem các tiết của ngày đó */
+export function WeekSchedule(p: { classId: string; base: string; day: string; savedByDay: Record<string, SavedSlot[]> }) {
+  const [local, setLocal] = useState<SchedSlot[]>([]);
+  const [min, setMin] = useState<number | null>(null);
+  const [off, setOff] = useState(0);
+  const [pick, setPick] = useState(p.day);
+  useEffect(() => { setLocal(loadSched(p.classId)); }, [p.classId]);
+  useEffect(() => {
+    const tick = () => { const d = new Date(); setMin(d.getHours() * 60 + d.getMinutes()); };
+    tick();
+    const id = window.setInterval(tick, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+  const monday = addDaysIso(mondayOf(p.day), off * 7);
+  const days = Array.from({ length: 7 }, (_, i) => addDaysIso(monday, i));
+  const sel = days.includes(pick) ? pick : off === 0 ? p.day : days[0];
+  const { groups } = useMemo(() => groupsOf(p.savedByDay[sel] ?? [], local.filter((s) => s.date === sel)), [p.savedByDay, local, sel]);
+  const has = (d: string) => (p.savedByDay[d]?.length ?? 0) > 0 || local.some((s) => s.date === d);
+  const week = schoolWeek(monday);
+  const isToday = sel === p.day;
+  return (
+    <section className="tdy-card tdy-week-card" aria-labelledby="tdy-week-h">
+      <h2 id="tdy-week-h">
+        <DashIcon name="h-week" h={26} /> Lịch tuần
+        <span className="tdy-wk-nav">
+          <button type="button" onClick={() => setOff((o) => o - 1)} aria-label="Tuần trước"><ChevronLeft aria-hidden="true" /></button>
+          <button type="button" className="tdy-wk-lbl" onClick={() => { setOff(0); setPick(p.day); }} title="Về tuần này">{week ? `Tuần ${week}` : 'Tuần này'}</button>
+          <button type="button" onClick={() => setOff((o) => o + 1)} aria-label="Tuần sau"><ChevronRight aria-hidden="true" /></button>
+        </span>
+      </h2>
+      <ol className="tdy-wk-days">
+        {days.map((d) => {
+          const dow = new Date(`${d}T00:00:00Z`).getUTCDay();
+          return (
+            <li key={d}>
+              <button type="button" onClick={() => setPick(d)} aria-pressed={d === sel}
+                className={`${d === sel ? 'is-sel' : ''}${d === p.day ? ' is-today' : ''}${dow === 0 ? ' is-sun' : ''}`}>
+                <small>{DOW_SHORT[dow]}</small><b>{+d.slice(8)}</b>{has(d) && <i aria-label="có tiết dạy" />}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+      {groups.length === 0 ? (
+        <p className="tdy-wk-empty">Chưa có tiết nào trong lịch ngày này. <Link href={`${p.base}/ke-hoach`}>Nạp lịch báo giảng</Link></p>
+      ) : (
+        <ul className="tdy-wk-list">
+          {groups.map((g) => {
+            const t = slotOf(g.period, g.pm);
+            const w = isToday ? whenOf(g, min) : null;
+            const math = g.items.some((r) => /toán/i.test(r.subject));
+            const Icon = math ? Calculator : BookOpen;
+            return (
+              <li key={g.key} className={`tdy-wk-row${w === 'now' ? ' is-now' : ''}${w === 'past' ? ' is-past' : ''}`}>
+                <span className="tdy-wk-t">{t ? hhmm(t[0]) : '—'}</span>
+                <Icon aria-hidden="true" />
+                <span className="tdy-wk-s" title={g.items.map((r) => `${r.subject} – ${r.title}`).join(' · ')}>{g.items.map((r) => `${r.subject} – ${r.title}`).join(' · ')}</span>
+                <span className="tdy-wk-p">({periodLabel(g)})</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }

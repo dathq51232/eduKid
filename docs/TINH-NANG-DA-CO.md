@@ -6,6 +6,7 @@ Trạng thái sản phẩm: đang phát triển, **chưa chạy thật với gi�
 
 ## Giáo viên (`src/app/giao-vien/lop/[id]/*`, menu `src/lib/classroom/teacher-nav.ts`)
 Menu 2 khu: Soạn & dạy · Lớp chủ nhiệm (+ Của tôi); ghim tối đa 6 / ẩn công cụ ở Hôm nay (`tool-prefs.ts`).
+- **Trang chủ giáo viên kiểu dashboard** (11/2026): thanh bên xanh đậm (Tổng quan · Giảng dạy · Quản lý lớp · Cộng đồng & cá nhân), thẻ "Tiết học tiếp theo", 4 ô số liệu, Việc hôm nay · Lịch tuần (đổi tuần) · Lớp học của tôi, Công cụ giảng dạy · Không gian cá nhân; chọn xưng hô Thầy/Cô (cookie `gv-xung-ho`, đổi hình minh hoạ + lời chúc); icon ở `public/brand/dash` — `src/app/giao-vien/page.tsx`, `dash-icons.tsx`, `tdy.css`
 - **Lịch báo giảng** theo file mẫu thật (TH Trần Hưng Đạo, khối 1): nhập TKB + PPCT Excel, tổ trưởng dựng LBG — `docs/LICH-BAO-GIANG-QUY-TAC.md`, `src/lib/plans/schedule*.ts`, `LbgBuilder.tsx`, `ScheduleImport.tsx`
 - **Giáo án (KHBD, CV 2345)**: tự sinh (loại tiết, YCCĐ đúng bài, câu mẫu thật, phân hoá 3 mức, đánh giá từng hoạt động) — `src/lib/plans/generate.ts`, `lessons.ts`; trợ lý soạn + ngân hàng ý tưởng (không AI) — `assistant.ts`, `idea-bank.ts`
 - **Kho giáo án cũ** từ Word của trường (tách theo tiết, đổi phông .VnTime/VNI), xuất Word — `src/lib/plans/library.ts`, `word.ts`, `docx-write.ts`
