@@ -6,7 +6,7 @@ import { f3dSrc as F } from './f3d-catalog';
 import { fit, shrinkToFit } from './fit';
 import { PHOTO_SRC, animDur, darkBg, uid, type Anim, type El, type FontKey, type Slide } from './types';
 
-export type SetId = 'oli' | 'cosmos' | 'leaf' | 'lab' | 'vui' | 'sotay';
+export type SetId = 'oli' | 'cosmos' | 'leaf' | 'lab' | 'vui' | 'sotay' | 'lan' | 'caphe' | 'tuyet';
 export type ThemeSet = {
   id: SetId; name: string; sub: string; bg: string;
   card: string; edge: string; title: string; text: string;
@@ -46,7 +46,24 @@ export const THEME_SETS: ThemeSet[] = [
   { id: 'sotay', name: 'Sổ tay ấm', sub: 'Giấy be · băng dính', bg: 'kraft', card: '#fdfbf4', edge: '#c9a27e', title: '#6b3d1a', text: '#5b3a1e',
     back: '#e8d6bf', accent: '#a3472f', steps: ['#a3472f', '#3d6b74', '#5e7a34', '#7d4e6e', '#8a6a1f'],
     mascots: ['professor', 'artist', '', 'doctor', 'professor', 'artist', ''].map(M), deco: [F('books'), F('blossom'), F('backpack')], tape: ['#d6a078cc', '#9fd2abcc'], tilt: -1.5, titleFont: 'script' },
+  // 3 bộ theo công thức 60–30–10 (nền chủ đạo – chữ tương phản – một màu nhấn lặp lại ở bóng thẻ, số thứ tự, gạch tiêu đề)
+  // tạp chí hoa lan: nền kem ấm, chữ đen, nhấn hồng lan; viền đen mảnh + bóng lệch hồng (kiểu poster)
+  { id: 'lan', name: 'Hoa lan', sub: 'Kem · đen · hồng lan', bg: '#ECE6DC', card: '#fffdf9', edge: '#050505', title: '#050505', text: '#1f1b1b', sw: 3,
+    back: '#E65BC4', accent: '#E65BC4', steps: ['#a21caf', '#86198f', '#be185d', '#6b21a8', '#3f3a3a'],
+    mascots: ['artist', 'professor', 'artist', 'doctor', 'professor', 'artist', ''].map(M), deco: [F('cherry-blossom'), F('tulip'), F('blossom')] },
+  // xưởng rang: nền xanh rêu đậm, thẻ tối, chữ kem, nhấn cam (cặp màu đối nhau trên bánh xe màu)
+  { id: 'caphe', name: 'Rang mộc', sub: 'Xanh rêu · kem · cam', bg: '#013230', card: '#024440', edge: '#FF6A1F', title: '#FF8A4C', text: '#F3EBDD', sw: 4, dash: 'dash',
+    back: '#FF6A1F59', accent: '#d9480f', steps: ['#c2410c', '#0f766e', '#9a3412', '#115e59', '#b45309'],
+    mascots: ['professor', 'robot', 'doctor', 'professor', 'robot', 'artist', ''].map(M), deco: [F('hot-beverage'), F('star'), F('party-popper')] },
+  // tuyết mới: nền xanh trời, thẻ trắng như tuyết, chữ xanh navy, nhấn vàng chanh (bóng lệch vàng, số thứ tự vàng chữ navy)
+  { id: 'tuyet', name: 'Tuyết mới', sub: 'Xanh trời · navy · vàng', bg: '#62A7EA', card: '#ffffff', edge: '#0C1B48', title: '#0C1B48', text: '#132a63', sw: 5, tilt: -1,
+    back: '#F2EA1E', accent: '#F2EA1E', steps: ['#0C1B48', '#1d4ed8', '#1e3a8a', '#0369a1', '#3730a3'],
+    mascots: ['astronaut', 'professor', 'robot', 'doctor', 'professor', 'astronaut', ''].map(M), deco: [F('mountain'), F('snowflake'), F('snowman-without-snow')] },
 ];
+/** nền tối: theo mã nền có sẵn hoặc mã màu hex tối */
+const isDark = (bg: string) => darkBg(bg) || (!!rgbOf(bg) && lum(rgbOf(bg)!) < 0.2);
+/** màu số trong vòng tròn nhấn: trắng nếu đủ tương phản, không thì xanh đen (màu nhấn sáng như vàng) */
+const onAccent = (t: ThemeSet) => (contrast('#ffffff', t.accent) >= 3 ? '#ffffff' : '#0f172a');
 export const SET_BY_ID = Object.fromEntries(THEME_SETS.map((t) => [t.id, t])) as Record<SetId, ThemeSet>;
 
 /** màu nhãn từng bước của tiết dạy */
@@ -120,7 +137,7 @@ export function makeSet(id: SetId, info: SetInfo, ct?: SetContent | null): Slide
     const g = long ? Math.min(140, Math.floor(420 / Math.max(1, lines.length))) : gap, h = long ? g - 14 : size + 20;
     const fs = long ? Math.min(...lines.map((x) => fit(x, 820, h, 52, 34))) : Math.round(size * 0.92);
     lines.forEach((x, j) => {
-      shape(m, 'circle', L + 10, 336 + j * g, size, size, t.accent, 'accent', { text: String(j + 1), color: '#ffffff', size: Math.round(size * 0.56) });
+      shape(m, 'circle', L + 10, 336 + j * g, size, size, t.accent, 'accent', { text: String(j + 1), color: onAccent(t), size: Math.round(size * 0.56) });
       txt(m, x, L + size + 34, 330 + j * g, 820, h, fs, t.text, 'body');
     });
   };
@@ -189,17 +206,17 @@ export function applySet(slides: Slide[], id: SetId): Slide[] {
     const mapped = els.map((e): El => {
       if (e.role === 'card' && e.kind === 'shape') return { ...e, fill: t.card, stroke: t.edge, sw: t.sw ?? 6, dash: t.dash, rot: t.tilt ?? 0, op: 1 };
       if (e.role === 'cardback' && e.kind === 'shape') return { ...e, fill: t.back, stroke: t.back, rot: t.tilt ?? 0, hide: t.noBack || undefined };
-      if (e.role === 'accent' && e.kind === 'shape') return { ...e, fill: t.accent, stroke: t.accent };
+      if (e.role === 'accent' && e.kind === 'shape') return { ...e, fill: t.accent, stroke: t.accent, ...(e.text ? { color: onAccent(t) } : {}) };
       if (e.role === 'step' && e.kind === 'text') return { ...e, bg: stepColor(t, e.text.trim()) };
       if (e.role === 'title' && e.kind === 'text') return { ...e, color: t.title, font: t.titleFont ?? e.font };
-      if (e.role === 'divider' && e.kind === 'text') return { ...e, color: t.title, stroke: darkBg(t.bg) ? '#0f172a' : e.stroke };
+      if (e.role === 'divider' && e.kind === 'text') return { ...e, color: t.title, stroke: isDark(t.bg) ? '#0f172a' : e.stroke };
       if (e.role === 'body' && e.kind === 'text') return { ...e, color: t.text };
       if (e.role === 'mascot' && e.kind === 'img') { const k = i === 0 ? 0 : i === slides.length - 1 ? 6 : 1 + ((i - 1 + mi++) % 5); return { ...e, src: t.mascots[k] }; }
       if (e.role === 'deco' && e.kind === 'img') return { ...e, src: t.deco[i === 0 ? 0 : i === slides.length - 1 ? 2 : 1] };
       return e;
     });
     // màu chữ phải đọc được trên nền ngay phía dưới (nền chữ → hình khối bên dưới → thẻ / nền trang)
-    const pageBg = darkBg(t.bg) ? '#151a46' : '#ffffff';
+    const pageBg = rgbOf(t.bg) ? t.bg : darkBg(t.bg) ? '#151a46' : '#ffffff';
     return { ...s, bg: t.bg, scene: undefined, els: mapped.map((e, k) => {
       if (e.kind !== 'text' || !e.text.trim()) return e;
       const under = e.bg && rgbOf(e.bg) ? e.bg : backdropOf(mapped, k) ?? pageBg;
