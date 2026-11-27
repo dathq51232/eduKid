@@ -3,7 +3,7 @@
 // Quy tắc sinh đề của phòng thi — cô tự đặt như ở "Ma trận và đề kiểm tra":
 // cách phát đề (riêng / chung), số câu từng chủ đề × mức, điểm mỗi câu theo mức, lọc yêu cầu cần đạt.
 import { useMemo } from 'react';
-import { MUCS, MUC_DESC, MUC_NAME, available, outcomesIn, totals, type Matrix, type Muc } from '@/lib/exams/matrix';
+import { MUCS, MUC_DESC, MUC_NAME, STAGE_MIX, STAGE_NAME, available, outcomesIn, totals, type Matrix, type Muc, type Stage } from '@/lib/exams/matrix';
 import type { RoomMode } from '@/lib/classroom/rooms-build';
 import { findOutcomeAny } from '@/lib/curriculum';
 import type { SubjectCode } from '@/lib/types';
@@ -21,9 +21,11 @@ export const RATIOS: { key: string; name: string; r: [number, number] }[] = [
 type Props = {
   matrix: Matrix; subject: SubjectCode; mode: RoomMode; ratio: string; nStudents: number;
   onMatrix: (m: Matrix) => void; onMode: (m: RoomMode) => void; onRatio: (key: string) => void;
+  /** xếp đề theo dạng thao tác (kiểu đề thi Tiếng Việt trực tuyến) */
+  byDang?: boolean; onByDang?: (v: boolean) => void;
 };
 
-export default function RoomRules({ matrix, subject, mode, ratio, nStudents, onMatrix, onMode, onRatio }: Props) {
+export default function RoomRules({ matrix, subject, mode, ratio, nStudents, onMatrix, onMode, onRatio, byDang, onByDang }: Props) {
   const avail = useMemo(() => matrix.rows.map((r) => available(r.lessonIds, matrix.exclude)), [matrix]);
   const t = totals(matrix);
   const outcomes = useMemo(() => outcomesIn(matrix.rows.flatMap((r) => r.lessonIds))
@@ -54,6 +56,16 @@ export default function RoomRules({ matrix, subject, mode, ratio, nStudents, onM
           <span><b>Cả lớp chung một đề</b><small>Cô duyệt, sửa một đề; mỗi em chỉ đảo thứ tự câu và phương án.</small></span>
         </label>
       </fieldset>
+
+      {onByDang && (
+        <label className={`room-dang${byDang ? ' is-on' : ''}`}>
+          <input type="checkbox" checked={!!byDang} onChange={(e) => onByDang(e.target.checked)} />
+          <span>
+            <b>Xếp đề theo dạng, dễ → khó</b>
+            <small>Như đề thi Tiếng Việt trực tuyến: {([1, 2, 3, 4] as Stage[]).map((s) => `${STAGE_NAME[s]} ~${Math.round(STAGE_MIX[s] * 100)}%`).join(' → ')}. Trong mỗi dạng, câu mức 1 trước, mức 3 sau. Số câu và thời gian cô vẫn tự đặt (vd. 30 câu / 30 phút).</small>
+          </span>
+        </label>
+      )}
 
       <label className="adm-field room-ratio"><span>Tỉ lệ gợi ý (Mức 1 · Mức 2 · Mức 3, %)</span>
         <select value={ratio} onChange={(e) => onRatio(e.target.value)}>

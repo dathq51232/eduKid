@@ -4,7 +4,8 @@
 //  - 'chung': cả lớp chung một đề cô đã duyệt, mỗi em chỉ đảo thứ tự câu (trong từng mức) và thứ tự phương án.
 // Cô xem trước, đổi / sửa / xoá câu rồi mới tạo phòng; đề đã duyệt được lưu nguyên vào từng em.
 import { gradeLocal, normalizeAnswer } from '../grading';
-import { buildPaper, type ExamQuestion, type Matrix, type Paper, type PaperSlot } from '../exams/matrix';
+import { buildPaper, stageOf, type ExamQuestion, type Matrix, type Paper, type PaperSlot } from '../exams/matrix';
+import type { QuestionType } from '../types';
 import type { AnswerValue } from '../types';
 import type { ExamItem } from './assignments';
 
@@ -20,9 +21,13 @@ function rng(seed: number) {
   return { shuffle };
 }
 
-/** Đảo thứ tự câu nhưng giữ câu dễ ở đầu đề: trộn trong từng mức (đề phòng thi không chia phần trắc nghiệm / tự luận) */
-function byMucShuffled<T extends { muc?: number }>(xs: T[], seed: number): T[] {
+/** Đảo thứ tự câu nhưng giữ câu dễ ở đầu đề: trộn trong từng mức (đề phòng thi không chia phần trắc nghiệm / tự luận).
+ *  layout 'dang': xếp theo dạng thao tác (chọn → điền → nối → xếp nhóm), trong mỗi dạng dễ → khó, chỉ trộn trong cùng (dạng, mức). */
+function byMucShuffled<T extends { muc?: number }>(xs: T[], seed: number, layout?: Matrix['layout'], typeOf?: (x: T) => QuestionType): T[] {
   const { shuffle } = rng(seed);
+  if (layout === 'dang' && typeOf) {
+    return [1, 2, 3, 4].flatMap((st) => [1, 2, 3].flatMap((k) => shuffle(xs.filter((x) => stageOf(typeOf(x)) === st && (x.muc ?? 1) === k))));
+  }
   return [1, 2, 3].flatMap((k) => shuffle(xs.filter((x) => (x.muc ?? 1) === k)));
 }
 
@@ -39,7 +44,7 @@ export function slotItem(s: PaperSlot, points: Matrix['points']): ExamItem {
 /** Đề xem trước của một em (đúng thứ tự em sẽ thấy) */
 export function previewPaper(m: Matrix, seed: number): Paper {
   const p = buildPaper(m, seed >>> 0, 'P');
-  return { ...p, slots: byMucShuffled(p.slots, seed) };
+  return { ...p, slots: byMucShuffled(p.slots, seed, m.layout, (s) => s.q.type) };
 }
 
 /** Một đề riêng cho một em (dùng khi tạo nhanh không xem trước, và khi "Cho làm lại" ở phòng đề riêng) */
@@ -49,9 +54,9 @@ export function roomPaper(m: Matrix, seed: number): BuiltPaper {
 }
 
 /** Đề chung → bản của một em: đảo câu trong từng mức và đảo phương án (đáp án giữ theo nội dung nên vẫn chấm đúng) */
-export function commonPaperFor(base: ExamItem[], seed: number): ExamItem[] {
+export function commonPaperFor(base: ExamItem[], seed: number, layout?: Matrix['layout']): ExamItem[] {
   const { shuffle } = rng(seed ^ 0x5bd1e995);
-  return byMucShuffled(base, seed).map((q) => {
+  return byMucShuffled(base, seed, layout, (q) => q.type).map((q) => {
     if (q.type === 'grouping') return { ...q, left: shuffle([...(q.left ?? [])]) };
     if (['single_choice', 'multiple_choice', 'matching', 'pair_grid'].includes(q.type)) return { ...q, options: shuffle([...q.options]) };
     return q;
@@ -60,7 +65,7 @@ export function commonPaperFor(base: ExamItem[], seed: number): ExamItem[] {
 
 /** Đề của một em theo quy tắc phòng (cho "Cho làm lại") */
 export function paperByPlan(plan: RoomPlan, seed: number): BuiltPaper {
-  if (plan.mode === 'chung' && plan.base?.length) return { items: commonPaperFor(plan.base, seed), missing: 0 };
+  if (plan.mode === 'chung' && plan.base?.length) return { items: commonPaperFor(plan.base, seed, plan.layout), missing: 0 };
   return roomPaper(plan, seed);
 }
 
