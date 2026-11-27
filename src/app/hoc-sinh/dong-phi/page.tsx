@@ -67,7 +67,7 @@ export default async function TuitionPage() {
                       <th scope="row" className="is-mono">{p.code}</th>
                       <td>{PLAN_NAME[p.plan]}</td>
                       <td>{vnd(p.amount)}</td>
-                      <td><span className={p.status === 'confirmed' ? 'tag-ok' : p.status === 'pending' ? 'tag-wait' : 'tag-miss'}>{STATUS[p.status]}</span></td>
+                      <td><span className={p.status === 'confirmed' ? 'tag-ok' : p.status === 'pending' ? 'tag-wait' : 'tag-miss'}>{STATUS[p.status]}</span>{p.status === 'pending' && p.claimed_at && <><br /><small>Đã báo chuyển khoản</small></>}</td>
                       <td>{p.status === 'confirmed' ? fmtDay(p.period_to) : '—'}</td>
                     </tr>
                   ))}

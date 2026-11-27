@@ -24,7 +24,7 @@ export type BillingPublic = {
   bank_bin: string | null; bank_name: string | null; account_no: string | null; account_name: string | null; note: string | null; year_end: string;
 };
 export type Gate = { is_student: boolean; grade: number | null; active: boolean; reason: 'free' | 'paid' | 'trial' | 'expired' | 'not_student' | 'plan_locked'; until: string | null };
-export type PaymentRow = { id: string; code: string; plan: Plan; amount: number; status: 'pending' | 'confirmed' | 'cancelled'; created_at: string; confirmed_at: string | null; period_to: string | null };
+export type PaymentRow = { id: string; code: string; plan: Plan; amount: number; status: 'pending' | 'confirmed' | 'cancelled'; created_at: string; confirmed_at: string | null; period_to: string | null; /** phụ huynh bấm "Tôi đã chuyển khoản" (0084) */ claimed_at?: string | null };
 
 export const vnd = (n: number) => `${Math.round(n).toLocaleString('vi-VN').replace(/,/g, '.')}đ`;
 export const fmtDay = (s: string | null | undefined) => {
@@ -81,6 +81,7 @@ export const BILLING_ERRORS: Record<string, string> = {
 export function billingError(message: string): string {
   const code = Object.keys(BILLING_ERRORS).find((k) => message.includes(k));
   if (code) return BILLING_ERRORS[code];
+  if (/student_claim_payment/i.test(message) && /function|does not exist|schema cache/i.test(message)) return 'Chưa bật báo chuyển khoản: hãy chạy supabase/migrations/0084_payment_confirm_flow.sql trên Supabase.';
   if (/student_billing_offer|admin_save_pricing|waiver|fee_waivers/i.test(message) && /function|does not exist|schema cache|relation/i.test(message)) return 'Chưa có giá theo học kỳ và đặc cách: hãy chạy supabase/migrations/0074_semester_pricing_waivers.sql trên Supabase.';
   if (/function|does not exist|schema cache|relation/i.test(message)) return 'Chưa bật tính năng thu phí: hãy chạy supabase/migrations/0018_billing.sql trên Supabase.';
   return 'Chưa thực hiện được. Thử lại sau.';

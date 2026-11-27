@@ -4,7 +4,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Clock, Lock, QrCode, ShieldCheck } from 'lucide-react';
-import { fmtDay, vnd, type BillingOffer, type BillingPublic, type Gate } from '@/lib/billing';
+import { fmtDay, vnd, type BillingOffer, type BillingPublic, type Gate, type PaymentRow } from '@/lib/billing';
 import PayDialog from '@/components/parent/PayDialog';
 import type { Recap } from '@/lib/parent/recap';
 
@@ -15,14 +15,14 @@ const perDay = (price: number) => {
   return d < 1000 ? 'chưa tới 1.000đ' : `khoảng ${vnd(Math.ceil(d / 500) * 500)}`;
 };
 
-export default function TuitionCard({ gate, offer, info, childName, recap }: { gate: Gate; offer: BillingOffer | null; info?: BillingPublic | null; childName: string; recap?: Recap | null }) {
+export default function TuitionCard({ gate, offer, info, pending, justPaid, childName, recap }: { gate: Gate; offer: BillingOffer | null; info?: BillingPublic | null; pending?: PaymentRow | null; justPaid?: PaymentRow | null; childName: string; recap?: Recap | null }) {
   if (gate.reason === 'free' || gate.reason === 'not_student') return null;
   const name = childName.trim().split(/\s+/).slice(-1)[0] || 'con';
 
   if (gate.reason === 'paid') {
     return (
       <p className="ph-fee-paid" id="hoc-phi">
-        <ShieldCheck aria-hidden="true" /> <span>EduChain Kids: {name} đã có gói học, học đến hết <b>{fmtDay(gate.until)}</b>. Cảm ơn ba mẹ đã đồng hành!</span>
+        <ShieldCheck aria-hidden="true" /> <span>{justPaid ? <>🎉 EduChain Kids đã nhận học phí ({justPaid.code}). {name} được học <b>đủ chức năng</b> đến hết <b>{fmtDay(gate.until)}</b>.</> : <>EduChain Kids: {name} đã có gói học, học đủ chức năng đến hết <b>{fmtDay(gate.until)}</b>.</>} Cảm ơn ba mẹ đã đồng hành!</span>
         <Link href="/hoc-sinh/dong-phi">Gia hạn</Link>
       </p>
     );
@@ -51,7 +51,9 @@ export default function TuitionCard({ gate, offer, info, childName, recap }: { g
             ? <>{name} vẫn làm đủ bài cô giao và phòng thi lớp. Mở gói học để con tiếp tục luyện tập theo lộ trình riêng, chuyên đề nâng cao và trò chơi trí tuệ.</>
             : <>Học thử miễn phí đến <b>{fmtDay(gate.until)}</b>. Mở gói trước hạn để con không bị gián đoạn.</>}
         </p>
-        {recap && <RecapLine recap={recap} name={name} />}
+        {pending
+          ? <p className="ph-fee-wait" role="status">⏳ Đã tạo mã <b>{pending.code}</b> ({vnd(pending.amount)}) — {pending.claimed_at ? 'ba mẹ đã báo chuyển khoản, EduChain Kids đang đối chiếu. Xác nhận xong con học đủ chức năng ngay.' : 'chuyển khoản xong, bấm “Tôi đã chuyển khoản” trong khung Thanh toán để được xác nhận nhanh.'}</p>
+          : recap && <RecapLine recap={recap} name={name} />}
       </div>
       <div className="ph-fee-side">
         {offer && price && (

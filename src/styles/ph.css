@@ -336,3 +336,6 @@
   .ph-fee.is-compact .ph-fee-cta { justify-content: center; }
   .ph-fee.is-compact .ph-fee-badge { margin-left: auto; }
 }
+/* Khoản đang chờ xác nhận (migration 0084) */
+.ph-fee-wait { margin: 2px 0 0; padding: 6px 10px; justify-self: start; border-radius: 10px; background: rgb(255 255 255 / .7); color: #3d3216; font-size: 13.5px; line-height: 1.45; }
+.ph-fee-wait b { color: #2457c5; font-family: ui-monospace, monospace; }
