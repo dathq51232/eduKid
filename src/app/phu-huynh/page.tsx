@@ -186,15 +186,16 @@ export default async function ParentsPage() {
     const weekDays = Array.from({ length: 7 }, (_, i) => new Date(Date.parse(`${todayVn}T00:00:00Z`) + (i - dow) * 86400_000).toISOString().slice(0, 10));
     const WD_SHORT = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
     const events = [
-      ...hw.filter((a) => !a.done).map((a) => ({ day: vn(a.due_at), icon: '📝', text: `Hạn nộp: ${a.title}` })),
-      ...days.filter((d) => d.announcement).map((d) => ({ day: d.day, icon: '📢', text: d.announcement as string })),
+      ...hw.filter((a) => !a.done).map((a) => ({ day: vn(a.due_at), icon: 'hw', text: `Hạn nộp: ${a.title}` })),
+      ...days.filter((d) => d.announcement).map((d) => ({ day: d.day, icon: 'loa', text: d.announcement as string })),
     ].filter((e) => weekDays.includes(e.day)).sort((a, b) => a.day.localeCompare(b.day));
     const eventDays = new Set(events.map((e) => e.day));
     // lời khen của cô trong 30 ngày (thẻ ★ trong Sổ lớp) → ô thành tích
     const praiseCount = new Map<string, number>();
     for (const d of days) for (const t of d.tags ?? []) if (t.startsWith('★')) { const k = t.replace(/^★\s*/, ''); praiseCount.set(k, (praiseCount.get(k) ?? 0) + 1); }
-    const praises = [...praiseCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-    const AWARD_IC = ['🏅', '🏆', '🎯', '⭐', '🛡️'];
+    const praises = [...praiseCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+    // icon 3D vẽ bằng Canva (public/brand/ph), cùng phong cách với hình minh hoạ của trang
+    const AWARD_IC = ['medal', 'cup', 'target', 'star', 'shield'];
     // đề xuất cho con (quy tắc, không dùng AI): bài chưa làm, môn còn yếu, luyện đều mỗi ngày
     const suggest: string[] = [];
     if (pending[0]) suggest.push(`Làm bài cô giao “${pending[0].title}” (hạn ${fmtDue(pending[0].due_at)})`);
@@ -247,7 +248,7 @@ export default async function ParentsPage() {
               <Bell aria-hidden="true" />{bellCount > 0 && <span>{bellCount > 9 ? '9+' : bellCount}</span>}
             </a>
             <a href="#ph-fam-title" className="phx-me" title="Thông tin gia đình">
-              <span className="phx-me-av" aria-hidden="true">👪</span>
+              <span className="phx-me-av" aria-hidden="true"><Image src="/brand/ph/fam.webp" alt="" width={128} height={128} /></span>
               <span className="phx-me-tx"><small>Ba mẹ của</small><b>{shortName}</b></span>
             </a>
           </header>
@@ -295,7 +296,7 @@ export default async function ParentsPage() {
                     const x = bySubj.find((s) => s.k === k);
                     return (
                       <li key={k} className={`tone-${['blue', 'pink', 'violet'][i]}`}>
-                        <span className="phx-subj-ic" aria-hidden="true">{['🔢', '📖', '🔤'][i]}</span>
+                        <span className="phx-subj-ic" aria-hidden="true"><Image src={`/brand/ph/${k}.webp`} alt="" width={128} height={128} /></span>
                         <span className="phx-subj-tx"><b>{SUBJ[k]}</b><i aria-hidden="true"><i style={{ width: `${x?.pct ?? 0}%` }} /></i></span>
                         <strong className={x ? undefined : 'is-none'}>{x ? `${x.pct}%` : 'Chưa làm'}</strong>
                       </li>
@@ -340,7 +341,7 @@ export default async function ParentsPage() {
               </ol>
               {events.length ? (
                 <ul className="phx-events">
-                  {events.slice(0, 4).map((e, i) => <li key={i}><span>{WD_SHORT[weekDays.indexOf(e.day)]} · {Number(e.day.slice(8))}/{Number(e.day.slice(5, 7))}</span><p>{e.icon} {e.text}</p></li>)}
+                  {events.slice(0, 4).map((e, i) => <li key={i}><span>{WD_SHORT[weekDays.indexOf(e.day)]} · {Number(e.day.slice(8))}/{Number(e.day.slice(5, 7))}</span><p><Image className="phx-ev-ic" src={`/brand/ph/${e.icon}.webp`} alt="" width={128} height={128} aria-hidden="true" /> {e.text}</p></li>)}
                 </ul>
               ) : <p className="phx-empty">Tuần này chưa có hạn nộp bài hay thông báo nào của lớp.</p>}
             </section>
@@ -350,7 +351,7 @@ export default async function ParentsPage() {
                 <ul className="phx-hw">
                   {hw.slice(0, 4).map((a, i) => (
                     <li key={i}>
-                      <span className="phx-hw-ic" aria-hidden="true">📝</span>
+                      <span className="phx-hw-ic" aria-hidden="true"><Image src="/brand/ph/hw.webp" alt="" width={128} height={128} /></span>
                       <span className="phx-hw-tx"><b>{a.title}</b><small>Hạn: {fmtDue(a.due_at)}</small></span>
                       <em className={a.done ? 'is-done' : a.late ? 'is-late' : 'is-todo'}>{a.done ? <><Check aria-hidden="true" /> Đã làm</> : a.late ? 'Quá hạn' : 'Chưa làm'}</em>
                     </li>
@@ -361,14 +362,14 @@ export default async function ParentsPage() {
             {/* ⑤ Thành tích của con: lời khen của cô trong 30 ngày */}
             <section className="phx-card phx-awards is-card" id="thanh-tich" aria-labelledby="phx-aw-t">
               <div className="phx-awards-hd">
-                <span className="phx-awards-cup" aria-hidden="true">🏆</span>
+                <span className="phx-awards-cup" aria-hidden="true"><Image src="/brand/ph/cup.webp" alt="" width={128} height={128} /></span>
                 <div><h2 id="phx-aw-t">Thành tích của con</h2><p>Cùng nhìn lại những nỗ lực và tiến bộ của {shortName} nhé!</p></div>
               </div>
               {praises.length ? (
                 <ul className="phx-badges">
-                  {praises.map(([t, n], i) => <li key={t} className={`tone-${i % 5}`}><span aria-hidden="true">{AWARD_IC[i % AWARD_IC.length]}</span><b>{t}</b>{n > 1 && <small>×{n}</small>}</li>)}
+                  {praises.map(([t, n], i) => <li key={t} className={`tone-${i % 5}`}><Image src={`/brand/ph/${AWARD_IC[i % AWARD_IC.length]}.webp`} alt="" width={128} height={128} aria-hidden="true" /><b>{t}</b>{n > 1 && <small>×{n}</small>}</li>)}
                 </ul>
-              ) : <p className="phx-empty">Lời khen của cô trong Sổ lớp (⭐) sẽ thành huy hiệu ở đây.</p>}
+              ) : <p className="phx-empty">Lời khen của cô trong Sổ lớp <Image className="phx-ev-ic" src="/brand/ph/star.webp" alt="ngôi sao" width={128} height={128} /> sẽ thành huy hiệu ở đây.</p>}
               <Link href="/thanh-tich" className="phx-awards-total"><b>{month?.praise ?? 0}</b><span>lần cô khen<br />{monthName}</span></Link>
             </section>
           </div>
