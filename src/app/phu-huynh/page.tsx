@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { BarChart3, Bell, BookOpen, CalendarDays, Check, CheckCircle2, ChevronRight, ClipboardList, Clock, Home, ListTodo, MessageCircle, Moon, Pin, Send, Settings2, Sparkles, Star, TrendingUp, Trophy, Users } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import ThemeToggle from '@/components/brand/ThemeToggle';
+import SideToggle from '@/components/parent/SideToggle';
 import { LUNAR_MONTH_NAME, canChiYear, solarToLunar } from '@/lib/utils/lunar';
 import ParentHeader from '@/components/parent/ParentHeader';
 import FamilyInfo from '@/components/parent/FamilyInfo';
@@ -203,28 +204,29 @@ export default async function ParentsPage() {
     if (week.length < 5) suggest.push('Luyện 10 phút mỗi ngày để giữ nhịp học');
     if (!suggest.length) suggest.push('Con đang học rất đều — thử một trò chơi trí tuệ để thư giãn nhé');
     const teacherShort = cls?.teacher ? cls.teacher.trim().split(/\s+/).slice(-2).join(' ') : null;
-    const lastNote = timeline.find((d) => d.note);
-    const lastReply = (messages ?? []).find((m) => m.reply);
     return (
       <>
         <div className="phx">
         <ParentHeader childCorner />
         {/* Thanh bên kiểu trang giáo viên (máy tính); điện thoại dùng thanh trên ParentHeader */}
         <aside className="phx-side" aria-label="Góc phụ huynh">
-          <Link href="/phu-huynh" className="phx-brand" aria-label="EduChain Kids — Góc phụ huynh"><BrandLogo size={32} /></Link>
+          <div className="phx-side-hd">
+            <Link href="/phu-huynh" className="phx-brand" aria-label="EduChain Kids — Góc phụ huynh"><BrandLogo size={32} /></Link>
+            <SideToggle />
+          </div>
           <span className="phx-role"><Users aria-hidden="true" /> Phụ huynh</span>
           <nav className="phx-nav">
-            <a href="#tien-do"><BarChart3 aria-hidden="true" /> Tiến độ học tập</a>
-            <a href="#bai-tap"><ClipboardList aria-hidden="true" /> Bài cô giao</a>
-            <a href="#lich"><CalendarDays aria-hidden="true" /> Lịch &amp; sự kiện</a>
-            <a href="#thanh-tich"><Trophy aria-hidden="true" /> Thành tích</a>
-            <a href="#ph-msg-title"><MessageCircle aria-hidden="true" /> Tin nhắn từ cô{bellCount > 0 && <em>{bellCount}</em>}</a>
-            <a href="#pm-title"><Send aria-hidden="true" /> Nhắn cô</a>
-            <a href="#ph-fam-title"><Home aria-hidden="true" /> Thông tin gia đình</a>
+            <a href="#tien-do" title="Tiến độ học tập"><BarChart3 aria-hidden="true" /> Tiến độ học tập</a>
+            <a href="#bai-tap" title="Bài cô giao"><ClipboardList aria-hidden="true" /> Bài cô giao</a>
+            <a href="#lich" title="Lịch & sự kiện"><CalendarDays aria-hidden="true" /> Lịch &amp; sự kiện</a>
+            <a href="#thanh-tich" title="Thành tích"><Trophy aria-hidden="true" /> Thành tích</a>
+            <a href="#ph-msg-title" title="Tin nhắn từ cô"><MessageCircle aria-hidden="true" /> Tin nhắn từ cô{bellCount > 0 && <em>{bellCount}</em>}</a>
+            <a href="#pm-title" title="Nhắn cô"><Send aria-hidden="true" /> Nhắn cô</a>
+            <a href="#ph-fam-title" title="Thông tin gia đình"><Home aria-hidden="true" /> Thông tin gia đình</a>
           </nav>
           <div className="phx-side-ft">
-            <Link href="/hoc-sinh" className="phx-side-go"><BookOpen aria-hidden="true" /> Cho con vào học</Link>
-            <Link href="/phu-huynh/tien-ich" className="phx-side-link"><Settings2 aria-hidden="true" /> Tiện ích gia đình</Link>
+            <Link href="/hoc-sinh" className="phx-side-go" title="Cho con vào học"><BookOpen aria-hidden="true" /> Cho con vào học</Link>
+            <Link href="/phu-huynh/tien-ich" className="phx-side-link" title="Tiện ích gia đình"><Settings2 aria-hidden="true" /> Tiện ích gia đình</Link>
             <TourHelpButton className="phx-side-link" label="Hướng dẫn" />
             <SignOutButton className="phx-side-link" />
           </div>
@@ -325,7 +327,7 @@ export default async function ParentsPage() {
             </section>
           </div>
 
-          {/* ④ Lịch tuần | Bài tập | Tin nhắn từ giáo viên */}
+          {/* ④ Lịch tuần | Bài cô giao | Thành tích */}
           <div className="phx-row is-3">
             <section className="phx-card" id="lich" aria-labelledby="phx-cal-t">
               <h2 id="phx-cal-t"><CalendarDays aria-hidden="true" /> Lịch &amp; sự kiện <Link href="/phu-huynh/tien-ich">Mở lịch <ChevronRight aria-hidden="true" /></Link></h2>
@@ -356,41 +358,23 @@ export default async function ParentsPage() {
                 </ul>
               ) : <p className="phx-empty">Cô chưa giao bài nào. Bài cô giao sẽ hiện ở đây kèm hạn nộp.</p>}
             </section>
-            <section className="phx-card" aria-labelledby="phx-tm-t">
-              <h2 id="phx-tm-t"><MessageCircle aria-hidden="true" /> Tin nhắn từ cô <a href="#ph-msg-title">Xem tất cả <ChevronRight aria-hidden="true" /></a></h2>
-              <div className="phx-teacher">
-                <span className="phx-teacher-av" aria-hidden="true">{(teacherShort ?? 'C').split(/\s+/).slice(-1)[0].charAt(0)}</span>
-                <div><b>{teacherShort ? `Cô ${teacherShort}` : 'Cô chủ nhiệm'}</b><small>{cls ? `GVCN lớp ${cls.name}` : 'Chưa có lớp'}</small></div>
+            {/* ⑤ Thành tích của con: lời khen của cô trong 30 ngày */}
+            <section className="phx-card phx-awards is-card" id="thanh-tich" aria-labelledby="phx-aw-t">
+              <div className="phx-awards-hd">
+                <span className="phx-awards-cup" aria-hidden="true">🏆</span>
+                <div><h2 id="phx-aw-t">Thành tích của con</h2><p>Cùng nhìn lại những nỗ lực và tiến bộ của {shortName} nhé!</p></div>
               </div>
-              {latestAnn || lastNote || lastReply ? (
-                <div className="phx-quotes">
-                  {latestAnn && <blockquote><small>📢 Thông báo · {fmtDay(latestAnn.day)}</small>{latestAnn.announcement}</blockquote>}
-                  {lastNote && lastNote !== latestAnn && <blockquote><small>📝 Nhận xét · {fmtDay(lastNote.day)}</small>{lastNote.note}</blockquote>}
-                  {!lastNote && lastReply && <blockquote><small>💬 Cô trả lời</small>{lastReply.reply}</blockquote>}
-                </div>
-              ) : <p className="phx-empty">Khi cô ghi Sổ lớp hoặc trả lời tin nhắn, lời của cô sẽ hiện ở đây.</p>}
+              {praises.length ? (
+                <ul className="phx-badges">
+                  {praises.map(([t, n], i) => <li key={t} className={`tone-${i % 5}`}><span aria-hidden="true">{AWARD_IC[i % AWARD_IC.length]}</span><b>{t}</b>{n > 1 && <small>×{n}</small>}</li>)}
+                </ul>
+              ) : <p className="phx-empty">Lời khen của cô trong Sổ lớp (⭐) sẽ thành huy hiệu ở đây.</p>}
+              <Link href="/thanh-tich" className="phx-awards-total"><b>{month?.praise ?? 0}</b><span>lần cô khen<br />{monthName}</span></Link>
             </section>
           </div>
 
-          {/* ⑤ Thành tích của con: lời khen của cô trong 30 ngày */}
-          <section className="phx-card phx-awards" id="thanh-tich" aria-labelledby="phx-aw-t">
-            <div className="phx-awards-hd">
-              <span className="phx-awards-cup" aria-hidden="true">🏆</span>
-              <div><h2 id="phx-aw-t">Thành tích của con</h2><p>Cùng nhìn lại những nỗ lực và tiến bộ của {shortName} nhé!</p></div>
-            </div>
-            {praises.length ? (
-              <ul className="phx-badges">
-                {praises.map(([t, n], i) => <li key={t} className={`tone-${i % 5}`}><span aria-hidden="true">{AWARD_IC[i % AWARD_IC.length]}</span><b>{t}</b>{n > 1 && <small>×{n}</small>}</li>)}
-              </ul>
-            ) : <p className="phx-empty">Lời khen của cô trong Sổ lớp (⭐) sẽ thành huy hiệu ở đây.</p>}
-            <Link href="/thanh-tich" className="phx-awards-total"><b>{month?.praise ?? 0}</b><span>lần cô khen<br />{monthName}</span></Link>
-          </section>
-
-          <h2 className="phx-more-h">Chi tiết từng ngày</h2>
-
-
-          <div className="ph-grid">
-            <div className="ph-side">
+          {/* ⑤ Tin nhắn từ cô (Sổ lớp từng ngày) | Nhắn cô */}
+          <div className="phx-row is-2w">
             <section className="ph-card" aria-labelledby="ph-msg-title" data-tour="tin-tu-co">
               <div className="ph-card-hd">
                 <div><h2 id="ph-msg-title"><MessageCircle aria-hidden="true" /> Tin nhắn từ cô</h2><p className="ph-sub">Thông báo của lớp và nhận xét hằng ngày dành cho con</p></div>
@@ -419,7 +403,16 @@ export default async function ParentsPage() {
                 </ul>
               )}
             </section>
+            <ParentMessages
+              people={contacts.map((c) => ({ name: c.name, relation: c.relation }))}
+              teacher={cls?.teacher ?? null}
+              childName={childName}
+              initial={messages}
+            />
+          </div>
 
+          {/* ⑥ Con luyện tập (chi tiết) | Thông tin gia đình */}
+          <div className="phx-row is-2w">
               <section className="ph-card" aria-labelledby="ph-res-title" data-tour="luyen-tap">
                 <div className="ph-card-hd"><div>
                   <h2 id="ph-res-title"><TrendingUp aria-hidden="true" /> Con luyện tập</h2>
@@ -463,25 +456,13 @@ export default async function ParentsPage() {
                   </>
                 )}
               </section>
-            </div>
-
-            <div className="ph-side">
-              <ParentMessages
-                people={contacts.map((c) => ({ name: c.name, relation: c.relation }))}
-                teacher={cls?.teacher ?? null}
-                childName={childName}
-                initial={messages}
-              />
-              <FamilyInfo contacts={contacts} address={o?.address ?? null} className={cls?.name ?? null} />
-            </div>
+            <FamilyInfo contacts={contacts} address={o?.address ?? null} className={cls?.name ?? null} />
           </div>
 
-          <GalleryTeaser variant="parent" />
-
-          {/* Tiện ích gia đình (lịch, thu chi): việc riêng của gia đình, ít gấp → để cuối trang */}
-          <div className="ph-utils-live" aria-label="Tiện ích gia đình" data-tour="tien-ich">
-            <MiniCalendar href="/phu-huynh/tien-ich" />
+          {/* ⑦ Thu chi gia đình | Phòng triển lãm (lịch đã có ở "Lịch & sự kiện" nên bỏ "Lịch hôm nay" trùng) */}
+          <div className="phx-row is-2r" data-tour="tien-ich">
             <MoneyCard href="/phu-huynh/tien-ich?xem=thu-chi" title="Thu chi gia đình" />
+            <GalleryTeaser variant="parent" />
           </div>
         </main>
         </div>

@@ -235,3 +235,42 @@
   .phx-awards-total { justify-content: center; }
   .phx-badges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ---------- Hàng thẻ đều nhau (11/2026): 2 cột rộng/hẹp, thẻ cũ (.ph-card) cùng kiểu với .phx-card ---------- */
+.phx-row.is-2w { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+.phx-row.is-2r { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); }
+.phx-row > * { min-width: 0; margin: 0; }
+/* hàng chỉ còn 1 thẻ (vd. lớp chưa có Phòng triển lãm) → thẻ chiếm cả hàng */
+.phx-row:has(> :only-child) { grid-template-columns: minmax(0, 1fr); }
+.phx-main .ph-card { align-content: start; gap: 12px; padding: 18px 20px; border-radius: 22px; background: var(--surface); }
+.phx-main .ph-card h2 { display: flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 800; }
+.phx-main .ph-card h2 > svg:first-child { width: 24px; height: 24px; padding: 5px; }
+.phx-main .ph-card .ph-sub { font-size: 13.5px; }
+/* Thành tích dạng thẻ trong hàng 3 cột */
+.phx-awards.is-card { grid-template-columns: minmax(0, 1fr); align-items: start; }
+.phx-awards.is-card .phx-awards-cup { font-size: 34px; }
+.phx-awards.is-card .phx-awards-hd h2 { font-size: 19px; }
+.phx-awards.is-card .phx-badges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.phx-awards.is-card .phx-awards-total { justify-content: center; padding: 10px 16px; }
+.phx-awards.is-card .phx-awards-total b { font-size: 32px; }
+.phx-awards.is-card > .phx-empty, .phx-awards.is-card .phx-badges { grid-row: auto; grid-column: auto; }
+@media (max-width: 1280px) { .phx-row.is-3 > .phx-awards.is-card { grid-column: 1 / -1; } }
+@media (max-width: 1100px) { .phx-row.is-2w, .phx-row.is-2r { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- Thanh menu: nút thu gọn ---------- */
+.phx-side-hd { display: flex; align-items: center; gap: 8px; }
+.phx-side-hd .phx-brand { flex: 1; min-width: 0; }
+.phx-collapse { display: grid; place-items: center; flex: none; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 10px; background: rgb(255 255 255 / .1); color: #dbe5ff; cursor: pointer; }
+.phx-collapse:hover { background: rgb(255 255 255 / .18); color: #fff; }
+.phx-collapse svg { width: 19px; height: 19px; }
+@media (min-width: 1024px) {
+  .phx.is-collapsed { grid-template-columns: 76px minmax(0, 1fr); }
+  .phx.is-collapsed .phx-side { padding-inline: 10px; }
+  .phx.is-collapsed .phx-side-hd { flex-direction: column; }
+  .phx.is-collapsed .phx-brand { padding: 6px; }
+  .phx.is-collapsed .phx-brand .brand-word, .phx.is-collapsed .phx-role { display: none; }
+  /* chỉ còn icon: chữ thu về 0 (giữ title để rê chuột xem tên) */
+  .phx.is-collapsed .phx-nav a, .phx.is-collapsed .phx-side-go, .phx.is-collapsed .phx-side-link { position: relative; justify-content: center; gap: 0; padding: 0; font-size: 0; }
+  .phx.is-collapsed .phx-nav a svg, .phx.is-collapsed .phx-side-go svg, .phx.is-collapsed .phx-side-link svg { width: 22px; height: 22px; }
+  .phx.is-collapsed .phx-nav a em { position: absolute; top: 2px; right: 4px; min-width: 18px; height: 18px; padding: 0 4px; font-size: 11px; line-height: 18px; }
+}
