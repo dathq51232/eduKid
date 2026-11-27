@@ -4,7 +4,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Clock, Lock, QrCode, ShieldCheck } from 'lucide-react';
-import { PLAN_NAME, fmtDay, vnd, type BillingOffer, type Gate } from '@/lib/billing';
+import { fmtDay, vnd, type BillingOffer, type Gate } from '@/lib/billing';
 import type { Recap } from '@/lib/parent/recap';
 
 /** Số ngày của một học kỳ (để quy ra "mỗi ngày") */
@@ -32,63 +32,49 @@ export default function TuitionCard({ gate, offer, childName, recap }: { gate: G
   const daysLeft = !expired && gate.until ? Math.max(0, Math.ceil((Date.parse(gate.until) - Date.now()) / 86_400_000)) : 0;
   const fixed = offer && offer.kind === 'school' && (offer.fee_plan === 'term' || offer.fee_plan === 'year') ? offer.fee_plan : null;
   const price = offer ? (fixed === 'year' ? offer.price_year : offer.price_term) : null;
-  const ctaPrice = price ? `${vnd(price)}/${fixed === 'year' ? 'năm học' : 'học kỳ'}` : '';
-  const announced = fixed && offer ? `${offer.teacher_name ? `Cô ${offer.teacher_name}` : 'Thầy cô'} đã công bố ${PLAN_NAME[fixed].toLowerCase()}${offer.class_name ? ` cho lớp ${offer.class_name}` : ''}.` : null;
 
+  // Bố cục gọn (11/2026): băng ngang 2 cột — trái: lời nhắn + tóm tắt 1 dòng; phải: giá + nút. Không còn dòng "Cô … đã công bố gói".
   return (
-    <section className={`ph-fee${expired ? ' is-expired' : ''}`} id="hoc-phi" aria-labelledby="ph-fee-title">
-      <div className="ph-fee-from">
-        <Image src="/brand/logo-mark-sm.webp" alt="" width={28} height={28} />
-        <span>Thông báo từ <b>EduChain Kids</b></span>
-        <em className="ph-fee-badge">{expired ? <><Lock aria-hidden="true" /> Đã hết học thử</> : <><Clock aria-hidden="true" /> Còn {daysLeft} ngày học thử</>}</em>
-      </div>
-      <h2 id="ph-fee-title">
-        {expired ? `Đừng để ${name} dừng lại giữa chừng` : `Giữ nhịp học mỗi ngày cho ${name}`}
-      </h2>
-      <p className="ph-fee-lead">
-        {expired
-          ? <>{name} vẫn làm đủ bài cô giao và phòng thi lớp. Mở gói học để con tiếp tục <b>luyện tập theo lộ trình riêng</b>, chuyên đề nâng cao, English Journey và trò chơi trí tuệ.</>
-          : <>{name} đang học thử miễn phí đến <b>{fmtDay(gate.until)}</b>. Mở gói học trước hạn để con không bị gián đoạn — ba mẹ theo dõi tiến bộ của con ngay tại đây.</>}
-      </p>
-      {recap && <RecapBox recap={recap} name={name} />}
-      {offer && price && (
-        <p className="ph-fee-price">
-          <b>{vnd(price)}</b> / {fixed === 'year' ? 'năm học' : 'học kỳ'} · {perDay(fixed === 'year' ? price / 2 : price)} mỗi ngày
-          {!fixed && offer.price_term * 2 > offer.price_year && <span> · Gói năm học {vnd(offer.price_year)} (tiết kiệm {vnd(offer.price_term * 2 - offer.price_year)})</span>}
+    <section className={`ph-fee is-compact${expired ? ' is-expired' : ''}`} id="hoc-phi" aria-labelledby="ph-fee-title">
+      <div className="ph-fee-main">
+        <div className="ph-fee-from">
+          <Image src="/brand/logo-mark-sm.webp" alt="" width={22} height={22} />
+          <span>Thông báo từ <b>EduChain Kids</b></span>
+          <em className="ph-fee-badge">{expired ? <><Lock aria-hidden="true" /> Đã hết học thử</> : <><Clock aria-hidden="true" /> Còn {daysLeft} ngày học thử</>}</em>
+        </div>
+        <h2 id="ph-fee-title">
+          {expired ? `Đừng để ${name} dừng lại giữa chừng` : `Giữ nhịp học mỗi ngày cho ${name}`}
+        </h2>
+        <p className="ph-fee-lead">
+          {expired
+            ? <>{name} vẫn làm đủ bài cô giao và phòng thi lớp. Mở gói học để con tiếp tục luyện tập theo lộ trình riêng, chuyên đề nâng cao và trò chơi trí tuệ.</>
+            : <>Học thử miễn phí đến <b>{fmtDay(gate.until)}</b>. Mở gói trước hạn để con không bị gián đoạn.</>}
         </p>
-      )}
-      {announced && <p className="ph-fee-note">{announced}</p>}
-      <div className="ph-fee-actions">
-        <Link href="/hoc-sinh/dong-phi" className="btn btn-yellow ph-fee-cta">
-          <QrCode aria-hidden="true" /> {expired ? 'Mở gói học cho con' : 'Đồng hành cùng con'}{ctaPrice ? ` · ${ctaPrice}` : ''} <ArrowRight aria-hidden="true" />
-        </Link>
+        {recap && <RecapLine recap={recap} name={name} />}
       </div>
-      <p className="ph-fee-safe"><ShieldCheck aria-hidden="true" /> Quét mã QR ngân hàng, tiền chuyển thẳng cho EduChain Kids — thầy cô không thu hộ. Đóng phí là tự nguyện.</p>
+      <div className="ph-fee-side">
+        {offer && price && (
+          <p className="ph-fee-price">
+            <b>{vnd(price)}</b><span>/ {fixed === 'year' ? 'năm học' : 'học kỳ'}</span>
+            <small>{perDay(fixed === 'year' ? price / 2 : price)} mỗi ngày{!fixed && offer.price_term * 2 > offer.price_year ? ` · năm học ${vnd(offer.price_year)}` : ''}</small>
+          </p>
+        )}
+        <Link href="/hoc-sinh/dong-phi" className="btn btn-yellow ph-fee-cta">
+          <QrCode aria-hidden="true" /> {expired ? 'Mở gói học cho con' : 'Đồng hành cùng con'} <ArrowRight aria-hidden="true" />
+        </Link>
+        <p className="ph-fee-safe"><ShieldCheck aria-hidden="true" /> Chuyển thẳng cho EduChain Kids · tự nguyện</p>
+      </div>
     </section>
   );
 }
 
-/** Milo tóm tắt N ngày học của con — giá trị trước, giá sau */
-function RecapBox({ recap: r, name }: { recap: Recap; name: string }) {
-  if (!r.total) {
-    return (
-      <div className="ph-recap is-empty">
-        <b>📋 Milo tóm tắt {r.days} ngày qua</b>
-        <p>{name} chưa bắt đầu luyện tập. Ba mẹ ngồi cùng con 10 phút mở một bài đầu tiên nhé — Milo sẽ ghi lại từng bước tiến bộ của con.</p>
-      </div>
-    );
-  }
+/** Milo tóm tắt N ngày học của con — gọn trong 1 dòng */
+function RecapLine({ recap: r, name }: { recap: Recap; name: string }) {
+  if (!r.total) return <p className="ph-recap-line">📋 {r.days} ngày qua {name} chưa luyện bài nào — ba mẹ ngồi cùng con 10 phút mở bài đầu tiên nhé.</p>;
   return (
-    <div className="ph-recap">
-      <b>📋 Milo tóm tắt {r.days} ngày học của {name}</b>
-      <ul className="ph-recap-stats">
-        <li><strong>{r.activeDays}</strong><span>ngày có học</span></li>
-        <li><strong>{r.lessons}</strong><span>bài đã làm</span></li>
-        <li><strong>{r.avg === null ? '—' : `${r.avg}%`}</strong><span>câu đúng</span></li>
-      </ul>
-      {r.strong.length > 0 && <p>⭐ <b>Đã vững:</b> {r.strong.join(' · ')}</p>}
-      {r.weak.length > 0 && <p>🌱 <b>Cần luyện thêm:</b> {r.weak.join(' · ')}</p>}
-      {!r.strong.length && !r.weak.length && r.total > r.lessons && <p>🎮 Con đã chơi {r.total - r.lessons} lượt trò chơi trí tuệ, cờ.</p>}
-    </div>
+    <p className="ph-recap-line">
+      📋 {r.days} ngày qua: <b>{r.activeDays}</b> ngày có học · <b>{r.lessons}</b> bài · đúng <b>{r.avg === null ? '—' : `${r.avg}%`}</b>
+      {r.weak.length > 0 ? <> · 🌱 cần luyện: {r.weak.slice(0, 2).join(', ')}</> : r.strong.length > 0 ? <> · ⭐ vững: {r.strong.slice(0, 2).join(', ')}</> : null}
+    </p>
   );
 }
