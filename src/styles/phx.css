@@ -3,7 +3,7 @@
    Hoạt ảnh chỉ dùng transform / opacity. */
 .phx { --navy: #1e2b5c; --card-line: color-mix(in srgb, #3b6fe0 12%, var(--line)); --card-shadow: 0 8px 24px -14px rgb(30 60 140 / .25), 0 1px 2px rgb(30 60 140 / .05); }
 :root[data-theme="dark"] .phx { --navy: var(--ink); --card-shadow: var(--shadow-sm); }
-.phx-main { display: grid; gap: 18px; width: min(1320px, calc(100% - 32px)); margin: 0 auto; padding-block: 18px 56px; min-width: 0; }
+.phx-main { display: grid; align-content: start; gap: 18px; width: min(1320px, calc(100% - 32px)); margin: 0 auto; padding-block: 18px 56px; min-width: 0; }
 
 /* ---------- Thanh bên (≥ 1024px) ---------- */
 .phx-side { display: none; }

@@ -311,3 +311,28 @@
 /* hàng "Chia sẻ app" ngay dưới phần chào */
 .ph-share-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; }
 .ph-share-row > span { color: var(--muted); font-size: 14px; }
+
+/* ---------- Thẻ học phí bản gọn (11/2026): băng ngang 2 cột, không chiếm cả màn hình dashboard ---------- */
+.ph-fee.is-compact { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 24px; padding: 14px 18px 14px 20px; border-radius: 20px; }
+.ph-fee-main { display: grid; gap: 4px; min-width: 0; }
+.ph-fee.is-compact .ph-fee-from { gap: 6px; font-size: 13px; }
+.ph-fee.is-compact .ph-fee-from img { width: 22px; height: 22px; border-radius: 6px; }
+.ph-fee.is-compact .ph-fee-badge { margin-left: 4px; padding: 2px 9px; font-size: 12px; }
+.ph-fee.is-compact h2 { margin-top: 2px; font-size: clamp(18px, 1.8vw, 21px); }
+.ph-fee.is-compact .ph-fee-lead { font-size: 14.5px; max-width: none; }
+.ph-recap-line { margin: 2px 0 0; padding: 6px 10px; justify-self: start; border-radius: 10px; background: rgb(255 255 255 / .65); color: #3d3216; font-size: 13.5px; line-height: 1.45; }
+.ph-recap-line b { color: #2457c5; }
+.ph-fee-side { display: grid; justify-items: end; gap: 6px; text-align: right; }
+.ph-fee.is-compact .ph-fee-price { display: grid; grid-template-columns: auto auto; align-items: baseline; justify-content: end; column-gap: 4px; font-size: 14px; }
+.ph-fee.is-compact .ph-fee-price b { font-size: 26px; line-height: 1; }
+.ph-fee.is-compact .ph-fee-price small { grid-column: 1 / -1; color: #6b5a2a; font-size: 12.5px; }
+.ph-fee.is-compact .ph-fee-cta { min-height: 44px; padding: 8px 18px; font-size: 15px; white-space: nowrap; }
+.ph-fee.is-compact .ph-fee-safe { font-size: 12px; }
+.ph-fee.is-compact .ph-fee-safe svg { width: 14px; height: 14px; }
+@media (max-width: 720px) {
+  .ph-fee.is-compact { grid-template-columns: minmax(0, 1fr); padding: 14px 16px; }
+  .ph-fee-side { justify-items: stretch; text-align: left; }
+  .ph-fee.is-compact .ph-fee-price { justify-content: start; }
+  .ph-fee.is-compact .ph-fee-cta { justify-content: center; }
+  .ph-fee.is-compact .ph-fee-badge { margin-left: auto; }
+}
