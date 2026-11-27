@@ -36,7 +36,9 @@
 .phx-side-link svg { width: 19px; height: 19px; }
 .phx-side-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; padding: 0 4px 0 8px; }
 .phx-side-tools .theme-switch-label { color: #c8d5f5; }
-.phx-side-milo { width: 150px; height: auto; margin: auto auto -14px; filter: drop-shadow(0 10px 16px rgb(0 0 0 / .3)); }
+/* công tắc sáng / tối ở thanh trên (máy tính); điện thoại đã có trong ParentHeader */
+.phx-theme { flex: none; }
+@media (max-width: 1023px) { .phx-theme { display: none !important; } }
 
 /* ---------- Thanh trên ---------- */
 .phx-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }

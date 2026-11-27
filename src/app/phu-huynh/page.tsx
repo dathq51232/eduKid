@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
-import { BarChart3, Bell, BookOpen, CalendarDays, Check, CheckCircle2, ChevronRight, ClipboardList, Clock, Home, LayoutDashboard, ListTodo, MessageCircle, Moon, Pin, Send, Settings2, Sparkles, Star, TrendingUp, Trophy, Users } from 'lucide-react';
+import { BarChart3, Bell, BookOpen, CalendarDays, Check, CheckCircle2, ChevronRight, ClipboardList, Clock, Home, ListTodo, MessageCircle, Moon, Pin, Send, Settings2, Sparkles, Star, TrendingUp, Trophy, Users } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import ThemeToggle from '@/components/brand/ThemeToggle';
 import { LUNAR_MONTH_NAME, canChiYear, solarToLunar } from '@/lib/utils/lunar';
@@ -212,7 +212,6 @@ export default async function ParentsPage() {
           <Link href="/phu-huynh" className="phx-brand" aria-label="EduChain Kids — Góc phụ huynh"><BrandLogo size={32} /></Link>
           <span className="phx-role"><Users aria-hidden="true" /> Phụ huynh</span>
           <nav className="phx-nav">
-            <a href="#tong-quan" className="is-on"><LayoutDashboard aria-hidden="true" /> Tổng quan</a>
             <a href="#tien-do"><BarChart3 aria-hidden="true" /> Tiến độ học tập</a>
             <a href="#bai-tap"><ClipboardList aria-hidden="true" /> Bài cô giao</a>
             <a href="#lich"><CalendarDays aria-hidden="true" /> Lịch &amp; sự kiện</a>
@@ -224,10 +223,9 @@ export default async function ParentsPage() {
           <div className="phx-side-ft">
             <Link href="/hoc-sinh" className="phx-side-go"><BookOpen aria-hidden="true" /> Cho con vào học</Link>
             <Link href="/phu-huynh/tien-ich" className="phx-side-link"><Settings2 aria-hidden="true" /> Tiện ích gia đình</Link>
-            <div className="phx-side-tools"><ThemeToggle /><TourHelpButton className="phx-side-link" label="Hướng dẫn" /></div>
+            <TourHelpButton className="phx-side-link" label="Hướng dẫn" />
             <SignOutButton className="phx-side-link" />
           </div>
-          <Image className="phx-side-milo" src="/brand/milo-professor.webp" alt="" width={560} height={773} aria-hidden="true" />
         </aside>
         <main className="ph phx-main">
           <GuidedTour id="ph-con-v1" />
@@ -240,6 +238,7 @@ export default async function ParentsPage() {
             </p>
             <span className="phx-bar-sp" />
             <ShareApp who="parent" className="phx-share" />
+            <ThemeToggle className="phx-theme" />
             <a href="#ph-msg-title" className={`phx-bell${bellCount ? ' is-hot' : ''}`} aria-label={bellCount ? `${bellCount} tin mới từ cô` : 'Tin nhắn từ cô'}>
               <Bell aria-hidden="true" />{bellCount > 0 && <span>{bellCount > 9 ? '9+' : bellCount}</span>}
             </a>
