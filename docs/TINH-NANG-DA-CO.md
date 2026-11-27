@@ -1,7 +1,7 @@
 # Tính năng đã có — đọc TRƯỚC khi tư vấn / đề xuất tính năng mới
 
 Mục đích: mọi phiên (PC, điện thoại, đám mây) biết app đã làm được gì mà không phải lục mã. Mỗi dòng: tính năng → chỗ mã chính.
-**Merge tính năng mới thì thêm / sửa một dòng ở đây** (cùng PR). Ngày cập nhật cuối: 2026-11-25 (sau PR #16).
+**Merge tính năng mới thì thêm / sửa một dòng ở đây** (cùng PR). Ngày cập nhật cuối: 2026-11-27 (trang chủ bố cục mới).
 Trạng thái sản phẩm: đang phát triển, **chưa chạy thật với giáo viên** (chưa có số liệu dùng thật).
 
 ## Giáo viên (`src/app/giao-vien/lop/[id]/*`, menu `src/lib/classroom/teacher-nav.ts`)
@@ -28,4 +28,5 @@ Menu 2 khu: Soạn & dạy · Lớp chủ nhiệm (+ Của tôi); ghim tối đa
 Tổng quan, thông báo, **truy cập** (lượt xem theo đường dẫn — `page_views_hourly`, migration 0049), marketing (UTM), người dùng, duyệt giáo viên, bài học, chương trình, xưởng video, thu phí, nhật ký. Học phí theo học kỳ + ví phí cộng tác của GV.
 
 ## Công khai / SEO / giao diện
+- **Trang chủ công khai bố cục mới** (11/2026): hero 2 cột (Milo gốc + 2 bạn nhỏ), thẻ môn màu lớn có nhân vật, trò chơi thẻ ngang pastel, Hệ sinh thái 3 vai (thầy cô · học sinh · phụ huynh), báo cáo tiến độ *ví dụ minh hoạ*, dải CTA vàng; nhân vật vẽ lại bằng Canva AI, nền trong suốt ở `public/brand/home` — `src/app/page.tsx`, `src/styles/hm.css`
 Thư viện bài học `/hoc` (694 trang tĩnh), robots + sitemap + ảnh chia sẻ + JSON-LD, tên miền chính educhainkids.com (`src/lib/site.ts`; chuyển hướng bật bằng `CANONICAL_REDIRECT=on`), giao diện theo mùa lễ (`src/lib/seasons.ts`).

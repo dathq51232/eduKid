@@ -1,6 +1,7 @@
+/* eslint-disable @next/next/no-img-element -- hình minh hoạ tĩnh cắt từ bộ ảnh trang chủ (public/brand/home) */
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Mail, MessageCircle, Phone, Activity, BookOpen, Calculator, ClipboardList, FileText, Gamepad2, GraduationCap, Languages, ListChecks, Presentation, Star, Timer, Trophy, Users } from 'lucide-react';
+import { ArrowRight, Mail, MessageCircle, Phone, CalendarDays, CheckCircle2, ChevronRight, Gamepad2, Play, Star, Users } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import GameArt from '@/components/games/GameArt';
@@ -8,7 +9,6 @@ import HomeWelcome from '@/components/home/HomeWelcome';
 import ContactFab from '@/components/home/ContactFab';
 import { FREE_STUDENT_LIMIT, SITE_CONTACT, TEACHER_TRIAL_DAYS } from '@/lib/contact';
 import { GAMES } from '@/lib/games/catalog';
-import { SUBJECT_MASCOT } from '@/lib/mascots';
 import { CONTENT } from '@/lib/content';
 import type { SubjectCode } from '@/lib/types';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site';
@@ -19,15 +19,18 @@ import '@/styles/brand.css';
 import '@/styles/btn.css';
 import '@/styles/grade.css';
 import '@/styles/hero.css';
+import '@/styles/hm.css';
 
 // Trang chủ EduChain Kids. Ý tưởng giao diện: "vở ô li" của học sinh tiểu học —
 // nền giấy kẻ ô, mỗi môn là một cuốn vở có nhãn vở, câu hỏi mẫu viết trên trang vở có lề đỏ.
 // Làm mới 10/2026 (Taste Skill, cách "restyle"): giữ bố cục cũ; thêm số liệu thật, Milo theo môn, dải trò chơi,
 // danh sách công cụ cho thầy cô; một thang cỡ chữ, một kiểu đổ bóng, tiêu đề ngắn trên điện thoại.
-const subjects: { code: SubjectCode; title: string; detail: string; tone: string; Icon: typeof Calculator }[] = [
-  { code: 'toan', title: 'Toán', detail: 'Số học, hình học, giải toán', tone: 'blue', Icon: Calculator },
-  { code: 'tieng-viet', title: 'Tiếng Việt', detail: 'Đọc hiểu, từ vựng, viết câu', tone: 'coral', Icon: BookOpen },
-  { code: 'tieng-anh', title: 'Tiếng Anh', detail: 'Từ mới, mẫu câu, giao tiếp', tone: 'green', Icon: Languages },
+// Hình minh hoạ cắt từ bộ ảnh trang chủ (11/2026) — public/brand/home/*
+const IMG = '/brand/home';
+const subjects: { code: SubjectCode; title: string; detail: string; tone: string; art: string; alt: string }[] = [
+  { code: 'toan', title: 'Toán', detail: 'Làm quen – Luyện tập – Vận dụng linh hoạt', tone: 'blue', art: 'sub-toan', alt: 'Bạn nhỏ cầm máy tính bỏ túi' },
+  { code: 'tieng-viet', title: 'Tiếng Việt', detail: 'Đọc hay – Viết đúng – Diễn đạt tự tin', tone: 'pink', art: 'sub-tv', alt: 'Bạn nhỏ ôm cuốn sách' },
+  { code: 'tieng-anh', title: 'Tiếng Anh', detail: 'Nghe – Nói – Đọc – Viết qua tình huống gần gũi', tone: 'green', art: 'sub-ta', alt: 'Bạn nhỏ đeo tai nghe nói “Hello!”' },
 ];
 
 const steps = [
@@ -36,17 +39,23 @@ const steps = [
   { title: 'Nhận ngôi sao', text: 'Sao và sticker ghi lại những gì em làm được và nhận những món quà nhỏ nhé!' },
 ];
 
-const teacherTools = [
-  { Icon: ClipboardList, text: 'Giáo án tự soạn từ lịch báo giảng' },
-  { Icon: FileText, text: 'Phiếu bài tập, phiếu chính tả có đáp án' },
-  { Icon: Trophy, text: 'Thư khen, nhận xét cuối kì' },
-  { Icon: ListChecks, text: 'Theo dõi tiến độ và lỗ hổng từng em' },
-];
+/** Hình + màu thẻ trò chơi theo thứ tự trong bộ ảnh; trò mới chưa có hình thì dùng GameArt */
+const GAME_ART: Record<string, { art: string; tone: string }> = {
+  pattern: { art: 'g1', tone: 'sky' },
+  memory: { art: 'g2', tone: 'sun' },
+  maze: { art: 'g3', tone: 'lilac' },
+  sudoku: { art: 'g4', tone: 'mint' },
+  balance: { art: 'g5', tone: 'peach' },
+};
+const GAME_TONES = ['sky', 'sun', 'lilac', 'mint', 'peach'];
 
-const parentBenefits = [
-  { title: 'Báo cáo tiến độ', text: 'Xem kết quả học tập và những bài con đã hoàn thành.', Icon: Activity, tone: 'green' },
-  { title: 'Thông báo cho phụ huynh', text: 'Nhận thông tin tổng kết và lời động viên dành cho con.', Icon: MessageCircle, tone: 'blue' },
-  { title: 'Thời gian học hợp lý', text: 'Khuyến khích con học theo từng phiên ngắn, cân bằng thời gian sử dụng thiết bị.', Icon: Timer, tone: 'yellow' },
+const ecosystem = [
+  { who: 'Dành cho thầy cô', art: 'eco-gv', tone: 'blue', href: '/giao-vien', cta: 'Khám phá cho giáo viên',
+    items: ['Soạn giáo án nhanh, đẹp, đúng chương trình.', 'Phiếu bài tập & đáp án theo từng bài học.', 'Thư khen, nhận xét động viên học sinh.', 'Theo dõi tiến độ, phát hiện lỗ hổng học tập.'] },
+  { who: 'Dành cho học sinh', art: 'eco-hs', tone: 'sun', href: '/chon-bai', cta: 'Bắt đầu học ngay',
+    items: ['Bài học ngắn, dễ hiểu, sinh động.', 'Học Toán – Tiếng Việt – Tiếng Anh.', 'Trò chơi trí tuệ rèn tư duy.', 'Nhận huy hiệu và tích lũy thành tích.'] },
+  { who: 'Dành cho phụ huynh', art: 'eco-ph', tone: 'green', href: '/dang-ky?vai=phu-huynh', cta: 'Khám phá cho phụ huynh',
+    items: ['Xem báo cáo tiến độ học tập.', 'Nắm rõ điểm mạnh, điểm cần hỗ trợ.', 'Nhận thông báo và lời nhận xét.', 'Đồng hành cùng con mỗi ngày.'] },
 ];
 
 // Câu hỏi thường gặp: chỉ ghi điều app đang làm thật (số ngày dùng thử của giáo viên, gói miễn phí lấy từ src/lib/contact.ts)
@@ -61,6 +70,9 @@ const faqs = [
 
 const grades = [1, 2, 3, 4, 5];
 const answers = ['6', '7', '8', '9'];
+// Báo cáo mẫu (ví dụ minh hoạ, không phải số liệu thật)
+const REPORT = [{ label: 'Toán', pct: 95, tone: 'blue' }, { label: 'Tiếng Việt', pct: 90, tone: 'pink' }, { label: 'Tiếng Anh', pct: 88, tone: 'green' }];
+const SPARK = [[10, 58], [70, 48], [130, 40], [190, 12]];
 
 /** Số bài thật theo môn: "24 bài mỗi lớp" hoặc "30 – 35 bài mỗi lớp" */
 function lessonsPerGrade(subject: SubjectCode): string {
@@ -107,74 +119,129 @@ export default function HomePage() {
       <LearnHeader />
       <main className="site-shell home">
         <HomeWelcome />
-        {/* ---------------------------------------------- Hero (tranh nền + Milo giữ nguyên) */}
-        <section id="home" className="home-hero wrap">
-          <div className="home-hero-card">
-            <picture>
-              <source media="(max-width: 700px)" srcSet="/brand/hero-bg-sm.webp" />
-              <img
-                src="/brand/hero-bg.webp"
-                width={1536}
-                height={1024}
-                alt="Milo – chú cú đeo kính xanh – ngồi đọc sách trên bãi cỏ cạnh những chồng sách"
-                className="hero-photo"
-                fetchPriority="high"
-              />
-            </picture>
-            <div className="home-hero-copy">
-              <h1>Học theo cách của em.</h1>
-              <p className="home-lead">Giúp con học tốt hơn mỗi ngày với những bài học ngắn. Mỗi ngày một bài nhỏ, mỗi bài nhỏ mở ra một thế giới lớn.</p>
-              <div className="home-actions">
-                <Link href="/chon-bai" className="btn btn-yellow">Bắt đầu học <ArrowRight aria-hidden="true" /></Link>
-                <Link href="/tro-choi" className="btn home-btn-ghost"><Gamepad2 aria-hidden="true" /> Chơi game trí tuệ</Link>
-              </div>
-              <nav className="home-roles" aria-label="Tôi là">
-                <span>Tôi là</span>
-                <Link href="/dang-ky?vai=phu-huynh"><Users aria-hidden="true" /> Phụ huynh</Link>
-                <Link href="/dang-nhap?vai=nguoi-lon"><Presentation aria-hidden="true" /> Giáo viên</Link>
-                <Link href="/dang-nhap"><GraduationCap aria-hidden="true" /> Học sinh</Link>
-              </nav>
-              <ul className="home-facts" aria-label="EduChain Kids có gì">
-                <li><strong>{totalLessons}</strong> bài học</li>
-                <li><strong>Lớp 1 – 5</strong></li>
-                <li><strong>3</strong> môn</li>
-                <li><strong>{GAMES.length}</strong> trò chơi</li>
-              </ul>
+        {/* ---------------------------------------------- Hero: chữ bên trái, Milo + các bạn bên phải */}
+        <section id="home" className="hm-hero wrap">
+          <div className="hm-hero-copy">
+            <h1>Học theo cách <span className="hm-hl">của em.</span></h1>
+            <p className="hm-lead">Mỗi ngày một bài nhỏ, mỗi bài nhỏ mở ra một thế giới lớn.</p>
+            <div className="hm-actions">
+              <Link href="/chon-bai" className="btn hm-btn-main"><Play aria-hidden="true" /> Bắt đầu học miễn phí</Link>
+              <Link href="/tro-choi" className="btn hm-btn-ghost"><Gamepad2 aria-hidden="true" /> Khám phá trò chơi</Link>
             </div>
-            <span className="hero-bubble" aria-hidden="true">Cố lên<br />bạn nhé!</span>
+            <ul className="hm-facts" aria-label="EduChain Kids có gì">
+              <li><img src={`${IMG}/t-book.webp`} alt="" width={40} height={36} /><span><strong>{totalLessons}</strong> bài học</span></li>
+              <li><img src={`${IMG}/t-class.webp`} alt="" width={40} height={36} /><span><strong>Lớp 1 – 5</strong> Tiểu học</span></li>
+              <li><img src={`${IMG}/t-sub.webp`} alt="" width={40} height={36} /><span><strong>3</strong> môn học</span></li>
+              <li><img src={`${IMG}/t-game.webp`} alt="" width={40} height={36} /><span><strong>{GAMES.length}</strong> trò chơi</span></li>
+            </ul>
+          </div>
+          <div className="hm-hero-art" aria-hidden="true">
+            <span className="hm-hero-blob" />
+            <img className="hm-kid hm-kid-girl" src={`${IMG}/girl.webp`} alt="" width={640} height={848} />
+            <img className="hm-kid hm-kid-milo" src="/brand/milo-professor.webp" alt="" width={560} height={773} fetchPriority="high" />
+            <img className="hm-kid hm-kid-boy" src={`${IMG}/boy.webp`} alt="" width={640} height={852} />
+            <span className="hero-bubble hm-bubble">Cố lên<br />bạn nhé!</span>
           </div>
         </section>
 
-        {/* ---------------------------------------------- Môn học: mỗi môn là một cuốn vở */}
-        <section id="subjects" className="home-section wrap">
-          <div className="home-section-head">
-            <div>
-              <h2>Hôm nay mình học gì?</h2>
-              <p>Chọn lớp và một môn, học một chút, rồi tự hào về điều mình vừa làm được.</p>
-            </div>
-            <div className="grade-pills" role="group" aria-label="Em học lớp mấy?">
-              {grades.map((g) => (
-                <Link href={`/chon-bai?grade=${g}`} className={g === 1 ? 'grade-pill is-on' : 'grade-pill'} key={g}>Lớp {g}</Link>
-              ))}
-            </div>
+        {/* ---------------------------------------------- Môn học: thẻ màu lớn có nhân vật */}
+        <section id="subjects" className="hm-section wrap">
+          <div className="hm-head">
+            <h2><img src={`${IMG}/ic-book.webp`} alt="" width={46} height={38} /> Hôm nay <span className="hm-ul">mình</span> học gì?</h2>
+            <p className="hm-note"><CalendarDays aria-hidden="true" /> Bài học ngắn 10 – 15 phút mỗi ngày, phù hợp cho học sinh lớp 1 – 5.</p>
           </div>
-          <ul className="notebooks">
-            {subjects.map(({ code, title, detail, tone, Icon }) => (
+          <div className="grade-pills hm-grades" role="group" aria-label="Em học lớp mấy?">
+            {grades.map((g) => (
+              <Link href={`/chon-bai?grade=${g}`} className="grade-pill" key={g}>Lớp {g}</Link>
+            ))}
+          </div>
+          <ul className="hm-subjects">
+            {subjects.map(({ code, title, detail, tone, art, alt }) => (
               <li key={code}>
-                <Link className={`notebook-cover tone-${tone}`} href={`/chon-bai?subject=${code}`}>
-                  <Icon className="notebook-icon" aria-hidden="true" />
-                  <span className="notebook-label">
-                    <span className="notebook-line">Vở <strong>{title}</strong></span>
-                    <span className="notebook-line notebook-detail">{detail}</span>
-                    <span className="notebook-line notebook-count">{lessonsPerGrade(code)}</span>
+                <Link className={`hm-subject tone-${tone}`} href={`/chon-bai?subject=${code}`}>
+                  <span className="hm-subject-text">
+                    <strong>{title}</strong>
+                    <span>{detail}</span>
+                    <small>{lessonsPerGrade(code)}</small>
+                    <span className="hm-open">Mở vở <ChevronRight aria-hidden="true" /></span>
                   </span>
-                  <MiloMascot variant={SUBJECT_MASCOT[code]} size={96} className="notebook-milo" />
-                  <span className="notebook-open">Mở vở <ArrowRight aria-hidden="true" /></span>
+                  <img src={`${IMG}/${art}.webp`} alt={alt} width={640} height={860} loading="lazy" />
                 </Link>
               </li>
             ))}
           </ul>
           <p className="home-lib-link">Thầy cô, ba mẹ muốn xem trước nội dung? <Link href="/hoc">Thư viện bài học lớp 1–5 <ArrowRight aria-hidden="true" /></Link></p>
+        </section>
+
+        {/* ---------------------------------------------- Trò chơi trí tuệ: thẻ ngang màu pastel */}
+        <section id="games" className="hm-section wrap">
+          <div className="hm-head">
+            <h2><img src={`${IMG}/ic-game.webp`} alt="" width={50} height={32} /> Nghỉ giữa giờ <span className="hm-sub">– Khám phá {GAMES.length} trò chơi trí tuệ</span></h2>
+            <Link href="/tro-choi" className="hm-more">Chơi ngay tất cả <ChevronRight aria-hidden="true" /></Link>
+          </div>
+          <ul className="hm-games">
+            {GAMES.map((g, i) => {
+              const a = GAME_ART[g.id];
+              return (
+                <li key={g.id}>
+                  <Link href={`/tro-choi/${g.slug}`} className={`hm-game tone-${a?.tone ?? GAME_TONES[i % GAME_TONES.length]}`}>
+                    {a ? <img src={`${IMG}/${a.art}.webp`} alt="" width={96} height={82} loading="lazy" /> : <span className="hm-game-art" aria-hidden="true"><GameArt id={g.id} /></span>}
+                    <strong>{g.title}</strong>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        {/* ---------------------------------------------- Hệ sinh thái: thầy cô · học sinh · phụ huynh */}
+        <section id="safety" className="hm-section wrap">
+          <div className="hm-head">
+            <h2><img src={`${IMG}/ic-eco.webp`} alt="" width={44} height={38} /> Hệ sinh thái <span className="hm-ul">EduChain Kids</span></h2>
+          </div>
+          <div className="hm-eco">
+            {ecosystem.map(({ who, art, tone, href, cta, items }) => (
+              <article className={`hm-eco-card tone-${tone}`} key={who}>
+                <img src={`${IMG}/${art}.webp`} alt="" width={640} height={960} loading="lazy" />
+                <div>
+                  <h3>{who}</h3>
+                  <ul>{items.map((t) => <li key={t}><CheckCircle2 aria-hidden="true" /> {t}</li>)}</ul>
+                  <Link href={href} className="hm-pill">{cta} <ChevronRight aria-hidden="true" /></Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* ---------------------------------------------- Báo cáo tiến độ (ví dụ minh hoạ, không phải số liệu thật) */}
+        <section id="phu-huynh" className="hm-section wrap" aria-labelledby="report-title">
+          <div className="hm-report">
+            <div className="hm-report-intro">
+              <h2 id="report-title"><img src={`${IMG}/ic-chart.webp`} alt="" width={40} height={40} /> Báo cáo tiến độ học tập rõ ràng, dễ theo dõi</h2>
+              <p>Giúp thầy cô và phụ huynh nắm bắt quá trình học tập, đồng hành và hỗ trợ con kịp thời.</p>
+              <span className="hm-demo">Ví dụ minh hoạ</span>
+            </div>
+            <div className="hm-report-card hm-report-kid">
+              <img src={`${IMG}/avatar.webp`} alt="" width={48} height={48} />
+              <div><strong>Bạn nhỏ lớp 4A</strong><span>Tiến độ tuần này</span></div>
+              <b>92%</b>
+              <span className="hm-bar"><i style={{ width: '92%' }} /></span>
+            </div>
+            <div className="hm-report-card">
+              <p className="hm-report-label">Kết quả 3 môn học</p>
+              <div className="hm-scores">
+                {REPORT.map((r) => <span className={`tone-${r.tone}`} key={r.label}>{r.label}<b>{r.pct}%</b></span>)}
+              </div>
+            </div>
+            <div className="hm-report-card">
+              <p className="hm-report-label">Tiến độ 4 tuần gần nhất</p>
+              <svg viewBox="0 0 200 70" className="hm-spark" role="img" aria-label="Tiến độ tăng dần qua 4 tuần">
+                <path d="M10 58 L70 48 L130 40 L190 12 L190 70 L10 70 Z" className="hm-spark-area" />
+                <polyline points="10,58 70,48 130,40 190,12" />
+                {SPARK.map(([x, y]) => <circle key={x} cx={x} cy={y} r="4.5" />)}
+              </svg>
+            </div>
+          </div>
         </section>
 
         {/* ---------------------------------------------- Cách học + câu hỏi mẫu trên trang vở */}
@@ -211,59 +278,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ---------------------------------------------- Trò chơi trí tuệ */}
-        <section id="games" className="home-section wrap">
-          <div className="home-section-head">
-            <div>
-              <h2>Nghỉ giữa giờ</h2>
-              <p>{GAMES.length} trò chơi trí tuệ, mỗi trò 5 – 10 phút, có 5 cấp độ từ dễ đến khó.</p>
-            </div>
-            <Link href="/tro-choi" className="btn btn-outline">Xem tất cả <ArrowRight aria-hidden="true" /></Link>
-          </div>
-          <ul className="home-games">
-            {GAMES.map((g) => (
-              <li key={g.id}>
-                <Link href={`/tro-choi/${g.slug}`} className="home-game">
-                  <span className="home-game-art" aria-hidden="true"><GameArt id={g.id} /></span>
-                  <strong>{g.title}</strong>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* ---------------------------------------------- Thầy cô */}
-        <section id="safety" className="home-section wrap">
-          <div className="home-safety">
-            <div>
-              <h2>Dành cho thầy cô</h2>
-              <p>Thầy cô tạo tài khoản và PIN cho cả lớp. Bảng điểm cao chỉ hiện trong lớp, cho các bạn cùng lớp và thầy cô.</p>
-              <ul className="home-tools">
-                {teacherTools.map(({ Icon, text }) => <li key={text}><Icon aria-hidden="true" /> {text}</li>)}
-              </ul>
-            </div>
-            <Link href="/giao-vien" className="btn btn-outline">Góc thầy cô <ArrowRight aria-hidden="true" /></Link>
-          </div>
-        </section>
-
-        <section id="phu-huynh" className="home-section wrap home-parent-section" aria-labelledby="parent-title">
-          <div className="home-section-head home-parent-head">
-            <div>
-              <h2 id="parent-title">Đồng hành cùng con mỗi ngày</h2>
-              <p>Dù bận rộn, phụ huynh vẫn có thể nắm rõ tiến độ học tập của con qua điện thoại.</p>
-            </div>
-          </div>
-          <div className="home-parent-grid">
-            {parentBenefits.map(({ title, text, Icon, tone }) => (
-              <article className={`home-parent-card tone-${tone}`} key={title}>
-                <span className="home-parent-icon"><Icon aria-hidden="true" /></span>
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
         <section className="home-faq home-section wrap" aria-labelledby="faq-title">
           <div className="home-section-head">
             <div>
@@ -281,25 +295,24 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section id="trial" className="home-final-cta wrap" aria-labelledby="final-cta-title">
-          <div>
-            <h2 id="final-cta-title">Học thử miễn phí 7 ngày cùng Milo</h2>
-            <p>Đăng ký miễn phí, không cần thẻ ngân hàng. Con học được ngay bài đầu tiên hôm nay.</p>
+        <section id="trial" className="hm-cta wrap" aria-labelledby="final-cta-title">
+          <img className="hm-cta-milo" src="/brand/milo.webp" alt="" width={640} height={884} loading="lazy" />
+          <div className="hm-cta-copy">
+            <h2 id="final-cta-title">Bắt đầu bài học nhỏ đầu tiên hôm nay!</h2>
+            <p>Học thử miễn phí 7 ngày – Dễ bắt đầu – Hiệu quả thấy ngay.</p>
           </div>
-          <div className="home-final-cta-actions">
-            <Link href="/chon-bai" className="btn btn-yellow">Bắt đầu học <ArrowRight aria-hidden="true" /></Link>
-            <Link href="/dang-ky?vai=phu-huynh" className="btn home-final-cta-secondary"><Users aria-hidden="true" /> Phụ huynh đăng ký cho con</Link>
+          <div className="hm-cta-actions">
+            <Link href="/chon-bai" className="btn hm-btn-main"><Play aria-hidden="true" /> Bắt đầu học miễn phí <ChevronRight aria-hidden="true" /></Link>
+            <Link href="/dang-ky?vai=phu-huynh" className="hm-cta-link"><Users aria-hidden="true" /> Phụ huynh đăng ký cho con</Link>
           </div>
         </section>
 
         <footer id="footer" className="brand-footer ft">
           <svg className="ft-wave" viewBox="0 0 1600 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40 C 280 0 560 4 850 22 S 1350 46 1600 8 V 40 Z" /></svg>
-          {/* eslint-disable-next-line @next/next/no-img-element -- linh vật trang trí */}
           <img className="ft-milo" src="/brand/milo-sm.webp" alt="" width={120} height={165} loading="lazy" />
           <div className="ft-grid wrap">
             <div className="ft-brand">
               <Link href="/" className="ft-logo" aria-label="EduChain Kids — về trang chủ">
-                {/* eslint-disable-next-line @next/next/no-img-element -- logo */}
                 <img src="/brand/logo-full.webp" alt="EduChain Kids" width={250} height={68} loading="lazy" />
               </Link>
               <p className="ft-slogan"><Star aria-hidden="true" />Học hôm nay, <b>tỏa sáng</b> ngày mai</p>
