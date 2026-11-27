@@ -13,7 +13,22 @@
 .hm-btn-ghost { background: var(--surface); color: #1f56d8; box-shadow: inset 0 0 0 2px #b9cdf8; }
 .hm-facts { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 0; padding: 0; list-style: none; }
 .hm-facts li { display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 8px; border-radius: 16px; background: var(--surface); box-shadow: 0 4px 14px rgb(30 50 90 / .08); font-size: 13px; color: var(--muted); line-height: 1.2; }
-.hm-facts img { width: 40px; height: 36px; object-fit: cover; border-radius: 10px; }
+/* Icon vẽ bằng SVG (lucide) — nét ở mọi độ phân giải, đổi màu theo chế độ sáng / tối */
+.hm-chip { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 12px; }
+.hm-chip svg { width: 22px; height: 22px; stroke-width: 2.2; }
+.hm-chip.tone-sun { background: #fff3c8; color: #e0a100; }
+.hm-chip.tone-blue { background: #e3efff; color: #2563eb; }
+.hm-chip.tone-mint { background: #d9f5ea; color: #149b6a; }
+.hm-chip.tone-pink { background: #ffe3ee; color: #e0245e; }
+.hm-ic { flex: none; width: 36px; height: 36px; stroke-width: 2.2; }
+.hm-ic.tone-sun { color: #f2b200; }
+.hm-ic.tone-orange { color: #f59e0b; }
+.hm-ic.tone-blue { color: #2563eb; }
+:root[data-theme="dark"] .hm-ic.tone-blue { color: #6ea2ff; }
+:root[data-theme="dark"] .hm-chip.tone-sun { background: #3b3112; color: #fcd34d; }
+:root[data-theme="dark"] .hm-chip.tone-blue { background: #1c2d52; color: #93b8ff; }
+:root[data-theme="dark"] .hm-chip.tone-mint { background: #12382a; color: #6ee7b7; }
+:root[data-theme="dark"] .hm-chip.tone-pink { background: #43182b; color: #f9a8c9; }
 .hm-facts strong { display: block; color: var(--ink); font-size: 16px; }
 
 .hm-hero-art { position: relative; height: clamp(300px, 36vw, 420px); }
@@ -31,7 +46,6 @@
 .hm-section { margin-top: 56px; }
 .hm-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; margin-bottom: 18px; }
 .hm-head h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: clamp(24px, 3vw, 32px); color: #14215a; }
-.hm-head h2 img { height: 38px; width: auto; mix-blend-mode: multiply; }
 .hm-sub { font-weight: 600; color: var(--ink); }
 .hm-ul { background: linear-gradient(transparent 82%, #f5c330 82%, #f5c330 94%, transparent 94%); }
 .hm-note { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; background: #eef4ff; color: #1b2a57; font-size: 14px; }
@@ -62,7 +76,8 @@
 .hm-games { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
 .hm-game { display: flex; align-items: center; gap: 10px; height: 100%; min-height: 92px; padding: 6px 12px 6px 6px; border-radius: 18px; color: #14215a; box-shadow: 0 6px 16px rgb(30 50 90 / .08); transition: transform 160ms ease; }
 .hm-game:hover { transform: translateY(-3px); }
-.hm-game img, .hm-game-art { flex: none; width: 82px; height: 72px; object-fit: cover; border-radius: 14px; mix-blend-mode: multiply; }
+.hm-game img, .hm-game-art { flex: none; width: 76px; height: 72px; object-fit: contain; }
+.hm-game img { filter: drop-shadow(0 4px 6px rgb(20 40 80 / .15)); }
 .hm-game-art svg { width: 100%; height: 100%; }
 .hm-game strong { font-size: 16px; line-height: 1.25; }
 .hm-game.tone-sky { background: #dff0ff; }
@@ -90,7 +105,6 @@
 /* ------------------------------------------------ Báo cáo mẫu */
 .hm-report { display: grid; grid-template-columns: 1.3fr 1.2fr 1.1fr 1fr; align-items: stretch; gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 24px; background: var(--surface); box-shadow: 0 6px 18px rgb(30 50 90 / .06); }
 .hm-report-intro h2 { display: flex; align-items: flex-start; gap: 10px; font-size: 20px; line-height: 1.25; color: #14215a; }
-.hm-report-intro h2 img { width: 40px; height: 40px; mix-blend-mode: multiply; flex: none; }
 .hm-report-intro p { margin-top: 8px; color: var(--muted); font-size: 13.5px; line-height: 1.5; }
 .hm-demo { display: inline-block; margin-top: 8px; padding: 3px 10px; border-radius: 999px; background: #fff3c8; color: #8a5a00; font-size: 12px; font-weight: 700; }
 .hm-report-card { padding: 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
@@ -124,7 +138,6 @@
 
 /* ------------------------------------------------ Bản tối: nền sáng của hình (blend multiply) đổi thành khung bo */
 :root[data-theme="dark"] .hm-hero h1, :root[data-theme="dark"] .hm-head h2, :root[data-theme="dark"] .hm-report-intro h2 { color: var(--ink); }
-:root[data-theme="dark"] .hm-head h2 img, :root[data-theme="dark"] .hm-report-intro h2 img { padding: 3px; border-radius: 10px; background: #fff; }
 /* tranh hero giữ nền sáng để hình nền trắng hoà vào (multiply) */
 :root[data-theme="dark"] .hm-hero-blob { background: radial-gradient(circle at 40% 40%, #fff6cf, #cfe0ff 72%); }
 :root[data-theme="dark"] .hm-note { background: #1c2a4d; color: var(--ink); }
@@ -148,7 +161,7 @@
   .hm-cta { grid-template-columns: 1fr; justify-items: center; text-align: center; padding: 20px; }
   .hm-cta-milo { width: 96px; margin: 0; }
   .hm-hl::after { display: none; }
-  .hm-head h2 img { height: 30px; }
+  .hm-ic { width: 28px; height: 28px; }
   .hm-game { gap: 8px; min-height: 76px; }
   .hm-game img, .hm-game-art { width: 58px; height: 52px; }
   .hm-game strong { font-size: 14px; }
