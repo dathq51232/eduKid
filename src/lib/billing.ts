@@ -76,7 +76,7 @@ export const BILLING_ERRORS: Record<string, string> = {
   waiver_pending: 'Em này đã có yêu cầu đặc cách đang chờ duyệt.',
   waiver_active: 'Em này đang được đặc cách trong học kỳ này.',
   waiver_quota: 'Lớp đã dùng hết suất đặc cách của học kỳ.',
-  plan_not_offered: 'Lớp của em chỉ mở gói thầy cô đã công bố. Tải lại trang để lấy đúng mã.',
+  plan_not_offered: 'Lớp của em chỉ áp dụng một gói học. Tải lại trang để lấy đúng mã.',
 };
 export function billingError(message: string): string {
   const code = Object.keys(BILLING_ERRORS).find((k) => message.includes(k));

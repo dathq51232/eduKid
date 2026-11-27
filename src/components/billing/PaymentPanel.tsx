@@ -68,8 +68,9 @@ export default function PaymentPanel({ info, offer, auto = false }: { info: Bill
     <div className="pay-panel">
       <p className="pay-kind">
         <strong>{KIND_NAME[offer.kind]}</strong>{offer.kind === 'school' && offer.class_name ? ` · lớp ${offer.class_name}` : ''}
-        <span>{offer.kind === 'school' ? 'Giá ưu đãi cho em học ở lớp của thầy cô (vào bằng mã lớp). Tính cho mỗi em.' : 'Dành cho bé học tại nhà do bố mẹ tự đăng ký. Tính cho mỗi bé.'}</span>
-        {fixed && <span className="pay-announce">{offer.teacher_name ? `Cô ${offer.teacher_name}` : 'Thầy cô'}{offer.class_name ? ` (lớp ${offer.class_name})` : ''} đã công bố: <b>{PLAN_NAME[fixed]} — {vnd(fixed === 'term' ? offer.price_term : offer.price_year)}</b></span>}
+        <span>{offer.kind === 'school' ? 'Giá ưu đãi cho em học theo lớp (vào bằng mã lớp). Tính cho mỗi em.' : 'Dành cho bé học tại nhà do bố mẹ tự đăng ký. Tính cho mỗi bé.'}</span>
+        {/* Không nhắc tên / vai trò giáo viên khi nói chuyện tiền: chỉ ghi gói áp dụng cho lớp */}
+        {fixed && <span className="pay-announce">Gói áp dụng cho lớp{offer.class_name ? ` ${offer.class_name}` : ''}: <b>{PLAN_NAME[fixed]} — {vnd(fixed === 'term' ? offer.price_term : offer.price_year)}</b></span>}
       </p>
       <div className="pay-plans">
         {plans.map((p) => (
