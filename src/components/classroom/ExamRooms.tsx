@@ -114,13 +114,15 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
   const [drafts, setDrafts] = useState<RoomDraft[] | null>(null);
   // Đấu cặp: bốc thăm chia cặp, mỗi cặp chung một đề, loại trực tiếp qua từng vòng (mỗi vòng một phòng thi)
   const [battle, setBattle] = useState(false);
+  // Xếp đề theo dạng (chọn → điền → nối → xếp nhóm, mỗi dạng dễ → khó) như đề thi Tiếng Việt trực tuyến; mặc định bật cho Tiếng Việt
+  const [byDang, setByDang] = useState(() => (subjects[0] ?? 'toan') === 'tieng-viet');
 
   const chosen = useMemo(() => lessons.filter((l) => picked.includes(l.unit.code)), [lessons, picked]);
   const auto: Matrix | null = useMemo(() => {
     if (!chosen.length) return null;
     return defaultMatrix(chosen, n, RATIOS.find((r) => r.key === ratio)?.r ?? ROOM_RATIO);
   }, [chosen, n, ratio]);
-  const matrix = custom ?? auto;
+  const matrix = useMemo<Matrix | null>(() => { const m = custom ?? auto; return m ? { ...m, layout: byDang ? 'dang' : undefined } : null; }, [custom, auto, byDang]);
   const t = matrix ? totals(matrix) : null;
   const have = t?.questions ?? 0;
   const autoTitle = `${battle ? 'Đấu cặp' : 'Phòng thi'} ${SUBJECT_NAME[subject]}${chosen.length ? ` – ${units.filter((u) => picked.includes(u.code)).map((u) => u.title).slice(0, 2).join(', ')}` : ''}`;
@@ -166,7 +168,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
     if (mode === 'chung') {
       const base = (drafts?.[0]?.slots ?? previewPaper(matrix, salt).slots).map((s) => slotItem(s, matrix.points));
       plan.base = base;
-      papers = students.map((s) => ({ student: s.id, questions: commonPaperFor(base, seedFor(s.id, salt)) }));
+      papers = students.map((s) => ({ student: s.id, questions: commonPaperFor(base, seedFor(s.id, salt), matrix.layout) }));
     } else {
       papers = students.map((s) => {
         const d = drafts?.find((x) => x.student === s.id);
@@ -215,7 +217,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
       </p>
       <div className="room-form">
         <label className="adm-field"><span>Môn</span>
-          <select value={subject} onChange={(e) => { if (!dropDrafts()) return; setSubject(e.target.value as SubjectCode); setPicked([]); resetRules(); }}>
+          <select value={subject} onChange={(e) => { if (!dropDrafts()) return; setSubject(e.target.value as SubjectCode); setByDang(e.target.value === 'tieng-viet'); setPicked([]); resetRules(); }}>
             {subjects.map((s) => <option key={s} value={s}>{SUBJECT_NAME[s]}</option>)}
           </select>
         </label>
@@ -256,6 +258,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
         </div>
         {matrix && showRules && (
             <RoomRules matrix={matrix} subject={subject} mode={mode} ratio={ratio} nStudents={students.length}
+              byDang={byDang} onByDang={(v) => { if (v === byDang || !dropDrafts()) return; setByDang(v); }}
               onMode={(m) => { if (m === mode || !dropDrafts()) return; setMode(m); }}
               onRatio={(k) => { if (!dropDrafts()) return; setCustom(null); setRatio(k); }}
               onMatrix={(m) => { if (!dropDrafts()) return; setCustom(m); setRatio('tu-chinh'); }} />

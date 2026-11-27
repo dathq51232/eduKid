@@ -13,7 +13,7 @@ Menu 2 khu: Soạn & dạy · Lớp chủ nhiệm (+ Của tôi); ghim tối đa
 - **Kho giáo án cũ** từ Word của trường (tách theo tiết, đổi phông .VnTime/VNI), xuất Word — `src/lib/plans/library.ts`, `word.ts`, `docx-write.ts`
 - **Bài giảng / thao giảng** kiểu Canva: tự sinh từ bài/giáo án, bộ chủ đề, chuyển trang Biến hình, hiệu ứng mặc định 2,5–3,5 s (bấm Tiếp = xong ngay) — `src/components/deck/*`, `src/lib/deck/*` (luật: skill `deck-layout`)
 - **Ma trận & đề kiểm tra** (đề A/B, chia câu, điểm theo số tiết đã dạy, mở đề Word có sẵn) — `src/components/exams/*`, `src/lib/exams/*`
-- Phiếu bài tập, phiếu chính tả, luyện chữ ô li, kho câu hỏi (nạp Word/Excel/PDF, máy kiểm, cô duyệt), giao bài về nhà, lỗ hổng kiến thức, phòng thi lớp (mã phòng, QR, đấu cặp)
+- Phiếu bài tập, phiếu chính tả, luyện chữ ô li, kho câu hỏi (nạp Word/Excel/PDF, máy kiểm, cô duyệt), giao bài về nhà, lỗ hổng kiến thức, phòng thi lớp (mã phòng, QR, đấu cặp; tuỳ chọn **xếp đề theo dạng, dễ → khó** — chọn → điền → nối → xếp nhóm ~60/15/15/10%, mặc định bật cho Tiếng Việt — `matrix.layout = 'dang'`, xem `docs/PHAN-TICH-DE-TRANG-NGUYEN.md`)
 - Trên lớp: bảng trắng, gọi tên – dò bài, hẹn giờ, nhóm & chỗ ngồi, thi đua tổ
 - **Nhận xét học sinh** (tuần/kỳ/năm, tự gợi ý, vnEdu) — `CommentsBoard.tsx`; kết quả trên trường (TT27) — `src/lib/classroom/school.ts`; phiếu báo tiến bộ, thư khen, sổ lớp, sổ chủ nhiệm
 - Phụ huynh: Liên lạc phụ huynh (tin nhắn + danh bạ), họp phụ huynh (thư mời, điểm danh, biên bản), phòng triển lãm 3D

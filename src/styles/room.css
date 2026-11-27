@@ -128,3 +128,10 @@
 .room-qr-code { font-size: 40px; font-weight: 900; letter-spacing: 6px; line-height: 1.1; }
 .room-qr-link { font-size: 12px; overflow-wrap: anywhere; }
 .room-excel { margin: 0 0 8px; }
+
+/* Xếp đề theo dạng (kiểu đề thi Tiếng Việt trực tuyến) */
+.room-dang { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); cursor: pointer; }
+.room-dang.is-on { border-color: var(--brand-blue); background: color-mix(in srgb, var(--brand-blue) 7%, var(--surface)); }
+.room-dang input { flex: none; width: 18px; height: 18px; margin-top: 2px; accent-color: var(--brand-blue); }
+.room-dang span { display: grid; gap: 2px; }
+.room-dang small { color: var(--muted); font-size: 13px; line-height: 1.45; }

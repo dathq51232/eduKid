@@ -43,7 +43,10 @@ export type ExamQuestion = {
 export type MatrixRow = { unitCode: string; unitTitle: string; lessonIds: string[]; counts: Record<Muc, number> };
 /** exclude: mã yêu cầu cần đạt KHÔNG lấy câu (giáo viên bỏ chọn) */
 /** periods: số tiết đã dạy của từng chủ đề (unitCode → số tiết) — có thì số câu mỗi chủ đề chia theo số tiết */
-export type Matrix = { rows: MatrixRow[]; points: Record<Muc, number>; exclude?: string[]; periods?: Record<string, number> };
+export type Matrix = { rows: MatrixRow[]; points: Record<Muc, number>; exclude?: string[]; periods?: Record<string, number>;
+  /** 'dang' (phòng thi): xếp đề theo DẠNG thao tác như đề thi Tiếng Việt trực tuyến — trắc nghiệm → điền → nối → xếp nhóm,
+   *  mỗi dạng dễ → khó, tỉ lệ dạng ≈ STAGE_MIX. Bỏ trống = cách cũ (trắc nghiệm / tự luận, theo mức). */
+  layout?: 'dang' };
 
 /** Số tiết dùng để chia của từng hàng: đủ số tiết cho mọi chủ đề thì dùng số tiết, thiếu thì dùng số bài */
 export function rowWeights(rows: Pick<MatrixRow, 'unitCode' | 'lessonIds'>[], periods?: Record<string, number>): { w: number[]; byPeriods: boolean } {
@@ -235,6 +238,7 @@ export function buildPaper(m: Matrix, seed: number, code: string, avoid: Set<str
   const slots: PaperSlot[] = [];
   const missing: Paper['missing'] = [];
   const partCount = { 1: 0, 2: 0 };
+  const stageCount: Record<Stage, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
   const ex = new Set(m.exclude ?? []);
   m.rows.forEach((row, ri) => {
     for (const muc of MUCS) {
@@ -249,12 +253,21 @@ export function buildPaper(m: Matrix, seed: number, code: string, avoid: Set<str
       for (let round = 0; got < need && buckets.some((b) => b.length); round++) {
         for (const b of buckets) {
           if (got >= need) break;
-          // giữ cân bằng trắc nghiệm / tự luận: ưu tiên câu thuộc phần đang ít hơn
-          const want = partCount[1] <= partCount[2] ? 1 : 2;
-          const idx = b.findIndex((x) => partOf(x.type) === want && !used.has(x.key));
+          // kiểu 'dang': ưu tiên dạng đang thiếu nhiều nhất so với tỉ lệ STAGE_MIX (rồi mới tới dạng khác)
+          // kiểu cũ: giữ cân bằng trắc nghiệm / tự luận, ưu tiên câu thuộc phần đang ít hơn
+          let idx = -1;
+          if (m.layout === 'dang') {
+            const total = slots.length + 1;
+            const order = ([1, 2, 3, 4] as Stage[]).sort((a, b2) => (STAGE_MIX[b2] * total - stageCount[b2]) - (STAGE_MIX[a] * total - stageCount[a]));
+            for (const st of order) { idx = b.findIndex((x) => stageOf(x.type) === st && !used.has(x.key)); if (idx >= 0) break; }
+          } else {
+            const want = partCount[1] <= partCount[2] ? 1 : 2;
+            idx = b.findIndex((x) => partOf(x.type) === want && !used.has(x.key));
+          }
           const q = idx >= 0 ? b.splice(idx, 1)[0] : b.shift();
           if (!q || used.has(q.key)) continue;
           partCount[partOf(q.type) as 1 | 2]++;
+          stageCount[stageOf(q.type)]++;
           used.add(q.key);
           slots.push({ row: ri, muc, q: prepare(q, r) });
           got++;
@@ -263,7 +276,8 @@ export function buildPaper(m: Matrix, seed: number, code: string, avoid: Set<str
       if (got < need) missing.push({ row: ri, muc, need, got });
     }
   });
-  slots.sort((a, b) => partOf(a.q.type) - partOf(b.q.type) || a.muc - b.muc);
+  if (m.layout === 'dang') slots.sort((a, b) => stageOf(a.q.type) - stageOf(b.q.type) || a.muc - b.muc);
+  else slots.sort((a, b) => partOf(a.q.type) - partOf(b.q.type) || a.muc - b.muc);
   return { code, slots, missing };
 }
 
@@ -306,6 +320,16 @@ function prepare(q: ExamQuestion, r: ReturnType<typeof makeRng>): ExamQuestion {
   }
   return q;
 }
+
+/** Dạng thao tác (xếp đề kiểu 'dang'): 1 chọn đáp án · 2 điền · 3 nối / ghép cặp · 4 xếp nhóm / sắp thứ tự */
+export type Stage = 1 | 2 | 3 | 4;
+export const stageOf = (t: QuestionType): Stage =>
+  t === 'single_choice' || t === 'multiple_choice' || t === 'true_false' || t === 'true_false_table' ? 1
+    : t === 'fill_blank' || t === 'fill_blanks' ? 2
+      : t === 'matching' || t === 'pair_grid' ? 3 : 4;
+export const STAGE_NAME: Record<Stage, string> = { 1: 'Chọn đáp án', 2: 'Điền', 3: 'Nối / ghép cặp', 4: 'Xếp nhóm / sắp thứ tự' };
+/** Tỉ lệ dạng mục tiêu, theo cấu trúc đề thi Tiếng Việt trực tuyến lớp 1 (19 · 4 · 4 · 3 câu / 30) — xem docs/PHAN-TICH-DE-TRANG-NGUYEN.md */
+export const STAGE_MIX: Record<Stage, number> = { 1: 0.6, 2: 0.15, 3: 0.15, 4: 0.1 };
 
 /** 1 = phần trắc nghiệm (khoanh/đánh dấu), 2 = phần tự luận (điền, nối, sắp xếp) */
 export const partOf = (t: QuestionType) => (t === 'single_choice' || t === 'multiple_choice' || t === 'true_false' || t === 'true_false_table' ? 1 : 2);
