@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Bell, Check, MessageCircle, Pin, School, Star, TrendingUp, UserRound } from 'lucide-react';
+import Image from 'next/image';
+import { Bell, BellRing, CalendarCheck, CalendarDays, Check, ChevronRight, MessageCircle, Moon, Pin, School, Send, Star, Target, TrendingUp, UserRound } from 'lucide-react';
+import { LUNAR_MONTH_NAME, canChiYear, solarToLunar } from '@/lib/utils/lunar';
 import ParentHeader from '@/components/parent/ParentHeader';
 import FamilyInfo from '@/components/parent/FamilyInfo';
 import ParentMessages from '@/components/parent/ParentMessages';
@@ -35,6 +37,7 @@ import '@/styles/games.css';
 import '@/styles/parent.css';
 import '@/styles/result.css';
 import '@/styles/tone.css';
+import '@/styles/phd.css';
 
 export const metadata: Metadata = { title: 'Phụ huynh · EduChain Kids' };
 export const dynamic = 'force-dynamic';
@@ -56,10 +59,6 @@ type Overview = {
 };
 const WD = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 const weekday = (iso: string) => WD[new Date(`${iso}T00:00:00`).getDay()];
-const fmtLong = (iso?: string) => {
-  const d = iso ? new Date(`${iso}T00:00:00`) : new Date();
-  return d.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric', ...(iso ? {} : { timeZone: 'Asia/Ho_Chi_Minh' }) });
-};
 const VN_TZ = { timeZone: 'Asia/Ho_Chi_Minh' } as const;
 /** hạn nộp: "T6, 21/11" */
 const fmtDue = (iso: string) => new Date(iso).toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'numeric', ...VN_TZ });
@@ -162,36 +161,61 @@ export default async function ParentsPage() {
       const rs = acts.filter((a) => a.subject === k && a.pct !== null);
       return { k, n: rs.length, pct: rs.length ? Math.round(rs.reduce((t, a) => t + (a.pct ?? 0), 0) / rs.length) : null };
     }).filter((x) => x.n > 0);
+    // đầu trang: ngày dương + âm lịch (giờ Việt Nam), tên gọi ngắn của con, số tin mới cho chuông
+    const DAYS = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+    const dateLabel = `${DAYS[new Date(`${todayVn}T00:00:00Z`).getUTCDay()]}, ${todayVn.slice(8)}/${todayVn.slice(5, 7)}/${todayVn.slice(0, 4)}`;
+    const lunar = solarToLunar(+todayVn.slice(8), +todayVn.slice(5, 7), +todayVn.slice(0, 4));
+    const shortName = childName.trim().split(/\s+/).slice(-1)[0] || childName;
+    const annToday = Boolean(latestAnn && latestAnn.day === today?.day);
+    const bellCount = newReplies + (annToday ? 1 : 0);
     const weak = bySubj.filter((x) => (x.pct ?? 100) < 70).sort((a, b) => (a.pct ?? 0) - (b.pct ?? 0))[0];
     return (
       <>
         <ParentHeader childCorner />
-        <main className="ph wrap">
+        <main className="ph ph-v2 wrap">
           <GuidedTour id="ph-con-v1" />
           {ovErr && <p className="adm-alert is-warn">Một số mục chưa bật: hãy chạy <code>supabase/migrations/0033_parent_family.sql</code> trên Supabase.</p>}
-          <section className="ph-hero">
-            <span className="ph-hero-av"><MiloMascot variant="artist" size={80} /></span>
-            <div className="ph-hero-txt">
-              <small>Phụ huynh của</small>
-              <h1>{childName}</h1>
-              <div className="ph-chips">
+          {/* ① Đầu trang kiểu trang chủ giáo viên: trái = ngày, lời chào, Milo; phải = Chia sẻ, chuông, ảnh đại diện + thẻ lớn "Hôm nay của con" */}
+          <div className="phd-top">
+            <div className="phd-top-l">
+              <p className="phd-date">
+                <CalendarDays aria-hidden="true" className="phd-date-ic" /> {dateLabel}
+                <span className="phd-lunar" title={`Ngày ${lunar.day} tháng ${LUNAR_MONTH_NAME[lunar.month]} năm ${canChiYear(lunar.year)}`}><Moon aria-hidden="true" /> {lunar.day}/{lunar.month}{lunar.leap ? ' nhuận' : ''}</span>
+              </p>
+              <h1>Chào ba mẹ {shortName}! <span aria-hidden="true">👋</span></h1>
+              <p className="phd-wish">Cùng {shortName} học một bài nhỏ mỗi ngày nhé!</p>
+              <div className="phd-chips">
                 {cls && <span><School aria-hidden="true" /> Lớp {cls.name}{cls.school ? ` · ${cls.school}` : ''}</span>}
                 {cls?.teacher && <span><UserRound aria-hidden="true" /> GVCN: {cls.teacher}</span>}
                 {!cls && <span>Con chưa vào lớp nào</span>}
               </div>
+              <Image className="phd-mascot" src="/brand/milo-artist.webp" alt="" width={560} height={749} priority aria-hidden="true" />
             </div>
-            <div className="ph-today" data-tour="hom-nay">
-              <span>Hôm nay · {fmtLong(today?.day)}</span>
-              {today?.recorded ? (
-                <>
-                  <b className={today.status === 'present' ? 'is-ok' : 'is-off'}>{today.status === 'present' ? <><Check aria-hidden="true" /> Có mặt</> : STATUS_LABEL[today.status as 'excused' | 'unexcused'] ?? 'Vắng'}</b>
-                  {praiseToday ? <em>⭐ Cô khen: {praiseToday.replace(/^★\s*/, '')}</em> : today.note ? <em>📝 {today.note}</em> : null}
-                </>
-              ) : <b className="is-wait">Cô chưa ghi Sổ lớp</b>}
+            <div className="phd-top-r">
+              <div className="phd-topbar">
+                <ShareApp who="parent" className="phd-share" />
+                <a href="#ph-msg-title" className={`phd-bell${bellCount ? ' is-hot' : ''}`} aria-label={bellCount ? `${bellCount} tin mới từ cô` : 'Tin nhắn từ cô'}>
+                  <Bell aria-hidden="true" />{bellCount > 0 && <span>{bellCount > 9 ? '9+' : bellCount}</span>}
+                </a>
+                <a href="#ph-fam-title" className="phd-av" title={`${childName} — thông tin gia đình`} aria-label="Thông tin gia đình">{shortName.charAt(0).toUpperCase()}</a>
+              </div>
+              <section className="phd-today" data-tour="hom-nay" aria-label="Hôm nay của con">
+                <span className="phd-pill"><CalendarCheck aria-hidden="true" /> Hôm nay của {shortName}</span>
+                {today?.recorded ? (
+                  <>
+                    <p className="phd-today-title">{today.status === 'present' ? <><Check aria-hidden="true" /> Con có mặt ở lớp</> : `Con ${(STATUS_LABEL[today.status as 'excused' | 'unexcused'] ?? 'vắng').toLowerCase()}`}</p>
+                    {praiseToday ? <p className="phd-today-sub">⭐ Cô khen: {praiseToday.replace(/^★\s*/, '')}</p> : today.note ? <p className="phd-today-sub">📝 {today.note}</p> : null}
+                  </>
+                ) : <p className="phd-today-title is-wait">Cô chưa ghi Sổ lớp hôm nay</p>}
+                {pending.length > 0 && <p className="phd-today-sub">📝 Còn {pending.length} bài cô giao chưa làm · hạn gần nhất {fmtDue(pending[0].due_at)}</p>}
+                <div className="phd-acts">
+                  <a href="#ph-msg-title" className="phd-go"><MessageCircle aria-hidden="true" /> Tin nhắn từ cô <ChevronRight aria-hidden="true" className="phd-arrow" /></a>
+                  <a href="#pm-title" className="phd-alt"><Send aria-hidden="true" /> Nhắn cô</a>
+                </div>
+                <Image className="phd-today-art" src="/emoji/f3d/books.webp" alt="" width={160} height={160} aria-hidden="true" />
+              </section>
             </div>
-          </section>
-
-          <div className="ph-share-row"><span>Thấy app hữu ích? Giới thiệu cho ba mẹ khác trong lớp nhé!</span><ShareApp who="parent" /></div>
+          </div>
 
           <TuitionCard gate={gate} offer={offer} childName={childName} recap={gate.reason === 'trial' || gate.reason === 'expired' ? progressRecap(acts, 14) : null} />
 
@@ -199,11 +223,12 @@ export default async function ParentsPage() {
             <a href="#pm-title" className="ph-alert"><Bell aria-hidden="true" /> <span><b>{cls?.teacher ? `Cô ${cls.teacher.trim().split(/\s+/).slice(-1)[0]}` : 'Cô'} vừa trả lời {newReplies} tin nhắn</b> của gia đình · Xem ngay</span></a>
           )}
 
-          <ul className="ph-tiles" data-tour="thang-nay">
-            <li><span className="ph-ic is-green" aria-hidden="true">📅</span><div><span>Đi học {monthName}</span><b>{month?.days ? `${month.present}/${month.days} ngày` : <em>Cô chưa ghi</em>}</b></div></li>
-            <li><span className="ph-ic is-yellow" aria-hidden="true">⭐</span><div><span>Cô khen</span><b>{month ? `${month.praise} lần` : <em>Chưa có</em>}</b></div></li>
-            <li><span className="ph-ic is-red" aria-hidden="true">🔔</span><div><span>Cô nhắc nhở</span><b>{month ? `${month.remind} lần` : <em>Chưa có</em>}</b></div></li>
-            <li><span className="ph-ic is-purple" aria-hidden="true">🎯</span><div><span>Luyện 7 ngày qua</span><b>{week.length ? `${week.length} hoạt động` : <em>Chưa làm bài</em>}</b></div></li>
+          {/* ② 4 ô số liệu (giống trang giáo viên) */}
+          <ul className="phd-stats" data-tour="thang-nay">
+            <li className="phd-stat is-green"><span className="phd-stat-ic" aria-hidden="true"><CalendarCheck /></span><b>{month?.days ? `${month.present}/${month.days}` : '—'}</b><small>{month?.days ? `Ngày đi học ${monthName}` : 'Cô chưa ghi Sổ lớp'}</small></li>
+            <li className="phd-stat is-yellow"><span className="phd-stat-ic" aria-hidden="true"><Star /></span><b>{month ? month.praise : '—'}</b><small>Lần cô khen</small></li>
+            <li className="phd-stat is-coral"><span className="phd-stat-ic" aria-hidden="true"><BellRing /></span><b>{month ? month.remind : '—'}</b><small>Lần cô nhắc nhở</small></li>
+            <li className="phd-stat is-violet"><span className="phd-stat-ic" aria-hidden="true"><Target /></span><b>{week.length}</b><small>{week.length ? 'Hoạt động 7 ngày qua' : 'Chưa làm bài tuần này'}</small></li>
           </ul>
 
           <div className="ph-grid">
