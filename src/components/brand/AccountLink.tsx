@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { LogIn, UserRound } from 'lucide-react';
 import { KidAvatar } from '@/components/home/HomeArt';
@@ -32,12 +33,15 @@ function useSignedIn(): boolean | null {
 /** Nút tài khoản trên thanh trên cùng (chỉ để điều hướng; quyền thật kiểm tra ở máy chủ). */
 export default function AccountLink({ variant = 'button' }: { variant?: 'button' | 'avatar' }) {
   const signedIn = useSignedIn();
+  // Đang ở chính trang của em (/hoc-sinh): nút "Trang của tôi" trỏ về trang đang xem → ẩn cho khỏi thừa
+  const onOwnPage = usePathname() === '/hoc-sinh';
   if (variant === 'avatar') {
     const href = !configured ? '/thanh-tich' : signedIn ? '/sau-dang-nhap' : '/dang-nhap';
     const label = !configured ? 'Thành tích của em' : signedIn ? 'Trang của tôi' : 'Đăng nhập';
     return <Link href={href} className="kid-avatar" aria-label={label} title={label}><KidAvatar /></Link>;
   }
   if (!configured) return null;
+  if (signedIn && onOwnPage) return null;
   if (signedIn === null) return <span className="account-link is-loading" aria-hidden="true" />;
   return signedIn
     ? <Link href="/sau-dang-nhap" className="account-link"><UserRound aria-hidden="true" /> <span>Trang của tôi</span></Link>
