@@ -1,0 +1,228 @@
+/* Kiểu riêng khu vực "phx-": trang phụ huynh bố cục dashboard (11/2026), đồng bộ trang chủ giáo viên.
+   Máy tính: thanh bên xanh đậm + nội dung; điện thoại: thanh trên ParentHeader, các thẻ xếp dọc.
+   Hoạt ảnh chỉ dùng transform / opacity. */
+.phx { --navy: #1e2b5c; --card-line: color-mix(in srgb, #3b6fe0 12%, var(--line)); --card-shadow: 0 8px 24px -14px rgb(30 60 140 / .25), 0 1px 2px rgb(30 60 140 / .05); }
+:root[data-theme="dark"] .phx { --navy: var(--ink); --card-shadow: var(--shadow-sm); }
+.phx-main { display: grid; gap: 18px; width: min(1320px, calc(100% - 32px)); margin: 0 auto; padding-block: 18px 56px; min-width: 0; }
+
+/* ---------- Thanh bên (≥ 1024px) ---------- */
+.phx-side { display: none; }
+@media (min-width: 1024px) {
+  .phx { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: 100vh; }
+  .phx > .ph-top { display: none; }
+  .phx-main { width: auto; margin: 0; padding: 18px 28px 56px; }
+  .phx-side { position: sticky; top: 0; display: flex; flex-direction: column; gap: 14px; height: 100vh; padding: 20px 16px 0; overflow: hidden auto; color: #e8eefc;
+    background: radial-gradient(260px 200px at 0% 100%, rgb(80 130 255 / .35), transparent 70%), linear-gradient(180deg, #1d2f6b, #182756); }
+}
+.phx-brand { display: flex; padding: 4px 6px; border-radius: 14px; background: #fff; }
+.phx-role { display: inline-flex; align-items: center; justify-content: center; gap: 6px; align-self: center; padding: 5px 16px; border: 1.5px solid rgb(255 255 255 / .35); border-radius: 99px; font-size: 14px; font-weight: 700; }
+.phx-role svg { width: 16px; height: 16px; }
+.phx-nav { display: grid; gap: 4px; }
+.phx-nav a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 14px; color: #dbe5ff; font-size: 15.5px; font-weight: 600; text-decoration: none; }
+.phx-nav a svg { flex: none; width: 21px; height: 21px; }
+.phx-nav a:hover { background: rgb(255 255 255 / .08); color: #fff; }
+.phx-nav a.is-on { background: linear-gradient(180deg, #ffd84d, #ffc21a); color: #1e2b4a; font-weight: 800; box-shadow: 0 4px 0 #d39b12; }
+.phx-nav a em { margin-left: auto; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 99px; background: #ef4444; color: #fff; font-size: 12px; font-style: normal; font-weight: 800; line-height: 22px; text-align: center; }
+.phx-side-ft { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid rgb(255 255 255 / .12); }
+.phx-side-go { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-radius: 14px; background: #fff; color: #1d2f6b; font-weight: 800; text-decoration: none; }
+.phx-side-go svg { width: 19px; height: 19px; }
+.phx-side-link { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: #c8d5f5; font: inherit; font-size: 14.5px; font-weight: 600; text-decoration: none; cursor: pointer; }
+.phx-side-link:hover { background: rgb(255 255 255 / .08); color: #fff; }
+.phx-side-link svg { width: 19px; height: 19px; }
+.phx-side-tools { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.phx-side-milo { width: 150px; height: auto; margin: auto auto -14px; filter: drop-shadow(0 10px 16px rgb(0 0 0 / .3)); }
+
+/* ---------- Thanh trên ---------- */
+.phx-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.phx-date { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 9px 16px; border: 1px solid var(--card-line); border-radius: 14px; background: var(--surface); color: var(--navy); font-weight: 800; box-shadow: var(--card-shadow); }
+.phx-date > svg { width: 20px; height: 20px; color: #2f6bea; }
+.phx-lunar { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); font-size: 12.5px; font-weight: 700; }
+.phx-lunar svg { width: 13px; height: 13px; }
+.phx-bar-sp { flex: 1; }
+.phx-share .share-btn { min-height: 46px; border-radius: 99px; white-space: nowrap; }
+.phx-bell { position: relative; display: grid; place-items: center; flex: none; width: 46px; height: 46px; border-radius: 50%; background: var(--surface); color: var(--navy); box-shadow: var(--card-shadow); }
+.phx-bell svg { width: 22px; height: 22px; }
+.phx-bell span { position: absolute; top: -3px; right: -3px; min-width: 20px; height: 20px; padding: 0 5px; border: 2px solid var(--surface); border-radius: 99px; background: #e11d48; color: #fff; font-size: 11px; font-weight: 800; line-height: 16px; text-align: center; }
+.phx-bell.is-hot { background: linear-gradient(135deg, #ffd54a, #ff9f43); color: #7a2e00; }
+.phx-bell.is-hot svg { animation: phx-shake 2.4s ease-in-out infinite; transform-origin: 50% 10%; }
+.phx-bell.is-hot::after { content: ''; position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 3px #ff9f43; animation: phx-ring 1.8s ease-out infinite; pointer-events: none; }
+@keyframes phx-shake { 0%, 60%, 100% { transform: rotate(0); } 64% { transform: rotate(16deg); } 70% { transform: rotate(-14deg); } 76% { transform: rotate(10deg); } 82% { transform: rotate(-6deg); } 88% { transform: rotate(3deg); } }
+@keyframes phx-ring { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(1.55); } }
+.phx-me { display: flex; align-items: center; gap: 10px; padding: 4px 14px 4px 4px; border: 1px solid var(--card-line); border-radius: 99px; background: var(--surface); color: var(--navy); text-decoration: none; box-shadow: var(--card-shadow); }
+.phx-me-av { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #ffe1b8, #ffc6d9); font-size: 20px; }
+.phx-me-tx { display: grid; line-height: 1.15; }
+.phx-me-tx small { color: var(--muted); font-size: 12px; font-weight: 600; }
+.phx-me-tx b { font-size: 15px; }
+
+/* ---------- Lời chào + tranh + thẻ con + số liệu ---------- */
+.phx-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); grid-template-areas: "hello art" "kid stats"; gap: 16px 18px; padding: 24px 24px 20px; overflow: hidden; border-radius: 28px;
+  background: radial-gradient(420px 260px at 82% 10%, rgb(255 236 170 / .7), transparent 70%), linear-gradient(135deg, #e6f0ff, #f3f7ff 55%, #e3f0ff); }
+:root[data-theme="dark"] .phx-hero { background: radial-gradient(420px 260px at 82% 10%, rgb(255 200 80 / .12), transparent 70%), linear-gradient(135deg, #17233f, #1a2747 55%, #162241); }
+.phx-hello { grid-area: hello; align-self: center; position: relative; z-index: 1; }
+.phx-hello h1 { margin: 0; color: var(--navy); font-size: clamp(28px, 3.2vw, 42px); font-weight: 900; line-height: 1.12; letter-spacing: -.01em; }
+.phx-hello p { margin: 6px 0 0; color: color-mix(in srgb, var(--navy) 75%, var(--muted)); font-size: 17px; font-weight: 600; }
+.phx-hero-art { grid-area: art; justify-self: center; align-self: end; width: auto; height: 190px; margin-bottom: -26px; filter: drop-shadow(0 12px 18px rgb(30 60 140 / .2)); }
+.phx-kid { grid-area: kid; position: relative; z-index: 1; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid var(--card-line); border-radius: 22px; background: color-mix(in srgb, var(--surface) 88%, transparent); box-shadow: var(--card-shadow); }
+.phx-kid-av { display: grid; place-items: center; flex: none; width: 64px; height: 64px; border: 3px solid #ffd43b; border-radius: 50%; background: linear-gradient(135deg, #4f8bff, #2457c5); color: #fff; font-size: 26px; font-weight: 900; }
+.phx-kid-tx { display: grid; gap: 2px; min-width: 0; }
+.phx-kid-tx b { overflow: hidden; color: var(--navy); font-size: 19px; text-overflow: ellipsis; white-space: nowrap; }
+.phx-kid-tx > span { color: var(--muted); font-size: 14px; font-weight: 600; }
+.phx-kid-tx small { display: inline-flex; align-items: center; gap: 4px; font-size: 13.5px; font-weight: 700; }
+.phx-kid-tx small svg { width: 15px; height: 15px; }
+.phx-kid-tx small.is-ok { color: #16a34a; } .phx-kid-tx small.is-off { color: #dc2626; } .phx-kid-tx small.is-wait { color: var(--muted); }
+.phx-stats { grid-area: stats; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.phx-stats li { --c: #3b6fe0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; align-items: center; padding: 12px 14px; border: 1px solid var(--card-line); border-radius: 20px; background: var(--surface); color: var(--navy); box-shadow: var(--card-shadow); }
+.phx-stat-ic { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px; background: color-mix(in srgb, var(--c) 15%, var(--surface)); color: var(--c); }
+.phx-stat-ic svg { width: 24px; height: 24px; }
+.phx-stats b { font-size: 26px; font-weight: 900; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.phx-stats small { grid-column: 1 / -1; color: var(--muted); font-size: 13.5px; font-weight: 600; line-height: 1.3; }
+.phx-stats .is-green { --c: #22a35a; } .phx-stats .is-blue { --c: #2f6bea; } .phx-stats .is-yellow { --c: #e0a100; } .phx-stats .is-pink { --c: #e11d74; }
+:root[data-theme="dark"] .phx-stats .is-yellow { --c: #fcd34d; }
+
+/* ---------- Thẻ chung ---------- */
+.phx-row { display: grid; gap: 18px; align-items: stretch; }
+.phx-row.is-2 { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+.phx-row.is-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.phx-card { position: relative; display: grid; align-content: start; gap: 12px; min-width: 0; padding: 18px 20px; border: 1px solid var(--card-line); border-radius: 22px; background: var(--surface); box-shadow: var(--card-shadow); }
+.phx-card h2 { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--navy); font-size: 19px; font-weight: 800; }
+.phx-card h2 > svg { flex: none; width: 24px; height: 24px; padding: 5px; box-sizing: content-box; border-radius: 10px; background: color-mix(in srgb, #2f6bea 13%, var(--surface)); color: #2f6bea; }
+.phx-card h2 > a { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; color: #2f6bea; font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.phx-card h2 > a svg { width: 16px; height: 16px; }
+.phx-sub { margin: -8px 0 0; color: var(--muted); font-size: 13.5px; }
+.phx-empty { margin: 0; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); color: var(--muted); font-size: 14px; line-height: 1.5; }
+
+/* Tiến độ học tập */
+.phx-prog { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 18px; }
+.phx-subj { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.phx-subj li { --c: #2f6bea; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.phx-subj li.tone-pink { --c: #e11d74; } .phx-subj li.tone-violet { --c: #8b5cf6; }
+.phx-subj-ic { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: color-mix(in srgb, var(--c) 14%, var(--surface)); font-size: 22px; }
+.phx-subj-tx { display: grid; gap: 6px; }
+.phx-subj-tx b { color: var(--navy); font-size: 16px; }
+.phx-subj-tx > i { display: block; height: 10px; overflow: hidden; border-radius: 99px; background: var(--surface-2); }
+.phx-subj-tx > i > i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c)); }
+.phx-subj strong { color: var(--navy); font-size: 18px; font-variant-numeric: tabular-nums; }
+.phx-chart { display: grid; gap: 8px; padding-left: 16px; border-left: 1px dashed var(--card-line); }
+.phx-chart > p { margin: 0; color: var(--navy); font-size: 14px; font-weight: 700; }
+.phx-bars { display: grid; grid-template-columns: repeat(7, 1fr); align-items: end; gap: 8px; height: 150px; }
+.phx-bars > div { position: relative; display: grid; grid-template-rows: 1fr auto; justify-items: center; height: 100%; }
+.phx-bars span { display: flex; align-items: flex-end; width: 100%; max-width: 28px; height: 100%; }
+.phx-bars span i { display: block; width: 100%; border-radius: 8px 8px 4px 4px; background: color-mix(in srgb, #2f6bea 30%, var(--surface)); }
+.phx-bars .is-today span i { background: linear-gradient(180deg, #4f8bff, #1f56d8); }
+.phx-bars small { margin-top: 6px; color: var(--muted); font-size: 12.5px; font-weight: 700; }
+.phx-bars .is-today small { color: #1f56d8; }
+.phx-bars em { position: absolute; top: -6px; left: 50%; z-index: 1; padding: 3px 8px; border-radius: 8px; background: #ffd43b; color: #1e2b4a; font-size: 11.5px; font-style: normal; font-weight: 800; white-space: nowrap; transform: translateX(-50%); }
+
+/* Đề xuất cho con */
+.phx-suggest { background: linear-gradient(160deg, color-mix(in srgb, #8b5cf6 9%, var(--surface)), var(--surface) 70%); }
+.phx-suggest h2 > svg { background: linear-gradient(135deg, #8b5cf6, #6d3fe0); color: #fff; }
+.phx-suggest-art { position: absolute; top: 10px; right: 14px; width: auto; height: 78px; pointer-events: none; }
+.phx-suggest ul { display: grid; gap: 8px; margin: 4px 0 0; padding: 12px 14px; border-radius: 16px; background: var(--surface); list-style: none; box-shadow: var(--card-shadow); }
+.phx-suggest li { display: flex; gap: 8px; color: var(--navy); font-size: 14.5px; line-height: 1.45; }
+.phx-suggest li svg { flex: none; width: 18px; height: 18px; margin-top: 2px; color: #22a35a; }
+.phx-suggest-go { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; border-radius: 99px; background: linear-gradient(90deg, #8b5cf6, #c026d3); color: #fff; font-size: 16px; font-weight: 800; text-decoration: none; box-shadow: 0 10px 20px -10px rgb(139 92 246 / .8); }
+.phx-suggest-go svg { width: 19px; height: 19px; color: #ffe066; }
+
+/* Lịch tuần */
+.phx-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.phx-week li { position: relative; display: grid; justify-items: center; gap: 2px; padding: 8px 0; border: 1px solid var(--card-line); border-radius: 12px; background: var(--surface); }
+.phx-week small { color: var(--muted); font-size: 12px; font-weight: 700; }
+.phx-week b { color: var(--navy); font-size: 18px; }
+.phx-week li.is-sun small, .phx-week li.is-sun b { color: #dc2626; }
+.phx-week li.is-today { border-color: transparent; background: linear-gradient(180deg, #4f8bff, #1f56d8); }
+.phx-week li.is-today small, .phx-week li.is-today b { color: #fff; }
+.phx-week li i { position: absolute; bottom: 3px; width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; }
+.phx-events { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.phx-events li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px; align-items: start; }
+.phx-events span { color: var(--navy); font-size: 13px; font-weight: 800; }
+.phx-events p { display: -webkit-box; margin: 0; overflow: hidden; color: var(--ink); font-size: 14px; line-height: 1.4; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+/* Bài cô giao */
+.phx-hw { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.phx-hw li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 14px; background: var(--surface-2); }
+.phx-hw-ic { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 10px; background: var(--surface); font-size: 18px; }
+.phx-hw-tx { display: grid; flex: 1; min-width: 0; }
+.phx-hw-tx b { overflow: hidden; color: var(--navy); font-size: 14.5px; text-overflow: ellipsis; white-space: nowrap; }
+.phx-hw-tx small { color: var(--muted); font-size: 12.5px; }
+.phx-hw em { display: inline-flex; align-items: center; gap: 3px; flex: none; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-style: normal; font-weight: 800; }
+.phx-hw em svg { width: 13px; height: 13px; }
+.phx-hw em.is-todo { background: #ffe4e6; color: #be123c; }
+.phx-hw em.is-late { background: #fee2e2; color: #991b1b; }
+.phx-hw em.is-done { background: #dcfce7; color: #15803d; }
+:root[data-theme="dark"] .phx-hw em.is-todo { background: #4c1424; color: #fda4af; }
+:root[data-theme="dark"] .phx-hw em.is-late { background: #4a1515; color: #fca5a5; }
+:root[data-theme="dark"] .phx-hw em.is-done { background: #12382a; color: #86efac; }
+
+/* Tin nhắn từ cô */
+.phx-teacher { display: flex; align-items: center; gap: 12px; }
+.phx-teacher-av { display: grid; place-items: center; flex: none; width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #ffd1dc, #ffb3c7); color: #9d174d; font-size: 20px; font-weight: 900; }
+.phx-teacher div { display: grid; }
+.phx-teacher b { color: var(--navy); font-size: 16px; }
+.phx-teacher small { color: var(--muted); font-size: 13px; }
+.phx-quotes { display: grid; gap: 8px; }
+.phx-quotes blockquote { display: grid; gap: 4px; margin: 0; padding: 10px 14px; border-radius: 14px; background: color-mix(in srgb, #2f6bea 7%, var(--surface-2)); color: var(--ink); font-size: 14.5px; line-height: 1.5; }
+.phx-quotes blockquote small { color: var(--muted); font-size: 12px; font-weight: 700; }
+
+/* Thành tích */
+.phx-awards { grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr) auto; align-items: center; gap: 16px; }
+.phx-awards-hd { display: flex; align-items: center; gap: 12px; }
+.phx-awards-cup { font-size: 46px; line-height: 1; }
+.phx-awards-hd h2 { font-size: 21px; }
+.phx-awards-hd p { margin: 4px 0 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.phx-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.phx-badges li { --c: #22a35a; position: relative; display: grid; justify-items: center; gap: 4px; padding: 12px 8px; border: 1px solid color-mix(in srgb, var(--c) 25%, var(--line)); border-radius: 18px; background: color-mix(in srgb, var(--c) 9%, var(--surface)); text-align: center; }
+.phx-badges li.tone-1 { --c: #2f6bea; } .phx-badges li.tone-2 { --c: #e11d74; } .phx-badges li.tone-3 { --c: #8b5cf6; } .phx-badges li.tone-4 { --c: #e0a100; }
+.phx-badges span { font-size: 32px; line-height: 1; }
+.phx-badges b { color: var(--navy); font-size: 13.5px; line-height: 1.3; }
+.phx-badges small { position: absolute; top: 6px; right: 8px; color: var(--c); font-size: 12px; font-weight: 800; }
+.phx-awards-total { display: flex; align-items: center; gap: 10px; padding: 14px 22px; border: 2px solid #ffd43b; border-radius: 22px; background: linear-gradient(135deg, #fff8d6, #ffeaa0); color: #1e2b4a; text-decoration: none; }
+.phx-awards-total b { font-size: 44px; font-weight: 900; line-height: 1; }
+.phx-awards-total span { font-size: 14px; font-weight: 800; line-height: 1.25; }
+:root[data-theme="dark"] .phx-awards-total { background: linear-gradient(135deg, #3b3112, #4a3a10); color: #fde68a; }
+
+/* Khối chi tiết bên dưới (Sổ lớp, luyện tập, nhắn cô, gia đình) cùng kiểu thẻ */
+.phx-more-h { margin: 8px 0 -4px; color: var(--navy); font-size: 20px; }
+.phx-main .ph-card { border: 1px solid var(--card-line); border-radius: 22px; box-shadow: var(--card-shadow); }
+.phx-main .ph-card h2 { color: var(--navy); }
+.phx-main .ph-card h2 > svg:first-child { width: 22px; height: 22px; padding: 4px; box-sizing: content-box; border-radius: 10px; background: color-mix(in srgb, #2f6bea 13%, var(--surface)); color: #2f6bea; }
+
+@media (prefers-reduced-motion: reduce) { .phx-bell.is-hot svg, .phx-bell.is-hot::after { animation: none; } }
+
+/* ---------- Máy tính bảng & điện thoại ---------- */
+@media (max-width: 1280px) {
+  .phx-row.is-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .phx-row.is-3 > :last-child { grid-column: 1 / -1; }
+  .phx-awards { grid-template-columns: minmax(0, 1fr) auto; }
+  .phx-awards .phx-badges, .phx-awards > .phx-empty { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (max-width: 1100px) {
+  .phx-hero { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "hello art" "kid kid" "stats stats"; }
+  .phx-hero-art { height: 150px; margin-bottom: 0; }
+  .phx-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .phx-row.is-2 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .phx-bar { gap: 8px; }
+  .phx-date { flex: 1 1 100%; justify-content: center; }
+  .phx-bar-sp { display: none; }
+  .phx-share { margin-right: auto; }
+  .phx-hero { padding: 18px 16px 16px; border-radius: 22px; }
+  .phx-hero-art { height: 104px; }
+  .phx-hello h1 { font-size: 26px; }
+  .phx-hello p { font-size: 15px; }
+  .phx-kid-av { width: 52px; height: 52px; font-size: 22px; }
+  .phx-stats { gap: 10px; }
+  .phx-stats li { padding: 10px 12px; }
+  .phx-stat-ic { width: 38px; height: 38px; }
+  .phx-stat-ic svg { width: 20px; height: 20px; }
+  .phx-stats b { font-size: 22px; }
+  .phx-stats small { font-size: 12.5px; white-space: normal; }
+  .phx-prog { grid-template-columns: minmax(0, 1fr); }
+  .phx-chart { padding: 14px 0 0; border-left: 0; border-top: 1px dashed var(--card-line); }
+  .phx-row.is-3 { grid-template-columns: minmax(0, 1fr); }
+  .phx-suggest-art { height: 60px; }
+  .phx-awards { grid-template-columns: minmax(0, 1fr); }
+  .phx-awards .phx-badges, .phx-awards > .phx-empty { grid-row: auto; }
+  .phx-awards-total { justify-content: center; }
+  .phx-badges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

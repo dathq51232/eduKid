@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
-import { Bell, BellRing, CalendarCheck, CalendarDays, Check, ChevronRight, MessageCircle, Moon, Pin, School, Send, Star, Target, TrendingUp, UserRound } from 'lucide-react';
+import { BarChart3, Bell, BookOpen, CalendarDays, Check, CheckCircle2, ChevronRight, ClipboardList, Clock, Home, LayoutDashboard, ListTodo, MessageCircle, Moon, Pin, Send, Settings2, Sparkles, Star, TrendingUp, Trophy, Users } from 'lucide-react';
+import BrandLogo from '@/components/brand/BrandLogo';
+import ThemeToggle from '@/components/brand/ThemeToggle';
 import { LUNAR_MONTH_NAME, canChiYear, solarToLunar } from '@/lib/utils/lunar';
 import ParentHeader from '@/components/parent/ParentHeader';
 import FamilyInfo from '@/components/parent/FamilyInfo';
@@ -37,7 +39,7 @@ import '@/styles/games.css';
 import '@/styles/parent.css';
 import '@/styles/result.css';
 import '@/styles/tone.css';
-import '@/styles/phd.css';
+import '@/styles/phx.css';
 
 export const metadata: Metadata = { title: 'Phụ huynh · EduChain Kids' };
 export const dynamic = 'force-dynamic';
@@ -169,67 +171,220 @@ export default async function ParentsPage() {
     const annToday = Boolean(latestAnn && latestAnn.day === today?.day);
     const bellCount = newReplies + (annToday ? 1 : 0);
     const weak = bySubj.filter((x) => (x.pct ?? 100) < 70).sort((a, b) => (a.pct ?? 0) - (b.pct ?? 0))[0];
+    // ---- Bố cục mới (phx-): số liệu cho thẻ tổng quan, đề xuất, lịch tuần, bài tập, thành tích ----
+    const graded = acts.filter((a) => a.pct !== null);
+    const avgPct = graded.length ? Math.round(graded.reduce((t, a) => t + (a.pct ?? 0), 0) / graded.length) : null;
+    const hw = ((homework ?? []) as { title: string; due_at: string; status: string; done: boolean }[])
+      .filter((a) => a.status === 'open' || a.done)
+      .map((a) => ({ ...a, late: !a.done && Date.parse(a.due_at) < Date.now() }))
+      .sort((a, b) => Number(a.done) - Number(b.done) || Date.parse(a.due_at) - Date.parse(b.due_at));
+    // tuần học (thứ Hai → Chủ nhật) chứa hôm nay, theo giờ Việt Nam
+    const dow = (new Date(`${todayVn}T00:00:00Z`).getUTCDay() + 6) % 7;
+    const weekDays = Array.from({ length: 7 }, (_, i) => new Date(Date.parse(`${todayVn}T00:00:00Z`) + (i - dow) * 86400_000).toISOString().slice(0, 10));
+    const WD_SHORT = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+    const events = [
+      ...hw.filter((a) => !a.done).map((a) => ({ day: vn(a.due_at), icon: '📝', text: `Hạn nộp: ${a.title}` })),
+      ...days.filter((d) => d.announcement).map((d) => ({ day: d.day, icon: '📢', text: d.announcement as string })),
+    ].filter((e) => weekDays.includes(e.day)).sort((a, b) => a.day.localeCompare(b.day));
+    const eventDays = new Set(events.map((e) => e.day));
+    // lời khen của cô trong 30 ngày (thẻ ★ trong Sổ lớp) → ô thành tích
+    const praiseCount = new Map<string, number>();
+    for (const d of days) for (const t of d.tags ?? []) if (t.startsWith('★')) { const k = t.replace(/^★\s*/, ''); praiseCount.set(k, (praiseCount.get(k) ?? 0) + 1); }
+    const praises = [...praiseCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const AWARD_IC = ['🏅', '🏆', '🎯', '⭐', '🛡️'];
+    // đề xuất cho con (quy tắc, không dùng AI): bài chưa làm, môn còn yếu, luyện đều mỗi ngày
+    const suggest: string[] = [];
+    if (pending[0]) suggest.push(`Làm bài cô giao “${pending[0].title}” (hạn ${fmtDue(pending[0].due_at)})`);
+    if (weak) suggest.push(`Ôn lại môn ${SUBJ[weak.k]} — con đang đúng ${weak.pct}%`);
+    const missing = Object.keys(SUBJ).find((k) => !bySubj.some((x) => x.k === k));
+    if (missing) suggest.push(`Thử một bài ${SUBJ[missing]} đầu tiên trong tuần`);
+    if (week.length < 5) suggest.push('Luyện 10 phút mỗi ngày để giữ nhịp học');
+    if (!suggest.length) suggest.push('Con đang học rất đều — thử một trò chơi trí tuệ để thư giãn nhé');
+    const teacherShort = cls?.teacher ? cls.teacher.trim().split(/\s+/).slice(-2).join(' ') : null;
+    const lastNote = timeline.find((d) => d.note);
+    const lastReply = (messages ?? []).find((m) => m.reply);
     return (
       <>
+        <div className="phx">
         <ParentHeader childCorner />
-        <main className="ph ph-v2 wrap">
+        {/* Thanh bên kiểu trang giáo viên (máy tính); điện thoại dùng thanh trên ParentHeader */}
+        <aside className="phx-side" aria-label="Góc phụ huynh">
+          <Link href="/phu-huynh" className="phx-brand" aria-label="EduChain Kids — Góc phụ huynh"><BrandLogo size={40} /></Link>
+          <span className="phx-role"><Users aria-hidden="true" /> Phụ huynh</span>
+          <nav className="phx-nav">
+            <a href="#tong-quan" className="is-on"><LayoutDashboard aria-hidden="true" /> Tổng quan</a>
+            <a href="#tien-do"><BarChart3 aria-hidden="true" /> Tiến độ học tập</a>
+            <a href="#bai-tap"><ClipboardList aria-hidden="true" /> Bài cô giao</a>
+            <a href="#lich"><CalendarDays aria-hidden="true" /> Lịch &amp; sự kiện</a>
+            <a href="#thanh-tich"><Trophy aria-hidden="true" /> Thành tích</a>
+            <a href="#ph-msg-title"><MessageCircle aria-hidden="true" /> Tin nhắn từ cô{bellCount > 0 && <em>{bellCount}</em>}</a>
+            <a href="#pm-title"><Send aria-hidden="true" /> Nhắn cô</a>
+            <a href="#ph-fam-title"><Home aria-hidden="true" /> Thông tin gia đình</a>
+          </nav>
+          <div className="phx-side-ft">
+            <Link href="/hoc-sinh" className="phx-side-go"><BookOpen aria-hidden="true" /> Cho con vào học</Link>
+            <Link href="/phu-huynh/tien-ich" className="phx-side-link"><Settings2 aria-hidden="true" /> Tiện ích gia đình</Link>
+            <div className="phx-side-tools"><ThemeToggle /><TourHelpButton className="phx-side-link" label="Hướng dẫn" /></div>
+            <SignOutButton className="phx-side-link" />
+          </div>
+          <Image className="phx-side-milo" src="/brand/milo-professor.webp" alt="" width={560} height={773} aria-hidden="true" />
+        </aside>
+        <main className="ph phx-main">
           <GuidedTour id="ph-con-v1" />
           {ovErr && <p className="adm-alert is-warn">Một số mục chưa bật: hãy chạy <code>supabase/migrations/0033_parent_family.sql</code> trên Supabase.</p>}
-          {/* ① Đầu trang kiểu trang chủ giáo viên: trái = ngày, lời chào, Milo; phải = Chia sẻ, chuông, ảnh đại diện + thẻ lớn "Hôm nay của con" */}
-          <div className="phd-top">
-            <div className="phd-top-l">
-              <p className="phd-date">
-                <CalendarDays aria-hidden="true" className="phd-date-ic" /> {dateLabel}
-                <span className="phd-lunar" title={`Ngày ${lunar.day} tháng ${LUNAR_MONTH_NAME[lunar.month]} năm ${canChiYear(lunar.year)}`}><Moon aria-hidden="true" /> {lunar.day}/{lunar.month}{lunar.leap ? ' nhuận' : ''}</span>
-              </p>
+          {/* ① Thanh trên: ngày · Chia sẻ · chuông · ba mẹ của con */}
+          <header className="phx-bar">
+            <p className="phx-date">
+              <CalendarDays aria-hidden="true" /> {dateLabel}
+              <span className="phx-lunar" title={`Ngày ${lunar.day} tháng ${LUNAR_MONTH_NAME[lunar.month]} năm ${canChiYear(lunar.year)}`}><Moon aria-hidden="true" /> {lunar.day}/{lunar.month}{lunar.leap ? ' nhuận' : ''}</span>
+            </p>
+            <span className="phx-bar-sp" />
+            <ShareApp who="parent" className="phx-share" />
+            <a href="#ph-msg-title" className={`phx-bell${bellCount ? ' is-hot' : ''}`} aria-label={bellCount ? `${bellCount} tin mới từ cô` : 'Tin nhắn từ cô'}>
+              <Bell aria-hidden="true" />{bellCount > 0 && <span>{bellCount > 9 ? '9+' : bellCount}</span>}
+            </a>
+            <a href="#ph-fam-title" className="phx-me" title="Thông tin gia đình">
+              <span className="phx-me-av" aria-hidden="true">👪</span>
+              <span className="phx-me-tx"><small>Ba mẹ của</small><b>{shortName}</b></span>
+            </a>
+          </header>
+
+          {/* ② Lời chào + tranh + thẻ con + 4 số liệu */}
+          <section className="phx-hero" id="tong-quan" data-tour="hom-nay">
+            <div className="phx-hello">
               <h1>Chào ba mẹ {shortName}! <span aria-hidden="true">👋</span></h1>
-              <p className="phd-wish">Cùng {shortName} học một bài nhỏ mỗi ngày nhé!</p>
-              <div className="phd-chips">
-                {cls && <span><School aria-hidden="true" /> Lớp {cls.name}{cls.school ? ` · ${cls.school}` : ''}</span>}
-                {cls?.teacher && <span><UserRound aria-hidden="true" /> GVCN: {cls.teacher}</span>}
-                {!cls && <span>Con chưa vào lớp nào</span>}
-              </div>
-              <Image className="phd-mascot" src="/brand/milo-artist.webp" alt="" width={560} height={749} priority aria-hidden="true" />
+              <p>Cùng con học tập, tiến bộ mỗi ngày với EduChain Kids.</p>
             </div>
-            <div className="phd-top-r">
-              <div className="phd-topbar">
-                <ShareApp who="parent" className="phd-share" />
-                <a href="#ph-msg-title" className={`phd-bell${bellCount ? ' is-hot' : ''}`} aria-label={bellCount ? `${bellCount} tin mới từ cô` : 'Tin nhắn từ cô'}>
-                  <Bell aria-hidden="true" />{bellCount > 0 && <span>{bellCount > 9 ? '9+' : bellCount}</span>}
-                </a>
-                <a href="#ph-fam-title" className="phd-av" title={`${childName} — thông tin gia đình`} aria-label="Thông tin gia đình">{shortName.charAt(0).toUpperCase()}</a>
+            <Image className="phx-hero-art" src="/brand/home/eco-ph.webp" alt="" width={640} height={709} priority aria-hidden="true" />
+            <div className="phx-kid">
+              <span className="phx-kid-av" aria-hidden="true">{shortName.charAt(0).toUpperCase()}</span>
+              <div className="phx-kid-tx">
+                <b>{childName}</b>
+                <span>{cls ? `Lớp ${cls.name}${cls.teacher ? ` · GVCN ${cls.teacher}` : ''}` : 'Con chưa vào lớp nào'}</span>
+                <small className={today?.recorded ? (today.status === 'present' ? 'is-ok' : 'is-off') : 'is-wait'}>
+                  {today?.recorded
+                    ? (today.status === 'present' ? <><Check aria-hidden="true" /> Hôm nay con có mặt{praiseToday ? ` · ⭐ ${praiseToday.replace(/^★\s*/, '')}` : ''}</> : `Hôm nay con ${(STATUS_LABEL[today.status as 'excused' | 'unexcused'] ?? 'vắng').toLowerCase()}`)
+                    : 'Cô chưa ghi Sổ lớp hôm nay'}
+                </small>
               </div>
-              <section className="phd-today" data-tour="hom-nay" aria-label="Hôm nay của con">
-                <span className="phd-pill"><CalendarCheck aria-hidden="true" /> Hôm nay của {shortName}</span>
-                {today?.recorded ? (
-                  <>
-                    <p className="phd-today-title">{today.status === 'present' ? <><Check aria-hidden="true" /> Con có mặt ở lớp</> : `Con ${(STATUS_LABEL[today.status as 'excused' | 'unexcused'] ?? 'vắng').toLowerCase()}`}</p>
-                    {praiseToday ? <p className="phd-today-sub">⭐ Cô khen: {praiseToday.replace(/^★\s*/, '')}</p> : today.note ? <p className="phd-today-sub">📝 {today.note}</p> : null}
-                  </>
-                ) : <p className="phd-today-title is-wait">Cô chưa ghi Sổ lớp hôm nay</p>}
-                {pending.length > 0 && <p className="phd-today-sub">📝 Còn {pending.length} bài cô giao chưa làm · hạn gần nhất {fmtDue(pending[0].due_at)}</p>}
-                <div className="phd-acts">
-                  <a href="#ph-msg-title" className="phd-go"><MessageCircle aria-hidden="true" /> Tin nhắn từ cô <ChevronRight aria-hidden="true" className="phd-arrow" /></a>
-                  <a href="#pm-title" className="phd-alt"><Send aria-hidden="true" /> Nhắn cô</a>
-                </div>
-                <Image className="phd-today-art" src="/emoji/f3d/books.webp" alt="" width={160} height={160} aria-hidden="true" />
-              </section>
             </div>
-          </div>
+            <ul className="phx-stats" data-tour="thang-nay">
+              <li className="is-green"><span className="phx-stat-ic" aria-hidden="true"><CheckCircle2 /></span><b>{avgPct === null ? '—' : `${avgPct}%`}</b><small>Đúng trung bình</small></li>
+              <li className="is-blue"><span className="phx-stat-ic" aria-hidden="true"><Clock /></span><b>{week.length}</b><small>Hoạt động 7 ngày</small></li>
+              <li className="is-yellow"><span className="phx-stat-ic" aria-hidden="true"><Trophy /></span><b>{month ? month.praise : '—'}</b><small>Lần cô khen {monthName}</small></li>
+              <li className="is-pink"><span className="phx-stat-ic" aria-hidden="true"><ListTodo /></span><b>{pending.length}</b><small>Bài cần làm</small></li>
+            </ul>
+          </section>
 
           <TuitionCard gate={gate} offer={offer} childName={childName} recap={gate.reason === 'trial' || gate.reason === 'expired' ? progressRecap(acts, 14) : null} />
 
           {newReplies > 0 && (
-            <a href="#pm-title" className="ph-alert"><Bell aria-hidden="true" /> <span><b>{cls?.teacher ? `Cô ${cls.teacher.trim().split(/\s+/).slice(-1)[0]}` : 'Cô'} vừa trả lời {newReplies} tin nhắn</b> của gia đình · Xem ngay</span></a>
+            <a href="#pm-title" className="ph-alert"><Bell aria-hidden="true" /> <span><b>{teacherShort ? `Cô ${teacherShort}` : 'Cô'} vừa trả lời {newReplies} tin nhắn</b> của gia đình · Xem ngay</span></a>
           )}
 
-          {/* ② 4 ô số liệu (giống trang giáo viên) */}
-          <ul className="phd-stats" data-tour="thang-nay">
-            <li className="phd-stat is-green"><span className="phd-stat-ic" aria-hidden="true"><CalendarCheck /></span><b>{month?.days ? `${month.present}/${month.days}` : '—'}</b><small>{month?.days ? `Ngày đi học ${monthName}` : 'Cô chưa ghi Sổ lớp'}</small></li>
-            <li className="phd-stat is-yellow"><span className="phd-stat-ic" aria-hidden="true"><Star /></span><b>{month ? month.praise : '—'}</b><small>Lần cô khen</small></li>
-            <li className="phd-stat is-coral"><span className="phd-stat-ic" aria-hidden="true"><BellRing /></span><b>{month ? month.remind : '—'}</b><small>Lần cô nhắc nhở</small></li>
-            <li className="phd-stat is-violet"><span className="phd-stat-ic" aria-hidden="true"><Target /></span><b>{week.length}</b><small>{week.length ? 'Hoạt động 7 ngày qua' : 'Chưa làm bài tuần này'}</small></li>
-          </ul>
+          {/* ③ Tiến độ học tập | Đề xuất cho con */}
+          <div className="phx-row is-2">
+            <section className="phx-card" id="tien-do" aria-labelledby="phx-prog-t">
+              <h2 id="phx-prog-t"><BarChart3 aria-hidden="true" /> Tiến độ học tập <a href="#ph-res-title">Xem chi tiết <ChevronRight aria-hidden="true" /></a></h2>
+              <div className="phx-prog">
+                <ul className="phx-subj">
+                  {Object.keys(SUBJ).map((k, i) => {
+                    const x = bySubj.find((s) => s.k === k);
+                    return (
+                      <li key={k} className={`tone-${['blue', 'pink', 'violet'][i]}`}>
+                        <span className="phx-subj-ic" aria-hidden="true">{['🔢', '📖', '🔤'][i]}</span>
+                        <span className="phx-subj-tx"><b>{SUBJ[k]}</b><i aria-hidden="true"><i style={{ width: `${x?.pct ?? 0}%` }} /></i></span>
+                        <strong>{x ? `${x.pct}%` : '—'}</strong>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="phx-chart" aria-label={`Số hoạt động 7 ngày qua: ${perDay.join(', ')}`}>
+                  <p>Hoạt động trong tuần</p>
+                  <div className="phx-bars">
+                    {last7.map((d, i) => (
+                      <div key={d} className={d === todayVn ? 'is-today' : undefined}>
+                        {d === todayVn && perDay[i] > 0 && <em>{perDay[i]} hoạt động</em>}
+                        <span><i style={{ height: `${perDay[i] ? 16 + (perDay[i] / maxDay) * 84 : 6}%` }} /></span>
+                        <small>{weekday(d)}</small>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section className="phx-card phx-suggest" aria-labelledby="phx-sug-t">
+              <h2 id="phx-sug-t"><Sparkles aria-hidden="true" /> Đề xuất cho con</h2>
+              <p className="phx-sub">Dựa trên kết quả học tập tuần này</p>
+              <Image className="phx-suggest-art" src="/brand/milo-robot.webp" alt="" width={560} height={744} aria-hidden="true" />
+              <ul>{suggest.slice(0, 3).map((t) => <li key={t}><CheckCircle2 aria-hidden="true" /> {t}</li>)}</ul>
+              <Link href="/hoc-sinh" className="phx-suggest-go">Cho con vào học ngay <Sparkles aria-hidden="true" /></Link>
+            </section>
+          </div>
+
+          {/* ④ Lịch tuần | Bài tập | Tin nhắn từ giáo viên */}
+          <div className="phx-row is-3">
+            <section className="phx-card" id="lich" aria-labelledby="phx-cal-t">
+              <h2 id="phx-cal-t"><CalendarDays aria-hidden="true" /> Lịch &amp; sự kiện <Link href="/phu-huynh/tien-ich">Mở lịch <ChevronRight aria-hidden="true" /></Link></h2>
+              <ol className="phx-week">
+                {weekDays.map((d, i) => (
+                  <li key={d} className={`${d === todayVn ? 'is-today' : ''}${i === 6 ? ' is-sun' : ''}`}>
+                    <small>{WD_SHORT[i]}</small><b>{Number(d.slice(8))}</b>{eventDays.has(d) && <i aria-label="có sự kiện" />}
+                  </li>
+                ))}
+              </ol>
+              {events.length ? (
+                <ul className="phx-events">
+                  {events.slice(0, 4).map((e, i) => <li key={i}><span>{WD_SHORT[weekDays.indexOf(e.day)]} · {Number(e.day.slice(8))}/{Number(e.day.slice(5, 7))}</span><p>{e.icon} {e.text}</p></li>)}
+                </ul>
+              ) : <p className="phx-empty">Tuần này chưa có hạn nộp bài hay thông báo nào của lớp.</p>}
+            </section>
+            <section className="phx-card" id="bai-tap" aria-labelledby="phx-hw-t">
+              <h2 id="phx-hw-t"><ClipboardList aria-hidden="true" /> Bài cô giao</h2>
+              {hw.length ? (
+                <ul className="phx-hw">
+                  {hw.slice(0, 4).map((a, i) => (
+                    <li key={i}>
+                      <span className="phx-hw-ic" aria-hidden="true">📝</span>
+                      <span className="phx-hw-tx"><b>{a.title}</b><small>Hạn: {fmtDue(a.due_at)}</small></span>
+                      <em className={a.done ? 'is-done' : a.late ? 'is-late' : 'is-todo'}>{a.done ? <><Check aria-hidden="true" /> Đã làm</> : a.late ? 'Quá hạn' : 'Chưa làm'}</em>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="phx-empty">Cô chưa giao bài nào. Bài cô giao sẽ hiện ở đây kèm hạn nộp.</p>}
+            </section>
+            <section className="phx-card" aria-labelledby="phx-tm-t">
+              <h2 id="phx-tm-t"><MessageCircle aria-hidden="true" /> Tin nhắn từ cô <a href="#ph-msg-title">Xem tất cả <ChevronRight aria-hidden="true" /></a></h2>
+              <div className="phx-teacher">
+                <span className="phx-teacher-av" aria-hidden="true">{(teacherShort ?? 'C').split(/\s+/).slice(-1)[0].charAt(0)}</span>
+                <div><b>{teacherShort ? `Cô ${teacherShort}` : 'Cô chủ nhiệm'}</b><small>{cls ? `GVCN lớp ${cls.name}` : 'Chưa có lớp'}</small></div>
+              </div>
+              {latestAnn || lastNote || lastReply ? (
+                <div className="phx-quotes">
+                  {latestAnn && <blockquote><small>📢 Thông báo · {fmtDay(latestAnn.day)}</small>{latestAnn.announcement}</blockquote>}
+                  {lastNote && lastNote !== latestAnn && <blockquote><small>📝 Nhận xét · {fmtDay(lastNote.day)}</small>{lastNote.note}</blockquote>}
+                  {!lastNote && lastReply && <blockquote><small>💬 Cô trả lời</small>{lastReply.reply}</blockquote>}
+                </div>
+              ) : <p className="phx-empty">Khi cô ghi Sổ lớp hoặc trả lời tin nhắn, lời của cô sẽ hiện ở đây.</p>}
+            </section>
+          </div>
+
+          {/* ⑤ Thành tích của con: lời khen của cô trong 30 ngày */}
+          <section className="phx-card phx-awards" id="thanh-tich" aria-labelledby="phx-aw-t">
+            <div className="phx-awards-hd">
+              <span className="phx-awards-cup" aria-hidden="true">🏆</span>
+              <div><h2 id="phx-aw-t">Thành tích của con</h2><p>Cùng nhìn lại những nỗ lực và tiến bộ của {shortName} nhé!</p></div>
+            </div>
+            {praises.length ? (
+              <ul className="phx-badges">
+                {praises.map(([t, n], i) => <li key={t} className={`tone-${i % 5}`}><span aria-hidden="true">{AWARD_IC[i % AWARD_IC.length]}</span><b>{t}</b>{n > 1 && <small>×{n}</small>}</li>)}
+              </ul>
+            ) : <p className="phx-empty">Lời khen của cô trong Sổ lớp (⭐) sẽ thành huy hiệu ở đây.</p>}
+            <Link href="/thanh-tich" className="phx-awards-total"><b>{month?.praise ?? 0}</b><span>lần cô khen<br />{monthName}</span></Link>
+          </section>
+
+          <h2 className="phx-more-h">Chi tiết từng ngày</h2>
+
 
           <div className="ph-grid">
             <div className="ph-side">
@@ -326,6 +481,7 @@ export default async function ParentsPage() {
             <MoneyCard href="/phu-huynh/tien-ich?xem=thu-chi" title="Thu chi gia đình" />
           </div>
         </main>
+        </div>
       </>
     );
   }
