@@ -4,7 +4,7 @@
 // tạo phòng (sinh đề riêng cho từng em ngay trên máy cô), phát mã, xem kết quả, cho làm lại, xem cờ bất thường.
 // Tuỳ chọn ĐẤU CẶP (mục 8.2, migration 0073): bốc thăm chia cặp, mỗi vòng một phòng thi, loại trực tiếp (BattlePanel).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Copy, DoorOpen, Eye, FileSpreadsheet, Flag, Lock, QrCode as QrIcon, RotateCcw, Settings2, Swords, Trash2, Unlock, Users } from 'lucide-react';
+import { BookOpen, Check, ChevronDown, Clock, Copy, DoorOpen, Eye, FileSpreadsheet, Flag, Lock, Plus, QrCode as QrIcon, RotateCcw, Settings2, Swords, Trash2, Unlock, Users } from 'lucide-react';
 import QrCode from '@/components/billing/QrCode';
 import { XS, downloadXlsx, range, type XCell } from '@/lib/xlsx';
 import { createClient } from '@/lib/supabase/client';
@@ -52,31 +52,81 @@ export default function ExamRooms({ classId, className, grade, students }: { cla
   }, [classId]);
   useEffect(() => { void load(); }, [load]);
 
+  // Hai thẻ: "Phòng của lớp" (cô mở trang chủ yếu để xem mã, kết quả) và "Tạo mới".
+  // Khung tạo phòng chỉ ẩn đi (không gỡ) để cô chuyển thẻ không mất các ô đã chọn.
+  // Lớp chưa có phòng thi lẫn đấu cặp nào → mở sẵn thẻ Tạo mới (chỉ quyết một lần khi tải xong cả hai).
+  const [tab, setTab] = useState<'list' | 'new'>('list');
+  const [battleCount, setBattleCount] = useState<number | null>(null);
+  const tabbed = useRef(false);
+  useEffect(() => {
+    if (!rooms || battleCount === null || tabbed.current) return;
+    tabbed.current = true;
+    if (!rooms.length && !battleCount) setTab('new');
+  }, [rooms, battleCount]);
   const topRef = useRef<HTMLDivElement>(null);
-  // Danh sách phòng ở đầu trang (cô mở trang chủ yếu để xem mã, kết quả); khung tạo phòng ở dưới
+  const [now] = useState(() => Date.now());
+  const activeRooms = (rooms ?? []).filter((r) => r.status === 'open' && new Date(r.closes_at).getTime() > now);
+  const closedRooms = (rooms ?? []).filter((r) => !activeRooms.includes(r));
+  const removeClosed = async () => {
+    if (!window.confirm(`Xoá cả ${closedRooms.length} phòng đã đóng và toàn bộ bài làm trong các phòng đó? Không hoàn tác được.`)) return;
+    const sb = createClient();
+    for (const r of closedRooms) await sb.rpc('teacher_room_delete', { p_room: r.id });
+    void load();
+  };
+  const card = (r: RoomRow) => <RoomCard key={r.id} room={r} open={openId === r.id} onToggle={() => setOpenId((x) => (x === r.id ? null : r.id))} onChanged={load} />;
+
   return (
     <>
       <div ref={topRef} />
+      <div className="room-tabs" role="tablist" aria-label="Phòng thi lớp">
+        <button type="button" role="tab" aria-selected={tab === 'list'} className={tab === 'list' ? 'is-on' : ''} onClick={() => setTab('list')}>
+          <DoorOpen aria-hidden="true" /> Phòng của lớp{activeRooms.length > 0 && <span className="room-tab-n">{activeRooms.length} đang mở</span>}
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'new'} className={tab === 'new' ? 'is-on' : ''} onClick={() => setTab('new')}>
+          <Plus aria-hidden="true" /> Tạo mới
+        </button>
+      </div>
       {msg && <p className="adm-alert is-ok" role="status">{msg}</p>}
       {err && <p className="adm-alert is-error" role="alert">{err}</p>}
-      <section className="dash-section">
-        <h2><DoorOpen aria-hidden="true" /> Phòng thi của lớp</h2>
-        {rooms === null ? <p className="dash-muted">Đang tải…</p> : rooms.length === 0 ? <p className="dash-muted">Chưa có phòng thi nào. Tạo phòng ở phần dưới.</p> : (
-          <ul className="room-list">
-            {rooms.map((r) => (
-              <RoomCard key={r.id} room={r} open={openId === r.id} onToggle={() => setOpenId((x) => (x === r.id ? null : r.id))} onChanged={load} />
-            ))}
-          </ul>
+
+      <div role="tabpanel" hidden={tab !== 'list'} className="room-panel">
+        <section className="dash-section">
+          <h2><DoorOpen aria-hidden="true" /> Phòng thi đang mở</h2>
+          {rooms === null ? <p className="dash-muted">Đang tải…</p> : activeRooms.length === 0 ? (
+            <div className="room-empty">
+              <p className="dash-muted">{rooms.length ? 'Không có phòng nào đang mở hoặc sắp mở.' : 'Lớp chưa có phòng thi nào.'}</p>
+              <button type="button" className="btn btn-yellow btn-sm" onClick={() => setTab('new')}><Plus aria-hidden="true" /> Tạo phòng thi</button>
+            </div>
+          ) : <ul className="room-list">{activeRooms.map(card)}</ul>}
+        </section>
+        <BattlePanel classId={classId} grade={grade} refresh={battleTick} onChanged={() => void load()} onCount={(n) => setBattleCount(n)} />
+        {closedRooms.length > 0 && (
+          <details className="room-archive">
+            <summary>
+              <ChevronDown aria-hidden="true" className="room-archive-chev" />
+              <b>Phòng thi đã đóng</b> <span className="room-archive-n">{closedRooms.length}</span>
+            </summary>
+            <div className="room-archive-body">
+              <p className="room-archive-tools">
+                <span className="dash-muted">Bấm “Kết quả” để xem điểm, tải Excel; “Mở lại” nếu cần cho em làm tiếp.</span>
+                {closedRooms.length > 1 && <button type="button" className="mini-btn is-danger" onClick={() => void removeClosed()}><Trash2 aria-hidden="true" /> Xoá cả {closedRooms.length} phòng đã đóng</button>}
+              </p>
+              <ul className="room-list">{closedRooms.map(card)}</ul>
+            </div>
+          </details>
         )}
-      </section>
-      <BattlePanel classId={classId} grade={grade} refresh={battleTick} onChanged={() => void load()} />
-      <CreateRoom classId={classId} className={className} grade={grade} students={students} subjects={subjects}
-        onCreated={(code, battle) => {
-          setMsg(battle ? `Đã bốc thăm chia cặp và mở vòng 1. Mã phòng vòng 1: ${code} — các em làm lúc nào cũng được trong giờ mở; cặp nào hai em nộp xong là có kết quả.`
-            : `Đã tạo phòng thi. Mã phòng: ${code} — đọc hoặc viết mã lên bảng cho các em.`);
-          void load(); if (battle) setBattleTick((t) => t + 1);
-          topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }} />
+      </div>
+
+      <div role="tabpanel" hidden={tab !== 'new'} className="room-panel">
+        <CreateRoom classId={classId} className={className} grade={grade} students={students} subjects={subjects}
+          onCreated={(code, battle) => {
+            setMsg(battle ? `Đã bốc thăm chia cặp và mở vòng 1. Mã phòng vòng 1: ${code} — các em làm lúc nào cũng được trong giờ mở; cặp nào hai em nộp xong là có kết quả.`
+              : `Đã tạo phòng thi. Mã phòng: ${code} — đọc hoặc viết mã lên bảng cho các em.`);
+            void load(); if (battle) setBattleTick((t) => t + 1);
+            setTab('list');
+            topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }} />
+      </div>
     </>
   );
 }
@@ -210,49 +260,69 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
 
   return (
     <form className="dash-card room-create" onSubmit={create}>
-      <h2>🌼 Tạo phòng thi mới · lớp {className}</h2>
-      <p className="dash-muted">
-        {mode === 'chung' ? <>Cả lớp làm <b>chung một đề</b> cô đã duyệt (mỗi em đảo thứ tự câu và phương án)</> : <>Mỗi em nhận <b>một đề riêng</b> theo cùng quy tắc</>}
-        {t && t.questions > 0 ? <> — {t.byMuc[1]} câu mức 1, {t.byMuc[2]} câu mức 2, {t.byMuc[3]} câu mức 3</> : null}, làm <b>một lần</b>, máy chấm ngay. Em chỉ thấy kết quả của mình; đáp án hiện sau khi phòng đóng.
-      </p>
-      <div className="room-form">
-        <label className="adm-field"><span>Môn</span>
-          <select value={subject} onChange={(e) => { if (!dropDrafts()) return; setSubject(e.target.value as SubjectCode); setByDang(e.target.value === 'tieng-viet'); setPicked([]); resetRules(); }}>
+      <h2>🌼 Tạo mới cho lớp {className}</h2>
+
+      {/* Bước 1: hình thức — hai thẻ chọn thay cho ô tick dễ bị bỏ sót */}
+      <section className="room-step" aria-label="Hình thức">
+        <div className="room-step-head"><h3><span className="room-step-no">1</span> Hình thức</h3></div>
+        <div className="room-mode" role="radiogroup" aria-label="Hình thức">
+          <label className={`room-mode-opt${!battle ? ' is-on' : ''}`}>
+            <input type="radio" name="room-kind" checked={!battle} onChange={() => { if (!battle || !dropDrafts()) return; setBattle(false); }} />
+            <DoorOpen aria-hidden="true" />
+            <span><b>Phòng thi</b>
+              <small>{mode === 'chung' ? 'Cả lớp làm chung một đề cô đã duyệt (mỗi em đảo câu, phương án)' : 'Mỗi em nhận một đề riêng theo cùng quy tắc'}, làm <b>một lần</b>, máy chấm ngay. Em chỉ thấy kết quả của mình; đáp án hiện sau khi phòng đóng.</small></span>
+          </label>
+          <label className={`room-mode-opt is-battle${battle ? ' is-on' : ''}`}>
+            <input type="radio" name="room-kind" checked={battle} onChange={() => { if (battle || !dropDrafts()) return; setBattle(true); }} />
+            <Swords aria-hidden="true" />
+            <span><b>Đấu cặp — loại trực tiếp</b>
+              <small>Máy bốc thăm chia cặp, mỗi cặp chung một đề; làm lúc nào cũng được trong giờ mở. Đúng nhiều câu hơn thắng, bằng câu thì ai nhanh hơn thắng. Em thắng vào vòng sau (đề khó hơn) đến khi có nhà vô địch.</small></span>
+          </label>
+        </div>
+      </section>
+
+      {/* Bước 2: môn + chủ đề */}
+      <section className="room-step" aria-label="Môn và chủ đề">
+        <div className="room-step-head">
+          <h3><span className="room-step-no">2</span><BookOpen aria-hidden="true" /> Môn và chủ đề</h3>
+          <span className="dash-muted">{picked.length ? `Đã chọn ${picked.length} chủ đề` : 'Chọn môn rồi tick ít nhất một chủ đề.'}</span>
+          <select className="room-subject" value={subject} aria-label="Môn" onChange={(e) => { if (!dropDrafts()) return; setSubject(e.target.value as SubjectCode); setByDang(e.target.value === 'tieng-viet'); setPicked([]); resetRules(); }}>
             {subjects.map((s) => <option key={s} value={s}>{SUBJECT_NAME[s]}</option>)}
           </select>
-        </label>
-        <label className="adm-field"><span>Số câu</span>
-          <input type="number" min={3} max={40} value={n} onChange={(e) => { if (!dropDrafts()) return; setN(Math.max(3, Math.min(40, Number(e.target.value) || def.n))); resetRules(); }} />
-        </label>
-        <label className="adm-field"><span>Thời gian (phút)</span>
-          <input type="number" min={5} max={90} value={minutes} onChange={(e) => setMinutes(Math.max(5, Math.min(90, Number(e.target.value) || def.minutes)))} />
-        </label>
-        <label className="adm-field"><span>Mở lúc</span><input type="datetime-local" value={opens} onChange={(e) => setOpens(e.target.value)} required /></label>
-        <label className="adm-field"><span>Đóng lúc</span><input type="datetime-local" value={closes} onChange={(e) => setCloses(e.target.value)} required /></label>
-        <label className="adm-field room-title"><span>Tên phòng (tuỳ chọn)</span><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={autoTitle} maxLength={200} /></label>
-      </div>
-      <label className={`bt-toggle${battle ? ' is-on' : ''}`}>
-        <input type="checkbox" checked={battle} onChange={(e) => { if (!dropDrafts()) return; setBattle(e.target.checked); }} />
-        <Swords aria-hidden="true" />
-        <span><b>Đấu cặp — bốc thăm chia cặp, loại trực tiếp</b>
-          <small>Máy bốc thăm chia cặp, mỗi cặp làm chung một đề (mỗi em đảo thứ tự câu, phương án). Các em làm lúc nào cũng được trong giờ mở — không cần vào cùng lúc. Đúng nhiều câu hơn thắng; bằng câu thì ai làm nhanh hơn thắng. Em thắng vào vòng sau (đề mới, khó hơn) đến khi có nhà vô địch.</small></span>
-      </label>
-      <fieldset className="room-units">
-        <legend>Chủ đề kiểm tra</legend>
-        {units.length === 0 ? <p className="dash-muted">Đang tải ngân hàng bài…</p> : units.map((u) => (
-          <label key={u.code} className={`room-unit${picked.includes(u.code) ? ' is-on' : ''}`}>
-            <input type="checkbox" checked={picked.includes(u.code)} onChange={(e) => { if (!dropDrafts()) return; const on = e.target.checked; setPicked((p) => (on ? [...p, u.code] : p.filter((x) => x !== u.code))); resetRules(); }} />
-            <span><b>{u.title}</b><small>HK{u.semester} · {u.ids.length} bài</small></span>
-          </label>
-        ))}
-      </fieldset>
-      {matrix && <p className={have < n ? 'exam-warn' : 'dash-muted'}>{have < n ? `Quy tắc hiện có ${have} câu (ít hơn ${n}) — chủ đề đã chọn còn ít câu, hoặc cô đã bớt câu.` : `Đủ ${have} câu cho ${mode === 'chung' ? 'đề chung' : `${students.length} đề riêng`}.`}</p>}
+        </div>
+        <fieldset className="room-units" aria-label="Chủ đề kiểm tra">
+          {units.length === 0 ? <p className="dash-muted">Đang tải ngân hàng bài…</p> : units.map((u) => (
+            <label key={u.code} className={`room-unit${picked.includes(u.code) ? ' is-on' : ''}`}>
+              <input type="checkbox" checked={picked.includes(u.code)} onChange={(e) => { if (!dropDrafts()) return; const on = e.target.checked; setPicked((p) => (on ? [...p, u.code] : p.filter((x) => x !== u.code))); resetRules(); }} />
+              <span><b>{u.title}</b><small>HK{u.semester} · {u.ids.length} bài</small></span>
+            </label>
+          ))}
+        </fieldset>
+      </section>
 
-      {/* Hai bước luôn hiện để cô thấy có thể chỉnh; cần chọn chủ đề trước mới bấm được */}
+      {/* Bước 3: số câu, thời gian, giờ mở – đóng, tên */}
+      <section className="room-step" aria-label="Số câu và thời gian">
+        <div className="room-step-head"><h3><span className="room-step-no">3</span><Clock aria-hidden="true" /> Số câu và thời gian</h3></div>
+        <div className="room-form">
+          <label className="adm-field"><span>Số câu</span>
+            <input type="number" min={3} max={40} value={n} onChange={(e) => { if (!dropDrafts()) return; setN(Math.max(3, Math.min(40, Number(e.target.value) || def.n))); resetRules(); }} />
+          </label>
+          <label className="adm-field"><span>{battle ? 'Phút mỗi vòng' : 'Thời gian (phút)'}</span>
+            <input type="number" min={5} max={90} value={minutes} onChange={(e) => setMinutes(Math.max(5, Math.min(90, Number(e.target.value) || def.minutes)))} />
+          </label>
+          <label className="adm-field"><span>Mở lúc</span><input type="datetime-local" value={opens} onChange={(e) => setOpens(e.target.value)} required /></label>
+          <label className="adm-field"><span>Đóng lúc</span><input type="datetime-local" value={closes} onChange={(e) => setCloses(e.target.value)} required /></label>
+          <label className="adm-field room-title"><span>Tên (tuỳ chọn)</span><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={autoTitle} maxLength={200} /></label>
+        </div>
+        {matrix && <p className={have < n ? 'exam-warn' : 'dash-muted'}>{have < n ? `Quy tắc hiện có ${have} câu (ít hơn ${n}) — chủ đề đã chọn còn ít câu, hoặc cô đã bớt câu.`
+          : `Đủ ${have} câu cho ${battle ? 'mỗi cặp' : mode === 'chung' ? 'đề chung' : `${students.length} đề riêng`}${t ? ` — ${t.byMuc[1]} câu mức 1, ${t.byMuc[2]} câu mức 2, ${t.byMuc[3]} câu mức 3` : ''}.`}</p>}
+      </section>
+
+      {/* Hai bước cuối luôn hiện để cô thấy có thể chỉnh; cần chọn chủ đề trước mới bấm được */}
       <section className="room-step" aria-label="Quy tắc sinh đề">
         <div className="room-step-head">
-          <h3><span className="room-step-no">1</span><Settings2 aria-hidden="true" /> Quy tắc sinh đề</h3>
-          <span className="dash-muted">{!matrix ? 'Tick ít nhất một chủ đề ở trên để đặt quy tắc: đề riêng / đề chung, số câu từng mức, điểm mỗi câu.'
+          <h3><span className="room-step-no">4</span><Settings2 aria-hidden="true" /> Quy tắc sinh đề</h3>
+          <span className="dash-muted">{!matrix ? 'Chọn chủ đề ở bước 2 để đặt quy tắc: đề riêng / đề chung, số câu từng mức, điểm mỗi câu.'
             : `${mode === 'chung' ? 'Đề chung' : 'Đề riêng từng em'} · ${ratio === 'tu-chinh' ? 'cô tự chỉnh' : RATIOS.find((r) => r.key === ratio)?.name}${t ? ` · ${t.questions} câu · ${t.score} đ` : ''}`}</span>
           <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowRules((v) => !v)} aria-expanded={showRules && !!matrix} disabled={!matrix}><Settings2 aria-hidden="true" /> {showRules && matrix ? 'Thu gọn' : 'Chỉnh quy tắc'}</button>
         </div>
@@ -267,7 +337,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
 
       {!battle && <section className="room-step" aria-label="Xem trước đề">
         <div className="room-step-head">
-          <h3><span className="room-step-no">2</span><Eye aria-hidden="true" /> Xem trước và sửa đề</h3>
+          <h3><span className="room-step-no">5</span><Eye aria-hidden="true" /> Xem trước và sửa đề</h3>
           <span className="dash-muted">{!matrix ? 'Sau khi chọn chủ đề, bấm “Xem trước đề” để xem từng đề, đổi câu, sửa câu hỏi và đáp án.'
             : drafts ? `${drafts.length} đề · ${editedCount} câu cô đã sửa` : 'Không bắt buộc — bỏ qua thì máy sinh đề lúc tạo phòng.'}</span>
           <button type="button" className="btn btn-outline btn-sm" onClick={preview} disabled={!have}><Eye aria-hidden="true" /> {drafts ? 'Sinh lại đề' : 'Xem trước đề'}</button>
@@ -279,7 +349,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
       </section>}
 
       {err && <p className="adm-alert is-error" role="alert">{err}</p>}
-      <button type="submit" className="btn btn-yellow" disabled={busy || !picked.length || problems > 0}>
+      <button type="submit" className="btn btn-yellow room-submit" disabled={busy || !picked.length || problems > 0}>
         {battle ? <Swords aria-hidden="true" /> : <DoorOpen aria-hidden="true" />} {busy ? (battle ? 'Đang bốc thăm chia cặp…' : 'Đang tạo đề cho từng em…')
           : battle ? `Bốc thăm chia cặp & mở vòng 1 cho ${students.length} em` : `Tạo phòng cho ${students.length} em${drafts ? ' với đề đã duyệt' : ''}`}
       </button>

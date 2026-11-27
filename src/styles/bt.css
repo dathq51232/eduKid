@@ -1,13 +1,5 @@
-/* ĐẤU CẶP trong PHÒNG THI LỚP (bt-) — ô chọn khi tạo phòng, khung Đấu cặp (sơ đồ nhánh) của cô, kết quả trận của em.
+/* ĐẤU CẶP trong PHÒNG THI LỚP (bt-) — khung Đấu cặp (sơ đồ nhánh) của cô, kết quả trận của em.
    Màu theo biến chung (sáng / tối tự đổi); hoạt ảnh chỉ dùng transform / opacity. */
-
-/* ---------- ô chọn Đấu cặp khi tạo phòng ---------- */
-.bt-toggle { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 2px dashed var(--line-strong, var(--line)); border-radius: 14px; cursor: pointer; }
-.bt-toggle.is-on { border-style: solid; border-color: #d97706; background: rgb(245 158 11 / .1); }
-.bt-toggle > svg { flex: none; width: 22px; height: 22px; color: #d97706; margin-top: 1px; }
-.bt-toggle input { margin-top: 4px; }
-.bt-toggle span { display: grid; gap: 3px; }
-.bt-toggle small { color: var(--muted); font-size: 13px; }
 
 /* ---------- khung Đấu cặp của cô ---------- */
 .bt-panel { display: grid; gap: 12px; }

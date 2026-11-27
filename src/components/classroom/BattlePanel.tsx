@@ -5,7 +5,7 @@
 // Ở đây: sơ đồ nhánh từng vòng (kết quả từng cặp, ai thắng, vì sao), xử thắng cặp chưa phân định, bốc thăm mở vòng sau
 // (máy cô sinh đề mới, khó hơn, từ cùng các bài), kết thúc. Tự tải lại mỗi 20 giây khi đang mở trang.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, Crown, Gavel, Lock, RefreshCw, Search, Shuffle, Swords, X } from 'lucide-react';
+import { ChevronDown, Crown, Gavel, Lock, RefreshCw, Search, Shuffle, Swords, Trash2, X } from 'lucide-react';
 import { fold } from '@/lib/classroom/teacher-nav';
 import { SUBJECT_NAME } from '@/lib/classroom/assignments';
 import type { Matrix } from '@/lib/exams/matrix';
@@ -35,14 +35,17 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 
 function endOfDay() { const d = new Date(); d.setHours(21, 0, 0, 0); if (d.getTime() < Date.now() + 30 * 60_000) d.setTime(Date.now() + 2 * 3600_000); return d; }
 
-export default function BattlePanel({ classId, grade, refresh, onChanged }: { classId: string; grade: number; refresh: number; onChanged: () => void }) {
+export default function BattlePanel({ classId, grade, refresh, onChanged, onCount }: {
+  classId: string; grade: number; refresh: number; onChanged: () => void; /** báo số đấu cặp sau khi tải (trang chọn thẻ mở sẵn) */ onCount?: (n: number) => void;
+}) {
   const [list, setList] = useState<BattleView[] | null>(null);
   const [err, setErr] = useState('');
   const last = useRef('');
-  const apply = useCallback((bs: BattleView[]) => { const j = JSON.stringify(bs); if (j !== last.current) { last.current = j; setList(bs); } }, []);
+  const countRef = useRef(onCount); countRef.current = onCount;
+  const apply = useCallback((bs: BattleView[]) => { countRef.current?.(bs.length); const j = JSON.stringify(bs); if (j !== last.current) { last.current = j; setList(bs); } }, []);
   const load = useCallback(async () => {
     try { apply((await api<{ battles: BattleView[] }>(`/api/giao-vien/dau-cap?classId=${classId}`)).battles); setErr(''); }
-    catch (e) { setErr((e as Error).message); setList((l) => l ?? []); }
+    catch (e) { setErr((e as Error).message); setList((l) => l ?? []); countRef.current?.(0); }
   }, [classId, apply]);
   useEffect(() => { void load(); }, [load, refresh]);
   useEffect(() => {
@@ -50,18 +53,56 @@ export default function BattlePanel({ classId, grade, refresh, onChanged }: { cl
     return () => clearInterval(t);
   }, [load]);
 
+  const [busy, setBusy] = useState(false);
+  /** Xoá đấu cặp đã kết thúc (kèm các phòng thi từng vòng) — một hoặc nhiều */
+  const remove = async (ids: string[], ask: string) => {
+    if (!ids.length || !window.confirm(ask)) return;
+    setBusy(true); setErr('');
+    try {
+      for (const id of ids) await api(`/api/giao-vien/dau-cap/${id}`, { method: 'DELETE' });
+    } catch (e) { setErr((e as Error).message); }
+    finally { setBusy(false); await load(); onChanged(); }
+  };
+
   if (list === null) return null;
   if (!list.length && !err) return null;
+  const playing = list.filter((b) => b.status === 'playing');
+  const ended = list.filter((b) => b.status !== 'playing');
+  const card = (b: BattleView) => (
+    <BattleCard key={b.id} b={b} grade={grade} reload={load}
+      onUpdate={(v) => { apply(list.map((x) => (x.id === v.id ? v : x))); onChanged(); }}
+      onDelete={b.status === 'playing' || busy ? undefined
+        : () => void remove([b.id], `Xoá đấu cặp “${b.title}”? Phòng thi các vòng và bài làm trong đó cũng bị xoá, không hoàn tác được.`)} />
+  );
   return (
     <section className="dash-section bt-panel" aria-labelledby="bt-h">
       <h2 id="bt-h"><Swords aria-hidden="true" /> Đấu cặp của lớp</h2>
       {err && <p className="adm-alert is-error" role="alert">{err}</p>}
-      {list.map((b) => <BattleCard key={b.id} b={b} grade={grade} onUpdate={(v) => { apply(list.map((x) => (x.id === v.id ? v : x))); onChanged(); }} reload={load} />)}
+      {playing.length ? playing.map(card) : <p className="dash-muted">Không có đấu cặp nào đang diễn ra.</p>}
+      {ended.length > 0 && (
+        <details className="room-archive">
+          <summary>
+            <ChevronDown aria-hidden="true" className="room-archive-chev" />
+            <b>Đấu cặp đã kết thúc</b> <span className="room-archive-n">{ended.length}</span>
+          </summary>
+          <div className="room-archive-body">
+            {ended.length > 1 && (
+              <p className="room-archive-tools">
+                <button type="button" className="mini-btn is-danger" disabled={busy}
+                  onClick={() => void remove(ended.map((b) => b.id), `Xoá cả ${ended.length} đấu cặp đã kết thúc? Phòng thi các vòng và bài làm trong đó cũng bị xoá, không hoàn tác được.`)}>
+                  <Trash2 aria-hidden="true" /> {busy ? 'Đang xoá…' : `Xoá cả ${ended.length} đấu cặp đã kết thúc`}
+                </button>
+              </p>
+            )}
+            {ended.map(card)}
+          </div>
+        </details>
+      )}
     </section>
   );
 }
 
-function BattleCard({ b, grade, onUpdate, reload }: { b: BattleView; grade: number; onUpdate: (v: BattleView) => void; reload: () => Promise<void> }) {
+function BattleCard({ b, grade, onUpdate, reload, onDelete }: { b: BattleView; grade: number; onUpdate: (v: BattleView) => void; reload: () => Promise<void>; onDelete?: () => void }) {
   const [busy, setBusy] = useState('');
   const [err, setErr] = useState('');
   const [closes, setCloses] = useState(() => toLocalInput(endOfDay()));
@@ -105,6 +146,11 @@ function BattleCard({ b, grade, onUpdate, reload }: { b: BattleView; grade: numb
           <span>{SUBJECT_NAME[b.subject]} · {b.minutes} phút/vòng · vòng {b.round}</span>
         </button>
         <em className={`bt-st is-${b.status}`}>{STATUS[b.status]}</em>
+        {b.status !== 'playing' && (
+          <button type="button" className="mini-btn is-danger" onClick={onDelete} disabled={!onDelete} aria-label={`Xoá đấu cặp ${b.title}`} title="Xoá đấu cặp">
+            <Trash2 aria-hidden="true" />
+          </button>
+        )}
       </header>
       {b.championName && <p className="bt-champ"><Crown aria-hidden="true" /> Nhà vô địch: <b>{b.championName}</b> 🎉</p>}
       {open && (

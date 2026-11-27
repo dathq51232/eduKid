@@ -44,7 +44,7 @@ export default async function RoomsPage({ params }: { params: Promise<{ id: stri
           <div>
             <p className="dash-kicker">Lớp {c.name} · Khối {c.grade} · {students.length} học sinh · Mùa Mắt Xích – chặng Ra hoa</p>
             <h1><ToolIcon k="phong-thi" /> Phòng thi lớp</h1>
-            <p className="dash-muted">Tạo phòng, đọc mã phòng cho các em. Cô tự đặt quy tắc sinh đề (đề riêng từng em hoặc đề chung), xem trước và sửa đề trước khi mở phòng; mỗi em làm một lần, cô xem điểm, huy hiệu Cú, kỹ năng cả lớp cần ôn và các bài cần xem lại.</p>
+            <p className="dash-muted">Tạo phòng thi hoặc đấu cặp, đọc mã phòng cho các em; xem điểm, huy hiệu Cú và kỹ năng cả lớp cần ôn ở từng phòng.</p>
           </div>
         </header>
         <GradeReady grade={c.grade}><ExamRooms classId={c.id} className={c.name} grade={c.grade} students={students} /></GradeReady>

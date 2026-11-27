@@ -53,3 +53,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ bid
   // battleView tự phân định lại (vd. sau khi xử thắng cặp cuối của vòng → có nhà vô địch)
   return NextResponse.json(await battleView(admin, { id: bid }));
 }
+
+// DELETE: cô xoá một đấu cặp ĐÃ KẾT THÚC (có vô địch hoặc đã bấm Kết thúc) — xoá luôn phòng thi từng vòng
+// (bài làm trong các phòng đó), các cặp đấu tự xoá theo (on delete cascade). Đang đấu thì phải Kết thúc trước.
+export async function DELETE(_request: Request, { params }: { params: Promise<{ bid: string }> }) {
+  const { bid } = await params;
+  if (!/^[0-9a-f-]{36}$/i.test(bid)) return NextResponse.json({ error: 'not_allowed' }, { status: 404 });
+  if (!hasServiceRole()) return NextResponse.json({ error: 'not_configured' }, { status: 503 });
+  const admin = createAdminClient();
+  const { data: battle, error } = await admin.from('battles').select('id, class_id, status').eq('id', bid).maybeSingle();
+  if (error) return NextResponse.json({ error: isMissingTable(error) ? 'missing_table' : 'db' }, { status: 500 });
+  const userId = battle ? await teacherOf(battle.class_id as string) : null;
+  if (!battle || !userId) return NextResponse.json({ error: 'not_allowed' }, { status: 403 });
+  if (battle.status === 'playing') return NextResponse.json({ error: 'still_playing' }, { status: 409 });
+  const rooms = await admin.from('exam_rooms').delete().eq('battle_id', bid).eq('class_id', battle.class_id);
+  if (rooms.error) return NextResponse.json({ error: 'db' }, { status: 500 });
+  const del = await admin.from('battles').delete().eq('id', bid);
+  if (del.error) return NextResponse.json({ error: 'db' }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
