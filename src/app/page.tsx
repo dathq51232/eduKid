@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- hình minh hoạ tĩnh cắt từ bộ ảnh trang chủ (public/brand/home) */
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Mail, MessageCircle, Phone, CalendarDays, CheckCircle2, ChevronRight, Gamepad2, Play, Star, Users } from 'lucide-react';
+import { ArrowRight, Mail, MessageCircle, Phone, BookOpen, CalendarDays, ChartNoAxesColumnIncreasing, CheckCircle2, ChevronRight, Gamepad2, Layers, Play, Star, Users } from 'lucide-react';
 import LearnHeader from '@/components/LearnHeader';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import GameArt from '@/components/games/GameArt';
@@ -129,10 +129,10 @@ export default function HomePage() {
               <Link href="/tro-choi" className="btn hm-btn-ghost"><Gamepad2 aria-hidden="true" /> Khám phá trò chơi</Link>
             </div>
             <ul className="hm-facts" aria-label="EduChain Kids có gì">
-              <li><img src={`${IMG}/t-book.webp`} alt="" width={40} height={36} /><span><strong>{totalLessons}</strong> bài học</span></li>
-              <li><img src={`${IMG}/t-class.webp`} alt="" width={40} height={36} /><span><strong>Lớp 1 – 5</strong> Tiểu học</span></li>
-              <li><img src={`${IMG}/t-sub.webp`} alt="" width={40} height={36} /><span><strong>3</strong> môn học</span></li>
-              <li><img src={`${IMG}/t-game.webp`} alt="" width={40} height={36} /><span><strong>{GAMES.length}</strong> trò chơi</span></li>
+              <li><span className="hm-chip tone-sun"><BookOpen aria-hidden="true" /></span><span><strong>{totalLessons}</strong> bài học</span></li>
+              <li><span className="hm-chip tone-blue"><Users aria-hidden="true" /></span><span><strong>Lớp 1 – 5</strong> Tiểu học</span></li>
+              <li><span className="hm-chip tone-mint"><Layers aria-hidden="true" /></span><span><strong>3</strong> môn học</span></li>
+              <li><span className="hm-chip tone-pink"><Gamepad2 aria-hidden="true" /></span><span><strong>{GAMES.length}</strong> trò chơi</span></li>
             </ul>
           </div>
           <div className="hm-hero-art" aria-hidden="true">
@@ -147,7 +147,7 @@ export default function HomePage() {
         {/* ---------------------------------------------- Môn học: thẻ màu lớn có nhân vật */}
         <section id="subjects" className="hm-section wrap">
           <div className="hm-head">
-            <h2><img src={`${IMG}/ic-book.webp`} alt="" width={46} height={38} /> Hôm nay <span className="hm-ul">mình</span> học gì?</h2>
+            <h2><BookOpen className="hm-ic tone-sun" aria-hidden="true" /> Hôm nay <span className="hm-ul">mình</span> học gì?</h2>
             <p className="hm-note"><CalendarDays aria-hidden="true" /> Bài học ngắn 10 – 15 phút mỗi ngày, phù hợp cho học sinh lớp 1 – 5.</p>
           </div>
           <div className="grade-pills hm-grades" role="group" aria-label="Em học lớp mấy?">
@@ -176,7 +176,7 @@ export default function HomePage() {
         {/* ---------------------------------------------- Trò chơi trí tuệ: thẻ ngang màu pastel */}
         <section id="games" className="hm-section wrap">
           <div className="hm-head">
-            <h2><img src={`${IMG}/ic-game.webp`} alt="" width={50} height={32} /> Nghỉ giữa giờ <span className="hm-sub">– Khám phá {GAMES.length} trò chơi trí tuệ</span></h2>
+            <h2><Gamepad2 className="hm-ic tone-orange" aria-hidden="true" /> Nghỉ giữa giờ <span className="hm-sub">– Khám phá {GAMES.length} trò chơi trí tuệ</span></h2>
             <Link href="/tro-choi" className="hm-more">Chơi ngay tất cả <ChevronRight aria-hidden="true" /></Link>
           </div>
           <ul className="hm-games">
@@ -197,7 +197,7 @@ export default function HomePage() {
         {/* ---------------------------------------------- Hệ sinh thái: thầy cô · học sinh · phụ huynh */}
         <section id="safety" className="hm-section wrap">
           <div className="hm-head">
-            <h2><img src={`${IMG}/ic-eco.webp`} alt="" width={44} height={38} /> Hệ sinh thái <span className="hm-ul">EduChain Kids</span></h2>
+            <h2><Layers className="hm-ic tone-blue" aria-hidden="true" /> Hệ sinh thái <span className="hm-ul">EduChain Kids</span></h2>
           </div>
           <div className="hm-eco">
             {ecosystem.map(({ who, art, tone, href, cta, items }) => (
@@ -217,7 +217,7 @@ export default function HomePage() {
         <section id="phu-huynh" className="hm-section wrap" aria-labelledby="report-title">
           <div className="hm-report">
             <div className="hm-report-intro">
-              <h2 id="report-title"><img src={`${IMG}/ic-chart.webp`} alt="" width={40} height={40} /> Báo cáo tiến độ học tập rõ ràng, dễ theo dõi</h2>
+              <h2 id="report-title"><ChartNoAxesColumnIncreasing className="hm-ic tone-orange" aria-hidden="true" /> Báo cáo tiến độ học tập rõ ràng, dễ theo dõi</h2>
               <p>Giúp thầy cô và phụ huynh nắm bắt quá trình học tập, đồng hành và hỗ trợ con kịp thời.</p>
               <span className="hm-demo">Ví dụ minh hoạ</span>
             </div>
