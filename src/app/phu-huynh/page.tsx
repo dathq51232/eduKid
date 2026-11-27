@@ -209,7 +209,7 @@ export default async function ParentsPage() {
         <ParentHeader childCorner />
         {/* Thanh bên kiểu trang giáo viên (máy tính); điện thoại dùng thanh trên ParentHeader */}
         <aside className="phx-side" aria-label="Góc phụ huynh">
-          <Link href="/phu-huynh" className="phx-brand" aria-label="EduChain Kids — Góc phụ huynh"><BrandLogo size={40} /></Link>
+          <Link href="/phu-huynh" className="phx-brand" aria-label="EduChain Kids — Góc phụ huynh"><BrandLogo size={32} /></Link>
           <span className="phx-role"><Users aria-hidden="true" /> Phụ huynh</span>
           <nav className="phx-nav">
             <a href="#tong-quan" className="is-on"><LayoutDashboard aria-hidden="true" /> Tổng quan</a>
@@ -294,13 +294,14 @@ export default async function ParentsPage() {
                       <li key={k} className={`tone-${['blue', 'pink', 'violet'][i]}`}>
                         <span className="phx-subj-ic" aria-hidden="true">{['🔢', '📖', '🔤'][i]}</span>
                         <span className="phx-subj-tx"><b>{SUBJ[k]}</b><i aria-hidden="true"><i style={{ width: `${x?.pct ?? 0}%` }} /></i></span>
-                        <strong>{x ? `${x.pct}%` : '—'}</strong>
+                        <strong className={x ? undefined : 'is-none'}>{x ? `${x.pct}%` : 'Chưa làm'}</strong>
                       </li>
                     );
                   })}
                 </ul>
                 <div className="phx-chart" aria-label={`Số hoạt động 7 ngày qua: ${perDay.join(', ')}`}>
                   <p>Hoạt động trong tuần</p>
+                  {week.length === 0 ? <p className="phx-empty">7 ngày qua con chưa làm bài nào. Khi con luyện bài, chơi trò trí tuệ hay làm bài cô giao, biểu đồ sẽ hiện ở đây.</p> : (
                   <div className="phx-bars">
                     {last7.map((d, i) => (
                       <div key={d} className={d === todayVn ? 'is-today' : undefined}>
@@ -310,6 +311,7 @@ export default async function ParentsPage() {
                       </div>
                     ))}
                   </div>
+                  )}
                 </div>
               </div>
             </section>

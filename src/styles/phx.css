@@ -12,9 +12,14 @@
   .phx > .ph-top { display: none; }
   .phx-main { width: auto; margin: 0; padding: 18px 28px 56px; }
   .phx-side { position: sticky; top: 0; display: flex; flex-direction: column; gap: 14px; height: 100vh; padding: 20px 16px 0; overflow: hidden auto; color: #e8eefc;
-    background: radial-gradient(260px 200px at 0% 100%, rgb(80 130 255 / .35), transparent 70%), linear-gradient(180deg, #1d2f6b, #182756); }
+    background: radial-gradient(260px 200px at 0% 100%, rgb(80 130 255 / .35), transparent 70%), linear-gradient(180deg, #1d2f6b, #182756);
+    overflow-x: hidden; scrollbar-width: none; }
+  .phx-side::-webkit-scrollbar { display: none; }
+  .phx-side > * { flex-shrink: 0; min-width: 0; }
 }
-.phx-brand { display: flex; padding: 4px 6px; border-radius: 14px; background: #fff; }
+.phx-brand { display: flex; justify-content: center; padding: 6px 8px; overflow: hidden; border-radius: 14px; background: #fff; }
+.phx-brand .brand-logo { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.phx-brand .brand-word { min-width: 0; max-width: 100%; height: auto !important; max-height: 20px; }
 .phx-role { display: inline-flex; align-items: center; justify-content: center; gap: 6px; align-self: center; padding: 5px 16px; border: 1.5px solid rgb(255 255 255 / .35); border-radius: 99px; font-size: 14px; font-weight: 700; }
 .phx-role svg { width: 16px; height: 16px; }
 .phx-nav { display: grid; gap: 4px; }
@@ -23,13 +28,14 @@
 .phx-nav a:hover { background: rgb(255 255 255 / .08); color: #fff; }
 .phx-nav a.is-on { background: linear-gradient(180deg, #ffd84d, #ffc21a); color: #1e2b4a; font-weight: 800; box-shadow: 0 4px 0 #d39b12; }
 .phx-nav a em { margin-left: auto; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 99px; background: #ef4444; color: #fff; font-size: 12px; font-style: normal; font-weight: 800; line-height: 22px; text-align: center; }
-.phx-side-ft { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid rgb(255 255 255 / .12); }
-.phx-side-go { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-radius: 14px; background: #fff; color: #1d2f6b; font-weight: 800; text-decoration: none; }
+.phx-side-ft { display: grid; gap: 6px; min-width: 0; padding-top: 12px; border-top: 1px solid rgb(255 255 255 / .12); }
+.phx-side-go { box-sizing: border-box; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-radius: 14px; background: #fff; color: #1d2f6b; font-weight: 800; text-decoration: none; }
 .phx-side-go svg { width: 19px; height: 19px; }
 .phx-side-link { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: #c8d5f5; font: inherit; font-size: 14.5px; font-weight: 600; text-decoration: none; cursor: pointer; }
 .phx-side-link:hover { background: rgb(255 255 255 / .08); color: #fff; }
 .phx-side-link svg { width: 19px; height: 19px; }
-.phx-side-tools { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.phx-side-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; padding: 0 4px 0 8px; }
+.phx-side-tools .theme-switch-label { color: #c8d5f5; }
 .phx-side-milo { width: 150px; height: auto; margin: auto auto -14px; filter: drop-shadow(0 10px 16px rgb(0 0 0 / .3)); }
 
 /* ---------- Thanh trên ---------- */
@@ -55,13 +61,13 @@
 .phx-me-tx b { font-size: 15px; }
 
 /* ---------- Lời chào + tranh + thẻ con + số liệu ---------- */
-.phx-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); grid-template-areas: "hello art" "kid stats"; gap: 16px 18px; padding: 24px 24px 20px; overflow: hidden; border-radius: 28px;
+.phx-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); align-items: end; grid-template-areas: "hello art" "kid stats"; gap: 16px 18px; padding: 24px 24px 20px; overflow: hidden; border-radius: 28px;
   background: radial-gradient(420px 260px at 82% 10%, rgb(255 236 170 / .7), transparent 70%), linear-gradient(135deg, #e6f0ff, #f3f7ff 55%, #e3f0ff); }
 :root[data-theme="dark"] .phx-hero { background: radial-gradient(420px 260px at 82% 10%, rgb(255 200 80 / .12), transparent 70%), linear-gradient(135deg, #17233f, #1a2747 55%, #162241); }
 .phx-hello { grid-area: hello; align-self: center; position: relative; z-index: 1; }
 .phx-hello h1 { margin: 0; color: var(--navy); font-size: clamp(28px, 3.2vw, 42px); font-weight: 900; line-height: 1.12; letter-spacing: -.01em; }
 .phx-hello p { margin: 6px 0 0; color: color-mix(in srgb, var(--navy) 75%, var(--muted)); font-size: 17px; font-weight: 600; }
-.phx-hero-art { grid-area: art; justify-self: center; align-self: end; width: auto; height: 190px; margin-bottom: -26px; filter: drop-shadow(0 12px 18px rgb(30 60 140 / .2)); }
+.phx-hero-art { grid-area: art; position: relative; z-index: 0; justify-self: end; align-self: end; width: auto; height: 170px; margin-right: 6%; filter: drop-shadow(0 12px 18px rgb(30 60 140 / .2)); }
 .phx-kid { grid-area: kid; position: relative; z-index: 1; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid var(--card-line); border-radius: 22px; background: color-mix(in srgb, var(--surface) 88%, transparent); box-shadow: var(--card-shadow); }
 .phx-kid-av { display: grid; place-items: center; flex: none; width: 64px; height: 64px; border: 3px solid #ffd43b; border-radius: 50%; background: linear-gradient(135deg, #4f8bff, #2457c5); color: #fff; font-size: 26px; font-weight: 900; }
 .phx-kid-tx { display: grid; gap: 2px; min-width: 0; }
@@ -70,7 +76,7 @@
 .phx-kid-tx small { display: inline-flex; align-items: center; gap: 4px; font-size: 13.5px; font-weight: 700; }
 .phx-kid-tx small svg { width: 15px; height: 15px; }
 .phx-kid-tx small.is-ok { color: #16a34a; } .phx-kid-tx small.is-off { color: #dc2626; } .phx-kid-tx small.is-wait { color: var(--muted); }
-.phx-stats { grid-area: stats; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.phx-stats { grid-area: stats; position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
 .phx-stats li { --c: #3b6fe0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; align-items: center; padding: 12px 14px; border: 1px solid var(--card-line); border-radius: 20px; background: var(--surface); color: var(--navy); box-shadow: var(--card-shadow); }
 .phx-stat-ic { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px; background: color-mix(in srgb, var(--c) 15%, var(--surface)); color: var(--c); }
 .phx-stat-ic svg { width: 24px; height: 24px; }
@@ -102,6 +108,7 @@
 .phx-subj-tx > i { display: block; height: 10px; overflow: hidden; border-radius: 99px; background: var(--surface-2); }
 .phx-subj-tx > i > i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c)); }
 .phx-subj strong { color: var(--navy); font-size: 18px; font-variant-numeric: tabular-nums; }
+.phx-subj strong.is-none { color: var(--muted); font-size: 13px; font-weight: 700; }
 .phx-chart { display: grid; gap: 8px; padding-left: 16px; border-left: 1px dashed var(--card-line); }
 .phx-chart > p { margin: 0; color: var(--navy); font-size: 14px; font-weight: 700; }
 .phx-bars { display: grid; grid-template-columns: repeat(7, 1fr); align-items: end; gap: 8px; height: 150px; }
