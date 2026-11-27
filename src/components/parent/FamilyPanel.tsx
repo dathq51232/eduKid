@@ -23,6 +23,8 @@ function access(c: FamilyChild) {
   }
 }
 
+const FAMILY_MAX = 4;
+
 export default function FamilyPanel({ kids, code, origin }: { kids: FamilyChild[]; code: string | null; origin: string }) {
   const router = useRouter();
   const [list, setList] = useState(kids);
@@ -36,6 +38,8 @@ export default function FamilyPanel({ kids, code, origin }: { kids: FamilyChild[
   const [shown, setShown] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
   const own = list.filter((k) => k.own);
+  // Gói gia đình tối đa 4 con do phụ huynh tự thêm (migration 0083); trần chung 6 liên kết kể cả con ở lớp trường
+  const full = own.length >= FAMILY_MAX || list.length >= 6;
   const loginUrl = `${origin}/dang-nhap`;
 
   const add = async (e: React.FormEvent) => {
@@ -133,7 +137,7 @@ export default function FamilyPanel({ kids, code, origin }: { kids: FamilyChild[
 
       {msg && <p className={`adm-alert ${msg.ok ? 'is-ok' : 'is-error'}`} role="status">{msg.text}</p>}
 
-      {open ? (
+      {open && !full ? (
         <form className="fam-form" onSubmit={add}>
           <h3><UserPlus aria-hidden="true" /> Thêm con</h3>
           <label className="adm-field"><span>Tên gọi của con (hiện khi đăng nhập)</span>
@@ -152,10 +156,12 @@ export default function FamilyPanel({ kids, code, origin }: { kids: FamilyChild[
             <button type="submit" className="btn btn-primary" disabled={busy === 'add' || !name.trim() || !consent}><Plus aria-hidden="true" /> {busy === 'add' ? 'Đang tạo…' : 'Thêm và tạo PIN'}</button>
             {list.length > 0 && <button type="button" className="btn btn-outline" onClick={() => setOpen(false)}>Huỷ</button>}
           </div>
-          <p className="fam-free">Mỗi bé được học thử miễn phí 7 ngày. Tối đa 6 con / tài khoản.</p>
+          <p className="fam-free">Mỗi bé được học thử miễn phí 7 ngày. Gói gia đình tối đa {FAMILY_MAX} con ({own.length}/{FAMILY_MAX}).</p>
         </form>
-      ) : list.length < 6 && (
-        <button type="button" className="fam-add" onClick={() => { setOpen(true); setMsg(null); }}><Plus aria-hidden="true" /> Thêm con</button>
+      ) : full ? (
+        <p className="fam-full">Gói gia đình đã đủ {FAMILY_MAX} con — mỗi tài khoản phụ huynh thêm được tối đa {FAMILY_MAX} con học tại nhà.</p>
+      ) : (
+        <button type="button" className="fam-add" onClick={() => { setOpen(true); setMsg(null); }}><Plus aria-hidden="true" /> Thêm con <small>({own.length}/{FAMILY_MAX})</small></button>
       )}
     </section>
   );
