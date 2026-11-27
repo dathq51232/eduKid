@@ -24,7 +24,7 @@ Menu 2 khu: Soạn & dạy · Lớp chủ nhiệm (+ Của tôi); ghim tối đa
 ## Học sinh / phụ huynh
 - Chọn bài, làm bài (694 bài Toán, TV, TA lớp 1–5; L1–L5; câu của cô), kiến thức cần nhớ, trò chơi trí tuệ, cờ, kỹ năng, tiếng Anh phản xạ, luyện chữ, thế giới của em, thành tích/huy hiệu Cú — `src/app/chon-bai`, `lam-bai`, `hoc-sinh`
 - Phụ huynh: theo dõi con, tiện ích gia đình, đóng phí (SePay) — `src/app/phu-huynh`, `docs/SEPAY-TICH-HOP.md`
-- **Trang phụ huynh kiểu dashboard** (11/2026): thanh bên xanh đậm (Tổng quan, Tiến độ, Bài cô giao, Lịch, Thành tích, Tin nhắn, Nhắn cô, Gia đình; điện thoại dùng thanh trên), lời chào + tranh, thẻ con + 4 số liệu, Tiến độ học tập (theo môn + biểu đồ tuần), Đề xuất cho con (theo quy tắc, không AI), Lịch tuần, Bài cô giao (Chưa làm / Quá hạn / Đã làm), Tin nhắn từ cô, Thành tích (lời khen ★ của cô) — `src/app/phu-huynh/page.tsx`, `src/styles/phx.css`
+- **Trang phụ huynh kiểu dashboard** (11/2026): thanh bên xanh đậm (Tổng quan, Tiến độ, Bài cô giao, Lịch, Thành tích, Tin nhắn, Nhắn cô, Gia đình; điện thoại dùng thanh trên), lời chào + tranh, thẻ con + 4 số liệu, Tiến độ học tập (theo môn + biểu đồ tuần), Đề xuất cho con (theo quy tắc, không AI), Lịch tuần, Bài cô giao (Chưa làm / Quá hạn / Đã làm), Tin nhắn từ cô, Thành tích (lời khen ★ của cô); các hàng thẻ cao bằng nhau, thanh menu có nút thu gọn (nhớ trên máy), Thanh toán mở khung QR — `src/app/phu-huynh/page.tsx`, `src/styles/phx.css`, `SideToggle.tsx`, `PayDialog.tsx`
 
 ## Quản trị (`src/app/quan-tri`)
 Tổng quan, thông báo, **truy cập** (lượt xem theo đường dẫn — `page_views_hourly`, migration 0049), marketing (UTM), người dùng, duyệt giáo viên, bài học, chương trình, xưởng video, thu phí, nhật ký. Học phí theo học kỳ + ví phí cộng tác của GV.
