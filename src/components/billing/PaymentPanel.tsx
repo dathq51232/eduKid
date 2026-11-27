@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Copy, QrCode as QrIcon } from 'lucide-react';
 import QrCode from '@/components/billing/QrCode';
@@ -34,7 +34,7 @@ function CopyLine({ label, value, mono }: { label: string; value: string; mono?:
 }
 
 /** Chọn gói (học kỳ / năm học, giá theo gói lớp học hoặc gia đình — migration 0074) -> tạo mã chuyển khoản riêng -> hiện QR VietQR + thông tin tài khoản. */
-export default function PaymentPanel({ info, offer }: { info: BillingPublic; offer: BillingOffer }) {
+export default function PaymentPanel({ info, offer, auto = false }: { info: BillingPublic; offer: BillingOffer; auto?: boolean }) {
   const router = useRouter();
   const [req, setReq] = useState<Req | null>(null);
   const [busy, setBusy] = useState<Plan | null>(null);
@@ -53,6 +53,15 @@ export default function PaymentPanel({ info, offer }: { info: BillingPublic; off
     setReq(((data ?? []) as Req[])[0] ?? null);
     router.refresh();
   };
+
+  // auto (khung Thanh toán ở Góc phụ huynh): lớp đã có gói cô công bố → lấy mã chuyển khoản ngay, một lần
+  const started = useRef(false);
+  useEffect(() => {
+    if (!auto || !ready || !fixed || started.current) return;
+    started.current = true;
+    void choose(fixed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ chạy một lần khi mở khung
+  }, [auto, ready, fixed]);
 
   if (!ready) return <p className="adm-alert is-info">Nhà trường chưa cấu hình tài khoản nhận học phí. Bố mẹ liên hệ thầy cô chủ nhiệm nhé.</p>;
   return (

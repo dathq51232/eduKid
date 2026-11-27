@@ -40,3 +40,16 @@
 :root[data-theme="dark"] .pay-plan-save { color: #4ade80; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pay-plan-save { color: #4ade80; } }
 .pay-announce { margin-top: 4px; padding: 8px 12px; border-radius: 12px; background: var(--blue-soft); color: var(--ink) !important; font-size: 15px !important; }
+
+/* Khung nổi "Thanh toán học phí" (PayDialog, Góc phụ huynh) */
+.pay-dlg { text-align: left; width: min(760px, calc(100vw - 24px)); max-height: calc(100vh - 32px); padding: 0; border: 0; border-radius: 22px; background: var(--surface); color: var(--ink); box-shadow: 0 30px 70px rgb(15 23 42 / .35); }
+.pay-dlg::backdrop { background: rgb(15 23 42 / .55); }
+.pay-dlg[open] { animation: pay-dlg-in .18s ease-out; }
+@keyframes pay-dlg-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.pay-dlg-in { display: grid; gap: 14px; padding: 18px 20px 22px; }
+.pay-dlg-hd { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pay-dlg-hd h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; }
+.pay-dlg-hd h2 svg { width: 22px; height: 22px; color: #2457c5; }
+.pay-dlg-x { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: var(--surface-2); color: var(--muted); cursor: pointer; }
+.pay-dlg-x svg { width: 18px; height: 18px; }
+@media (prefers-reduced-motion: reduce) { .pay-dlg[open] { animation: none; } }
