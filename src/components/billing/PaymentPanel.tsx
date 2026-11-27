@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Copy, QrCode as QrIcon } from 'lucide-react';
+import { BellRing, Check, Copy, QrCode as QrIcon } from 'lucide-react';
 import QrCode from '@/components/billing/QrCode';
 import { createClient } from '@/lib/supabase/client';
 import { KIND_NAME, PLAN_NAME, billingError, fmtDay, vietQrPayload, vnd, type BillingOffer, type BillingPublic, type Plan } from '@/lib/billing';
@@ -39,6 +39,18 @@ export default function PaymentPanel({ info, offer, auto = false }: { info: Bill
   const [req, setReq] = useState<Req | null>(null);
   const [busy, setBusy] = useState<Plan | null>(null);
   const [err, setErr] = useState('');
+  // "Tôi đã chuyển khoản" (0084): báo quản trị đối chiếu sao kê + xác nhận; xác nhận xong em học đủ chức năng ngay
+  const [claimed, setClaimed] = useState(false);
+  const [claiming, setClaiming] = useState(false);
+  const claim = async () => {
+    if (!req) return;
+    setClaiming(true); setErr('');
+    const { error } = await createClient().rpc('student_claim_payment', { p_payment: req.id });
+    setClaiming(false);
+    if (error) return setErr(billingError(error.message));
+    setClaimed(true);
+    router.refresh();
+  };
   const ready = Boolean(info.bank_bin && info.account_no);
   // Lớp ở trường: cô đã công bố một gói (migration 0075) thì chỉ hiện gói đó; lớp gia đình / cô để phụ huynh chọn thì hiện cả hai
   const fixed: Plan | null = offer.kind === 'school' && (offer.fee_plan === 'term' || offer.fee_plan === 'year') ? offer.fee_plan : null;
@@ -97,6 +109,9 @@ export default function PaymentPanel({ info, offer, auto = false }: { info: Bill
             <CopyLine label="Nội dung" value={req.code} mono />
             <p className="pay-warn">Ghi <strong>đúng nội dung {req.code}</strong> để EduChain Kids nhận ra khoản đóng của em. Sau khi nhận tiền, quản trị xác nhận và em học tiếp được ngay (trong giờ làm việc).</p>
             {info.note && <p className="dash-muted">{info.note}</p>}
+            {claimed
+              ? <p className="pay-claimed" role="status"><Check aria-hidden="true" /> Đã báo cho EduChain Kids. Khi đối chiếu xong (trong giờ làm việc), em được học đủ chức năng ngay — không cần làm gì thêm.</p>
+              : <button type="button" className="pay-claim" onClick={() => void claim()} disabled={claiming}><BellRing aria-hidden="true" /> {claiming ? 'Đang gửi…' : 'Tôi đã chuyển khoản'}</button>}
           </div>
         </section>
       )}

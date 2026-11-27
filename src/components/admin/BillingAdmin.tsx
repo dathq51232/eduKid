@@ -12,6 +12,7 @@ import { walletError } from '@/lib/wallet';
 import { useAdminUser } from './AdminContext';
 import '@/styles/adm.css';
 import '@/styles/auth.css';
+import '@/styles/tone.css';
 import '@/styles/billing.css';
 
 type Settings = {
@@ -23,7 +24,7 @@ type Settings = {
 type Pay = {
   id: string; code: string; plan: Plan; amount: number; status: 'pending' | 'confirmed' | 'cancelled'; created_at: string; confirmed_at: string | null;
   period_to: string | null; student_id: string; student_name: string; grade: number; class_name: string | null; school_name: string | null;
-  kind?: PriceKind; teacher_name?: string | null; commission?: number;
+  kind?: PriceKind; teacher_name?: string | null; commission?: number; /** phụ huynh đã báo chuyển khoản (0084) */ claimed_at?: string | null;
 };
 type Summary = { pending: number; pending_amount: number; month_amount: number; month_count: number; paid_students: number };
 type Tab = 'pending' | 'confirmed' | 'cancelled' | 'all';
@@ -244,7 +245,8 @@ export default function BillingAdmin() {
                     <td>{PLAN_NAME[r.plan] ?? r.plan}{r.kind && <><br /><small>{KIND_NAME[r.kind]}</small></>}</td>
                     <td>{vnd(r.amount)}{r.commission ? <><br /><small title={r.teacher_name ? `Cô ${r.teacher_name}` : undefined}>Cộng tác {vnd(r.commission)}</small></> : null}</td>
                     <td>{fmtTime(r.created_at)}</td>
-                    <td>{r.status === 'confirmed' ? <>Đã nhận {fmtTime(r.confirmed_at)}<br /><small>Học đến {fmtDay(r.period_to)}</small></> : TAB_NAME[r.status as Tab]}</td>
+                    <td>{r.status === 'confirmed' ? <>Đã nhận {fmtTime(r.confirmed_at)}<br /><small>Học đến {fmtDay(r.period_to)}</small></> : TAB_NAME[r.status as Tab]}
+                      {r.status === 'pending' && r.claimed_at && <><br /><span className="status-chip tone-green" title="Phụ huynh bấm “Tôi đã chuyển khoản” — đối chiếu sao kê rồi Xác nhận">PH báo đã CK {fmtTime(r.claimed_at)}</span></>}</td>
                     <td className="adm-row-actions">
                       {r.status === 'pending' && <>
                         <button type="button" className="button button-blue" disabled={busy} onClick={() => void confirm(r)}><Check size={16} aria-hidden="true" /> Xác nhận</button>

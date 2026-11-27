@@ -2,7 +2,7 @@
 
 > Ghi lại 22/11/2026. Khi bắt đầu làm: đọc file này, **xem lại bảng giá trên sepay.vn** (giá dưới đây có thể đã đổi),
 > rồi làm theo mục 4–6. Trạng thái hiện tại của app: phụ huynh chuyển khoản theo mã QR có nội dung `EDKxxxxxx`,
-> quản trị đối chiếu sao kê rồi bấm **Xác nhận** tay ở *Quản trị → Thu phí*.
+> quản trị đối chiếu sao kê rồi bấm **Xác nhận** tay ở *Quản trị → Thu phí* (từ 0084: phụ huynh bấm "Tôi đã chuyển khoản" để báo quản trị; khoản đã báo lên đầu danh sách).
 
 ## 1. Mục tiêu
 
