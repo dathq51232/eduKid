@@ -5,7 +5,6 @@ import { ArrowRight, Mail, MessageCircle, Phone, BookOpen, CalendarDays, ChartNo
 import LearnHeader from '@/components/LearnHeader';
 import MiloMascot from '@/components/mascot/MiloMascot';
 import GameArt from '@/components/games/GameArt';
-import HomeWelcome from '@/components/home/HomeWelcome';
 import ContactFab from '@/components/home/ContactFab';
 import { FREE_STUDENT_LIMIT, SITE_CONTACT, TEACHER_TRIAL_DAYS } from '@/lib/contact';
 import { GAMES } from '@/lib/games/catalog';
@@ -118,7 +117,6 @@ export default function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD).replace(/</g, '\\u003c') }} />
       <LearnHeader />
       <main className="site-shell home">
-        <HomeWelcome />
         {/* ---------------------------------------------- Hero: chữ bên trái, Milo + các bạn bên phải */}
         <section id="home" className="hm-hero wrap">
           <div className="hm-hero-copy">
