@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   PanelLeftClose, PanelLeftOpen, BookCheck, Check, ChevronDown, Copy, Home, LayoutGrid, LogOut, Menu, MessageSquareHeart, Search, Users, UsersRound, X,
+  Award, ClipboardCheck, FileText, FolderOpen, MessageCircle, MonitorPlay, School, UserRound,
 } from 'lucide-react';
 import BrandLogo from '@/components/brand/BrandLogo';
 import { icon3d, type IconComp } from '@/components/classroom/tool-icons';
@@ -32,6 +33,14 @@ export const GROUP_ICON: Record<string, IconComp> = {
   'Học sinh & sổ': icon3d('lop'), 'Đánh giá & khen': icon3d('g-danh-gia'), 'Phụ huynh': icon3d('g-phu-huynh'), 'Văn phòng lớp': icon3d('quy-lop'),
   'Của tôi': icon3d('g-tien-ich'),
 };
+/** Biểu tượng nét (trắng) của nhóm trên thanh bên trái nền xanh đậm */
+const SIDE_ICON: Record<string, IconComp> = {
+  'Soạn bài': MonitorPlay, 'Phiếu & đề': FileText, 'Trên lớp': School, 'Sau giờ học': ClipboardCheck,
+  'Học sinh & sổ': Users, 'Đánh giá & khen': Award, 'Phụ huynh': MessageCircle, 'Văn phòng lớp': FolderOpen, 'Của tôi': UserRound,
+};
+/** Tên khu trên thanh bên trái (thanh tab điện thoại vẫn dùng tên ngắn) */
+const SIDE_KHU: Record<KhuKey, string> = { day: 'Giảng dạy', cn: 'Quản lý lớp', me: 'Cộng đồng & cá nhân' };
+
 /** Biểu tượng của khu trên thanh tab điện thoại */
 const KHU_ICON: Record<KhuKey, IconComp> = { day: icon3d('g-day-hoc'), cn: icon3d('g-tren-lop'), me: icon3d('g-tien-ich') };
 const MINI_KEY = 'gv-cot-trai-gon';
@@ -170,18 +179,18 @@ export default function TeacherShell({ classes, teacherName, schoolName, childre
 
   const nav = (
     <>
-      <Link href="/giao-vien" className={`tsh-nav${pathname === '/giao-vien' ? ' is-on' : ''}`} aria-current={pathname === '/giao-vien' ? 'page' : undefined} title="Hôm nay">
-        <span className="tsh-ic tone-blue"><Home aria-hidden="true" /></span><span className="tsh-nav-t">Hôm nay</span>
+      <span className="tsh-khu-h"><span className="tsh-nav-t">Tổng quan</span></span>
+      <Link href="/giao-vien" className={`tsh-nav${pathname === '/giao-vien' ? ' is-on' : ''}`} aria-current={pathname === '/giao-vien' ? 'page' : undefined} title="Trang chủ">
+        <span className="tsh-ic tone-blue"><Home aria-hidden="true" /></span><span className="tsh-nav-t">Trang chủ</span>
       </Link>
       {active && KHU.map((k) => {
         const groups = groupsOfKhu(k.key).filter((g) => vis(g.key).length);
         if (!groups.length) return null;
         return (
           <div key={k.key} className={`tsh-khu is-${k.key}`} role="group" aria-label={k.label}>
-            {/* "Của tôi" chỉ có một nhóm cùng tên: không cần tiêu đề khu, chỉ một vạch ngăn */}
-            {k.key !== 'me' && <span className="tsh-khu-h" data-tour={KHU_TOUR[k.key]}><span className="tsh-nav-t">{k.label}</span></span>}
+            <span className="tsh-khu-h" data-tour={KHU_TOUR[k.key]}><span className="tsh-nav-t">{SIDE_KHU[k.key]}</span></span>
             {groups.map((g) => {
-              const Icon = GROUP_ICON[g.key] ?? LayoutGrid;
+              const Icon = SIDE_ICON[g.key] ?? GROUP_ICON[g.key] ?? LayoutGrid;
               const on = curGroup === g.key;
               const n = vis(g.key).length;
               return (

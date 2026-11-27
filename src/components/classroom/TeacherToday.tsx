@@ -4,7 +4,9 @@
 // chưa ghim thì tự sắp theo số lần dùng) kèm bảng Tuỳ chỉnh để ghim / ẩn công cụ.
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check, Coffee, Eye, EyeOff, ListTodo, Pin, RotateCcw, Settings2, Undo2, Wrench } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Check, Coffee, Eye, EyeOff, ListTodo, Pin, RotateCcw, Search, Settings2, Undo2 } from 'lucide-react';
+import { DashIcon, HOME_TOOL_IMG } from '@/components/classroom/dash-icons';
 import { dayLabel, dueReminders, useCalendarNotes, type Occurrence } from '@/lib/calendar-notes';
 import { KHU, TOOLS, groupsOfKhu, quickTools, toolHref, toolsOfGroup, type ToolKey } from '@/lib/classroom/teacher-nav';
 import { MAX_PINS, UNHIDEABLE, resetToolPrefs, setKhuHidden, toggleHidden, togglePin, useToolPrefs } from '@/lib/classroom/tool-prefs';
@@ -32,7 +34,7 @@ function reminderRows(list: Occurrence[], calHref: string): Row[] {
 
 /** "Việc hôm nay": tiêu đề kèm tiến độ (x/y xong); mỗi việc một nút hành động, nút ✓ nhỏ để tự đánh dấu xong.
  *  calHref: có thì gộp thêm ghi chú nhắc hẹn trên lịch đã tới lúc nhắc (đánh dấu xong lưu theo ghi chú). */
-export function TodoList({ items: base, day, headingId, calHref }: { items: TodayItem[]; day: string; headingId?: string; calHref?: string }) {
+export function TodoList({ items: base, day, headingId, calHref, compact = false }: { items: TodayItem[]; day: string; headingId?: string; calHref?: string; compact?: boolean }) {
   const cal = useCalendarNotes();
   const items: Row[] = [
     ...(calHref && cal.ready ? reminderRows(dueReminders(cal.notes, day), calHref) : []),
@@ -54,6 +56,44 @@ export function TodoList({ items: base, day, headingId, calHref }: { items: Toda
   const now = pending.filter((t) => !t.later), later = pending.filter((t) => t.later);
   const [showLater, setShowLater] = useState(false);
   const finished = items.filter(isDone);
+  const [more, setMore] = useState(false);
+  if (compact) {
+    // Kiểu trang chủ: một dòng mỗi việc — ô tích bên trái, tên việc, nhãn hành động bên phải; việc xong gạch ngang ở đầu danh sách
+    const all = [...finished, ...now, ...later];
+    const LIMIT = 6;
+    const shown = more ? all : all.slice(0, LIMIT);
+    return (
+      <>
+        <h2 id={headingId}>
+          <DashIcon name="h-todo" h={26} /> Việc hôm nay
+          <span className="tdy-count">{pending.length ? `${pending.length} nhiệm vụ` : 'Xong hết 🎉'}</span>
+        </h2>
+        {all.length === 0 ? <p className="dash-muted tdy-empty">Hôm nay chưa có việc nào. 🎉</p> : (
+          <ul className="tdy-checks">
+            {shown.map((t) => {
+              const d = isDone(t);
+              return (
+                <li key={t.key} className={`${d ? 'is-done' : ''}${t.tone === 'urgent' && !d ? ' is-urgent' : ''}`}>
+                  {t.tone === 'done'
+                    ? <span className="tdy-check is-on" aria-hidden="true"><Check /></span>
+                    : <button type="button" role="checkbox" aria-checked={d} className={`tdy-check${d ? ' is-on' : ''}`} onClick={() => mark(t)}
+                        aria-label={d ? `Bỏ đánh dấu xong: ${t.title}` : `Đánh dấu xong: ${t.title}`}>{d && <Check aria-hidden="true" />}</button>}
+                  <Link href={t.href} className="tdy-check-t" title={t.detail}>{t.title}</Link>
+                  {d ? <span className="tdy-check-tag is-done">Đã xong</span>
+                    : <Link href={t.href} className={`tdy-check-tag${t.tone === 'urgent' ? ' is-urgent' : ''}`}>{t.tone === 'urgent' ? 'Làm ngay' : t.cta}</Link>}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        {all.length > LIMIT && (
+          <button type="button" className="ct-link tdy-check-more" onClick={() => setMore((v) => !v)} aria-expanded={more}>
+            {more ? 'Thu gọn' : `Xem thêm ${all.length - LIMIT} việc`}
+          </button>
+        )}
+      </>
+    );
+  }
   const row = (t: Row) => {
     const d = isDone(t); const tag = TONE_TAG[t.tone];
     return (
@@ -100,6 +140,33 @@ export function TodoList({ items: base, day, headingId, calHref }: { items: Toda
   );
 }
 
+/** Chọn cách xưng hô "Thầy / Cô" trên trang chủ: lưu cookie (1 năm) để máy chủ vẽ đúng hình minh hoạ và lời chúc.
+ *  Không đoán theo tên (tên Việt nhiều tên dùng cho cả nam và nữ). */
+export function HonorificPick({ value }: { value: 'thay' | 'co' | null }) {
+  const router = useRouter();
+  const pick = (v: 'thay' | 'co') => {
+    document.cookie = `gv-xung-ho=${v}; path=/; max-age=31536000; samesite=lax`;
+    router.refresh();
+  };
+  return (
+    <span className={`tdy-xh${value ? '' : ' is-ask'}`} role="group" aria-label="Thầy cô muốn được xưng hô là">
+      {!value && <small>Xưng hô:</small>}
+      <button type="button" aria-pressed={value === 'thay'} onClick={() => pick('thay')}>Thầy</button>
+      <button type="button" aria-pressed={value === 'co'} onClick={() => pick('co')}>Cô</button>
+    </span>
+  );
+}
+
+/** Ô tìm kiếm trên đầu trang chủ: mở ô tìm nhanh của khung giáo viên (giống bấm Ctrl K) */
+export function HomeSearch() {
+  const open = () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }));
+  return (
+    <button type="button" className="tdy-search" onClick={open} title="Tìm nhanh (Ctrl K)">
+      <Search aria-hidden="true" /> <span>Tìm giáo án, bài giảng, học sinh…</span>
+    </button>
+  );
+}
+
 /** "Công cụ ghim": công cụ thầy cô ghim (tối đa 6); chưa ghim thì 6 công cụ mở nhiều nhất trên máy này (bỏ công cụ đã ẩn) */
 export function QuickTools({ classId }: { classId: string }) {
   const prefs = useToolPrefs();
@@ -111,7 +178,7 @@ export function QuickTools({ classId }: { classId: string }) {
   return (
     <>
       <div className="tdy-quick-hd">
-        <h2 id="tdy-quick-h" className="tdy-sect"><Wrench aria-hidden="true" /> Công cụ ghim <span>· {auto ? 'tự xếp theo số lần dùng' : `${prefs.pins.length}/${MAX_PINS} đã ghim`}</span></h2>
+        <h2 id="tdy-quick-h" className="tdy-sect"><DashIcon name="h-tools" h={26} /> Công cụ giảng dạy <span>· {auto ? 'tự xếp theo số lần dùng' : `${prefs.pins.length}/${MAX_PINS} đã ghim`}</span></h2>
         <button type="button" className="ct-link tdy-quick-edit" aria-expanded={edit} onClick={() => setEdit((v) => !v)}><Settings2 aria-hidden="true" /> {edit ? 'Xong' : 'Tuỳ chỉnh'}</button>
       </div>
       <ul className="tdy-quick">
@@ -119,10 +186,11 @@ export function QuickTools({ classId }: { classId: string }) {
           const t = TOOLS.find((x) => x.key === k);
           if (!t) return null;
           const Icon = TOOL_ICON[k];
+          const img = HOME_TOOL_IMG[k];
           return (
             <li key={k}>
               <Link href={toolHref(t, classId)} className="tdy-tool">
-                <span className={`tsh-ic tone-${t.tone}`}><Icon aria-hidden="true" /></span>
+                <span className={`tsh-ic tone-${t.tone}${img ? ' is-img' : ''}`}>{img ? <DashIcon name={img} h={40} /> : <Icon aria-hidden="true" />}</span>
                 <span><b>{t.label}</b><small>{t.desc}</small></span>
               </Link>
             </li>

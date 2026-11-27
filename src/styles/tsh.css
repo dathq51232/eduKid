@@ -222,3 +222,46 @@ html.dk-focus .tsh-main { padding-bottom: 0; }
 }
 @keyframes tsh-sheet-in { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .tsh-sheet { animation: none; } }
+
+/* ===== Thanh bên giáo viên kiểu dashboard 11/2026: nền xanh đậm, chữ trắng, mục đang mở là viên thuốc xanh sáng.
+   Đổi biến màu ngay trong .tsh-side nên mọi phần con (lớp, ô tìm, menu chọn lớp, tài khoản) tự theo, không ảnh hưởng nội dung trang. ===== */
+.tsh-side {
+  --surface: #1a2d66; --surface-2: rgb(255 255 255 / .08); --ink: #eef3ff; --muted: #a9b9e3; --line: rgb(255 255 255 / .12); --line-strong: rgb(255 255 255 / .28);
+  --blue-soft: rgb(255 255 255 / .12); --brand-blue: #ffd84d;
+  background: radial-gradient(260px 260px at 0% 100%, rgb(80 130 255 / .25), transparent 70%), linear-gradient(180deg, #1b2f6b 0%, #142456 55%, #0f1c45 100%);
+  border-right: 0; color: var(--ink); color-scheme: dark;
+}
+.tsh-side .tsh-brand { padding-bottom: 14px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
+.tsh-side .brand-logo img.logo-word { filter: brightness(1.25) saturate(1.1); }
+.tsh-side .tsh-khu-h { padding-top: 14px; color: #8fb2ff; font-size: 12.5px; }
+.tsh-side .tsh-nav { color: #e6ecff; font-weight: 600; }
+.tsh-side .tsh-nav:hover { background: rgb(255 255 255 / .08); }
+.tsh-side .tsh-nav.is-on { background: linear-gradient(90deg, #5b97ff, #3b74f0); color: #fff; font-weight: 800; box-shadow: 0 8px 18px -8px rgb(59 116 240 / .9); }
+.tsh-side .tsh-nav.is-on .tsh-ic { background: rgb(255 255 255 / .22); }
+.tsh-side .tsh-ic { background: rgb(255 255 255 / .1); }
+.tsh-side .tsh-class-av { background: #3b74f0; }
+.tsh-side .tsh-search kbd { border-color: var(--line-strong); }
+.tsh-side .tsh-icon-btn { background: rgb(255 255 255 / .1); color: #fff; }
+.tsh-side .tsh-code a, .tsh-side .tsh-code-link { color: #ffd84d; }
+
+/* Thanh bên theo ảnh mẫu: biểu tượng nét trắng không nền, bỏ số đếm, tiêu đề khu chữ hoa xanh nhạt, vạch ngăn mảnh */
+.tsh-side .tsh-gnav .tsh-ic, .tsh-side .tsh-nav > .tsh-ic { width: 30px; height: 30px; background: none; color: #dfe7ff; }
+.tsh-side .tsh-gnav .tsh-ic svg, .tsh-side .tsh-nav > .tsh-ic svg { width: 22px; height: 22px; stroke-width: 1.9; }
+.tsh-side .tsh-nav.is-on > .tsh-ic { background: none; color: #fff; }
+.tsh-side .tsh-count { display: none; }
+.tsh-side .tsh-nav, .tsh-side .tsh-gnav { min-height: 44px; font-size: 15px; }
+.tsh-side .tsh-khu { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgb(255 255 255 / .1); }
+.tsh-side .tsh-khu-h { padding: 6px 12px 4px; color: #8fb2ff; font-size: 13px; font-weight: 800; letter-spacing: .05em; }
+.tsh-side .tsh-sep { display: none; }
+.tsh.is-mini .tsh-side .tsh-khu { border-top: 0; }
+
+/* Điện thoại: thanh trên cùng và thanh tab dưới đáy nền xanh đậm như ảnh mẫu, tab đang mở là viên vàng */
+@media (max-width: 900px) {
+  .tsh-mtop { --surface-2: rgb(255 255 255 / .12); --ink: #fff; background: #1b2f6b; border-bottom: 0; color: #fff; }
+  .tsh-mtop .tsh-icon-btn { background: rgb(255 255 255 / .12); color: #fff; }
+  .tsh-mtop-class { background: rgb(255 255 255 / .14); color: #fff; }
+  .tsh-mtop .brand-logo img.logo-word { filter: brightness(1.25) saturate(1.1); }
+  .tsh-tabs { padding: 8px 8px calc(10px + env(safe-area-inset-bottom)); border-top: 0; border-radius: 22px 22px 0 0; background: linear-gradient(180deg, #1b2f6b, #142456); box-shadow: 0 -8px 20px -10px rgb(15 28 69 / .5); }
+  .tsh-tabs a, .tsh-tabs button { color: #dfe7ff; border-radius: 16px; }
+  .tsh-tabs .is-on { background: rgb(255 255 255 / .1); color: #ffd84d; }
+}

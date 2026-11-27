@@ -1,19 +1,17 @@
 import type { Metadata } from 'next';
 import ShareApp from '@/components/ShareApp';
 import Link from 'next/link';
-import { Suspense } from 'react';
-import CommunityFeedCard from '@/components/community/CommunityFeedCard';
 import type { Inbox } from '@/lib/classroom/messages';
 import { redirect } from 'next/navigation';
-import { BookCheck, Check, ChevronRight, Library, Moon, School, Send, UserRound } from 'lucide-react';
-import { QuickTools, TodoList } from '@/components/classroom/TeacherToday';
-import TodaySchedule, { NowBar } from '@/components/classroom/TodaySchedule';
+import Image from 'next/image';
+import { Bell, BookCheck, CalendarDays, Check, ChevronRight, Library, Moon, NotebookPen, School, Send } from 'lucide-react';
+import { HomeSearch, HonorificPick, QuickTools, TodoList } from '@/components/classroom/TeacherToday';
+import { cookies } from 'next/headers';
+import { NextLessonCard, TodayLessonCount, WeekSchedule, type SavedSlot } from '@/components/classroom/TodaySchedule';
+import { schoolWeek } from '@/lib/classroom/school-week';
+import { DashIcon } from '@/components/classroom/dash-icons';
 import { LUNAR_MONTH_NAME, canChiYear, solarToLunar } from '@/lib/utils/lunar';
-import ClassPulse, { type Birthday } from '@/components/classroom/ClassPulse';
-import MiniCalendar from '@/components/utils/MiniCalendar';
-import MoneyCard from '@/components/utils/MoneyCard';
-import TeacherEnglishCard from '@/components/teacher-english/TeacherEnglishCardLazy';
-import LessonPlanAside from '@/components/classroom/LessonPlanAside';
+import { type Birthday } from '@/components/classroom/ClassPulse';
 import { alertsOf, summarize, type RangeData } from '@/lib/classroom/diary';
 import LearnHeader from '@/components/LearnHeader';
 import NotConfigured from '@/components/classroom/NotConfigured';
@@ -84,6 +82,10 @@ export default async function TeacherHome() {
   const todayIso = vnNow.toISOString().slice(0, 10);
   const weekday = vnNow.getUTCDay();
   const firstName = viewer.displayName.trim().split(/\s+/).slice(-2).join(' ');
+  // Xưng hô thầy / cô: thầy cô tự chọn trên trang (cookie), chưa chọn thì dùng "thầy cô" và hình cô giáo
+  const xhRaw = (await cookies()).get('gv-xung-ho')?.value;
+  const xh: 'thay' | 'co' | null = xhRaw === 'thay' || xhRaw === 'co' ? xhRaw : null;
+  const xhWord = xh === 'thay' ? 'thầy' : xh === 'co' ? 'cô' : 'thầy cô';
 
   // ------------------------------------------------------------ số liệu "Hôm nay" của lớp đang dạy
   let todo: TodayItem[] = [];
@@ -92,6 +94,7 @@ export default async function TeacherHome() {
   let tomorrowPlans: typeof todayPlans = [];
   const tomorrowIso = new Date(nowMs + 7 * 3600_000 + 86_400_000).toISOString().slice(0, 10);
   let watch: Watch[] = [];
+  const savedByDay: Record<string, SavedSlot[]> = {};
   let inbox: Inbox | null = null;
   let births: Birthday[] = [];
   let birthsOn = false;
@@ -182,6 +185,9 @@ export default async function TeacherHome() {
     }
     todayPlans = planErr ? [] : ((plans ?? []) as { id: string; subject: string; title: string; period: number | null; teach_date: string | null }[])
       .filter((p) => p.teach_date === todayIso).sort((a, b) => (a.period ?? 99) - (b.period ?? 99));
+    for (const p of (planErr ? [] : (plans ?? []) as { id: string; subject: string; title: string; period: number | null; teach_date: string | null }[])) {
+      if (p.teach_date) (savedByDay[p.teach_date] ??= []).push({ id: p.id, subject: p.subject, title: p.title, period: p.period });
+    }
     tomorrowPlans = planErr ? [] : ((plans ?? []) as { id: string; subject: string; title: string; period: number | null; teach_date: string | null }[])
       .filter((p) => p.teach_date === tomorrowIso).sort((a, b) => (a.period ?? 99) - (b.period ?? 99));
     // cần để ý: từ Sổ lớp tháng này + em làm đúng dưới một nửa trong 2 tuần
@@ -202,16 +208,48 @@ export default async function TeacherHome() {
   const base = active ? `/giao-vien/lop/${active.id}` : '';
   const delta = k && k.rate !== null && k.prevRate !== null ? Math.round((k.rate - k.prevRate) * 100) : null;
   const lunar = solarToLunar(+todayIso.slice(8), +todayIso.slice(5, 7), +todayIso.slice(0, 4));
+  const week = schoolWeek(todayIso);
+  const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
+  const todoLeft = todo.filter((t) => t.tone !== 'done').length;
+  const warn = watch.filter((w) => w.tone === 'warn');
+  const unread = inbox?.unread ?? 0;
+  const initial = (firstName.trim().split(/\s+/).pop() ?? 'G').charAt(0).toUpperCase();
 
   return (
-    <main className="tdy">
-      <header className="tdy-head">
-        <div>
-          <p className="tdy-date">{dateLabel} <span className="tdy-lunar" title={`Ngày ${lunar.day} tháng ${LUNAR_MONTH_NAME[lunar.month]} năm ${canChiYear(lunar.year)}`}><Moon aria-hidden="true" /> {lunar.day}/{lunar.month}{lunar.leap ? ' nhuận' : ''} {canChiYear(lunar.year)}</span></p>
-          <h1>Chào {firstName} <span aria-hidden="true">👋</span></h1>
+    <main className="tdy tdy-v2">
+      {/* ① Đầu trang: trái = ngày, lời chào, Milo; phải = ô tìm, chuông, ảnh đại diện + thẻ lớn "Tiết học tiếp theo" */}
+      <div className="tdy-top">
+        <div className="tdy-top-l">
+          <p className="tdy-date">
+            <CalendarDays aria-hidden="true" className="tdy-date-ic" /> {dateLabel}
+            {week && <span className="tdy-week" title="Tuần học tính từ thứ Hai đầu tiên sau ngày 5/9">Tuần {week}</span>}
+            <span className="tdy-lunar" title={`Ngày ${lunar.day} tháng ${LUNAR_MONTH_NAME[lunar.month]} năm ${canChiYear(lunar.year)}`}><Moon aria-hidden="true" /> {lunar.day}/{lunar.month}{lunar.leap ? ' nhuận' : ''}</span>
+          </p>
+          <h1>Chào {firstName}! <span aria-hidden="true">👋</span></h1>
+          <p className="tdy-wish">Chúc {xhWord} một ngày dạy học thật hiệu quả và nhiều niềm vui! <HonorificPick value={xh} /></p>
+          <DashIcon name={xh === 'thay' ? 'teacher-male' : 'teacher'} h={236} className={`tdy-teacher${xh === 'thay' ? ' is-male' : ''}`} priority />
+          <Image className="tdy-mascot" src="/brand/milo-professor.webp" alt="" width={560} height={773} priority aria-hidden="true" />
         </div>
-        <ShareApp who="teacher" className="tdy-share" />
-      </header>
+        <div className="tdy-top-r">
+          <div className="tdy-bar">
+            <HomeSearch />
+            <ShareApp who="teacher" className="tdy-share" />
+            {active && (
+              <Link href={`${base}/tin-nhan`} className="tdy-bell" aria-label={unread ? `${unread} tin nhắn phụ huynh chưa đọc` : 'Tin nhắn phụ huynh'}>
+                <Bell aria-hidden="true" />{unread > 0 && <span>{unread > 9 ? '9+' : unread}</span>}
+              </Link>
+            )}
+            <span className="tdy-av" title={viewer.displayName} aria-hidden="true">{initial}</span>
+          </div>
+          {active && k && (
+            <div className="tdy-next-wrap">
+              <NextLessonCard classId={active.id} day={todayIso} tomorrow={tomorrowIso} base={base} saved={todayPlans} savedTomorrow={tomorrowPlans} className={active.name} />
+              <DashIcon name="hero-book" h={170} className="tdy-next-art" />
+              <Image className="tdy-next-art-m" src="/emoji/f3d/open-book.webp" alt="" width={96} height={96} aria-hidden="true" />
+            </div>
+          )}
+        </div>
+      </div>
 
       {!active && (
         <section className="tdy-card tdy-create" data-tour="tao-lop">
@@ -235,52 +273,94 @@ export default async function TeacherHome() {
 
       {active && k && (
         <>
-          {/* ① Bây giờ: tiết đang dạy / kế tiếp + nút dùng trong tiết, gộp việc hằng ngày (Điểm danh, Giao bài) — một hàng nút duy nhất */}
-          <NowBar classId={active.id} day={todayIso} tomorrow={tomorrowIso} base={base} saved={todayPlans} savedTomorrow={tomorrowPlans}
-            side={<>
-              {k.attendanceSaved
-                ? <Link href={`${base}/so-lop`} className="tdy-btn is-done" title="Mở Sổ lớp để sửa"><Check aria-hidden="true" /> Đã điểm danh · {k.students - k.absent}/{k.students}</Link>
-                : <Link href={`${base}/so-lop`} className="tdy-btn is-primary"><BookCheck aria-hidden="true" /> Điểm danh</Link>}
-              <Link href={`${base}/giao-bai`} className="tdy-btn is-opt"><Send aria-hidden="true" /> Giao bài</Link>
-              <Link href={`${base}/kho-cau-hoi`} className="tdy-btn is-opt" title="Nạp Word, Excel, PDF → tách câu → máy kiểm → cô duyệt"><Library aria-hidden="true" /> Kho câu hỏi</Link>
-            </>} />
+          {/* ② 4 ô số liệu (có hình 3D trang trí) */}
+          <ul className="tdy-stats" aria-label="Số liệu lớp">
+            <li><Link href={`${base}/so-lop`} className="tdy-stat is-blue">
+              <span className="tdy-stat-ic is-img"><DashIcon name="stat-users" h={60} /></span>
+              <b>{k.attendanceSaved ? `${k.students - k.absent}/${k.students}` : k.students}</b>
+              <small>{k.attendanceSaved ? 'Có mặt hôm nay' : 'Học sinh'}</small>
+              <DashIcon name="stat-kids" h={56} className="tdy-stat-art is-kids" />
+            </Link></li>
+            <li><Link href={`${base}/giao-bai`} className="tdy-stat is-green">
+              <span className="tdy-stat-ic is-img"><DashIcon name="stat-book" h={60} /></span>
+              <b>{k.practiced}/{k.students}</b>
+              <small>Đã luyện bài</small>
+              <i className="tdy-ring" style={{ '--p': pct(k.practiced, k.students) } as React.CSSProperties} title={`${pct(k.practiced, k.students)}% học sinh luyện bài trong 7 ngày`}><span>{pct(k.practiced, k.students)}%</span></i>
+            </Link></li>
+            <li><Link href={`${base}/ke-hoach`} className="tdy-stat is-coral">
+              <span className="tdy-stat-ic is-img"><DashIcon name="stat-cal" h={60} /></span>
+              <b><TodayLessonCount classId={active.id} day={todayIso} saved={todayPlans} /></b>
+              <small>Tiết hôm nay</small>
+              <DashIcon name="stat-cal3d" h={64} className="tdy-stat-art" />
+            </Link></li>
+            <li><a href="#tdy-todo" className="tdy-stat is-violet">
+              <span className="tdy-stat-ic is-img"><DashIcon name="stat-check" h={60} /></span>
+              <b>{todoLeft}</b>
+              <small>Việc cần làm</small>
+              <DashIcon name="stat-clip3d" h={66} className="tdy-stat-art" />
+            </a></li>
+          </ul>
 
-          {/* Công cụ ghim: thầy cô tự ghim tối đa 6 công cụ hay dùng (Tuỳ chỉnh: ghim / ẩn công cụ khỏi menu) */}
-          <section id="cong-cu" className="tdy-quick-sec" aria-labelledby="tdy-quick-h" data-tour="cong-cu">
-            <QuickTools classId={active.id} />
-          </section>
+          {/* Việc hằng ngày — chỉ hiện trên điện thoại / máy tính bảng (4 ô vuông) */}
+          <nav className="tdy-acts" aria-label="Việc hằng ngày" data-tour="viec-nhanh">
+            {k.attendanceSaved
+              ? <Link href={`${base}/so-lop`} className="tdy-act is-done" title="Mở Sổ lớp để sửa"><Check aria-hidden="true" /><span>Đã điểm danh</span></Link>
+              : <Link href={`${base}/so-lop`} className="tdy-act is-blue"><BookCheck aria-hidden="true" /><span>Điểm danh</span></Link>}
+            <Link href={`${base}/giao-bai`} className="tdy-act is-violet"><Send aria-hidden="true" /><span>Giao bài</span></Link>
+            <Link href={`${base}/ke-hoach`} className="tdy-act is-green"><NotebookPen aria-hidden="true" /><span>Xem giáo án</span></Link>
+            <Link href={`${base}/kho-cau-hoi`} className="tdy-act is-coral"><Library aria-hidden="true" /><span>Kho câu hỏi</span></Link>
+          </nav>
 
-          {/* Trái (~60%) = việc phải làm: ② Việc hôm nay → ③ Hôm nay dạy (+ tiết đã chọn gợi ý).
-              Phải (~40%) = xem nhanh: ④ Tuần này (lịch, nhắc hẹn) → ⑤ Lớp mình. Điện thoại: một cột theo đúng thứ tự này. */}
-          <div className="tdy-cols tdy-cols-main">
-            <div className="tdy-stack">
-              <section className="tdy-card tdy-todo" aria-labelledby="tdy-todo">
-                <TodoList items={todo} day={todayIso} headingId="tdy-todo" calHref={`${base}/lich`} />
-              </section>
-              <section className="tdy-card tdy-sched" aria-labelledby="tdy-sched">
-                <TodaySchedule classId={active.id} day={todayIso} tomorrow={tomorrowIso} base={base} saved={todayPlans} savedTomorrow={tomorrowPlans} headingId="tdy-sched" grade={active.grade} />
-              </section>
-              <LessonPlanAside classId={active.id} grade={active.grade} />
-            </div>
-            <div className="tdy-stack">
-              <MiniCalendar href={`${base}/lich`} compact title="📅 Tuần này" hideDue addNote />
-              <ClassPulse base={base} births={births} birthsOn={birthsOn} watch={watch}
-                unread={inbox?.unread ?? 0} pendingLeave={inbox?.pending_leave ?? 0} recentMsgs={inbox?.items.length ?? 0} contactGaps={contactGaps}
-                spark={k.spark} students={k.students} todayIso={todayIso} planText={planText}
-                kpi={{ practiced: k.practiced, rate: k.rate, delta, open: k.open, openFirst: k.openFirst }} />
-              {/* ⑥ Cộng đồng: tài liệu đồng nghiệp mới đăng + tin nhắn — tải riêng, không chặn trang */}
-              {FEATURES.community && <Suspense fallback={null}><CommunityFeedCard /></Suspense>}
-            </div>
+          {/* ③ Việc hôm nay | Lịch tuần | Lớp học của tôi */}
+          <div className="tdy-board">
+            <section className="tdy-card tdy-todo" aria-labelledby="tdy-todo">
+              <TodoList items={todo} day={todayIso} headingId="tdy-todo" calHref={`${base}/lich`} compact />
+            </section>
+            <WeekSchedule classId={active.id} base={base} day={todayIso} savedByDay={savedByDay} />
+            <section className="tdy-card tdy-class" aria-labelledby="tdy-class-h">
+              <h2 id="tdy-class-h"><DashIcon name="h-class" h={26} /> Lớp học của tôi <Link href={base}>Xem chi tiết <ChevronRight aria-hidden="true" /></Link></h2>
+              <div className="tdy-class-body">
+                <div className="tdy-class-art" aria-hidden="true">
+                  <DashIcon name="class-kids" h={104} className="tdy-class-kids" />
+                  <span>Lớp {active.name}</span>
+                </div>
+                <ul className="tdy-class-nums">
+                  <li className="is-blue"><Link href={`${base}/so-lop`}><DashIcon name="c-users" h={34} /><b>{k.attendanceSaved ? `${k.students - k.absent}/${k.students}` : `${k.students}`}</b><small>{k.attendanceSaved ? 'Có mặt' : 'Học sinh'}</small></Link></li>
+                  <li className="is-green"><Link href={`${base}/lo-hong`}><DashIcon name="c-target" h={34} /><b>{k.rate !== null ? `${Math.round(k.rate * 100)}%` : '—'}{delta !== null && k.rate !== null && <em className={delta >= 0 ? 'is-good' : 'is-bad'}>{delta >= 0 ? '▲' : '▼'}{Math.abs(delta)}</em>}</b><small>Tỷ lệ làm đúng</small></Link></li>
+                  <li className="is-red"><Link href={`${base}/lo-hong`} title={warn.map((w) => `${w.name}: ${w.text}`).join('\n') || undefined}><DashIcon name="c-alert" h={34} /><b>{String(warn.length).padStart(2, '0')}</b><small>Cần chú ý</small></Link></li>
+                  <li className="is-violet"><Link href={birthsOn ? `${base}/lich` : `${base}?xem=ho-so`} title={births.map((b) => `${b.name} · ${b.date}`).join('\n') || undefined}><DashIcon name="c-party" h={34} /><b>{birthsOn ? births.length : '—'}</b><small>Sinh nhật tuần này</small></Link></li>
+                </ul>
+              </div>
+              <nav className="tdy-class-links" aria-label="Lối tắt lớp">
+                <Link href={`${base}?xem=ho-so`}><DashIcon name="l-profile" h={18} /> Hồ sơ lớp</Link>
+                <Link href={`${base}/nhan-xet`}><DashIcon name="l-comment" h={18} /> Nhận xét</Link>
+                <Link href={`${base}/phieu-tien-bo`}><DashIcon name="l-chart" h={18} /> Báo cáo</Link>
+                <Link href={`${base}/tin-nhan`}><DashIcon name="l-phone" h={18} /> Liên hệ PH{unread > 0 && <span className="tdy-dot" title="Có tin chưa đọc" />}</Link>
+              </nav>
+            </section>
           </div>
 
-          {/* ⑥ Của tôi: việc cá nhân, ít gấp — để cuối, 2 ô bằng nhau; số tiền luôn che khi mở trang */}
-          <section className="tdy-mine" aria-labelledby="tdy-mine-h">
-            <h2 id="tdy-mine-h" className="tdy-sect"><UserRound aria-hidden="true" /> Của tôi</h2>
-            <div className="tdy-mine-grid tdy-mine-2">
-              <MoneyCard href={`${base}/thu-chi`} title="Thu chi cá nhân" fundHref={`${base}/quy-lop`} classId={active.id} />
-              <TeacherEnglishCard href={`${base}/tieng-anh`} grade={active.grade} day={todayIso} compact />
-            </div>
-          </section>
+          {/* ④ Công cụ giảng dạy | Không gian cá nhân */}
+          <div className="tdy-bottom">
+            <section id="cong-cu" className="tdy-card tdy-quick-sec" aria-labelledby="tdy-quick-h" data-tour="cong-cu">
+              <QuickTools classId={active.id} />
+            </section>
+            <section className="tdy-card tdy-mine" aria-labelledby="tdy-mine-h">
+              <h2 id="tdy-mine-h"><DashIcon name="h-mine" h={26} /> Không gian cá nhân</h2>
+              <div className="tdy-mine-links">
+                <Link href={`${base}/tieng-anh`} className="tdy-mine-link is-orange">
+                  <span className="tdy-mine-ic"><DashIcon name="m-english" h={44} /></span>
+                  <span><b>Tiếng Anh sư phạm</b><small>Lộ trình học · Bài tập · Đánh giá</small></span>
+                  <ChevronRight aria-hidden="true" className="tdy-mine-go" />
+                </Link>
+                <Link href={`${base}/thu-chi`} className="tdy-mine-link is-green">
+                  <span className="tdy-mine-ic"><DashIcon name="m-money" h={44} /></span>
+                  <span><b>Thu chi cá nhân</b><small>Quản lý chi tiêu · Báo cáo tháng</small></span>
+                  <ChevronRight aria-hidden="true" className="tdy-mine-go" />
+                </Link>
+              </div>
+            </section>
+          </div>
         </>
       )}
 
