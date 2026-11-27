@@ -4,7 +4,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Clock, Lock, QrCode, ShieldCheck } from 'lucide-react';
-import { fmtDay, vnd, type BillingOffer, type Gate } from '@/lib/billing';
+import { fmtDay, vnd, type BillingOffer, type BillingPublic, type Gate } from '@/lib/billing';
+import PayDialog from '@/components/parent/PayDialog';
 import type { Recap } from '@/lib/parent/recap';
 
 /** Số ngày của một học kỳ (để quy ra "mỗi ngày") */
@@ -14,7 +15,7 @@ const perDay = (price: number) => {
   return d < 1000 ? 'chưa tới 1.000đ' : `khoảng ${vnd(Math.ceil(d / 500) * 500)}`;
 };
 
-export default function TuitionCard({ gate, offer, childName, recap }: { gate: Gate; offer: BillingOffer | null; childName: string; recap?: Recap | null }) {
+export default function TuitionCard({ gate, offer, info, childName, recap }: { gate: Gate; offer: BillingOffer | null; info?: BillingPublic | null; childName: string; recap?: Recap | null }) {
   if (gate.reason === 'free' || gate.reason === 'not_student') return null;
   const name = childName.trim().split(/\s+/).slice(-1)[0] || 'con';
 
@@ -59,9 +60,10 @@ export default function TuitionCard({ gate, offer, childName, recap }: { gate: G
             <small>{perDay(fixed === 'year' ? price / 2 : price)} mỗi ngày{!fixed && offer.price_term * 2 > offer.price_year ? ` · năm học ${vnd(offer.price_year)}` : ''}</small>
           </p>
         )}
-        <Link href="/hoc-sinh/dong-phi" className="btn btn-yellow ph-fee-cta">
-          <QrCode aria-hidden="true" /> {expired ? 'Mở gói học cho con' : 'Đồng hành cùng con'} <ArrowRight aria-hidden="true" />
-        </Link>
+        {/* Thanh toán: có tài khoản nhận tiền → mở khung QR ngay tại đây; chưa cấu hình → sang trang học phí */}
+        {info?.enabled && info.bank_bin && info.account_no && offer
+          ? <PayDialog info={info} offer={offer} />
+          : <Link href="/hoc-sinh/dong-phi" className="btn btn-yellow ph-fee-cta"><QrCode aria-hidden="true" /> Thanh toán <ArrowRight aria-hidden="true" /></Link>}
         <p className="ph-fee-safe"><ShieldCheck aria-hidden="true" /> Chuyển thẳng cho EduChain Kids · tự nguyện</p>
       </div>
     </section>
