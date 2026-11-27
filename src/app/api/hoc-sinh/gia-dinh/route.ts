@@ -13,7 +13,8 @@ function familyError(m: string): { status: number; error: string } {
   if (m.includes('consent_required')) return { status: 400, error: 'Bạn cần xác nhận là cha/mẹ hoặc người giám hộ và đồng ý điều khoản.' };
   if (m.includes('invalid_name')) return { status: 400, error: 'Tên gọi của con cần từ 1 đến 60 ký tự.' };
   if (m.includes('invalid_grade')) return { status: 400, error: 'Chọn khối lớp từ 1 đến 5.' };
-  if (m.includes('too_many_children')) return { status: 400, error: 'Mỗi tài khoản phụ huynh thêm được tối đa 6 con.' };
+  if (m.includes('family_limit')) return { status: 400, error: 'Gói gia đình tối đa 4 con — tài khoản này đã đủ 4 con.' };
+  if (m.includes('too_many_children')) return { status: 400, error: 'Mỗi tài khoản phụ huynh liên kết được tối đa 6 con (kể cả con học ở lớp trường).' };
   if (m.includes('duplicate_name')) return { status: 400, error: 'Gia đình đã có một bạn trùng tên gọi này. Thêm chữ để phân biệt (vd: “Bin lớn”).' };
   if (/function .* does not exist|parent_add_child/.test(m)) return { status: 503, error: 'Máy chủ chưa bật tính năng này: chạy supabase/migrations/0047_family_accounts.sql.' };
   return { status: 400, error: 'Không thêm được. Vui lòng thử lại.' };

@@ -46,3 +46,7 @@
 :root[data-theme="dark"] .fam-code button { background: color-mix(in srgb, #eef4ff 14%, var(--surface)); }
 :root[data-theme="dark"] .fam-acc.is-ok { background: color-mix(in srgb, #166534 24%, var(--surface)); color: color-mix(in srgb, #166534 40%, #fff); }
 :root[data-theme="dark"] .fam-acc.is-off { background: color-mix(in srgb, #991b1b 24%, var(--surface)); color: color-mix(in srgb, #991b1b 40%, #fff); }
+
+/* Gói gia đình đã đủ 4 con (migration 0083) */
+.fam-full { margin: 4px 0 0; padding: 10px 14px; border-radius: 12px; background: var(--surface-2); color: var(--muted); font-size: 14px; }
+.fam-add small { margin-left: 4px; color: var(--muted); font-weight: 600; }
