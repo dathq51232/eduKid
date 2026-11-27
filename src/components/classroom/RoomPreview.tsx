@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Pencil, RefreshCw, RotateCcw, Trash2, TriangleAlert } from 'lucide-react';
 import EmojiText from '@/components/EmojiText';
-import { replaceSlot, type ExamQuestion, type Matrix, type PaperSlot } from '@/lib/exams/matrix';
+import { replaceSlot, type ExamQuestion, type Matrix, type PaperSlot, STAGE_NAME, stageOf } from '@/lib/exams/matrix';
 import { itemProblem } from '@/lib/classroom/rooms-build';
 import { answerText } from '@/lib/exams/word';
 import '@/styles/exam.css';
@@ -80,6 +80,7 @@ export default function RoomPreview({ drafts, matrix, students, onChange, onRege
             <li key={`${si}-${s.q.key}`} className={bad ? 'has-warn' : undefined}>
               <div className="exam-q-head">
                 <span className={`exam-muc m${s.muc}`}>M{s.muc}</span>
+                <span className={`room-pv-dang d${stageOf(s.q.type)}`} title="Dạng thao tác">{STAGE_NAME[stageOf(s.q.type)]}</span>
                 <span className="exam-q-lesson">{s.q.lessonTitle}{s.edited && <b className="room-pv-edited"> · cô đã sửa</b>}</span>
                 <button type="button" className="mini-btn" onClick={() => setEditing(editing === si ? null : si)} aria-expanded={editing === si}><Pencil aria-hidden="true" /> Sửa</button>
                 <button type="button" className="mini-btn" onClick={() => swap(si)}><RefreshCw aria-hidden="true" /> Đổi câu</button>
