@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import ShareApp from '@/components/ShareApp';
 import Link from 'next/link';
-import type { Inbox } from '@/lib/classroom/messages';
+import { KIND_ICON, KIND_LABEL, senderLabel, type Inbox } from '@/lib/classroom/messages';
+import TeacherBell from '@/components/classroom/TeacherBell';
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
-import { Bell, BookCheck, CalendarDays, Check, ChevronRight, Library, Moon, NotebookPen, School, Send } from 'lucide-react';
+import { BookCheck, CalendarDays, Check, ChevronRight, Library, Moon, NotebookPen, School, Send } from 'lucide-react';
 import { HomeSearch, HonorificPick, QuickTools, TodoList } from '@/components/classroom/TeacherToday';
 import { cookies } from 'next/headers';
 import { NextLessonCard, TodayLessonCount, WeekSchedule, type SavedSlot } from '@/components/classroom/TodaySchedule';
@@ -214,6 +215,9 @@ export default async function TeacherHome() {
   const warn = watch.filter((w) => w.tone === 'warn');
   const unread = inbox?.unread ?? 0;
   const initial = (firstName.trim().split(/\s+/).pop() ?? 'G').charAt(0).toUpperCase();
+  // tin phụ huynh chưa xem cho chuông (tối đa 5, bỏ tin cô tự gửi)
+  const bellMsgs = (inbox?.items ?? []).filter((m) => m.status === 'new' && !m.from_teacher).slice(0, 5)
+    .map((m) => ({ id: m.id, who: senderLabel(m), student: m.student_name, kind: KIND_LABEL[m.kind], icon: KIND_ICON[m.kind], text: m.body.length > 80 ? `${m.body.slice(0, 80)}…` : m.body, at: m.created_at }));
 
   return (
     <main className="tdy tdy-v2">
@@ -231,15 +235,13 @@ export default async function TeacherHome() {
           <Image className="tdy-mascot" src="/brand/milo-professor.webp" alt="" width={560} height={773} priority aria-hidden="true" />
         </div>
         <div className="tdy-top-r">
-          <div className="tdy-bar">
+          <div className="tdy-topbar">
             <HomeSearch />
             <ShareApp who="teacher" className="tdy-share" />
             {active && (
-              <Link href={`${base}/tin-nhan`} className="tdy-bell" aria-label={unread ? `${unread} tin nhắn phụ huynh chưa đọc` : 'Tin nhắn phụ huynh'}>
-                <Bell aria-hidden="true" />{unread > 0 && <span>{unread > 9 ? '9+' : unread}</span>}
-              </Link>
+              <TeacherBell base={base} unread={unread} msgs={bellMsgs} births={births.filter((b) => b.inDays <= 3).map(({ id, name, inDays, age, date }) => ({ id, name, inDays, age, date }))} />
             )}
-            <span className="tdy-av" title={viewer.displayName} aria-hidden="true">{initial}</span>
+            <Link href="/giao-vien/ca-nhan" className="tdy-av" title={`${viewer.displayName} — thông tin cá nhân`} aria-label="Thông tin cá nhân">{initial}</Link>
           </div>
           {active && k && (
             <div className="tdy-next-wrap">
