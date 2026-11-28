@@ -281,7 +281,7 @@ a.adm-row-title:hover { color: var(--link); text-decoration: underline; }
 .planner-lib-search { max-width: 520px; }
 
 @media (max-width: 860px) {
-  .planner-new { grid-template-columns: 1fr 1fr; }
+  .planner-new { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .planner-new .planner-lesson { grid-column: 1 / -1; }
   .planner-grid { grid-template-columns: 1fr 1fr; }
   .planner-two { grid-template-columns: 1fr; }
