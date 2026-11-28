@@ -344,7 +344,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
           <label className={`room-kind is-to${kind === 'to' ? ' is-on' : ''}`}>
             <Img3d src="/emoji/tool/thi-dua.webp" size={40} />
             <span><b>Đấu tổ – thi trên lớp, cô trình chiếu</b>
-              <small>Máy quay tổ ngẫu nhiên, rồi quay một bạn trong tổ lên trả lời. Đúng cộng điểm cho tổ (mức 1 +1, mức 2 +2, mức 3 +3). Cuối buổi cộng điểm Thi đua tổ hạng 1 +3, 2 +2, 3 +1.</small></span>
+              <small>Cô chiếu từng câu, các tổ cùng viết câu trả lời vào bảng con rồi giơ bảng. Tổ đúng +1 điểm, sai không cộng. Cuối buổi cộng điểm Thi đua tổ hạng 1 +3, 2 +2, 3 +1.</small></span>
             <input type="checkbox" role="switch" className="room-switch" checked={kind === 'to'} onChange={() => pickKind('to')} aria-label="Bật Đấu tổ" />
           </label>
         </div>
@@ -435,7 +435,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
         </button>
       </section>
       {show && (
-        <TeamQuiz classId={classId} title={(title.trim() || autoTitle).slice(0, 120)} teams={teamSnap} students={students} questions={show} onClose={() => setShow(null)} />
+        <TeamQuiz classId={classId} title={(title.trim() || autoTitle).slice(0, 120)} teams={teamSnap} questions={show} onClose={() => setShow(null)} />
       )}
     </form>
   );
