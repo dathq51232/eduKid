@@ -6,24 +6,27 @@
 //   Hết câu (hoặc Kết thúc): bảng xếp hạng, cô cộng điểm Thi đua tổ hạng 1–3 (+3 / +2 / +1).
 // Giao diện theo mẫu “Đấu tổ Toán” (khung chung ShowFrame). Trạng thái chỉ ở trên máy đang chiếu.
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Crown, Eye, Pause, Play, SkipForward } from 'lucide-react';
+import { Check, Crown, Eye, Pause, Play, SkipForward, Volume2, VolumeX } from 'lucide-react';
 import EmojiText from '@/components/EmojiText';
 import { createClient } from '@/lib/supabase/client';
+import { playSound } from '@/lib/sound';
+import { speakSegments, speakableQuestion, stopSpeaking } from '@/lib/speech';
+import { duckMusic, startMusic, stopMusic } from '@/lib/show-music';
+import type { SubjectCode } from '@/lib/types';
 import { answerText } from '@/lib/exams/word';
 import type { PaperSlot } from '@/lib/exams/matrix';
-import { TEAM_AWARD, liveAwardReason, type TeamSnap } from '@/lib/classroom/team-battle';
+import { QUIZ_SECS, TEAM_AWARD, liveAwardReason, type TeamSnap } from '@/lib/classroom/team-battle';
 import ShowFrame, { Pic, ShowBoard, ShowHero, ShowTimer, TeamPic } from './ShowFrame';
 
 type Stage = 'ready' | 'ask' | 'check' | 'scored';
 const L = 'ABCDEFGH';
-/** giới hạn thời gian một câu (giây) — cô tự đặt ở form, chỉnh nhanh ±5 giây khi đang chiếu */
-export const QUIZ_SECS = { min: 5, max: 600, def: 30 };
 const clampSecs = (v: number) => Math.max(QUIZ_SECS.min, Math.min(QUIZ_SECS.max, Math.round(v) || QUIZ_SECS.def));
 /** màu dải tên tổ (theo thứ tự tổ) */
 const RIBBON = ['is-c0', 'is-c1', 'is-c2', 'is-c3', 'is-c4', 'is-c5', 'is-c6', 'is-c7'];
 
-export default function TeamQuiz({ classId, title, subject, teams, questions, seconds = QUIZ_SECS.def, onClose }: {
-  classId: string; title: string; /** tên môn, vd “Toán” */ subject: string; teams: TeamSnap[]; questions: PaperSlot[];
+export default function TeamQuiz({ classId, title, subject, subjectCode, teams, questions, seconds = QUIZ_SECS.def, onClose }: {
+  classId: string; title: string; /** tên môn, vd “Toán” */ subject: string; /** mã môn — để đọc đề đúng giọng */ subjectCode: SubjectCode;
+  teams: TeamSnap[]; questions: PaperSlot[];
   /** giây mỗi câu */ seconds?: number; onClose: () => void;
 }) {
   const [qi, setQi] = useState(0);
@@ -38,6 +41,11 @@ export default function TeamQuiz({ classId, title, subject, teams, questions, se
   const [awarded, setAwarded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  // Âm thanh: nhạc nền + tiếng đồng hồ khi đang đếm (bật / tắt, nhớ trên máy); loa đọc đề; tự đọc đề khi sang câu mới
+  const [sound, setSound] = useState(() => { try { return localStorage.getItem('dto-sound') !== '0'; } catch { return true; } });
+  const [autoRead, setAutoRead] = useState(() => { try { return localStorage.getItem('dto-autoread') !== '0'; } catch { return true; } });
+  const [speaking, setSpeaking] = useState(false);
+  const [voiceErr, setVoiceErr] = useState('');
 
   const q = questions[qi];
   const color = useMemo(() => new Map(teams.map((t, i) => [t.no, RIBBON[i % RIBBON.length]])), [teams]);
@@ -60,9 +68,40 @@ export default function TeamQuiz({ classId, title, subject, teams, questions, se
     return () => clearTimeout(t);
   }, [stage, paused, left]);
 
+  // nhạc nền chỉ chạy khi đồng hồ đang đếm; dừng / hết giờ / chấm thì tắt
+  const running = !done && stage === 'ask' && !paused && left > 0;
+  useEffect(() => { if (sound && running) startMusic(); else stopMusic(); }, [sound, running]);
+  useEffect(() => () => { stopMusic(); stopSpeaking(); }, []);
+  // tiếng đồng hồ mỗi giây: nhẹ, 10 giây cuối rõ hơn, 3 giây cuối gấp; hết giờ có chuông
+  useEffect(() => {
+    if (!sound || done || stage !== 'ask' || paused) return;
+    if (left <= 0) playSound('timeout');
+    else if (left < secs) playSound(left <= 3 ? 'tickUrgent' : left <= 10 ? 'tick' : 'tickSoft');
+  }, [left]); // eslint-disable-line react-hooks/exhaustive-deps -- chỉ kêu khi số giây đổi
+  const toggleSound = () => setSound((v) => { try { localStorage.setItem('dto-sound', v ? '0' : '1'); } catch { /* chế độ riêng tư */ } return !v; });
+  const toggleAuto = () => setAutoRead((v) => { try { localStorage.setItem('dto-autoread', v ? '0' : '1'); } catch { /* chế độ riêng tư */ } return !v; });
+
+  /** Loa: đọc đề + các phương án (giọng Việt / Anh tự chọn); nhạc hạ nhỏ trong lúc đọc */
+  const read = async (slot: PaperSlot | undefined = q) => {
+    if (!slot) return;
+    if (speaking) { stopSpeaking(); setSpeaking(false); duckMusic(false); return; }
+    setVoiceErr('');
+    const r = await speakSegments(speakableQuestion(slot.q, subjectCode), {
+      rate: 0.95,
+      onStart: () => { setSpeaking(true); duckMusic(true); },
+      onEnd: () => { setSpeaking(false); duckMusic(false); },
+    });
+    if (!r.ok) { setSpeaking(false); duckMusic(false); setVoiceErr(r.reason === 'no_vi_voice' ? 'Máy này chưa có giọng đọc tiếng Việt.' : 'Trình duyệt này không đọc được đề.'); }
+  };
+  // sang câu mới (hoặc bắt đầu câu 1): tự đọc đề nếu cô bật
+  useEffect(() => {
+    if (stage === 'ask' && autoRead && !done) void read(questions[qi]);
+    return () => { stopSpeaking(); };
+  }, [qi, stage === 'ask']); // eslint-disable-line react-hooks/exhaustive-deps -- chỉ đọc khi vào câu mới
+
   /** Đổi giây mỗi câu: áp dụng ngay cho câu đang đếm (đếm lại từ đầu) và các câu sau */
   const setTime = (v: number) => { const n = clampSecs(v); setSecs(n); if (stage === 'ready' || stage === 'ask') setLeft(n); };
-  const start = () => { setLeft(secs); setPaused(false); setStage('ask'); };
+  const start = () => { setLeft(secs); setPaused(false); setStage('ask'); if (sound) playSound('complete'); };
   const reveal = () => { setStage('check'); setOk([]); };
   const toggle = (no: number) => setOk((s) => (s.includes(no) ? s.filter((x) => x !== no) : [...s, no]));
   const score = () => { setHist((h) => { const n = [...h]; n[qi] = ok; return n; }); setStage('scored'); };
@@ -102,7 +141,14 @@ export default function TeamQuiz({ classId, title, subject, teams, questions, se
         </span>
       )}
       <span className="dto-chip"><Pic src="/brand/ph/star.webp" size={22} /> Đấu tổ ({teams.length} tổ)</span>
+      {!done && <button type="button" className={`dto-chip dto-chip-btn${autoRead ? ' is-on' : ''}`} onClick={toggleAuto} aria-pressed={autoRead} title="Tự đọc đề khi sang câu mới">🔊 Tự đọc đề</button>}
     </>
+  );
+  const tools = (
+    <button type="button" className={`dto-sq${sound ? '' : ' is-off'}`} onClick={toggleSound} aria-pressed={sound}
+      aria-label={sound ? 'Tắt nhạc nền và tiếng đồng hồ' : 'Bật nhạc nền và tiếng đồng hồ'} title={sound ? 'Tắt nhạc & tiếng đồng hồ' : 'Bật nhạc & tiếng đồng hồ'}>
+      {sound ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}
+    </button>
   );
 
   const board = (
@@ -142,7 +188,7 @@ export default function TeamQuiz({ classId, title, subject, teams, questions, se
 
   return (
     <ShowFrame kind="Đấu tổ" subject={subject} tag="Phòng thi tổ" title={title} counter={done ? 'Kết quả' : `Câu ${qi + 1}/${questions.length}`}
-      chips={chips} onEnd={!done && asked > 0 ? () => { if (window.confirm('Kết thúc sớm và xem kết quả?')) setDone(true); } : undefined}
+      chips={chips} tools={tools} onEnd={!done && asked > 0 ? () => { if (window.confirm('Kết thúc sớm và xem kết quả?')) setDone(true); } : undefined}
       onClose={close} board={board}>
       {done ? (
         <div className="dto-q">
@@ -188,7 +234,13 @@ export default function TeamQuiz({ classId, title, subject, teams, questions, se
           <div className="dto-card">
             <span className="dto-qtag">Câu {qi + 1} <Pic src="/brand/ph/star.webp" size={30} /></span>
             <em className={`dto-muc m${q.muc}`}>Mức {q.muc}</em>
-            <p className="dto-prompt"><EmojiText text={q.q.prompt} /></p>
+            <p className="dto-prompt">
+              <button type="button" className={`dto-speak${speaking ? ' is-on' : ''}`} onClick={() => void read()} aria-label={speaking ? 'Dừng đọc' : 'Đọc đề'} title={speaking ? 'Dừng đọc' : 'Đọc đề cho các em'}>
+                {speaking ? <VolumeX aria-hidden="true" /> : <Volume2 aria-hidden="true" />}
+              </button>
+              <EmojiText text={q.q.prompt} />
+            </p>
+            {voiceErr && <p className="dto-voice-err">{voiceErr}</p>}
             {q.q.left && q.q.left.length > 0 && q.q.type !== 'grouping' && <p className="dto-sub">{q.q.left.join('   ·   ')}</p>}
             {opts.length > 0 && <ul className="dto-optlist">{opts.map((o, k) => <li key={k} className={isAns(k) ? 'is-ans' : undefined}><EmojiText text={o} /></li>)}</ul>}
             {(q.q.blanks ?? q.q.statements)?.map((l, k) => <p key={k} className="dto-sub">{l.replace(/\{\}/g, '……')}</p>)}
