@@ -16,9 +16,11 @@ import { TEAM_AWARD, liveAwardReason, type TeamSnap } from '@/lib/classroom/team
 import '@/styles/btn.css';
 import '@/styles/dto.css';
 
-type Stage = 'ask' | 'check' | 'scored';
+type Stage = 'ready' | 'ask' | 'check' | 'scored';
 const L = 'ABCDEFGH';
-const TIMES = [15, 30, 45, 60];
+/** giới hạn thời gian một câu (giây) — cô tự đặt ở form, chỉnh nhanh ±5 giây khi đang chiếu */
+export const QUIZ_SECS = { min: 5, max: 600, def: 30 };
+const clampSecs = (v: number) => Math.max(QUIZ_SECS.min, Math.min(QUIZ_SECS.max, Math.round(v) || QUIZ_SECS.def));
 
 function TeamPic({ emoji, size }: { emoji: string; size: number }) {
   const src = teamIconSrc(emoji);
@@ -27,13 +29,14 @@ function TeamPic({ emoji, size }: { emoji: string; size: number }) {
     : <span style={{ fontSize: size * 0.8, lineHeight: 1 }} aria-hidden="true">{emoji}</span>;
 }
 
-export default function TeamQuiz({ classId, title, teams, questions, onClose }: {
-  classId: string; title: string; teams: TeamSnap[]; questions: PaperSlot[]; onClose: () => void;
+export default function TeamQuiz({ classId, title, teams, questions, seconds = QUIZ_SECS.def, onClose }: {
+  classId: string; title: string; teams: TeamSnap[]; questions: PaperSlot[]; /** giây mỗi câu */ seconds?: number; onClose: () => void;
 }) {
   const [qi, setQi] = useState(0);
-  const [stage, setStage] = useState<Stage>('ask');
-  const [secs, setSecs] = useState(30);
-  const [left, setLeft] = useState(30);
+  // 'ready': màn chờ trước câu 1 — đồng hồ chỉ chạy khi cô bấm Bắt đầu
+  const [stage, setStage] = useState<Stage>('ready');
+  const [secs, setSecs] = useState(() => clampSecs(seconds));
+  const [left, setLeft] = useState(() => clampSecs(seconds));
   const [paused, setPaused] = useState(false);
   const [ok, setOk] = useState<number[]>([]); // các tổ cô chọn là trả lời đúng ở câu hiện tại
   const [hist, setHist] = useState<number[][]>([]); // hist[i] = các tổ đúng ở câu i
@@ -69,6 +72,9 @@ export default function TeamQuiz({ classId, title, teams, questions, onClose }: 
   }, []);
   const toggleFull = () => { if (document.fullscreenElement) void document.exitFullscreen(); else void root.current?.requestFullscreen?.().catch(() => undefined); };
 
+  /** Đổi giây mỗi câu: áp dụng ngay cho câu đang đếm (đếm lại từ đầu) và các câu sau */
+  const setTime = (v: number) => { const n = clampSecs(v); setSecs(n); if (stage === 'ready' || stage === 'ask') setLeft(n); };
+  const start = () => { setLeft(secs); setPaused(false); setStage('ask'); };
   const reveal = () => { setStage('check'); setOk([]); };
   const toggle = (no: number) => setOk((s) => (s.includes(no) ? s.filter((x) => x !== no) : [...s, no]));
   const score = () => { setHist((h) => { const n = [...h]; n[qi] = ok; return n; }); setStage('scored'); };
@@ -101,10 +107,12 @@ export default function TeamQuiz({ classId, title, teams, questions, onClose }: 
         <b className="dto-title">🏆 {title}</b>
         {!done && <span className="dto-count">Câu {qi + 1}/{questions.length}</span>}
         <span className="dto-top-act">
-          {!done && stage === 'ask' && (
-            <select className="dto-secs" value={secs} onChange={(e) => { const v = Number(e.target.value); setSecs(v); setLeft(v); }} aria-label="Thời gian mỗi câu">
-              {TIMES.map((s) => <option key={s} value={s}>{s} giây / câu</option>)}
-            </select>
+          {!done && (
+            <span className="dto-secs" role="group" aria-label="Thời gian mỗi câu">
+              <button type="button" onClick={() => setTime(secs - 5)} disabled={secs <= QUIZ_SECS.min} aria-label="Bớt 5 giây">−</button>
+              <span>{secs} giây / câu</span>
+              <button type="button" onClick={() => setTime(secs + 5)} disabled={secs >= QUIZ_SECS.max} aria-label="Thêm 5 giây">+</button>
+            </span>
           )}
           <button type="button" className="dto-ico" onClick={toggleFull} aria-label={full ? 'Thoát toàn màn hình' : 'Toàn màn hình'}>{full ? <Minimize2 aria-hidden="true" /> : <Maximize2 aria-hidden="true" />}</button>
           {!done && asked > 0 && <button type="button" className="dto-ico is-text" onClick={() => { if (window.confirm('Kết thúc sớm và xem kết quả?')) setDone(true); }}>Kết thúc</button>}
@@ -136,9 +144,18 @@ export default function TeamQuiz({ classId, title, teams, questions, onClose }: 
               {err && <p className="dto-err" role="alert">{err}</p>}
               <button type="button" className="btn btn-outline" onClick={close}>Đóng</button>
             </div>
+          ) : stage === 'ready' ? (
+            <div className="dto-pick">
+              <h2>Sẵn sàng Đấu tổ!</h2>
+              <ul className="dto-teams">
+                {teams.map((t) => <li key={t.no}><TeamPic emoji={t.emoji} size={64} /><b>{t.name}</b><small>{t.members.length} bạn</small></li>)}
+              </ul>
+              <p className="dto-howto">Mỗi câu có <b>{secs} giây</b>: các tổ hội ý, ghi đáp án vào <b>bảng con</b>. Hết giờ cả lớp giơ bảng, cô lật đáp án — tổ đúng +1, sai không được cộng. {questions.length} câu.</p>
+              <button type="button" className="btn btn-yellow dto-go" onClick={start}><Play aria-hidden="true" /> Bắt đầu câu 1</button>
+            </div>
           ) : q ? (
             <div className="dto-q">
-              <p className="dto-who">✍️ Các tổ viết câu trả lời vào <b>bảng con</b> <em className={`dto-muc m${q.muc}`}>Mức {q.muc}</em></p>
+              <p className="dto-who">✍️ Các tổ hội ý, ghi đáp án vào <b>bảng con</b> <em className={`dto-muc m${q.muc}`}>Mức {q.muc}</em></p>
               <div className="dto-card">
                 <p className="dto-prompt"><EmojiText text={q.q.prompt} /></p>
                 {q.q.left && q.q.left.length > 0 && q.q.type !== 'grouping' && <p className="dto-opts">{q.q.left.join('   ·   ')}</p>}
@@ -150,8 +167,14 @@ export default function TeamQuiz({ classId, title, teams, questions, onClose }: 
               {stage === 'ask' ? (
                 <div className="dto-actions">
                   <span className={`dto-timer${left <= 5 ? ' is-low' : ''}${left <= 0 ? ' is-up' : ''}`}><Timer aria-hidden="true" /> {left > 0 ? `${left} giây` : 'Hết giờ — giơ bảng!'}</span>
-                  {left > 0 && <button type="button" className="dto-ico is-text" onClick={() => setPaused((p) => !p)}>{paused ? <><Play aria-hidden="true" /> Tiếp</> : <><Pause aria-hidden="true" /> Dừng</>}</button>}
-                  <button type="button" className="btn btn-yellow" onClick={reveal}><Eye aria-hidden="true" /> Hiện đáp án & chấm</button>
+                  {left > 0 ? (
+                    <>
+                      <button type="button" className="dto-ico is-text" onClick={() => setPaused((p) => !p)}>{paused ? <><Play aria-hidden="true" /> Tiếp</> : <><Pause aria-hidden="true" /> Dừng</>}</button>
+                      <button type="button" className="dto-ico is-text" onClick={() => { if (window.confirm('Hết giờ ngay để các tổ giơ bảng?')) setLeft(0); }}>Hết giờ ngay</button>
+                    </>
+                  ) : (
+                    <button type="button" className="btn btn-yellow" onClick={reveal}><Eye aria-hidden="true" /> Lật đáp án</button>
+                  )}
                 </div>
               ) : (
                 <div className="dto-check">
