@@ -5,7 +5,8 @@
 // Ở đây: sơ đồ nhánh từng vòng (kết quả từng cặp, ai thắng, vì sao), xử thắng cặp chưa phân định, bốc thăm mở vòng sau
 // (máy cô sinh đề mới, khó hơn, từ cùng các bài), kết thúc. Tự tải lại mỗi 20 giây khi đang mở trang.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, Crown, Gavel, Lock, RefreshCw, Search, Shuffle, Trash2, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Crown, Gavel, Lock, Presentation, RefreshCw, Search, Shuffle, Trash2, X } from 'lucide-react';
+import BattleShow from './BattleShow';
 import { fold } from '@/lib/classroom/teacher-nav';
 import { SUBJECT_NAME } from '@/lib/classroom/assignments';
 import type { Matrix } from '@/lib/exams/matrix';
@@ -127,6 +128,7 @@ function BattleCard({ b, grade, onUpdate, reload }: { b: BattleView; grade: numb
   const [err, setErr] = useState('');
   const [closes, setCloses] = useState(() => toLocalInput(endOfDay()));
   const [open, setOpen] = useState(true);
+  const [showing, setShowing] = useState(false); // màn chiếu lên bảng (BattleShow)
   const cur = b.rounds.find((r) => r.round === b.round);
   const winners = useMemo(() => (cur?.pairs ?? []).filter((p) => p.winner).length, [cur]);
   const roundDone = !!cur && cur.pairs.every((p) => p.winner);
@@ -166,7 +168,9 @@ function BattleCard({ b, grade, onUpdate, reload }: { b: BattleView; grade: numb
           <span>{SUBJECT_NAME[b.subject]} · {b.minutes} phút/vòng · vòng {b.round}</span>
         </button>
         <em className={`bt-st is-${b.status}`}>{STATUS[b.status]}</em>
+        <button type="button" className="btn btn-outline btn-sm bt-show-btn" onClick={() => setShowing(true)}><Presentation aria-hidden="true" /> Chiếu lên bảng</button>
       </header>
+      {showing && <BattleShow b={b} onClose={() => setShowing(false)} onRefresh={() => void reload()} />}
       {b.championName && <p className="bt-champ"><Crown aria-hidden="true" /> Nhà vô địch: <b>{b.championName}</b> 🎉</p>}
       {open && (
         <>

@@ -443,7 +443,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
         </button>
       </section>
       {show && (
-        <TeamQuiz classId={classId} title={(title.trim() || autoTitle).slice(0, 120)} teams={teamSnap} questions={show} seconds={quizSecs} onClose={() => setShow(null)} />
+        <TeamQuiz classId={classId} title={(title.trim() || autoTitle).slice(0, 120)} subject={SUBJECT_NAME[subject]} teams={teamSnap} questions={show} seconds={quizSecs} onClose={() => setShow(null)} />
       )}
     </form>
   );

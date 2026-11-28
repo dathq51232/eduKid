@@ -89,3 +89,5 @@
 .bt-tile-del svg { width: 15px; height: 15px; }
 :root[data-theme="dark"] .bt-tile-del:hover { background: #3d1d22; color: #ff9a9a; }
 @media (max-width: 520px) { .bt-strip-nav { display: none; } .bt-strip-wrap { grid-template-columns: minmax(0, 1fr); } .bt-strip { grid-auto-columns: 78%; } }
+.bt-show-btn { flex: none; min-height: 36px; padding: 4px 14px; font-size: 14px; }
+.bt-show-btn svg { width: 16px; height: 16px; }
