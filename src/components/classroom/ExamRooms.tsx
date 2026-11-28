@@ -16,10 +16,11 @@ import { XS, downloadXlsx, range, type XCell } from '@/lib/xlsx';
 import { createClient } from '@/lib/supabase/client';
 import { useGradeContent } from '@/components/learn/GradeReady';
 import { SUBJECT_NAME, type ExamItem } from '@/lib/classroom/assignments';
-import { bookLessons, defaultMatrix, totals, type Matrix } from '@/lib/exams/matrix';
+import { bookLessons, defaultMatrix, totals, type Matrix, type PaperSlot } from '@/lib/exams/matrix';
 import { commonPaperFor, paperByPlan, previewPaper, roomPaper, seedFor, slotItem, type RoomMode, type RoomPlan } from '@/lib/classroom/rooms-build';
 import RoomRules, { RATIOS } from './RoomRules';
 import RoomPreview, { draftProblems, type RoomDraft } from './RoomPreview';
+import TeamQuiz from './TeamQuiz';
 import BattlePanel from './BattlePanel';
 import { battleError } from '@/lib/classroom/battle';
 import { normalizeTeams, teamIconSrc, type Team } from '@/lib/classroom/class-tools';
@@ -177,6 +178,8 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
   const battle = kind === 'cap';
   // Tổ của lớp (Thi đua tổ) — tải khi cô bật Đấu tổ
   const [teams, setTeams] = useState<Team[] | null>(null);
+  // Đấu tổ trên lớp: bộ câu đang chiếu (null: chưa mở màn trình chiếu)
+  const [show, setShow] = useState<PaperSlot[] | null>(null);
   // Xếp đề theo dạng (chọn → điền → nối → xếp nhóm, mỗi dạng dễ → khó) như đề thi Tiếng Việt trực tuyến; mặc định bật cho Tiếng Việt
   const [byDang, setByDang] = useState(() => (subjects[0] ?? 'toan') === 'tieng-viet');
 
@@ -215,7 +218,8 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
 
   const makeDrafts = (m: Matrix): RoomDraft[] => {
     const salt = Date.now() >>> 0;
-    return mode === 'chung'
+    // Đấu tổ trên lớp: một bộ câu chung để cô chiếu
+    return mode === 'chung' || kind === 'to'
       ? [{ student: null, slots: previewPaper(m, newSeed()).slots }]
       : students.map((s) => ({ student: s.id, slots: previewPaper(m, seedFor(s.id, salt)).slots }));
   };
@@ -234,13 +238,20 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
     if (!have) return setErr('Quy tắc sinh đề chưa có câu nào.');
     if (!students.length) return setErr('Lớp chưa có học sinh.');
     if (problems) return setErr(`Còn ${problems} câu trong đề xem trước có đáp án chưa chấm được — sửa lại hoặc đổi câu đó.`);
-    if (kind === 'to' && teamSnap.length < 2) return setErr('Đấu tổ cần ít nhất 2 tổ có thành viên — xếp tổ ở Thi đua tổ trước.');
+    if (kind === 'to') {
+      // Đấu tổ trên lớp: không tạo phòng — sinh một bộ câu chung (hoặc dùng đề cô đã duyệt) rồi mở màn trình chiếu
+      if (teamSnap.length < 2) return setErr('Đấu tổ cần ít nhất 2 tổ có thành viên — xếp tổ ở Thi đua tổ trước.');
+      const slots = drafts?.[0]?.student === null ? drafts[0].slots : previewPaper(matrix, newSeed()).slots;
+      if (!slots.length) return setErr('Ngân hàng chưa đủ câu cho các chủ đề đã chọn — chọn thêm chủ đề.');
+      setShow(slots);
+      return;
+    }
     const o = new Date(opens), c = new Date(closes);
     if (Number.isNaN(o.getTime()) || Number.isNaN(c.getTime()) || c <= o) return setErr('Giờ đóng phải sau giờ mở.');
     if (battle) return void createBattle(o, c);
     setBusy(true);
     const salt = Date.now() >>> 0;
-    const plan: RoomPlan & { teams?: TeamSnap[] } = { ...matrix, mode, ...(kind === 'to' ? { teams: teamSnap } : {}) };
+    const plan: RoomPlan = { ...matrix, mode };
     let papers: { student: string; questions: ExamItem[] }[];
     if (mode === 'chung') {
       const base = (drafts?.[0]?.slots ?? previewPaper(matrix, salt).slots).map((s) => slotItem(s, matrix.points));
@@ -305,17 +316,20 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
             <span className="room-f-in"><ListOrdered aria-hidden="true" />
               <input type="number" min={3} max={40} value={n} onChange={(e) => { if (!dropDrafts()) return; setN(Math.max(3, Math.min(40, Number(e.target.value) || def.n))); resetRules(); }} /></span>
           </label>
-          <label className="room-f"><span>{battle ? 'Phút mỗi vòng' : 'Thời gian (phút)'}</span>
-            <span className="room-f-in"><Clock aria-hidden="true" />
-              <input type="number" min={5} max={90} value={minutes} onChange={(e) => setMinutes(Math.max(5, Math.min(90, Number(e.target.value) || def.minutes)))} /></span>
-          </label>
-          <label className="room-f is-wide"><span>Mở thi</span>
-            <span className="room-f-in"><CalendarDays aria-hidden="true" /><input type="datetime-local" value={opens} onChange={(e) => setOpens(e.target.value)} required /></span>
-          </label>
-          <label className="room-f is-wide"><span>Đóng thi</span>
-            <span className="room-f-in"><CalendarDays aria-hidden="true" /><input type="datetime-local" value={closes} onChange={(e) => setCloses(e.target.value)} required /></span>
-          </label>
-          <label className="room-f is-full"><span>Tên phòng thi (tuỳ chọn)</span>
+          {/* Đấu tổ chơi ngay trên lớp: không cần thời gian làm bài, giờ mở – đóng */}
+          {kind !== 'to' && <>
+            <label className="room-f"><span>{battle ? 'Phút mỗi vòng' : 'Thời gian (phút)'}</span>
+              <span className="room-f-in"><Clock aria-hidden="true" />
+                <input type="number" min={5} max={90} value={minutes} onChange={(e) => setMinutes(Math.max(5, Math.min(90, Number(e.target.value) || def.minutes)))} /></span>
+            </label>
+            <label className="room-f is-wide"><span>Mở thi</span>
+              <span className="room-f-in"><CalendarDays aria-hidden="true" /><input type="datetime-local" value={opens} onChange={(e) => setOpens(e.target.value)} required /></span>
+            </label>
+            <label className="room-f is-wide"><span>Đóng thi</span>
+              <span className="room-f-in"><CalendarDays aria-hidden="true" /><input type="datetime-local" value={closes} onChange={(e) => setCloses(e.target.value)} required /></span>
+            </label>
+          </>}
+          <label className="room-f is-full"><span>{kind === 'to' ? 'Tên buổi Đấu tổ (tuỳ chọn)' : 'Tên phòng thi (tuỳ chọn)'}</span>
             <span className="room-f-in"><Pencil aria-hidden="true" /><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={autoTitle} maxLength={200} /></span>
           </label>
         </div>
@@ -329,8 +343,8 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
           </label>
           <label className={`room-kind is-to${kind === 'to' ? ' is-on' : ''}`}>
             <Img3d src="/emoji/tool/thi-dua.webp" size={40} />
-            <span><b>Đấu tổ – các tổ thi đua</b>
-              <small>Cả lớp làm một phòng, điểm tổ = điểm trung bình cả tổ (em không làm tính 0). Phòng đóng: cộng điểm Thi đua tổ hạng 1 +3, hạng 2 +2, hạng 3 +1.</small></span>
+            <span><b>Đấu tổ – thi trên lớp, cô trình chiếu</b>
+              <small>Máy quay tổ ngẫu nhiên, rồi quay một bạn trong tổ lên trả lời. Đúng cộng điểm cho tổ (mức 1 +1, mức 2 +2, mức 3 +3). Cuối buổi cộng điểm Thi đua tổ hạng 1 +3, 2 +2, 3 +1.</small></span>
             <input type="checkbox" role="switch" className="room-switch" checked={kind === 'to'} onChange={() => pickKind('to')} aria-label="Bật Đấu tổ" />
           </label>
         </div>
@@ -378,7 +392,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
           })}
         </fieldset>
         {matrix && <p className={have < n ? 'exam-warn' : 'dash-muted'}>{have < n ? `Quy tắc hiện có ${have} câu (ít hơn ${n}) — chủ đề đã chọn còn ít câu, hoặc cô đã bớt câu.`
-          : `Đủ ${have} câu cho ${battle ? 'mỗi cặp' : mode === 'chung' ? 'đề chung' : `${students.length} đề riêng`}${t ? ` — ${t.byMuc[1]} câu mức 1, ${t.byMuc[2]} câu mức 2, ${t.byMuc[3]} câu mức 3` : ''}.`}</p>}
+          : `Đủ ${have} câu cho ${battle ? 'mỗi cặp' : kind === 'to' ? 'buổi Đấu tổ' : mode === 'chung' ? 'đề chung' : `${students.length} đề riêng`}${t ? ` — ${t.byMuc[1]} câu mức 1, ${t.byMuc[2]} câu mức 2, ${t.byMuc[3]} câu mức 3` : ''}.`}</p>}
 
         {/* Hai bước luôn hiện để cô thấy có thể chỉnh; cần chọn chủ đề trước mới bấm được */}
         <section className="room-step" aria-label="Quy tắc sinh đề">
@@ -416,10 +430,13 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
         <button type="submit" className="btn btn-yellow room-submit" disabled={busy || !picked.length || problems > 0 || (kind === 'to' && teamSnap.length < 2)}>
           <Play aria-hidden="true" /> {busy ? (battle ? 'Đang bốc thăm chia cặp…' : 'Đang tạo đề cho từng em…')
             : battle ? `Bốc thăm chia cặp & mở vòng 1 cho ${students.length} em`
-              : kind === 'to' ? `Tạo phòng Đấu tổ cho ${teamSnap.length || ''} tổ · ${students.length} em`
+              : kind === 'to' ? `Bắt đầu Đấu tổ trên lớp · ${teamSnap.length || ''} tổ · ${have} câu`
                 : `Tạo phòng thi cho ${students.length} em${drafts ? ' với đề đã duyệt' : ''}`}
         </button>
       </section>
+      {show && (
+        <TeamQuiz classId={classId} title={(title.trim() || autoTitle).slice(0, 120)} teams={teamSnap} students={students} questions={show} onClose={() => setShow(null)} />
+      )}
     </form>
   );
 }

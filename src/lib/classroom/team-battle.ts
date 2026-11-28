@@ -1,4 +1,5 @@
-// ĐẤU TỔ trong PHÒNG THI LỚP — cả lớp làm bài trong một phòng thi như thường, kết quả cộng theo TỔ
+// ĐẤU TỔ — hai phần: (1) Đấu tổ TRÊN LỚP (cô trình chiếu, TeamQuiz.tsx — cách tạo hiện nay, xem cuối file);
+// (2) bảng xếp hạng tổ cho phòng thi online cũ đã tạo kèm danh sách tổ (TeamBoard trong ExamRooms) — cả lớp làm bài trong một phòng thi, kết quả cộng theo TỔ
 // (tổ lấy từ Thi đua tổ: class_tool_state tool 'teams'). Không cần bảng mới: danh sách tổ lúc tạo phòng
 // được chụp lại trong exam_rooms.matrix.teams, nên cô đổi tổ sau đó cũng không làm lệch kết quả phòng cũ.
 //
@@ -51,6 +52,20 @@ export function teamScores(teams: TeamSnap[], rows: TeamRow[]): TeamScore[] {
   list.forEach((t, i) => { t.rank = i > 0 && cmp(list[i - 1], t) === 0 ? list[i - 1].rank : i + 1; });
   return list;
 }
+
+// ---------------------------------------------------------------- Đấu tổ TRÊN LỚP (cô trình chiếu, TeamQuiz.tsx)
+/** Điểm một câu trả lời đúng theo mức: M1 +1, M2 +2, M3 +3 */
+export const pointsForMuc = (muc: number) => Math.max(1, Math.min(3, Math.round(muc) || 1));
+/** Bốc công bằng: chọn ngẫu nhiên trong các mục chưa được bốc; bốc hết thì sang vòng mới (trừ mục vừa bốc nếu còn mục khác) */
+export function pickFair<T>(items: T[], used: T[], last: T | null, rand: () => number = Math.random): { pick: T; used: T[] } | null {
+  if (!items.length) return null;
+  let left = items.filter((x) => !used.includes(x));
+  let fresh = used;
+  if (!left.length) { fresh = []; left = items.length > 1 && last !== null ? items.filter((x) => x !== last) : items; }
+  const pick = left[Math.floor(rand() * left.length)];
+  return { pick, used: [...fresh, pick] };
+}
+export const liveAwardReason = (day: string, rank: number) => `🏆 Đấu tổ trên lớp ${day} · hạng ${rank}`;
 
 /** Lý do ghi vào điểm thi đua (có mã phòng để biết đã cộng chưa, không cộng hai lần) */
 export const awardReason = (code: string, rank: number) => `🏆 Đấu tổ phòng ${code} · hạng ${rank}`;

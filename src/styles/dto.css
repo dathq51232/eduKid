@@ -1,0 +1,86 @@
+/* ĐẤU TỔ TRÊN LỚP (dto-) — màn trình chiếu toàn màn hình: quay tổ, quay bạn, câu hỏi, bảng điểm.
+   Nền xanh đậm, chữ to để chiếu máy chiếu; hoạt ảnh chỉ dùng transform / opacity. */
+.dto { position: fixed; inset: 0; z-index: 1000; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 14px; padding: 16px 20px 20px;
+  background: radial-gradient(circle at 20% 10%, #24408f 0%, #142a66 45%, #0c1b45 100%); color: #f4f7ff; overflow: auto; }
+.dto .ic3d { filter: drop-shadow(0 4px 6px rgb(0 0 0 / .35)); }
+.dto-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.dto-title { font-size: clamp(18px, 2.2vw, 26px); }
+.dto-count { padding: 3px 12px; border-radius: 999px; background: rgb(255 255 255 / .14); font-weight: 700; }
+.dto-top-act { display: flex; gap: 8px; margin-left: auto; }
+.dto-ico { display: inline-grid; place-items: center; min-width: 40px; height: 40px; padding: 0 10px; border: 0; border-radius: 12px; background: rgb(255 255 255 / .12); color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+.dto-ico:hover { background: rgb(255 255 255 / .22); }
+.dto-ico svg { width: 20px; height: 20px; }
+
+.dto-main { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 18px; min-height: 0; }
+.dto-stage { display: grid; place-items: center; min-height: 0; padding: 20px; border-radius: 26px; background: rgb(255 255 255 / .06); }
+.dto-pick, .dto-q, .dto-end { display: grid; justify-items: center; gap: 22px; width: 100%; max-width: 1100px; text-align: center; }
+.dto-pick h2, .dto-end h2 { display: inline-flex; align-items: center; gap: 10px; margin: 0; font-size: clamp(24px, 3.4vw, 44px); color: #fff; }
+
+/* thẻ tổ / thẻ tên khi quay */
+.dto-teams { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; width: 100%; margin: 0; padding: 0; list-style: none; }
+.dto-teams li { display: grid; justify-items: center; gap: 6px; padding: 18px 10px; border: 3px solid rgb(255 255 255 / .16); border-radius: 22px; background: rgb(255 255 255 / .08); transition: transform .12s, border-color .12s, background-color .12s; }
+.dto-teams li b { font-size: clamp(18px, 2vw, 26px); }
+.dto-teams li small { opacity: .75; }
+.dto-teams li.is-off { opacity: .4; }
+.dto-kids { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.dto-kids li { padding: 12px 20px; border: 3px solid rgb(255 255 255 / .16); border-radius: 999px; background: rgb(255 255 255 / .08); font-size: clamp(18px, 2vw, 26px); font-weight: 700; transition: transform .12s, border-color .12s, background-color .12s; }
+.dto-kids li.is-used { opacity: .5; text-decoration: line-through; }
+.dto-teams li.is-hi, .dto-kids li.is-hi { transform: scale(1.08); border-color: #ffc83d; background: rgb(255 200 61 / .22); opacity: 1; text-decoration: none; }
+.dto-go { min-height: 64px; padding: 12px 40px; font-size: 24px; }
+.dto-go svg { width: 26px; height: 26px; }
+
+/* câu hỏi */
+.dto-who { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; margin: 0; font-size: clamp(20px, 2.6vw, 32px); }
+.dto-who b { color: #ffd76b; }
+.dto-who span { opacity: .8; }
+.dto-muc { padding: 3px 12px; border-radius: 999px; font-size: 15px; font-style: normal; font-weight: 700; background: rgb(255 255 255 / .16); }
+.dto-muc.m2 { background: rgb(255 200 61 / .3); }
+.dto-muc.m3 { background: rgb(244 114 182 / .35); }
+.dto-card { display: grid; gap: 14px; width: 100%; padding: clamp(18px, 3vw, 34px); border-radius: 24px; background: #fff; color: #14213d; text-align: left; box-shadow: 0 16px 40px rgb(0 0 0 / .35); }
+.dto-prompt { margin: 0; font-size: clamp(22px, 3vw, 38px); font-weight: 700; line-height: 1.35; }
+.dto-opts { margin: 0; font-size: clamp(18px, 2.2vw, 28px); }
+.dto-optlist { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.dto-optlist li { padding: 12px 16px; border: 2px solid #d5deea; border-radius: 14px; font-size: clamp(18px, 2.2vw, 28px); font-weight: 600; }
+.dto-ans { margin: 0; padding: 10px 14px; border-radius: 14px; background: #dcfce7; color: #14532d; font-size: clamp(18px, 2.2vw, 28px); animation: dto-in .3s ease-out both; }
+.dto-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; }
+.dto-timer { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 999px; background: rgb(255 255 255 / .14); font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.dto-timer svg { width: 22px; height: 22px; }
+.dto-timer.is-low { background: #dc2626; }
+.dto-yes { color: #fff; background: #16a34a; box-shadow: 0 4px 0 #0f6a32; }
+.dto-no { color: #fff; background: #dc2626; box-shadow: 0 4px 0 #8c1d18; }
+.dto-link { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: #c7d4f5; font: inherit; text-decoration: underline; cursor: pointer; }
+.dto-link svg { width: 18px; height: 18px; }
+.dto-result { font-size: clamp(20px, 2.6vw, 32px); font-weight: 800; animation: dto-in .3s ease-out both; }
+.dto-result.is-ok { color: #86efac; }
+
+/* bảng điểm bên phải */
+.dto-board { display: grid; align-content: start; gap: 10px; padding: 16px; border-radius: 22px; background: rgb(255 255 255 / .08); }
+.dto-board h3 { margin: 0; font-size: 20px; color: #fff; }
+.dto-board ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.dto-board li { display: grid; grid-template-columns: 28px auto minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 14px; background: rgb(255 255 255 / .08); transition: background-color .2s; }
+.dto-board li.is-cur { background: rgb(255 200 61 / .25); }
+.dto-board li b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dto-board li strong { font-size: 24px; font-variant-numeric: tabular-nums; }
+.dto-rank { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: rgb(255 255 255 / .14); font-weight: 800; font-size: 14px; }
+.dto-rank svg { width: 18px; height: 18px; color: #ffc83d; }
+.dto-rule { margin: 0; font-size: 13px; opacity: .75; }
+
+/* kết quả */
+.dto-podium { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; width: 100%; margin: 0; padding: 0; list-style: none; }
+.dto-podium li { display: grid; justify-items: center; gap: 6px; padding: 18px 10px; border-radius: 22px; background: rgb(255 255 255 / .08); animation: dto-in .4s ease-out both; }
+.dto-podium li.r1 { background: rgb(255 200 61 / .25); box-shadow: inset 0 0 0 3px #ffc83d; }
+.dto-podium li b { font-size: 22px; }
+.dto-podium li strong { font-size: 28px; color: #ffd76b; }
+.dto-podium li small { opacity: .75; }
+.dto-medal { font-size: 36px; font-weight: 800; }
+.dto-ok { display: inline-flex; align-items: center; gap: 6px; margin: 0; color: #86efac; font-weight: 700; }
+.dto-ok svg { width: 20px; height: 20px; }
+.dto-err { margin: 0; color: #fecaca; }
+.dto .btn-outline { background: transparent; color: #fff; box-shadow: inset 0 0 0 2px rgb(255 255 255 / .6); }
+
+@keyframes dto-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .dto *, .dto *::before { animation: none !important; transition: none !important; } }
+@media (max-width: 820px) {
+  .dto-main { grid-template-columns: 1fr; }
+  .dto-board ol { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+}
