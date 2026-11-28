@@ -146,19 +146,66 @@
 :root[data-theme="dark"] .room-pv-dang.d3 { background: #12382a; color: #86efac; }
 :root[data-theme="dark"] .room-pv-dang.d4 { background: #2e1f57; color: #c4b5fd; }
 
-/* ---------- Bố cục trang cô: hai thẻ (Phòng của lớp / Tạo mới), mục đã đóng thu gọn ---------- */
-.room-tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 5px; border: 1px solid var(--line-strong); border-radius: 16px; background: var(--surface); width: fit-content; max-width: 100%; }
-.room-tabs button { flex: 1 1 auto; justify-content: center; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); font: inherit; font-weight: 700; cursor: pointer; }
-.room-tabs button svg { width: 18px; height: 18px; }
-.room-tabs button.is-on { background: var(--blue); color: #fff; }
-.room-tabs button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-.room-tab-n { padding: 1px 8px; border-radius: 999px; background: rgb(22 163 74 / .18); color: #15803d; font-size: 12px; }
-.room-tabs button.is-on .room-tab-n { background: rgb(255 255 255 / .22); color: #fff; }
-.room-panel { display: grid; gap: 22px; }
-.room-panel[hidden] { display: none; }
-.room-empty { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 14px 16px; border: 1px dashed var(--line-strong); border-radius: 16px; }
+
+/* ================= Bố cục mới trang cô (11/2026): hero · Phòng thi của lớp · Đấu cặp (dải thẻ) · Tạo phòng · Chủ đề =================
+   Màu theo biến chung (sáng / tối tự đổi). Hình 3D: public/emoji (Fluent Emoji 3D), public/brand. */
+.room-hero { position: relative; align-items: center; min-height: 170px; padding: 18px 22px; border-radius: 24px; overflow: hidden;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--blue-soft) 90%, transparent), color-mix(in srgb, var(--surface) 70%, transparent)); }
+.room-hero-txt { position: relative; z-index: 1; flex: 1 1 360px; max-width: 620px; }
+.room-hero-txt .dash-muted { margin: 6px 0 0; }
+.room-hero-art { position: relative; flex: 0 0 auto; width: 300px; height: 150px; }
+.room-hero-art img { position: absolute; bottom: -18px; height: auto; object-fit: contain; }
+.room-hero-kids { right: 0; width: 230px; }
+.room-hero-milo { right: 175px; width: 120px; bottom: -10px !important; }
+@media (max-width: 760px) { .room-hero-art { display: none; } }
+
+/* khung mục (Phòng thi của lớp, Đấu cặp) */
+.room-sec, .room-box { display: grid; gap: 14px; padding: 18px 20px; border-radius: 22px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.room-sec-head, .room-box-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.room-sec-head h2, .room-box-head h2 { margin: 0; font-size: clamp(20px, 2.4vw, 24px); }
+.room-sec-n { padding: 2px 10px; border-radius: 999px; background: var(--blue-soft); color: var(--blue-deep); font-size: 13px; font-weight: 700; }
+.room-sec-act { margin-left: auto; }
+.room-sec-act svg { width: 16px; height: 16px; }
+.room-anchor { scroll-margin-top: 80px; }
+.room-empty { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1.5px dashed var(--line-strong); border-radius: 16px; color: var(--muted); }
 .room-empty p { margin: 0; }
 
+/* thẻ một phòng: mã lớn | thông tin | nút */
+.room-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.room-card { padding: 14px 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: none; }
+.room-card.is-live { border-color: color-mix(in srgb, #22c55e 45%, var(--line)); }
+.room-card-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px 18px; }
+.room-code-box { display: grid; gap: 6px; padding: 10px 12px; border-radius: 16px; background: var(--surface-2, var(--blue-soft)); }
+.room-code-box > span { font-size: 13px; font-weight: 700; color: var(--muted); }
+.room-code-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 14px; border: 2px solid var(--brand-yellow); border-radius: 14px; background: #fff8e1; }
+.room-code-row .room-code { padding: 0; border: 0; background: none; font-size: 30px; }
+.room-card.is-closed .room-code-row { border-color: var(--line-strong); background: var(--surface); }
+.room-copy { padding: 6px; border-radius: 10px; }
+.room-copy svg { width: 20px; height: 20px; }
+.room-card-info { min-width: 0; display: grid; gap: 8px; }
+.room-card-info > strong { font-size: 18px; line-height: 1.3; }
+.room-kind-tag { margin-left: 8px; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-style: normal; vertical-align: 2px; }
+.room-kind-tag.is-to { background: #ede4ff; color: #6d3fe0; }
+.room-kind-tag.is-cap { background: rgb(245 158 11 / .18); color: #b45309; }
+.room-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.room-chips > span { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; background: var(--surface-2, var(--blue-soft)); color: var(--ink); font-size: 13px; }
+.room-chips > span svg { width: 15px; height: 15px; color: var(--blue); }
+.room-chips > span.is-flag svg { color: #c2410c; }
+.room-chip { display: inline-flex; align-items: center; gap: 6px; }
+.room-chip i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.room-card-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: center; }
+.room-card-actions .btn { min-height: 40px; padding: 6px 14px; font-size: 14px; }
+.room-card-actions .btn svg { width: 16px; height: 16px; }
+.room-act-main { color: #fff; background: var(--blue); box-shadow: 0 4px 0 color-mix(in srgb, var(--blue) 55%, #000); }
+.room-del { grid-column: 1 / -1; justify-self: end; }
+@media (max-width: 860px) {
+  .room-card-head { grid-template-columns: auto minmax(0, 1fr); }
+  .room-card-actions { grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+  .room-del { grid-column: auto; justify-self: start; }
+}
+@media (max-width: 520px) { .room-card-head { grid-template-columns: 1fr; } .room-code-box { justify-self: start; } }
+
+/* phòng / đấu cặp đã kết thúc: thu gọn */
 .room-archive { border: 1px solid var(--line-strong); border-radius: 16px; background: var(--surface); }
 .room-archive > summary { display: flex; align-items: center; gap: 8px; padding: 12px 16px; cursor: pointer; list-style: none; }
 .room-archive > summary::-webkit-details-marker { display: none; }
@@ -169,15 +216,92 @@
 .room-archive-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 0; }
 .room-archive-tools > span { font-size: 14px; }
 
-/* Form tạo mới: 5 bước, mỗi bước một khung */
-.room-mode { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
-.room-mode-opt { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 2px solid var(--line-strong); border-radius: 14px; cursor: pointer; }
-.room-mode-opt > svg { flex: none; width: 22px; height: 22px; margin-top: 1px; color: var(--blue); }
-.room-mode-opt.is-battle > svg { color: #d97706; }
-.room-mode-opt input { margin-top: 4px; }
-.room-mode-opt > span { display: grid; gap: 3px; }
-.room-mode-opt small { color: var(--muted); font-size: 13px; line-height: 1.45; }
-.room-mode-opt.is-on { border-color: var(--blue); background: var(--blue-soft); }
-.room-mode-opt.is-battle.is-on { border-color: #d97706; background: rgb(245 158 11 / .1); }
-.room-subject { min-height: 38px; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; }
-.room-submit { justify-self: stretch; min-height: 48px; font-size: 17px; }
+/* ĐẤU TỔ: bảng xếp hạng tổ dưới thẻ phòng */
+.room-teamboard { display: grid; gap: 8px; margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: color-mix(in srgb, #8b5cf6 7%, var(--surface)); border: 1px solid color-mix(in srgb, #8b5cf6 25%, var(--line)); }
+.room-teamboard-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0; }
+.room-teamboard-head .dash-muted { flex-basis: 100%; font-size: 13px; }
+.room-teamlist { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.room-teamlist li { display: grid; grid-template-columns: 30px auto minmax(0, 1fr) minmax(60px, 160px) auto; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 12px; background: var(--surface); }
+.room-teamlist li.is-top { box-shadow: inset 0 0 0 2px #f5b301; }
+.room-rank { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2, var(--blue-soft)); font-weight: 800; }
+.room-rank svg { width: 18px; height: 18px; color: #d99a12; }
+.room-team-name { display: grid; min-width: 0; }
+.room-team-name small { color: var(--muted); font-size: 12px; }
+.room-team-bar { height: 8px; border-radius: 99px; background: var(--surface-2, var(--line)); overflow: hidden; }
+.room-team-bar i { display: block; height: 100%; background: linear-gradient(90deg, #8b5cf6, #3b82f6); transform-origin: left; transition: transform .5s ease; }
+.room-team-pts { font-size: 20px; }
+.room-team-pts small { color: var(--muted); font-size: 12px; font-weight: 600; }
+.room-team-emo { font-size: 24px; line-height: 1; }
+.room-teamboard-foot { margin: 0; }
+@media (max-width: 520px) { .room-teamlist li { grid-template-columns: 26px auto minmax(0, 1fr) auto; } .room-team-bar { display: none; } }
+
+/* Form tạo phòng mới */
+.room-new { display: grid; gap: 22px; }
+.room-plus { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--blue); color: #fff; }
+.room-plus svg { width: 20px; height: 20px; }
+.room-box-lead { margin: -6px 0 0; color: var(--muted); font-size: 14px; }
+.room-fields { display: flex; flex-wrap: wrap; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 18px; }
+.room-f { display: grid; grid-template-columns: minmax(0, 1fr); gap: 5px; min-width: 0; flex: 1 1 120px; }
+.room-f > span:first-child { font-size: 13px; font-weight: 700; }
+.room-f.is-wide { flex: 1.7 1 215px; }
+.room-f.is-full { flex-basis: 100%; }
+.room-f-in { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border: 1.5px solid var(--line-strong); border-radius: 12px; background: var(--surface); }
+.room-f-in:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 18%, transparent); }
+.room-f-in > svg { flex: none; width: 18px; height: 18px; color: var(--blue); }
+.room-f-in input, .room-f-in select { flex: 1; min-width: 0; min-height: 40px; border: 0; background: transparent; color: var(--ink); font: inherit; font-weight: 600; outline: none; }
+.room-kinds { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
+.room-kind { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--blue) 5%, var(--surface)); cursor: pointer; }
+.room-kind > span { flex: 1; display: grid; gap: 3px; min-width: 0; }
+.room-kind small { color: var(--muted); font-size: 13px; line-height: 1.45; }
+.room-kind.is-cap.is-on { border-color: #d97706; background: rgb(245 158 11 / .1); }
+.room-kind.is-to.is-on { border-color: #8b5cf6; background: color-mix(in srgb, #8b5cf6 10%, var(--surface)); }
+/* công tắc bật / tắt (ô tick vẽ lại) */
+.room-switch { flex: none; appearance: none; position: relative; width: 46px; height: 26px; margin: 0; border-radius: 99px; background: var(--line-strong); cursor: pointer; transition: background-color .2s; }
+.room-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / .3); transition: transform .2s; }
+.room-switch:checked { background: var(--blue); }
+.room-kind.is-cap .room-switch:checked { background: #d97706; }
+.room-kind.is-to .room-switch:checked { background: #8b5cf6; }
+.room-switch:checked::after { transform: translateX(20px); }
+.room-switch:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.room-teams-pick { display: grid; gap: 6px; }
+.room-teams-pick p { margin: 0; }
+.room-team-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.room-team-chips li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 6px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 14px; }
+.room-team-chips li span { color: var(--muted); font-size: 12px; }
+
+/* Chủ đề kiểm tra: ô tìm + lọc học kì, thẻ có hình 3D */
+.room-topic-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.room-topic-tools select { min-height: 40px; padding: 0 10px; border: 1.5px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; }
+.room-search { display: flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border: 1.5px solid var(--line-strong); border-radius: 999px; background: var(--surface); }
+.room-search svg { width: 16px; height: 16px; color: var(--muted); }
+.room-search input { width: 170px; border: 0; background: transparent; color: var(--ink); font: inherit; outline: none; }
+.room-units { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.room-unit { position: relative; align-items: center; gap: 10px; padding: 12px; border: 1.5px solid var(--line); border-radius: 16px; transition: transform .15s, box-shadow .15s; }
+.room-unit:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.room-unit > input { position: absolute; opacity: 0; pointer-events: none; }
+.room-unit:has(input:focus-visible) { outline: 2px solid var(--blue); outline-offset: 2px; }
+.room-unit > span b { font-size: 15px; }
+.room-unit > span em { font-style: normal; font-weight: 600; line-height: 1.3; }
+.room-unit-ok { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; padding: 2px; border-radius: 50%; background: var(--blue); color: #fff; }
+.room-unit.is-on { border-color: var(--blue); }
+img.ic3d.room-unit-ic { flex: none; }
+
+/* bước Quy tắc / Xem trước: hàng có biểu tượng tròn bên trái, nút bên phải */
+.room-step { border-radius: 18px; }
+.room-step-head h3 { font-size: 18px; }
+.room-step-head > .room-step-ic { flex: none; min-width: 0; }
+.room-step-ic { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: #fff; }
+.room-step-ic svg { width: 18px; height: 18px; }
+.room-step-ic.is-blue { background: var(--blue); }
+.room-step-ic.is-navy { background: var(--blue-deep); }
+.room-submit { justify-self: stretch; min-height: 56px; font-size: 19px; }
+.room-submit svg { width: 22px; height: 22px; }
+
+:root[data-theme="dark"] .room-code-row { background: #3a2f12; }
+:root[data-theme="dark"] .room-kind-tag.is-to { background: #2e1f57; color: #c4b5fd; }
+:root[data-theme="dark"] .room-kind-tag.is-cap { color: #fcd34d; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .room-code-row { background: #3a2f12; }
+  :root:not([data-theme="light"]) .room-kind-tag.is-to { background: #2e1f57; color: #c4b5fd; }
+  :root:not([data-theme="light"]) .room-kind-tag.is-cap { color: #fcd34d; }
+}
