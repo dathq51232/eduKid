@@ -20,7 +20,7 @@ import { bookLessons, defaultMatrix, totals, type Matrix, type PaperSlot } from 
 import { commonPaperFor, paperByPlan, previewPaper, roomPaper, seedFor, slotItem, type RoomMode, type RoomPlan } from '@/lib/classroom/rooms-build';
 import RoomRules, { RATIOS } from './RoomRules';
 import RoomPreview, { draftProblems, type RoomDraft } from './RoomPreview';
-import TeamQuiz from './TeamQuiz';
+import TeamQuiz, { QUIZ_SECS } from './TeamQuiz';
 import BattlePanel from './BattlePanel';
 import { battleError } from '@/lib/classroom/battle';
 import { normalizeTeams, teamIconSrc, type Team } from '@/lib/classroom/class-tools';
@@ -180,6 +180,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
   const [teams, setTeams] = useState<Team[] | null>(null);
   // Đấu tổ trên lớp: bộ câu đang chiếu (null: chưa mở màn trình chiếu)
   const [show, setShow] = useState<PaperSlot[] | null>(null);
+  const [quizSecs, setQuizSecs] = useState(QUIZ_SECS.def); // giây mỗi câu của Đấu tổ (cô tự đặt)
   // Xếp đề theo dạng (chọn → điền → nối → xếp nhóm, mỗi dạng dễ → khó) như đề thi Tiếng Việt trực tuyến; mặc định bật cho Tiếng Việt
   const [byDang, setByDang] = useState(() => (subjects[0] ?? 'toan') === 'tieng-viet');
 
@@ -316,7 +317,14 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
             <span className="room-f-in"><ListOrdered aria-hidden="true" />
               <input type="number" min={3} max={40} value={n} onChange={(e) => { if (!dropDrafts()) return; setN(Math.max(3, Math.min(40, Number(e.target.value) || def.n))); resetRules(); }} /></span>
           </label>
-          {/* Đấu tổ chơi ngay trên lớp: không cần thời gian làm bài, giờ mở – đóng */}
+          {/* Đấu tổ chơi ngay trên lớp: chỉ cần số giây mỗi câu (không có thời gian làm bài, giờ mở – đóng) */}
+          {kind === 'to' && (
+            <label className="room-f"><span>Giây mỗi câu</span>
+              <span className="room-f-in"><Clock aria-hidden="true" />
+                <input type="number" min={QUIZ_SECS.min} max={QUIZ_SECS.max} step={5} value={quizSecs} onChange={(e) => setQuizSecs(Number(e.target.value) || QUIZ_SECS.def)}
+                  onBlur={() => setQuizSecs((v) => Math.max(QUIZ_SECS.min, Math.min(QUIZ_SECS.max, Math.round(v))))} /></span>
+            </label>
+          )}
           {kind !== 'to' && <>
             <label className="room-f"><span>{battle ? 'Phút mỗi vòng' : 'Thời gian (phút)'}</span>
               <span className="room-f-in"><Clock aria-hidden="true" />
@@ -344,7 +352,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
           <label className={`room-kind is-to${kind === 'to' ? ' is-on' : ''}`}>
             <Img3d src="/emoji/tool/thi-dua.webp" size={40} />
             <span><b>Đấu tổ – thi trên lớp, cô trình chiếu</b>
-              <small>Máy quay tổ ngẫu nhiên, rồi quay một bạn trong tổ lên trả lời. Đúng cộng điểm cho tổ (mức 1 +1, mức 2 +2, mức 3 +3). Cuối buổi cộng điểm Thi đua tổ hạng 1 +3, 2 +2, 3 +1.</small></span>
+              <small>Cô chiếu từng câu, các tổ hội ý và ghi đáp án vào bảng con; hết giờ giơ bảng, cô lật đáp án — tổ đúng +1, sai không cộng. Cuối buổi cộng điểm Thi đua tổ hạng 1 +3, 2 +2, 3 +1.</small></span>
             <input type="checkbox" role="switch" className="room-switch" checked={kind === 'to'} onChange={() => pickKind('to')} aria-label="Bật Đấu tổ" />
           </label>
         </div>
@@ -435,7 +443,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
         </button>
       </section>
       {show && (
-        <TeamQuiz classId={classId} title={(title.trim() || autoTitle).slice(0, 120)} teams={teamSnap} students={students} questions={show} onClose={() => setShow(null)} />
+        <TeamQuiz classId={classId} title={(title.trim() || autoTitle).slice(0, 120)} teams={teamSnap} questions={show} seconds={quizSecs} onClose={() => setShow(null)} />
       )}
     </form>
   );
