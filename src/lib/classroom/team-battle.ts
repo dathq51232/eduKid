@@ -54,6 +54,8 @@ export function teamScores(teams: TeamSnap[], rows: TeamRow[]): TeamScore[] {
 }
 
 // ---------------------------------------------------------------- Đấu tổ TRÊN LỚP (cô trình chiếu, cả lớp trả lời bằng bảng con — TeamQuiz.tsx)
+/** giới hạn thời gian một câu Đấu tổ (giây) — cô tự đặt ở form, chỉnh nhanh ±5 giây khi đang chiếu */
+export const QUIZ_SECS = { min: 5, max: 600, def: 30 };
 export const liveAwardReason = (day: string, rank: number) => `🏆 Đấu tổ trên lớp ${day} · hạng ${rank}`;
 
 /** Lý do ghi vào điểm thi đua (có mã phòng để biết đã cộng chưa, không cộng hai lần) */

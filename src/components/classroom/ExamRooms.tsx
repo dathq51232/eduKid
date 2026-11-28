@@ -20,11 +20,11 @@ import { bookLessons, defaultMatrix, totals, type Matrix, type PaperSlot } from 
 import { commonPaperFor, paperByPlan, previewPaper, roomPaper, seedFor, slotItem, type RoomMode, type RoomPlan } from '@/lib/classroom/rooms-build';
 import RoomRules, { RATIOS } from './RoomRules';
 import RoomPreview, { draftProblems, type RoomDraft } from './RoomPreview';
-import TeamQuiz, { QUIZ_SECS } from './TeamQuiz';
+import TeamQuiz from './TeamQuiz';
 import BattlePanel from './BattlePanel';
 import { battleError } from '@/lib/classroom/battle';
 import { normalizeTeams, teamIconSrc, type Team } from '@/lib/classroom/class-tools';
-import { TEAM_AWARD, TEAM_RULE, awardReason, awardedFor, teamScores, teamsOfRoom, type TeamSnap } from '@/lib/classroom/team-battle';
+import { QUIZ_SECS, TEAM_AWARD, TEAM_RULE, awardReason, awardedFor, teamScores, teamsOfRoom, type TeamSnap } from '@/lib/classroom/team-battle';
 import { unitIcon } from '@/lib/classroom/unit-icons';
 import { fold } from '@/lib/classroom/teacher-nav';
 import {
@@ -443,7 +443,7 @@ function CreateRoom({ classId, className, grade, students, subjects, onCreated }
         </button>
       </section>
       {show && (
-        <TeamQuiz classId={classId} title={(title.trim() || autoTitle).slice(0, 120)} subject={SUBJECT_NAME[subject]} teams={teamSnap} questions={show} seconds={quizSecs} onClose={() => setShow(null)} />
+        <TeamQuiz classId={classId} title={(title.trim() || autoTitle).slice(0, 120)} subject={SUBJECT_NAME[subject]} subjectCode={subject} teams={teamSnap} questions={show} seconds={quizSecs} onClose={() => setShow(null)} />
       )}
     </form>
   );

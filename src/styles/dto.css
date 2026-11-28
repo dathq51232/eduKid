@@ -195,3 +195,13 @@
 .dto-hero img { bottom: 16px; height: calc(100% - 16px); }
 .dto-hero img.dto-hero-milo { bottom: 84px; height: calc(100% - 74px); }
 .dto-card { padding-top: clamp(36px, 4.6vh, 50px); }
+
+/* âm thanh: loa đọc đề cạnh câu hỏi, nút tắt / bật nhạc */
+.dto-speak { display: inline-grid; place-items: center; width: clamp(42px, 5.6vh, 56px); height: clamp(42px, 5.6vh, 56px); margin-right: 12px; vertical-align: -0.2em; border: 3px solid #fff; border-radius: 50%;
+  background: linear-gradient(180deg, #4f8dff, #2357d8); color: #fff; box-shadow: 0 5px 0 #183f9e, 0 8px 16px rgb(20 60 160 / .3); cursor: pointer; transition: transform .12s; }
+.dto-speak:active { transform: translateY(3px); }
+.dto-speak svg { width: 60%; height: 60%; }
+.dto-speak.is-on { background: linear-gradient(180deg, #ffb020, #f08a00); box-shadow: 0 5px 0 #b25a00; animation: dto-pulse 1s ease-in-out infinite; }
+.dto-voice-err { margin: 0; color: #b45309; font-size: 14px; font-weight: 700; }
+.dto-sq.is-off { color: #94a3b8; }
+.dto-strip .dto-chip-btn.is-on { background: linear-gradient(180deg, #4f8dff, #2357d8); color: #fff; }
