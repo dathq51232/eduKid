@@ -14,7 +14,7 @@ const OPENAI_BASE = 'https://api.openai.com/v1';
 // Ưu tiên model rẻ/nhanh, tiếng Việt tốt; nếu tài khoản không có thì tự chọn model flash/gpt gần nhất.
 // Gemini: Google ngừng cho tài khoản mới dùng model cũ dần dần (2.5-flash bị chặn với user mới 10/2026),
 // nên đặt model mới nhất lên đầu; chat vẫn có cơ chế tự chuyển theo model Google khuyên dùng khi bị chặn.
-const GEMINI_PREFERRED = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+const GEMINI_PREFERRED = ['gemini-4-hydrogen', 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
 // Khi model đang dùng báo quá tải (503) / lỗi máy chủ: thử lại một lần rồi chuyển sang model nhẹ hơn cùng key miễn phí
 // (mỗi model có sức chứa riêng nên thường vẫn trả lời được). Model nào tài khoản không có (404) thì bỏ qua.
 const GEMINI_BUSY_FALLBACK = ['gemini-flash-lite-latest', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-flash-latest'];
@@ -98,6 +98,13 @@ export async function validateKey(provider: ProviderId, key: string): Promise<Pr
 
 export type ChatOptions = { system: string; messages: ChatMessage[]; model: string; maxTokens?: number };
 
+function geminiThinkingConfig(model: string, noThinking: boolean) {
+  if (!noThinking) return {};
+  return /^gemini-(3\.[5-9]|4)/.test(model)
+    ? { thinkingConfig: { thinkingLevel: 'low' } }
+    : { thinkingConfig: { thinkingBudget: 0 } };
+}
+
 /** Đọc Response SSE (data: {json} mỗi dòng) và nhả ra stream chữ đã ghép từ các phần phản hồi. */
 function sseTextStream(res: Response, kind: 'gemini' | 'openai'): ReadableStream<Uint8Array> {
   type SsePayload = { candidates?: { content?: { parts?: { text?: string }[] } }[]; choices?: { delta?: { content?: string } }[] };
@@ -153,7 +160,7 @@ export async function streamChatCompletion(
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: opts.system }] },
           contents: opts.messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
-          generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens, ...(noThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}) },
+          generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens, ...geminiThinkingConfig(model, noThinking) },
         }),
         signal: AbortSignal.timeout(55_000),
       });
@@ -211,7 +218,7 @@ export async function chatCompletion(provider: ProviderId, key: string, opts: Ch
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: opts.system }] },
           contents: opts.messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
-          generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens, ...(noThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}) },
+          generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens, ...geminiThinkingConfig(model, noThinking) },
         }),
       });
       let model = opts.model;

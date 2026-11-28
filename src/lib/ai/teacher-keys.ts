@@ -8,9 +8,19 @@ import type { ProviderId } from './providers';
 
 export type TeacherAiConfig = {
   preferred: ProviderId;
-  openai: { key: string; model: string } | null;
-  gemini: { key: string; model: string } | null;
+  openai: { key: string; model: string; isEnv?: boolean } | null;
+  gemini: { key: string; model: string; isEnv?: boolean } | null;
 };
+
+export function hasEnvGeminiKey(): boolean {
+  return Boolean(process.env.GEMINI_API_KEY?.trim());
+}
+
+function envGeminiConfig(): { key: string; model: string; isEnv: true } | null {
+  const key = process.env.GEMINI_API_KEY?.trim();
+  if (!key) return null;
+  return { key, model: process.env.GEMINI_MODEL?.trim() || 'gemini-4-hydrogen', isEnv: true };
+}
 
 type Row = {
   user_id: string;
@@ -25,13 +35,17 @@ export async function loadTeacherAiConfig(userId: string): Promise<TeacherAiConf
   const db = createAdminClient();
   const { data } = await db.from('teacher_ai_keys').select('user_id, openai_key_enc, openai_model, gemini_key_enc, gemini_model, preferred').eq('user_id', userId).maybeSingle();
   const row = data as Row | null;
-  if (!row) return null;
+  const fallbackGemini = envGeminiConfig();
+  if (!row) {
+    return fallbackGemini ? { preferred: 'gemini', openai: null, gemini: fallbackGemini } : null;
+  }
   const openaiKey = row.openai_key_enc ? decryptSecret(row.openai_key_enc) : null;
   const geminiKey = row.gemini_key_enc ? decryptSecret(row.gemini_key_enc) : null;
+  const gemini = geminiKey && row.gemini_model ? { key: geminiKey, model: row.gemini_model } : fallbackGemini;
   return {
     preferred: row.preferred === 'openai' ? 'openai' : 'gemini',
     openai: openaiKey && row.openai_model ? { key: openaiKey, model: row.openai_model } : null,
-    gemini: geminiKey && row.gemini_model ? { key: geminiKey, model: row.gemini_model } : null,
+    gemini,
   };
 }
 

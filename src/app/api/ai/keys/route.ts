@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { hasServiceRole } from '@/lib/supabase/admin';
 import { rateLimit } from '@/lib/rate-limit';
 import { hasKeyEncryptionSecret } from '@/lib/ai/crypto';
-import { loadTeacherAiConfig, saveTeacherAiKeys } from '@/lib/ai/teacher-keys';
+import { hasEnvGeminiKey, loadTeacherAiConfig, saveTeacherAiKeys } from '@/lib/ai/teacher-keys';
 import { validateKey } from '@/lib/ai/providers';
 
 // Quản lý API key AI của giáo viên (mô hình tự mang key — BYOK).
@@ -23,7 +23,7 @@ export async function GET() {
   return NextResponse.json({
     setupOk: hasKeyEncryptionSecret() && hasServiceRole(),
     hasOpenai: row?.has_openai === true,
-    hasGemini: row?.has_gemini === true,
+    hasGemini: row?.has_gemini === true || hasEnvGeminiKey(),
     preferred: row?.preferred === 'openai' ? 'openai' : 'gemini',
   });
 }
