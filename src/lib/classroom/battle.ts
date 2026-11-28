@@ -89,6 +89,7 @@ export function battleError(code: string): string {
     invalid_window: 'Giờ đóng phải sau giờ mở và chưa qua.',
     student_not_in_class: 'Có em không còn trong lớp, tải lại trang rồi thử lại.',
     closed: 'Đấu cặp này đã kết thúc hoặc đã đóng.',
+    still_playing: 'Đấu cặp đang diễn ra — bấm “Kết thúc” trước rồi mới xoá.',
     missing_table: 'Máy chủ chưa có Đấu cặp — cần chạy migration 0073_battle_rooms.sql trên Supabase.',
     not_configured: 'Máy chủ chưa cấu hình.',
   };

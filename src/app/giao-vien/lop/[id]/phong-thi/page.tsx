@@ -40,11 +40,17 @@ export default async function RoomsPage({ params }: { params: Promise<{ id: stri
       <LearnHeader />
       <main className="dash wrap">
         <Link href={`/giao-vien/lop/${id}`} className="dash-back no-print"><ArrowLeft aria-hidden="true" /> Lớp {c.name}</Link>
-        <header className="dash-head">
-          <div>
+        <header className="dash-head room-hero">
+          <div className="room-hero-txt">
             <p className="dash-kicker">Lớp {c.name} · Khối {c.grade} · {students.length} học sinh · Mùa Mắt Xích – chặng Ra hoa</p>
             <h1><ToolIcon k="phong-thi" /> Phòng thi lớp</h1>
-            <p className="dash-muted">Tạo phòng, đọc mã phòng cho các em. Cô tự đặt quy tắc sinh đề (đề riêng từng em hoặc đề chung), xem trước và sửa đề trước khi mở phòng; mỗi em làm một lần, cô xem điểm, huy hiệu Cú, kỹ năng cả lớp cần ôn và các bài cần xem lại.</p>
+            <p className="dash-muted">Tạo đề thi, đấu cặp hoặc đấu tổ cho cả lớp và theo dõi kết quả ngay tức thì. Các em ôn tập, củng cố kiến thức; cô xem điểm, huy hiệu Cú và kỹ năng cả lớp cần ôn.</p>
+          </div>
+          <div className="room-hero-art" aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element -- tranh minh hoạ đã tối ưu sẵn (webp) */}
+            <img src="/brand/dash/class-kids.webp" alt="" width={560} height={420} className="room-hero-kids" decoding="async" />
+            {/* eslint-disable-next-line @next/next/no-img-element -- tranh minh hoạ đã tối ưu sẵn (webp) */}
+            <img src="/brand/milo-professor-sm.webp" alt="" width={240} height={330} className="room-hero-milo" decoding="async" />
           </div>
         </header>
         <GradeReady grade={c.grade}><ExamRooms classId={c.id} className={c.name} grade={c.grade} students={students} /></GradeReady>

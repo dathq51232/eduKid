@@ -1,13 +1,5 @@
-/* ĐẤU CẶP trong PHÒNG THI LỚP (bt-) — ô chọn khi tạo phòng, khung Đấu cặp (sơ đồ nhánh) của cô, kết quả trận của em.
+/* ĐẤU CẶP trong PHÒNG THI LỚP (bt-) — khung Đấu cặp (sơ đồ nhánh) của cô, kết quả trận của em.
    Màu theo biến chung (sáng / tối tự đổi); hoạt ảnh chỉ dùng transform / opacity. */
-
-/* ---------- ô chọn Đấu cặp khi tạo phòng ---------- */
-.bt-toggle { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 2px dashed var(--line-strong, var(--line)); border-radius: 14px; cursor: pointer; }
-.bt-toggle.is-on { border-style: solid; border-color: #d97706; background: rgb(245 158 11 / .1); }
-.bt-toggle > svg { flex: none; width: 22px; height: 22px; color: #d97706; margin-top: 1px; }
-.bt-toggle input { margin-top: 4px; }
-.bt-toggle span { display: grid; gap: 3px; }
-.bt-toggle small { color: var(--muted); font-size: 13px; }
 
 /* ---------- khung Đấu cặp của cô ---------- */
 .bt-panel { display: grid; gap: 12px; }
@@ -75,3 +67,25 @@
 .bt-pairs { list-style: none; margin: 0; padding: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
 @media (max-width: 520px) { .bt-round-meta { margin-left: 28px; width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .bt-chev { transition: none; } }
+
+/* ---------- dải thẻ Đấu cặp (trượt ngang, có mũi tên) ---------- */
+.bt-strip-wrap { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; }
+.bt-strip { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 4px 2px 8px; }
+.bt-strip::-webkit-scrollbar { display: none; }
+.bt-strip-nav { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); cursor: pointer; }
+.bt-strip-nav svg { width: 18px; height: 18px; }
+.bt-tile { position: relative; scroll-snap-align: start; border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface); transition: transform .15s, box-shadow .15s; }
+.bt-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.bt-tile.is-playing { border-color: rgb(245 158 11 / .6); }
+.bt-tile.is-sel { border-color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
+.bt-tile-main { display: flex; align-items: flex-start; gap: 10px; width: 100%; height: 100%; padding: 12px 36px 12px 12px; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.bt-tile img.bt-tile-ic { flex: none; width: 44px; height: 44px; }
+.bt-tile-txt { display: grid; gap: 3px; min-width: 0; }
+.bt-tile-txt > span { color: var(--muted); font-size: 13px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bt-tile-txt .bt-st { justify-self: start; display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; }
+.bt-tile-txt .bt-st svg { width: 14px; height: 14px; }
+.bt-tile-del { position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+.bt-tile-del:hover, .bt-tile-del:focus-visible { background: #fde8e6; color: #b3261e; }
+.bt-tile-del svg { width: 15px; height: 15px; }
+:root[data-theme="dark"] .bt-tile-del:hover { background: #3d1d22; color: #ff9a9a; }
+@media (max-width: 520px) { .bt-strip-nav { display: none; } .bt-strip-wrap { grid-template-columns: minmax(0, 1fr); } .bt-strip { grid-auto-columns: 78%; } }

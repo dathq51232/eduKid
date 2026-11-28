@@ -5,7 +5,7 @@
 // Ở đây: sơ đồ nhánh từng vòng (kết quả từng cặp, ai thắng, vì sao), xử thắng cặp chưa phân định, bốc thăm mở vòng sau
 // (máy cô sinh đề mới, khó hơn, từ cùng các bài), kết thúc. Tự tải lại mỗi 20 giây khi đang mở trang.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, Crown, Gavel, Lock, RefreshCw, Search, Shuffle, Swords, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Crown, Gavel, Lock, RefreshCw, Search, Shuffle, Trash2, X } from 'lucide-react';
 import { fold } from '@/lib/classroom/teacher-nav';
 import { SUBJECT_NAME } from '@/lib/classroom/assignments';
 import type { Matrix } from '@/lib/exams/matrix';
@@ -13,6 +13,7 @@ import { battleSets } from '@/lib/classroom/battle-build';
 import { toLocalInput, whenLabel } from '@/lib/classroom/rooms';
 import { REASON_LABEL, battleError, fmtMs, roundName, type WinReason } from '@/lib/classroom/battle';
 import type { SubjectCode } from '@/lib/types';
+import { unitIcon } from '@/lib/classroom/unit-icons';
 import '@/styles/bt.css';
 
 type R = { correct: number; ms: number | null } | null;
@@ -38,7 +39,9 @@ function endOfDay() { const d = new Date(); d.setHours(21, 0, 0, 0); if (d.getTi
 export default function BattlePanel({ classId, grade, refresh, onChanged }: { classId: string; grade: number; refresh: number; onChanged: () => void }) {
   const [list, setList] = useState<BattleView[] | null>(null);
   const [err, setErr] = useState('');
+  const [sel, setSel] = useState<string | null>(null);
   const last = useRef('');
+  const strip = useRef<HTMLDivElement>(null);
   const apply = useCallback((bs: BattleView[]) => { const j = JSON.stringify(bs); if (j !== last.current) { last.current = j; setList(bs); } }, []);
   const load = useCallback(async () => {
     try { apply((await api<{ battles: BattleView[] }>(`/api/giao-vien/dau-cap?classId=${classId}`)).battles); setErr(''); }
@@ -50,13 +53,71 @@ export default function BattlePanel({ classId, grade, refresh, onChanged }: { cl
     return () => clearInterval(t);
   }, [load]);
 
+  const [busy, setBusy] = useState(false);
+  /** Xoá đấu cặp đã kết thúc (kèm các phòng thi từng vòng) — một hoặc nhiều */
+  const remove = async (ids: string[], ask: string) => {
+    if (!ids.length || !window.confirm(ask)) return;
+    setBusy(true); setErr('');
+    try {
+      for (const id of ids) await api(`/api/giao-vien/dau-cap/${id}`, { method: 'DELETE' });
+    } catch (e) { setErr((e as Error).message); }
+    finally { setBusy(false); setSel((x) => (x && ids.includes(x) ? null : x)); await load(); onChanged(); }
+  };
+
   if (list === null) return null;
   if (!list.length && !err) return null;
+  // Dải thẻ (đang đấu xếp trước); thẻ đang chọn — mặc định đấu cặp đang diễn ra đầu tiên — mở chi tiết ngay dưới dải. '' = cô đã thu gọn.
+  const sorted = [...list].sort((a, b) => Number(b.status === 'playing') - Number(a.status === 'playing'));
+  const ended = list.filter((b) => b.status !== 'playing');
+  const curId = sel ?? sorted.find((b) => b.status === 'playing')?.id ?? null;
+  const cur = list.find((b) => b.id === curId) ?? null;
+  const slide = (dir: number) => { const el = strip.current; if (el) el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: 'smooth' }); };
+  const short = (b: BattleView) => b.title.replace(/^Đấu cặp\s+.*?\s+–\s+/u, '');
+
   return (
-    <section className="dash-section bt-panel" aria-labelledby="bt-h">
-      <h2 id="bt-h"><Swords aria-hidden="true" /> Đấu cặp của lớp</h2>
+    <section className="room-sec bt-panel" aria-labelledby="bt-h">
+      <header className="room-sec-head">
+        {/* eslint-disable-next-line @next/next/no-img-element -- ảnh 3D nhỏ đã tối ưu sẵn (webp) */}
+        <img src="/emoji/hd/trophy.webp" width={34} height={34} style={{ width: 34, height: 34 }} alt="" aria-hidden="true" className="ic3d" decoding="async" />
+        <h2 id="bt-h">Đấu cặp của lớp</h2>
+        <span className="room-sec-n">{list.length - ended.length} đang đấu · {ended.length} đã kết thúc</span>
+        {ended.length > 1 && (
+          <button type="button" className="mini-btn is-danger room-sec-act" disabled={busy}
+            onClick={() => void remove(ended.map((b) => b.id), `Xoá cả ${ended.length} đấu cặp đã kết thúc? Phòng thi các vòng và bài làm trong đó cũng bị xoá, không hoàn tác được.`)}>
+            <Trash2 aria-hidden="true" /> {busy ? 'Đang xoá…' : `Xoá ${ended.length} đấu cặp đã kết thúc`}
+          </button>
+        )}
+      </header>
       {err && <p className="adm-alert is-error" role="alert">{err}</p>}
-      {list.map((b) => <BattleCard key={b.id} b={b} grade={grade} onUpdate={(v) => { apply(list.map((x) => (x.id === v.id ? v : x))); onChanged(); }} reload={load} />)}
+      <div className="bt-strip-wrap">
+        <button type="button" className="bt-strip-nav is-prev" onClick={() => slide(-1)} aria-label="Xem đấu cặp trước"><ChevronLeft aria-hidden="true" /></button>
+        <div className="bt-strip" ref={strip} role="list">
+          {sorted.map((b) => (
+            <div key={b.id} role="listitem" className={`bt-tile is-${b.status}${b.id === curId ? ' is-sel' : ''}`}>
+              <button type="button" className="bt-tile-main" aria-pressed={b.id === curId} onClick={() => setSel(b.id === curId ? '' : b.id)}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- ảnh 3D nhỏ đã tối ưu sẵn (webp) */}
+                <img src={unitIcon(short(b), b.subject)} width={44} height={44} alt="" aria-hidden="true" className="ic3d bt-tile-ic" decoding="async" loading="lazy" />
+                <span className="bt-tile-txt">
+                  <b>Đấu cặp {SUBJECT_NAME[b.subject]}</b>
+                  <span>{short(b)}</span>
+                  <em className={`bt-st is-${b.status}`}>{b.championName ? <><Crown aria-hidden="true" /> {b.championName}</> : STATUS[b.status]}</em>
+                </span>
+              </button>
+              {b.status !== 'playing' && (
+                <button type="button" className="bt-tile-del" disabled={busy} aria-label={`Xoá đấu cặp ${b.title}`} title="Xoá đấu cặp"
+                  onClick={() => void remove([b.id], `Xoá đấu cặp “${b.title}”? Phòng thi các vòng và bài làm trong đó cũng bị xoá, không hoàn tác được.`)}>
+                  <Trash2 aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <button type="button" className="bt-strip-nav is-next" onClick={() => slide(1)} aria-label="Xem đấu cặp sau"><ChevronRight aria-hidden="true" /></button>
+      </div>
+      {cur && (
+        <BattleCard key={cur.id} b={cur} grade={grade} reload={load}
+          onUpdate={(v) => { apply(list.map((x) => (x.id === v.id ? v : x))); onChanged(); }} />
+      )}
     </section>
   );
 }
@@ -65,7 +126,7 @@ function BattleCard({ b, grade, onUpdate, reload }: { b: BattleView; grade: numb
   const [busy, setBusy] = useState('');
   const [err, setErr] = useState('');
   const [closes, setCloses] = useState(() => toLocalInput(endOfDay()));
-  const [open, setOpen] = useState(b.status === 'playing');
+  const [open, setOpen] = useState(true);
   const cur = b.rounds.find((r) => r.round === b.round);
   const winners = useMemo(() => (cur?.pairs ?? []).filter((p) => p.winner).length, [cur]);
   const roundDone = !!cur && cur.pairs.every((p) => p.winner);
